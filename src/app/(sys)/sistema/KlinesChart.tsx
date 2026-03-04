@@ -56,133 +56,29 @@ import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "./KlinesChartDrawing";
 import type { DrawSegment, SegmentCap } from "./KlinesChartDrawing";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
+import type { Kline, KlinesChartProps } from "./klinesChart/types";
+import {
+  CANDLE_COLOR_PRESETS,
+  DEFAULT_CANDLE_PRESET,
+  DEFAULT_BACKGROUND,
+  DEFAULT_LINE_TABLE_COLOR,
+  DEFAULT_SECONDARY_GRID_COLOR,
+  DEFAULT_TEXT_COLOR,
+  BACKGROUND_PALETTE,
+  LINE_GRID_PALETTE,
+  TEXT_PALETTE,
+  SEGMENT_COLOR_PALETTE,
+  SEGMENT_CAP_OPTIONS,
+} from "./klinesChart/palettes";
+import type { CandleColorPresetId, BackgroundId, LineGridId, TextColorId } from "./klinesChart/palettes";
+import { KlinesChartSidebar } from "./klinesChart/KlinesChartSidebar";
+import { KlinesChartSvg } from "./klinesChart/KlinesChartSvg";
+import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
+import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 
-type Kline = [
-  number, string, string, string, string, string, number, string, number, string, string, number,
-  ...(number | null)[],
-];
+export type { ChartIndicatorLine } from "./klinesChart/types";
 
-/** Indicador a desenhar no gráfico: coluna (índice 12+), cor, espessura, tipo de traço e rótulo para a faixa no topo. */
-export interface ChartIndicatorLine {
-  columnIndex: number;
-  color: string;
-  lineWidth?: "thin" | "normal";
-  lineStyle?: "solid" | "dotted" | "dashed";
-  /** Rótulo exibido na faixa de indicadores no topo (ex.: "SMA(7) Close"). */
-  label?: string;
-  /** Rótulo resumido para o display (ex.: "SMA(7) C"). */
-  shortLabel?: string;
-  /** Tipo do indicador: RSI usa escala 0–100 no gráfico; MACD e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD";
-  /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
-  panel?: "main" | "panel2" | "panel3" | "panel4";
-  /** Só para RSI: true = escala fixa 0–100 no eixo Y; false ou ausente (para não-RSI) = escala automática. */
-  rsiFixedScale?: boolean;
-  /** Só para RSI: desenhar linha horizontal em 50%. */
-  rsiCenterLine?: boolean;
-  rsiCenterLineColor?: string;
-  rsiCenterLineWidth?: "thin" | "normal";
-  rsiCenterLineStyle?: "solid" | "dotted" | "dashed";
-  /** Só para RSI: limites superior/inferior. */
-  rsiLimits?: boolean;
-  rsiLimitUpper?: number;
-  rsiLimitLower?: number;
-  rsiLimitColor?: string;
-  rsiLimitLineWidth?: "thin" | "normal";
-  rsiLimitLineStyle?: "solid" | "dotted" | "dashed";
-  /** Desenho: linha (default) ou barras (histograma MACD). */
-  display?: "line" | "histogram";
-  /** Cor das barras do histograma acima de zero. */
-  histogramColorAbove?: string;
-  /** Cor das barras do histograma abaixo de zero. */
-  histogramColorBelow?: string;
-}
-
-type Props = {
-  klines: Kline[];
-  groupMinutes: number;
-  intervalLabel?: string;
-  width: number;
-  /** Indicadores do usuário (ex.: SMA) a desenhar como linhas. */
-  indicatorLines?: ChartIndicatorLine[];
-  /** Chamado ao carregar um layout; permite ao pai (ex.: KlinesTable) aplicar preferências que não são do chart (ex.: groupMinutes). */
-  onLayoutConfigLoaded?: (config: Record<string, unknown>) => void;
-  /** Altura máxima para o SVG do gráfico (main + painéis). Quando definido e houver painéis secundários, a altura é limitada para caber no container. */
-  maxChartHeight?: number;
-};
-
-const CANDLE_COLOR_PRESETS = [
-  { id: "greenRed" as const, bull: "#059669", bear: "#dc2626" },
-  { id: "blueOrange" as const, bull: "#2563eb", bear: "#ea580c" },
-  { id: "blackWhite" as const, bull: "#f5f5f5", bear: "#171717" },
-  { id: "purpleAmber" as const, bull: "#7c3aed", bear: "#f59e0b" },
-  { id: "cyanRose" as const, bull: "#0891b2", bear: "#e11d48" },
-] as const;
-type CandleColorPresetId = (typeof CANDLE_COLOR_PRESETS)[number]["id"];
-const DEFAULT_CANDLE_PRESET: CandleColorPresetId = "greenRed";
-
-/** Paleta básica para cor do segmento de reta. */
-const SEGMENT_COLOR_PALETTE = [
-  "#000000", "#ffffff", "#dc2626", "#ea580c", "#ca8a04", "#65a30d", "#059669", "#0891b2", "#2563eb", "#7c3aed", "#db2777", "#78716c",
-] as const;
-
-const SEGMENT_CAP_OPTIONS: { value: SegmentCap; labelKey: "capNone" | "capPoint" | "capArrow" }[] = [
-  { value: "none", labelKey: "capNone" },
-  { value: "point", labelKey: "capPoint" },
-  { value: "arrow", labelKey: "capArrow" },
-];
-
-// Paleta Área de plot: branco, cinzas, pretos, marrons (10 cores)
-const BACKGROUND_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "bgWhite" as const },
-  { id: 1, hex: "#f5f5f5", labelKey: "bgLightGray" as const },
-  { id: 2, hex: "#e5e5e5", labelKey: "bgGray" as const },
-  { id: 3, hex: "#a3a3a3", labelKey: "bgMediumGray" as const },
-  { id: 4, hex: "#525252", labelKey: "bgDarkGray" as const },
-  { id: 5, hex: "#171717", labelKey: "bgBlack" as const },
-  { id: 6, hex: "#d6d3d1", labelKey: "bgLightBrown" as const },
-  { id: 7, hex: "#78716c", labelKey: "bgBrown" as const },
-  { id: 8, hex: "#57534e", labelKey: "bgDarkBrown" as const },
-  { id: 9, hex: "#292524", labelKey: "bgVeryDarkBrown" as const },
-] as const;
-type BackgroundId = (typeof BACKGROUND_PALETTE)[number]["id"];
-const DEFAULT_BACKGROUND: BackgroundId = 0;
-
-// Paleta Linhas/tabela/grade: branco, preto, vermelho, verde, azul, roxo, ciano, amarelo, laranja, cinza, marrom (11 cores)
-const LINE_GRID_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "lineWhite" as const },
-  { id: 1, hex: "#000000", labelKey: "lineBlack" as const },
-  { id: 2, hex: "#dc2626", labelKey: "lineRed" as const },
-  { id: 3, hex: "#16a34a", labelKey: "lineGreen" as const },
-  { id: 4, hex: "#2563eb", labelKey: "lineBlue" as const },
-  { id: 5, hex: "#9333ea", labelKey: "linePurple" as const },
-  { id: 6, hex: "#0891b2", labelKey: "lineCyan" as const },
-  { id: 7, hex: "#ca8a04", labelKey: "lineYellow" as const },
-  { id: 8, hex: "#ea580c", labelKey: "lineOrange" as const },
-  { id: 9, hex: "#71717a", labelKey: "lineGray" as const },
-  { id: 10, hex: "#78716c", labelKey: "lineBrown" as const },
-] as const;
-type LineGridId = (typeof LINE_GRID_PALETTE)[number]["id"];
-const DEFAULT_LINE_TABLE_COLOR: LineGridId = 1; // preto
-const DEFAULT_SECONDARY_GRID_COLOR: LineGridId = 9; // cinza
-
-// Paleta texto: branco, preto, cinzas, marrom, vermelho, azul, roxo (10 cores) — para texto no fundo e no rodapé/eixo Y
-const TEXT_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "textWhite" as const },
-  { id: 1, hex: "#000000", labelKey: "textBlack" as const },
-  { id: 2, hex: "#f5f5f5", labelKey: "textLightGray" as const },
-  { id: 3, hex: "#a3a3a3", labelKey: "textGray" as const },
-  { id: 4, hex: "#525252", labelKey: "textDarkGray" as const },
-  { id: 5, hex: "#78716c", labelKey: "textBrown" as const },
-  { id: 6, hex: "#dc2626", labelKey: "textRed" as const },
-  { id: 7, hex: "#2563eb", labelKey: "textBlue" as const },
-  { id: 8, hex: "#9333ea", labelKey: "textPurple" as const },
-  { id: 9, hex: "#71717a", labelKey: "textMediumGray" as const },
-] as const;
-type TextColorId = (typeof TEXT_PALETTE)[number]["id"];
-const DEFAULT_TEXT_COLOR: TextColorId = 1; // preto
-
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, maxChartHeight }: Props) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, maxChartHeight }: KlinesChartProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
   const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
@@ -297,7 +193,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       setDrawPending(null);
     }
     setSegmentsApplied(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
   }, [groupMinutes]);
 
   // Persistir segmentos no localStorage (por intervalo; em outros intervalos não são exibidos)
@@ -645,7 +541,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const windowN = windowSlice.length;
   if (windowN === 0) return null;
 
-  const getPanel = (ind: { type?: string; panel?: string }) => ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main");
+  const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" =>
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4") ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
@@ -921,9 +818,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   // Verticais: quantidade 30→6, 50→6, 100→8, 150→12; primeira vertical sempre no início do dia (meia-noite UTC)
   const numVerticals =
     windowN <= 30 ? 6
-    : windowN <= 50 ? 6
-    : windowN <= 100 ? 8
-    : 12;
+      : windowN <= 50 ? 6
+        : windowN <= 100 ? 8
+          : 12;
   const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
   const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
   const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : (dateBreaks[0]?.index ?? 0);
@@ -977,452 +874,78 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
       <div className="flex min-w-0 flex-shrink-0">
-        {/* Sidebar: configuração + cores dos candles (mesma altura do gráfico) */}
-        <div
-          ref={settingsRef}
-          className="flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative"
-          style={{ width: SIDEBAR_WIDTH, height: chartHeight }}
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setSettingsOpen((o) => !o); setColorsOpen(false); }}
-            className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-            title={t.configTitle}
-            aria-expanded={settingsOpen}
-          >
-            ⚙️
-          </button>
-          {settingsOpen && (
-            <div
-              className="absolute left-full top-0 ml-1 z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={yAxisAbbreviated}
-                  onChange={(e) => setYAxisAbbreviated(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.yAxisAbbreviated}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={logScale}
-                  onChange={(e) => setLogScale(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.logScale}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showMainAxis}
-                  onChange={(e) => setShowMainAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.mainAxis}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showSecondaryAxis}
-                  onChange={(e) => setShowSecondaryAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.secondaryAxis}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showLastCloseLine}
-                  onChange={(e) => setShowLastCloseLine(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.lastCloseLine}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showIndicatorLastValueOnYAxis}
-                  onChange={(e) => setShowIndicatorLastValueOnYAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.showIndicatorLastValueOnYAxis}</span>
-              </label>
-              <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
-                <span className="shrink-0">{t.invisibleCandlesEnd}</span>
-                <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setInvisibleCandlesEnd((v) => Math.max(0, v - 1))}
-                    disabled={invisibleCandlesEnd <= 0}
-                    aria-label="-"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">
-                    {invisibleCandlesEnd}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))}
-                    disabled={invisibleCandlesEnd >= 30}
-                    aria-label="+"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
-                <span className="shrink-0">{t.secondaryPanelHeight}</span>
-                <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setSecondaryPanelHeightPercent((v) => Math.max(SECONDARY_PANEL_HEIGHT_MIN, v - 1))}
-                    disabled={secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MIN}
-                    aria-label="-"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    −
-                  </button>
-                  <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">
-                    {secondaryPanelHeightPercent}%
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSecondaryPanelHeightPercent((v) => Math.min(SECONDARY_PANEL_HEIGHT_MAX, v + 1))}
-                    disabled={secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MAX}
-                    aria-label="+"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={colorsRef} className="relative w-full flex flex-col items-center">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setColorsOpen((o) => !o); setSettingsOpen(false); }}
-              className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-              title={t.candleColors}
-              aria-expanded={colorsOpen}
-            >
-              🎨
-            </button>
-            {colorsOpen && (
-              <div
-                className="absolute left-full top-0 ml-1 z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.candleColors}</div>
-                {CANDLE_COLOR_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setCandleColorPreset(preset.id)}
-                    className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 ${candleColorPreset === preset.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}
-                  >
-                    <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bull }} />
-                    <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bear }} />
-                    <span>
-                      {preset.id === "greenRed" && t.candleColorGreenRed}
-                      {preset.id === "blueOrange" && t.candleColorBlueOrange}
-                      {preset.id === "blackWhite" && t.candleColorBlackWhite}
-                      {preset.id === "purpleAmber" && t.candleColorPurpleAmber}
-                      {preset.id === "cyanRose" && t.candleColorCyanRose}
-                    </span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setCandleColorPreset(DEFAULT_CANDLE_PRESET)}
-                  className="w-full text-left px-2 py-1.5 rounded text-sm mt-1 border-t border-zinc-100 hover:bg-zinc-100 text-zinc-600"
-                >
-                  {t.default}
-                </button>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.background}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={`cb-${bg.id}`}
-                      type="button"
-                      onClick={() => setContainerBackground(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${containerBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.areaPlot}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={bg.id}
-                      type="button"
-                      onClick={() => setChartBackground(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${chartBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.footerAndYAxis}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={`fy-${bg.id}`}
-                      type="button"
-                      onClick={() => setFooterYAxisBgColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisBgColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.linesAndTable}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lt-${bg.id}`}
-                      type="button"
-                      onClick={() => setLineTableColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lineTableColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.secondaryGrid}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`sg-${bg.id}`}
-                      type="button"
-                      onClick={() => setSecondaryGridColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${secondaryGridColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseLineColor}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lcl-${bg.id}`}
-                      type="button"
-                      onClick={() => setLastCloseLineColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseLineColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseTextColor}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lct-${bg.id}`}
-                      type="button"
-                      onClick={() => setLastCloseTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textBackground}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {TEXT_PALETTE.map((bg) => (
-                    <button
-                      key={`bt-${bg.id}`}
-                      type="button"
-                      onClick={() => setBackgroundTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${backgroundTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textFooterYAxis}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {TEXT_PALETTE.map((bg) => (
-                    <button
-                      key={`ft-${bg.id}`}
-                      type="button"
-                      onClick={() => setFooterYAxisTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <div ref={drawRef} className="relative w-full flex flex-col items-center">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setColorsOpen(false); setSettingsOpen(false); openDrawPanel(); }}
-              className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${drawMode ? "bg-zinc-200" : ""}`}
-              title={t.drawTool}
-              aria-expanded={drawOpen}
-            >
-              📐
-            </button>
-            {drawOpen && drawPanelSide === "left" && (
-              <div
-                className="absolute left-full top-0 ml-1 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDrawPanelSide((s) => s === "left" ? "right" : "left"); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                    title={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                    aria-label={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                  >
-                    {drawPanelSide === "left" ? "→" : "←"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold"
-                    title={t.drawExitMode}
-                    aria-label={t.drawExitMode}
-                  >
-                    <span aria-hidden>×</span>
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={selectLineTool}
-                  title={t.lineSegment}
-                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
-                  aria-label={t.lineSegment}
-                >
-                  📏
-                </button>
-                <button
-                  type="button"
-                  onClick={selectSelectTool}
-                  title={t.drawSelectSegment}
-                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "select" ? "bg-zinc-100" : ""}`}
-                  aria-label={t.drawSelectSegment}
-                >
-                  👆
-                </button>
-                <label className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 ${drawMagnetic ? "bg-zinc-100" : ""}`} title={t.drawMagnetic}>
-                  <input
-                    type="checkbox"
-                    checked={drawMagnetic}
-                    onChange={(e) => setDrawMagnetic(e.target.checked)}
-                    className="rounded border-zinc-300 sr-only"
-                  />
-                  <span aria-hidden>🧲</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={clearAllDrawing}
-                  title={t.drawClearAll}
-                  className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700"
-                  aria-label={t.drawClearAll}
-                >
-                  🗑️
-                </button>
-              </div>
-            )}
-          </div>
-          <div ref={saveLoadRef} className="w-full flex flex-col items-center">
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setSaveOpen((o) => !o); setLoadOpen(false); }}
-                className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-                title={t.saveLayout}
-                aria-expanded={saveOpen}
-              >
-                💾
-              </button>
-              {saveOpen && (
-                <div
-                  className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-                  {([1, 2, 3, 4, 5, 6, 7] as const).map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => handleSaveLayout(slot)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
-                    >
-                      {t.layoutName.replace("{n}", String(slot))}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setLoadOpen((o) => {
-                    if (!o) fetchSavedLayouts();
-                    return !o;
-                  });
-                  setSaveOpen(false);
-                }}
-                className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-                title={t.loadLayout}
-                aria-expanded={loadOpen}
-              >
-                📂
-              </button>
-              {loadOpen && (
-                <div
-                  className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-                <button
-                  type="button"
-                  onClick={handleLoadDefaultLayout}
-                  className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 font-medium"
-                >
-                  {t.defaultLayout}
-                </button>
-                {savedLayouts.length === 0 ? (
-                  <p className="px-2 py-1.5 text-sm text-zinc-500 border-t border-zinc-100 mt-1 pt-1">{t.noSavedLayouts}</p>
-                ) : (
-                  <>
-                    <div className="border-t border-zinc-100 mt-1 pt-1" />
-                    {savedLayouts.map((layout) => (
-                      <button
-                        key={layout.slot}
-                        type="button"
-                        onClick={() => handleLoadLayout(layout)}
-                        className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
-                      >
-                        {t.layoutName.replace("{n}", String(layout.slot))}
-                      </button>
-                    ))}
-                  </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <KlinesChartSidebar
+          chartHeight={chartHeight}
+          settingsRef={settingsRef}
+          colorsRef={colorsRef}
+          saveLoadRef={saveLoadRef}
+          drawRef={drawRef}
+          t={t}
+          settingsOpen={settingsOpen}
+          setSettingsOpen={setSettingsOpen}
+          colorsOpen={colorsOpen}
+          setColorsOpen={setColorsOpen}
+          yAxisAbbreviated={yAxisAbbreviated}
+          setYAxisAbbreviated={setYAxisAbbreviated}
+          logScale={logScale}
+          setLogScale={setLogScale}
+          showMainAxis={showMainAxis}
+          setShowMainAxis={setShowMainAxis}
+          showSecondaryAxis={showSecondaryAxis}
+          setShowSecondaryAxis={setShowSecondaryAxis}
+          showLastCloseLine={showLastCloseLine}
+          setShowLastCloseLine={setShowLastCloseLine}
+          showIndicatorLastValueOnYAxis={showIndicatorLastValueOnYAxis}
+          setShowIndicatorLastValueOnYAxis={setShowIndicatorLastValueOnYAxis}
+          invisibleCandlesEnd={invisibleCandlesEnd}
+          setInvisibleCandlesEnd={setInvisibleCandlesEnd}
+          secondaryPanelHeightPercent={secondaryPanelHeightPercent}
+          setSecondaryPanelHeightPercent={setSecondaryPanelHeightPercent}
+          secondaryPanelHeightMin={SECONDARY_PANEL_HEIGHT_MIN}
+          secondaryPanelHeightMax={SECONDARY_PANEL_HEIGHT_MAX}
+          candleColorPreset={candleColorPreset}
+          setCandleColorPreset={setCandleColorPreset}
+          containerBackground={containerBackground}
+          setContainerBackground={setContainerBackground}
+          chartBackground={chartBackground}
+          setChartBackground={setChartBackground}
+          footerYAxisBgColor={footerYAxisBgColor}
+          setFooterYAxisBgColor={setFooterYAxisBgColor}
+          backgroundTextColor={backgroundTextColor}
+          setBackgroundTextColor={setBackgroundTextColor}
+          footerYAxisTextColor={footerYAxisTextColor}
+          setFooterYAxisTextColor={setFooterYAxisTextColor}
+          lineTableColor={lineTableColor}
+          setLineTableColor={setLineTableColor}
+          secondaryGridColor={secondaryGridColor}
+          setSecondaryGridColor={setSecondaryGridColor}
+          lastCloseLineColor={lastCloseLineColor}
+          setLastCloseLineColor={setLastCloseLineColor}
+          lastCloseTextColor={lastCloseTextColor}
+          setLastCloseTextColor={setLastCloseTextColor}
+          drawOpen={drawOpen}
+          setDrawOpen={setDrawOpen}
+          drawMode={drawMode}
+          drawTool={drawTool}
+          drawMagnetic={drawMagnetic}
+          setDrawMagnetic={setDrawMagnetic}
+          drawPanelSide={drawPanelSide}
+          setDrawPanelSide={setDrawPanelSide}
+          openDrawPanel={openDrawPanel}
+          closeDrawMode={closeDrawMode}
+          selectLineTool={selectLineTool}
+          selectSelectTool={selectSelectTool}
+          clearAllDrawing={clearAllDrawing}
+          saveOpen={saveOpen}
+          setSaveOpen={setSaveOpen}
+          loadOpen={loadOpen}
+          setLoadOpen={setLoadOpen}
+          savedLayouts={savedLayouts}
+          onSaveLayout={handleSaveLayout}
+          onLoadDefaultLayout={handleLoadDefaultLayout}
+          onLoadLayout={handleLoadLayout}
+          onFetchSavedLayouts={fetchSavedLayouts}
+        />
         <div className="flex-shrink-0 relative" style={{ backgroundColor: containerBgHex }}>
           {drawOpen && drawPanelSide === "right" && (
             <div
@@ -1654,853 +1177,136 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
               )}
             </div>
           )}
-        <div className="flex flex-shrink-0 relative" style={{ width: width + Y_AXIS_WIDTH }}>
-          {/* Faixa de indicadores sobreposta ao topo de cada área (main e painéis 2/3/4) */}
-          {hasIndicatorStrip && (() => {
-            const showCrosshairValues = crosshairPoint !== null
-              && (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging)
-              && crosshairPoint.index >= 0
-              && crosshairPoint.index < fullReversed.length;
-            const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4", topY: number, lines: typeof indicatorLines) => (
-              <div
-                key={panelKey}
-                className="absolute left-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
-                style={{
-                  top: topY === 0 ? 0 : topY - INDICATOR_STRIP_OFFSET_UP,
-                  height: INDICATOR_STRIP_HEIGHT,
-                  width,
-                  paddingLeft: MARGIN_LEFT,
-                  paddingTop: 2,
-                }}
-                role="list"
-                aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
-              >
-                {lines.map((ind, idx) => {
-                  const crosshairVal = showCrosshairValues
-                    ? (() => {
-                        const raw = fullReversed[crosshairPoint!.index]?.[ind.columnIndex];
-                        if (raw == null) return null;
-                        const v = Number(raw);
-                        if (!Number.isFinite(v)) return null;
-                        return ind.type === "RSI" ? v.toFixed(1) : formatYAxis(v);
-                      })()
-                    : null;
-                  return (
-                    <span
-                      key={idx}
-                      className="flex items-center gap-1.5 text-[10px] font-light px-1.5 py-0.5 rounded"
-                      style={{
-                        color: ind.color,
-                        backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
-                        boxShadow: "0 0 4px rgba(0,0,0,0.15)",
-                      }}
-                      role="listitem"
-                    >
-                      <span className="w-2 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
-                      <span>{ind.shortLabel ?? ind.label ?? `Ind ${idx + 1}`}</span>
-                      {crosshairVal != null && <span className="font-mono opacity-90">{crosshairVal}</span>}
-                    </span>
-                  );
-                })}
-              </div>
-            );
-            const mainLines = indicatorLines.filter((ind) => getPanel(ind) === "main");
-            return (
-              <>
-                {mainLines.length > 0 && strip("main", 0, mainLines)}
-                {hasPanel2 && strip("panel2", panel2Top, indicatorLines.filter((ind) => getPanel(ind) === "panel2"))}
-                {hasPanel3 && strip("panel3", panel3Top, indicatorLines.filter((ind) => getPanel(ind) === "panel3"))}
-                {hasPanel4 && strip("panel4", panel4Top, indicatorLines.filter((ind) => getPanel(ind) === "panel4"))}
-              </>
-            );
-          })()}
-        <svg ref={chartSvgRef} width={width} height={chartHeight} className={`flex-shrink-0 ${isDarkBg ? "text-zinc-400" : "text-zinc-700"}`}>
-          {/* Área de plotagem (só candles + grade) com cor de fundo */}
-          <rect
-            x={MARGIN_LEFT}
-            y={MARGIN_TOP}
-            width={chartW}
-            height={chartH}
-            fill={chartBgHex}
+          <KlinesChartSvg
+            chartSvgRef={chartSvgRef}
+            crosshairOverlayRef={crosshairOverlayRef}
+            width={width}
+            chartHeight={chartHeight}
+            chartW={chartW}
+            chartH={chartH}
+            gap={gap}
+            candleW={candleW}
+            y={y}
+            cx={cx}
+            segmentToPixel={segmentToPixel}
+            snapToCandlePoint={snapToCandlePoint}
+            windowSlice={windowSlice}
+            fullReversed={fullReversed}
+            startIndex={startIndex}
+            windowN={windowN}
+            n={n}
+            candleColors={candleColors}
+            yTickValues={yTickValues}
+            verticalIndicesFiltered={verticalIndicesFiltered}
+            dateBreaksFiltered={dateBreaksFiltered}
+            dayBreaksFiltered={dayBreaksFiltered}
+            showMainAxis={showMainAxis}
+            showSecondaryAxis={showSecondaryAxis}
+            showLastCloseLine={showLastCloseLine}
+            showLastClose={showLastClose}
+            lastCloseY={lastCloseY}
+            lineTableHex={lineTableHex}
+            secondaryGridHex={secondaryGridHex}
+            lastCloseLineHex={lastCloseLineHex}
+            chartBgHex={chartBgHex}
+            backgroundTextHex={backgroundTextHex}
+            formatYAxis={formatYAxis}
+            hasPanel2={hasPanel2}
+            hasPanel3={hasPanel3}
+            hasPanel4={hasPanel4}
+            panel2Top={panel2Top}
+            panel3Top={panel3Top}
+            panel4Top={panel4Top}
+            panelTop={panelTop}
+            panelHeight={panelHeight}
+            panelExtents={panelExtents}
+            indicatorLines={indicatorLines}
+            getPanel={getPanel}
+            yValInPanel={yValInPanel}
+            hasIndicatorStrip={hasIndicatorStrip}
+            isDarkBg={isDarkBg}
+            crosshairPoint={crosshairPoint}
+            crosshairDragging={crosshairDragging}
+            setCrosshairPoint={setCrosshairPoint}
+            setCrosshairDragging={setCrosshairDragging}
+            onCrosshairMouseDown={(px, py) => {
+              const toData = crosshairPixelToDataRef.current;
+              if (!toData) return;
+              const newPoint = toData(px, py);
+              const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+              if (isSamePoint) {
+                setCrosshairPoint(null);
+                return;
+              }
+              const hadCrosshair = crosshairPoint !== null;
+              setCrosshairPoint(newPoint);
+              if (hadCrosshair) {
+                crosshairDraggingRef.current = true;
+                setCrosshairDragging(true);
+              }
+            }}
+            drawSegments={drawSegments}
+            setDrawSegments={setDrawSegments}
+            drawPending={drawPending}
+            setDrawPending={setDrawPending}
+            selectedSegmentIndex={selectedSegmentIndex}
+            setSelectedSegmentIndex={setSelectedSegmentIndex}
+            drawMode={drawMode}
+            drawTool={drawTool}
+            setDrawDragging={setDrawDragging}
+            t={t}
           />
-          {/* Eixo secundário: grade do plot (verticais tracejadas + grid horizontal) — cor da paleta Área de plot */}
-          {showSecondaryAxis && (
-            <>
-              {verticalIndicesFiltered.map((idx) => (
-                <line
-                  key={`dash-${idx}`}
-                  x1={cx(idx)}
-                  y1={MARGIN_TOP}
-                  x2={cx(idx)}
-                  y2={MARGIN_TOP + chartH}
-                  stroke={secondaryGridHex}
-                  strokeOpacity={0.5}
-                  strokeDasharray="4 2"
-                />
-              ))}
-              {yTickValues.map((v, i) => (
-                <line
-                  key={i}
-                  x1={MARGIN_LEFT}
-                  y1={y(v)}
-                  x2={MARGIN_LEFT + chartW}
-                  y2={y(v)}
-                  stroke={secondaryGridHex}
-                  strokeOpacity={0.5}
-                  strokeDasharray="2 2"
-                />
-              ))}
-            </>
-          )}
-          {/* Linha pontilhada do último fechamento (atravessa o gráfico) */}
-          {showLastCloseLine && showLastClose && (
-            <line
-              x1={MARGIN_LEFT}
-              y1={lastCloseY}
-              x2={MARGIN_LEFT + chartW}
-              y2={lastCloseY}
-              stroke={lastCloseLineHex}
-              strokeWidth={1}
-              strokeDasharray="2 4"
+          <KlinesChartYAxis
+              chartHeight={chartHeight}
+              yTickValues={yTickValues}
+              y={y}
+              formatYAxis={formatYAxis}
+              footerYAxisTextHex={footerYAxisTextHex}
+              isDarkFooterYAxis={isDarkFooterYAxis}
+              footerYAxisHex={footerYAxisHex}
+              lineTableHex={lineTableHex}
+              yAxisAbbreviated={yAxisAbbreviated}
+              hasPanel2={hasPanel2}
+              hasPanel3={hasPanel3}
+              hasPanel4={hasPanel4}
+              panelExtents={panelExtents}
+              yRsiPanel2={yRsiPanel2}
+              yRsiPanel3={yRsiPanel3}
+              yRsiPanel4={yRsiPanel4}
+              yRsiByPanel={yRsiByPanel}
+              showLastClose={showLastClose}
+              lastCloseY={lastCloseY}
+              lastClose={lastClose}
+              lastCloseTextHex={lastCloseTextHex}
+              showIndicatorLastValueOnYAxis={showIndicatorLastValueOnYAxis}
+              indicatorLines={indicatorLines}
+              klines={klines}
+              n={n}
+              getPanel={getPanel}
+              yMin={yMin}
+              yMax={yMax}
+              crosshairPoint={crosshairPoint}
+              startIndex={startIndex}
+              windowN={windowN}
+              crosshairDragging={crosshairDragging}
             />
-          )}
-          {/* Eixo principal: verticais do dia */}
-          {showMainAxis && dateBreaksFiltered.map((b) => (
-            <line
-              key={`date-${b.index}`}
-              x1={cx(b.index)}
-              y1={MARGIN_TOP}
-              x2={cx(b.index)}
-              y2={MARGIN_TOP + chartH}
-              stroke={lineTableHex}
-              strokeWidth={1}
-              strokeDasharray="4 2"
-            />
-          ))}
-          {/* Eixo X: linha 1 = dias (dia 01 = mês a 45°); linha 2 = grade secundária (sempre) hh:mm, sem desenho de tabela */}
-          {(() => {
-            const tableTop = MARGIN_TOP + chartH;
-            const rowH = 12;
-            const labelOffsetDown = 4;
-            const yRow1 = tableTop + rowH - 2 + labelOffsetDown;
-            const yRow2 = tableTop + rowH + rowH - 2 + labelOffsetDown;
-            return (
-              <>
-                {/* Dias (dd); dia 01 = mês abreviado a 45° no mesmo lugar, substituindo o 01 — 12px */}
-                <g className="text-[12px] font-mono" fill={backgroundTextHex}>
-                  {dayBreaksFiltered.map((b) => {
-                    const isDay01 = b.label === "01";
-                    const openTimeMs = windowSlice[b.index][0] as number;
-                    const x = cx(b.index);
-                    if (isDay01) {
-                      return (
-                        <text
-                          key={b.index}
-                          x={x}
-                          y={yRow1}
-                          textAnchor="middle"
-                          className="text-[12px] font-mono"
-                          fill={backgroundTextHex}
-                          transform={`rotate(-45, ${x}, ${yRow1})`}
-                        >
-                          {formatMonthOnly(openTimeMs)}
-                        </text>
-                      );
-                    }
-                    return <text key={b.index} x={x} y={yRow1} textAnchor="middle">{b.label}</text>;
-                  })}
-                </g>
-                {/* Linha 2: grade secundária hh:mm só quando o eixo secundário está ativo */}
-                {showSecondaryAxis && (
-                  <g className="text-[9px] font-mono" fill={secondaryGridHex}>
-                    {verticalIndicesFiltered.map((idx) => (
-                      <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
-                        {formatTimeLabel(windowSlice[idx][0] as number)}
-                      </text>
-                    ))}
-                  </g>
-                )}
-              </>
-            );
-          })()}
-          {/* Panels 2/3/4: indicadores secundários (RSI, SMA/EMA/WMA ex.: SMA do RSI), escala automática por painel */}
-          {(["panel2", "panel3", "panel4"] as const).map((panelId) => {
-            const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : hasPanel4;
-            const top = panelTop(panelId);
-            const h = panelHeight(panelId);
-            if (!hasPanel || h <= 0) return null;
-            const panelLines = indicatorLines.filter((ind) => getPanel(ind) === panelId);
-            const { min: pMin, max: pMax } = panelExtents[panelId];
-            const pRange = pMax - pMin || 1;
-            const yPanel = (val: number) => yValInPanel(val, top, h, pMin, pMax);
-            const tickVals = [pMin, pMin + pRange * 0.25, pMin + pRange * 0.5, pMin + pRange * 0.75, pMax];
-            return (
-              <g key={panelId}>
-                <rect x={MARGIN_LEFT} y={top} width={chartW} height={h} fill={chartBgHex} />
-                {showSecondaryAxis && (
-                  <>
-                    {verticalIndicesFiltered.map((idx) => (
-                      <line key={`${panelId}-dash-${idx}`} x1={cx(idx)} y1={top} x2={cx(idx)} y2={top + h} stroke={secondaryGridHex} strokeOpacity={0.5} strokeDasharray="4 2" />
-                    ))}
-                    {tickVals.map((v) => (
-                      <line key={`${panelId}-h-${v}`} x1={MARGIN_LEFT} y1={yPanel(v)} x2={MARGIN_LEFT + chartW} y2={yPanel(v)} stroke={secondaryGridHex} strokeOpacity={0.5} strokeDasharray="2 2" />
-                    ))}
-                  </>
-                )}
-                {panelLines.map((ind, indIdx) => {
-                  const col = ind.columnIndex;
-                  if (ind.display === "histogram") {
-                    const barW = Math.max(1, gap * 0.6);
-                    const colorAbove = ind.histogramColorAbove ?? "#059669";
-                    const colorBelow = ind.histogramColorBelow ?? "#dc2626";
-                    const yZero = yPanel(0);
-                    return (
-                      <g key={indIdx}>
-                        {windowSlice.map((row, i) => {
-                          const v = row[col];
-                          if (v == null || typeof v !== "number" || !Number.isFinite(v)) return null;
-                          const yVal = yPanel(v);
-                          const yTop = Math.min(yZero, yVal);
-                          const yBottom = Math.max(yZero, yVal);
-                          const barH = Math.max(1, yBottom - yTop);
-                          const fill = v >= 0 ? colorAbove : colorBelow;
-                          return (
-                            <rect
-                              key={i}
-                              x={cx(i) - barW / 2}
-                              y={yTop}
-                              width={barW}
-                              height={barH}
-                              fill={fill}
-                              stroke="none"
-                            />
-                          );
-                        })}
-                      </g>
-                    );
-                  }
-                  const points: { i: number; val: number }[] = [];
-                  for (let i = 0; i < windowSlice.length; i++) {
-                    const v = windowSlice[i][col];
-                    if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
-                  }
-                  if (points.length < 2) return null;
-                  const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
-                  const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-                  const strokeDasharray = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
-                  return (
-                    <path key={indIdx} d={d} fill="none" stroke={ind.color} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} strokeLinecap="round" strokeLinejoin="round" />
-                  );
-                })}
-                {panelLines.filter((ind) => ind.type === "RSI" && ind.rsiCenterLine).map((ind, idx) => {
-                  const y50 = yPanel(50);
-                  const cStrokeWidth = ind.rsiCenterLineWidth === "thin" ? 1 : 2;
-                  const cStrokeDasharray = ind.rsiCenterLineStyle === "dotted" ? "2 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined;
-                  return (
-                    <line
-                      key={`center-${idx}`}
-                      x1={MARGIN_LEFT}
-                      y1={y50}
-                      x2={MARGIN_LEFT + chartW}
-                      y2={y50}
-                      stroke={ind.rsiCenterLineColor ?? "#71717a"}
-                      strokeWidth={cStrokeWidth}
-                      strokeDasharray={cStrokeDasharray}
-                    />
-                  );
-                })}
-                {panelLines.filter((ind) => ind.type === "RSI" && ind.rsiLimits).map((ind, idx) => {
-                  const upper = Math.max(0, Math.min(100, ind.rsiLimitUpper ?? 90));
-                  const lower = Math.max(0, Math.min(100, ind.rsiLimitLower ?? 10));
-                  const yUpper = yPanel(upper);
-                  const yLower = yPanel(lower);
-                  const lStrokeWidth = ind.rsiLimitLineWidth === "thin" ? 1 : 2;
-                  const lStrokeDasharray = ind.rsiLimitLineStyle === "dotted" ? "2 2" : ind.rsiLimitLineStyle === "dashed" ? "6 4" : undefined;
-                  const stroke = ind.rsiLimitColor ?? "#dc2626";
-                  return (
-                    <g key={`limits-${idx}`}>
-                      <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
-                      <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
-                    </g>
-                  );
-                })}
-              </g>
-            );
-          })}
-          {/* Candles */}
-          {windowSlice.map((k, i) => {
-            const openP = parseNum(k[1]);
-            const highP = parseNum(k[2]);
-            const lowP = parseNum(k[3]);
-            const closeP = parseNum(k[4]);
-            const bull = closeP >= openP;
-            const x = cx(i);
-            const bodyTop = y(Math.max(openP, closeP));
-            const bodyBottom = y(Math.min(openP, closeP));
-            const bodyH = Math.max(1, bodyBottom - bodyTop);
-            const wickTop = y(highP);
-            const wickBottom = y(lowP);
-            const color = bull ? candleColors.bull : candleColors.bear;
-            const strokeColor = color === "#f5f5f5" ? "#171717" : color;
-            const slotLeft = MARGIN_LEFT + i * gap;
-            const slotRight = MARGIN_LEFT + (i + 1) * gap;
-            return (
-              <g key={i}>
-                {/* Área de clique ampliada (crosshair é tratado pelo overlay) */}
-                <rect x={slotLeft} y={MARGIN_TOP} width={gap} height={chartH} fill="transparent" />
-                <line x1={x} y1={wickTop} x2={x} y2={wickBottom} stroke={strokeColor} strokeWidth={1} />
-                <rect
-                  x={x - candleW / 2}
-                  y={bodyTop}
-                  width={candleW}
-                  height={bodyH}
-                  fill={color}
-                  stroke={strokeColor}
-                  strokeWidth={1}
-                />
-              </g>
-            );
-          })}
-          {/* Linhas dos indicadores no Main (apenas os com panel === "main") */}
-          {indicatorLines.filter((ind) => getPanel(ind) === "main").map((ind, indIdx) => {
-            const col = ind.columnIndex;
-            const points: { i: number; val: number }[] = [];
-            for (let i = 0; i < windowSlice.length; i++) {
-              const v = windowSlice[i][col];
-              if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
-            }
-            if (points.length < 2) return null;
-            const d = points
-              .map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`)
-              .join(" ");
-            const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-            const strokeDasharray =
-              ind.lineStyle === "dotted"
-                ? "2 2"
-                : ind.lineStyle === "dashed"
-                  ? "6 4"
-                  : undefined;
-            return (
-              <path
-                key={indIdx}
-                d={d}
-                fill="none"
-                stroke={ind.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDasharray}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            );
-          })}
-          {/* Crosshair: linhas pontilhadas + marcador (visível sobre candle ou durante arraste; ao arrastar fora, fica na borda) */}
-          {(() => {
-            if (!crosshairPoint) return null;
-            const isOverCandle = crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
-            const showCrosshair = isOverCandle || crosshairDragging;
-            if (!showCrosshair) return null;
-            let crossX = segmentToPixel(crosshairPoint.index, crosshairPoint.price).x;
-            let crossY = y(crosshairPoint.price);
-            if (crosshairDragging) {
-              crossX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW, crossX));
-              crossY = Math.max(MARGIN_TOP, Math.min(MARGIN_TOP + chartH, crossY));
-            }
-            const strokeCross = lineTableHex;
-            const tableTop = MARGIN_TOP + chartH;
-            const openTimeMs = crosshairPoint.index >= 0 && crosshairPoint.index < n ? Number(fullReversed[crosshairPoint.index][0]) : null;
-            const boxPad = 6;
-            const lineH = 10;
-            const boxW = 72;
-            const boxH = lineH * 2 + boxPad * 2;
-            const boxX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW - boxW, crossX - boxW / 2));
-            const boxY = tableTop + 2;
-            return (
-              <g pointerEvents="none">
-                {/* Vertical pontilhada */}
-                <line x1={crossX} y1={MARGIN_TOP} x2={crossX} y2={tableTop} stroke={strokeCross} strokeWidth={1} strokeDasharray="4 2" />
-                {/* Horizontal pontilhada */}
-                <line x1={MARGIN_LEFT} y1={crossY} x2={MARGIN_LEFT + chartW} y2={crossY} stroke={strokeCross} strokeWidth={1} strokeDasharray="4 2" />
-                {/* Marcação do ponto */}
-                <circle cx={crossX} cy={crossY} r={3} fill={strokeCross} stroke="none" />
-                {/* Data/hora embaixo da vertical: fundo preto 80%, texto branco, quebra de linha (yyyy-mm-dd) */}
-                {openTimeMs != null && (
-                  <g>
-                    <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
-                    <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
-                      {formatDateYyyyMmDd(openTimeMs)}
-                    </text>
-                    <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
-                      {formatTimeLabel(openTimeMs)}
-                    </text>
-                  </g>
-                )}
-              </g>
-            );
-          })()}
-          {/* Tooltip OHLC do candle só quando o ponto está dentro dos limites (min/max) do candle */}
-          {(() => {
-            const isOverCandle = crosshairPoint !== null && crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
-            if (!isOverCandle || !crosshairPoint) return null;
-            const localIndex = crosshairPoint.index - startIndex;
-            const k = windowSlice[localIndex];
-            if (!k) return null;
-            const openP = parseNum(k[1]);
-            const highP = parseNum(k[2]);
-            const lowP = parseNum(k[3]);
-            const closeP = parseNum(k[4]);
-            if (crosshairPoint.price < lowP || crosshairPoint.price > highP) return null;
-            const openTimeMs = Number(k[0]);
-            const prevK = localIndex > 0 ? windowSlice[localIndex - 1] : null;
-            const prevClose = prevK ? parseNum(prevK[4]) : 0;
-            const amplitude = closeP - openP;
-            const amplitudePct = openP > 0 ? (amplitude / openP) * 100 : 0;
-            const pctVsPrev = prevClose > 0 ? ((closeP - prevClose) / prevClose) * 100 : 0;
-            const pctVsPrevStr = pctVsPrev >= 0 ? `+${pctVsPrev.toFixed(2)}%` : pctVsPrev.toFixed(2) + "%";
-            const volume = parseNum(k[5]);
-            const volumeUsdt = parseNum(k[7]);
-            const x = cx(localIndex);
-            const wickTop = y(highP);
-            const bodyBottom = y(Math.min(openP, closeP));
-            const tw = 130;
-            const lineH = 11;
-            const pad = 6;
-            const numLines = 11;
-            const th = pad * 2 + lineH * numLines;
-            const tx = Math.max(MARGIN_LEFT + 4, Math.min(MARGIN_LEFT + chartW - tw - 4, x - tw / 2));
-            const showAbove = wickTop - th - 4 >= MARGIN_TOP;
-            const ty = showAbove ? wickTop - th - 4 : bodyBottom + 4;
-            const fmt = (v: number) => formatYAxis(v);
-            const y1 = ty + pad + 9;
-            const blue = "#2563eb";
-            const green = "#059669";
-            const red = "#dc2626";
-            return (
-              <g pointerEvents="none" opacity={0.8}>
-                <rect x={tx} y={ty} width={tw} height={th} rx={4} ry={4} fill="white" stroke="#e4e4e7" strokeWidth={1} />
-                <text x={tx + pad} y={y1} className="text-[10px] font-mono" fill="#171717">{t.date}: {formatDateLabel(openTimeMs)}</text>
-                <text x={tx + pad} y={y1 + lineH} className="text-[10px] font-mono" fill="#171717">{t.time}: {formatTimeLabel(openTimeMs)}</text>
-                <text x={tx + pad} y={y1 + lineH * 2} className="text-[10px] font-mono font-medium" fill="#171717">{t.open}: {fmt(openP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 3} className="text-[10px] font-mono" fill="#171717">{t.high}: {fmt(highP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 4} className="text-[10px] font-mono" fill="#171717">{t.low}: {fmt(lowP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 5} className="text-[10px] font-mono" fill="#171717">{t.close}: {fmt(closeP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 6} className="text-[10px] font-mono" fill={blue}>{t.amplitude}: {fmt(amplitude)}</text>
-                <text x={tx + pad} y={y1 + lineH * 7} className="text-[10px] font-mono" fill={blue}>{t.amplitudeVar}: {amplitudePct.toFixed(2)}%</text>
-                <text x={tx + pad} y={y1 + lineH * 8} className="text-[10px] font-mono" fill={pctVsPrev >= 0 ? green : red}>{t.vsPrevClose} {pctVsPrevStr}</text>
-                <text x={tx + pad} y={y1 + lineH * 9} className="text-[10px] font-mono" fill="#171717">{t.volumeBtc}: {formatAbbreviated(volume)}</text>
-                <text x={tx + pad} y={y1 + lineH * 10} className="text-[10px] font-mono" fill="#171717">{t.volUsdt}: {formatAbbreviated(volumeUsdt)}</text>
-              </g>
-            );
-          })()}
-          {/* Overlay: clique define/atualiza crosshair; mousedown com crosshair ativo inicia arraste (somente quando não está no modo desenho) */}
-          {!drawMode && (
-            <rect
-              ref={crosshairOverlayRef}
-              x={MARGIN_LEFT}
-              y={MARGIN_TOP}
-              width={chartW}
-              height={chartH}
-              fill="transparent"
-              style={{ cursor: crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair" }}
-              onMouseDown={(e) => {
-                const overlay = crosshairOverlayRef.current;
-                const dims = drawConversionRef.current;
-                if (!overlay || !dims) return;
-                const rect = overlay.getBoundingClientRect();
-                const px = MARGIN_LEFT + (e.clientX - rect.left) * (dims.chartW / (rect.width || 1));
-                const py = MARGIN_TOP + (e.clientY - rect.top) * (dims.chartH / (rect.height || 1));
-                const toData = crosshairPixelToDataRef.current;
-                if (!toData) return;
-                const newPoint = toData(px, py);
-                const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
-                if (isSamePoint) {
-                  setCrosshairPoint(null);
-                  return;
-                }
-                const hadCrosshair = crosshairPoint !== null;
-                setCrosshairPoint(newPoint);
-                if (hadCrosshair) {
-                  crosshairDraggingRef.current = true;
-                  setCrosshairDragging(true);
-                }
-              }}
-            />
-          )}
-          {/* Segmentos de reta desenhados (em dados: índice + preço; convertidos para pixel); cor e pontas (ponto/seta) */}
-          {drawSegments.map((seg, idx) => {
-            const p1 = segmentToPixel(seg.index1, seg.price1);
-            const p2 = segmentToPixel(seg.index2, seg.price2);
-            const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
-            const startCap = seg.startCap ?? "none";
-            const endCap = seg.endCap ?? "none";
-            const isSelected = selectedSegmentIndex === idx;
-            const lineW = isSelected ? 2 : 1;
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
-            const ux = dx / len;
-            const uy = dy / len;
-            const arrowLen = 8;
-            const arrowW = 4;
-            return (
-              <g key={idx}>
-                <line
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
-                  stroke={strokeColor}
-                  strokeWidth={lineW}
-                />
-                {startCap === "point" && <circle cx={p1.x} cy={p1.y} r={3} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />}
-                {endCap === "point" && <circle cx={p2.x} cy={p2.y} r={3} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />}
-                {startCap === "arrow" && (() => {
-                  const tip = p1;
-                  const u1 = (p1.x - p2.x) / len;
-                  const u2 = (p1.y - p2.y) / len;
-                  const backX = tip.x - arrowLen * u1;
-                  const backY = tip.y - arrowLen * u2;
-                  const leftX = backX - u2 * arrowW;
-                  const leftY = backY + u1 * arrowW;
-                  const rightX = backX + u2 * arrowW;
-                  const rightY = backY - u1 * arrowW;
-                  return <path d={`M ${tip.x} ${tip.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />;
-                })()}
-                {endCap === "arrow" && (() => {
-                  const tip = p2;
-                  const backX = tip.x - arrowLen * ux;
-                  const backY = tip.y - arrowLen * uy;
-                  const leftX = backX - uy * arrowW;
-                  const leftY = backY + ux * arrowW;
-                  const rightX = backX + uy * arrowW;
-                  const rightY = backY - ux * arrowW;
-                  return <path d={`M ${tip.x} ${tip.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />;
-                })()}
-                {seg.showPercent !== false && (() => {
-                  const midX = (p1.x + p2.x) / 2;
-                  const midY = (p1.y + p2.y) / 2;
-                  const offset = 12;
-                  const labelX = midX + uy * offset;
-                  const labelY = midY - ux * offset;
-                  const percent = seg.price1 !== 0 ? ((seg.price2 - seg.price1) / seg.price1) * 100 : 0;
-                  const percentStr = percent >= 0 ? `+${percent.toFixed(4)}%` : `${percent.toFixed(4)}%`;
-                  const i1 = Math.max(0, Math.min(seg.index1, n - 1));
-                  const i2 = Math.max(0, Math.min(seg.index2, n - 1));
-                  const openTime1 = fullReversed[i1]?.[0] ?? 0;
-                  const openTime2 = fullReversed[i2]?.[0] ?? 0;
-                  const days = Math.round((openTime2 - openTime1) / MS_PER_DAY);
-                  const daysStr = `${days}d`;
-                  const textColor = percent >= 0 ? "#059669" : "#dc2626";
-                  const padW = 44;
-                  const padH = 14;
-                  return (
-                    <g>
-                      <rect x={labelX - padW} y={labelY - 12} width={padW * 2} height={padH * 2} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
-                      <text x={labelX} y={labelY} textAnchor="middle" fill={textColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>
-                        <tspan x={labelX} dy={0}>{percentStr}</tspan>
-                        <tspan x={labelX} dy={11}>{daysStr}</tspan>
-                      </text>
-                    </g>
-                  );
-                })()}
-                {seg.showValues === true && (() => {
-                  const fmt = (v: number) => formatYAxis(v);
-                  const v1 = fmt(seg.price1);
-                  const v2 = fmt(seg.price2);
-                  const vPadW = 34;
-                  const vHeight = 16;
-                  const textBaselineY = -6;
-                  const textCenterY = textBaselineY - 5;
-                  const rectY1 = p1.y + textCenterY - vHeight / 2;
-                  const rectY2 = p2.y + textCenterY - vHeight / 2;
-                  return (
-                    <>
-                      <rect x={p1.x - vPadW} y={rectY1} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                      <text x={p1.x} y={p1.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v1}</text>
-                      <rect x={p2.x - vPadW} y={rectY2} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                      <text x={p2.x} y={p2.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v2}</text>
-                    </>
-                  );
-                })()}
-              </g>
-            );
-          })}
-          {/* Primeiro ponto ao desenhar (aguardando segundo clique) */}
-          {drawPending && (() => {
-            const p = segmentToPixel(drawPending.index1, drawPending.price1);
-            return <circle cx={p.x} cy={p.y} r={4} fill="none" stroke="#000000" strokeWidth={1} />;
-          })()}
-          {/* Overlay no modo desenho: captura cliques para segmento de reta ou seleção (evita que candles capturem) */}
-          {drawMode && (
-            <rect
-              x={MARGIN_LEFT}
-              y={MARGIN_TOP}
-              width={chartW}
-              height={chartH}
-              fill="transparent"
-              style={{ cursor: drawTool === "select" ? "pointer" : "crosshair" }}
-              onClick={(e) => {
-                if (!chartSvgRef.current) return;
-                const svg = chartSvgRef.current;
-                const rect = svg.getBoundingClientRect();
-                const svgW = svg.width.baseVal.value;
-                const svgH = svg.height.baseVal.value;
-                const px = (e.nativeEvent.clientX - rect.left) * (svgW / rect.width);
-                const py = (e.nativeEvent.clientY - rect.top) * (svgH / rect.height);
-                if (drawTool === "select") {
-                  const HIT_THRESHOLD = 12;
-                  let bestIdx = -1;
-                  let bestD = HIT_THRESHOLD;
-                  drawSegments.forEach((seg, idx) => {
-                    const p1 = segmentToPixel(seg.index1, seg.price1);
-                    const p2 = segmentToPixel(seg.index2, seg.price2);
-                    const d = distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y);
-                    if (d < bestD) {
-                      bestD = d;
-                      bestIdx = idx;
-                    }
-                  });
-                  setSelectedSegmentIndex(bestIdx >= 0 ? bestIdx : null);
-                  return;
-                }
-                const d = snapToCandlePoint(px, py);
-                if (drawPending === null) {
-                  setDrawPending({ index1: d.index, price1: d.price });
-                } else {
-                  setDrawSegments((seg) => [...seg, { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: "point", endCap: "arrow", showPercent: true }]);
-                  setDrawPending(null);
-                }
-              }}
-            />
-          )}
-          {/* Handles do segmento selecionado (reajustar posição dos pontos); cor do segmento */}
-          {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (() => {
-            const seg = drawSegments[selectedSegmentIndex];
-            const h1 = segmentToPixel(seg.index1, seg.price1);
-            const h2 = segmentToPixel(seg.index2, seg.price2);
-            const handleColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
-            return (
-              <g pointerEvents="all">
-                <circle
-                  cx={h1.x}
-                  cy={h1.y}
-                  r={2.5}
-                  fill={handleColor}
-                  stroke={handleColor}
-                  strokeWidth={1}
-                  style={{ cursor: "grab" }}
-                  onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-                  onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <circle
-                  cx={h2.x}
-                  cy={h2.y}
-                  r={2.5}
-                  fill={handleColor}
-                  stroke={handleColor}
-                  strokeWidth={1}
-                  style={{ cursor: "grab" }}
-                  onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-                  onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </g>
-            );
-          })()}
-        </svg>
-        {/* Eixo Y (USDT) — fixo à direita; último fechamento sempre visível — cor do texto rodapé/eixo Y */}
-        <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
-          <svg width={Y_AXIS_WIDTH} height={chartHeight} className="text-[10px] font-mono">
-            {yTickValues.map((v, i) => (
-              <text
-                key={i}
-                x={Y_AXIS_WIDTH - 6}
-                y={y(v) + 4}
-                textAnchor="end"
-                fill={footerYAxisTextHex}
-              >
-                {formatYAxis(v)}
-              </text>
-            ))}
-            {hasPanel2 && (() => {
-              const { min, max } = panelExtents.panel2;
-              const r = max - min || 1;
-              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
-              return ticks.map((v) => (
-                <text key={`p2-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel2(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
-                </text>
-              ));
-            })()}
-            {hasPanel3 && (() => {
-              const { min, max } = panelExtents.panel3;
-              const r = max - min || 1;
-              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
-              return ticks.map((v) => (
-                <text key={`p3-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel3(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
-                </text>
-              ));
-            })()}
-            {hasPanel4 && (() => {
-              const { min, max } = panelExtents.panel4;
-              const r = max - min || 1;
-              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
-              return ticks.map((v) => (
-                <text key={`p4-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel4(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
-                </text>
-              ));
-            })()}
-            {showLastClose && (
-              <g>
-                <rect
-                  x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                  y={lastCloseY - 7}
-                  width={yAxisAbbreviated ? 46 : 56}
-                  height={14}
-                  fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-                  stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
-                  strokeWidth={1}
-                  rx={2}
-                />
-                <text
-                  x={Y_AXIS_WIDTH - 6}
-                  y={lastCloseY + 4}
-                  textAnchor="end"
-                  className="font-semibold"
-                  fill={lastCloseTextHex}
-                >
-                  {formatYAxis(lastClose)}
-                </text>
-              </g>
-            )}
-            {showIndicatorLastValueOnYAxis && indicatorLines.map((ind, indIdx) => {
-              const lastVal = n > 0 ? (() => {
-                const v = klines[0][ind.columnIndex];
-                return v != null && typeof v === "number" && Number.isFinite(v) ? v : null;
-              })() : null;
-              if (lastVal == null) return null;
-              const panelKey = getPanel(ind);
-              const lastValY = panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel3" || panelKey === "panel4" ? panelKey : "panel2");
-              const inRange = panelKey === "main" ? (lastVal >= yMin && lastVal <= yMax) : (lastVal >= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].min && lastVal <= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].max);
-              if (!inRange) return null;
-              const textColor = ind.display === "histogram"
-                ? (lastVal >= 0 ? (ind.histogramColorAbove ?? "#059669") : (ind.histogramColorBelow ?? "#dc2626"))
-                : ind.color;
-              return (
-                <g key={indIdx}>
-                  <rect
-                    x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                    y={lastValY - 7}
-                    width={yAxisAbbreviated ? 46 : 56}
-                    height={14}
-                    fill="white"
-                    fillOpacity={0.9}
-                    stroke="#e4e4e7"
-                    strokeWidth={1}
-                    rx={2}
-                  />
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={lastValY + 4}
-                    textAnchor="end"
-                    className="font-semibold font-mono text-[10px]"
-                    fill={textColor}
-                  >
-                    {panelKey === "main" ? formatYAxis(lastVal) : (lastVal >= 0 && lastVal <= 100 ? lastVal.toFixed(1) : formatYAxis(lastVal))}
-                  </text>
-                </g>
-              );
-            })}
-            {/* Marcador do crosshair no eixo Y: valor + percentual (visível sobre candle ou durante arraste) */}
-            {crosshairPoint !== null && (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) && (() => {
-              const crossY = y(crosshairPoint.price);
-              const pctVsLast = lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : 0;
-              const pctStr = pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%";
-              const pctColor = pctVsLast >= 0 ? "#059669" : "#dc2626";
-              const boxH = 28;
-              const boxY = crossY - 8;
-              return (
-                <g>
-                  <rect
-                    x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                    y={boxY}
-                    width={yAxisAbbreviated ? 46 : 56}
-                    height={boxH}
-                    fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-                    stroke={lineTableHex}
-                    strokeWidth={1}
-                    strokeDasharray="2 2"
-                    rx={2}
-                  />
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={crossY + 4}
-                    textAnchor="end"
-                    className="font-mono font-medium"
-                    fill={footerYAxisTextHex}
-                  >
-                    {formatYAxis(crosshairPoint.price)}
-                  </text>
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={crossY + 15}
-                    textAnchor="end"
-                    className="text-[10px] font-mono"
-                    fill={pctColor}
-                  >
-                    {pctStr}
-                  </text>
-                </g>
-              );
-            })()}
-          </svg>
+          </div>
         </div>
-        </div>
-      </div>
-      </div>
-      <div
-        className={`px-3 pt-3 pb-2 text-[10px] border-t flex items-center justify-end gap-3 flex-wrap ${footerYAxisBgColor >= 4 ? "border-zinc-600" : "border-zinc-100"}`}
-        style={{ backgroundColor: footerYAxisHex, color: footerYAxisTextHex }}
-      >
-        {saveLoadMsg && <span className="mr-auto text-emerald-600 font-medium">{saveLoadMsg}</span>}
-        <span className="mr-auto">BTCUSDT {intervalLabel ?? `${groupMinutes}m`} · USDT</span>
-        <div className="flex items-center gap-2">
-          <label htmlFor="candles-listbox">{t.candles}:</label>
-          <select
-            id="candles-listbox"
-            value={visibleCount}
-            onChange={(e) => setVisibleCount(Number(e.target.value) as VisibleCount)}
-            aria-label={t.candlesAria}
-            className={`text-[10px] font-medium rounded px-1.5 py-0.5 cursor-pointer ${isDarkFooterYAxis ? "text-zinc-100 bg-zinc-600 border-zinc-500 border" : "text-zinc-700 bg-zinc-100 border border-zinc-200"}`}
-          >
-            {VISIBLE_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setStartIndex((i) => Math.max(0, i - Math.floor(visibleCount / 2)))}
-            disabled={!canPrev}
-            className={`px-2 py-0.5 rounded border disabled:opacity-40 disabled:cursor-not-allowed ${isDarkFooterYAxis ? "border-zinc-500 hover:bg-zinc-600" : "border-zinc-200 hover:bg-zinc-100"}`}
-          >
-            {t.previous}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStartIndex((i) => Math.min(n - visibleCount, i + visibleCount))}
-            disabled={!canNext}
-            className={`px-2 py-0.5 rounded border disabled:opacity-40 disabled:cursor-not-allowed ${isDarkFooterYAxis ? "border-zinc-500 hover:bg-zinc-600" : "border-zinc-200 hover:bg-zinc-100"}`}
-          >
-            {t.next}
-          </button>
-        </div>
-      </div>
+      <KlinesChartFooter
+        footerYAxisHex={footerYAxisHex}
+        footerYAxisTextHex={footerYAxisTextHex}
+        isDarkFooterYAxis={isDarkFooterYAxis}
+        saveLoadMsg={saveLoadMsg}
+        intervalLabel={intervalLabel}
+        groupMinutes={groupMinutes}
+        t={t}
+        visibleCount={visibleCount}
+        setVisibleCount={setVisibleCount}
+        setStartIndex={setStartIndex}
+        n={n}
+        canPrev={canPrev}
+        canNext={canNext}
+      />
     </div>
   );
 }

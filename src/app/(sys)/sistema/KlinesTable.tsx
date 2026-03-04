@@ -7,6 +7,9 @@ import { getBioT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
+
+/** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
+const SCROLLBAR_GUTTER = 17;
 import { formatAbbreviated } from "./klinesFormatters";
 import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal } from "./IndicatorsPanel";
 import KlinesChart from "./KlinesChart";
@@ -207,7 +210,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const ro = new ResizeObserver((entries) => {
       const rect = entries[0]?.contentRect;
       if (rect) {
-        if (typeof rect.width === "number" && rect.width > 0) setChartWidth(rect.width);
+        // Largura do plot = container - sidebar - eixo Y - gutter da scrollbar (barra fica fora do gráfico)
+        if (typeof rect.width === "number" && rect.width > 0) {
+          const plotWidth = Math.max(100, rect.width - SIDEBAR_WIDTH - Y_AXIS_WIDTH - SCROLLBAR_GUTTER);
+          setChartWidth(plotWidth);
+        }
         if (typeof rect.height === "number" && rect.height > 0) setChartContainerHeight(rect.height);
       }
     });
@@ -333,7 +340,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return { max, min, volBtc, volUsd };
   })();
 
-  const headerWidth = chartWidth + SIDEBAR_WIDTH + Y_AXIS_WIDTH;
+  const headerWidth = chartWidth + SIDEBAR_WIDTH + Y_AXIS_WIDTH + SCROLLBAR_GUTTER;
 
   return (
     <div className="flex flex-col min-h-0 p-4">
@@ -408,11 +415,12 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       >
         <div
           ref={chartWrapRef}
-          className="w-full min-h-0 max-h-[85vh] overflow-auto rounded-lg border border-zinc-200 bg-white"
+          className="w-full min-h-0 max-h-[85vh] overflow-x-hidden overflow-y-auto rounded-lg border border-zinc-200 bg-white"
           style={{
             WebkitOverflowScrolling: "touch",
-            touchAction: "pan-x pan-y",
+            touchAction: "pan-y",
             overscrollBehavior: "contain",
+            scrollbarGutter: "stable",
           }}
         >
           <KlinesChart
@@ -479,13 +487,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyBase}</th>
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyQuote}</th>
               {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }, idx) => (
-                  <th
-                    key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
-                    className="px-3 py-2 font-medium text-right text-xs"
-                    style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
-                  >
-                    {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? `MACD Sig(${ind.macdSignalPeriod ?? 9})` : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : `${ind.type}(${ind.period})`}
-                  </th>
+                <th
+                  key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
+                  className="px-3 py-2 font-medium text-right text-xs"
+                  style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                >
+                  {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? `MACD Sig(${ind.macdSignalPeriod ?? 9})` : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : `${ind.type}(${ind.period})`}
+                </th>
               ))}
             </tr>
           </thead>
