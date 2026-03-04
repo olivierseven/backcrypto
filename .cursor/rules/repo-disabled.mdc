@@ -1,13 +1,12 @@
 ---
-description: Repositório Git desativado neste projeto
+description: Repositório Git ativo neste projeto
 alwaysApply: true
 ---
 
-# Repositório desativado
+# Repositório ativo
 
-Neste projeto (gotai) **não estamos usando repositório Git** por enquanto.
+Neste projeto **o Git está em uso** com o repositório:
 
-- Não oferecer commit, push ou qualquer fluxo de Git.
-- Não assumir que o projeto está versionado nem sugerir comandos git.
+- **Remote:** `origin` → https://github.com/olivierseven/backcrypto.git
 
-Quando o repositório for ativado, esta regra pode ser removida ou alterada.
+Pode oferecer commit, push e fluxo de Git normalmente quando fizer sentido (ex.: após gerar AAB, conforme regra `aab.mdc`).

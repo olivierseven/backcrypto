@@ -33,7 +33,10 @@ function saveShowIndicatorLastValueOnYAxis(value: boolean) {
   }
 }
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI";
+
+/** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
+export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4";
 
 export type IndicatorLineWidth = "thin" | "normal";
 export type IndicatorLineStyle = "solid" | "dotted" | "dashed";
@@ -55,8 +58,30 @@ export interface UserIndicatorConfig {
   color: string;
   /** groupMinutes em que o indicador aparece; vazio = todos. */
   intervals: number[];
+  /** Onde renderizar: main (SMA/EMA/WMA) ou panel2/panel3/panel4 (RSI e outros secundários). */
+  panel?: IndicatorPanel;
   lineWidth?: IndicatorLineWidth;
   lineStyle?: IndicatorLineStyle;
+  /** Só para RSI: escala fixa 0–100 no eixo Y (default true). Se false, usa escala automática do painel. */
+  rsiFixedScale?: boolean;
+  /** Só para RSI: exibir linha central em 50%. */
+  rsiCenterLine?: boolean;
+  /** Só para RSI: cor da linha central 50%. */
+  rsiCenterLineColor?: string;
+  /** Só para RSI: espessura da linha central (thin | normal). */
+  rsiCenterLineWidth?: IndicatorLineWidth;
+  /** Só para RSI: estilo da linha central (solid | dotted | dashed). */
+  rsiCenterLineStyle?: IndicatorLineStyle;
+  /** Só para RSI: exibir limites superior e inferior. */
+  rsiLimits?: boolean;
+  /** Só para RSI: limite superior % (default 90). */
+  rsiLimitUpper?: number;
+  /** Só para RSI: limite inferior % (default 10). */
+  rsiLimitLower?: number;
+  /** Só para RSI: cor das linhas de limite (default vermelho). */
+  rsiLimitColor?: string;
+  rsiLimitLineWidth?: IndicatorLineWidth;
+  rsiLimitLineStyle?: IndicatorLineStyle;
 }
 
 const FIELD_KEY_TO_INDEX: Record<string, number> = {
@@ -97,7 +122,7 @@ function loadFromStorage(): UserIndicatorConfig[] {
         const u = p as UserIndicatorConfig;
         return (
           typeof u.id === "string" &&
-          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA") &&
+          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI") &&
           typeof u.period === "number" &&
           typeof u.fieldKey === "string" &&
           typeof u.color === "string" &&
@@ -106,8 +131,22 @@ function loadFromStorage(): UserIndicatorConfig[] {
       }
     ).map((u) => ({
       ...u,
+      panel: u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4"
+        ? u.panel
+        : (u.type === "RSI" ? "panel2" : "main"),
       lineWidth: u.lineWidth === "thin" || u.lineWidth === "normal" ? u.lineWidth : "normal",
       lineStyle: u.lineStyle === "solid" || u.lineStyle === "dotted" || u.lineStyle === "dashed" ? u.lineStyle : "solid",
+      rsiFixedScale: u.type === "RSI" ? (u.rsiFixedScale === false ? false : true) : undefined,
+      rsiCenterLine: u.type === "RSI" ? (u.rsiCenterLine === true) : undefined,
+      rsiCenterLineColor: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineColor ?? "#71717a") : undefined,
+      rsiCenterLineWidth: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineWidth === "thin" || u.rsiCenterLineWidth === "normal" ? u.rsiCenterLineWidth : "normal") : undefined,
+      rsiCenterLineStyle: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineStyle === "solid" || u.rsiCenterLineStyle === "dotted" || u.rsiCenterLineStyle === "dashed" ? u.rsiCenterLineStyle : "dotted") : undefined,
+      rsiLimits: u.type === "RSI" ? (u.rsiLimits === true) : undefined,
+      rsiLimitUpper: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitUpper))) : 90) : undefined,
+      rsiLimitLower: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitLower))) : 10) : undefined,
+      rsiLimitColor: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitColor ?? "#dc2626") : undefined,
+      rsiLimitLineWidth: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineWidth === "thin" || u.rsiLimitLineWidth === "normal" ? u.rsiLimitLineWidth : "normal") : undefined,
+      rsiLimitLineStyle: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineStyle === "solid" || u.rsiLimitLineStyle === "dotted" || u.rsiLimitLineStyle === "dashed" ? u.rsiLimitLineStyle : "dotted") : undefined,
     }));
   } catch {
     return [];
@@ -125,7 +164,7 @@ function saveToStorage(list: UserIndicatorConfig[]) {
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "lineWidth" | "lineStyle"
+  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle"
 >;
 
 interface ContextValue {

@@ -18,12 +18,20 @@ import {
   MARGIN_LEFT,
   MARGIN_TOP,
   MARGIN_BOTTOM_TABLE,
+  PANEL2_BOTTOM_MARGIN,
+  MAIN_TO_PANEL_GAP,
+  PANEL_GAP,
   INDICATOR_STRIP_HEIGHT,
+  INDICATOR_STRIP_OFFSET_UP,
+  CHART_TOP_PADDING,
   VISIBLE_OPTIONS,
   DEFAULT_VISIBLE,
   INVISIBLE_CANDLES_END,
   SIDEBAR_WIDTH,
   KLINE_PREFS_KEY,
+  SECONDARY_PANEL_HEIGHT_MIN,
+  SECONDARY_PANEL_HEIGHT_MAX,
+  SECONDARY_PANEL_HEIGHT_DEFAULT,
   KLINE_LAST_LAYOUT_KEY,
   KLINE_DRAW_SEGMENTS_KEY,
   MS_PER_DAY,
@@ -62,6 +70,26 @@ export interface ChartIndicatorLine {
   lineStyle?: "solid" | "dotted" | "dashed";
   /** Rótulo exibido na faixa de indicadores no topo (ex.: "SMA(7) Close"). */
   label?: string;
+  /** Rótulo resumido para o display (ex.: "SMA(7) C"). */
+  shortLabel?: string;
+  /** Tipo do indicador: RSI usa escala 0–100 no gráfico; demais usam escala de preço. */
+  type?: "SMA" | "EMA" | "WMA" | "RSI";
+  /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
+  panel?: "main" | "panel2" | "panel3" | "panel4";
+  /** Só para RSI: true = escala fixa 0–100 no eixo Y; false ou ausente (para não-RSI) = escala automática. */
+  rsiFixedScale?: boolean;
+  /** Só para RSI: desenhar linha horizontal em 50%. */
+  rsiCenterLine?: boolean;
+  rsiCenterLineColor?: string;
+  rsiCenterLineWidth?: "thin" | "normal";
+  rsiCenterLineStyle?: "solid" | "dotted" | "dashed";
+  /** Só para RSI: limites superior/inferior. */
+  rsiLimits?: boolean;
+  rsiLimitUpper?: number;
+  rsiLimitLower?: number;
+  rsiLimitColor?: string;
+  rsiLimitLineWidth?: "thin" | "normal";
+  rsiLimitLineStyle?: "solid" | "dotted" | "dashed";
 }
 
 type Props = {
@@ -168,6 +196,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const [showSecondaryAxis, setShowSecondaryAxis] = useState(true);
   const [showLastCloseLine, setShowLastCloseLine] = useState(true);
   const [invisibleCandlesEnd, setInvisibleCandlesEnd] = useState(INVISIBLE_CANDLES_END);
+  const [secondaryPanelHeightPercent, setSecondaryPanelHeightPercent] = useState(SECONDARY_PANEL_HEIGHT_DEFAULT);
   const [candleColorPreset, setCandleColorPreset] = useState<CandleColorPresetId>(DEFAULT_CANDLE_PRESET);
   const [containerBackground, setContainerBackground] = useState<BackgroundId>(DEFAULT_BACKGROUND);
   const [chartBackground, setChartBackground] = useState<BackgroundId>(DEFAULT_BACKGROUND);
@@ -285,7 +314,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean };
+      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean; secondaryPanelHeightPercent?: number };
       if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
@@ -304,6 +333,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       if (typeof data.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseLineColor)) setLastCloseLineColor(data.lastCloseLineColor as LineGridId);
       if (typeof data.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseTextColor)) setLastCloseTextColor(data.lastCloseTextColor as LineGridId);
       if (typeof data.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(data.showIndicatorLastValueOnYAxis);
+      if (typeof data.secondaryPanelHeightPercent === "number" && data.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && data.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(data.secondaryPanelHeightPercent));
     } catch {
       /* ignore */
     }
@@ -315,12 +345,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       if (typeof window === "undefined") return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent]);
 
   // Ao montar: se existir último layout selecionado, aplicá-lo (default ou slot da API). Sempre chama done() para desbloquear o gráfico.
   useEffect(() => {
@@ -421,7 +451,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
-    const config = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, groupMinutes };
+    const config = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, groupMinutes };
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -455,6 +485,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     if (typeof c.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseTextColor)) setLastCloseTextColor(c.lastCloseTextColor as LineGridId);
     if (typeof c.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(c.showIndicatorLastValueOnYAxis);
     if (typeof c.invisibleCandlesEnd === "number" && c.invisibleCandlesEnd >= 0 && c.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(c.invisibleCandlesEnd);
+    if (typeof c.secondaryPanelHeightPercent === "number" && c.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && c.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(c.secondaryPanelHeightPercent));
     onLayoutConfigLoaded?.(c);
   };
 
@@ -477,6 +508,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     lastCloseLineColor: 1,
     lastCloseTextColor: 1,
     showIndicatorLastValueOnYAxis: true,
+    secondaryPanelHeightPercent: SECONDARY_PANEL_HEIGHT_DEFAULT,
     groupMinutes,
   });
 
@@ -605,25 +637,95 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const windowN = windowSlice.length;
   if (windowN === 0) return null;
 
-  const chartHeight = Math.max(
+  const baseChartHeight = Math.max(
     MIN_CHART_HEIGHT,
     width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(width * (9 / 16))
   );
+  const marginBottom = MARGIN_BOTTOM_TABLE;
+  const chartH = baseChartHeight - MARGIN_TOP - marginBottom;
+  const getPanel = (ind: { type?: string; panel?: string }) => ind.panel ?? (ind.type === "RSI" ? "panel2" : "main");
+  const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
+  const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
+  const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
+  const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
+  const panel2Height = hasPanel2 ? chartH * secondaryPanelRatio : 0;
+  const panel3Height = hasPanel3 ? chartH * secondaryPanelRatio : 0;
+  const panel4Height = hasPanel4 ? chartH * secondaryPanelRatio : 0;
+  const hasAnySecondaryPanel = hasPanel2 || hasPanel3 || hasPanel4;
+  const mainToPanelGap = hasAnySecondaryPanel ? MAIN_TO_PANEL_GAP : 0;
+  const gap2_3 = hasPanel2 && hasPanel3 ? PANEL_GAP : 0;
+  const gap3_4 = hasPanel3 && hasPanel4 ? PANEL_GAP : 0;
+  const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + gap2_3 + gap3_4 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
   const is2hOrAbove = groupMinutes >= 120;
-  const marginBottom = MARGIN_BOTTOM_TABLE;
   const chartW = width - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
-  const chartH = chartHeight - MARGIN_TOP - marginBottom;
+  const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
+  const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
+  const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
+  const panelTop = (p: "panel2" | "panel3" | "panel4") => p === "panel2" ? panel2Top : p === "panel3" ? panel3Top : panel4Top;
+  const panelHeight = (p: "panel2" | "panel3" | "panel4") => p === "panel2" ? panel2Height : p === "panel3" ? panel3Height : panel4Height;
+  const yValInPanel = (val: number, top: number, h: number, pMin: number, pMax: number) => {
+    const range = pMax - pMin || 1;
+    const t = (val - pMin) / range;
+    return top + h - Math.max(0, Math.min(1, t)) * h;
+  };
+  const panelExtents: Record<"panel2" | "panel3" | "panel4", { min: number; max: number }> = {
+    panel2: (() => {
+      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel2");
+      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
+      if (useFixedScale) return { min: 0, max: 100 };
+      const ext: number[] = [];
+      for (const ind of lines) {
+        for (let i = 0; i < windowSlice.length; i++) {
+          const v = windowSlice[i][ind.columnIndex];
+          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
+        }
+      }
+      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
+    })(),
+    panel3: (() => {
+      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel3");
+      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
+      if (useFixedScale) return { min: 0, max: 100 };
+      const ext: number[] = [];
+      for (const ind of lines) {
+        for (let i = 0; i < windowSlice.length; i++) {
+          const v = windowSlice[i][ind.columnIndex];
+          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
+        }
+      }
+      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
+    })(),
+    panel4: (() => {
+      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel4");
+      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
+      if (useFixedScale) return { min: 0, max: 100 };
+      const ext: number[] = [];
+      for (const ind of lines) {
+        for (let i = 0; i < windowSlice.length; i++) {
+          const v = windowSlice[i][ind.columnIndex];
+          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
+        }
+      }
+      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
+    })(),
+  };
+  const yRsiPanel2 = (rsi: number) => yValInPanel(rsi, panel2Top, panel2Height, panelExtents.panel2.min, panelExtents.panel2.max);
+  const yRsiPanel3 = (rsi: number) => yValInPanel(rsi, panel3Top, panel3Height, panelExtents.panel3.min, panelExtents.panel3.max);
+  const yRsiPanel4 = (rsi: number) => yValInPanel(rsi, panel4Top, panel4Height, panelExtents.panel4.min, panelExtents.panel4.max);
+  const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4") =>
+    panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : yRsiPanel4(rsi);
   const totalSlots = windowN + invisibleCandlesEnd;
   const gap = chartW / totalSlots;
   const candleW = Math.max(2, gap * BODY_WIDTH_RATIO);
   const cx = (i: number) => MARGIN_LEFT + (i + 0.5) * gap;
 
-  // Y apenas da janela visível (OHLC + valores dos indicadores)
+  // Y apenas da janela visível (OHLC + indicadores de preço no Main; indicadores em panel 2/3/4 não entram)
   const lows = windowSlice.map((k) => parseNum(k[3]));
   const highs = windowSlice.map((k) => parseNum(k[2]));
   const priceExtents: number[] = [...lows, ...highs];
   for (const ind of indicatorLines) {
+    if (getPanel(ind) !== "main") continue;
     const col = ind.columnIndex;
     for (let i = 0; i < windowSlice.length; i++) {
       const v = windowSlice[i][col];
@@ -849,7 +951,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   return (
     <div
       className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit"
-      style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex }}
+      style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
       <div className="flex min-w-0 flex-shrink-0">
         {/* Sidebar: configuração + cores dos candles (mesma altura do gráfico) */}
@@ -945,6 +1047,32 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                     type="button"
                     onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))}
                     disabled={invisibleCandlesEnd >= 30}
+                    aria-label="+"
+                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+                <span className="shrink-0">{t.secondaryPanelHeight}</span>
+                <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setSecondaryPanelHeightPercent((v) => Math.max(SECONDARY_PANEL_HEIGHT_MIN, v - 1))}
+                    disabled={secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MIN}
+                    aria-label="-"
+                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">
+                    {secondaryPanelHeightPercent}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSecondaryPanelHeightPercent((v) => Math.min(SECONDARY_PANEL_HEIGHT_MAX, v + 1))}
+                    disabled={secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MAX}
                     aria-label="+"
                     className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
@@ -1504,36 +1632,65 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
             </div>
           )}
         <div className="flex flex-shrink-0 relative" style={{ width: width + Y_AXIS_WIDTH }}>
-          {/* Faixa de indicadores sobreposta ao topo da área de plot (não ocupa espaço) */}
-          {hasIndicatorStrip && (
-            <div
-              className="absolute left-0 top-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
-              style={{
-                height: INDICATOR_STRIP_HEIGHT,
-                width,
-                paddingLeft: MARGIN_LEFT,
-                paddingTop: 2,
-              }}
-              role="list"
-              aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
-            >
-              {indicatorLines.map((ind, idx) => (
-                <span
-                  key={idx}
-                  className="flex items-center gap-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded"
-                  style={{
-                    color: ind.color,
-                    backgroundColor: isDarkBg ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.85)",
-                    boxShadow: "0 0 4px rgba(0,0,0,0.15)",
-                  }}
-                  role="listitem"
-                >
-                  <span className="w-2 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
-                  <span>{ind.label ?? `Ind ${idx + 1}`}</span>
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Faixa de indicadores sobreposta ao topo de cada área (main e painéis 2/3/4) */}
+          {hasIndicatorStrip && (() => {
+            const showCrosshairValues = crosshairPoint !== null
+              && (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging)
+              && crosshairPoint.index >= 0
+              && crosshairPoint.index < fullReversed.length;
+            const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4", topY: number, lines: typeof indicatorLines) => (
+              <div
+                key={panelKey}
+                className="absolute left-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
+                style={{
+                  top: topY === 0 ? 0 : topY - INDICATOR_STRIP_OFFSET_UP,
+                  height: INDICATOR_STRIP_HEIGHT,
+                  width,
+                  paddingLeft: MARGIN_LEFT,
+                  paddingTop: 2,
+                }}
+                role="list"
+                aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
+              >
+                {lines.map((ind, idx) => {
+                  const crosshairVal = showCrosshairValues
+                    ? (() => {
+                        const raw = fullReversed[crosshairPoint!.index]?.[ind.columnIndex];
+                        if (raw == null) return null;
+                        const v = Number(raw);
+                        if (!Number.isFinite(v)) return null;
+                        return ind.type === "RSI" ? v.toFixed(1) : formatYAxis(v);
+                      })()
+                    : null;
+                  return (
+                    <span
+                      key={idx}
+                      className="flex items-center gap-1.5 text-[10px] font-light px-1.5 py-0.5 rounded"
+                      style={{
+                        color: ind.color,
+                        backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
+                        boxShadow: "0 0 4px rgba(0,0,0,0.15)",
+                      }}
+                      role="listitem"
+                    >
+                      <span className="w-2 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
+                      <span>{ind.shortLabel ?? ind.label ?? `Ind ${idx + 1}`}</span>
+                      {crosshairVal != null && <span className="font-mono opacity-90">{crosshairVal}</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+            const mainLines = indicatorLines.filter((ind) => getPanel(ind) === "main");
+            return (
+              <>
+                {mainLines.length > 0 && strip("main", 0, mainLines)}
+                {hasPanel2 && strip("panel2", panel2Top, indicatorLines.filter((ind) => getPanel(ind) === "panel2"))}
+                {hasPanel3 && strip("panel3", panel3Top, indicatorLines.filter((ind) => getPanel(ind) === "panel3"))}
+                {hasPanel4 && strip("panel4", panel4Top, indicatorLines.filter((ind) => getPanel(ind) === "panel4"))}
+              </>
+            );
+          })()}
         <svg ref={chartSvgRef} width={width} height={chartHeight} className={`flex-shrink-0 ${isDarkBg ? "text-zinc-400" : "text-zinc-700"}`}>
           {/* Área de plotagem (só candles + grade) com cor de fundo */}
           <rect
@@ -1643,6 +1800,80 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
               </>
             );
           })()}
+          {/* Panels 2/3/4: indicadores secundários (RSI, SMA/EMA/WMA ex.: SMA do RSI), escala automática por painel */}
+          {(["panel2", "panel3", "panel4"] as const).map((panelId) => {
+            const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : hasPanel4;
+            const top = panelTop(panelId);
+            const h = panelHeight(panelId);
+            if (!hasPanel || h <= 0) return null;
+            const panelLines = indicatorLines.filter((ind) => getPanel(ind) === panelId);
+            const { min: pMin, max: pMax } = panelExtents[panelId];
+            const pRange = pMax - pMin || 1;
+            const yPanel = (val: number) => yValInPanel(val, top, h, pMin, pMax);
+            const tickVals = [pMin, pMin + pRange * 0.25, pMin + pRange * 0.5, pMin + pRange * 0.75, pMax];
+            return (
+              <g key={panelId}>
+                <rect x={MARGIN_LEFT} y={top} width={chartW} height={h} fill={chartBgHex} />
+                {showSecondaryAxis && (
+                  <>
+                    {verticalIndicesFiltered.map((idx) => (
+                      <line key={`${panelId}-dash-${idx}`} x1={cx(idx)} y1={top} x2={cx(idx)} y2={top + h} stroke={secondaryGridHex} strokeOpacity={0.5} strokeDasharray="4 2" />
+                    ))}
+                    {tickVals.map((v) => (
+                      <line key={`${panelId}-h-${v}`} x1={MARGIN_LEFT} y1={yPanel(v)} x2={MARGIN_LEFT + chartW} y2={yPanel(v)} stroke={secondaryGridHex} strokeOpacity={0.5} strokeDasharray="2 2" />
+                    ))}
+                  </>
+                )}
+                {panelLines.map((ind, indIdx) => {
+                  const col = ind.columnIndex;
+                  const points: { i: number; val: number }[] = [];
+                  for (let i = 0; i < windowSlice.length; i++) {
+                    const v = windowSlice[i][col];
+                    if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
+                  }
+                  if (points.length < 2) return null;
+                  const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
+                  const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const strokeDasharray = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  return (
+                    <path key={indIdx} d={d} fill="none" stroke={ind.color} strokeWidth={strokeWidth} strokeDasharray={strokeDasharray} strokeLinecap="round" strokeLinejoin="round" />
+                  );
+                })}
+                {panelLines.filter((ind) => ind.type === "RSI" && ind.rsiCenterLine).map((ind, idx) => {
+                  const y50 = yPanel(50);
+                  const cStrokeWidth = ind.rsiCenterLineWidth === "thin" ? 1 : 2;
+                  const cStrokeDasharray = ind.rsiCenterLineStyle === "dotted" ? "2 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined;
+                  return (
+                    <line
+                      key={`center-${idx}`}
+                      x1={MARGIN_LEFT}
+                      y1={y50}
+                      x2={MARGIN_LEFT + chartW}
+                      y2={y50}
+                      stroke={ind.rsiCenterLineColor ?? "#71717a"}
+                      strokeWidth={cStrokeWidth}
+                      strokeDasharray={cStrokeDasharray}
+                    />
+                  );
+                })}
+                {panelLines.filter((ind) => ind.type === "RSI" && ind.rsiLimits).map((ind, idx) => {
+                  const upper = Math.max(0, Math.min(100, ind.rsiLimitUpper ?? 90));
+                  const lower = Math.max(0, Math.min(100, ind.rsiLimitLower ?? 10));
+                  const yUpper = yPanel(upper);
+                  const yLower = yPanel(lower);
+                  const lStrokeWidth = ind.rsiLimitLineWidth === "thin" ? 1 : 2;
+                  const lStrokeDasharray = ind.rsiLimitLineStyle === "dotted" ? "2 2" : ind.rsiLimitLineStyle === "dashed" ? "6 4" : undefined;
+                  const stroke = ind.rsiLimitColor ?? "#dc2626";
+                  return (
+                    <g key={`limits-${idx}`}>
+                      <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                      <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })}
           {/* Candles */}
           {windowSlice.map((k, i) => {
             const openP = parseNum(k[1]);
@@ -1677,8 +1908,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
               </g>
             );
           })}
-          {/* Linhas dos indicadores (SMA etc.) */}
-          {indicatorLines.map((ind, indIdx) => {
+          {/* Linhas dos indicadores no Main (apenas os com panel === "main") */}
+          {indicatorLines.filter((ind) => getPanel(ind) === "main").map((ind, indIdx) => {
             const col = ind.columnIndex;
             const points: { i: number; val: number }[] = [];
             for (let i = 0; i < windowSlice.length; i++) {
@@ -2038,6 +2269,36 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                 {formatYAxis(v)}
               </text>
             ))}
+            {hasPanel2 && (() => {
+              const { min, max } = panelExtents.panel2;
+              const r = max - min || 1;
+              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+              return ticks.map((v) => (
+                <text key={`p2-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel2(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+                </text>
+              ));
+            })()}
+            {hasPanel3 && (() => {
+              const { min, max } = panelExtents.panel3;
+              const r = max - min || 1;
+              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+              return ticks.map((v) => (
+                <text key={`p3-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel3(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+                </text>
+              ));
+            })()}
+            {hasPanel4 && (() => {
+              const { min, max } = panelExtents.panel4;
+              const r = max - min || 1;
+              const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+              return ticks.map((v) => (
+                <text key={`p4-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel4(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                  {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+                </text>
+              ));
+            })()}
             {showLastClose && (
               <g>
                 <rect
@@ -2067,8 +2328,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                 return v != null && typeof v === "number" && Number.isFinite(v) ? v : null;
               })() : null;
               if (lastVal == null) return null;
-              const lastValY = y(lastVal);
-              const inRange = lastVal >= yMin && lastVal <= yMax;
+              const panelKey = getPanel(ind);
+              const lastValY = panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel3" || panelKey === "panel4" ? panelKey : "panel2");
+              const inRange = panelKey === "main" ? (lastVal >= yMin && lastVal <= yMax) : (lastVal >= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].min && lastVal <= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].max);
               if (!inRange) return null;
               return (
                 <g key={indIdx}>
@@ -2090,7 +2352,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                     className="font-semibold font-mono text-[10px]"
                     fill={ind.color}
                   >
-                    {formatYAxis(lastVal)}
+                    {panelKey === "main" ? formatYAxis(lastVal) : (lastVal >= 0 && lastVal <= 100 ? lastVal.toFixed(1) : formatYAxis(lastVal))}
                   </text>
                 </g>
               );

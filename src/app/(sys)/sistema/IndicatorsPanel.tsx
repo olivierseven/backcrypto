@@ -5,74 +5,23 @@ import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import {
   useKlinesIndicators,
-  getFieldIndex,
   type UserIndicatorConfig,
   type UserIndicatorType,
+  type IndicatorPanel,
   type IndicatorFieldKey,
   type IndicatorLineWidth,
   type IndicatorLineStyle,
 } from "./KlinesIndicatorsContext";
+import {
+  INDICATOR_COLOR_PALETTE,
+  INTERVAL_OPTIONS,
+  getIndicatorLabel,
+  isMovingAverageType,
+  useIndicatorsPanelFields,
+} from "./indicatorsPanel/index";
 
-/** Paleta de cores (claro → escuro), pelo menos 12. */
-const INDICATOR_COLOR_PALETTE = [
-  "#ffffff",
-  // cores base (compacta)
-  "#000000",
-  "#ef4444", // red
-  "#f97316", // orange
-  "#f59e0b", // amber
-  "#84cc16", // lime
-  "#10b981", // emerald
-  "#06b6d4", // cyan
-  "#3b82f6", // blue
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#64748b", // slate
-];
-
-const INTERVAL_OPTIONS: { value: number; label: string }[] = [
-  { value: 1, label: "1m" },
-  { value: 3, label: "3m" },
-  { value: 5, label: "5m" },
-  { value: 15, label: "15m" },
-  { value: 30, label: "30m" },
-  { value: 45, label: "45m" },
-  { value: 60, label: "1h" },
-  { value: 120, label: "2h" },
-  { value: 180, label: "3h" },
-  { value: 240, label: "4h" },
-  { value: 360, label: "6h" },
-  { value: 480, label: "8h" },
-  { value: 720, label: "12h" },
-  { value: 1440, label: "1D" },
-  { value: 4320, label: "3D" },
-  { value: 10080, label: "1S" },
-  { value: 43200, label: "1M" },
-];
-
-function getFieldLabel(
-  fieldKey: IndicatorFieldKey,
-  t: ReturnType<typeof getBioT>["sistema"]["klines"],
-  userIndicators: UserIndicatorConfig[]
-): string {
-  const k = t as Record<string, string>;
-  if (fieldKey === "open") return k.fieldOpen ?? "Open";
-  if (fieldKey === "high") return k.fieldHigh ?? "High";
-  if (fieldKey === "low") return k.fieldLow ?? "Low";
-  if (fieldKey === "close") return k.fieldClose ?? "Close";
-  if (fieldKey === "volume") return k.fieldVol ?? "Vol";
-  if (fieldKey.startsWith("user_")) {
-    const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
-    if (u) return `${u.type}(${u.period}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
-  }
-  return String(fieldKey);
-}
-
-export function getIndicatorLabel(ind: UserIndicatorConfig, t: ReturnType<typeof getBioT>["sistema"]["klines"], userIndicators: UserIndicatorConfig[]): string {
-  const fieldLabel = getFieldLabel(ind.fieldKey, t, userIndicators);
-  return `${ind.type}(${ind.period}) ${fieldLabel}`;
-}
+/** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
+export { getIndicatorLabel, getIndicatorLabelShort } from "./indicatorsPanel/index";
 
 interface IndicatorsPanelProps {
   onClose?: () => void;
@@ -90,51 +39,116 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
   const [color, setColor] = useState(INDICATOR_COLOR_PALETTE[7] ?? "#3b82f6");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [colorOpen, setColorOpen] = useState(false);
-  const [chartOption, setChartOption] = useState<"main">("main");
+  const [chartOption, setChartOption] = useState<IndicatorPanel>("main");
   const [lineWidth, setLineWidth] = useState<IndicatorLineWidth>("normal");
   const [lineStyle, setLineStyle] = useState<IndicatorLineStyle>("solid");
+  const [rsiFixedScale, setRsiFixedScale] = useState(true);
+  const [rsiCenterLine, setRsiCenterLine] = useState(false);
+  const [rsiCenterLineColor, setRsiCenterLineColor] = useState("#71717a");
+  const [rsiCenterLineWidth, setRsiCenterLineWidth] = useState<IndicatorLineWidth>("normal");
+  const [rsiCenterLineStyle, setRsiCenterLineStyle] = useState<IndicatorLineStyle>("dotted");
+  const [rsiLimits, setRsiLimits] = useState(false);
+  const [rsiLimitUpper, setRsiLimitUpper] = useState(90);
+  const [rsiLimitLower, setRsiLimitLower] = useState(10);
+  const [rsiLimitColor, setRsiLimitColor] = useState("#dc2626");
+  const [rsiLimitLineWidth, setRsiLimitLineWidth] = useState<IndicatorLineWidth>("normal");
+  const [rsiLimitLineStyle, setRsiLimitLineStyle] = useState<IndicatorLineStyle>("dotted");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{
     period: number;
     periodText: string;
     fieldKey: IndicatorFieldKey;
     color: string;
+    panel: IndicatorPanel;
     lineWidth: IndicatorLineWidth;
     lineStyle: IndicatorLineStyle;
+    rsiFixedScale: boolean;
+    rsiCenterLine: boolean;
+    rsiCenterLineColor: string;
+    rsiCenterLineWidth: IndicatorLineWidth;
+    rsiCenterLineStyle: IndicatorLineStyle;
+    rsiLimits: boolean;
+    rsiLimitUpper: number;
+    rsiLimitLower: number;
+    rsiLimitColor: string;
+    rsiLimitLineWidth: IndicatorLineWidth;
+    rsiLimitLineStyle: IndicatorLineStyle;
   } | null>(null);
 
-  const fieldOptions = useMemo(() => {
-    const base: { value: IndicatorFieldKey; label: string }[] = [
-      { value: "open", label: (t as Record<string, string>).fieldOpen ?? "Open" },
-      { value: "high", label: (t as Record<string, string>).fieldHigh ?? "High" },
-      { value: "low", label: (t as Record<string, string>).fieldLow ?? "Low" },
-      { value: "close", label: (t as Record<string, string>).fieldClose ?? "Close" },
-      { value: "volume", label: (t as Record<string, string>).fieldVol ?? "Vol" },
-    ];
-    userIndicators.forEach((u) => {
-      base.push({
-        value: `user_${u.id}` as IndicatorFieldKey,
-        label: getIndicatorLabel(u, t, userIndicators),
-      });
-    });
-    return base;
-  }, [t, userIndicators]);
+  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" ? "panel2" : "main");
+
+  /** Panéis que já têm indicador secundário (ex.: RSI) — médias móveis só fazem sentido nesses painéis. */
+  const panelsWithSecondary = useMemo(() => {
+    return {
+      panel2: userIndicators.some((i) => getPanel(i) === "panel2" && i.type === "RSI"),
+      panel3: userIndicators.some((i) => getPanel(i) === "panel3" && i.type === "RSI"),
+      panel4: userIndicators.some((i) => getPanel(i) === "panel4" && i.type === "RSI"),
+    };
+  }, [userIndicators]);
+
+  /** Para RSI no add: painéis livres (sem outro secundário). Um secundário não pode ocupar o mesmo panel que outro. */
+  const panelsFreeForSecondary = useMemo(() => ({
+    panel2: !panelsWithSecondary.panel2,
+    panel3: !panelsWithSecondary.panel3,
+    panel4: !panelsWithSecondary.panel4,
+  }), [panelsWithSecondary]);
+
+  /** Para RSI no edit: painel disponível se estiver livre ou se o único ocupante é o indicador que estamos editando. */
+  const panelsFreeForSecondaryEdit = useMemo(() => {
+    if (!editingId) return { panel2: true, panel3: true, panel4: true };
+    return {
+      panel2: !userIndicators.some((i) => getPanel(i) === "panel2" && i.type === "RSI" && i.id !== editingId),
+      panel3: !userIndicators.some((i) => getPanel(i) === "panel3" && i.type === "RSI" && i.id !== editingId),
+      panel4: !userIndicators.some((i) => getPanel(i) === "panel4" && i.type === "RSI" && i.id !== editingId),
+    };
+  }, [userIndicators, editingId]);
+
+  const {
+    fieldOptions,
+    firstEnabledFieldValue,
+    firstEnabledFieldValueForAdd,
+    fieldOptionsVisibleForAdd,
+    isMovingAverageType: isMA,
+  } = useIndicatorsPanelFields({
+    userIndicators,
+    editingId,
+    indicatorType,
+    t,
+    fieldKey,
+    editForm,
+    setFieldKey,
+    setEditForm,
+  });
+  const isMovingAverageType = isMA;
+
+  const rsiNoPanelFree = indicatorType === "RSI" && !panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4;
+  const addButtonDisabled = rsiNoPanelFree;
 
   const handleAdd = () => {
+    if (addButtonDisabled) return;
     const n = Number(periodText);
     const periodNum = Number.isFinite(n) && n > 0
       ? Math.max(1, Math.min(500, Math.round(n)))
       : Math.max(1, Math.min(500, Math.round(period)));
     setPeriod(periodNum);
     setPeriodText(String(periodNum));
+    const effectivePanel: IndicatorPanel = indicatorType === "RSI"
+      ? (["panel2", "panel3", "panel4"] as const).filter((p) => p === "panel2" ? panelsFreeForSecondary.panel2 : p === "panel3" ? panelsFreeForSecondary.panel3 : panelsFreeForSecondary.panel4).includes(chartOption as "panel2" | "panel3" | "panel4")
+        ? chartOption
+        : ((["panel2", "panel3", "panel4"] as const).find((p) => p === "panel2" ? panelsFreeForSecondary.panel2 : p === "panel3" ? panelsFreeForSecondary.panel3 : panelsFreeForSecondary.panel4) ?? "panel2")
+      : (chartOption === "panel2" && !panelsWithSecondary.panel2) || (chartOption === "panel3" && !panelsWithSecondary.panel3) || (chartOption === "panel4" && !panelsWithSecondary.panel4)
+        ? "main"
+        : (chartOption === "panel2" || chartOption === "panel3" || chartOption === "panel4" ? chartOption : "main");
     addIndicator({
       type: indicatorType,
       period: periodNum,
       fieldKey,
       color,
       intervals: currentGroupMinutes != null ? [currentGroupMinutes] : [],
+      panel: effectivePanel,
       lineWidth,
       lineStyle,
+      ...(indicatorType === "RSI" ? { rsiFixedScale, rsiCenterLine, rsiCenterLineColor, rsiCenterLineWidth, rsiCenterLineStyle, rsiLimits, rsiLimitUpper, rsiLimitLower, rsiLimitColor, rsiLimitLineWidth, rsiLimitLineStyle } : {}),
     });
   };
 
@@ -166,18 +180,34 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
 
   const startEdit = (ind: UserIndicatorConfig) => {
     setEditingId(ind.id);
+    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4"
+      ? ind.panel
+      : (ind.type === "RSI" ? "panel2" : "main");
     setEditForm({
       period: ind.period,
       periodText: String(ind.period),
       fieldKey: ind.fieldKey,
       color: ind.color,
+      panel,
       lineWidth: (ind.lineWidth === "thin" || ind.lineWidth === "normal" ? ind.lineWidth : "normal") as IndicatorLineWidth,
       lineStyle: (ind.lineStyle === "solid" || ind.lineStyle === "dotted" || ind.lineStyle === "dashed" ? ind.lineStyle : "solid") as IndicatorLineStyle,
+      rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : true,
+      rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : false,
+      rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : "#71717a",
+      rsiCenterLineWidth: (ind.type === "RSI" && ind.rsiCenterLine && (ind.rsiCenterLineWidth === "thin" || ind.rsiCenterLineWidth === "normal") ? ind.rsiCenterLineWidth : "normal") as IndicatorLineWidth,
+      rsiCenterLineStyle: (ind.type === "RSI" && ind.rsiCenterLine && (ind.rsiCenterLineStyle === "solid" || ind.rsiCenterLineStyle === "dotted" || ind.rsiCenterLineStyle === "dashed") ? ind.rsiCenterLineStyle : "dotted") as IndicatorLineStyle,
+      rsiLimits: ind.type === "RSI" ? (ind.rsiLimits === true) : false,
+      rsiLimitUpper: ind.type === "RSI" && ind.rsiLimits ? (typeof ind.rsiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(ind.rsiLimitUpper))) : 90) : 90,
+      rsiLimitLower: ind.type === "RSI" && ind.rsiLimits ? (typeof ind.rsiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(ind.rsiLimitLower))) : 10) : 10,
+      rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : "#dc2626",
+      rsiLimitLineWidth: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineWidth === "thin" || ind.rsiLimitLineWidth === "normal") ? ind.rsiLimitLineWidth : "normal") as IndicatorLineWidth,
+      rsiLimitLineStyle: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineStyle === "solid" || ind.rsiLimitLineStyle === "dotted" || ind.rsiLimitLineStyle === "dashed") ? ind.rsiLimitLineStyle : "dotted") as IndicatorLineStyle,
     });
   };
 
   const saveEdit = () => {
     if (!editingId || !editForm) return;
+    const ind = userIndicators.find((u) => u.id === editingId);
     const periodNum = (() => {
       const n = Number(editForm.periodText);
       return Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : editForm.period;
@@ -186,8 +216,10 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       period: periodNum,
       fieldKey: editForm.fieldKey,
       color: editForm.color,
+      panel: editForm.panel,
       lineWidth: editForm.lineWidth,
       lineStyle: editForm.lineStyle,
+      ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
     });
     setEditingId(null);
     setEditForm(null);
@@ -232,26 +264,199 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
             <select
-              value={chartOption}
-              onChange={(e) => setChartOption(e.target.value as "main")}
+              value={
+                indicatorType === "RSI"
+                  ? rsiNoPanelFree
+                    ? ""
+                    : ((["panel2", "panel3", "panel4"] as const).filter((p) => p === "panel2" ? panelsFreeForSecondary.panel2 : p === "panel3" ? panelsFreeForSecondary.panel3 : panelsFreeForSecondary.panel4).includes(chartOption as "panel2" | "panel3" | "panel4")
+                      ? chartOption
+                      : ((["panel2", "panel3", "panel4"] as const).find((p) => p === "panel2" ? panelsFreeForSecondary.panel2 : p === "panel3" ? panelsFreeForSecondary.panel3 : panelsFreeForSecondary.panel4) ?? "panel2"))
+                  : (chartOption === "panel2" && !panelsWithSecondary.panel2) || (chartOption === "panel3" && !panelsWithSecondary.panel3) || (chartOption === "panel4" && !panelsWithSecondary.panel4)
+                    ? "main"
+                    : chartOption
+              }
+              onChange={(e) => setChartOption(e.target.value as IndicatorPanel)}
               className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
               aria-label={t.chartOption}
             >
-              <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+              {indicatorType === "RSI" ? (
+                <>
+                  {rsiNoPanelFree ? (
+                    <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
+                  ) : (
+                    <>
+                      {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                      {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                      {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                  {panelsWithSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                  {panelsWithSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                  {panelsWithSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                </>
+              )}
             </select>
           </div>
+
+          {indicatorType === "RSI" && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rsiFixedScale}
+                onChange={(e) => setRsiFixedScale(e.target.checked)}
+                className="rounded border-zinc-300"
+              />
+              <span className="text-xs text-zinc-700">{(t as Record<string, string>).rsiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
+            </label>
+          )}
+
+          {indicatorType === "RSI" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rsiCenterLine}
+                  onChange={(e) => setRsiCenterLine(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-xs text-zinc-700">{(t as Record<string, string>).rsiCenterLineLabel ?? "Linha central 50%"}</span>
+              </label>
+              {rsiCenterLine && (
+                <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex) => (
+                        <button
+                          key={hex}
+                          type="button"
+                          onClick={() => setRsiCenterLineColor(hex)}
+                          className={`w-6 h-6 rounded border shrink-0 ${rsiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`}
+                          style={{ backgroundColor: hex }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                    <select
+                      value={rsiCenterLineWidth}
+                      onChange={(e) => setRsiCenterLineWidth(e.target.value as IndicatorLineWidth)}
+                      className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+                    >
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                    <select
+                      value={rsiCenterLineStyle}
+                      onChange={(e) => setRsiCenterLineStyle(e.target.value as IndicatorLineStyle)}
+                      className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+                    >
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {indicatorType === "RSI" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rsiLimits}
+                  onChange={(e) => setRsiLimits(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-xs text-zinc-700">{(t as Record<string, string>).rsiLimitsLabel ?? "Limites superior e inferior"}</span>
+              </label>
+              {rsiLimits && (
+                <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).rsiLimitUpperLabel ?? "Superior %"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setRsiLimitUpper((v) => Math.max(0, Math.min(100, v - 1)))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                      <span className="w-10 text-center text-sm tabular-nums">{rsiLimitUpper}</span>
+                      <button type="button" onClick={() => setRsiLimitUpper((v) => Math.max(0, Math.min(100, v + 1)))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).rsiLimitLowerLabel ?? "Inferior %"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setRsiLimitLower((v) => Math.max(0, Math.min(100, v - 1)))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                      <span className="w-10 text-center text-sm tabular-nums">{rsiLimitLower}</span>
+                      <button type="button" onClick={() => setRsiLimitLower((v) => Math.max(0, Math.min(100, v + 1)))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex) => (
+                        <button key={hex} type="button" onClick={() => setRsiLimitColor(hex)} className={`w-6 h-6 rounded border shrink-0 ${rsiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                    <select value={rsiLimitLineWidth} onChange={(e) => setRsiLimitLineWidth(e.target.value as IndicatorLineWidth)} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                    <select value={rsiLimitLineStyle} onChange={(e) => setRsiLimitLineStyle(e.target.value as IndicatorLineStyle)} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
             <select
               value={indicatorType}
-              onChange={(e) => setIndicatorType(e.target.value as UserIndicatorType)}
+              onChange={(e) => {
+                const newType = e.target.value as UserIndicatorType;
+                setIndicatorType(newType);
+                if (newType === "RSI") {
+                  setPeriod(14);
+                  setPeriodText("14");
+                  setChartOption("panel2");
+                  setRsiFixedScale(true);
+                  setRsiCenterLine(false);
+                  setRsiCenterLineColor("#71717a");
+                  setRsiCenterLineWidth("normal");
+                  setRsiCenterLineStyle("dotted");
+                  setRsiLimits(false);
+                  setRsiLimitUpper(90);
+                  setRsiLimitLower(10);
+                  setRsiLimitColor("#dc2626");
+                  setRsiLimitLineWidth("normal");
+                  setRsiLimitLineStyle("dotted");
+                }
+              }}
               className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
               aria-label={t.indicatorType}
             >
               <option value="SMA">SMA</option>
               <option value="EMA">EMA</option>
               <option value="WMA">WMA</option>
+              <option value="RSI">RSI</option>
             </select>
           </div>
 
@@ -311,12 +516,21 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
             <select
-              value={fieldKey}
-              onChange={(e) => setFieldKey(e.target.value as IndicatorFieldKey)}
+              value={(fieldOptionsVisibleForAdd.some((o) => o.value === fieldKey) ? fieldKey : firstEnabledFieldValueForAdd) as string}
+              onChange={(e) => {
+                const newKey = e.target.value as IndicatorFieldKey;
+                setFieldKey(newKey);
+                if (newKey.startsWith("user_")) {
+                  const id = newKey.slice(5);
+                  const baseInd = userIndicators.find((i) => i.id === id);
+                  const p = baseInd?.panel ?? (baseInd?.type === "RSI" ? "panel2" : "main");
+                  if (p === "panel2" || p === "panel3" || p === "panel4") setChartOption(p);
+                }
+              }}
               className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
               aria-label={t.field}
             >
-              {fieldOptions.map((opt) => (
+              {fieldOptionsVisibleForAdd.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -389,7 +603,8 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
         <button
           type="button"
           onClick={handleAdd}
-          className="w-full py-2 rounded bg-zinc-800 text-white text-sm font-medium hover:bg-zinc-700"
+          disabled={addButtonDisabled}
+          className="w-full py-2 rounded bg-zinc-800 text-white text-sm font-medium hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t.addIndicator}
         </button>
@@ -510,13 +725,43 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
                       <select
-                        value={editForm.fieldKey}
-                        onChange={(e) => setEditForm((f) => ({ ...f!, fieldKey: e.target.value as IndicatorFieldKey }))}
+                        value={(() => {
+                          const visibleForEdit = fieldOptions.filter(
+                            (o) =>
+                              !o.disabled &&
+                              o.optionType !== ind.type &&
+                              !(o.isMovingAverage && isMovingAverageType(ind.type))
+                          );
+                          const firstForEdit = (visibleForEdit[0]?.value ?? firstEnabledFieldValue) as IndicatorFieldKey;
+                          return (visibleForEdit.some((o) => o.value === editForm.fieldKey) ? editForm.fieldKey : firstForEdit) as string;
+                        })()}
+                        onChange={(e) => {
+                          const newKey = e.target.value as IndicatorFieldKey;
+                          setEditForm((f) => {
+                            const next = { ...f!, fieldKey: newKey };
+                            if (newKey.startsWith("user_")) {
+                              const id = newKey.slice(5);
+                              const baseInd = userIndicators.find((i) => i.id === id);
+                              const p = baseInd?.panel ?? (baseInd?.type === "RSI" ? "panel2" : "main");
+                              if (p === "panel2" || p === "panel3" || p === "panel4") next.panel = p;
+                            }
+                            return next;
+                          });
+                        }}
                         className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
                       >
-                        {fieldOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
+                        {fieldOptions
+                          .filter(
+                            (o) =>
+                              !o.disabled &&
+                              o.optionType !== ind.type &&
+                              !(o.isMovingAverage && isMovingAverageType(ind.type))
+                          )
+                          .map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
                       </select>
                     </div>
                     <div className="flex items-center gap-2">
@@ -533,6 +778,150 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
                         ))}
                       </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
+                      <select
+                        value={editForm.panel}
+                        onChange={(e) => setEditForm((f) => ({ ...f!, panel: e.target.value as IndicatorPanel }))}
+                        className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+                      >
+                        {ind.type === "RSI" ? (
+                          <>
+                            {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                            {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                            {panelsFreeForSecondaryEdit.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                          </>
+                        ) : (
+                          <>
+                            <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                            {(panelsWithSecondary.panel2 || editForm.panel === "panel2") && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                            {(panelsWithSecondary.panel3 || editForm.panel === "panel3") && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                            {(panelsWithSecondary.panel4 || editForm.panel === "panel4") && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                          </>
+                        )}
+                      </select>
+                    </div>
+                    {ind.type === "RSI" && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editForm.rsiFixedScale}
+                          onChange={(e) => setEditForm((f) => ({ ...f!, rsiFixedScale: e.target.checked }))}
+                          className="rounded border-zinc-300"
+                        />
+                        <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).rsiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
+                      </label>
+                    )}
+                    {ind.type === "RSI" && (
+                      <>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editForm.rsiCenterLine}
+                            onChange={(e) => setEditForm((f) => ({ ...f!, rsiCenterLine: e.target.checked }))}
+                            className="rounded border-zinc-300"
+                          />
+                          <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).rsiCenterLineLabel ?? "Linha central 50%"}</span>
+                        </label>
+                        {editForm.rsiCenterLine && (
+                          <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                              <div className="flex flex-wrap gap-1">
+                                {INDICATOR_COLOR_PALETTE.map((hex) => (
+                                  <button
+                                    key={hex}
+                                    type="button"
+                                    onClick={() => setEditForm((f) => ({ ...f!, rsiCenterLineColor: hex }))}
+                                    className={`w-5 h-5 rounded border shrink-0 ${editForm.rsiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`}
+                                    style={{ backgroundColor: hex }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                              <select
+                                value={editForm.rsiCenterLineWidth}
+                                onChange={(e) => setEditForm((f) => ({ ...f!, rsiCenterLineWidth: e.target.value as IndicatorLineWidth }))}
+                                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+                              >
+                                <option value="thin">{(t as Record<string, string>).lineWidthThin}</option>
+                                <option value="normal">{(t as Record<string, string>).lineWidthNormal}</option>
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                              <select
+                                value={editForm.rsiCenterLineStyle}
+                                onChange={(e) => setEditForm((f) => ({ ...f!, rsiCenterLineStyle: e.target.value as IndicatorLineStyle }))}
+                                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+                              >
+                                <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
+                                <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
+                                <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {ind.type === "RSI" && (
+                      <>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editForm.rsiLimits}
+                            onChange={(e) => setEditForm((f) => ({ ...f!, rsiLimits: e.target.checked }))}
+                            className="rounded border-zinc-300"
+                          />
+                          <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).rsiLimitsLabel ?? "Limites superior e inferior"}</span>
+                        </label>
+                        {editForm.rsiLimits && (
+                          <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).rsiLimitUpperLabel ?? "Superior %"}</span>
+                              <div className="flex items-center gap-0.5">
+                                <button type="button" onClick={() => setEditForm((f) => ({ ...f!, rsiLimitUpper: Math.max(0, Math.min(100, (f!.rsiLimitUpper ?? 90) - 1)) }))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                                <span className="w-8 text-center text-xs tabular-nums">{editForm.rsiLimitUpper}</span>
+                                <button type="button" onClick={() => setEditForm((f) => ({ ...f!, rsiLimitUpper: Math.max(0, Math.min(100, (f!.rsiLimitUpper ?? 90) + 1)) }))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).rsiLimitLowerLabel ?? "Inferior %"}</span>
+                              <div className="flex items-center gap-0.5">
+                                <button type="button" onClick={() => setEditForm((f) => ({ ...f!, rsiLimitLower: Math.max(0, Math.min(100, (f!.rsiLimitLower ?? 10) - 1)) }))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                                <span className="w-8 text-center text-xs tabular-nums">{editForm.rsiLimitLower}</span>
+                                <button type="button" onClick={() => setEditForm((f) => ({ ...f!, rsiLimitLower: Math.max(0, Math.min(100, (f!.rsiLimitLower ?? 10) + 1)) }))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                              <div className="flex flex-wrap gap-1">
+                                {INDICATOR_COLOR_PALETTE.map((hex) => (
+                                  <button key={hex} type="button" onClick={() => setEditForm((f) => ({ ...f!, rsiLimitColor: hex }))} className={`w-5 h-5 rounded border shrink-0 ${editForm.rsiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                              <select value={editForm.rsiLimitLineWidth} onChange={(e) => setEditForm((f) => ({ ...f!, rsiLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                                <option value="thin">{(t as Record<string, string>).lineWidthThin}</option>
+                                <option value="normal">{(t as Record<string, string>).lineWidthNormal}</option>
+                              </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                              <select value={editForm.rsiLimitLineStyle} onChange={(e) => setEditForm((f) => ({ ...f!, rsiLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                                <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
+                                <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
+                                <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
                       <select

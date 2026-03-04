@@ -1,0 +1,36 @@
+/** Paleta de cores (claro → escuro), pelo menos 12. */
+export const INDICATOR_COLOR_PALETTE = [
+  "#ffffff",
+  "#000000",
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#84cc16",
+  "#10b981",
+  "#06b6d4",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#64748b",
+];
+
+export const INTERVAL_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "1m" },
+  { value: 3, label: "3m" },
+  { value: 5, label: "5m" },
+  { value: 15, label: "15m" },
+  { value: 30, label: "30m" },
+  { value: 45, label: "45m" },
+  { value: 60, label: "1h" },
+  { value: 120, label: "2h" },
+  { value: 180, label: "3h" },
+  { value: 240, label: "4h" },
+  { value: 360, label: "6h" },
+  { value: 480, label: "8h" },
+  { value: 720, label: "12h" },
+  { value: 1440, label: "1D" },
+  { value: 4320, label: "3D" },
+  { value: 10080, label: "1S" },
+  { value: 43200, label: "1M" },
+];

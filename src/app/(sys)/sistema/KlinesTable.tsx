@@ -4,11 +4,11 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
 import { formatAbbreviated } from "./klinesFormatters";
-import { getIndicatorLabel } from "./IndicatorsPanel";
+import { getIndicatorLabel, getIndicatorLabelShort } from "./IndicatorsPanel";
 import KlinesChart from "./KlinesChart";
 
 /**
@@ -124,7 +124,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           ? computeEmaColumn(out, valueIndex, period)
           : ind.type === "WMA"
             ? computeWmaColumn(out, valueIndex, period)
-            : computeSmaColumn(out, valueIndex, period);
+            : ind.type === "RSI"
+              ? computeRsiColumn(out, valueIndex, period)
+              : computeSmaColumn(out, valueIndex, period);
       for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
     }
     return out as Kline[];
@@ -267,39 +269,39 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   return (
     <div className="flex flex-col min-h-0 p-4">
       <div
-        className="grid grid-cols-[1fr_auto] gap-2 sm:gap-4 mb-3 flex-shrink-0 items-start w-full min-w-0"
+        className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 mb-2 flex-shrink-0 items-baseline w-full min-w-0"
         style={{ maxWidth: headerWidth }}
       >
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <h2 className="text-sm sm:text-lg font-semibold text-zinc-900">
-            {t.title}
-          </h2>
-          {(() => {
-            const current = spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null);
-            const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
-            const currentNum = current != null ? parseFloat(current) : null;
-            const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
-              ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
-              : null;
-            if (current == null) return null;
-            return (
-              <p className="text-xs sm:text-sm font-medium text-zinc-600 font-mono flex items-baseline gap-1.5 flex-wrap">
-                <span>{formatNum(current)}</span>
-                {pct != null && (
-                  <span className={pct >= 0 ? "text-emerald-600" : "text-red-600"}>
-                    ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
-                  </span>
-                )}
-              </p>
-            );
-          })()}
-          <div className="flex items-center gap-2 flex-wrap mt-1">
+        <div className="flex flex-col gap-0 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <h2 className="text-sm font-semibold text-zinc-900 shrink-0">{t.title}</h2>
+            {(() => {
+              const current = spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null);
+              const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
+              const currentNum = current != null ? parseFloat(current) : null;
+              const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
+                ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
+                : null;
+              if (current == null) return null;
+              return (
+                <p className="text-xs font-medium text-zinc-600 font-mono flex items-baseline gap-1.5">
+                  <span>{formatNum(current)}</span>
+                  {pct != null && (
+                    <span className={pct >= 0 ? "text-emerald-600" : "text-red-600"}>
+                      ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
+                    </span>
+                  )}
+                </p>
+              );
+            })()}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
             <select
               id="interval-listbox"
               value={groupMinutes}
               onChange={(e) => setGroupMinutes(Number(e.target.value))}
               aria-label={t.interval}
-              className="text-xs sm:text-sm font-medium text-zinc-700 bg-zinc-100 border border-zinc-200 rounded-md px-2 py-1 sm:px-2.5 sm:py-1.5 cursor-pointer"
+              className="text-[11px] font-medium text-zinc-700 bg-zinc-100 border border-zinc-200 rounded px-1.5 py-0.5 cursor-pointer"
             >
               {intervalOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -307,24 +309,24 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 </option>
               ))}
             </select>
-            <span className="text-xs sm:text-sm text-zinc-500">{t.tableNote}</span>
+            <span className="text-[11px] text-zinc-500">{t.tableNote}</span>
           </div>
         </div>
         {last24h && (
           <div className="w-max max-w-full shrink-0">
-            <table className="border-collapse font-mono text-xs sm:text-sm text-zinc-600 whitespace-nowrap" role="presentation">
+            <table className="border-collapse font-mono text-[11px] text-zinc-600 whitespace-nowrap leading-tight" role="presentation">
               <tbody>
                 <tr>
-                  <td className="py-0.5 align-baseline"><span className="text-zinc-500">{t.max24h}</span> {formatNum(String(last24h.max))}</td>
+                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.max24h}</span> {formatNum(String(last24h.max))}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 align-baseline"><span className="text-zinc-500">{t.min24h}</span> {formatNum(String(last24h.min))}</td>
+                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.min24h}</span> {formatNum(String(last24h.min))}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 align-baseline"><span className="text-zinc-500">{t.vol24hBtc}</span> {formatAbbreviated(last24h.volBtc)}</td>
+                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.vol24hBtc}</span> {formatAbbreviated(last24h.volBtc)}</td>
                 </tr>
                 <tr>
-                  <td className="py-0.5 align-baseline"><span className="text-zinc-500">{t.vol24hUsd}</span> {formatAbbreviated(last24h.volUsd)}</td>
+                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.vol24hUsd}</span> {formatAbbreviated(last24h.volUsd)}</td>
                 </tr>
               </tbody>
             </table>
@@ -332,7 +334,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         )}
       </div>
       <div
-        className="flex-shrink-0 mb-3 w-full min-w-0"
+        className="flex-shrink-0 mb-2 w-full min-w-0"
         style={{ maxWidth: headerWidth }}
       >
         <div
@@ -355,6 +357,20 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               lineWidth: ind.lineWidth ?? "normal",
               lineStyle: ind.lineStyle ?? "solid",
               label: getIndicatorLabel(ind, t, userIndicators),
+              shortLabel: getIndicatorLabelShort(ind, userIndicators),
+              type: ind.type,
+              panel: ind.panel ?? (ind.type === "RSI" ? "panel2" : "main"),
+              rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
+              rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
+              rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
+              rsiCenterLineWidth: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineWidth ?? "normal") : undefined,
+              rsiCenterLineStyle: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineStyle ?? "dotted") : undefined,
+              rsiLimits: ind.type === "RSI" ? (ind.rsiLimits === true) : undefined,
+              rsiLimitUpper: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitUpper ?? 90) : undefined,
+              rsiLimitLower: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLower ?? 10) : undefined,
+              rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
+              rsiLimitLineWidth: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
+              rsiLimitLineStyle: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
             }))}
             onLayoutConfigLoaded={(config) => {
               const v = config.groupMinutes;

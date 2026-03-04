@@ -123,3 +123,68 @@ export function computeWmaColumn(
   }
   return out;
 }
+
+/**
+ * RSI (Índice de Força Relativa) sobre uma coluna (tipicamente close).
+ * Período padrão 14. Suavização de Wilder: primeira média = SMA dos primeiros "period" ganhos/perdas,
+ * depois média suavizada = (anterior * (period-1) + atual) / period.
+ * Retorna valores entre 0 e 100 (ou null quando não há dados suficientes).
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeRsiColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  if (period < 1 || n < period + 2) return out;
+
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const gains: number[] = [];
+  const losses: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const cur = getNum(data[i], valueIndex);
+    const prev = getNum(data[i + 1], valueIndex);
+    if (cur == null || prev == null) {
+      gains.push(0);
+      losses.push(0);
+    } else {
+      const ch = cur - prev;
+      gains.push(ch > 0 ? ch : 0);
+      losses.push(ch < 0 ? -ch : 0);
+    }
+  }
+
+  const startIdx = n - period - 1;
+  let sumG = 0;
+  let sumL = 0;
+  for (let j = startIdx; j < startIdx + period && j < gains.length; j++) {
+    sumG += gains[j];
+    sumL += losses[j];
+  }
+  let avgGain = sumG / period;
+  let avgLoss = sumL / period;
+
+  const rsiFromAvgs = (ag: number, al: number): number => {
+    if (al === 0) return 100;
+    const rs = ag / al;
+    return 100 - 100 / (1 + rs);
+  };
+
+  out[startIdx] = rsiFromAvgs(avgGain, avgLoss);
+
+  for (let j = startIdx - 1; j >= 0; j--) {
+    avgGain = (avgGain * (period - 1) + gains[j]) / period;
+    avgLoss = (avgLoss * (period - 1) + losses[j]) / period;
+    out[j] = rsiFromAvgs(avgGain, avgLoss);
+  }
+
+  return out;
+}
