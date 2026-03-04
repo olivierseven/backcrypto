@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
 import { formatAbbreviated } from "./klinesFormatters";
-import { getIndicatorLabel, getIndicatorLabelShort } from "./IndicatorsPanel";
+import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal } from "./IndicatorsPanel";
 import KlinesChart from "./KlinesChart";
 
 /**
@@ -102,6 +102,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
+  const [chartContainerHeight, setChartContainerHeight] = useState(0);
 
   const visibleUserIndicators = useMemo(
     () =>
@@ -111,26 +112,90 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     [userIndicators, groupMinutes]
   );
 
-  const extendedKlines = useMemo(() => {
+  const extendedKlines = useMemo((): Kline[] => {
     const base = klines as (string | number)[][];
-    if (base.length === 0 || userIndicators.length === 0) return base;
+    if (base.length === 0 || userIndicators.length === 0) return klines;
     const out = base.map((row) => [...row] as (string | number | null)[]);
+    /** Indicadores só leem colunas 0–11 (OHLC etc.); fazer cast para satisfazer a API. */
+    const data = out as (string | number)[][];
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
       const valueIndex = getFieldIndex(ind.fieldKey, userIndicators);
       const period = Math.max(1, Math.min(500, ind.period));
-      const col =
-        ind.type === "EMA"
-          ? computeEmaColumn(out, valueIndex, period)
-          : ind.type === "WMA"
-            ? computeWmaColumn(out, valueIndex, period)
-            : ind.type === "RSI"
-              ? computeRsiColumn(out, valueIndex, period)
-              : computeSmaColumn(out, valueIndex, period);
-      for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      if (ind.type === "MACD") {
+        const col = computeMacdColumn(
+          data,
+          valueIndex,
+          ind.macdFastMaType ?? "EMA",
+          ind.macdFastPeriod ?? 12,
+          ind.macdSlowMaType ?? "EMA",
+          ind.macdSlowPeriod ?? 26
+        );
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        if (ind.macdSignalLine) {
+          const macdColIndex = out[0].length - 1;
+          const signalPeriod = Math.max(1, Math.min(500, ind.macdSignalPeriod ?? 9));
+          const signalCol =
+            (ind.macdSignalMaType ?? "EMA") === "EMA"
+              ? computeEmaColumn(data, macdColIndex, signalPeriod)
+              : (ind.macdSignalMaType ?? "EMA") === "WMA"
+                ? computeWmaColumn(data, macdColIndex, signalPeriod)
+                : computeSmaColumn(data, macdColIndex, signalPeriod);
+          for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
+          if (ind.macdHistogram) {
+            const signalColIndex = out[0].length - 1;
+            for (let i = 0; i < out.length; i++) {
+              const macdVal = out[i][macdColIndex];
+              const sigVal = out[i][signalColIndex];
+              const hist = macdVal != null && sigVal != null && Number.isFinite(Number(macdVal)) && Number.isFinite(Number(sigVal))
+                ? (Number(macdVal) - Number(sigVal))
+                : null;
+              out[i].push(hist);
+            }
+          }
+        }
+      } else {
+        const col =
+          ind.type === "EMA"
+            ? computeEmaColumn(data, valueIndex, period)
+            : ind.type === "WMA"
+              ? computeWmaColumn(data, valueIndex, period)
+              : ind.type === "RSI"
+                ? computeRsiColumn(data, valueIndex, period)
+                : computeSmaColumn(data, valueIndex, period);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      }
     }
     return out as Kline[];
   }, [klines, userIndicators]);
+
+  /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. */
+  const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
+    let col = 12;
+    for (let i = 0; i < indicatorIndex; i++) {
+      const ind = userIndicators[i];
+      if (ind.type === "MACD") {
+        col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
+      } else {
+        col += 1;
+      }
+    }
+    return col;
+  }, [userIndicators]);
+
+  /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
+  const visibleIndicatorColumns = useMemo(() => {
+    const list: { ind: (typeof userIndicators)[0]; columnIndex: number; isSignal: boolean; isHistogram: boolean }[] = [];
+    for (let u = 0; u < userIndicators.length; u++) {
+      const ind = userIndicators[u];
+      if (ind.intervals.length > 0 && !ind.intervals.includes(groupMinutes)) continue;
+      const start = getIndicatorColumnStart(u);
+      list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
+      if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
+      if (ind.type === "MACD" && ind.macdHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
+    }
+    return list;
+  }, [userIndicators, groupMinutes, getIndicatorColumnStart]);
 
   useEffect(() => {
     setCurrentGroupMinutes(groupMinutes);
@@ -140,8 +205,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const el = chartWrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width;
-      if (typeof w === "number" && w > 0) setChartWidth(w);
+      const rect = entries[0]?.contentRect;
+      if (rect) {
+        if (typeof rect.width === "number" && rect.width > 0) setChartWidth(rect.width);
+        if (typeof rect.height === "number" && rect.height > 0) setChartContainerHeight(rect.height);
+      }
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -246,20 +314,21 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
 
   const last24h = (() => {
     if (extendedKlines.length === 0) return null;
-    const cutoff = extendedKlines[0][0] - 24 * 60 * 60 * 1000;
-    const in24h = extendedKlines.filter((k) => k[0] >= cutoff);
+    const first = extendedKlines[0];
+    const cutoff = Number(first[0]) - 24 * 60 * 60 * 1000;
+    const in24h = extendedKlines.filter((k) => Number(k[0]) >= cutoff);
     if (in24h.length === 0) return null;
-    let max = parseFloat(in24h[0][2]);
-    let min = parseFloat(in24h[0][3]);
+    let max = parseFloat(String(in24h[0][2]));
+    let min = parseFloat(String(in24h[0][3]));
     let volBtc = 0;
     let volUsd = 0;
     for (const k of in24h) {
-      const high = parseFloat(k[2]);
-      const low = parseFloat(k[3]);
+      const high = parseFloat(String(k[2]));
+      const low = parseFloat(String(k[3]));
       if (high > max) max = high;
       if (low < min) min = low;
-      volBtc += parseFloat(k[5]);
-      volUsd += parseFloat(k[7]);
+      volBtc += parseFloat(String(k[5]));
+      volUsd += parseFloat(String(k[7]));
     }
     return { max, min, volBtc, volUsd };
   })();
@@ -276,7 +345,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           <div className="flex items-baseline gap-2 flex-wrap">
             <h2 className="text-sm font-semibold text-zinc-900 shrink-0">{t.title}</h2>
             {(() => {
-              const current = spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null);
+              const current = spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
               const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
               const currentNum = current != null ? parseFloat(current) : null;
               const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
@@ -285,7 +354,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               if (current == null) return null;
               return (
                 <p className="text-xs font-medium text-zinc-600 font-mono flex items-baseline gap-1.5">
-                  <span>{formatNum(current)}</span>
+                  <span>{formatNum(String(current))}</span>
                   {pct != null && (
                     <span className={pct >= 0 ? "text-emerald-600" : "text-red-600"}>
                       ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
@@ -339,7 +408,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       >
         <div
           ref={chartWrapRef}
-          className="w-full min-h-0 max-h-[80vh] overflow-auto rounded-lg border border-zinc-200 bg-white sm:max-h-none sm:overflow-visible"
+          className="w-full min-h-0 max-h-[85vh] overflow-auto rounded-lg border border-zinc-200 bg-white"
           style={{
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x pan-y",
@@ -351,15 +420,23 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             groupMinutes={groupMinutes}
             intervalLabel={intervalLabel}
             width={chartWidth}
-            indicatorLines={visibleUserIndicators.map((ind) => ({
-              columnIndex: 12 + userIndicators.indexOf(ind),
-              color: ind.color,
-              lineWidth: ind.lineWidth ?? "normal",
-              lineStyle: ind.lineStyle ?? "solid",
-              label: getIndicatorLabel(ind, t, userIndicators),
-              shortLabel: getIndicatorLabelShort(ind, userIndicators),
+            maxChartHeight={
+              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD") && chartContainerHeight > 100
+                ? chartContainerHeight - 80
+                : undefined
+            }
+            indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
+              columnIndex,
+              color: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color,
+              lineWidth: isHistogram ? undefined : isSignal ? (ind.macdSignalLineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
+              lineStyle: isHistogram ? undefined : isSignal ? (ind.macdSignalLineStyle ?? "dashed") : (ind.lineStyle ?? "solid"),
+              label: isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? getIndicatorLabelSignal(ind, t) : getIndicatorLabel(ind, t, userIndicators),
+              shortLabel: isHistogram ? "MACD Hist" : isSignal ? getIndicatorLabelShortSignal(ind) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
-              panel: ind.panel ?? (ind.type === "RSI" ? "panel2" : "main"),
+              display: isHistogram ? "histogram" as const : undefined,
+              histogramColorAbove: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : undefined,
+              histogramColorBelow: isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : undefined,
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -401,13 +478,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               <th className="px-3 py-2 font-medium text-right">{t.trades}</th>
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyBase}</th>
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyQuote}</th>
-              {visibleUserIndicators.map((ind) => (
+              {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }, idx) => (
                   <th
-                    key={ind.id}
+                    key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
                     className="px-3 py-2 font-medium text-right text-xs"
-                    style={{ borderLeftColor: ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                    style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                   >
-                    {ind.type}({ind.period})
+                    {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? `MACD Sig(${ind.macdSignalPeriod ?? 9})` : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : `${ind.type}(${ind.period})`}
                   </th>
               ))}
             </tr>
@@ -416,27 +493,27 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             {extendedKlines.map((k, i) => {
               const baseCols = (
                 <>
-                  <td className="px-3 py-1.5 text-zinc-600 whitespace-nowrap">{formatTime(k[0])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono">{formatNum(k[1])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-emerald-600">{formatNum(k[2])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-red-600">{formatNum(k[3])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono">{formatNum(k[4])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(k[5])}</td>
-                  <td className="px-3 py-1.5 text-zinc-600 whitespace-nowrap">{formatTime(k[6])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(k[7])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono">{formatInt(k[8])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(k[9])}</td>
-                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(k[10])}</td>
+                  <td className="px-3 py-1.5 text-zinc-600 whitespace-nowrap">{formatTime(Number(k[0]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono">{formatNum(String(k[1]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-emerald-600">{formatNum(String(k[2]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-red-600">{formatNum(String(k[3]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono">{formatNum(String(k[4]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(String(k[5]))}</td>
+                  <td className="px-3 py-1.5 text-zinc-600 whitespace-nowrap">{formatTime(Number(k[6]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(String(k[7]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono">{formatInt(Number(k[8]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(String(k[9]))}</td>
+                  <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(String(k[10]))}</td>
                 </>
               );
-              const userCols = visibleUserIndicators.map((ind) => {
-                const colIndex = 12 + userIndicators.indexOf(ind);
-                const val = k[colIndex];
+              const userCols = visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }, idx) => {
+                const val = k[columnIndex];
+                const borderColor = isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color;
                 return (
                   <td
-                    key={ind.id}
+                    key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
                     className="px-3 py-1.5 text-right font-mono text-zinc-500"
-                    style={{ borderLeftColor: ind.color, borderLeftWidth: 1, borderLeftStyle: "solid" }}
+                    style={{ borderLeftColor: borderColor, borderLeftWidth: 1, borderLeftStyle: "solid" }}
                   >
                     {val != null && Number.isFinite(Number(val)) ? formatNum(String(val)) : "—"}
                   </td>

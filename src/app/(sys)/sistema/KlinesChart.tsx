@@ -72,8 +72,8 @@ export interface ChartIndicatorLine {
   label?: string;
   /** Rótulo resumido para o display (ex.: "SMA(7) C"). */
   shortLabel?: string;
-  /** Tipo do indicador: RSI usa escala 0–100 no gráfico; demais usam escala de preço. */
-  type?: "SMA" | "EMA" | "WMA" | "RSI";
+  /** Tipo do indicador: RSI usa escala 0–100 no gráfico; MACD e demais usam escala automática no painel. */
+  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD";
   /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
   panel?: "main" | "panel2" | "panel3" | "panel4";
   /** Só para RSI: true = escala fixa 0–100 no eixo Y; false ou ausente (para não-RSI) = escala automática. */
@@ -90,6 +90,12 @@ export interface ChartIndicatorLine {
   rsiLimitColor?: string;
   rsiLimitLineWidth?: "thin" | "normal";
   rsiLimitLineStyle?: "solid" | "dotted" | "dashed";
+  /** Desenho: linha (default) ou barras (histograma MACD). */
+  display?: "line" | "histogram";
+  /** Cor das barras do histograma acima de zero. */
+  histogramColorAbove?: string;
+  /** Cor das barras do histograma abaixo de zero. */
+  histogramColorBelow?: string;
 }
 
 type Props = {
@@ -101,6 +107,8 @@ type Props = {
   indicatorLines?: ChartIndicatorLine[];
   /** Chamado ao carregar um layout; permite ao pai (ex.: KlinesTable) aplicar preferências que não são do chart (ex.: groupMinutes). */
   onLayoutConfigLoaded?: (config: Record<string, unknown>) => void;
+  /** Altura máxima para o SVG do gráfico (main + painéis). Quando definido e houver painéis secundários, a altura é limitada para caber no container. */
+  maxChartHeight?: number;
 };
 
 const CANDLE_COLOR_PRESETS = [
@@ -174,7 +182,7 @@ const TEXT_PALETTE = [
 type TextColorId = (typeof TEXT_PALETTE)[number]["id"];
 const DEFAULT_TEXT_COLOR: TextColorId = 1; // preto
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded }: Props) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, maxChartHeight }: Props) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
   const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
@@ -637,24 +645,33 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const windowN = windowSlice.length;
   if (windowN === 0) return null;
 
-  const baseChartHeight = Math.max(
-    MIN_CHART_HEIGHT,
-    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(width * (9 / 16))
-  );
-  const marginBottom = MARGIN_BOTTOM_TABLE;
-  const chartH = baseChartHeight - MARGIN_TOP - marginBottom;
-  const getPanel = (ind: { type?: string; panel?: string }) => ind.panel ?? (ind.type === "RSI" ? "panel2" : "main");
+  const getPanel = (ind: { type?: string; panel?: string }) => ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
-  const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
-  const panel2Height = hasPanel2 ? chartH * secondaryPanelRatio : 0;
-  const panel3Height = hasPanel3 ? chartH * secondaryPanelRatio : 0;
-  const panel4Height = hasPanel4 ? chartH * secondaryPanelRatio : 0;
   const hasAnySecondaryPanel = hasPanel2 || hasPanel3 || hasPanel4;
   const mainToPanelGap = hasAnySecondaryPanel ? MAIN_TO_PANEL_GAP : 0;
   const gap2_3 = hasPanel2 && hasPanel3 ? PANEL_GAP : 0;
   const gap3_4 = hasPanel3 && hasPanel4 ? PANEL_GAP : 0;
+  const marginBottom = MARGIN_BOTTOM_TABLE;
+  const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
+  const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0);
+
+  let baseChartHeight = Math.max(
+    MIN_CHART_HEIGHT,
+    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(width * (9 / 16))
+  );
+  if (hasAnySecondaryPanel && typeof maxChartHeight === "number" && maxChartHeight > 0 && nSecondaryPanels > 0) {
+    const gapsAndMargin = mainToPanelGap + gap2_3 + gap3_4 + PANEL2_BOTTOM_MARGIN;
+    const denom = 1 + secondaryPanelRatio * nSecondaryPanels;
+    const baseToFit = (maxChartHeight - gapsAndMargin + (MARGIN_TOP + marginBottom) * secondaryPanelRatio * nSecondaryPanels) / denom;
+    if (baseToFit >= MIN_CHART_HEIGHT) baseChartHeight = Math.min(baseChartHeight, Math.round(baseToFit));
+  }
+
+  const chartH = baseChartHeight - MARGIN_TOP - marginBottom;
+  const panel2Height = hasPanel2 ? chartH * secondaryPanelRatio : 0;
+  const panel3Height = hasPanel3 ? chartH * secondaryPanelRatio : 0;
+  const panel4Height = hasPanel4 ? chartH * secondaryPanelRatio : 0;
   const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + gap2_3 + gap3_4 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
   const is2hOrAbove = groupMinutes >= 120;
@@ -675,6 +692,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
       if (useFixedScale) return { min: 0, max: 100 };
       const ext: number[] = [];
+      const hasHistogram = lines.some((ind) => ind.display === "histogram");
+      if (hasHistogram) ext.push(0);
       for (const ind of lines) {
         for (let i = 0; i < windowSlice.length; i++) {
           const v = windowSlice[i][ind.columnIndex];
@@ -688,6 +707,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
       if (useFixedScale) return { min: 0, max: 100 };
       const ext: number[] = [];
+      const hasHistogram = lines.some((ind) => ind.display === "histogram");
+      if (hasHistogram) ext.push(0);
       for (const ind of lines) {
         for (let i = 0; i < windowSlice.length; i++) {
           const v = windowSlice[i][ind.columnIndex];
@@ -701,6 +722,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
       if (useFixedScale) return { min: 0, max: 100 };
       const ext: number[] = [];
+      const hasHistogram = lines.some((ind) => ind.display === "histogram");
+      if (hasHistogram) ext.push(0);
       for (const ind of lines) {
         for (let i = 0; i < windowSlice.length; i++) {
           const v = windowSlice[i][ind.columnIndex];
@@ -1826,6 +1849,36 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                 )}
                 {panelLines.map((ind, indIdx) => {
                   const col = ind.columnIndex;
+                  if (ind.display === "histogram") {
+                    const barW = Math.max(1, gap * 0.6);
+                    const colorAbove = ind.histogramColorAbove ?? "#059669";
+                    const colorBelow = ind.histogramColorBelow ?? "#dc2626";
+                    const yZero = yPanel(0);
+                    return (
+                      <g key={indIdx}>
+                        {windowSlice.map((row, i) => {
+                          const v = row[col];
+                          if (v == null || typeof v !== "number" || !Number.isFinite(v)) return null;
+                          const yVal = yPanel(v);
+                          const yTop = Math.min(yZero, yVal);
+                          const yBottom = Math.max(yZero, yVal);
+                          const barH = Math.max(1, yBottom - yTop);
+                          const fill = v >= 0 ? colorAbove : colorBelow;
+                          return (
+                            <rect
+                              key={i}
+                              x={cx(i) - barW / 2}
+                              y={yTop}
+                              width={barW}
+                              height={barH}
+                              fill={fill}
+                              stroke="none"
+                            />
+                          );
+                        })}
+                      </g>
+                    );
+                  }
                   const points: { i: number; val: number }[] = [];
                   for (let i = 0; i < windowSlice.length; i++) {
                     const v = windowSlice[i][col];
@@ -2332,6 +2385,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
               const lastValY = panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel3" || panelKey === "panel4" ? panelKey : "panel2");
               const inRange = panelKey === "main" ? (lastVal >= yMin && lastVal <= yMax) : (lastVal >= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].min && lastVal <= panelExtents[panelKey as "panel2" | "panel3" | "panel4"].max);
               if (!inRange) return null;
+              const textColor = ind.display === "histogram"
+                ? (lastVal >= 0 ? (ind.histogramColorAbove ?? "#059669") : (ind.histogramColorBelow ?? "#dc2626"))
+                : ind.color;
               return (
                 <g key={indIdx}>
                   <rect
@@ -2350,7 +2406,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
                     y={lastValY + 4}
                     textAnchor="end"
                     className="font-semibold font-mono text-[10px]"
-                    fill={ind.color}
+                    fill={textColor}
                   >
                     {panelKey === "main" ? formatYAxis(lastVal) : (lastVal >= 0 && lastVal <= 100 ? lastVal.toFixed(1) : formatYAxis(lastVal))}
                   </text>

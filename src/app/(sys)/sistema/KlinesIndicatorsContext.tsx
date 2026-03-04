@@ -33,7 +33,7 @@ function saveShowIndicatorLastValueOnYAxis(value: boolean) {
   }
 }
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
 export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4";
@@ -82,6 +82,30 @@ export interface UserIndicatorConfig {
   rsiLimitColor?: string;
   rsiLimitLineWidth?: IndicatorLineWidth;
   rsiLimitLineStyle?: IndicatorLineStyle;
+  /** Só para MACD: tipo da média rápida (SMA | EMA | WMA). */
+  macdFastMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para MACD: período da média rápida. */
+  macdFastPeriod?: number;
+  /** Só para MACD: tipo da média lenta. */
+  macdSlowMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para MACD: período da média lenta. */
+  macdSlowPeriod?: number;
+  /** Só para MACD: exibir linha de sinal (MA aplicada à linha MACD). */
+  macdSignalLine?: boolean;
+  /** Só para MACD: tipo da média da linha de sinal (SMA | EMA | WMA). */
+  macdSignalMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para MACD: período da linha de sinal. */
+  macdSignalPeriod?: number;
+  /** Só para MACD: cor da linha de sinal. */
+  macdSignalColor?: string;
+  macdSignalLineWidth?: IndicatorLineWidth;
+  macdSignalLineStyle?: IndicatorLineStyle;
+  /** Só para MACD: exibir histograma (MACD − linha de sinal). Só disponível com linha de sinal. */
+  macdHistogram?: boolean;
+  /** Só para MACD: cor das barras do histograma acima de zero. */
+  macdHistogramColorAbove?: string;
+  /** Só para MACD: cor das barras do histograma abaixo de zero. */
+  macdHistogramColorBelow?: string;
 }
 
 const FIELD_KEY_TO_INDEX: Record<string, number> = {
@@ -122,7 +146,7 @@ function loadFromStorage(): UserIndicatorConfig[] {
         const u = p as UserIndicatorConfig;
         return (
           typeof u.id === "string" &&
-          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI") &&
+          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD") &&
           typeof u.period === "number" &&
           typeof u.fieldKey === "string" &&
           typeof u.color === "string" &&
@@ -133,7 +157,7 @@ function loadFromStorage(): UserIndicatorConfig[] {
       ...u,
       panel: u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4"
         ? u.panel
-        : (u.type === "RSI" ? "panel2" : "main"),
+        : (u.type === "RSI" || u.type === "MACD" ? "panel2" : "main"),
       lineWidth: u.lineWidth === "thin" || u.lineWidth === "normal" ? u.lineWidth : "normal",
       lineStyle: u.lineStyle === "solid" || u.lineStyle === "dotted" || u.lineStyle === "dashed" ? u.lineStyle : "solid",
       rsiFixedScale: u.type === "RSI" ? (u.rsiFixedScale === false ? false : true) : undefined,
@@ -147,6 +171,19 @@ function loadFromStorage(): UserIndicatorConfig[] {
       rsiLimitColor: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitColor ?? "#dc2626") : undefined,
       rsiLimitLineWidth: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineWidth === "thin" || u.rsiLimitLineWidth === "normal" ? u.rsiLimitLineWidth : "normal") : undefined,
       rsiLimitLineStyle: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineStyle === "solid" || u.rsiLimitLineStyle === "dotted" || u.rsiLimitLineStyle === "dashed" ? u.rsiLimitLineStyle : "dotted") : undefined,
+      macdFastMaType: u.type === "MACD" ? (u.macdFastMaType === "SMA" || u.macdFastMaType === "EMA" || u.macdFastMaType === "WMA" ? u.macdFastMaType : "EMA") : undefined,
+      macdFastPeriod: u.type === "MACD" ? (typeof u.macdFastPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdFastPeriod))) : 12) : undefined,
+      macdSlowMaType: u.type === "MACD" ? (u.macdSlowMaType === "SMA" || u.macdSlowMaType === "EMA" || u.macdSlowMaType === "WMA" ? u.macdSlowMaType : "EMA") : undefined,
+      macdSlowPeriod: u.type === "MACD" ? (typeof u.macdSlowPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSlowPeriod))) : 26) : undefined,
+      macdSignalLine: u.type === "MACD" ? (u.macdSignalLine === true) : undefined,
+      macdSignalMaType: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalMaType === "SMA" || u.macdSignalMaType === "EMA" || u.macdSignalMaType === "WMA" ? u.macdSignalMaType : "EMA") : undefined,
+      macdSignalPeriod: u.type === "MACD" && u.macdSignalLine ? (typeof u.macdSignalPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSignalPeriod))) : 9) : undefined,
+      macdSignalColor: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalColor ?? "#ea580c") : undefined,
+      macdSignalLineWidth: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalLineWidth === "thin" || u.macdSignalLineWidth === "normal" ? u.macdSignalLineWidth : "normal") : undefined,
+      macdSignalLineStyle: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalLineStyle === "solid" || u.macdSignalLineStyle === "dotted" || u.macdSignalLineStyle === "dashed" ? u.macdSignalLineStyle : "dashed") : undefined,
+      macdHistogram: u.type === "MACD" && u.macdSignalLine ? (u.macdHistogram === true) : undefined,
+      macdHistogramColorAbove: u.type === "MACD" && u.macdSignalLine && u.macdHistogram ? (u.macdHistogramColorAbove ?? "#059669") : undefined,
+      macdHistogramColorBelow: u.type === "MACD" && u.macdSignalLine && u.macdHistogram ? (u.macdHistogramColorBelow ?? "#dc2626") : undefined,
     }));
   } catch {
     return [];
@@ -164,7 +201,7 @@ function saveToStorage(list: UserIndicatorConfig[]) {
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle"
+  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" |   "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" |   "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow"
 >;
 
 interface ContextValue {

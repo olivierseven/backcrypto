@@ -1,10 +1,11 @@
-/** Paleta de cores (claro → escuro), pelo menos 12. */
+/** Paleta de cores (claro → escuro), pelo menos 12. Inclui amarelo para MACD, MAs e RSI. */
 export const INDICATOR_COLOR_PALETTE = [
   "#ffffff",
   "#000000",
   "#ef4444",
   "#f97316",
   "#f59e0b",
+  "#eab308", // amarelo
   "#84cc16",
   "#10b981",
   "#06b6d4",

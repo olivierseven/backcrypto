@@ -1,0 +1,114 @@
+import type {
+  UserIndicatorType,
+  IndicatorPanel,
+  IndicatorFieldKey,
+  IndicatorLineWidth,
+  IndicatorLineStyle,
+} from "../KlinesIndicatorsContext";
+import type { FieldOption } from "./useIndicatorsPanelFields";
+
+export interface AddFormState {
+  indicatorType: UserIndicatorType;
+  period: number;
+  periodText: string;
+  fieldKey: IndicatorFieldKey;
+  color: string;
+  colorOpen: boolean;
+  chartOption: IndicatorPanel;
+  lineWidth: IndicatorLineWidth;
+  lineStyle: IndicatorLineStyle;
+  macdFastMaType: "SMA" | "EMA" | "WMA";
+  macdFastPeriod: number;
+  macdFastPeriodText: string;
+  macdSlowMaType: "SMA" | "EMA" | "WMA";
+  macdSlowPeriod: number;
+  macdSlowPeriodText: string;
+  macdSignalLine: boolean;
+  macdSignalMaType: "SMA" | "EMA" | "WMA";
+  macdSignalPeriod: number;
+  macdSignalPeriodText: string;
+  macdSignalColor: string;
+  macdSignalLineWidth: IndicatorLineWidth;
+  macdSignalLineStyle: IndicatorLineStyle;
+  macdHistogram: boolean;
+  macdHistogramColorAbove: string;
+  macdHistogramColorBelow: string;
+  rsiFixedScale: boolean;
+  rsiCenterLine: boolean;
+  rsiCenterLineColor: string;
+  rsiCenterLineWidth: IndicatorLineWidth;
+  rsiCenterLineStyle: IndicatorLineStyle;
+  rsiLimits: boolean;
+  rsiLimitUpper: number;
+  rsiLimitLower: number;
+  rsiLimitColor: string;
+  rsiLimitLineWidth: IndicatorLineWidth;
+  rsiLimitLineStyle: IndicatorLineStyle;
+}
+
+export interface EditFormState {
+  period: number;
+  periodText: string;
+  fieldKey: IndicatorFieldKey;
+  color: string;
+  panel: IndicatorPanel;
+  lineWidth: IndicatorLineWidth;
+  lineStyle: IndicatorLineStyle;
+  rsiFixedScale: boolean;
+  rsiCenterLine: boolean;
+  rsiCenterLineColor: string;
+  rsiCenterLineWidth: IndicatorLineWidth;
+  rsiCenterLineStyle: IndicatorLineStyle;
+  rsiLimits: boolean;
+  rsiLimitUpper: number;
+  rsiLimitLower: number;
+  rsiLimitColor: string;
+  rsiLimitLineWidth: IndicatorLineWidth;
+  rsiLimitLineStyle: IndicatorLineStyle;
+  macdFastMaType: "SMA" | "EMA" | "WMA";
+  macdFastPeriod: number;
+  macdFastPeriodText: string;
+  macdSlowMaType: "SMA" | "EMA" | "WMA";
+  macdSlowPeriod: number;
+  macdSlowPeriodText: string;
+  macdSignalLine: boolean;
+  macdSignalMaType: "SMA" | "EMA" | "WMA";
+  macdSignalPeriod: number;
+  macdSignalPeriodText: string;
+  macdSignalColor: string;
+  macdSignalLineWidth: IndicatorLineWidth;
+  macdSignalLineStyle: IndicatorLineStyle;
+  macdHistogram: boolean;
+  macdHistogramColorAbove: string;
+  macdHistogramColorBelow: string;
+}
+
+export interface IndicatorsPanelContextValue {
+  t: Record<string, string>;
+  userIndicators: import("../KlinesIndicatorsContext").UserIndicatorConfig[];
+  fieldOptions: FieldOption[];
+  firstEnabledFieldValue: IndicatorFieldKey;
+  fieldOptionsVisibleForAdd: FieldOption[];
+  firstEnabledFieldValueForAdd: IndicatorFieldKey;
+  panelsWithSecondary: { panel2: boolean; panel3: boolean; panel4: boolean };
+  panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean };
+  panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean };
+  isMovingAverageType: (type: string) => boolean;
+  INDICATOR_COLOR_PALETTE: readonly string[];
+  INTERVAL_OPTIONS: { value: number; label: string }[];
+  addButtonDisabled: boolean;
+  handleAdd: () => void;
+  editingId: string | null;
+  editForm: EditFormState | null;
+  setEditForm: React.Dispatch<React.SetStateAction<EditFormState | null>>;
+  startEdit: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig) => void;
+  saveEdit: () => void;
+  cancelEdit: () => void;
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+  toggleInterval: (id: string, groupMinutes: number) => void;
+  setAllIntervals: (id: string) => void;
+  isIntervalChecked: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig, value: number) => boolean;
+  removeIndicator: (id: string) => void;
+  getIndicatorLabel: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig, t: unknown, list: import("../KlinesIndicatorsContext").UserIndicatorConfig[]) => string;
+}

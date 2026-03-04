@@ -188,3 +188,45 @@ export function computeRsiColumn(
 
   return out;
 }
+
+export type MaType = "SMA" | "EMA" | "WMA";
+
+function computeMaColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  maType: MaType,
+  period: number
+): (number | null)[] {
+  if (maType === "EMA") return computeEmaColumn(data, valueIndex, period);
+  if (maType === "WMA") return computeWmaColumn(data, valueIndex, period);
+  return computeSmaColumn(data, valueIndex, period);
+}
+
+/**
+ * MACD line = fast MA - slow MA (diferença entre duas médias móveis).
+ * Indicador secundário: valores podem ser negativos; escala automática no painel.
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeMacdColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  fastMaType: MaType,
+  fastPeriod: number,
+  slowMaType: MaType,
+  slowPeriod: number
+): (number | null)[] {
+  const fast = computeMaColumn(data, valueIndex, fastMaType, Math.max(1, fastPeriod));
+  const slow = computeMaColumn(data, valueIndex, slowMaType, Math.max(1, slowPeriod));
+  const n = data.length;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const f = fast[i];
+    const s = slow[i];
+    if (f != null && s != null && Number.isFinite(f) && Number.isFinite(s)) {
+      out.push(f - s);
+    } else {
+      out.push(null);
+    }
+  }
+  return out;
+}

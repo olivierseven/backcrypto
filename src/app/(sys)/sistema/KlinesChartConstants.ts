@@ -18,7 +18,7 @@ export const INDICATOR_STRIP_OFFSET_UP = 18;
 export const CHART_TOP_PADDING = 0;
 export const MARGIN_BOTTOM_TABLE = 28;
 /** Margem abaixo do último painel secundário para não encostar no rodapé. */
-export const PANEL2_BOTTOM_MARGIN = 10;
+export const PANEL2_BOTTOM_MARGIN = 24;
 /** Espaçamento entre o gráfico principal e o primeiro painel (2/3/4). */
 export const MAIN_TO_PANEL_GAP = 14;
 /** Espaçamento vertical entre os painéis 2, 3 e 4. */

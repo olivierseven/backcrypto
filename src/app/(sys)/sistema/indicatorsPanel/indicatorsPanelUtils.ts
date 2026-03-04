@@ -27,6 +27,11 @@ export function getIndicatorLabel(
   userIndicators: UserIndicatorConfig[]
 ): string {
   const fieldLabel = getFieldLabel(ind.fieldKey, t, userIndicators);
+  if (ind.type === "MACD") {
+    const fast = ind.macdFastPeriod ?? 12;
+    const slow = ind.macdSlowPeriod ?? 26;
+    return `MACD(${fast},${slow}) ${fieldLabel}`;
+  }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
 
@@ -52,7 +57,29 @@ export function getIndicatorLabelShort(
   userIndicators: UserIndicatorConfig[]
 ): string {
   const letter = getFieldShortLetter(ind.fieldKey, userIndicators);
+  if (ind.type === "MACD") {
+    const fast = ind.macdFastPeriod ?? 12;
+    const slow = ind.macdSlowPeriod ?? 26;
+    return `MACD(${fast},${slow}) ${letter}`;
+  }
   return `${ind.type}(${ind.period}) ${letter}`;
+}
+
+/** Rótulo da linha de sinal do MACD (ex.: "MACD Signal(9)"). */
+export function getIndicatorLabelSignal(
+  ind: UserIndicatorConfig,
+  t: KlinesT
+): string {
+  const period = ind.macdSignalPeriod ?? 9;
+  const k = t as Record<string, string>;
+  const template = k.macdSignalLabel ?? "MACD Signal({period})";
+  return template.replace("{period}", String(period));
+}
+
+/** Rótulo curto da linha de sinal (ex.: "MACD Sig(9)"). */
+export function getIndicatorLabelShortSignal(ind: UserIndicatorConfig): string {
+  const period = ind.macdSignalPeriod ?? 9;
+  return `MACD Sig(${period})`;
 }
 
 export function isMovingAverageType(type: string): boolean {
