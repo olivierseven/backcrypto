@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "project_number": "796979219120",
+    "project_id": "sevencoins",
+    "storage_bucket": "sevencoins.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796979219120:android:2628110308d52176848975",
+        "android_client_info": {
+          "package_name": "com.sevencoins.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [{"current_key": "AIzaSyDyp6v8xHGS-fg1XUiD0xgHieuMZh6fn5s"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796979219120:android:a1b2c3d4e5f6g7h8i9j0",
+        "android_client_info": {
+          "package_name": "com.sevencoins.biogenerator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [{"current_key": "AIzaSyDyp6v8xHGS-fg1XUiD0xgHieuMZh6fn5s"}],
+      "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+    }
+  ],
+  "configuration_version": "1"
+}

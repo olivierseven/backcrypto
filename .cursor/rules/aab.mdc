@@ -1,0 +1,29 @@
+---
+description: Procedimento de release AAB do BioGenerator Android
+alwaysApply: true
+---
+
+# Release AAB BioGenerator
+
+## Antes de gerar o AAB
+
+1. **versionCode**: somar +1 em relação ao último release (`android/app/build.gradle`).
+2. **versionName**: usar sempre o nome da branch atual (ex.: `v1.00`, `main`, `fix/oauth`).
+
+## Após gerar o AAB
+
+1. **Se o repositório estiver ativo**: perguntar ao usuário "Deseja fazer commit e push de tudo que foi alterado no projeto?" e, se sim, executar o fluxo de commit e push.
+2. **Se o repositório estiver desativado** (regra `repo-disabled.mdc`): não perguntar sobre commit/push.
+
+## Notas da versão
+
+Sempre sugerir notas para o público no formato abaixo (baseadas nas alterações do release):
+
+```
+<pt-BR>
+Insira ou cole aqui as notas da versão no idioma pt-BR
+</pt-BR>
+<en-US>
+Insira ou cole aqui as notas da versão no idioma en-US
+</en-US>
+```

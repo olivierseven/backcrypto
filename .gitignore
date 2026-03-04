@@ -1,0 +1,18 @@
+node_modules
+.next
+.env
+.env*.local
+
+# Android release
+android/keystore.properties
+android/app/keystore.properties
+*.jks
+
+# IDE
+android/.idea/
+
+# Prisma temp
+*.dll.node.tmp*
+
+logs/*
+!logs/.gitkeep

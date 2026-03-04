@@ -1,0 +1,446 @@
+// Schema backcrypto — DATABASE_URL
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/lib/prisma-bio-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["backcrypto"]
+}
+
+enum Role {
+  user
+  admin
+
+  @@schema("backcrypto")
+}
+
+enum BioLanguage {
+  en
+  pt
+
+  @@schema("backcrypto")
+}
+
+enum Tier {
+  free
+  plus
+  lite
+
+  @@schema("backcrypto")
+}
+
+enum UserLevel {
+  RECRUTA
+  APRENDIZ
+  EXPLORADOR
+  JOGADOR
+  AVANCADO
+  ESPECIALISTA
+  MESTRE
+  ELITE
+  LENDARIO
+  SUPREMO
+  MITICO
+  CELESTIAL
+  DIVINO
+
+  @@schema("backcrypto")
+}
+
+enum TxType {
+  CREDIT
+  DEBIT
+  ADJUSTMENT
+
+  @@schema("backcrypto")
+}
+
+enum TxSource {
+  STRIPE
+  PAGARME
+  SPEND
+  REFUND
+  ADMIN
+  EXPIRATION
+  BONUS
+  PRIZE
+
+  @@schema("backcrypto")
+}
+
+enum CheckoutStatus {
+  CREATED
+  COMPLETED
+  REFUNDED
+  CANCELED
+  PARTIALLY_REFUNDED
+  OVER_LIMIT
+
+  @@schema("backcrypto")
+}
+
+model User {
+  id               String      @id @default(cuid())
+  emailEnc         String
+  emailIv          String
+  emailTag         String
+  emailSearchHash  String      @unique
+  emailVerifiedAt  DateTime?
+  name             String?
+  passwordHash     String
+  specialCodeHash  String?
+  specialExpiresAt DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  role             Role        @default(user)
+  tier             Tier        @default(free)
+  nickname         String?     @unique
+  nicknameChanges  Int         @default(0)
+  avatarId         Int         @default(1)
+  avatarBorder     String      @default("white")
+  avatarSkinTone   Int?
+  avatarColorTone  Int?
+  sevenPoints      Int         @default(0)
+  ganhoSimulado    Decimal     @default(0) @db.Decimal(65, 30)
+  userLevel        UserLevel   @default(RECRUTA)
+  position         Int?
+  tmp              Boolean     @default(false)
+  isDeleted        Boolean     @default(false)
+  dataExclusao     DateTime?
+  dataExpiracao    DateTime?
+  pushToken        String?
+  pushTokenUpdated DateTime?
+  notifyMegaSena   Boolean     @default(true)
+  notifyLotofacil  Boolean     @default(true)
+  notifyQuina      Boolean     @default(true)
+  hideStatusBar    Boolean     @default(true)
+  progress         Int         @default(0)
+  language         BioLanguage @default(en)
+
+  accessRequests      AccessRequest[]
+  coinLedger          CoinLedgerEntry[]
+  coinWallet          UserCoinWallet?
+  checkoutSessions    StripeCheckoutSession[]
+  pagarMeOrders       PagarMeOrder[]
+  passwordResetTokens PasswordResetToken[]
+  verificationTokens  EmailVerificationToken[]
+  walletCredits       WalletCredit[]
+  notifications       UserNotification[]
+  simulationQueue     BioSimulationQueue[]
+  savedConfigs        BioSavedConfig[]
+  simulationState     BioSimulationState?
+  chartLayouts        ChartLayout[]
+
+  @@schema("backcrypto")
+}
+
+// Preferências de layout do gráfico de klines (slots 1–7; 0 = default/localStorage). Config em JSON para flexibilidade.
+model ChartLayout {
+  userId    String   @map("user_id")
+  slot      Int // 1–7 (Layout 1 … Layout 7); 0 = default, não persistido
+  config    Json // { visibleCount, candleColorPreset, yAxisAbbreviated, ... }
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, slot])
+  @@schema("backcrypto")
+}
+
+model BioSavedConfig {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  private          Boolean  @default(true)
+  config           Json
+  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
+  likes            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name])
+  @@index([userId])
+  @@index([private])
+  @@schema("backcrypto")
+}
+
+enum SenderType {
+  system
+  user
+
+  @@schema("backcrypto")
+}
+
+model UserNotification {
+  idNotification String     @id @default(cuid())
+  senderType     SenderType
+  sender         String?
+  userId         String
+  notification   String
+  keySystem      String?
+  ativo          Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  expiredDate    DateTime
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ativo])
+  @@index([expiredDate])
+  @@schema("backcrypto")
+}
+
+model AccessRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@schema("backcrypto")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@schema("backcrypto")
+}
+
+model PasswordResetToken {
+  tokenHash String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@schema("backcrypto")
+}
+
+model UserCoinWallet {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  balance   Int               @default(0)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  entries   CoinLedgerEntry[]
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@schema("backcrypto")
+}
+
+model CoinLedgerEntry {
+  id        String         @id @default(cuid())
+  userId    String
+  walletId  String
+  type      TxType
+  source    TxSource
+  amount    Int
+  refId     String?
+  meta      Json?
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet    UserCoinWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  credit    WalletCredit?  @relation("EntryCredit")
+
+  @@unique([source, refId])
+  @@index([userId, createdAt])
+  @@index([walletId, createdAt])
+  @@index([source, createdAt])
+  @@schema("backcrypto")
+}
+
+model WalletCredit {
+  id        String          @id @default(cuid())
+  userId    String
+  entryId   String          @unique
+  amount    Int
+  consumed  Int             @default(0)
+  expiresAt DateTime
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  entry     CoinLedgerEntry @relation("EntryCredit", fields: [entryId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([userId, createdAt])
+  @@schema("backcrypto")
+}
+
+model StripeEvent {
+  id          String    @id @default(cuid())
+  type        String
+  payload     Json
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([type])
+  @@schema("backcrypto")
+}
+
+model StripeCheckoutSession {
+  id               String         @id @default(cuid())
+  userId           String
+  status           CheckoutStatus @default(CREATED)
+  amountTotalCents Int
+  currency         String
+  coinsToCredit    Int
+  pricingLabel     String
+  completedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, completedAt])
+  @@index([completedAt])
+  @@schema("backcrypto")
+}
+
+model PagarMeOrder {
+  id               String         @id
+  userId           String
+  status           CheckoutStatus @default(CREATED)
+  amountTotalCents Int
+  currency         String         @default("BRL")
+  coinsToCredit    Int
+  pricingLabel     String
+  qrCode           String?
+  qrCodeUrl        String?
+  pixCopyPaste     String?
+  expiresAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, completedAt])
+  @@index([completedAt])
+  @@index([status])
+  @@schema("backcrypto")
+}
+
+enum BioQueueStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+
+  @@schema("backcrypto")
+}
+
+model BioSimulationQueue {
+  id        String         @id @default(cuid())
+  queueName String
+  userId    String
+  status    BioQueueStatus @default(PENDING)
+  payload   Json
+  result    Json?
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([queueName, status])
+  @@index([userId, createdAt])
+  @@schema("backcrypto")
+}
+
+// Uma linha por usuário: último estado da simulação (genesis + inputs + mapa/origens). Sem histórico.
+model BioSimulationState {
+  userId           String   @unique
+  state            Json // snapshot: genesisResult, inputValues, origensAgendadas, mapaNumero, iteracao, etc.
+  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@schema("backcrypto")
+}
+
+model BioAppConfig {
+  key         String   @id
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@schema("backcrypto")
+}
+
+// Velas (klines) Binance — BTCUSDT 1m; manter 180 dias com expurgo
+model BinanceKline {
+  symbol                   String // ex.: BTCUSDT
+  interval                 String // ex.: 1m
+  openTime                 BigInt // abertura (ms UTC)
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([symbol, interval, openTime])
+  @@index([symbol, interval, openTime])
+  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Cópia idêntica de BinanceKline (mesma estrutura e dados)
+model BinanceKlineFast {
+  symbol                   String
+  interval                 String
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([symbol, interval, openTime])
+  @@index([symbol, interval, openTime])
+  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Cache de klines agregados a partir de BinanceKline 1m. Sem 1m; intervalos até 1D.
+// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo script binance-kline-cache-refresh.
+model BinanceKlineCache {
+  symbol                   String
+  interval                 String // 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([symbol, interval, openTime])
+  @@index([symbol, interval, openTime])
+  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineCache_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}

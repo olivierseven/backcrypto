@@ -1,0 +1,60 @@
+{
+  "name": "biogenerator",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "node scripts/build.js",
+    "start": "next start -p 3004",
+    "postinstall": "prisma generate",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:copy": "npx cap copy",
+    "cap:update": "npx cap update",
+    "cap:assets": "npx capacitor-assets generate --android --splashBackgroundColor \"#ffffff\"",
+    "backcrypto:schema": "prisma db execute --file prisma/backcrypto_schema.sql --schema prisma/schema.prisma",
+    "backcrypto:copy": "prisma db execute --file prisma/backcrypto_copy_data.sql --schema prisma/schema.prisma",
+    "backcrypto": "npm run backcrypto:schema && npm run backcrypto:copy",
+    "binance-klines-fast-sync": "node scripts/binance-klines-fast-sync.js",
+    "binance-klines-fast-sync:loop": "node scripts/binance-klines-fast-sync-loop.js",
+    "binance-kline-cache-refresh": "node scripts/binance-kline-cache-refresh.js",
+    "binance-klines-backfill": "node scripts/binance-klines-backfill.js",
+    "binance-klines-backfill-1h": "node scripts/binance-klines-backfill-1h.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@capacitor-community/in-app-review": "^8.0.0",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
+    "@prisma/client": "^6.14.0",
+    "bcryptjs": "^3.0.2",
+    "firebase-admin": "^13.6.1",
+    "jose": "^6.0.13",
+    "next": "15.5.9",
+    "prisma": "^6.14.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "resend": "^4.8.0",
+    "sharp": "^0.34.5",
+    "stripe": "^18.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "postcss": "^8",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  }
+}

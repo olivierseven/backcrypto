@@ -1,0 +1,13 @@
+---
+description: Repositório Git desativado neste projeto
+alwaysApply: true
+---
+
+# Repositório desativado
+
+Neste projeto (gotai) **não estamos usando repositório Git** por enquanto.
+
+- Não oferecer commit, push ou qualquer fluxo de Git.
+- Não assumir que o projeto está versionado nem sugerir comandos git.
+
+Quando o repositório for ativado, esta regra pode ser removida ou alterada.

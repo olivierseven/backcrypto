@@ -1,0 +1,37 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /reset-password/
+Disallow: /check-email/
+Disallow: /redeem/
+Disallow: /pagamento/
+Disallow: /bypass/
+Disallow: /dev/
+Disallow: /_next/
+Disallow: /carteira/
+Disallow: /mega-sena/
+Disallow: /quina/
+Disallow: /lotofacil/
+Disallow: /conta/
+Disallow: /analises/
+Disallow: /labs/
+Disallow: /sorte/
+Disallow: /progresso/
+Disallow: /biogenerator/
+
+# Permitir rastreador do Google AdSense
+User-agent: Mediapartners-Google
+Allow: /
+
+# Permitir acesso aos assets públicos
+Allow: /assets/
+Allow: /coins/
+Allow: /favicon.ico
+Allow: /manifest.json
+Allow: /ads.txt
+
+# Sitemap
+Sitemap: https://sevencoins.com.br/sitemap.xml
