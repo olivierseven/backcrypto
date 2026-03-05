@@ -36,6 +36,7 @@ export const SIDEBAR_WIDTH = 40;
 export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
 export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";
+export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";
 export const KLINE_USER_INDICATORS_KEY = "backcrypto-klines-user-indicators";
 
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;

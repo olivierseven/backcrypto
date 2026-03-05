@@ -74,6 +74,8 @@ export interface KlinesChartSidebarProps {
   // Draw
   drawOpen: boolean;
   setDrawOpen: (v: boolean | ((o: boolean) => boolean)) => void;
+  drawingsVisible: boolean;
+  setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
   drawTool: "line" | "select";
   drawMagnetic: boolean;
@@ -148,6 +150,8 @@ export function KlinesChartSidebar({
   setLastCloseTextColor,
   drawOpen,
   setDrawOpen,
+  drawingsVisible,
+  setDrawingsVisible,
   drawMode,
   drawTool,
   drawMagnetic,
@@ -468,6 +472,19 @@ export function KlinesChartSidebar({
         )}
       </div>
       <div ref={drawRef} className="relative w-full flex flex-col items-center">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDrawingsVisible((v) => !v);
+          }}
+          className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${!drawingsVisible ? "opacity-60" : ""}`}
+          title={(t as Record<string, string>).drawVisibilityTitle}
+          aria-label={(t as Record<string, string>).drawVisibilityAria}
+          aria-pressed={!drawingsVisible}
+        >
+          <span className={!drawingsVisible ? "opacity-50" : ""} aria-hidden>👁</span>
+        </button>
         <button
           type="button"
           onClick={(e) => {

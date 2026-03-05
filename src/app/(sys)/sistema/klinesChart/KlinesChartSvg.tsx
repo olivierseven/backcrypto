@@ -4,7 +4,7 @@
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
 import type { RefObject } from "react";
-import { MARGIN_LEFT, MARGIN_TOP, Y_AXIS_WIDTH, INDICATOR_STRIP_HEIGHT, INDICATOR_STRIP_OFFSET_UP } from "../KlinesChartConstants";
+import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, INDICATOR_STRIP_OFFSET_UP } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
@@ -60,11 +60,11 @@ export interface KlinesChartSvgProps {
   yValInPanel: (val: number, top: number, h: number, pMin: number, pMax: number) => number;
   hasIndicatorStrip: boolean;
   isDarkBg: boolean;
-  crosshairPoint: { index: number; price: number } | null;
+  crosshairPoint: { index: number; price: number; panelClickY?: number; panelValue?: number } | null;
   crosshairDragging: boolean;
   setCrosshairPoint: (p: { index: number; price: number } | null) => void;
   setCrosshairDragging: (v: boolean) => void;
-  onCrosshairMouseDown: (px: number, py: number) => void;
+  drawingsVisible: boolean;
   drawSegments: DrawSegment[];
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   drawPending: { index1: number; price1: number } | null;
@@ -129,7 +129,7 @@ export function KlinesChartSvg({
   crosshairDragging,
   setCrosshairPoint,
   setCrosshairDragging,
-  onCrosshairMouseDown,
+  drawingsVisible,
   drawSegments,
   setDrawSegments,
   drawPending,
@@ -141,15 +141,6 @@ export function KlinesChartSvg({
   setDrawDragging,
   t,
 }: KlinesChartSvgProps) {
-  const handleCrosshairRectMouseDown = (e: React.MouseEvent<SVGRectElement>) => {
-    const overlay = crosshairOverlayRef.current;
-    if (!overlay) return;
-    const rect = overlay.getBoundingClientRect();
-    const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
-    const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
-    onCrosshairMouseDown(px, py);
-  };
-
   const showCrosshairValues =
     crosshairPoint !== null &&
     (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
@@ -170,6 +161,18 @@ export function KlinesChartSvg({
       role="list"
       aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
     >
+      {panelKey !== "main" && (
+        <span
+          className="text-[10px] font-medium text-zinc-500 px-1.5 py-0.5 rounded shrink-0"
+          style={{
+            backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
+            boxShadow: "0 0 4px rgba(0,0,0,0.15)",
+          }}
+          aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : "Panel 4"}
+        >
+          ({panelKey.replace("panel", "")})
+        </span>
+      )}
       {lines.map((ind, idx) => {
         const crosshairVal =
           showCrosshairValues && crosshairPoint
@@ -178,7 +181,7 @@ export function KlinesChartSvg({
                 if (raw == null) return null;
                 const v = Number(raw);
                 if (!Number.isFinite(v)) return null;
-                return ind.type === "RSI" ? v.toFixed(1) : formatYAxis(v);
+                return (ind.type === "RSI" || ind.type === "Stochastic") ? v.toFixed(1) : formatYAxis(v);
               })()
             : null;
         return (
@@ -204,7 +207,7 @@ export function KlinesChartSvg({
   const mainLines = indicatorLines.filter((ind) => getPanel(ind) === "main");
 
   return (
-    <div className="flex flex-shrink-0 relative" style={{ width: width + Y_AXIS_WIDTH }}>
+    <div className="flex flex-shrink-0 relative" style={{ width }}>
       {hasIndicatorStrip && (
         <>
           {mainLines.length > 0 && strip("main", 0, mainLines)}
@@ -362,6 +365,79 @@ export function KlinesChartSvg({
               )}
               {panelLines.map((ind, indIdx) => {
                 const col = ind.columnIndex;
+                if (ind.type === "Bollinger") {
+                  const upperPts: { i: number; val: number }[] = [];
+                  const middlePts: { i: number; val: number }[] = [];
+                  const lowerPts: { i: number; val: number }[] = [];
+                  for (let i = 0; i < windowSlice.length; i++) {
+                    const u = windowSlice[i][col];
+                    const m = windowSlice[i][col + 1];
+                    const l = windowSlice[i][col + 2];
+                    if (u != null && typeof u === "number" && Number.isFinite(u)) upperPts.push({ i, val: u });
+                    if (m != null && typeof m === "number" && Number.isFinite(m)) middlePts.push({ i, val: m });
+                    if (l != null && typeof l === "number" && Number.isFinite(l)) lowerPts.push({ i, val: l });
+                  }
+                  const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
+                  const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
+                  const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
+                  const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "2 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+                  const middleColor = ind.color ?? "#6366f1";
+                  const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
+                  const upperD = toPathPanel(upperPts);
+                  const middleD = toPathPanel(middlePts);
+                  const lowerD = toPathPanel(lowerPts);
+                  const upperToMiddlePoly = upperPts.length >= 2 && middlePts.length >= 2
+                    ? (() => {
+                        const uMap = new Map(upperPts.map((p) => [p.i, p.val]));
+                        const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                        const indices = [...new Set([...uMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                        let d = "";
+                        for (const i of indices) {
+                          const u = uMap.get(i);
+                          const m = mMap.get(i);
+                          if (u != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${yPanel(u)}`;
+                        }
+                        for (let j = indices.length - 1; j >= 0; j--) {
+                          const i = indices[j]!;
+                          const m = mMap.get(i);
+                          const u = uMap.get(i);
+                          if (m != null && u != null) d += ` L ${cx(i)} ${yPanel(m)}`;
+                        }
+                        return d ? `${d} Z` : "";
+                      })()
+                    : "";
+                  const lowerToMiddlePoly = lowerPts.length >= 2 && middlePts.length >= 2
+                    ? (() => {
+                        const lMap = new Map(lowerPts.map((p) => [p.i, p.val]));
+                        const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                        const indices = [...new Set([...lMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                        let d = "";
+                        for (const i of indices) {
+                          const l = lMap.get(i);
+                          const m = mMap.get(i);
+                          if (l != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${yPanel(l)}`;
+                        }
+                        for (let j = indices.length - 1; j >= 0; j--) {
+                          const i = indices[j]!;
+                          const m = mMap.get(i);
+                          const l = lMap.get(i);
+                          if (m != null && l != null) d += ` L ${cx(i)} ${yPanel(m)}`;
+                        }
+                        return d ? `${d} Z` : "";
+                      })()
+                    : "";
+                  return (
+                    <g key={indIdx}>
+                      {upperToMiddlePoly && <path d={upperToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                      {lowerToMiddlePoly && <path d={lowerToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                      {ind.bollingerShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {ind.bollingerShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {ind.bollingerShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
+                    </g>
+                  );
+                }
                 if (ind.display === "histogram") {
                   const barW = Math.max(1, gap * 0.6);
                   const colorAbove = ind.histogramColorAbove ?? "#059669";
@@ -394,8 +470,9 @@ export function KlinesChartSvg({
                 }
                 const points: { i: number; val: number }[] = [];
                 for (let i = 0; i < windowSlice.length; i++) {
-                  const v = windowSlice[i][col];
-                  if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
+                  const raw = windowSlice[i][col];
+                  const v = raw != null ? Number(raw) : NaN;
+                  if (Number.isFinite(v)) points.push({ i, val: v });
                 }
                 if (points.length < 2) return null;
                 const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
@@ -446,6 +523,21 @@ export function KlinesChartSvg({
                   </g>
                 );
               })}
+              {panelLines.filter((ind) => ind.type === "Stochastic" && ind.stochLimits).map((ind, idx) => {
+                const upper = Math.max(0, Math.min(100, ind.stochLimitUpper ?? 80));
+                const lower = Math.max(0, Math.min(100, ind.stochLimitLower ?? 20));
+                const yUpper = yPanel(upper);
+                const yLower = yPanel(lower);
+                const lStrokeWidth = ind.stochLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeDasharray = ind.stochLimitLineStyle === "dotted" ? "2 2" : ind.stochLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const stroke = ind.stochLimitColor ?? "#dc2626";
+                return (
+                  <g key={`stoch-limits-${idx}`}>
+                    <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                  </g>
+                );
+              })}
             </g>
           );
         })}
@@ -482,10 +574,100 @@ export function KlinesChartSvg({
         })}
         {indicatorLines.filter((ind) => getPanel(ind) === "main").map((ind, indIdx) => {
           const col = ind.columnIndex;
+          if (ind.type === "Bollinger") {
+            const upperPts: { i: number; val: number }[] = [];
+            const middlePts: { i: number; val: number }[] = [];
+            const lowerPts: { i: number; val: number }[] = [];
+            for (let i = 0; i < windowSlice.length; i++) {
+              const u = windowSlice[i][col];
+              const m = windowSlice[i][col + 1];
+              const l = windowSlice[i][col + 2];
+              if (u != null && typeof u === "number" && Number.isFinite(u)) upperPts.push({ i, val: u });
+              if (m != null && typeof m === "number" && Number.isFinite(m)) middlePts.push({ i, val: m });
+              if (l != null && typeof l === "number" && Number.isFinite(l)) lowerPts.push({ i, val: l });
+            }
+            const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
+            const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
+            const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
+            const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "2 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+            const middleColor = ind.color ?? "#6366f1";
+            const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+            const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
+            const upperD = toPath(upperPts);
+            const middleD = toPath(middlePts);
+            const lowerD = toPath(lowerPts);
+            const upperToMiddlePoly = upperPts.length >= 2 && middlePts.length >= 2
+              ? (() => {
+                  const uMap = new Map(upperPts.map((p) => [p.i, p.val]));
+                  const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                  const indices = [...new Set([...uMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                  let d = "";
+                  for (const i of indices) {
+                    const u = uMap.get(i);
+                    const m = mMap.get(i);
+                    if (u != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${y(u)}`;
+                  }
+                  for (let j = indices.length - 1; j >= 0; j--) {
+                    const i = indices[j]!;
+                    const m = mMap.get(i);
+                    const u = uMap.get(i);
+                    if (m != null && u != null) d += ` L ${cx(i)} ${y(m)}`;
+                  }
+                  return d ? `${d} Z` : "";
+                })()
+              : "";
+            const lowerToMiddlePoly = lowerPts.length >= 2 && middlePts.length >= 2
+              ? (() => {
+                  const lMap = new Map(lowerPts.map((p) => [p.i, p.val]));
+                  const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                  const indices = [...new Set([...lMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                  let d = "";
+                  for (const i of indices) {
+                    const l = lMap.get(i);
+                    const m = mMap.get(i);
+                    if (l != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${y(l)}`;
+                  }
+                  for (let j = indices.length - 1; j >= 0; j--) {
+                    const i = indices[j]!;
+                    const m = mMap.get(i);
+                    const l = lMap.get(i);
+                    if (m != null && l != null) d += ` L ${cx(i)} ${y(m)}`;
+                  }
+                  return d ? `${d} Z` : "";
+                })()
+              : "";
+            return (
+              <g key={indIdx}>
+                {upperToMiddlePoly && <path d={upperToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                {lowerToMiddlePoly && <path d={lowerToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                {ind.bollingerShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                {ind.bollingerShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                {ind.bollingerShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
+              </g>
+            );
+          }
           const points: { i: number; val: number }[] = [];
           for (let i = 0; i < windowSlice.length; i++) {
             const v = windowSlice[i][col];
             if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
+          }
+          if (ind.display === "points") {
+            const r = ind.pointSize === "thin" ? 1.5 : 2.5;
+            return (
+              <g key={indIdx}>
+                {points.map((p, i) => (
+                  <circle
+                    key={i}
+                    cx={cx(p.i)}
+                    cy={y(p.val)}
+                    r={r}
+                    fill={ind.color}
+                    stroke="none"
+                  />
+                ))}
+              </g>
+            );
           }
           if (points.length < 2) return null;
           const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
@@ -509,12 +691,19 @@ export function KlinesChartSvg({
           const showCrosshair = isOverCandle || crosshairDragging;
           if (!showCrosshair) return null;
           let crossX = segmentToPixel(crosshairPoint.index, crosshairPoint.price).x;
-          let crossY = y(crosshairPoint.price);
+          let crossY = crosshairPoint.panelClickY != null ? crosshairPoint.panelClickY : y(crosshairPoint.price);
           if (crosshairDragging) {
             crossX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW, crossX));
             crossY = Math.max(MARGIN_TOP, Math.min(MARGIN_TOP + chartH, crossY));
           }
           const tableTop = MARGIN_TOP + chartH;
+          const chartBottom = hasPanel4
+            ? panelTop("panel4") + panelHeight("panel4")
+            : hasPanel3
+              ? panelTop("panel3") + panelHeight("panel3")
+              : hasPanel2
+                ? panelTop("panel2") + panelHeight("panel2")
+                : tableTop;
           const openTimeMs = crosshairPoint.index >= 0 && crosshairPoint.index < n ? Number(fullReversed[crosshairPoint.index][0]) : null;
           const boxPad = 6;
           const lineH = 10;
@@ -524,7 +713,7 @@ export function KlinesChartSvg({
           const boxY = tableTop + 2;
           return (
             <g pointerEvents="none">
-              <line x1={crossX} y1={MARGIN_TOP} x2={crossX} y2={tableTop} stroke={lineTableHex} strokeWidth={1} strokeDasharray="4 2" />
+              <line x1={crossX} y1={MARGIN_TOP} x2={crossX} y2={chartBottom} stroke={lineTableHex} strokeWidth={1} strokeDasharray="4 2" />
               <line x1={MARGIN_LEFT} y1={crossY} x2={MARGIN_LEFT + chartW} y2={crossY} stroke={lineTableHex} strokeWidth={1} strokeDasharray="4 2" />
               <circle cx={crossX} cy={crossY} r={3} fill={lineTableHex} stroke="none" />
               {openTimeMs != null && (
@@ -600,11 +789,11 @@ export function KlinesChartSvg({
             width={chartW}
             height={chartH}
             fill="transparent"
-            style={{ cursor: crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair" }}
-            onMouseDown={handleCrosshairRectMouseDown}
+            style={{ pointerEvents: "none" }}
+            aria-hidden
           />
         )}
-        {drawSegments.map((seg, idx) => {
+        {drawingsVisible && drawSegments.map((seg, idx) => {
           const p1 = segmentToPixel(seg.index1, seg.price1);
           const p2 = segmentToPixel(seg.index2, seg.price2);
           const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
@@ -715,7 +904,7 @@ export function KlinesChartSvg({
               const svgH = svg.height.baseVal.value;
               const px = (e.nativeEvent.clientX - rect.left) * (svgW / rect.width);
               const py = (e.nativeEvent.clientY - rect.top) * (svgH / rect.height);
-              if (drawTool === "select") {
+              if (drawTool === "select" && drawingsVisible) {
                 const HIT_THRESHOLD = 12;
                 let bestIdx = -1;
                 let bestD = HIT_THRESHOLD;
@@ -741,7 +930,7 @@ export function KlinesChartSvg({
             }}
           />
         )}
-        {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (() => {
+        {drawingsVisible && drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (() => {
           const seg = drawSegments[selectedSegmentIndex];
           const h1 = segmentToPixel(seg.index1, seg.price1);
           const h2 = segmentToPixel(seg.index2, seg.price2);

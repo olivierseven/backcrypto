@@ -444,3 +444,15 @@ model BinanceKlineCache {
   @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineCache_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
+
+// Gaps conhecidos (sem dado na Binance): ao validar, estes intervalos são ignorados.
+model BinanceKlineGap {
+  symbol   String
+  interval String // 1m | 1h
+  gapFrom  BigInt // openTime do candle anterior ao gap
+  gapTo    BigInt // openTime do candle seguinte ao gap
+
+  @@id([symbol, interval, gapFrom, gapTo])
+  @@index([symbol, interval])
+  @@schema("backcrypto")
+}

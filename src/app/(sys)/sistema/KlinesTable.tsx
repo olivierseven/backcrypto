@@ -4,14 +4,14 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
 import { formatAbbreviated } from "./klinesFormatters";
-import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal } from "./IndicatorsPanel";
+import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./IndicatorsPanel";
 import KlinesChart from "./KlinesChart";
 
 /**
@@ -95,7 +95,7 @@ function dayKeyUtc(ms: number): string {
 export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
-  const { userIndicators, setCurrentGroupMinutes } = useKlinesIndicators();
+  const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(5); // default 5m
   const [klines, setKlines] = useState<Kline[]>([]);
@@ -157,6 +157,44 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             }
           }
         }
+      } else if (ind.type === "Stochastic") {
+        const stochValueIndex = (valueIndex === 1 || valueIndex === 4) ? valueIndex : 4;
+        const kCol = computeStochasticKColumn(data, period, stochValueIndex);
+        for (let i = 0; i < out.length; i++) out[i].push(kCol[i] ?? null);
+        if (ind.stochDLine) {
+          const kColIndex = out[0].length - 1;
+          const dPeriod = Math.max(1, Math.min(500, ind.stochDPeriod ?? 3));
+          const dCol =
+            (ind.stochDMaType ?? "SMA") === "EMA"
+              ? computeEmaColumn(data, kColIndex, dPeriod)
+              : (ind.stochDMaType ?? "SMA") === "WMA"
+                ? computeWmaColumn(data, kColIndex, dPeriod)
+                : computeSmaColumn(data, kColIndex, dPeriod);
+          for (let i = 0; i < out.length; i++) out[i].push(dCol[i] ?? null);
+        }
+      } else if (ind.type === "OBV") {
+        const col = computeObvColumn(data);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "SAR") {
+        const start = typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02;
+        const inc = typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02;
+        const max = typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2;
+        const col = computeParabolicSarColumn(data, start, inc, max);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "ATR") {
+        const col = computeAtrColumn(data, period);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "VWAP") {
+        const col = computeVwapColumn(data);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "Bollinger") {
+        const z = typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2;
+        const { upper, middle, lower } = computeBollingerBands(data, valueIndex, period, ind.bollingerMaType ?? "SMA", z);
+        for (let i = 0; i < out.length; i++) {
+          out[i].push(upper[i] ?? null);
+          out[i].push(middle[i] ?? null);
+          out[i].push(lower[i] ?? null);
+        }
       } else {
         const col =
           ind.type === "EMA"
@@ -172,13 +210,19 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return out as Kline[];
   }, [klines, userIndicators]);
 
-  /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. */
+  /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
     let col = 12;
     for (let i = 0; i < indicatorIndex; i++) {
       const ind = userIndicators[i];
       if (ind.type === "MACD") {
         col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
+      } else if (ind.type === "Stochastic") {
+        col += 1 + (ind.stochDLine ? 1 : 0);
+      } else if (ind.type === "Bollinger") {
+        col += 3;
+      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP") {
+        col += 1;
       } else {
         col += 1;
       }
@@ -196,6 +240,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
       if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
       if (ind.type === "MACD" && ind.macdHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
+      if (ind.type === "Stochastic" && ind.stochDLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
+      /* Bollinger: single entry with columnIndex = first of 3 cols (upper, middle, lower) */
     }
     return list;
   }, [userIndicators, groupMinutes, getIndicatorColumnStart]);
@@ -415,10 +461,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       >
         <div
           ref={chartWrapRef}
-          className="w-full min-h-0 max-h-[85vh] overflow-x-hidden overflow-y-auto rounded-lg border border-zinc-200 bg-white"
+          className="w-full min-h-0 max-h-[85vh] overflow-x-auto overflow-y-auto rounded-lg border border-zinc-200 bg-white"
           style={{
             WebkitOverflowScrolling: "touch",
-            touchAction: "pan-y",
+            touchAction: "pan-x pan-y",
             overscrollBehavior: "contain",
             scrollbarGutter: "stable",
           }}
@@ -429,22 +475,23 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             intervalLabel={intervalLabel}
             width={chartWidth}
             maxChartHeight={
-              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD") && chartContainerHeight > 100
+              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR") && chartContainerHeight > 100
                 ? chartContainerHeight - 80
                 : undefined
             }
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
-              color: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color,
-              lineWidth: isHistogram ? undefined : isSignal ? (ind.macdSignalLineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
-              lineStyle: isHistogram ? undefined : isSignal ? (ind.macdSignalLineStyle ?? "dashed") : (ind.lineStyle ?? "solid"),
-              label: isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? getIndicatorLabelSignal(ind, t) : getIndicatorLabel(ind, t, userIndicators),
-              shortLabel: isHistogram ? "MACD Hist" : isSignal ? getIndicatorLabelShortSignal(ind) : getIndicatorLabelShort(ind, userIndicators),
+              color: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
+              lineWidth: isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
+              lineStyle: isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
+              label: isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
+              shortLabel: isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
-              display: isHistogram ? "histogram" as const : undefined,
+              display: isHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
+              pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
               histogramColorAbove: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : undefined,
               histogramColorBelow: isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main"),
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "OBV" || ind.type === "ATR" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -456,10 +503,28 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
               rsiLimitLineWidth: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
               rsiLimitLineStyle: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
+              stochLimits: ind.type === "Stochastic" ? (ind.stochLimits === true) : undefined,
+              stochLimitUpper: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitUpper ?? 80) : undefined,
+              stochLimitLower: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLower ?? 20) : undefined,
+              stochLimitColor: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitColor ?? "#dc2626") : undefined,
+              stochLimitLineWidth: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLineWidth ?? "normal") : undefined,
+              stochLimitLineStyle: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLineStyle ?? "dotted") : undefined,
+              bollingerShowUpper: ind.type === "Bollinger" ? (ind.bollingerShowUpper !== false) : undefined,
+              bollingerShowLower: ind.type === "Bollinger" ? (ind.bollingerShowLower !== false) : undefined,
+              bollingerShowMiddle: ind.type === "Bollinger" ? (ind.bollingerShowMiddle === true) : undefined,
+              bollingerBandOpacity: ind.type === "Bollinger" ? (ind.bollingerBandOpacity ?? 0.2) : undefined,
+              bollingerLimitsColor: ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : undefined,
+              bollingerLimitsLineStyle: ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? "solid") : undefined,
+              bollingerLimitsLineWidth: ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? "normal") : undefined,
+              bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : undefined,
+              bollingerMiddleLineStyle: ind.type === "Bollinger" ? (ind.bollingerMiddleLineStyle ?? "dashed") : undefined,
+              bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
             }))}
+            getLayoutExtraConfig={() => ({ userIndicators })}
             onLayoutConfigLoaded={(config) => {
               const v = config.groupMinutes;
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
+              if (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) replaceUserIndicatorsFromLayout(config.userIndicators);
             }}
           />
         </div>
@@ -490,9 +555,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 <th
                   key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
                   className="px-3 py-2 font-medium text-right text-xs"
-                  style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                  style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                 >
-                  {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? `MACD Sig(${ind.macdSignalPeriod ?? 9})` : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : `${ind.type}(${ind.period})`}
+                  {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
             </tr>

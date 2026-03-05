@@ -16,28 +16,38 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     fieldOptionsVisibleForAdd,
     firstEnabledFieldValueForAdd,
     panelsWithSecondary,
+    panelsFreeForSecondary,
     INDICATOR_COLOR_PALETTE,
     addButtonDisabled,
     handleAdd,
   } = useIndicatorsPanelContext();
 
-  /** Indicadores secundários (RSI, MACD) podem ir em qualquer um dos painéis 2, 3 ou 4 (nunca no main). */
+  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4;
+  const firstFreePanelForSecondary: IndicatorPanel =
+    panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2";
+
+  /** Indicadores secundários (RSI, MACD, Stochastic, OBV, ATR) só podem ir em painéis livres (2, 3 ou 4). SAR e VWAP só no main. */
   const chartOptionValue: string =
-    form.indicatorType === "RSI" || form.indicatorType === "MACD"
-      ? (form.chartOption === "panel2" || form.chartOption === "panel3" || form.chartOption === "panel4" ? form.chartOption : "panel2")
-      : (form.chartOption === "panel2" && !panelsWithSecondary.panel2) || (form.chartOption === "panel3" && !panelsWithSecondary.panel3) || (form.chartOption === "panel4" && !panelsWithSecondary.panel4)
-        ? "main"
+    form.indicatorType === "SAR" || form.indicatorType === "VWAP"
+      ? "main"
+      : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "OBV" || form.indicatorType === "ATR"
+        ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4)
+          ? form.chartOption
+          : hasFreePanelForSecondary
+            ? firstFreePanelForSecondary
+            : ""
         : form.chartOption;
 
   const setType = (newType: UserIndicatorType) => {
     setForm((prev) => {
+      const freePanel: IndicatorPanel = panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2";
       if (newType === "RSI") {
         return {
           ...prev,
           indicatorType: "RSI",
           period: 14,
           periodText: "14",
-          chartOption: "panel2",
+          chartOption: freePanel,
           rsiFixedScale: true,
           rsiCenterLine: false,
           rsiCenterLineColor: "#71717a",
@@ -55,7 +65,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         return {
           ...prev,
           indicatorType: "MACD",
-          chartOption: "panel2",
+          chartOption: freePanel,
           macdFastMaType: "EMA",
           macdFastPeriod: 12,
           macdFastPeriodText: "12",
@@ -74,6 +84,99 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           macdHistogramColorBelow: "#dc2626",
         };
       }
+      if (newType === "Stochastic") {
+        return {
+          ...prev,
+          indicatorType: "Stochastic",
+          period: 14,
+          periodText: "14",
+          fieldKey: "close",
+          chartOption: freePanel,
+          stochLimits: false,
+          stochLimitUpper: 80,
+          stochLimitLower: 20,
+          stochLimitColor: "#dc2626",
+          stochLimitLineWidth: "normal",
+          stochLimitLineStyle: "dotted",
+          stochDLine: false,
+          stochDMaType: "SMA",
+          stochDPeriod: 3,
+          stochDPeriodText: "3",
+          stochDColor: "#ea580c",
+          stochDLineWidth: "normal",
+          stochDLineStyle: "dashed",
+        };
+      }
+      if (newType === "OBV") {
+        return {
+          ...prev,
+          indicatorType: "OBV",
+          period: 1,
+          periodText: "1",
+          fieldKey: "volume",
+          chartOption: freePanel,
+        };
+      }
+      if (newType === "SAR") {
+        return {
+          ...prev,
+          indicatorType: "SAR",
+          chartOption: "main",
+          sarStart: 0.02,
+          sarStartText: "0.02",
+          sarIncrement: 0.02,
+          sarIncrementText: "0.02",
+          sarMax: 0.2,
+          sarMaxText: "0.2",
+          sarPointSize: "normal",
+          lineStyle: "dotted",
+        };
+      }
+      if (newType === "ATR") {
+        return {
+          ...prev,
+          indicatorType: "ATR",
+          period: 14,
+          periodText: "14",
+          fieldKey: "close",
+          chartOption: freePanel,
+        };
+      }
+      if (newType === "VWAP") {
+        return {
+          ...prev,
+          indicatorType: "VWAP",
+          period: 1,
+          periodText: "1",
+          fieldKey: "close",
+          chartOption: "main",
+        };
+      }
+      if (newType === "Bollinger") {
+        return {
+          ...prev,
+          indicatorType: "Bollinger",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+          bollingerMaType: "SMA",
+          bollingerZ: 2,
+          bollingerZText: "2",
+          bollingerShowUpper: true,
+          bollingerShowLower: true,
+          bollingerShowMiddle: false,
+          bollingerBandOpacity: 0.2,
+          bollingerBandOpacityText: "20",
+          bollingerLimitsColor: "#6366f1",
+          bollingerLimitsColorOpen: false,
+          bollingerLimitsLineStyle: "solid",
+          bollingerLimitsLineWidth: "normal",
+          bollingerMiddleColor: "#a855f7",
+          bollingerMiddleLineStyle: "dashed",
+          bollingerMiddleLineWidth: "normal",
+        };
+      }
       return { ...prev, indicatorType: newType };
     });
   };
@@ -82,27 +185,34 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-        <select
-          value={chartOptionValue}
-          onChange={(e) => setForm((prev) => ({ ...prev, chartOption: e.target.value as IndicatorPanel }))}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.chartOption}
-        >
-          {(form.indicatorType === "RSI" || form.indicatorType === "MACD") ? (
-            <>
-              <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-              <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-              <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
-            </>
-          ) : (
-            <>
-              <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
-              {panelsWithSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-              {panelsWithSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-              {panelsWithSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-            </>
-          )}
-        </select>
+        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" ? (
+          <span className="text-sm text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
+        ) : (
+          <select
+            value={chartOptionValue}
+            onChange={(e) => setForm((prev) => ({ ...prev, chartOption: e.target.value as IndicatorPanel }))}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            aria-label={t.chartOption}
+          >
+            {(form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "OBV" || form.indicatorType === "ATR") ? (
+              <>
+                {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && (
+                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
+                )}
+              </>
+            ) : (
+              <>
+                <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
+                <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+              </>
+            )}
+          </select>
+        )}
       </div>
 
       {form.indicatorType === "RSI" && (
@@ -229,6 +339,110 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
+      {form.indicatorType === "Stochastic" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.stochLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, stochLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochLimitsLabel ?? "Limites superior e inferior (0–100)"}</span>
+          </label>
+          {form.stochLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.stochLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.stochLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.stochDLine} onChange={(e) => setForm((prev) => ({ ...prev, stochDLine: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochDLineLabel ?? "Linha %D (média móvel da %K)"}</span>
+          </label>
+          {form.stochDLine && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo da MM"}</span>
+                <select value={form.stochDMaType} onChange={(e) => setForm((prev) => ({ ...prev, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="SMA">SMA</option>
+                  <option value="EMA">EMA</option>
+                  <option value="WMA">WMA</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
+                <div className="flex-1 min-w-0 flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.max(1, prev.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, prev.stochDPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+                  <input type="text" inputMode="numeric" value={form.stochDPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setForm((prev) => ({ ...prev, stochDPeriod: v, stochDPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.min(500, prev.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, prev.stochDPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochDColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.stochDLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.stochDLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
         <select
@@ -242,8 +456,188 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="WMA">WMA</option>
           <option value="RSI">RSI</option>
           <option value="MACD">MACD</option>
+          <option value="Stochastic">Stochastic</option>
+          <option value="OBV">OBV</option>
+          <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
+          <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
+          <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
+          <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
         </select>
       </div>
+
+      {form.indicatorType === "Bollinger" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerMaType ?? "Média móvel"}</span>
+            <select
+              value={form.bollingerMaType}
+              onChange={(e) => setForm((prev) => ({ ...prev, bollingerMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            >
+              <option value="SMA">SMA</option>
+              <option value="EMA">EMA</option>
+              <option value="WMA">WMA</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).field ?? "Campo"}</span>
+            <select
+              value={form.fieldKey}
+              onChange={(e) => setForm((prev) => ({ ...prev, fieldKey: e.target.value as typeof form.fieldKey }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            >
+              {fieldOptionsVisibleForAdd.map((opt) => (
+                <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).period ?? "Período"}</span>
+            <div className="flex-1 min-w-0 flex items-center gap-1">
+              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerZ ?? "Z (0–3)"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.bollingerZText}
+              onChange={(e) => setForm((prev) => ({ ...prev, bollingerZText: e.target.value }))}
+              onBlur={() => {
+                const n = parseFloat(form.bollingerZText);
+                const v = Number.isFinite(n) ? Math.max(0, Math.min(3, n)) : 2;
+                setForm((prev) => ({ ...prev, bollingerZ: v, bollingerZText: String(v) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.bollingerShowUpper} onChange={(e) => setForm((p) => ({ ...p, bollingerShowUpper: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).bollingerShowUpper ?? "Banda superior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.bollingerShowLower} onChange={(e) => setForm((p) => ({ ...p, bollingerShowLower: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).bollingerShowLower ?? "Banda inferior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.bollingerShowMiddle} onChange={(e) => setForm((p) => ({ ...p, bollingerShowMiddle: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).bollingerShowMiddle ?? "Média móvel"}
+            </label>
+          </div>
+          <div className="flex items-center gap-2 relative">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}</span>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColorOpen: !prev.bollingerLimitsColorOpen }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
+              aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}
+              aria-expanded={form.bollingerLimitsColorOpen}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.bollingerLimitsColor }} />
+              </span>
+              <span className="text-zinc-500 text-xs">▾</span>
+            </button>
+            {form.bollingerLimitsColorOpen && (
+              <>
+                <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColorOpen: false }))} />
+                <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColor: hex, bollingerLimitsColorOpen: false }))}
+                        className={`w-10 h-10 rounded border-2 ${form.bollingerLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
+                        style={{ backgroundColor: hex }}
+                        aria-label={`Color ${hex}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
+            <select value={form.bollingerLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, bollingerLimitsLineWidth: e.target.value as typeof form.bollingerLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+            </select>
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
+            <select value={form.bollingerLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, bollingerLimitsLineStyle: e.target.value as typeof form.bollingerLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+            </select>
+          </div>
+        </>
+      )}
+
+      {form.indicatorType === "SAR" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarStart ?? "Start"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.sarStartText}
+              onChange={(e) => setForm((prev) => ({ ...prev, sarStartText: e.target.value }))}
+              onBlur={() => {
+                const n = parseFloat(form.sarStartText);
+                const v = Number.isFinite(n) && n >= 0.001 && n <= 1 ? Math.max(0.001, Math.min(1, n)) : 0.02;
+                setForm((prev) => ({ ...prev, sarStart: v, sarStartText: String(v) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarIncrement ?? "Increment"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.sarIncrementText}
+              onChange={(e) => setForm((prev) => ({ ...prev, sarIncrementText: e.target.value }))}
+              onBlur={() => {
+                const n = parseFloat(form.sarIncrementText);
+                const v = Number.isFinite(n) && n >= 0.001 && n <= 1 ? Math.max(0.001, Math.min(1, n)) : 0.02;
+                setForm((prev) => ({ ...prev, sarIncrement: v, sarIncrementText: String(v) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarMax ?? "Max value"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.sarMaxText}
+              onChange={(e) => setForm((prev) => ({ ...prev, sarMaxText: e.target.value }))}
+              onBlur={() => {
+                const n = parseFloat(form.sarMaxText);
+                const v = Number.isFinite(n) && n >= 0.02 && n <= 1 ? Math.max(0.02, Math.min(1, n)) : 0.2;
+                setForm((prev) => ({ ...prev, sarMax: v, sarMaxText: String(v) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarPointSize ?? "Tamanho do ponto"}</span>
+            <select
+              value={form.sarPointSize}
+              onChange={(e) => setForm((prev) => ({ ...prev, sarPointSize: e.target.value as "thin" | "normal" }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            >
+              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
+              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+            </select>
+          </div>
+        </>
+      )}
 
       {form.indicatorType === "MACD" && (
         <>
@@ -367,7 +761,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {form.indicatorType !== "MACD" && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
         <div className="flex-1 min-w-0 flex items-center gap-1">
@@ -415,10 +809,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       </div>
       )}
 
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "VWAP" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
         <select
-          value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
+          value={(
+            form.indicatorType === "Stochastic"
+              ? ((form.fieldKey === "open" || form.fieldKey === "close") ? form.fieldKey : "close")
+              : (fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd)
+          ) as string}
           onChange={(e) => {
             const newKey = e.target.value as IndicatorFieldKey;
             setForm((prev) => ({ ...prev, fieldKey: newKey }));
@@ -426,13 +825,17 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
           aria-label={t.field}
         >
-          {fieldOptionsVisibleForAdd.map((opt) => (
+          {(form.indicatorType === "Stochastic"
+            ? fieldOptionsVisibleForAdd.filter((o) => o.value === "open" || o.value === "close")
+            : fieldOptionsVisibleForAdd
+          ).map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
         </select>
       </div>
+      )}
 
       <div className="flex items-center gap-2 relative">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
@@ -469,32 +872,35 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-        <select
-          value={form.lineWidth}
-          onChange={(e) => setForm((prev) => ({ ...prev, lineWidth: e.target.value as IndicatorLineWidth }))}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={(t as Record<string, string>).lineWidth}
-        >
-          <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-          <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-        </select>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-        <select
-          value={form.lineStyle}
-          onChange={(e) => setForm((prev) => ({ ...prev, lineStyle: e.target.value as IndicatorLineStyle }))}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={(t as Record<string, string>).lineStyle}
-        >
-          <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-          <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-          <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-        </select>
-      </div>
+      {(form.indicatorType !== "SAR" && form.indicatorType !== "VWAP") && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+            <select
+              value={form.lineWidth}
+              onChange={(e) => setForm((prev) => ({ ...prev, lineWidth: e.target.value as IndicatorLineWidth }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+              aria-label={(t as Record<string, string>).lineWidth}
+            >
+              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+            <select
+              value={form.lineStyle}
+              onChange={(e) => setForm((prev) => ({ ...prev, lineStyle: e.target.value as IndicatorLineStyle }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+              aria-label={(t as Record<string, string>).lineStyle}
+            >
+              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+            </select>
+          </div>
+        </>
+      )}
       <button
         type="button"
         onClick={handleAdd}

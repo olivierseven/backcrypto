@@ -34,6 +34,7 @@ import {
   SECONDARY_PANEL_HEIGHT_DEFAULT,
   KLINE_LAST_LAYOUT_KEY,
   KLINE_DRAW_SEGMENTS_KEY,
+  KLINE_DRAW_VISIBLE_KEY,
   MS_PER_DAY,
   type VisibleCount,
 } from "./KlinesChartConstants";
@@ -45,6 +46,7 @@ import {
   formatDateLabel,
   formatDateYyyyMmDd,
   formatAbbreviated,
+  formatObvYAxis,
   dayKey,
   monthKey,
   formatDayOnly,
@@ -78,7 +80,7 @@ import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, maxChartHeight }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight }: KlinesChartProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
   const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
@@ -115,14 +117,18 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const [chartReady, setChartReady] = useState(true);
   const [layoutApplied, setLayoutApplied] = useState(false);
   const [segmentsApplied, setSegmentsApplied] = useState(false);
+  /** Ocultar/exibir todos os desenhos do timeframe/símbolo atual (persistido por intervalo). */
+  const [drawingsVisible, setDrawingsVisible] = useState(true);
   /** Ponto do crosshair (clique/arraste); índice global e preço. Display só quando estiver sobre um candle visível. */
-  const [crosshairPoint, setCrosshairPoint] = useState<{ index: number; price: number } | null>(null);
+  const [crosshairPoint, setCrosshairPoint] = useState<{ index: number; price: number; panelClickY?: number; panelValue?: number } | null>(null);
   const crosshairDraggingRef = useRef(false);
+  const crosshairStartedInPanelRef = useRef(false);
   const [crosshairDragging, setCrosshairDragging] = useState(false);
   /** Conversão pixel → dados para o crosshair (sem atração magnética). */
   const crosshairPixelToDataRef = useRef<((x: number, yCoord: number) => { index: number; price: number }) | null>(null);
   const crosshairPointRef = useRef(crosshairPoint);
   const crosshairOverlayRef = useRef<SVGRectElement>(null);
+  const crosshairOverlayDivRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
   const saveLoadRef = useRef<HTMLDivElement>(null);
@@ -170,7 +176,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     return () => cancelAnimationFrame(id);
   }, [groupMinutes]);
 
-  // Carregar segmentos de desenho do localStorage ao mudar o intervalo (só os do intervalo atual ficam ativos/visíveis)
+  // Carregar segmentos e visibilidade de desenho do localStorage ao mudar o intervalo
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY) : null;
@@ -178,15 +184,24 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
         setDrawSegments([]);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
-        setSegmentsApplied(true);
-        return;
+      } else {
+        const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
+        const key = String(groupMinutes);
+        const loaded = Array.isArray(data[key]) ? data[key] : [];
+        setDrawSegments(loaded);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
       }
-      const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-      const key = String(groupMinutes);
-      const loaded = Array.isArray(data[key]) ? data[key] : [];
-      setDrawSegments(loaded);
-      setSelectedSegmentIndex(null);
-      setDrawPending(null);
+      const visibleRaw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_VISIBLE_KEY) : null;
+      if (visibleRaw) {
+        try {
+          const visibleData = JSON.parse(visibleRaw) as Record<string, boolean>;
+          const key = String(groupMinutes);
+          if (typeof visibleData[key] === "boolean") setDrawingsVisible(visibleData[key]);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       setDrawSegments([]);
       setSelectedSegmentIndex(null);
@@ -195,6 +210,19 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     setSegmentsApplied(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
   }, [groupMinutes]);
+
+  // Persistir visibilidade dos desenhos (por intervalo)
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const raw = window.localStorage.getItem(KLINE_DRAW_VISIBLE_KEY);
+      const data: Record<string, boolean> = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      data[String(groupMinutes)] = drawingsVisible;
+      window.localStorage.setItem(KLINE_DRAW_VISIBLE_KEY, JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+  }, [groupMinutes, drawingsVisible]);
 
   // Persistir segmentos no localStorage (por intervalo; em outros intervalos não são exibidos)
   useEffect(() => {
@@ -355,7 +383,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
-    const config = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, groupMinutes };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, groupMinutes };
+    const extra = getLayoutExtraConfig?.() ?? {};
+    const config = { ...baseConfig, ...extra };
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -461,80 +491,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     return () => document.removeEventListener("click", onDocClick);
   }, [crosshairPoint]);
 
-  // Arraste do crosshair: mousemove/mouseup; conversão usa rect do overlay (área de plot) + drawConversionRef para alinhar com o clique
-  useEffect(() => {
-    const getCoords = (e: MouseEvent | TouchEvent): { x: number; y: number } | null => {
-      if ("touches" in e && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      if ("clientX" in e) return { x: e.clientX, y: e.clientY };
-      return null;
-    };
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      if (!crosshairDraggingRef.current) return;
-      const coords = getCoords(e);
-      if (!coords) return;
-      const overlay = crosshairOverlayRef.current;
-      const dims = drawConversionRef.current;
-      if (!overlay || !dims) return;
-      if (e.cancelable && "touches" in e) e.preventDefault();
-      const rect = overlay.getBoundingClientRect();
-      const px = MARGIN_LEFT + (coords.x - rect.left) * (dims.chartW / (rect.width || 1));
-      const py = MARGIN_TOP + (coords.y - rect.top) * (dims.chartH / (rect.height || 1));
-      const toData = crosshairPixelToDataRef.current;
-      if (toData) setCrosshairPoint(toData(px, py));
-    };
-    const onUp = () => {
-      crosshairDraggingRef.current = false;
-      setCrosshairDragging(false);
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchmove", onMove, { passive: false });
-    document.addEventListener("touchend", onUp);
-    document.addEventListener("touchcancel", onUp);
-    return () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      document.removeEventListener("touchmove", onMove);
-      document.removeEventListener("touchend", onUp);
-      document.removeEventListener("touchcancel", onUp);
-    };
-  }, []);
-
-  // Touch no overlay com passive: false para permitir preventDefault (evita scroll ao arrastar crosshair)
-  useEffect(() => {
-    if (drawMode) return;
-    const el = crosshairOverlayRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      e.preventDefault();
-      const t = e.touches[0];
-      const overlay = crosshairOverlayRef.current;
-      const dims = drawConversionRef.current;
-      if (!overlay || !dims) return;
-      const rect = overlay.getBoundingClientRect();
-      const px = MARGIN_LEFT + (t.clientX - rect.left) * (dims.chartW / (rect.width || 1));
-      const py = MARGIN_TOP + (t.clientY - rect.top) * (dims.chartH / (rect.height || 1));
-      const toData = crosshairPixelToDataRef.current;
-      if (!toData) return;
-      const newPoint = toData(px, py);
-      const current = crosshairPointRef.current;
-      const isSamePoint = current !== null && current.index === newPoint.index && Math.abs(current.price - newPoint.price) < 1e-9;
-      if (isSamePoint) {
-        setCrosshairPoint(null);
-        return;
-      }
-      const hadCrosshair = current !== null;
-      setCrosshairPoint(newPoint);
-      if (hadCrosshair) {
-        crosshairDraggingRef.current = true;
-        setCrosshairDragging(true);
-      }
-    };
-    el.addEventListener("touchstart", handler, { passive: false });
-    return () => el.removeEventListener("touchstart", handler);
-  }, [drawMode]);
-
   if (klines.length === 0 || width < 100) return null;
 
   const windowSlice = fullReversed.slice(startIndex, startIndex + visibleCount);
@@ -542,7 +498,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   if (windowN === 0) return null;
 
   const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" =>
-    (ind.panel as "main" | "panel2" | "panel3" | "panel4") ?? (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main");
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4") ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "OBV" || ind.type === "ATR" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
@@ -578,57 +534,61 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
   const panelTop = (p: "panel2" | "panel3" | "panel4") => p === "panel2" ? panel2Top : p === "panel3" ? panel3Top : panel4Top;
   const panelHeight = (p: "panel2" | "panel3" | "panel4") => p === "panel2" ? panel2Height : p === "panel3" ? panel3Height : panel4Height;
+  const tableTop = MARGIN_TOP + chartH;
+  const chartBottom = hasPanel4
+    ? panelTop("panel4") + panelHeight("panel4")
+    : hasPanel3
+      ? panelTop("panel3") + panelHeight("panel3")
+      : hasPanel2
+        ? panelTop("panel2") + panelHeight("panel2")
+        : tableTop;
   const yValInPanel = (val: number, top: number, h: number, pMin: number, pMax: number) => {
     const range = pMax - pMin || 1;
     const t = (val - pMin) / range;
     return top + h - Math.max(0, Math.min(1, t)) * h;
   };
+  const buildPanelExtent = (panelKey: "panel2" | "panel3" | "panel4") => {
+    const lines = indicatorLines.filter((ind) => getPanel(ind) === panelKey);
+    const hasObv = lines.some((ind) => ind.type === "OBV");
+    const useFixedScale =
+      !hasObv &&
+      lines.length > 0 &&
+      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || ind.type === "Stochastic");
+    if (useFixedScale) return { min: 0, max: 100 };
+
+    const ext: number[] = [];
+    if (lines.some((ind) => ind.display === "histogram")) ext.push(0);
+    for (const ind of lines) {
+      const col = ind.columnIndex;
+      if (col < 12) continue;
+      for (let i = 0; i < windowSlice.length; i++) {
+        const row = windowSlice[i];
+        if (row.length <= col) continue;
+        const raw = row[col];
+        const v = raw != null ? Number(raw) : NaN;
+        if (!Number.isFinite(v)) continue;
+        if (ind.type === "OBV" && Math.abs(v) > 1e11) continue;
+        ext.push(v);
+      }
+    }
+    let min = ext.length ? Math.min(...ext) : 0;
+    let max = ext.length ? Math.max(...ext) : 100;
+    if (lines.some((ind) => ind.type === "RSI" || ind.type === "Stochastic")) {
+      min = Math.min(min, 0);
+      max = Math.max(max, 100);
+    }
+    if (min !== 0 || max !== 100) {
+      const range = max - min || 1;
+      const pad = range * 0.05;
+      min -= pad;
+      max += pad;
+    }
+    return { min, max };
+  };
   const panelExtents: Record<"panel2" | "panel3" | "panel4", { min: number; max: number }> = {
-    panel2: (() => {
-      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel2");
-      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
-      if (useFixedScale) return { min: 0, max: 100 };
-      const ext: number[] = [];
-      const hasHistogram = lines.some((ind) => ind.display === "histogram");
-      if (hasHistogram) ext.push(0);
-      for (const ind of lines) {
-        for (let i = 0; i < windowSlice.length; i++) {
-          const v = windowSlice[i][ind.columnIndex];
-          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
-        }
-      }
-      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
-    })(),
-    panel3: (() => {
-      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel3");
-      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
-      if (useFixedScale) return { min: 0, max: 100 };
-      const ext: number[] = [];
-      const hasHistogram = lines.some((ind) => ind.display === "histogram");
-      if (hasHistogram) ext.push(0);
-      for (const ind of lines) {
-        for (let i = 0; i < windowSlice.length; i++) {
-          const v = windowSlice[i][ind.columnIndex];
-          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
-        }
-      }
-      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
-    })(),
-    panel4: (() => {
-      const lines = indicatorLines.filter((ind) => getPanel(ind) === "panel4");
-      const useFixedScale = lines.some((ind) => ind.type === "RSI" && ind.rsiFixedScale !== false);
-      if (useFixedScale) return { min: 0, max: 100 };
-      const ext: number[] = [];
-      const hasHistogram = lines.some((ind) => ind.display === "histogram");
-      if (hasHistogram) ext.push(0);
-      for (const ind of lines) {
-        for (let i = 0; i < windowSlice.length; i++) {
-          const v = windowSlice[i][ind.columnIndex];
-          if (v != null && typeof v === "number" && Number.isFinite(v)) ext.push(v);
-        }
-      }
-      return { min: ext.length ? Math.min(...ext) : 0, max: ext.length ? Math.max(...ext) : 100 };
-    })(),
+    panel2: buildPanelExtent("panel2"),
+    panel3: buildPanelExtent("panel3"),
+    panel4: buildPanelExtent("panel4"),
   };
   const yRsiPanel2 = (rsi: number) => yValInPanel(rsi, panel2Top, panel2Height, panelExtents.panel2.min, panelExtents.panel2.max);
   const yRsiPanel3 = (rsi: number) => yValInPanel(rsi, panel3Top, panel3Height, panelExtents.panel3.min, panelExtents.panel3.max);
@@ -925,6 +885,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
           setLastCloseTextColor={setLastCloseTextColor}
           drawOpen={drawOpen}
           setDrawOpen={setDrawOpen}
+          drawingsVisible={drawingsVisible}
+          setDrawingsVisible={setDrawingsVisible}
           drawMode={drawMode}
           drawTool={drawTool}
           drawMagnetic={drawMagnetic}
@@ -946,7 +908,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
           onLoadLayout={handleLoadLayout}
           onFetchSavedLayouts={fetchSavedLayouts}
         />
-        <div className="flex-shrink-0 relative" style={{ backgroundColor: containerBgHex }}>
+        <div className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
           {drawOpen && drawPanelSide === "right" && (
             <div
               className="absolute right-2 top-2 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
@@ -1229,22 +1191,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
             crosshairDragging={crosshairDragging}
             setCrosshairPoint={setCrosshairPoint}
             setCrosshairDragging={setCrosshairDragging}
-            onCrosshairMouseDown={(px, py) => {
-              const toData = crosshairPixelToDataRef.current;
-              if (!toData) return;
-              const newPoint = toData(px, py);
-              const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
-              if (isSamePoint) {
-                setCrosshairPoint(null);
-                return;
-              }
-              const hadCrosshair = crosshairPoint !== null;
-              setCrosshairPoint(newPoint);
-              if (hadCrosshair) {
-                crosshairDraggingRef.current = true;
-                setCrosshairDragging(true);
-              }
-            }}
+            drawingsVisible={drawingsVisible}
             drawSegments={drawSegments}
             setDrawSegments={setDrawSegments}
             drawPending={drawPending}
@@ -1256,11 +1203,111 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
             setDrawDragging={setDrawDragging}
             t={t}
           />
+          {!drawMode && (
+            <>
+              <div
+                ref={crosshairOverlayDivRef}
+                role="presentation"
+                style={{
+                  position: "absolute",
+                  left: MARGIN_LEFT,
+                  top: MARGIN_TOP,
+                  width: chartW,
+                  height: chartH,
+                  touchAction: "none",
+                  zIndex: 1,
+                  cursor: crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair",
+                }}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                  const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                  const toData = crosshairPixelToDataRef.current;
+                  if (!toData) return;
+                  const newPoint = toData(px, py);
+                  const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                  if (isSamePoint) {
+                    setCrosshairPoint(null);
+                    return;
+                  }
+                  setCrosshairPoint(newPoint);
+                  crosshairDraggingRef.current = true;
+                  setCrosshairDragging(true);
+                }}
+                onPointerMove={(e) => {
+                  if (!crosshairDraggingRef.current) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                  const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                  const toData = crosshairPixelToDataRef.current;
+                  if (toData) setCrosshairPoint(toData(px, py));
+                }}
+                onPointerUp={(e) => {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                  crosshairDraggingRef.current = false;
+                  setCrosshairDragging(false);
+                }}
+                onPointerCancel={(e) => {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                  crosshairDraggingRef.current = false;
+                  setCrosshairDragging(false);
+                }}
+              />
+              {hasPanel2 || hasPanel3 || hasPanel4 ? (
+                <div
+                  role="presentation"
+                  style={{
+                    position: "absolute",
+                    left: MARGIN_LEFT,
+                    top: tableTop,
+                    width: chartW,
+                    height: chartBottom - tableTop,
+                    touchAction: "pan-x pan-y",
+                    zIndex: 1,
+                  }}
+                  onPointerDown={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const secH = chartBottom - tableTop;
+                    const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                    const py = tableTop + (e.clientY - rect.top) * (secH / (rect.height || 1));
+                    const inPanel2 = hasPanel2 && py >= panel2Top && py < panel2Top + panel2Height;
+                    const inPanel3 = hasPanel3 && py >= panel3Top && py < panel3Top + panel3Height;
+                    const inPanel4 = hasPanel4 && py >= panel4Top && py < panel4Top + panel4Height;
+                    if (!inPanel2 && !inPanel3 && !inPanel4) return;
+                    const idx = Math.max(0, Math.min(n - 1, Math.round((px - MARGIN_LEFT) / gap - 0.5) + startIndex));
+                    const close = parseNum(String(fullReversed[idx]?.[4] ?? 0));
+                    let panelValue: number;
+                    if (inPanel2) {
+                      const { min, max } = panelExtents.panel2;
+                      panelValue = min + (1 - (py - panel2Top) / panel2Height) * (max - min);
+                    } else if (inPanel3) {
+                      const { min, max } = panelExtents.panel3;
+                      panelValue = min + (1 - (py - panel3Top) / panel3Height) * (max - min);
+                    } else {
+                      const { min, max } = panelExtents.panel4;
+                      panelValue = min + (1 - (py - panel4Top) / panel4Height) * (max - min);
+                    }
+                    const newPoint = { index: idx, price: close, panelClickY: py, panelValue };
+                    const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                    if (isSamePoint) {
+                      setCrosshairPoint(null);
+                      return;
+                    }
+                    setCrosshairPoint(newPoint);
+                  }}
+                />
+              ) : null}
+            </>
+          )}
           <KlinesChartYAxis
               chartHeight={chartHeight}
               yTickValues={yTickValues}
               y={y}
               formatYAxis={formatYAxis}
+              formatPanelValue={(v: number) => (v >= 0 && v <= 100 && v === Math.round(v) ? String(v) : formatAbbreviated(v))}
+              formatObvValue={formatObvYAxis}
               footerYAxisTextHex={footerYAxisTextHex}
               isDarkFooterYAxis={isDarkFooterYAxis}
               footerYAxisHex={footerYAxisHex}

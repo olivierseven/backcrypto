@@ -108,6 +108,11 @@ export type BinanceKlineFast = $Result.DefaultSelection<Prisma.$BinanceKlineFast
  * 
  */
 export type BinanceKlineCache = $Result.DefaultSelection<Prisma.$BinanceKlineCachePayload>
+/**
+ * Model BinanceKlineGap
+ * 
+ */
+export type BinanceKlineGap = $Result.DefaultSelection<Prisma.$BinanceKlineGapPayload>
 
 /**
  * Enums
@@ -553,6 +558,16 @@ export class PrismaClient<
     * ```
     */
   get binanceKlineCache(): Prisma.BinanceKlineCacheDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceKlineGap`: Exposes CRUD operations for the **BinanceKlineGap** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceKlineGaps
+    * const binanceKlineGaps = await prisma.binanceKlineGap.findMany()
+    * ```
+    */
+  get binanceKlineGap(): Prisma.BinanceKlineGapDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1012,7 +1027,8 @@ export namespace Prisma {
     BioAppConfig: 'BioAppConfig',
     BinanceKline: 'BinanceKline',
     BinanceKlineFast: 'BinanceKlineFast',
-    BinanceKlineCache: 'BinanceKlineCache'
+    BinanceKlineCache: 'BinanceKlineCache',
+    BinanceKlineGap: 'BinanceKlineGap'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1031,7 +1047,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "bioSavedConfig" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "bioSimulationQueue" | "bioSimulationState" | "bioAppConfig" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache"
+      modelProps: "user" | "chartLayout" | "bioSavedConfig" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "bioSimulationQueue" | "bioSimulationState" | "bioAppConfig" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2441,6 +2457,80 @@ export namespace Prisma {
           }
         }
       }
+      BinanceKlineGap: {
+        payload: Prisma.$BinanceKlineGapPayload<ExtArgs>
+        fields: Prisma.BinanceKlineGapFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceKlineGapFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceKlineGapFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceKlineGapFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceKlineGapFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceKlineGapFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceKlineGapCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceKlineGapCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceKlineGapCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceKlineGapDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          update: {
+            args: Prisma.BinanceKlineGapUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceKlineGapDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceKlineGapUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceKlineGapUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceKlineGapUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineGapPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceKlineGapAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceKlineGap>
+          }
+          groupBy: {
+            args: Prisma.BinanceKlineGapGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineGapGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceKlineGapCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineGapCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2556,6 +2646,7 @@ export namespace Prisma {
     binanceKline?: BinanceKlineOmit
     binanceKlineFast?: BinanceKlineFastOmit
     binanceKlineCache?: BinanceKlineCacheOmit
+    binanceKlineGap?: BinanceKlineGapOmit
   }
 
   /* Types for Logging */
@@ -24546,6 +24637,1026 @@ export namespace Prisma {
 
 
   /**
+   * Model BinanceKlineGap
+   */
+
+  export type AggregateBinanceKlineGap = {
+    _count: BinanceKlineGapCountAggregateOutputType | null
+    _avg: BinanceKlineGapAvgAggregateOutputType | null
+    _sum: BinanceKlineGapSumAggregateOutputType | null
+    _min: BinanceKlineGapMinAggregateOutputType | null
+    _max: BinanceKlineGapMaxAggregateOutputType | null
+  }
+
+  export type BinanceKlineGapAvgAggregateOutputType = {
+    gapFrom: number | null
+    gapTo: number | null
+  }
+
+  export type BinanceKlineGapSumAggregateOutputType = {
+    gapFrom: bigint | null
+    gapTo: bigint | null
+  }
+
+  export type BinanceKlineGapMinAggregateOutputType = {
+    symbol: string | null
+    interval: string | null
+    gapFrom: bigint | null
+    gapTo: bigint | null
+  }
+
+  export type BinanceKlineGapMaxAggregateOutputType = {
+    symbol: string | null
+    interval: string | null
+    gapFrom: bigint | null
+    gapTo: bigint | null
+  }
+
+  export type BinanceKlineGapCountAggregateOutputType = {
+    symbol: number
+    interval: number
+    gapFrom: number
+    gapTo: number
+    _all: number
+  }
+
+
+  export type BinanceKlineGapAvgAggregateInputType = {
+    gapFrom?: true
+    gapTo?: true
+  }
+
+  export type BinanceKlineGapSumAggregateInputType = {
+    gapFrom?: true
+    gapTo?: true
+  }
+
+  export type BinanceKlineGapMinAggregateInputType = {
+    symbol?: true
+    interval?: true
+    gapFrom?: true
+    gapTo?: true
+  }
+
+  export type BinanceKlineGapMaxAggregateInputType = {
+    symbol?: true
+    interval?: true
+    gapFrom?: true
+    gapTo?: true
+  }
+
+  export type BinanceKlineGapCountAggregateInputType = {
+    symbol?: true
+    interval?: true
+    gapFrom?: true
+    gapTo?: true
+    _all?: true
+  }
+
+  export type BinanceKlineGapAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineGap to aggregate.
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineGaps to fetch.
+     */
+    orderBy?: BinanceKlineGapOrderByWithRelationInput | BinanceKlineGapOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceKlineGapWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineGaps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineGaps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceKlineGaps
+    **/
+    _count?: true | BinanceKlineGapCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceKlineGapAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceKlineGapSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceKlineGapMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceKlineGapMaxAggregateInputType
+  }
+
+  export type GetBinanceKlineGapAggregateType<T extends BinanceKlineGapAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceKlineGap]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceKlineGap[P]>
+      : GetScalarType<T[P], AggregateBinanceKlineGap[P]>
+  }
+
+
+
+
+  export type BinanceKlineGapGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceKlineGapWhereInput
+    orderBy?: BinanceKlineGapOrderByWithAggregationInput | BinanceKlineGapOrderByWithAggregationInput[]
+    by: BinanceKlineGapScalarFieldEnum[] | BinanceKlineGapScalarFieldEnum
+    having?: BinanceKlineGapScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceKlineGapCountAggregateInputType | true
+    _avg?: BinanceKlineGapAvgAggregateInputType
+    _sum?: BinanceKlineGapSumAggregateInputType
+    _min?: BinanceKlineGapMinAggregateInputType
+    _max?: BinanceKlineGapMaxAggregateInputType
+  }
+
+  export type BinanceKlineGapGroupByOutputType = {
+    symbol: string
+    interval: string
+    gapFrom: bigint
+    gapTo: bigint
+    _count: BinanceKlineGapCountAggregateOutputType | null
+    _avg: BinanceKlineGapAvgAggregateOutputType | null
+    _sum: BinanceKlineGapSumAggregateOutputType | null
+    _min: BinanceKlineGapMinAggregateOutputType | null
+    _max: BinanceKlineGapMaxAggregateOutputType | null
+  }
+
+  type GetBinanceKlineGapGroupByPayload<T extends BinanceKlineGapGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceKlineGapGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceKlineGapGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceKlineGapGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceKlineGapGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceKlineGapSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    interval?: boolean
+    gapFrom?: boolean
+    gapTo?: boolean
+  }, ExtArgs["result"]["binanceKlineGap"]>
+
+  export type BinanceKlineGapSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    interval?: boolean
+    gapFrom?: boolean
+    gapTo?: boolean
+  }, ExtArgs["result"]["binanceKlineGap"]>
+
+  export type BinanceKlineGapSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    interval?: boolean
+    gapFrom?: boolean
+    gapTo?: boolean
+  }, ExtArgs["result"]["binanceKlineGap"]>
+
+  export type BinanceKlineGapSelectScalar = {
+    symbol?: boolean
+    interval?: boolean
+    gapFrom?: boolean
+    gapTo?: boolean
+  }
+
+  export type BinanceKlineGapOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "interval" | "gapFrom" | "gapTo", ExtArgs["result"]["binanceKlineGap"]>
+
+  export type $BinanceKlineGapPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceKlineGap"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      symbol: string
+      interval: string
+      gapFrom: bigint
+      gapTo: bigint
+    }, ExtArgs["result"]["binanceKlineGap"]>
+    composites: {}
+  }
+
+  type BinanceKlineGapGetPayload<S extends boolean | null | undefined | BinanceKlineGapDefaultArgs> = $Result.GetResult<Prisma.$BinanceKlineGapPayload, S>
+
+  type BinanceKlineGapCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceKlineGapFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceKlineGapCountAggregateInputType | true
+    }
+
+  export interface BinanceKlineGapDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceKlineGap'], meta: { name: 'BinanceKlineGap' } }
+    /**
+     * Find zero or one BinanceKlineGap that matches the filter.
+     * @param {BinanceKlineGapFindUniqueArgs} args - Arguments to find a BinanceKlineGap
+     * @example
+     * // Get one BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceKlineGapFindUniqueArgs>(args: SelectSubset<T, BinanceKlineGapFindUniqueArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceKlineGap that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceKlineGapFindUniqueOrThrowArgs} args - Arguments to find a BinanceKlineGap
+     * @example
+     * // Get one BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceKlineGapFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceKlineGapFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineGap that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapFindFirstArgs} args - Arguments to find a BinanceKlineGap
+     * @example
+     * // Get one BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceKlineGapFindFirstArgs>(args?: SelectSubset<T, BinanceKlineGapFindFirstArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineGap that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapFindFirstOrThrowArgs} args - Arguments to find a BinanceKlineGap
+     * @example
+     * // Get one BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceKlineGapFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceKlineGapFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceKlineGaps that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceKlineGaps
+     * const binanceKlineGaps = await prisma.binanceKlineGap.findMany()
+     * 
+     * // Get first 10 BinanceKlineGaps
+     * const binanceKlineGaps = await prisma.binanceKlineGap.findMany({ take: 10 })
+     * 
+     * // Only select the `symbol`
+     * const binanceKlineGapWithSymbolOnly = await prisma.binanceKlineGap.findMany({ select: { symbol: true } })
+     * 
+     */
+    findMany<T extends BinanceKlineGapFindManyArgs>(args?: SelectSubset<T, BinanceKlineGapFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceKlineGap.
+     * @param {BinanceKlineGapCreateArgs} args - Arguments to create a BinanceKlineGap.
+     * @example
+     * // Create one BinanceKlineGap
+     * const BinanceKlineGap = await prisma.binanceKlineGap.create({
+     *   data: {
+     *     // ... data to create a BinanceKlineGap
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceKlineGapCreateArgs>(args: SelectSubset<T, BinanceKlineGapCreateArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceKlineGaps.
+     * @param {BinanceKlineGapCreateManyArgs} args - Arguments to create many BinanceKlineGaps.
+     * @example
+     * // Create many BinanceKlineGaps
+     * const binanceKlineGap = await prisma.binanceKlineGap.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceKlineGapCreateManyArgs>(args?: SelectSubset<T, BinanceKlineGapCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceKlineGaps and returns the data saved in the database.
+     * @param {BinanceKlineGapCreateManyAndReturnArgs} args - Arguments to create many BinanceKlineGaps.
+     * @example
+     * // Create many BinanceKlineGaps
+     * const binanceKlineGap = await prisma.binanceKlineGap.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceKlineGaps and only return the `symbol`
+     * const binanceKlineGapWithSymbolOnly = await prisma.binanceKlineGap.createManyAndReturn({
+     *   select: { symbol: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceKlineGapCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceKlineGapCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceKlineGap.
+     * @param {BinanceKlineGapDeleteArgs} args - Arguments to delete one BinanceKlineGap.
+     * @example
+     * // Delete one BinanceKlineGap
+     * const BinanceKlineGap = await prisma.binanceKlineGap.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceKlineGap
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceKlineGapDeleteArgs>(args: SelectSubset<T, BinanceKlineGapDeleteArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceKlineGap.
+     * @param {BinanceKlineGapUpdateArgs} args - Arguments to update one BinanceKlineGap.
+     * @example
+     * // Update one BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceKlineGapUpdateArgs>(args: SelectSubset<T, BinanceKlineGapUpdateArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceKlineGaps.
+     * @param {BinanceKlineGapDeleteManyArgs} args - Arguments to filter BinanceKlineGaps to delete.
+     * @example
+     * // Delete a few BinanceKlineGaps
+     * const { count } = await prisma.binanceKlineGap.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceKlineGapDeleteManyArgs>(args?: SelectSubset<T, BinanceKlineGapDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineGaps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceKlineGaps
+     * const binanceKlineGap = await prisma.binanceKlineGap.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceKlineGapUpdateManyArgs>(args: SelectSubset<T, BinanceKlineGapUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineGaps and returns the data updated in the database.
+     * @param {BinanceKlineGapUpdateManyAndReturnArgs} args - Arguments to update many BinanceKlineGaps.
+     * @example
+     * // Update many BinanceKlineGaps
+     * const binanceKlineGap = await prisma.binanceKlineGap.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceKlineGaps and only return the `symbol`
+     * const binanceKlineGapWithSymbolOnly = await prisma.binanceKlineGap.updateManyAndReturn({
+     *   select: { symbol: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceKlineGapUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceKlineGapUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceKlineGap.
+     * @param {BinanceKlineGapUpsertArgs} args - Arguments to update or create a BinanceKlineGap.
+     * @example
+     * // Update or create a BinanceKlineGap
+     * const binanceKlineGap = await prisma.binanceKlineGap.upsert({
+     *   create: {
+     *     // ... data to create a BinanceKlineGap
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceKlineGap we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceKlineGapUpsertArgs>(args: SelectSubset<T, BinanceKlineGapUpsertArgs<ExtArgs>>): Prisma__BinanceKlineGapClient<$Result.GetResult<Prisma.$BinanceKlineGapPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceKlineGaps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapCountArgs} args - Arguments to filter BinanceKlineGaps to count.
+     * @example
+     * // Count the number of BinanceKlineGaps
+     * const count = await prisma.binanceKlineGap.count({
+     *   where: {
+     *     // ... the filter for the BinanceKlineGaps we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceKlineGapCountArgs>(
+      args?: Subset<T, BinanceKlineGapCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceKlineGapCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceKlineGap.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceKlineGapAggregateArgs>(args: Subset<T, BinanceKlineGapAggregateArgs>): Prisma.PrismaPromise<GetBinanceKlineGapAggregateType<T>>
+
+    /**
+     * Group by BinanceKlineGap.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineGapGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceKlineGapGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceKlineGapGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceKlineGapGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceKlineGapGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceKlineGapGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceKlineGap model
+   */
+  readonly fields: BinanceKlineGapFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceKlineGap.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceKlineGapClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceKlineGap model
+   */
+  interface BinanceKlineGapFieldRefs {
+    readonly symbol: FieldRef<"BinanceKlineGap", 'String'>
+    readonly interval: FieldRef<"BinanceKlineGap", 'String'>
+    readonly gapFrom: FieldRef<"BinanceKlineGap", 'BigInt'>
+    readonly gapTo: FieldRef<"BinanceKlineGap", 'BigInt'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceKlineGap findUnique
+   */
+  export type BinanceKlineGapFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineGap to fetch.
+     */
+    where: BinanceKlineGapWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineGap findUniqueOrThrow
+   */
+  export type BinanceKlineGapFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineGap to fetch.
+     */
+    where: BinanceKlineGapWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineGap findFirst
+   */
+  export type BinanceKlineGapFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineGap to fetch.
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineGaps to fetch.
+     */
+    orderBy?: BinanceKlineGapOrderByWithRelationInput | BinanceKlineGapOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineGaps.
+     */
+    cursor?: BinanceKlineGapWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineGaps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineGaps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineGaps.
+     */
+    distinct?: BinanceKlineGapScalarFieldEnum | BinanceKlineGapScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineGap findFirstOrThrow
+   */
+  export type BinanceKlineGapFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineGap to fetch.
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineGaps to fetch.
+     */
+    orderBy?: BinanceKlineGapOrderByWithRelationInput | BinanceKlineGapOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineGaps.
+     */
+    cursor?: BinanceKlineGapWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineGaps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineGaps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineGaps.
+     */
+    distinct?: BinanceKlineGapScalarFieldEnum | BinanceKlineGapScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineGap findMany
+   */
+  export type BinanceKlineGapFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineGaps to fetch.
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineGaps to fetch.
+     */
+    orderBy?: BinanceKlineGapOrderByWithRelationInput | BinanceKlineGapOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceKlineGaps.
+     */
+    cursor?: BinanceKlineGapWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineGaps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineGaps.
+     */
+    skip?: number
+    distinct?: BinanceKlineGapScalarFieldEnum | BinanceKlineGapScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineGap create
+   */
+  export type BinanceKlineGapCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceKlineGap.
+     */
+    data: XOR<BinanceKlineGapCreateInput, BinanceKlineGapUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceKlineGap createMany
+   */
+  export type BinanceKlineGapCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceKlineGaps.
+     */
+    data: BinanceKlineGapCreateManyInput | BinanceKlineGapCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineGap createManyAndReturn
+   */
+  export type BinanceKlineGapCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceKlineGaps.
+     */
+    data: BinanceKlineGapCreateManyInput | BinanceKlineGapCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineGap update
+   */
+  export type BinanceKlineGapUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceKlineGap.
+     */
+    data: XOR<BinanceKlineGapUpdateInput, BinanceKlineGapUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceKlineGap to update.
+     */
+    where: BinanceKlineGapWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineGap updateMany
+   */
+  export type BinanceKlineGapUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceKlineGaps.
+     */
+    data: XOR<BinanceKlineGapUpdateManyMutationInput, BinanceKlineGapUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineGaps to update
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * Limit how many BinanceKlineGaps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineGap updateManyAndReturn
+   */
+  export type BinanceKlineGapUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceKlineGaps.
+     */
+    data: XOR<BinanceKlineGapUpdateManyMutationInput, BinanceKlineGapUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineGaps to update
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * Limit how many BinanceKlineGaps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineGap upsert
+   */
+  export type BinanceKlineGapUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceKlineGap to update in case it exists.
+     */
+    where: BinanceKlineGapWhereUniqueInput
+    /**
+     * In case the BinanceKlineGap found by the `where` argument doesn't exist, create a new BinanceKlineGap with this data.
+     */
+    create: XOR<BinanceKlineGapCreateInput, BinanceKlineGapUncheckedCreateInput>
+    /**
+     * In case the BinanceKlineGap was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceKlineGapUpdateInput, BinanceKlineGapUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceKlineGap delete
+   */
+  export type BinanceKlineGapDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceKlineGap to delete.
+     */
+    where: BinanceKlineGapWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineGap deleteMany
+   */
+  export type BinanceKlineGapDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineGaps to delete
+     */
+    where?: BinanceKlineGapWhereInput
+    /**
+     * Limit how many BinanceKlineGaps to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineGap without action
+   */
+  export type BinanceKlineGapDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineGap
+     */
+    select?: BinanceKlineGapSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineGap
+     */
+    omit?: BinanceKlineGapOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -24848,6 +25959,16 @@ export namespace Prisma {
   };
 
   export type BinanceKlineCacheScalarFieldEnum = (typeof BinanceKlineCacheScalarFieldEnum)[keyof typeof BinanceKlineCacheScalarFieldEnum]
+
+
+  export const BinanceKlineGapScalarFieldEnum: {
+    symbol: 'symbol',
+    interval: 'interval',
+    gapFrom: 'gapFrom',
+    gapTo: 'gapTo'
+  };
+
+  export type BinanceKlineGapScalarFieldEnum = (typeof BinanceKlineGapScalarFieldEnum)[keyof typeof BinanceKlineGapScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -26652,6 +27773,56 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
   }
 
+  export type BinanceKlineGapWhereInput = {
+    AND?: BinanceKlineGapWhereInput | BinanceKlineGapWhereInput[]
+    OR?: BinanceKlineGapWhereInput[]
+    NOT?: BinanceKlineGapWhereInput | BinanceKlineGapWhereInput[]
+    symbol?: StringFilter<"BinanceKlineGap"> | string
+    interval?: StringFilter<"BinanceKlineGap"> | string
+    gapFrom?: BigIntFilter<"BinanceKlineGap"> | bigint | number
+    gapTo?: BigIntFilter<"BinanceKlineGap"> | bigint | number
+  }
+
+  export type BinanceKlineGapOrderByWithRelationInput = {
+    symbol?: SortOrder
+    interval?: SortOrder
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+  }
+
+  export type BinanceKlineGapWhereUniqueInput = Prisma.AtLeast<{
+    symbol_interval_gapFrom_gapTo?: BinanceKlineGapSymbolIntervalGapFromGapToCompoundUniqueInput
+    AND?: BinanceKlineGapWhereInput | BinanceKlineGapWhereInput[]
+    OR?: BinanceKlineGapWhereInput[]
+    NOT?: BinanceKlineGapWhereInput | BinanceKlineGapWhereInput[]
+    symbol?: StringFilter<"BinanceKlineGap"> | string
+    interval?: StringFilter<"BinanceKlineGap"> | string
+    gapFrom?: BigIntFilter<"BinanceKlineGap"> | bigint | number
+    gapTo?: BigIntFilter<"BinanceKlineGap"> | bigint | number
+  }, "symbol_interval_gapFrom_gapTo">
+
+  export type BinanceKlineGapOrderByWithAggregationInput = {
+    symbol?: SortOrder
+    interval?: SortOrder
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+    _count?: BinanceKlineGapCountOrderByAggregateInput
+    _avg?: BinanceKlineGapAvgOrderByAggregateInput
+    _max?: BinanceKlineGapMaxOrderByAggregateInput
+    _min?: BinanceKlineGapMinOrderByAggregateInput
+    _sum?: BinanceKlineGapSumOrderByAggregateInput
+  }
+
+  export type BinanceKlineGapScalarWhereWithAggregatesInput = {
+    AND?: BinanceKlineGapScalarWhereWithAggregatesInput | BinanceKlineGapScalarWhereWithAggregatesInput[]
+    OR?: BinanceKlineGapScalarWhereWithAggregatesInput[]
+    NOT?: BinanceKlineGapScalarWhereWithAggregatesInput | BinanceKlineGapScalarWhereWithAggregatesInput[]
+    symbol?: StringWithAggregatesFilter<"BinanceKlineGap"> | string
+    interval?: StringWithAggregatesFilter<"BinanceKlineGap"> | string
+    gapFrom?: BigIntWithAggregatesFilter<"BinanceKlineGap"> | bigint | number
+    gapTo?: BigIntWithAggregatesFilter<"BinanceKlineGap"> | bigint | number
+  }
+
   export type UserCreateInput = {
     id?: string
     emailEnc: string
@@ -28335,6 +29506,55 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type BinanceKlineGapCreateInput = {
+    symbol: string
+    interval: string
+    gapFrom: bigint | number
+    gapTo: bigint | number
+  }
+
+  export type BinanceKlineGapUncheckedCreateInput = {
+    symbol: string
+    interval: string
+    gapFrom: bigint | number
+    gapTo: bigint | number
+  }
+
+  export type BinanceKlineGapUpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    gapFrom?: BigIntFieldUpdateOperationsInput | bigint | number
+    gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
+  }
+
+  export type BinanceKlineGapUncheckedUpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    gapFrom?: BigIntFieldUpdateOperationsInput | bigint | number
+    gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
+  }
+
+  export type BinanceKlineGapCreateManyInput = {
+    symbol: string
+    interval: string
+    gapFrom: bigint | number
+    gapTo: bigint | number
+  }
+
+  export type BinanceKlineGapUpdateManyMutationInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    gapFrom?: BigIntFieldUpdateOperationsInput | bigint | number
+    gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
+  }
+
+  export type BinanceKlineGapUncheckedUpdateManyInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    gapFrom?: BigIntFieldUpdateOperationsInput | bigint | number
+    gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -29846,6 +31066,44 @@ export namespace Prisma {
     numberOfTrades?: SortOrder
     takerBuyBaseAssetVolume?: SortOrder
     takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineGapSymbolIntervalGapFromGapToCompoundUniqueInput = {
+    symbol: string
+    interval: string
+    gapFrom: bigint | number
+    gapTo: bigint | number
+  }
+
+  export type BinanceKlineGapCountOrderByAggregateInput = {
+    symbol?: SortOrder
+    interval?: SortOrder
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+  }
+
+  export type BinanceKlineGapAvgOrderByAggregateInput = {
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+  }
+
+  export type BinanceKlineGapMaxOrderByAggregateInput = {
+    symbol?: SortOrder
+    interval?: SortOrder
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+  }
+
+  export type BinanceKlineGapMinOrderByAggregateInput = {
+    symbol?: SortOrder
+    interval?: SortOrder
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
+  }
+
+  export type BinanceKlineGapSumOrderByAggregateInput = {
+    gapFrom?: SortOrder
+    gapTo?: SortOrder
   }
 
   export type AccessRequestCreateNestedManyWithoutUserInput = {

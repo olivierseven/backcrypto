@@ -23,7 +23,7 @@ import { IndicatorsPanelIndicatorCard } from "./indicatorsPanel/IndicatorsPanelI
 import type { AddFormState, IndicatorsPanelContextValue } from "./indicatorsPanel/indicatorsPanelTypes";
 
 /** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
-export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal } from "./indicatorsPanel/index";
+export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./indicatorsPanel/index";
 
 const INITIAL_ADD_FORM: AddFormState = {
   indicatorType: "SMA",
@@ -62,6 +62,41 @@ const INITIAL_ADD_FORM: AddFormState = {
   rsiLimitColor: "#dc2626",
   rsiLimitLineWidth: "normal",
   rsiLimitLineStyle: "dotted",
+  stochLimits: false,
+  stochLimitUpper: 80,
+  stochLimitLower: 20,
+  stochLimitColor: "#dc2626",
+  stochLimitLineWidth: "normal",
+  stochLimitLineStyle: "dotted",
+  stochDLine: false,
+  stochDMaType: "SMA",
+  stochDPeriod: 3,
+  stochDPeriodText: "3",
+  stochDColor: "#ea580c",
+  stochDLineWidth: "normal",
+  stochDLineStyle: "dashed",
+  sarStart: 0.02,
+  sarStartText: "0.02",
+  sarIncrement: 0.02,
+  sarIncrementText: "0.02",
+  sarMax: 0.2,
+  sarMaxText: "0.2",
+  sarPointSize: "normal",
+  bollingerMaType: "SMA",
+  bollingerZ: 2,
+  bollingerZText: "2",
+  bollingerShowUpper: true,
+  bollingerShowLower: true,
+  bollingerShowMiddle: false,
+  bollingerBandOpacity: 0.2,
+  bollingerBandOpacityText: "20",
+  bollingerLimitsColor: "#6366f1",
+  bollingerLimitsColorOpen: false,
+  bollingerLimitsLineStyle: "solid",
+  bollingerLimitsLineWidth: "normal",
+  bollingerMiddleColor: "#a855f7",
+  bollingerMiddleLineStyle: "dashed",
+  bollingerMiddleLineWidth: "normal",
 };
 
 interface IndicatorsPanelProps {
@@ -111,14 +146,34 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     rsiLimitColor: string;
     rsiLimitLineWidth: IndicatorLineWidth;
     rsiLimitLineStyle: IndicatorLineStyle;
+    stochLimits: boolean;
+    stochLimitUpper: number;
+    stochLimitLower: number;
+    stochLimitColor: string;
+    stochLimitLineWidth: IndicatorLineWidth;
+    stochLimitLineStyle: IndicatorLineStyle;
+    stochDLine: boolean;
+    stochDMaType: "SMA" | "EMA" | "WMA";
+    stochDPeriod: number;
+    stochDPeriodText: string;
+    stochDColor: string;
+    stochDLineWidth: IndicatorLineWidth;
+    stochDLineStyle: IndicatorLineStyle;
+    sarStart: number;
+    sarStartText: string;
+    sarIncrement: number;
+    sarIncrementText: string;
+    sarMax: number;
+    sarMaxText: string;
+    sarPointSize: "thin" | "normal";
   } | null>(null);
 
-  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" ? "panel2" : "main");
+  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR" ? "panel2" : "main");
 
   const panelsWithSecondary = useMemo(() => ({
-    panel2: userIndicators.some((i) => getPanel(i) === "panel2" && (i.type === "RSI" || i.type === "MACD")),
-    panel3: userIndicators.some((i) => getPanel(i) === "panel3" && (i.type === "RSI" || i.type === "MACD")),
-    panel4: userIndicators.some((i) => getPanel(i) === "panel4" && (i.type === "RSI" || i.type === "MACD")),
+    panel2: userIndicators.some((i) => getPanel(i) === "panel2" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
+    panel3: userIndicators.some((i) => getPanel(i) === "panel3" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
+    panel4: userIndicators.some((i) => getPanel(i) === "panel4" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
   }), [userIndicators]);
 
   const panelsFreeForSecondary = useMemo(() => ({
@@ -129,10 +184,11 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
 
   const panelsFreeForSecondaryEdit = useMemo(() => {
     if (!editingId) return { panel2: true, panel3: true, panel4: true };
+    const isSecondary = (i: UserIndicatorConfig) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR";
     return {
-      panel2: !userIndicators.some((i) => getPanel(i) === "panel2" && (i.type === "RSI" || i.type === "MACD") && i.id !== editingId),
-      panel3: !userIndicators.some((i) => getPanel(i) === "panel3" && (i.type === "RSI" || i.type === "MACD") && i.id !== editingId),
-      panel4: !userIndicators.some((i) => getPanel(i) === "panel4" && (i.type === "RSI" || i.type === "MACD") && i.id !== editingId),
+      panel2: !userIndicators.some((i) => getPanel(i) === "panel2" && isSecondary(i) && i.id !== editingId),
+      panel3: !userIndicators.some((i) => getPanel(i) === "panel3" && isSecondary(i) && i.id !== editingId),
+      panel4: !userIndicators.some((i) => getPanel(i) === "panel4" && isSecondary(i) && i.id !== editingId),
     };
   }, [userIndicators, editingId]);
 
@@ -157,7 +213,9 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     setEditForm,
   });
 
-  const addButtonDisabled = false;
+  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4;
+  const addButtonDisabled =
+    (addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR") && !hasFreePanelForSecondary;
 
   const handleAdd = useCallback(() => {
     const n = Number(addForm.periodText);
@@ -165,15 +223,37 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     const fastP = addForm.indicatorType === "MACD" ? (Number(addForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = addForm.indicatorType === "MACD" ? (Number(addForm.macdSlowPeriodText) || 26) : periodNum;
     setAddForm((prev) => ({ ...prev, period: periodNum, periodText: String(periodNum) }));
-    const effectivePanel: IndicatorPanel = addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD"
-      ? (addForm.chartOption === "panel2" || addForm.chartOption === "panel3" || addForm.chartOption === "panel4" ? addForm.chartOption : "panel2")
+    const effectivePanel: IndicatorPanel = addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP"
+      ? "main"
+      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR"
+      ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4)
+        ? addForm.chartOption
+        : (panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2")
       : (addForm.chartOption === "panel2" && !panelsWithSecondary.panel2) || (addForm.chartOption === "panel3" && !panelsWithSecondary.panel3) || (addForm.chartOption === "panel4" && !panelsWithSecondary.panel4)
-        ? "main"
+        ? addForm.chartOption
         : (addForm.chartOption === "panel2" || addForm.chartOption === "panel3" || addForm.chartOption === "panel4" ? addForm.chartOption : "main");
+    const parseSar = (s: string, def: number, min: number, max: number) => {
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : def;
+    };
     addIndicator({
       type: addForm.indicatorType,
-      period: addForm.indicatorType === "MACD" ? fastP : periodNum,
-      fieldKey: addForm.fieldKey,
+      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" ? 1 : periodNum,
+      fieldKey: addForm.indicatorType === "OBV" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
+      ...(addForm.indicatorType === "Bollinger" ? {
+        bollingerMaType: addForm.bollingerMaType,
+        bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
+        bollingerShowUpper: addForm.bollingerShowUpper,
+        bollingerShowLower: addForm.bollingerShowLower,
+        bollingerShowMiddle: addForm.bollingerShowMiddle,
+        bollingerBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(addForm.bollingerBandOpacityText) || 20) / 100)),
+        bollingerLimitsColor: addForm.bollingerLimitsColor,
+        bollingerLimitsLineStyle: addForm.bollingerLimitsLineStyle,
+        bollingerLimitsLineWidth: addForm.bollingerLimitsLineWidth,
+        bollingerMiddleColor: addForm.color,
+        bollingerMiddleLineStyle: addForm.lineStyle,
+        bollingerMiddleLineWidth: addForm.lineWidth,
+      } : {}),
       color: addForm.color,
       intervals: currentGroupMinutes != null ? [currentGroupMinutes] : [],
       panel: effectivePanel,
@@ -195,6 +275,27 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
         macdHistogramColorAbove: addForm.macdSignalLine && addForm.macdHistogram ? addForm.macdHistogramColorAbove : undefined,
         macdHistogramColorBelow: addForm.macdSignalLine && addForm.macdHistogram ? addForm.macdHistogramColorBelow : undefined,
       } : {}),
+      ...(addForm.indicatorType === "Stochastic" ? {
+        stochLimits: addForm.stochLimits,
+        stochLimitUpper: addForm.stochLimitUpper,
+        stochLimitLower: addForm.stochLimitLower,
+        stochLimitColor: addForm.stochLimitColor,
+        stochLimitLineWidth: addForm.stochLimitLineWidth,
+        stochLimitLineStyle: addForm.stochLimitLineStyle,
+        stochDLine: addForm.stochDLine,
+        stochDMaType: addForm.stochDMaType,
+        stochDPeriod: addForm.stochDLine ? Math.max(1, Math.min(500, Number(addForm.stochDPeriodText) || 3)) : undefined,
+        stochDColor: addForm.stochDLine ? addForm.stochDColor : undefined,
+        stochDLineWidth: addForm.stochDLine ? addForm.stochDLineWidth : undefined,
+        stochDLineStyle: addForm.stochDLine ? addForm.stochDLineStyle : undefined,
+      } : {}),
+      ...(addForm.indicatorType === "SAR" ? {
+        sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
+        sarIncrement: parseSar(addForm.sarIncrementText, 0.02, 0.001, 1),
+        sarMax: parseSar(addForm.sarMaxText, 0.2, 0.02, 1),
+        sarPointSize: addForm.sarPointSize ?? "normal",
+      } : {}),
+      ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
   }, [addForm, panelsWithSecondary, currentGroupMinutes, addIndicator]);
 
@@ -216,13 +317,14 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
 
   const startEdit = useCallback((ind: UserIndicatorConfig) => {
     setEditingId(ind.id);
-    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" ? "panel2" : "main");
+    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "OBV" || ind.type === "ATR" ? "panel2" : "main");
+    const fieldKey = ind.type === "Stochastic" && ind.fieldKey !== "open" && ind.fieldKey !== "close" ? "close" : ind.fieldKey;
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
     setEditForm({
       period: ind.period,
       periodText: String(ind.period),
-      fieldKey: ind.fieldKey,
+      fieldKey,
       color: ind.color,
       panel,
       lineWidth: (ind.lineWidth === "thin" || ind.lineWidth === "normal" ? ind.lineWidth : "normal") as IndicatorLineWidth,
@@ -254,6 +356,41 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : "#dc2626",
       rsiLimitLineWidth: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineWidth === "thin" || ind.rsiLimitLineWidth === "normal") ? ind.rsiLimitLineWidth : "normal") as IndicatorLineWidth,
       rsiLimitLineStyle: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineStyle === "solid" || ind.rsiLimitLineStyle === "dotted" || ind.rsiLimitLineStyle === "dashed") ? ind.rsiLimitLineStyle : "dotted") as IndicatorLineStyle,
+      stochLimits: ind.type === "Stochastic" ? (ind.stochLimits === true) : false,
+      stochLimitUpper: ind.type === "Stochastic" && ind.stochLimits ? (typeof ind.stochLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(ind.stochLimitUpper))) : 80) : 80,
+      stochLimitLower: ind.type === "Stochastic" && ind.stochLimits ? (typeof ind.stochLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(ind.stochLimitLower))) : 20) : 20,
+      stochLimitColor: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitColor ?? "#dc2626") : "#dc2626",
+      stochLimitLineWidth: (ind.type === "Stochastic" && ind.stochLimits && (ind.stochLimitLineWidth === "thin" || ind.stochLimitLineWidth === "normal") ? ind.stochLimitLineWidth : "normal") as IndicatorLineWidth,
+      stochLimitLineStyle: (ind.type === "Stochastic" && ind.stochLimits && (ind.stochLimitLineStyle === "solid" || ind.stochLimitLineStyle === "dotted" || ind.stochLimitLineStyle === "dashed") ? ind.stochLimitLineStyle : "dotted") as IndicatorLineStyle,
+      stochDLine: ind.type === "Stochastic" ? (ind.stochDLine === true) : false,
+      stochDMaType: ind.type === "Stochastic" && ind.stochDLine ? (ind.stochDMaType === "SMA" || ind.stochDMaType === "EMA" || ind.stochDMaType === "WMA" ? ind.stochDMaType : "SMA") : "SMA",
+      stochDPeriod: ind.type === "Stochastic" && ind.stochDLine ? (ind.stochDPeriod ?? 3) : 3,
+      stochDPeriodText: String(ind.type === "Stochastic" && ind.stochDLine ? (ind.stochDPeriod ?? 3) : 3),
+      stochDColor: ind.type === "Stochastic" && ind.stochDLine ? (ind.stochDColor ?? "#ea580c") : "#ea580c",
+      stochDLineWidth: (ind.type === "Stochastic" && ind.stochDLine && (ind.stochDLineWidth === "thin" || ind.stochDLineWidth === "normal") ? ind.stochDLineWidth : "normal") as IndicatorLineWidth,
+      stochDLineStyle: (ind.type === "Stochastic" && ind.stochDLine && (ind.stochDLineStyle === "solid" || ind.stochDLineStyle === "dotted" || ind.stochDLineStyle === "dashed") ? ind.stochDLineStyle : "dashed") as IndicatorLineStyle,
+      sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
+      sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
+      sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
+      sarIncrementText: String(ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02),
+      sarMax: ind.type === "SAR" ? (typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2) : 0.2,
+      sarMaxText: String(ind.type === "SAR" ? (typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2) : 0.2),
+      sarPointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : "normal",
+      ...(ind.type === "VWAP" ? { period: 1, periodText: "1", fieldKey: "close" as const } : {}),
+      bollingerMaType: ind.type === "Bollinger" ? (ind.bollingerMaType === "SMA" || ind.bollingerMaType === "EMA" || ind.bollingerMaType === "WMA" ? ind.bollingerMaType : "SMA") : "SMA",
+      bollingerZ: ind.type === "Bollinger" ? (typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2) : 2,
+      bollingerZText: String(ind.type === "Bollinger" ? (typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2) : 2),
+      bollingerShowUpper: ind.type === "Bollinger" ? (ind.bollingerShowUpper !== false) : true,
+      bollingerShowLower: ind.type === "Bollinger" ? (ind.bollingerShowLower !== false) : true,
+      bollingerShowMiddle: ind.type === "Bollinger" ? (ind.bollingerShowMiddle === true) : false,
+      bollingerBandOpacity: ind.type === "Bollinger" ? (typeof ind.bollingerBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.bollingerBandOpacity)) : 0.2) : 0.2,
+      bollingerBandOpacityText: String(Math.round((ind.type === "Bollinger" ? (typeof ind.bollingerBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.bollingerBandOpacity)) : 0.2) : 0.2) * 100)),
+      bollingerLimitsColor: ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : "#6366f1",
+      bollingerLimitsLineStyle: (ind.type === "Bollinger" && (ind.bollingerLimitsLineStyle === "solid" || ind.bollingerLimitsLineStyle === "dotted" || ind.bollingerLimitsLineStyle === "dashed") ? ind.bollingerLimitsLineStyle : "solid") as IndicatorLineStyle,
+      bollingerLimitsLineWidth: (ind.type === "Bollinger" && (ind.bollingerLimitsLineWidth === "thin" || ind.bollingerLimitsLineWidth === "normal") ? ind.bollingerLimitsLineWidth : "normal") as IndicatorLineWidth,
+      bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : "#a855f7",
+      bollingerMiddleLineStyle: (ind.type === "Bollinger" && (ind.bollingerMiddleLineStyle === "solid" || ind.bollingerMiddleLineStyle === "dotted" || ind.bollingerMiddleLineStyle === "dashed") ? ind.bollingerMiddleLineStyle : "dashed") as IndicatorLineStyle,
+      bollingerMiddleLineWidth: (ind.type === "Bollinger" && (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal") ? ind.bollingerMiddleLineWidth : "normal") as IndicatorLineWidth,
     });
   }, []);
 
@@ -268,9 +405,9 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
     updateIndicator(editingId, {
       period: ind?.type === "MACD" ? fastP : periodNum,
-      fieldKey: editForm.fieldKey,
+      fieldKey: ind?.type === "OBV" ? "volume" : editForm.fieldKey,
       color: editForm.color,
-      panel: editForm.panel,
+      panel: ind?.type === "SAR" || ind?.type === "VWAP" ? "main" : editForm.panel,
       lineWidth: editForm.lineWidth,
       lineStyle: editForm.lineStyle,
       ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
@@ -288,6 +425,40 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
         macdHistogram: editForm.macdSignalLine && editForm.macdHistogram,
         macdHistogramColorAbove: editForm.macdSignalLine && editForm.macdHistogram ? editForm.macdHistogramColorAbove : undefined,
         macdHistogramColorBelow: editForm.macdSignalLine && editForm.macdHistogram ? editForm.macdHistogramColorBelow : undefined,
+      } : {}),
+      ...(ind?.type === "Stochastic" ? {
+        stochLimits: editForm.stochLimits,
+        stochLimitUpper: editForm.stochLimitUpper,
+        stochLimitLower: editForm.stochLimitLower,
+        stochLimitColor: editForm.stochLimitColor,
+        stochLimitLineWidth: editForm.stochLimitLineWidth,
+        stochLimitLineStyle: editForm.stochLimitLineStyle,
+        stochDLine: editForm.stochDLine,
+        stochDMaType: editForm.stochDMaType,
+        stochDPeriod: editForm.stochDLine ? Math.max(1, Math.min(500, Number(editForm.stochDPeriodText) || 3)) : undefined,
+        stochDColor: editForm.stochDLine ? editForm.stochDColor : undefined,
+        stochDLineWidth: editForm.stochDLine ? editForm.stochDLineWidth : undefined,
+        stochDLineStyle: editForm.stochDLine ? editForm.stochDLineStyle : undefined,
+      } : {}),
+      ...(ind?.type === "SAR" ? {
+        sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),
+        sarIncrement: (() => { const n = parseFloat(editForm.sarIncrementText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),
+        sarMax: (() => { const n = parseFloat(editForm.sarMaxText); return Number.isFinite(n) ? Math.max(0.02, Math.min(1, n)) : 0.2; })(),
+        sarPointSize: editForm.sarPointSize ?? "normal",
+      } : {}),
+      ...(ind?.type === "Bollinger" ? {
+        bollingerMaType: editForm.bollingerMaType,
+        bollingerZ: Math.max(0, Math.min(3, parseFloat(editForm.bollingerZText) || 2)),
+        bollingerShowUpper: editForm.bollingerShowUpper,
+        bollingerShowLower: editForm.bollingerShowLower,
+        bollingerShowMiddle: editForm.bollingerShowMiddle,
+        bollingerBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(editForm.bollingerBandOpacityText) || 20) / 100)),
+        bollingerLimitsColor: editForm.bollingerLimitsColor,
+        bollingerLimitsLineStyle: editForm.bollingerLimitsLineStyle,
+        bollingerLimitsLineWidth: editForm.bollingerLimitsLineWidth,
+        bollingerMiddleColor: editForm.color,
+        bollingerMiddleLineStyle: editForm.lineStyle,
+        bollingerMiddleLineWidth: editForm.lineWidth,
       } : {}),
     });
     setEditingId(null);

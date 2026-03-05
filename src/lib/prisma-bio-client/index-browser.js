@@ -355,6 +355,13 @@ exports.Prisma.BinanceKlineCacheScalarFieldEnum = {
   takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
 };
 
+exports.Prisma.BinanceKlineGapScalarFieldEnum = {
+  symbol: 'symbol',
+  interval: 'interval',
+  gapFrom: 'gapFrom',
+  gapTo: 'gapTo'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -472,7 +479,8 @@ exports.Prisma.ModelName = {
   BioAppConfig: 'BioAppConfig',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
-  BinanceKlineCache: 'BinanceKlineCache'
+  BinanceKlineCache: 'BinanceKlineCache',
+  BinanceKlineGap: 'BinanceKlineGap'
 };
 
 /**

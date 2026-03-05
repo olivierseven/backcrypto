@@ -6,6 +6,8 @@ export {
   getIndicatorLabelShort,
   getIndicatorLabelSignal,
   getIndicatorLabelShortSignal,
+  getIndicatorLabelStochD,
+  getIndicatorLabelShortStochD,
   isMovingAverageType,
   type KlinesT,
 } from "./indicatorsPanelUtils";

@@ -24,6 +24,13 @@ export function formatAbbreviated(n: number, decimals = 2): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+/** OBV no eixo Y: sempre /1000, 2 decimais, vírgula, sufixo "k" (ex.: -176326.71 → -176,33k). */
+export function formatObvYAxis(value: number): string {
+  const scaled = value / 1000;
+  const s = scaled.toFixed(2).replace(".", ",");
+  return s + "k";
+}
+
 export function formatTimeLabel(ms: number): string {
   const d = new Date(ms);
   return d.toLocaleTimeString("en-CA", {

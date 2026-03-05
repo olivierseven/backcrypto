@@ -32,6 +32,28 @@ export function getIndicatorLabel(
     const slow = ind.macdSlowPeriod ?? 26;
     return `MACD(${fast},${slow}) ${fieldLabel}`;
   }
+  if (ind.type === "Stochastic") {
+    return `Stoch %K(${ind.period}) ${fieldLabel}`;
+  }
+  if (ind.type === "OBV") {
+    return `OBV ${fieldLabel}`;
+  }
+  if (ind.type === "SAR") {
+    const start = ind.sarStart ?? 0.02;
+    const inc = ind.sarIncrement ?? 0.02;
+    const max = ind.sarMax ?? 0.2;
+    return `SAR(${start}, ${inc}, ${max})`;
+  }
+  if (ind.type === "ATR") {
+    return `ATR(${ind.period})`;
+  }
+  if (ind.type === "VWAP") {
+    return "VWAP";
+  }
+  if (ind.type === "Bollinger") {
+    const z = ind.bollingerZ ?? 2;
+    return `Bollinger(${ind.period}) Z=${z} ${fieldLabel}`;
+  }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
 
@@ -62,6 +84,25 @@ export function getIndicatorLabelShort(
     const slow = ind.macdSlowPeriod ?? 26;
     return `MACD(${fast},${slow}) ${letter}`;
   }
+  if (ind.type === "Stochastic") {
+    return `%K(${ind.period}) ${letter}`;
+  }
+  if (ind.type === "OBV") {
+    return `OBV ${letter}`;
+  }
+  if (ind.type === "SAR") {
+    return "SAR";
+  }
+  if (ind.type === "ATR") {
+    return `ATR(${ind.period})`;
+  }
+  if (ind.type === "VWAP") {
+    return "VWAP";
+  }
+  if (ind.type === "Bollinger") {
+    const z = ind.bollingerZ ?? 2;
+    return `BB(${ind.period}) Z=${z} ${letter}`;
+  }
   return `${ind.type}(${ind.period}) ${letter}`;
 }
 
@@ -80,6 +121,20 @@ export function getIndicatorLabelSignal(
 export function getIndicatorLabelShortSignal(ind: UserIndicatorConfig): string {
   const period = ind.macdSignalPeriod ?? 9;
   return `MACD Sig(${period})`;
+}
+
+/** Rótulo da linha %D do Stochastic (ex.: "Stoch %D(3)"). */
+export function getIndicatorLabelStochD(ind: UserIndicatorConfig, t: KlinesT): string {
+  const period = ind.stochDPeriod ?? 3;
+  const k = t as Record<string, string>;
+  const template = k.stochDLabel ?? "Stoch %D({period})";
+  return template.replace("{period}", String(period));
+}
+
+/** Rótulo curto da linha %D (ex.: "%D(3)"). */
+export function getIndicatorLabelShortStochD(ind: UserIndicatorConfig): string {
+  const period = ind.stochDPeriod ?? 3;
+  return `%D(${period})`;
 }
 
 export function isMovingAverageType(type: string): boolean {

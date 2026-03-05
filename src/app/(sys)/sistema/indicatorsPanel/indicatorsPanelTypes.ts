@@ -44,6 +44,41 @@ export interface AddFormState {
   rsiLimitColor: string;
   rsiLimitLineWidth: IndicatorLineWidth;
   rsiLimitLineStyle: IndicatorLineStyle;
+  stochLimits: boolean;
+  stochLimitUpper: number;
+  stochLimitLower: number;
+  stochLimitColor: string;
+  stochLimitLineWidth: IndicatorLineWidth;
+  stochLimitLineStyle: IndicatorLineStyle;
+  stochDLine: boolean;
+  stochDMaType: "SMA" | "EMA" | "WMA";
+  stochDPeriod: number;
+  stochDPeriodText: string;
+  stochDColor: string;
+  stochDLineWidth: IndicatorLineWidth;
+  stochDLineStyle: IndicatorLineStyle;
+  sarStart: number;
+  sarStartText: string;
+  sarIncrement: number;
+  sarIncrementText: string;
+  sarMax: number;
+  sarMaxText: string;
+  sarPointSize: "thin" | "normal";
+  bollingerMaType: "SMA" | "EMA" | "WMA";
+  bollingerZ: number;
+  bollingerZText: string;
+  bollingerShowUpper: boolean;
+  bollingerShowLower: boolean;
+  bollingerShowMiddle: boolean;
+  bollingerBandOpacity: number;
+  bollingerBandOpacityText: string;
+  bollingerLimitsColor: string;
+  bollingerLimitsColorOpen: boolean;
+  bollingerLimitsLineStyle: IndicatorLineStyle;
+  bollingerLimitsLineWidth: IndicatorLineWidth;
+  bollingerMiddleColor: string;
+  bollingerMiddleLineStyle: IndicatorLineStyle;
+  bollingerMiddleLineWidth: IndicatorLineWidth;
 }
 
 export interface EditFormState {
@@ -81,6 +116,40 @@ export interface EditFormState {
   macdHistogram: boolean;
   macdHistogramColorAbove: string;
   macdHistogramColorBelow: string;
+  stochLimits: boolean;
+  stochLimitUpper: number;
+  stochLimitLower: number;
+  stochLimitColor: string;
+  stochLimitLineWidth: IndicatorLineWidth;
+  stochLimitLineStyle: IndicatorLineStyle;
+  stochDLine: boolean;
+  stochDMaType: "SMA" | "EMA" | "WMA";
+  stochDPeriod: number;
+  stochDPeriodText: string;
+  stochDColor: string;
+  stochDLineWidth: IndicatorLineWidth;
+  stochDLineStyle: IndicatorLineStyle;
+  sarStart: number;
+  sarStartText: string;
+  sarIncrement: number;
+  sarIncrementText: string;
+  sarMax: number;
+  sarMaxText: string;
+  sarPointSize: "thin" | "normal";
+  bollingerMaType: "SMA" | "EMA" | "WMA";
+  bollingerZ: number;
+  bollingerZText: string;
+  bollingerShowUpper: boolean;
+  bollingerShowLower: boolean;
+  bollingerShowMiddle: boolean;
+  bollingerBandOpacity: number;
+  bollingerBandOpacityText: string;
+  bollingerLimitsColor: string;
+  bollingerLimitsLineStyle: IndicatorLineStyle;
+  bollingerLimitsLineWidth: IndicatorLineWidth;
+  bollingerMiddleColor: string;
+  bollingerMiddleLineStyle: IndicatorLineStyle;
+  bollingerMiddleLineWidth: IndicatorLineWidth;
 }
 
 export interface IndicatorsPanelContextValue {

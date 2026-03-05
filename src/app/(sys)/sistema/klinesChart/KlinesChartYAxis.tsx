@@ -11,6 +11,10 @@ export interface KlinesChartYAxisProps {
   yTickValues: number[];
   y: (price: number) => number;
   formatYAxis: (v: number) => string;
+  /** Formatação para valores grandes em painéis (ex.: MACD). */
+  formatPanelValue?: (v: number) => string;
+  /** Formatação só para OBV no eixo Y: /1000, vírgula, "k" (ex.: -176,33k). */
+  formatObvValue?: (v: number) => string;
   footerYAxisTextHex: string;
   isDarkFooterYAxis: boolean;
   footerYAxisHex: string;
@@ -35,7 +39,7 @@ export interface KlinesChartYAxisProps {
   getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4";
   yMin: number;
   yMax: number;
-  crosshairPoint: { index: number; price: number } | null;
+  crosshairPoint: { index: number; price: number; panelClickY?: number; panelValue?: number } | null;
   startIndex: number;
   windowN: number;
   crosshairDragging: boolean;
@@ -46,6 +50,8 @@ export function KlinesChartYAxis({
   yTickValues,
   y,
   formatYAxis,
+  formatPanelValue,
+  formatObvValue,
   footerYAxisTextHex,
   isDarkFooterYAxis,
   footerYAxisHex,
@@ -83,7 +89,7 @@ export function KlinesChartYAxis({
     <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
       <svg width={Y_AXIS_WIDTH} height={chartHeight} className="text-[10px] font-mono">
         {yTickValues.map((v, i) => (
-          <text key={i} x={Y_AXIS_WIDTH - 6} y={y(v) + 4} textAnchor="end" fill={footerYAxisTextHex}>
+          <text key={i} x={6} y={y(v) + 4} textAnchor="start" fill={footerYAxisTextHex}>
             {formatYAxis(v)}
           </text>
         ))}
@@ -92,9 +98,16 @@ export function KlinesChartYAxis({
             const { min, max } = panelExtents.panel2;
             const r = max - min || 1;
             const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel2" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p2-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel2(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+              <text key={`p2-${v}`} x={6} y={yRsiPanel2(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                {fmt(v)}
               </text>
             ));
           })()}
@@ -103,9 +116,16 @@ export function KlinesChartYAxis({
             const { min, max } = panelExtents.panel3;
             const r = max - min || 1;
             const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel3" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p3-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel3(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+              <text key={`p3-${v}`} x={6} y={yRsiPanel3(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                {fmt(v)}
               </text>
             ));
           })()}
@@ -114,9 +134,16 @@ export function KlinesChartYAxis({
             const { min, max } = panelExtents.panel4;
             const r = max - min || 1;
             const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel4" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p4-${v}`} x={Y_AXIS_WIDTH - 6} y={yRsiPanel4(v) + 4} textAnchor="end" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
-                {v >= 0 && v <= 100 && v === Math.round(v) ? v : formatYAxis(v)}
+              <text key={`p4-${v}`} x={6} y={yRsiPanel4(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                {fmt(v)}
               </text>
             ));
           })()}
@@ -132,7 +159,7 @@ export function KlinesChartYAxis({
               strokeWidth={1}
               rx={2}
             />
-            <text x={Y_AXIS_WIDTH - 6} y={lastCloseY + 4} textAnchor="end" className="font-semibold" fill={lastCloseTextHex}>
+            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" fill={lastCloseTextHex}>
               {formatYAxis(lastClose)}
             </text>
           </g>
@@ -174,13 +201,19 @@ export function KlinesChartYAxis({
                   rx={2}
                 />
                 <text
-                  x={Y_AXIS_WIDTH - 6}
+                  x={6}
                   y={lastValY + 4}
-                  textAnchor="end"
+                  textAnchor="start"
                   className="font-semibold font-mono text-[10px]"
                   fill={textColor}
                 >
-                  {panelKey === "main" ? formatYAxis(lastVal) : lastVal >= 0 && lastVal <= 100 ? lastVal.toFixed(1) : formatYAxis(lastVal)}
+                  {panelKey === "main"
+                    ? formatYAxis(lastVal)
+                    : ind.type === "OBV" && formatObvValue
+                      ? formatObvValue(lastVal)
+                      : lastVal >= 0 && lastVal <= 100 && lastVal === Math.round(lastVal)
+                        ? lastVal.toFixed(1)
+                        : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
                 </text>
               </g>
             );
@@ -188,11 +221,14 @@ export function KlinesChartYAxis({
         {crosshairPoint !== null &&
           (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
           (() => {
-            const crossY = y(crosshairPoint.price);
-            const pctVsLast = lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : 0;
-            const pctStr = pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%";
-            const pctColor = pctVsLast >= 0 ? "#059669" : "#dc2626";
-            const boxH = 28;
+            const crossY = crosshairPoint.panelClickY != null ? crosshairPoint.panelClickY : y(crosshairPoint.price);
+            const isPanelValue = crosshairPoint.panelValue != null;
+            const displayValue = isPanelValue ? crosshairPoint.panelValue! : crosshairPoint.price;
+            const valueStr = isPanelValue && displayValue >= 0 && displayValue <= 100 ? displayValue.toFixed(1) : formatYAxis(displayValue);
+            const pctVsLast = !isPanelValue && lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : null;
+            const pctStr = pctVsLast != null ? (pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%") : null;
+            const pctColor = pctVsLast != null && pctVsLast >= 0 ? "#059669" : "#dc2626";
+            const boxH = pctStr != null ? 28 : 16;
             const boxY = crossY - 8;
             return (
               <g>
@@ -207,12 +243,14 @@ export function KlinesChartYAxis({
                   strokeDasharray="2 2"
                   rx={2}
                 />
-                <text x={Y_AXIS_WIDTH - 6} y={crossY + 4} textAnchor="end" className="font-mono font-medium" fill={footerYAxisTextHex}>
-                  {formatYAxis(crosshairPoint.price)}
+                <text x={6} y={crossY + 4} textAnchor="start" className="font-mono font-medium" fill={footerYAxisTextHex}>
+                  {valueStr}
                 </text>
-                <text x={Y_AXIS_WIDTH - 6} y={crossY + 15} textAnchor="end" className="text-[10px] font-mono" fill={pctColor}>
-                  {pctStr}
-                </text>
+                {pctStr != null && (
+                  <text x={6} y={crossY + 15} textAnchor="start" className="text-[10px] font-mono" fill={pctColor}>
+                    {pctStr}
+                  </text>
+                )}
               </g>
             );
           })()}
