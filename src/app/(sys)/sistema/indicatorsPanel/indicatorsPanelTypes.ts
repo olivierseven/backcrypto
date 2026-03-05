@@ -57,6 +57,12 @@ export interface AddFormState {
   stochDColor: string;
   stochDLineWidth: IndicatorLineWidth;
   stochDLineStyle: IndicatorLineStyle;
+  williamsRLimits: boolean;
+  williamsRLimitUpper: number;
+  williamsRLimitLower: number;
+  williamsRLimitColor: string;
+  williamsRLimitLineWidth: IndicatorLineWidth;
+  williamsRLimitLineStyle: IndicatorLineStyle;
   sarStart: number;
   sarStartText: string;
   sarIncrement: number;
@@ -79,6 +85,11 @@ export interface AddFormState {
   bollingerMiddleColor: string;
   bollingerMiddleLineStyle: IndicatorLineStyle;
   bollingerMiddleLineWidth: IndicatorLineWidth;
+  volumeInUsdt: boolean;
+  volumeColorAbove: string;
+  volumeColorBelow: string;
+  volumeColorAboveOpen: boolean;
+  volumeColorBelowOpen: boolean;
 }
 
 export interface EditFormState {
@@ -129,6 +140,12 @@ export interface EditFormState {
   stochDColor: string;
   stochDLineWidth: IndicatorLineWidth;
   stochDLineStyle: IndicatorLineStyle;
+  williamsRLimits: boolean;
+  williamsRLimitUpper: number;
+  williamsRLimitLower: number;
+  williamsRLimitColor: string;
+  williamsRLimitLineWidth: IndicatorLineWidth;
+  williamsRLimitLineStyle: IndicatorLineStyle;
   sarStart: number;
   sarStartText: string;
   sarIncrement: number;
@@ -150,6 +167,9 @@ export interface EditFormState {
   bollingerMiddleColor: string;
   bollingerMiddleLineStyle: IndicatorLineStyle;
   bollingerMiddleLineWidth: IndicatorLineWidth;
+  volumeInUsdt: boolean;
+  volumeColorAbove: string;
+  volumeColorBelow: string;
 }
 
 export interface IndicatorsPanelContextValue {
@@ -159,9 +179,12 @@ export interface IndicatorsPanelContextValue {
   firstEnabledFieldValue: IndicatorFieldKey;
   fieldOptionsVisibleForAdd: FieldOption[];
   firstEnabledFieldValueForAdd: IndicatorFieldKey;
-  panelsWithSecondary: { panel2: boolean; panel3: boolean; panel4: boolean };
-  panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean };
-  panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean };
+  panelsWithSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
+  panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
+  panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
+  indicatorCountByPanel: { main: number; panel2: number; panel3: number; panel4: number; panel5: number };
+  MAIN_MAX_INDICATORS: number;
+  SECONDARY_MAX_INDICATORS: number;
   isMovingAverageType: (type: string) => boolean;
   INDICATOR_COLOR_PALETTE: readonly string[];
   INTERVAL_OPTIONS: { value: number; label: string }[];

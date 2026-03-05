@@ -1,3 +1,8 @@
+/** Máximo de indicadores no painel principal (main). */
+export const MAIN_MAX_INDICATORS = 7;
+/** Máximo de indicadores em cada painel secundário (2, 3 ou 4). */
+export const SECONDARY_MAX_INDICATORS = 3;
+
 /** Paleta de cores (claro → escuro), pelo menos 12. Inclui amarelo para MACD, MAs e RSI. */
 export const INDICATOR_COLOR_PALETTE = [
   "#ffffff",

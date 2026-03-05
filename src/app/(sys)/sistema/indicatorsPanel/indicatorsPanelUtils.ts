@@ -35,6 +35,9 @@ export function getIndicatorLabel(
   if (ind.type === "Stochastic") {
     return `Stoch %K(${ind.period}) ${fieldLabel}`;
   }
+  if (ind.type === "WilliamsR") {
+    return `Williams %R(${ind.period}) ${fieldLabel}`;
+  }
   if (ind.type === "OBV") {
     return `OBV ${fieldLabel}`;
   }
@@ -53,6 +56,9 @@ export function getIndicatorLabel(
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
     return `Bollinger(${ind.period}) Z=${z} ${fieldLabel}`;
+  }
+  if (ind.type === "Volume") {
+    return ind.volumeInUsdt ? (typeof (t as Record<string, string>).volumeUsdtLabel === "string" ? (t as Record<string, string>).volumeUsdtLabel : "Volume (USDT)") : (typeof (t as Record<string, string>).volumeLabel === "string" ? (t as Record<string, string>).volumeLabel : "Volume");
   }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
@@ -87,6 +93,9 @@ export function getIndicatorLabelShort(
   if (ind.type === "Stochastic") {
     return `%K(${ind.period}) ${letter}`;
   }
+  if (ind.type === "WilliamsR") {
+    return `%R(${ind.period}) ${letter}`;
+  }
   if (ind.type === "OBV") {
     return `OBV ${letter}`;
   }
@@ -102,6 +111,9 @@ export function getIndicatorLabelShort(
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
     return `BB(${ind.period}) Z=${z} ${letter}`;
+  }
+  if (ind.type === "Volume") {
+    return ind.volumeInUsdt ? "Vol USDT" : "Vol";
   }
   return `${ind.type}(${ind.period}) ${letter}`;
 }

@@ -13,6 +13,8 @@ import {
 import {
   INDICATOR_COLOR_PALETTE,
   INTERVAL_OPTIONS,
+  MAIN_MAX_INDICATORS,
+  SECONDARY_MAX_INDICATORS,
   getIndicatorLabel,
   isMovingAverageType,
   useIndicatorsPanelFields,
@@ -75,6 +77,12 @@ const INITIAL_ADD_FORM: AddFormState = {
   stochDColor: "#ea580c",
   stochDLineWidth: "normal",
   stochDLineStyle: "dashed",
+  williamsRLimits: true,
+  williamsRLimitUpper: -20,
+  williamsRLimitLower: -80,
+  williamsRLimitColor: "#dc2626",
+  williamsRLimitLineWidth: "normal",
+  williamsRLimitLineStyle: "dotted",
   sarStart: 0.02,
   sarStartText: "0.02",
   sarIncrement: 0.02,
@@ -97,6 +105,11 @@ const INITIAL_ADD_FORM: AddFormState = {
   bollingerMiddleColor: "#a855f7",
   bollingerMiddleLineStyle: "dashed",
   bollingerMiddleLineWidth: "normal",
+  volumeInUsdt: false,
+  volumeColorAbove: "#10b981",
+  volumeColorBelow: "#ef4444",
+  volumeColorAboveOpen: false,
+  volumeColorBelowOpen: false,
 };
 
 interface IndicatorsPanelProps {
@@ -159,6 +172,12 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     stochDColor: string;
     stochDLineWidth: IndicatorLineWidth;
     stochDLineStyle: IndicatorLineStyle;
+    williamsRLimits: boolean;
+    williamsRLimitUpper: number;
+    williamsRLimitLower: number;
+    williamsRLimitColor: string;
+    williamsRLimitLineWidth: IndicatorLineWidth;
+    williamsRLimitLineStyle: IndicatorLineStyle;
     sarStart: number;
     sarStartText: string;
     sarIncrement: number;
@@ -168,29 +187,50 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     sarPointSize: "thin" | "normal";
   } | null>(null);
 
-  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR" ? "panel2" : "main");
+  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" ? "panel2" : "main");
+
+  const indicatorCountByPanel = useMemo(() => {
+    let main = 0;
+    let panel2 = 0;
+    let panel3 = 0;
+    let panel4 = 0;
+    let panel5 = 0;
+    for (const i of userIndicators) {
+      const p = getPanel(i);
+      if (p === "main") main++;
+      else if (p === "panel2") panel2++;
+      else if (p === "panel3") panel3++;
+      else if (p === "panel4") panel4++;
+      else if (p === "panel5") panel5++;
+    }
+    return { main, panel2, panel3, panel4, panel5 };
+  }, [userIndicators]);
 
   const panelsWithSecondary = useMemo(() => ({
-    panel2: userIndicators.some((i) => getPanel(i) === "panel2" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
-    panel3: userIndicators.some((i) => getPanel(i) === "panel3" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
-    panel4: userIndicators.some((i) => getPanel(i) === "panel4" && (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR")),
-  }), [userIndicators]);
+    panel2: indicatorCountByPanel.panel2 > 0,
+    panel3: indicatorCountByPanel.panel3 > 0,
+    panel4: indicatorCountByPanel.panel4 > 0,
+    panel5: indicatorCountByPanel.panel5 > 0,
+  }), [indicatorCountByPanel]);
 
   const panelsFreeForSecondary = useMemo(() => ({
-    panel2: !panelsWithSecondary.panel2,
-    panel3: !panelsWithSecondary.panel3,
-    panel4: !panelsWithSecondary.panel4,
-  }), [panelsWithSecondary]);
+    panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS,
+    panel3: indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS,
+    panel4: indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS,
+    panel5: indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS,
+  }), [indicatorCountByPanel]);
 
   const panelsFreeForSecondaryEdit = useMemo(() => {
-    if (!editingId) return { panel2: true, panel3: true, panel4: true };
-    const isSecondary = (i: UserIndicatorConfig) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR";
+    if (!editingId) return { panel2: true, panel3: true, panel4: true, panel5: true };
+    const editing = userIndicators.find((i) => i.id === editingId);
+    const editingPanel = editing ? getPanel(editing) : null;
     return {
-      panel2: !userIndicators.some((i) => getPanel(i) === "panel2" && isSecondary(i) && i.id !== editingId),
-      panel3: !userIndicators.some((i) => getPanel(i) === "panel3" && isSecondary(i) && i.id !== editingId),
-      panel4: !userIndicators.some((i) => getPanel(i) === "panel4" && isSecondary(i) && i.id !== editingId),
+      panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS || editingPanel === "panel2",
+      panel3: indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS || editingPanel === "panel3",
+      panel4: indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS || editingPanel === "panel4",
+      panel5: indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS || editingPanel === "panel5",
     };
-  }, [userIndicators, editingId]);
+  }, [userIndicators, editingId, indicatorCountByPanel]);
 
   const setFieldKey = useCallback((v: import("./KlinesIndicatorsContext").IndicatorFieldKey) => {
     setAddForm((prev) => ({ ...prev, fieldKey: v }));
@@ -213,9 +253,25 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     setEditForm,
   });
 
-  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4;
+  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
+  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "Volume";
+  const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
+  const chosenPanelUsedForVolume =
+    (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 > 0) ||
+    (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 > 0) ||
+    (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 > 0) ||
+    (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 > 0);
+  const mainPanelFull = indicatorCountByPanel.main >= MAIN_MAX_INDICATORS;
+  const chosenPanelFull =
+    (addForm.chartOption === "main" && mainPanelFull) ||
+    (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS) ||
+    (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS) ||
+    (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS) ||
+    (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS);
   const addButtonDisabled =
-    (addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR") && !hasFreePanelForSecondary;
+    (addForm.indicatorType === "Volume" && (!hasEmptyPanelForVolume || chosenPanelUsedForVolume)) ||
+    (isSecondaryType && addForm.indicatorType !== "Volume" && !hasFreePanelForSecondary) ||
+    (!isSecondaryType && chosenPanelFull);
 
   const handleAdd = useCallback(() => {
     const n = Number(addForm.periodText);
@@ -225,21 +281,25 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     setAddForm((prev) => ({ ...prev, period: periodNum, periodText: String(periodNum) }));
     const effectivePanel: IndicatorPanel = addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP"
       ? "main"
-      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR"
-      ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4)
+      : addForm.indicatorType === "Volume"
+      ? (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
         ? addForm.chartOption
-        : (panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2")
-      : (addForm.chartOption === "panel2" && !panelsWithSecondary.panel2) || (addForm.chartOption === "panel3" && !panelsWithSecondary.panel3) || (addForm.chartOption === "panel4" && !panelsWithSecondary.panel4)
+        : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2")
+      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR"
+      ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (addForm.chartOption === "panel5" && panelsFreeForSecondary.panel5)
         ? addForm.chartOption
-        : (addForm.chartOption === "panel2" || addForm.chartOption === "panel3" || addForm.chartOption === "panel4" ? addForm.chartOption : "main");
+        : (panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2")
+      : (addForm.chartOption === "panel2" && !panelsWithSecondary.panel2) || (addForm.chartOption === "panel3" && !panelsWithSecondary.panel3) || (addForm.chartOption === "panel4" && !panelsWithSecondary.panel4) || (addForm.chartOption === "panel5" && !panelsWithSecondary.panel5)
+        ? addForm.chartOption
+        : (addForm.chartOption === "panel2" || addForm.chartOption === "panel3" || addForm.chartOption === "panel4" || addForm.chartOption === "panel5" ? addForm.chartOption : "main");
     const parseSar = (s: string, def: number, min: number, max: number) => {
       const n = parseFloat(s);
       return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : def;
     };
     addIndicator({
       type: addForm.indicatorType,
-      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" ? 1 : periodNum,
-      fieldKey: addForm.indicatorType === "OBV" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
+      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
+      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
         bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
@@ -289,11 +349,24 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
         stochDLineWidth: addForm.stochDLine ? addForm.stochDLineWidth : undefined,
         stochDLineStyle: addForm.stochDLine ? addForm.stochDLineStyle : undefined,
       } : {}),
+      ...(addForm.indicatorType === "WilliamsR" ? {
+        williamsRLimits: addForm.williamsRLimits,
+        williamsRLimitUpper: addForm.williamsRLimitUpper,
+        williamsRLimitLower: addForm.williamsRLimitLower,
+        williamsRLimitColor: addForm.williamsRLimitColor,
+        williamsRLimitLineWidth: addForm.williamsRLimitLineWidth,
+        williamsRLimitLineStyle: addForm.williamsRLimitLineStyle,
+      } : {}),
       ...(addForm.indicatorType === "SAR" ? {
         sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
         sarIncrement: parseSar(addForm.sarIncrementText, 0.02, 0.001, 1),
         sarMax: parseSar(addForm.sarMaxText, 0.2, 0.02, 1),
         sarPointSize: addForm.sarPointSize ?? "normal",
+      } : {}),
+      ...(addForm.indicatorType === "Volume" ? {
+        volumeInUsdt: addForm.volumeInUsdt === true,
+        volumeColorAbove: addForm.volumeColorAbove ?? "#10b981",
+        volumeColorBelow: addForm.volumeColorBelow ?? "#ef4444",
       } : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
@@ -317,8 +390,8 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
 
   const startEdit = useCallback((ind: UserIndicatorConfig) => {
     setEditingId(ind.id);
-    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "OBV" || ind.type === "ATR" ? "panel2" : "main");
-    const fieldKey = ind.type === "Stochastic" && ind.fieldKey !== "open" && ind.fieldKey !== "close" ? "close" : ind.fieldKey;
+    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" || ind.panel === "panel5" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");
+    const fieldKey = ind.type === "WilliamsR" ? "close" : ind.fieldKey;
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
     setEditForm({
@@ -369,6 +442,12 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       stochDColor: ind.type === "Stochastic" && ind.stochDLine ? (ind.stochDColor ?? "#ea580c") : "#ea580c",
       stochDLineWidth: (ind.type === "Stochastic" && ind.stochDLine && (ind.stochDLineWidth === "thin" || ind.stochDLineWidth === "normal") ? ind.stochDLineWidth : "normal") as IndicatorLineWidth,
       stochDLineStyle: (ind.type === "Stochastic" && ind.stochDLine && (ind.stochDLineStyle === "solid" || ind.stochDLineStyle === "dotted" || ind.stochDLineStyle === "dashed") ? ind.stochDLineStyle : "dashed") as IndicatorLineStyle,
+      williamsRLimits: ind.type === "WilliamsR" ? (ind.williamsRLimits === true) : false,
+      williamsRLimitUpper: ind.type === "WilliamsR" && ind.williamsRLimits ? (typeof ind.williamsRLimitUpper === "number" ? Math.max(-100, Math.min(0, Math.round(ind.williamsRLimitUpper))) : -20) : -20,
+      williamsRLimitLower: ind.type === "WilliamsR" && ind.williamsRLimits ? (typeof ind.williamsRLimitLower === "number" ? Math.max(-100, Math.min(0, Math.round(ind.williamsRLimitLower))) : -80) : -80,
+      williamsRLimitColor: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitColor ?? "#dc2626") : "#dc2626",
+      williamsRLimitLineWidth: (ind.type === "WilliamsR" && ind.williamsRLimits && (ind.williamsRLimitLineWidth === "thin" || ind.williamsRLimitLineWidth === "normal") ? ind.williamsRLimitLineWidth : "normal") as IndicatorLineWidth,
+      williamsRLimitLineStyle: (ind.type === "WilliamsR" && ind.williamsRLimits && (ind.williamsRLimitLineStyle === "solid" || ind.williamsRLimitLineStyle === "dotted" || ind.williamsRLimitLineStyle === "dashed") ? ind.williamsRLimitLineStyle : "dotted") as IndicatorLineStyle,
       sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
       sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
       sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
@@ -391,6 +470,9 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : "#a855f7",
       bollingerMiddleLineStyle: (ind.type === "Bollinger" && (ind.bollingerMiddleLineStyle === "solid" || ind.bollingerMiddleLineStyle === "dotted" || ind.bollingerMiddleLineStyle === "dashed") ? ind.bollingerMiddleLineStyle : "dashed") as IndicatorLineStyle,
       bollingerMiddleLineWidth: (ind.type === "Bollinger" && (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal") ? ind.bollingerMiddleLineWidth : "normal") as IndicatorLineWidth,
+      volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : false,
+      volumeColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : "#10b981",
+      volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
     });
   }, []);
 
@@ -405,9 +487,14 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
     updateIndicator(editingId, {
       period: ind?.type === "MACD" ? fastP : periodNum,
-      fieldKey: ind?.type === "OBV" ? "volume" : editForm.fieldKey,
+      fieldKey: ind?.type === "OBV" || ind?.type === "Volume" ? "volume" : editForm.fieldKey,
       color: editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" ? "main" : editForm.panel,
+      ...(ind?.type === "Volume" ? {
+        volumeInUsdt: editForm.volumeInUsdt === true,
+        volumeColorAbove: editForm.volumeColorAbove ?? "#10b981",
+        volumeColorBelow: editForm.volumeColorBelow ?? "#ef4444",
+      } : {}),
       lineWidth: editForm.lineWidth,
       lineStyle: editForm.lineStyle,
       ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
@@ -439,6 +526,14 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
         stochDColor: editForm.stochDLine ? editForm.stochDColor : undefined,
         stochDLineWidth: editForm.stochDLine ? editForm.stochDLineWidth : undefined,
         stochDLineStyle: editForm.stochDLine ? editForm.stochDLineStyle : undefined,
+      } : {}),
+      ...(ind?.type === "WilliamsR" ? {
+        williamsRLimits: editForm.williamsRLimits,
+        williamsRLimitUpper: editForm.williamsRLimitUpper,
+        williamsRLimitLower: editForm.williamsRLimitLower,
+        williamsRLimitColor: editForm.williamsRLimitColor,
+        williamsRLimitLineWidth: editForm.williamsRLimitLineWidth,
+        williamsRLimitLineStyle: editForm.williamsRLimitLineStyle,
       } : {}),
       ...(ind?.type === "SAR" ? {
         sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),
@@ -481,6 +576,9 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       panelsWithSecondary,
       panelsFreeForSecondary,
       panelsFreeForSecondaryEdit,
+      indicatorCountByPanel,
+      MAIN_MAX_INDICATORS,
+      SECONDARY_MAX_INDICATORS,
       isMovingAverageType: isMA,
       INDICATOR_COLOR_PALETTE,
       INTERVAL_OPTIONS,
@@ -510,6 +608,7 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       panelsWithSecondary,
       panelsFreeForSecondary,
       panelsFreeForSecondaryEdit,
+      indicatorCountByPanel,
       isMA,
       addButtonDisabled,
       handleAdd,

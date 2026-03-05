@@ -33,10 +33,10 @@ function saveShowIndicatorLastValueOnYAxis(value: boolean) {
   }
 }
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
-export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4";
+export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4" | "panel5";
 
 export type IndicatorLineWidth = "thin" | "normal";
 export type IndicatorLineStyle = "solid" | "dotted" | "dashed";
@@ -126,6 +126,15 @@ export interface UserIndicatorConfig {
   stochDColor?: string;
   stochDLineWidth?: IndicatorLineWidth;
   stochDLineStyle?: IndicatorLineStyle;
+  /** Só para Williams %R: exibir limites (escala -100 a 0; default -80 e -20). */
+  williamsRLimits?: boolean;
+  /** Só para Williams %R: limite superior (default -20, overbought). */
+  williamsRLimitUpper?: number;
+  /** Só para Williams %R: limite inferior (default -80, oversold). */
+  williamsRLimitLower?: number;
+  williamsRLimitColor?: string;
+  williamsRLimitLineWidth?: IndicatorLineWidth;
+  williamsRLimitLineStyle?: IndicatorLineStyle;
   /** Só para SAR (Parabolic SAR): valor inicial do Acceleration Factor (default 0.02). */
   sarStart?: number;
   /** Só para SAR: incremento do AF (default 0.02). */
@@ -156,6 +165,12 @@ export interface UserIndicatorConfig {
   /** Só para Bollinger: estilo de traço da média. */
   bollingerMiddleLineStyle?: IndicatorLineStyle;
   bollingerMiddleLineWidth?: IndicatorLineWidth;
+  /** Só para Volume: exibir volume em USDT (quote); default false = volume em base. */
+  volumeInUsdt?: boolean;
+  /** Só para Volume: cor das barras quando o candle fecha positivo (close >= open). */
+  volumeColorAbove?: string;
+  /** Só para Volume: cor das barras quando o candle fecha negativo (close < open). */
+  volumeColorBelow?: string;
 }
 
 const FIELD_KEY_TO_INDEX: Record<string, number> = {
@@ -196,7 +211,7 @@ function loadFromStorage(): UserIndicatorConfig[] {
         const u = p as UserIndicatorConfig;
         return (
           typeof u.id === "string" &&
-          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger") &&
+          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger" || u.type === "Volume") &&
           typeof u.period === "number" &&
           typeof u.fieldKey === "string" &&
           typeof u.color === "string" &&
@@ -205,10 +220,10 @@ function loadFromStorage(): UserIndicatorConfig[] {
       }
     ).map((u) => ({
       ...u,
-      fieldKey: u.type === "Stochastic" && u.fieldKey !== "open" && u.fieldKey !== "close" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.fieldKey),
-      panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4"
+      fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.type === "Volume" ? "volume" : u.fieldKey),
+      panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
         ? u.panel
-        : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "OBV" || u.type === "ATR" ? "panel2" : "main")),
+        : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" ? "panel2" : "main")),
       sarStart: u.type === "SAR" ? (typeof u.sarStart === "number" ? Math.max(0.001, Math.min(1, u.sarStart)) : 0.02) : undefined,
       sarIncrement: u.type === "SAR" ? (typeof u.sarIncrement === "number" ? Math.max(0.001, Math.min(1, u.sarIncrement)) : 0.02) : undefined,
       sarMax: u.type === "SAR" ? (typeof u.sarMax === "number" ? Math.max(0.02, Math.min(1, u.sarMax)) : 0.2) : undefined,
@@ -251,6 +266,12 @@ function loadFromStorage(): UserIndicatorConfig[] {
       stochDColor: u.type === "Stochastic" && u.stochDLine ? (u.stochDColor ?? "#ea580c") : undefined,
       stochDLineWidth: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineWidth === "thin" || u.stochDLineWidth === "normal" ? u.stochDLineWidth : "normal") : undefined,
       stochDLineStyle: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineStyle === "solid" || u.stochDLineStyle === "dotted" || u.stochDLineStyle === "dashed" ? u.stochDLineStyle : "dashed") : undefined,
+      williamsRLimits: u.type === "WilliamsR" ? (u.williamsRLimits === true) : undefined,
+      williamsRLimitUpper: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitUpper === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitUpper))) : -20) : undefined,
+      williamsRLimitLower: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitLower === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitLower))) : -80) : undefined,
+      williamsRLimitColor: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitColor ?? "#dc2626") : undefined,
+      williamsRLimitLineWidth: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineWidth === "thin" || u.williamsRLimitLineWidth === "normal" ? u.williamsRLimitLineWidth : "normal") : undefined,
+      williamsRLimitLineStyle: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineStyle === "solid" || u.williamsRLimitLineStyle === "dotted" || u.williamsRLimitLineStyle === "dashed" ? u.williamsRLimitLineStyle : "dotted") : undefined,
       bollingerMaType: u.type === "Bollinger" ? (u.bollingerMaType === "SMA" || u.bollingerMaType === "EMA" || u.bollingerMaType === "WMA" ? u.bollingerMaType : "SMA") : undefined,
       bollingerZ: u.type === "Bollinger" ? (typeof u.bollingerZ === "number" ? Math.max(0, Math.min(3, u.bollingerZ)) : 2) : undefined,
       bollingerShowUpper: u.type === "Bollinger" ? (u.bollingerShowUpper !== false) : undefined,
@@ -263,6 +284,9 @@ function loadFromStorage(): UserIndicatorConfig[] {
       bollingerMiddleColor: u.type === "Bollinger" ? (u.bollingerMiddleColor ?? "#a855f7") : undefined,
       bollingerMiddleLineStyle: u.type === "Bollinger" ? (u.bollingerMiddleLineStyle === "solid" || u.bollingerMiddleLineStyle === "dotted" || u.bollingerMiddleLineStyle === "dashed" ? u.bollingerMiddleLineStyle : "dashed") : undefined,
       bollingerMiddleLineWidth: u.type === "Bollinger" ? (u.bollingerMiddleLineWidth === "thin" || u.bollingerMiddleLineWidth === "normal" ? u.bollingerMiddleLineWidth : "normal") : undefined,
+      volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
+      volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
+      volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
     }));
   } catch {
     return [];
@@ -286,7 +310,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
       const u = p as UserIndicatorConfig;
       return (
         typeof u.id === "string" &&
-        (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger") &&
+        (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger" || u.type === "Volume") &&
         typeof u.period === "number" &&
         typeof u.fieldKey === "string" &&
         typeof u.color === "string" &&
@@ -295,10 +319,10 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     }
   ).map((u) => ({
     ...u,
-    fieldKey: u.type === "Stochastic" && u.fieldKey !== "open" && u.fieldKey !== "close" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.fieldKey),
-    panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4"
+    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.type === "Volume" ? "volume" : u.fieldKey),
+    panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
       ? u.panel
-      : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "OBV" || u.type === "ATR" ? "panel2" : "main")),
+      : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" ? "panel2" : "main")),
     sarStart: u.type === "SAR" ? (typeof u.sarStart === "number" ? Math.max(0.001, Math.min(1, u.sarStart)) : 0.02) : undefined,
     sarIncrement: u.type === "SAR" ? (typeof u.sarIncrement === "number" ? Math.max(0.001, Math.min(1, u.sarIncrement)) : 0.02) : undefined,
     sarMax: u.type === "SAR" ? (typeof u.sarMax === "number" ? Math.max(0.02, Math.min(1, u.sarMax)) : 0.2) : undefined,
@@ -341,6 +365,12 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     stochDColor: u.type === "Stochastic" && u.stochDLine ? (u.stochDColor ?? "#ea580c") : undefined,
     stochDLineWidth: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineWidth === "thin" || u.stochDLineWidth === "normal" ? u.stochDLineWidth : "normal") : undefined,
     stochDLineStyle: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineStyle === "solid" || u.stochDLineStyle === "dotted" || u.stochDLineStyle === "dashed" ? u.stochDLineStyle : "dashed") : undefined,
+    williamsRLimits: u.type === "WilliamsR" ? (u.williamsRLimits === true) : undefined,
+    williamsRLimitUpper: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitUpper === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitUpper))) : -20) : undefined,
+    williamsRLimitLower: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitLower === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitLower))) : -80) : undefined,
+    williamsRLimitColor: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitColor ?? "#dc2626") : undefined,
+    williamsRLimitLineWidth: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineWidth === "thin" || u.williamsRLimitLineWidth === "normal" ? u.williamsRLimitLineWidth : "normal") : undefined,
+    williamsRLimitLineStyle: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineStyle === "solid" || u.williamsRLimitLineStyle === "dotted" || u.williamsRLimitLineStyle === "dashed" ? u.williamsRLimitLineStyle : "dotted") : undefined,
     bollingerMaType: u.type === "Bollinger" ? (u.bollingerMaType === "SMA" || u.bollingerMaType === "EMA" || u.bollingerMaType === "WMA" ? u.bollingerMaType : "SMA") : undefined,
     bollingerZ: u.type === "Bollinger" ? (typeof u.bollingerZ === "number" ? Math.max(0, Math.min(3, u.bollingerZ)) : 2) : undefined,
     bollingerShowUpper: u.type === "Bollinger" ? (u.bollingerShowUpper !== false) : undefined,
@@ -353,13 +383,16 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     bollingerMiddleColor: u.type === "Bollinger" ? (u.bollingerMiddleColor ?? "#a855f7") : undefined,
     bollingerMiddleLineStyle: u.type === "Bollinger" ? (u.bollingerMiddleLineStyle === "solid" || u.bollingerMiddleLineStyle === "dotted" || u.bollingerMiddleLineStyle === "dashed" ? u.bollingerMiddleLineStyle : "dashed") : undefined,
     bollingerMiddleLineWidth: u.type === "Bollinger" ? (u.bollingerMiddleLineWidth === "thin" || u.bollingerMiddleLineWidth === "normal" ? u.bollingerMiddleLineWidth : "normal") : undefined,
+    volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
+    volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
+    volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
   }));
 }
 
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth"
+  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow"
 >;
 
 interface ContextValue {
@@ -382,7 +415,6 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
   const [userIndicators, setUserIndicators] = useState<UserIndicatorConfig[]>(loadFromStorage);
   const [currentGroupMinutes, setCurrentGroupMinutes] = useState<number | null>(null);
   const [showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxisState] = useState(loadShowIndicatorLastValueOnYAxis);
-
   const setShowIndicatorLastValueOnYAxis = useCallback((v: boolean) => {
     setShowIndicatorLastValueOnYAxisState(v);
     saveShowIndicatorLastValueOnYAxis(v);

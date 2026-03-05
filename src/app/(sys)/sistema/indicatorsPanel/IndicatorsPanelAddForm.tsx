@@ -17,30 +17,41 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     firstEnabledFieldValueForAdd,
     panelsWithSecondary,
     panelsFreeForSecondary,
+    indicatorCountByPanel,
+    MAIN_MAX_INDICATORS,
+    SECONDARY_MAX_INDICATORS,
     INDICATOR_COLOR_PALETTE,
     addButtonDisabled,
     handleAdd,
   } = useIndicatorsPanelContext();
 
-  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4;
+  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
   const firstFreePanelForSecondary: IndicatorPanel =
-    panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2";
+    panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2";
 
-  /** Indicadores secundários (RSI, MACD, Stochastic, OBV, ATR) só podem ir em painéis livres (2, 3 ou 4). SAR e VWAP só no main. */
+  /** Volume só pode ir em painel vazio (0 indicadores). Outros secundários em painéis livres (< 3). SAR e VWAP só no main. */
+  const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
+  const firstEmptyPanelForVolume: IndicatorPanel = indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2";
   const chartOptionValue: string =
     form.indicatorType === "SAR" || form.indicatorType === "VWAP"
       ? "main"
-      : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "OBV" || form.indicatorType === "ATR"
-        ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4)
+      : form.indicatorType === "Volume"
+        ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
           ? form.chartOption
-          : hasFreePanelForSecondary
-            ? firstFreePanelForSecondary
+          : hasEmptyPanelForVolume
+            ? firstEmptyPanelForVolume
             : ""
-        : form.chartOption;
+        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR"
+          ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
+            ? form.chartOption
+            : hasFreePanelForSecondary
+              ? firstFreePanelForSecondary
+              : ""
+          : form.chartOption;
 
   const setType = (newType: UserIndicatorType) => {
     setForm((prev) => {
-      const freePanel: IndicatorPanel = panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : "panel2";
+      const freePanel: IndicatorPanel = panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2";
       if (newType === "RSI") {
         return {
           ...prev,
@@ -105,6 +116,22 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           stochDColor: "#ea580c",
           stochDLineWidth: "normal",
           stochDLineStyle: "dashed",
+        };
+      }
+      if (newType === "WilliamsR") {
+        return {
+          ...prev,
+          indicatorType: "WilliamsR",
+          period: 14,
+          periodText: "14",
+          fieldKey: "close",
+          chartOption: freePanel,
+          williamsRLimits: true,
+          williamsRLimitUpper: -20,
+          williamsRLimitLower: -80,
+          williamsRLimitColor: "#dc2626",
+          williamsRLimitLineWidth: "normal",
+          williamsRLimitLineStyle: "dotted",
         };
       }
       if (newType === "OBV") {
@@ -177,6 +204,20 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           bollingerMiddleLineWidth: "normal",
         };
       }
+      if (newType === "Volume") {
+        const emptyPanel: IndicatorPanel = indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2";
+        return {
+          ...prev,
+          indicatorType: "Volume",
+          period: 1,
+          periodText: "1",
+          fieldKey: "volume",
+          chartOption: emptyPanel,
+          volumeInUsdt: false,
+          volumeColorAbove: "#10b981",
+          volumeColorBelow: "#ef4444",
+        };
+      }
       return { ...prev, indicatorType: newType };
     });
   };
@@ -194,21 +235,33 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
             aria-label={t.chartOption}
           >
-            {(form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "OBV" || form.indicatorType === "ATR") ? (
+            {form.indicatorType === "Volume" ? (
+              <>
+                {indicatorCountByPanel.panel2 === 0 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                {indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                {indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                {indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                {!hasEmptyPanelForVolume && (
+                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
+                )}
+              </>
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR") ? (
               <>
                 {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                 {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
                 {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-                {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && (
+                {panelsFreeForSecondary.panel5 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5 && (
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
               </>
             ) : (
               <>
-                <option value="main">{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
-                <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-                <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-                <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
+                <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
               </>
             )}
           </select>
@@ -443,6 +496,63 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
+      {form.indicatorType === "WilliamsR" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.williamsRLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).williamsRLimitsLabel ?? "Limites (-100 a 0: ex. -80 / -20)"}</span>
+          </label>
+          {form.williamsRLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.williamsRLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.williamsRLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
         <select
@@ -457,13 +567,81 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="RSI">RSI</option>
           <option value="MACD">MACD</option>
           <option value="Stochastic">Stochastic</option>
+          <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
           <option value="OBV">OBV</option>
           <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
           <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
+          <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
         </select>
       </div>
+
+      {form.indicatorType === "Volume" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.volumeInUsdt}
+              onChange={(e) => setForm((prev) => ({ ...prev, volumeInUsdt: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).volumeInUsdtLabel ?? "Exibir em USDT"}</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-24 shrink-0">{(t as Record<string, string>).volumeColorPositive ?? "Cor positivo"}</span>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, volumeColorAboveOpen: !prev.volumeColorAboveOpen }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
+              aria-expanded={form.volumeColorAboveOpen}
+            >
+              <span className="w-4 h-4 rounded shrink-0 border border-zinc-300" style={{ backgroundColor: form.volumeColorAbove }} />
+              <span className="text-zinc-500 text-xs">▼</span>
+            </button>
+          </div>
+          {form.volumeColorAboveOpen && (
+            <div className="flex flex-wrap gap-1 p-1 border border-zinc-200 rounded bg-zinc-50">
+              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                <button
+                  key={hex}
+                  type="button"
+                  className="w-6 h-6 rounded border border-zinc-300 shrink-0"
+                  style={{ backgroundColor: hex }}
+                  onClick={() => setForm((prev) => ({ ...prev, volumeColorAbove: hex, volumeColorAboveOpen: false }))}
+                  aria-label={hex}
+                />
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-24 shrink-0">{(t as Record<string, string>).volumeColorNegative ?? "Cor negativo"}</span>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, volumeColorBelowOpen: !prev.volumeColorBelowOpen }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
+              aria-expanded={form.volumeColorBelowOpen}
+            >
+              <span className="w-4 h-4 rounded shrink-0 border border-zinc-300" style={{ backgroundColor: form.volumeColorBelow }} />
+              <span className="text-zinc-500 text-xs">▼</span>
+            </button>
+          </div>
+          {form.volumeColorBelowOpen && (
+            <div className="flex flex-wrap gap-1 p-1 border border-zinc-200 rounded bg-zinc-50">
+              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                <button
+                  key={hex}
+                  type="button"
+                  className="w-6 h-6 rounded border border-zinc-300 shrink-0"
+                  style={{ backgroundColor: hex }}
+                  onClick={() => setForm((prev) => ({ ...prev, volumeColorBelow: hex, volumeColorBelowOpen: false }))}
+                  aria-label={hex}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
 
       {form.indicatorType === "Bollinger" && (
         <>
@@ -761,7 +939,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
         <div className="flex-1 min-w-0 flex items-center gap-1">
@@ -809,15 +987,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       </div>
       )}
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "VWAP" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
         <select
-          value={(
-            form.indicatorType === "Stochastic"
-              ? ((form.fieldKey === "open" || form.fieldKey === "close") ? form.fieldKey : "close")
-              : (fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd)
-          ) as string}
+          value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
           onChange={(e) => {
             const newKey = e.target.value as IndicatorFieldKey;
             setForm((prev) => ({ ...prev, fieldKey: newKey }));
@@ -825,10 +999,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
           aria-label={t.field}
         >
-          {(form.indicatorType === "Stochastic"
-            ? fieldOptionsVisibleForAdd.filter((o) => o.value === "open" || o.value === "close")
-            : fieldOptionsVisibleForAdd
-          ).map((opt) => (
+          {fieldOptionsVisibleForAdd.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

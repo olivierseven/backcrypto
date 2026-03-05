@@ -71,6 +71,10 @@ export interface KlinesChartSidebarProps {
   setLastCloseLineColor: (v: LineGridId) => void;
   lastCloseTextColor: LineGridId;
   setLastCloseTextColor: (v: LineGridId) => void;
+  volumeOnPrice: boolean;
+  setVolumeOnPrice: (v: boolean) => void;
+  volumeOnPriceOpacity: number;
+  setVolumeOnPriceOpacity: (v: number | ((v: number) => number)) => void;
   // Draw
   drawOpen: boolean;
   setDrawOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -148,6 +152,10 @@ export function KlinesChartSidebar({
   setLastCloseLineColor,
   lastCloseTextColor,
   setLastCloseTextColor,
+  volumeOnPrice,
+  setVolumeOnPrice,
+  volumeOnPriceOpacity,
+  setVolumeOnPriceOpacity,
   drawOpen,
   setDrawOpen,
   drawingsVisible,
@@ -303,6 +311,43 @@ export function KlinesChartSidebar({
               </button>
             </div>
           </div>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={volumeOnPrice}
+              onChange={(e) => setVolumeOnPrice(e.target.checked)}
+              className="rounded border-zinc-300"
+            />
+            <span>{(t as Record<string, string>).volumeOnPrice ?? "Volume on price"}</span>
+          </label>
+          {volumeOnPrice && (
+            <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+              <span className="shrink-0">{(t as Record<string, string>).volOpacity ?? "Vol opacity"}</span>
+              <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setVolumeOnPriceOpacity((v) => Math.max(0, v - 1))}
+                  disabled={volumeOnPriceOpacity <= 0}
+                  aria-label="-1%"
+                  className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">
+                  {volumeOnPriceOpacity}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVolumeOnPriceOpacity((v) => Math.min(30, v + 1))}
+                  disabled={volumeOnPriceOpacity >= 30}
+                  aria-label="+1%"
+                  className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div ref={colorsRef} className="relative w-full flex flex-col items-center">

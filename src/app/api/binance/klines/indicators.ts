@@ -289,9 +289,57 @@ function computeMaColumn(
 /**
  * Estocástico %K: 100 * (price - lowestLow) / (highestHigh - lowestLow) na janela dos últimos "period" candles.
  * Dados em ordem DESC (índice 0 = mais recente). Retorna valores entre 0 e 100 (ou null).
- * highestHigh/lowestLow usam high[2] e low[3]; price usa valueIndex (1 = open, 4 = close).
+ * - Sobre preço (valueIndex 1=open, 4=close): highestHigh/lowestLow usam high[2] e low[3]; price usa valueIndex.
+ * - Sobre outro indicador (valueIndex >= 12): usa a mesma coluna para min/max no período e valor atual (Stochastic do indicador).
  */
 export function computeStochasticKColumn(
+  data: (string | number)[][],
+  period: number,
+  valueIndex: number
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = [];
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+  const isOhlc = valueIndex >= 1 && valueIndex <= 4;
+  for (let i = 0; i < n; i++) {
+    let lowest: number | null = null;
+    let highest: number | null = null;
+    for (let j = i; j < Math.min(i + period, n); j++) {
+      if (isOhlc) {
+        const low = getNum(data[j], 3);
+        const high = getNum(data[j], 2);
+        if (low != null && (lowest == null || low < lowest)) lowest = low;
+        if (high != null && (highest == null || high > highest)) highest = high;
+      } else {
+        const v = getNum(data[j], valueIndex);
+        if (v != null) {
+          if (lowest == null || v < lowest) lowest = v;
+          if (highest == null || v > highest) highest = v;
+        }
+      }
+    }
+    const price = getNum(data[i], valueIndex);
+    if (price == null || lowest == null || highest == null || highest === lowest) {
+      out.push(null);
+      continue;
+    }
+    const k = 100 * (price - lowest) / (highest - lowest);
+    out.push(Math.max(0, Math.min(100, k)));
+  }
+  return out;
+}
+
+/**
+ * Williams %R: -100 * (Highest High - Close) / (Highest High - Lowest Low) na janela dos últimos "period" candles.
+ * Praticamente o inverso do estocástico: escala -100 a 0. Overbought perto de -20, oversold perto de -80.
+ * Dados em ordem DESC; usa high[2], low[3], price = valueIndex (tipicamente close 4).
+ */
+export function computeWilliamsRColumn(
   data: (string | number)[][],
   period: number,
   valueIndex: number
@@ -318,8 +366,8 @@ export function computeStochasticKColumn(
       out.push(null);
       continue;
     }
-    const k = 100 * (price - lowest) / (highest - lowest);
-    out.push(Math.max(0, Math.min(100, k)));
+    const wr = -100 * (highest - price) / (highest - lowest);
+    out.push(Math.max(-100, Math.min(0, wr)));
   }
   return out;
 }

@@ -1,4 +1,4 @@
-export { INDICATOR_COLOR_PALETTE, INTERVAL_OPTIONS } from "./indicatorsPanelConstants";
+export { INDICATOR_COLOR_PALETTE, INTERVAL_OPTIONS, MAIN_MAX_INDICATORS, SECONDARY_MAX_INDICATORS } from "./indicatorsPanelConstants";
 export {
   getFieldLabel,
   getIndicatorLabel,

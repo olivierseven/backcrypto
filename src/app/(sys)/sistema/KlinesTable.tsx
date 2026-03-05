@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
 
@@ -123,6 +123,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const data = out as (string | number)[][];
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
+      if (ind.type === "Volume") continue;
       const valueIndex = getFieldIndex(ind.fieldKey, userIndicators);
       const period = Math.max(1, Math.min(500, ind.period));
       if (ind.type === "MACD") {
@@ -158,8 +159,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           }
         }
       } else if (ind.type === "Stochastic") {
-        const stochValueIndex = (valueIndex === 1 || valueIndex === 4) ? valueIndex : 4;
-        const kCol = computeStochasticKColumn(data, period, stochValueIndex);
+        const kCol = computeStochasticKColumn(data, period, valueIndex);
         for (let i = 0; i < out.length; i++) out[i].push(kCol[i] ?? null);
         if (ind.stochDLine) {
           const kColIndex = out[0].length - 1;
@@ -172,6 +172,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 : computeSmaColumn(data, kColIndex, dPeriod);
           for (let i = 0; i < out.length; i++) out[i].push(dCol[i] ?? null);
         }
+      } else if (ind.type === "WilliamsR") {
+        const wrValueIndex = (valueIndex === 1 || valueIndex === 4) ? valueIndex : 4;
+        const wrCol = computeWilliamsRColumn(data, period, wrValueIndex);
+        for (let i = 0; i < out.length; i++) out[i].push(wrCol[i] ?? null);
       } else if (ind.type === "OBV") {
         const col = computeObvColumn(data);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
@@ -219,8 +223,12 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
       } else if (ind.type === "Stochastic") {
         col += 1 + (ind.stochDLine ? 1 : 0);
+      } else if (ind.type === "WilliamsR") {
+        col += 1;
       } else if (ind.type === "Bollinger") {
         col += 3;
+      } else if (ind.type === "Volume") {
+        // Volume usa coluna 5 ou 7, não consome slot
       } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP") {
         col += 1;
       } else {
@@ -236,6 +244,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
       if (ind.intervals.length > 0 && !ind.intervals.includes(groupMinutes)) continue;
+      if (ind.type === "Volume") {
+        list.push({ ind, columnIndex: ind.volumeInUsdt ? 7 : 5, isSignal: false, isHistogram: false });
+        continue;
+      }
       const start = getIndicatorColumnStart(u);
       list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
       if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
@@ -475,23 +487,24 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             intervalLabel={intervalLabel}
             width={chartWidth}
             maxChartHeight={
-              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "OBV" || i.type === "ATR") && chartContainerHeight > 100
+              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" || i.type === "Volume") && chartContainerHeight > 100
                 ? chartContainerHeight - 80
                 : undefined
             }
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
-              color: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
-              lineWidth: isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
-              lineStyle: isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
-              label: isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
-              shortLabel: isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
+              color: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
+              lineWidth: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
+              label: ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
+              shortLabel: ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
-              display: isHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
+              display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
+              volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : undefined,
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
-              histogramColorAbove: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : undefined,
-              histogramColorBelow: isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "OBV" || ind.type === "ATR" ? "panel2" : "main"),
+              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : undefined,
+              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : undefined,
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -509,6 +522,12 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               stochLimitColor: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitColor ?? "#dc2626") : undefined,
               stochLimitLineWidth: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLineWidth ?? "normal") : undefined,
               stochLimitLineStyle: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLineStyle ?? "dotted") : undefined,
+              williamsRLimits: ind.type === "WilliamsR" ? (ind.williamsRLimits === true) : undefined,
+              williamsRLimitUpper: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitUpper ?? -20) : undefined,
+              williamsRLimitLower: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitLower ?? -80) : undefined,
+              williamsRLimitColor: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitColor ?? "#dc2626") : undefined,
+              williamsRLimitLineWidth: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitLineWidth ?? "normal") : undefined,
+              williamsRLimitLineStyle: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitLineStyle ?? "dotted") : undefined,
               bollingerShowUpper: ind.type === "Bollinger" ? (ind.bollingerShowUpper !== false) : undefined,
               bollingerShowLower: ind.type === "Bollinger" ? (ind.bollingerShowLower !== false) : undefined,
               bollingerShowMiddle: ind.type === "Bollinger" ? (ind.bollingerShowMiddle === true) : undefined,
@@ -555,9 +574,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 <th
                   key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
                   className="px-3 py-2 font-medium text-right text-xs"
-                  style={{ borderLeftColor: isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                  style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                 >
-                  {isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
+                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
             </tr>

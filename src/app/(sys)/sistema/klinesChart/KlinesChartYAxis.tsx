@@ -23,11 +23,13 @@ export interface KlinesChartYAxisProps {
   hasPanel2: boolean;
   hasPanel3: boolean;
   hasPanel4: boolean;
-  panelExtents: Record<"panel2" | "panel3" | "panel4", { min: number; max: number }>;
+  hasPanel5: boolean;
+  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5", { min: number; max: number }>;
   yRsiPanel2: (v: number) => number;
   yRsiPanel3: (v: number) => number;
   yRsiPanel4: (v: number) => number;
-  yRsiByPanel: (val: number, panel: "panel2" | "panel3" | "panel4") => number;
+  yRsiPanel5: (v: number) => number;
+  yRsiByPanel: (val: number, panel: "panel2" | "panel3" | "panel4" | "panel5") => number;
   showLastClose: boolean;
   lastCloseY: number;
   lastClose: number;
@@ -36,13 +38,18 @@ export interface KlinesChartYAxisProps {
   indicatorLines: ChartIndicatorLine[];
   klines: unknown[][];
   n: number;
-  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4";
+  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5";
   yMin: number;
   yMax: number;
   crosshairPoint: { index: number; price: number; panelClickY?: number; panelValue?: number } | null;
   startIndex: number;
   windowN: number;
   crosshairDragging: boolean;
+  /** Volume no preço: etiqueta no eixo Y com valor atual (Y em px, valor formatado, cor da última vela). */
+  volumeOnPrice?: boolean;
+  volumeLabelY?: number;
+  volumeLabelValue?: string;
+  volumeLabelColor?: string;
 }
 
 export function KlinesChartYAxis({
@@ -60,10 +67,12 @@ export function KlinesChartYAxis({
   hasPanel2,
   hasPanel3,
   hasPanel4,
+  hasPanel5,
   panelExtents,
   yRsiPanel2,
   yRsiPanel3,
   yRsiPanel4,
+  yRsiPanel5,
   yRsiByPanel,
   showLastClose,
   lastCloseY,
@@ -80,6 +89,10 @@ export function KlinesChartYAxis({
   startIndex,
   windowN,
   crosshairDragging,
+  volumeOnPrice,
+  volumeLabelY,
+  volumeLabelValue,
+  volumeLabelColor,
 }: KlinesChartYAxisProps) {
   const boxWidth = yAxisAbbreviated ? 46 : 56;
   const boxX = Y_AXIS_WIDTH - 52;
@@ -147,6 +160,42 @@ export function KlinesChartYAxis({
               </text>
             ));
           })()}
+        {hasPanel5 &&
+          (() => {
+            const { min, max } = panelExtents.panel5;
+            const r = max - min || 1;
+            const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel5" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
+            return ticks.map((v) => (
+              <text key={`p5-${v}`} x={6} y={yRsiPanel5(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+                {fmt(v)}
+              </text>
+            ));
+          })()}
+        {volumeOnPrice && volumeLabelValue != null && volumeLabelY != null && volumeLabelColor != null && (
+          <g>
+            <rect
+              x={yAxisAbbreviated ? boxX : boxXLong}
+              y={volumeLabelY - 7}
+              width={yAxisAbbreviated ? 46 : 56}
+              height={14}
+              fill="white"
+              fillOpacity={0.8}
+              stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
+              strokeWidth={1}
+              rx={2}
+            />
+            <text x={6} y={volumeLabelY + 4} textAnchor="start" className="font-mono font-medium text-[10px]" fill={volumeLabelColor}>
+              {volumeLabelValue}
+            </text>
+          </g>
+        )}
         {showLastClose && (
           <g>
             <rect
@@ -170,19 +219,30 @@ export function KlinesChartYAxis({
               n > 0
                 ? (() => {
                     const v = klines[0][ind.columnIndex];
-                    return v != null && typeof v === "number" && Number.isFinite(v) ? v : null;
+                    if (v == null) return null;
+                    const num = typeof v === "number" ? v : Number(v);
+                    return Number.isFinite(num) ? num : null;
                   })()
                 : null;
             if (lastVal == null) return null;
             const panelKey = getPanel(ind);
             const lastValY =
-              panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel3" || panelKey === "panel4" ? panelKey : "panel2");
-            const ext = panelExtents[panelKey as "panel2" | "panel3" | "panel4"];
+              panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel2" || panelKey === "panel3" || panelKey === "panel4" || panelKey === "panel5" ? panelKey : "panel2");
+            const ext = panelKey === "main" ? null : panelExtents[panelKey];
             const inRange =
-              panelKey === "main" ? lastVal >= yMin && lastVal <= yMax : lastVal >= ext.min && lastVal <= ext.max;
+              panelKey === "main" ? lastVal >= yMin && lastVal <= yMax : ext != null && lastVal >= ext.min && lastVal <= ext.max;
             if (!inRange) return null;
-            const textColor =
-              ind.display === "histogram"
+            const isVolumeStyle = ind.type === "Volume";
+            const textColor = isVolumeStyle
+              ? (() => {
+                  const openRaw = n > 0 ? klines[0][1] : null;
+                  const closeRaw = n > 0 ? klines[0][4] : null;
+                  const open = openRaw != null ? (typeof openRaw === "string" ? parseFloat(openRaw) : Number(openRaw)) : NaN;
+                  const close = closeRaw != null ? (typeof closeRaw === "string" ? parseFloat(closeRaw) : Number(closeRaw)) : NaN;
+                  const lastCandleUp = Number.isFinite(open) && Number.isFinite(close) && close >= open;
+                  return lastCandleUp ? (ind.histogramColorAbove ?? "#10b981") : (ind.histogramColorBelow ?? "#ef4444");
+                })()
+              : ind.display === "histogram"
                 ? lastVal >= 0
                   ? (ind.histogramColorAbove ?? "#059669")
                   : (ind.histogramColorBelow ?? "#dc2626")
@@ -195,7 +255,7 @@ export function KlinesChartYAxis({
                   width={yAxisAbbreviated ? 46 : 56}
                   height={14}
                   fill="white"
-                  fillOpacity={0.9}
+                  fillOpacity={isVolumeStyle ? 0.8 : 0.9}
                   stroke="#e4e4e7"
                   strokeWidth={1}
                   rx={2}
@@ -209,11 +269,13 @@ export function KlinesChartYAxis({
                 >
                   {panelKey === "main"
                     ? formatYAxis(lastVal)
-                    : ind.type === "OBV" && formatObvValue
-                      ? formatObvValue(lastVal)
-                      : lastVal >= 0 && lastVal <= 100 && lastVal === Math.round(lastVal)
-                        ? lastVal.toFixed(1)
-                        : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
+                    : ind.type === "Volume"
+                      ? (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))
+                      : ind.type === "OBV" && formatObvValue
+                        ? formatObvValue(lastVal)
+                        : lastVal >= 0 && lastVal <= 100 && lastVal === Math.round(lastVal)
+                          ? lastVal.toFixed(1)
+                          : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
                 </text>
               </g>
             );

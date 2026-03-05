@@ -3,7 +3,7 @@
 /**
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
-import type { RefObject } from "react";
+import { useId, type RefObject } from "react";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, INDICATOR_STRIP_OFFSET_UP } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
@@ -40,6 +40,8 @@ export interface KlinesChartSvgProps {
   showLastCloseLine: boolean;
   showLastClose: boolean;
   lastCloseY: number;
+  volumeOnPrice: boolean;
+  volumeOnPriceOpacity: number;
   lineTableHex: string;
   secondaryGridHex: string;
   lastCloseLineHex: string;
@@ -49,14 +51,16 @@ export interface KlinesChartSvgProps {
   hasPanel2: boolean;
   hasPanel3: boolean;
   hasPanel4: boolean;
+  hasPanel5: boolean;
   panel2Top: number;
   panel3Top: number;
   panel4Top: number;
-  panelTop: (p: "panel2" | "panel3" | "panel4") => number;
-  panelHeight: (p: "panel2" | "panel3" | "panel4") => number;
-  panelExtents: Record<"panel2" | "panel3" | "panel4", { min: number; max: number }>;
+  panel5Top: number;
+  panelTop: (p: "panel2" | "panel3" | "panel4" | "panel5") => number;
+  panelHeight: (p: "panel2" | "panel3" | "panel4" | "panel5") => number;
+  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5", { min: number; max: number }>;
   indicatorLines: ChartIndicatorLine[];
-  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4";
+  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5";
   yValInPanel: (val: number, top: number, h: number, pMin: number, pMax: number) => number;
   hasIndicatorStrip: boolean;
   isDarkBg: boolean;
@@ -105,6 +109,8 @@ export function KlinesChartSvg({
   showLastCloseLine,
   showLastClose,
   lastCloseY,
+  volumeOnPrice,
+  volumeOnPriceOpacity,
   lineTableHex,
   secondaryGridHex,
   lastCloseLineHex,
@@ -114,9 +120,11 @@ export function KlinesChartSvg({
   hasPanel2,
   hasPanel3,
   hasPanel4,
+  hasPanel5,
   panel2Top,
   panel3Top,
   panel4Top,
+  panel5Top,
   panelTop,
   panelHeight,
   panelExtents,
@@ -141,13 +149,14 @@ export function KlinesChartSvg({
   setDrawDragging,
   t,
 }: KlinesChartSvgProps) {
+  const volumeOnPriceClipId = useId();
   const showCrosshairValues =
     crosshairPoint !== null &&
     (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
     crosshairPoint.index >= 0 &&
     crosshairPoint.index < fullReversed.length;
 
-  const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4", topY: number, lines: ChartIndicatorLine[]) => (
+  const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4" | "panel5", topY: number, lines: ChartIndicatorLine[]) => (
     <div
       key={panelKey}
       className="absolute left-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
@@ -168,7 +177,7 @@ export function KlinesChartSvg({
             backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
             boxShadow: "0 0 4px rgba(0,0,0,0.15)",
           }}
-          aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : "Panel 4"}
+          aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : panelKey === "panel4" ? "Panel 4" : "Panel 5"}
         >
           ({panelKey.replace("panel", "")})
         </span>
@@ -181,7 +190,7 @@ export function KlinesChartSvg({
                 if (raw == null) return null;
                 const v = Number(raw);
                 if (!Number.isFinite(v)) return null;
-                return (ind.type === "RSI" || ind.type === "Stochastic") ? v.toFixed(1) : formatYAxis(v);
+                return (ind.type === "RSI" || ind.type === "Stochastic" || ind.type === "WilliamsR") ? v.toFixed(1) : formatYAxis(v);
               })()
             : null;
         return (
@@ -214,6 +223,7 @@ export function KlinesChartSvg({
           {hasPanel2 && strip("panel2", panel2Top, indicatorLines.filter((ind) => getPanel(ind) === "panel2"))}
           {hasPanel3 && strip("panel3", panel3Top, indicatorLines.filter((ind) => getPanel(ind) === "panel3"))}
           {hasPanel4 && strip("panel4", panel4Top, indicatorLines.filter((ind) => getPanel(ind) === "panel4"))}
+          {hasPanel5 && strip("panel5", panel5Top, indicatorLines.filter((ind) => getPanel(ind) === "panel5"))}
         </>
       )}
       <svg
@@ -322,8 +332,8 @@ export function KlinesChartSvg({
             </>
           );
         })()}
-        {(["panel2", "panel3", "panel4"] as const).map((panelId) => {
-          const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : hasPanel4;
+        {(["panel2", "panel3", "panel4", "panel5"] as const).map((panelId) => {
+          const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : panelId === "panel4" ? hasPanel4 : hasPanel5;
           const top = panelTop(panelId);
           const h = panelHeight(panelId);
           if (!hasPanel || h <= 0) return null;
@@ -438,6 +448,43 @@ export function KlinesChartSvg({
                     </g>
                   );
                 }
+                if (ind.type === "Volume") {
+                  const barW = Math.max(1, gap * 0.6);
+                  const colorAbove = ind.histogramColorAbove ?? "#10b981";
+                  const colorBelow = ind.histogramColorBelow ?? "#ef4444";
+                  const panelId = (["panel2", "panel3", "panel4", "panel5"] as const).find((p) => getPanel(ind) === p) ?? "panel2";
+                  const panelBottomY = panelTop(panelId) + panelHeight(panelId);
+                  return (
+                    <g key={indIdx}>
+                      {windowSlice.map((row, i) => {
+                        const v = row[col];
+                        if (v == null) return null;
+                        const numVal = typeof v === "number" ? v : Number(v);
+                        if (!Number.isFinite(numVal) || numVal < 0) return null;
+                        const openRaw = row[1];
+                        const closeRaw = row[4];
+                        const open = typeof openRaw === "string" ? parseFloat(openRaw) : Number(openRaw);
+                        const close = typeof closeRaw === "string" ? parseFloat(closeRaw) : Number(closeRaw);
+                        const fill = (Number.isFinite(open) && Number.isFinite(close) && close >= open) ? colorAbove : colorBelow;
+                        const yVal = yPanel(numVal);
+                        const yTop = Math.min(panelBottomY, yVal);
+                        const yBottom = Math.max(panelBottomY, yVal);
+                        const barH = Math.max(1, yBottom - yTop);
+                        return (
+                          <rect
+                            key={i}
+                            x={cx(i) - barW / 2}
+                            y={yTop}
+                            width={barW}
+                            height={barH}
+                            fill={fill}
+                            stroke="none"
+                          />
+                        );
+                      })}
+                    </g>
+                  );
+                }
                 if (ind.display === "histogram") {
                   const barW = Math.max(1, gap * 0.6);
                   const colorAbove = ind.histogramColorAbove ?? "#059669";
@@ -533,6 +580,21 @@ export function KlinesChartSvg({
                 const stroke = ind.stochLimitColor ?? "#dc2626";
                 return (
                   <g key={`stoch-limits-${idx}`}>
+                    <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                  </g>
+                );
+              })}
+              {panelLines.filter((ind) => ind.type === "WilliamsR" && ind.williamsRLimits).map((ind, idx) => {
+                const upper = Math.max(-100, Math.min(0, ind.williamsRLimitUpper ?? -20));
+                const lower = Math.max(-100, Math.min(0, ind.williamsRLimitLower ?? -80));
+                const yUpper = yPanel(upper);
+                const yLower = yPanel(lower);
+                const lStrokeWidth = ind.williamsRLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeDasharray = ind.williamsRLimitLineStyle === "dotted" ? "2 2" : ind.williamsRLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const stroke = ind.williamsRLimitColor ?? "#dc2626";
+                return (
+                  <g key={`williams-r-limits-${idx}`}>
                     <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                     <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                   </g>
@@ -686,6 +748,53 @@ export function KlinesChartSvg({
             />
           );
         })}
+        {volumeOnPrice && (() => {
+          const volTop = MARGIN_TOP + (chartH * 2) / 3;
+          const volH = chartH / 3;
+          const volBottom = volTop + volH;
+          const VOL_COL = 5;
+          let maxVol = 0;
+          for (let i = 0; i < windowSlice.length; i++) {
+            const v = windowSlice[i][VOL_COL];
+            const numVal = v != null ? (typeof v === "number" ? v : Number(v)) : 0;
+            if (Number.isFinite(numVal) && numVal > maxVol) maxVol = numVal;
+          }
+          const barW = Math.max(1, gap * 0.6);
+          const opacity = Math.max(0, Math.min(1, volumeOnPriceOpacity / 100));
+          return (
+            <g pointerEvents="none">
+              <clipPath id={volumeOnPriceClipId}>
+                <rect x={MARGIN_LEFT} y={volTop} width={chartW} height={volH} />
+              </clipPath>
+              <g clipPath={`url(#${volumeOnPriceClipId.replace(/:/g, "\\:")})`}>
+                {windowSlice.map((row, i) => {
+                  const v = row[VOL_COL];
+                  const numVal = v != null ? (typeof v === "number" ? v : Number(v)) : 0;
+                  if (!Number.isFinite(numVal) || numVal < 0 || maxVol <= 0) return null;
+                  const openRaw = row[1];
+                  const closeRaw = row[4];
+                  const open = typeof openRaw === "string" ? parseFloat(openRaw) : Number(openRaw);
+                  const close = typeof closeRaw === "string" ? parseFloat(closeRaw) : Number(closeRaw);
+                  const fill = (Number.isFinite(open) && Number.isFinite(close) && close >= open) ? candleColors.bull : candleColors.bear;
+                  const barHeight = Math.max(1, (numVal / maxVol) * volH);
+                  const yTop = volBottom - barHeight;
+                  return (
+                    <rect
+                      key={i}
+                      x={cx(i) - barW / 2}
+                      y={yTop}
+                      width={barW}
+                      height={barHeight}
+                      fill={fill}
+                      fillOpacity={opacity}
+                      stroke="none"
+                    />
+                  );
+                })}
+              </g>
+            </g>
+          );
+        })()}
         {crosshairPoint && (() => {
           const isOverCandle = crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
           const showCrosshair = isOverCandle || crosshairDragging;
@@ -697,13 +806,15 @@ export function KlinesChartSvg({
             crossY = Math.max(MARGIN_TOP, Math.min(MARGIN_TOP + chartH, crossY));
           }
           const tableTop = MARGIN_TOP + chartH;
-          const chartBottom = hasPanel4
-            ? panelTop("panel4") + panelHeight("panel4")
-            : hasPanel3
-              ? panelTop("panel3") + panelHeight("panel3")
-              : hasPanel2
-                ? panelTop("panel2") + panelHeight("panel2")
-                : tableTop;
+          const chartBottom = hasPanel5
+            ? panelTop("panel5") + panelHeight("panel5")
+            : hasPanel4
+              ? panelTop("panel4") + panelHeight("panel4")
+              : hasPanel3
+                ? panelTop("panel3") + panelHeight("panel3")
+                : hasPanel2
+                  ? panelTop("panel2") + panelHeight("panel2")
+                  : tableTop;
           const openTimeMs = crosshairPoint.index >= 0 && crosshairPoint.index < n ? Number(fullReversed[crosshairPoint.index][0]) : null;
           const boxPad = 6;
           const lineH = 10;
