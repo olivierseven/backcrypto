@@ -4,7 +4,7 @@
  * Gráfico de candles (OHLC). Janela visível configurável.
  * Eixo Y: preço USDT (ajustado aos candles visíveis). Eixo X: tempo + subeixo por data.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
@@ -32,6 +32,10 @@ import {
   SECONDARY_PANEL_HEIGHT_MIN,
   SECONDARY_PANEL_HEIGHT_MAX,
   SECONDARY_PANEL_HEIGHT_DEFAULT,
+  CHART_SIZE_PERCENT_MIN,
+  CHART_SIZE_PERCENT_MAX,
+  CHART_SIZE_PERCENT_DEFAULT,
+  CHART_SIZE_PERCENT_STEP,
   KLINE_LAST_LAYOUT_KEY,
   KLINE_DRAW_SEGMENTS_KEY,
   KLINE_DRAW_VISIBLE_KEY,
@@ -80,7 +84,7 @@ import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange }: KlinesChartProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
   const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
@@ -115,6 +119,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const [lastCloseTextColor, setLastCloseTextColor] = useState<LineGridId>(1); // preto (texto do fechamento no eixo Y)
   const [volumeOnPrice, setVolumeOnPrice] = useState(false);
   const [volumeOnPriceOpacity, setVolumeOnPriceOpacity] = useState(20); // 0–30%, default 20%
+  const [chartSizePercent, setChartSizePercent] = useState(CHART_SIZE_PERCENT_DEFAULT); // desktop 16:9, 100–200%
   /** Exibir gráfico; loading só por um instante ao trocar o intervalo (evita travar por efeitos assíncronos). */
   const [chartReady, setChartReady] = useState(true);
   const [layoutApplied, setLayoutApplied] = useState(false);
@@ -135,6 +140,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const colorsRef = useRef<HTMLDivElement>(null);
   const saveLoadRef = useRef<HTMLDivElement>(null);
   const chartSvgRef = useRef<SVGSVGElement>(null);
+  const chartDimensionsRef = useRef<{ w: number; h: number; sizePercent?: number }>({ w: 0, h: 0 });
 
   const drawing = useKlinesChartDrawing(chartSvgRef);
   const {
@@ -248,7 +254,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number };
+      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number };
       if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
@@ -270,6 +276,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       if (typeof data.secondaryPanelHeightPercent === "number" && data.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && data.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(data.secondaryPanelHeightPercent));
       if (typeof data.volumeOnPrice === "boolean") setVolumeOnPrice(data.volumeOnPrice);
       if (typeof data.volumeOnPriceOpacity === "number" && data.volumeOnPriceOpacity >= 0 && data.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(data.volumeOnPriceOpacity));
+      if (typeof data.chartSizePercent === "number" && data.chartSizePercent >= CHART_SIZE_PERCENT_MIN && data.chartSizePercent <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(data.chartSizePercent));
     } catch {
       /* ignore */
     }
@@ -281,12 +288,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       if (typeof window === "undefined") return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent]);
 
   // Ao montar: se existir último layout selecionado, aplicá-lo (default ou slot da API). Sempre chama done() para desbloquear o gráfico.
   useEffect(() => {
@@ -387,7 +394,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, groupMinutes };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
     const extra = getLayoutExtraConfig?.() ?? {};
     const config = { ...baseConfig, ...extra };
     const res = await fetch(`${API_BASE}/chart-layouts`, {
@@ -426,6 +433,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     if (typeof c.secondaryPanelHeightPercent === "number" && c.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && c.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(c.secondaryPanelHeightPercent));
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
     if (typeof c.volumeOnPriceOpacity === "number" && c.volumeOnPriceOpacity >= 0 && c.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(c.volumeOnPriceOpacity));
+    if (typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(c.chartSizePercent));
     onLayoutConfigLoaded?.(c);
   };
 
@@ -451,6 +459,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     secondaryPanelHeightPercent: SECONDARY_PANEL_HEIGHT_DEFAULT,
     volumeOnPrice: false,
     volumeOnPriceOpacity: 20,
+    chartSizePercent: CHART_SIZE_PERCENT_DEFAULT,
     groupMinutes,
   });
 
@@ -499,7 +508,15 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     return () => document.removeEventListener("click", onDocClick);
   }, [crosshairPoint]);
 
-  if (klines.length === 0 || width < 100) return null;
+  useLayoutEffect(() => {
+    const d = chartDimensionsRef.current;
+    if (d.w > 0 && onChartDimensionsChange) onChartDimensionsChange(d.w, d.h, d.sizePercent ?? 100);
+  }, [onChartDimensionsChange, width, chartSizePercent, chartReady, visibleCount, indicatorLines?.length, secondaryPanelHeightPercent, klines.length]);
+
+  if (klines.length === 0 || width < 100) {
+    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
+    return null;
+  }
 
   const windowSlice = fullReversed.slice(startIndex, startIndex + visibleCount);
   const windowN = windowSlice.length;
@@ -520,10 +537,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
   const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0) + (hasPanel5 ? 1 : 0);
 
-  let baseChartHeight = Math.max(
-    MIN_CHART_HEIGHT,
-    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(width * (9 / 16))
-  );
+  /** Desktop: escala proporcional (largura e altura). Mobile: sem escala. */
+  const effectiveWidth =
+    width >= ASPECT_BREAKPOINT ? Math.round(width * (chartSizePercent / 100)) : width;
+  const baseByAspect =
+    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(effectiveWidth * (9 / 16));
+  let baseChartHeight = Math.max(MIN_CHART_HEIGHT, baseByAspect);
   if (hasAnySecondaryPanel && typeof maxChartHeight === "number" && maxChartHeight > 0 && nSecondaryPanels > 0) {
     const gapsAndMargin = mainToPanelGap + gap2_3 + gap3_4 + gap4_5 + PANEL2_BOTTOM_MARGIN;
     const denom = 1 + secondaryPanelRatio * nSecondaryPanels;
@@ -539,7 +558,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + gap2_3 + gap3_4 + gap4_5 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
   const is2hOrAbove = groupMinutes >= 120;
-  const chartW = width - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
+  const chartW = effectiveWidth - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
   const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
   const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
@@ -833,7 +852,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     lastClose >= yMin && lastClose <= yMax;
   const showLastClose = lastClose > 0 && lastCloseInVisibleRange;
 
-  const totalChartWidth = SIDEBAR_WIDTH + width + Y_AXIS_WIDTH;
+  const totalChartWidth = SIDEBAR_WIDTH + effectiveWidth + Y_AXIS_WIDTH;
+  chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };
 
   const containerBgHex = BACKGROUND_PALETTE.find((b) => b.id === containerBackground)?.hex ?? "#ffffff";
   const chartBgHex = BACKGROUND_PALETTE.find((b) => b.id === chartBackground)?.hex ?? "#ffffff";
@@ -849,10 +869,11 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   // Estado de carregamento apenas na primeira renderização ou ao trocar o intervalo (não ao atualizar klines em background)
   if (!chartReady) {
+    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
     return (
       <div
         className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit flex items-center justify-center"
-        style={{ minWidth: width, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
+        style={{ minWidth: effectiveWidth, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
       >
         <p className="text-zinc-500 text-sm">{t.loading.replace("{interval}", intervalLabel ?? "")}</p>
       </div>
@@ -867,13 +888,18 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
       <div className="flex min-w-0 flex-shrink-0">
-        <KlinesChartSidebar
-          chartHeight={chartHeight}
+        <div className="flex-shrink-0 self-stretch" style={{ width: SIDEBAR_WIDTH }}>
+          <KlinesChartSidebar
+            chartHeight={chartHeight}
           settingsRef={settingsRef}
           colorsRef={colorsRef}
           saveLoadRef={saveLoadRef}
           drawRef={drawRef}
           t={t}
+          intervalLabel={intervalLabel}
+          intervalOptions={intervalOptions ?? []}
+          groupMinutes={groupMinutes}
+          onIntervalChange={onIntervalChange ?? (() => {})}
           settingsOpen={settingsOpen}
           setSettingsOpen={setSettingsOpen}
           colorsOpen={colorsOpen}
@@ -920,6 +946,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
           setVolumeOnPrice={setVolumeOnPrice}
           volumeOnPriceOpacity={volumeOnPriceOpacity}
           setVolumeOnPriceOpacity={setVolumeOnPriceOpacity}
+          chartWidth={width}
+          chartSizePercent={chartSizePercent}
+          setChartSizePercent={setChartSizePercent}
           drawOpen={drawOpen}
           setDrawOpen={setDrawOpen}
           drawingsVisible={drawingsVisible}
@@ -944,8 +973,10 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
           onLoadDefaultLayout={handleLoadDefaultLayout}
           onLoadLayout={handleLoadLayout}
           onFetchSavedLayouts={fetchSavedLayouts}
-        />
-        <div className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
+          />
+        </div>
+        <div className="flex flex-col flex-shrink-0 min-w-0">
+          <div className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
           {drawOpen && drawPanelSide === "right" && (
             <div
               className="absolute right-2 top-2 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
@@ -1179,7 +1210,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
           <KlinesChartSvg
             chartSvgRef={chartSvgRef}
             crosshairOverlayRef={crosshairOverlayRef}
-            width={width}
+            width={effectiveWidth}
             chartHeight={chartHeight}
             chartW={chartW}
             chartH={chartH}
@@ -1409,22 +1440,23 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
               }
             />
           </div>
+          <KlinesChartFooter
+            footerYAxisHex={footerYAxisHex}
+            footerYAxisTextHex={footerYAxisTextHex}
+            isDarkFooterYAxis={isDarkFooterYAxis}
+            saveLoadMsg={saveLoadMsg}
+            intervalLabel={intervalLabel}
+            groupMinutes={groupMinutes}
+            t={t}
+            visibleCount={visibleCount}
+            setVisibleCount={setVisibleCount}
+            setStartIndex={setStartIndex}
+            n={n}
+            canPrev={canPrev}
+            canNext={canNext}
+          />
         </div>
-      <KlinesChartFooter
-        footerYAxisHex={footerYAxisHex}
-        footerYAxisTextHex={footerYAxisTextHex}
-        isDarkFooterYAxis={isDarkFooterYAxis}
-        saveLoadMsg={saveLoadMsg}
-        intervalLabel={intervalLabel}
-        groupMinutes={groupMinutes}
-        t={t}
-        visibleCount={visibleCount}
-        setVisibleCount={setVisibleCount}
-        setStartIndex={setStartIndex}
-        n={n}
-        canPrev={canPrev}
-        canNext={canNext}
-      />
+      </div>
     </div>
   );
 }

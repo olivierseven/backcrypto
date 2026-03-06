@@ -84,14 +84,21 @@ export interface ChartIndicatorLine {
   bollingerMiddleLineWidth?: "thin" | "normal";
 }
 
+export type IntervalOption = { value: number; label: string; param: string };
+
 export type KlinesChartProps = {
   klines: Kline[];
   groupMinutes: number;
   intervalLabel?: string;
+  /** Opções de tempo (ex.: 1m, 5m, 4h) para o seletor na sidebar. */
+  intervalOptions?: IntervalOption[];
+  onIntervalChange?: (value: number) => void;
   width: number;
   indicatorLines?: ChartIndicatorLine[];
   onLayoutConfigLoaded?: (config: Record<string, unknown>) => void;
   /** Chamado ao salvar o layout; o retorno é mesclado ao config (ex.: userIndicators, prefs do painel). */
   getLayoutExtraConfig?: () => Record<string, unknown>;
   maxChartHeight?: number;
+  /** Chamado quando as dimensões do gráfico mudam (ex.: tamanho 125%). Permite ao container se ajustar sem scroll horizontal. sizePercent = 100 | 125 para cálculo estável. */
+  onChartDimensionsChange?: (width: number, height: number, sizePercent: number) => void;
 };

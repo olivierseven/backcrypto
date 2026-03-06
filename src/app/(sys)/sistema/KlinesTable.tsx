@@ -106,6 +106,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
+  const [chartRequestedWidth, setChartRequestedWidth] = useState<number | null>(null);
+  const [chartReportedSizePercent, setChartReportedSizePercent] = useState(100);
 
   const visibleUserIndicators = useMemo(
     () =>
@@ -399,12 +401,17 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   })();
 
   const headerWidth = chartWidth + SIDEBAR_WIDTH + Y_AXIS_WIDTH + SCROLLBAR_GUTTER;
+  const chartContainerWidth = chartRequestedWidth != null ? chartRequestedWidth + 2 : headerWidth;
+  const chartWidthToUse =
+    chartRequestedWidth != null
+      ? (chartRequestedWidth - SIDEBAR_WIDTH - Y_AXIS_WIDTH) / (chartReportedSizePercent / 100)
+      : chartWidth;
 
   return (
     <div className="flex flex-col min-h-0 p-4">
       <div
         className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 mb-2 flex-shrink-0 items-baseline w-full min-w-0"
-        style={{ maxWidth: headerWidth }}
+        style={{ maxWidth: chartContainerWidth }}
       >
         <div className="flex flex-col gap-0 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
@@ -428,22 +435,6 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 </p>
               );
             })()}
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <select
-              id="interval-listbox"
-              value={groupMinutes}
-              onChange={(e) => setGroupMinutes(Number(e.target.value))}
-              aria-label={t.interval}
-              className="text-[11px] font-medium text-zinc-700 bg-zinc-100 border border-zinc-200 rounded px-1.5 py-0.5 cursor-pointer"
-            >
-              {intervalOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-            <span className="text-[11px] text-zinc-500">{t.tableNote}</span>
           </div>
         </div>
         {last24h && (
@@ -469,28 +460,33 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       </div>
       <div
         className="flex-shrink-0 mb-2 w-full min-w-0"
-        style={{ maxWidth: headerWidth }}
+        style={{ minWidth: chartContainerWidth, maxWidth: chartContainerWidth }}
       >
         <div
           ref={chartWrapRef}
-          className="w-full min-h-0 max-h-[85vh] overflow-x-auto overflow-y-auto rounded-lg border border-zinc-200 bg-white"
+          className="w-full min-h-0 rounded-lg border border-zinc-200 bg-white"
           style={{
+            boxSizing: "border-box",
+            overflowX: chartRequestedWidth != null ? "hidden" : "auto",
+            overflowY: "visible",
             WebkitOverflowScrolling: "touch",
             touchAction: "pan-x pan-y",
             overscrollBehavior: "contain",
-            scrollbarGutter: "stable",
+            scrollbarGutter: chartRequestedWidth != null ? "auto" : "stable",
           }}
         >
           <KlinesChart
             klines={extendedKlines}
             groupMinutes={groupMinutes}
             intervalLabel={intervalLabel}
-            width={chartWidth}
-            maxChartHeight={
-              visibleUserIndicators.some((i) => i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" || i.type === "Volume") && chartContainerHeight > 100
-                ? chartContainerHeight - 80
-                : undefined
-            }
+            intervalOptions={intervalOptions}
+            onIntervalChange={setGroupMinutes}
+            width={chartWidthToUse}
+            onChartDimensionsChange={(w, _h, sizePercent) => {
+              setChartRequestedWidth(w);
+              if (sizePercent != null) setChartReportedSizePercent(sizePercent);
+            }}
+            maxChartHeight={undefined}
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
               color: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,

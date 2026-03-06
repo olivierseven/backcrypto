@@ -27,6 +27,11 @@ export const PANEL_GAP = 16;
 export const SECONDARY_PANEL_HEIGHT_MIN = 30;
 export const SECONDARY_PANEL_HEIGHT_MAX = 50;
 export const SECONDARY_PANEL_HEIGHT_DEFAULT = 50;
+/** Desktop (16:9): tamanho do gráfico em % da altura base (100 = padrão, 200 = dobro). */
+export const CHART_SIZE_PERCENT_MIN = 100;
+export const CHART_SIZE_PERCENT_MAX = 200;
+export const CHART_SIZE_PERCENT_DEFAULT = 100;
+export const CHART_SIZE_PERCENT_STEP = 25;
 export const VISIBLE_OPTIONS = [30, 50, 100, 150] as const;
 export type VisibleCount = (typeof VISIBLE_OPTIONS)[number];
 export const DEFAULT_VISIBLE: VisibleCount = 50;

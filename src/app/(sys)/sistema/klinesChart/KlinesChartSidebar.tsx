@@ -3,8 +3,8 @@
 /**
  * Sidebar do gráfico de candles: configuração, cores, desenho e save/load de layout.
  */
-import type { RefObject } from "react";
-import { SIDEBAR_WIDTH } from "../KlinesChartConstants";
+import { useState, type RefObject } from "react";
+import { SIDEBAR_WIDTH, ASPECT_BREAKPOINT } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
   DEFAULT_CANDLE_PRESET,
@@ -18,6 +18,7 @@ import type {
   LineGridId,
   TextColorId,
 } from "./palettes";
+import type { IntervalOption } from "./types";
 export type KlinesChartSidebarTranslations = Record<string, string>;
 
 export interface KlinesChartSidebarProps {
@@ -27,6 +28,11 @@ export interface KlinesChartSidebarProps {
   saveLoadRef: RefObject<HTMLDivElement | null>;
   drawRef: RefObject<HTMLDivElement | null>;
   t: KlinesChartSidebarTranslations;
+  /** Tempo selecionado (ex.: "4h") — exibido no topo da sidebar. */
+  intervalLabel?: string;
+  intervalOptions: IntervalOption[];
+  groupMinutes: number;
+  onIntervalChange: (value: number) => void;
   // Settings
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -75,6 +81,9 @@ export interface KlinesChartSidebarProps {
   setVolumeOnPrice: (v: boolean) => void;
   volumeOnPriceOpacity: number;
   setVolumeOnPriceOpacity: (v: number | ((v: number) => number)) => void;
+  chartWidth: number;
+  chartSizePercent: number;
+  setChartSizePercent: (v: number | ((v: number) => number)) => void;
   // Draw
   drawOpen: boolean;
   setDrawOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -110,6 +119,10 @@ export function KlinesChartSidebar({
   saveLoadRef,
   drawRef,
   t,
+  intervalLabel,
+  intervalOptions,
+  groupMinutes,
+  onIntervalChange,
   settingsOpen,
   setSettingsOpen,
   colorsOpen,
@@ -156,6 +169,9 @@ export function KlinesChartSidebar({
   setVolumeOnPrice,
   volumeOnPriceOpacity,
   setVolumeOnPriceOpacity,
+  chartWidth,
+  chartSizePercent,
+  setChartSizePercent,
   drawOpen,
   setDrawOpen,
   drawingsVisible,
@@ -181,12 +197,69 @@ export function KlinesChartSidebar({
   onLoadLayout,
   onFetchSavedLayouts,
 }: KlinesChartSidebarProps) {
+  const [intervalsOpen, setIntervalsOpen] = useState(false);
+  const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
+
   return (
     <div
       ref={settingsRef}
-      className="flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative"
-      style={{ width: SIDEBAR_WIDTH, height: chartHeight }}
+      className="flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative h-full"
+      style={{ width: SIDEBAR_WIDTH }}
     >
+      {intervalOptions.length > 0 && (
+        <div className="w-full flex flex-col items-center py-2 px-1 border-b border-zinc-200/80">
+          <button
+            type="button"
+            id="interval-listbox"
+            onClick={() => {
+              setIntervalsOpen((o) => !o);
+              setSettingsOpen(false);
+              setColorsOpen(false);
+            }}
+            aria-label={t.interval}
+            aria-expanded={intervalsOpen}
+            aria-haspopup="dialog"
+            title={currentIntervalLabel}
+            className="w-full min-h-[28px] text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 py-1 cursor-pointer"
+          >
+            {currentIntervalLabel}
+          </button>
+          {intervalsOpen && (
+            <div
+              className="absolute left-full top-0 ml-1 z-20 min-w-[140px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-label={(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
+            >
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
+                {(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
+              </p>
+              <div className="grid grid-cols-3 gap-1 mb-3">
+                {intervalOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      onIntervalChange(opt.value);
+                      setIntervalsOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors ${
+                      opt.value === groupMinutes
+                        ? "bg-zinc-200 border-zinc-300 text-zinc-900"
+                        : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-100">
+                {t.tableNote}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       <button
         type="button"
         onClick={(e) => {
@@ -200,6 +273,17 @@ export function KlinesChartSidebar({
       >
         ⚙️
       </button>
+      {chartWidth >= ASPECT_BREAKPOINT && (
+        <button
+          type="button"
+          onClick={() => setChartSizePercent((v) => (v >= 125 ? 100 : 125))}
+          className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
+          title={chartSizePercent >= 125 ? ((t as Record<string, string>).chartSizeRestore ?? "Normal size (100%)") : ((t as Record<string, string>).chartSizeEnlarge ?? "Expand chart (125%)")}
+          aria-pressed={chartSizePercent >= 125}
+        >
+          🔍
+        </button>
+      )}
       {settingsOpen && (
         <div
           className="absolute left-full top-0 ml-1 z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
