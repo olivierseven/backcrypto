@@ -391,16 +391,19 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   })();
 
   const headerWidth = chartWidth + Y_AXIS_WIDTH;
-  /** Em 100%: container usa a largura disponível (até 660px). Em 125%: trava no tamanho reportado pelo chart. */
+  /** Em 100%: container até 660px (600+60). Em 125%: até 810px (750+60) para a lupa mostrar 592×320 em 100% e maior em 125%. */
+  const chartContainerMaxWidth =
+    chartReportedSizePercent >= 125
+      ? Math.round(MAX_PLOT_WIDTH * (chartReportedSizePercent / 100)) + Y_AXIS_WIDTH
+      : MAX_PLOT_WIDTH + Y_AXIS_WIDTH;
   const chartContainerWidth =
     chartRequestedWidth != null && chartReportedSizePercent >= 125
       ? chartRequestedWidth + 2
       : headerWidth;
-  const chartContainerMaxWidth = MAX_PLOT_WIDTH + Y_AXIS_WIDTH;
-  /** Em 100%: usar sempre a largura do container (ResizeObserver) para o gráfico crescer ao aumentar a tela. Em 125%: usar o tamanho reportado pelo chart. */
+  /** Em 100%: largura do container (ResizeObserver). Em 125%: largura de plot do tamanho escolhido (ex.: 750px). */
   const chartWidthToUse =
-    chartReportedSizePercent >= 125 && chartRequestedWidth != null
-      ? (chartRequestedWidth - Y_AXIS_WIDTH) / (chartReportedSizePercent / 100)
+    chartReportedSizePercent >= 125
+      ? Math.round(MAX_PLOT_WIDTH * (chartReportedSizePercent / 100))
       : chartWidth;
 
   useEffect(() => {
@@ -449,8 +452,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         className="flex-shrink-0 mb-2 min-w-0 rounded-lg border border-zinc-200 bg-white"
         style={{
           width: "100%",
-          minWidth: chartReportedSizePercent >= 125 && chartRequestedWidth != null ? chartRequestedWidth + 2 : undefined,
-          maxWidth: chartReportedSizePercent >= 125 && chartRequestedWidth != null ? chartRequestedWidth + 2 : chartContainerMaxWidth,
+          minWidth: chartReportedSizePercent >= 125 ? chartContainerMaxWidth : undefined,
+          maxWidth: chartContainerMaxWidth,
           boxSizing: "border-box",
           overflowX: "visible",
           overflowY: "visible",
