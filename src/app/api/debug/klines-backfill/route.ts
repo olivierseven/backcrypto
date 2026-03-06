@@ -152,10 +152,17 @@ export async function POST(request: NextRequest) {
           totalInserted1m += created.count;
           gapInserted += created.count;
         } else {
-          const created = await bioPrisma.binanceKline.createMany({
-            data: rows,
-            skipDuplicates: true,
+          // Para 1h: sobrescreve o range (se executar atrasado ou repetir, mantém consistência com a Binance)
+          const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
+          const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
+          await bioPrisma.binanceKline.deleteMany({
+            where: {
+              symbol,
+              interval: "1h",
+              openTime: { gte: minOpen, lte: maxOpen },
+            },
           });
+          const created = await bioPrisma.binanceKline.createMany({ data: rows });
           totalInserted1h += created.count;
           gapInserted += created.count;
         }

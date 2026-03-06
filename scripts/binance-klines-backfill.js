@@ -1,7 +1,6 @@
 /**
- * Backfill de klines BTCUSDT 1m no banco (backcrypto.BinanceKline).
- * Popula dados retroativamente de 2024-01-01T00:00:00.000Z até 2025-09-01T00:00:00.000Z.
- * Usa a mesma API Binance e createMany com skipDuplicates (não sobrescreve dados já existentes).
+ * Backfill de klines BTCUSDT 1m no banco (backcrypto.BinanceKlineFast).
+ * Período: últimos 90 dias (base de expurgo) até agora. Se rodar de novo, reescreve o range.
  *
  * Uso: node scripts/binance-klines-backfill.js
  * Requer: DATABASE_URL no .env e prisma generate já rodado.
@@ -18,11 +17,16 @@ const INTERVAL = "1m";
 const LIMIT = 1000;
 const ONE_MINUTE_MS = 60 * 1000;
 const DELAY_MS = 1100; // ~1 req/s para evitar rate limit
+const FAST_DAYS = 90; // mesmo expurgo do sync: mantém no máx. 90 dias
 
-/** 2024-01-01 00:00:00 UTC */
-const START_MS = new Date("2024-01-01T00:00:00.000Z").getTime();
-/** 2025-09-01 00:00:00 UTC (último minuto incluído: 2025-08-31 23:59:00) */
-const END_MS = new Date("2025-09-01T00:00:00.000Z").getTime();
+/** Início do passado = 90 dias atrás (UTC). */
+function getStartMs() {
+  return Date.now() - FAST_DAYS * 24 * 60 * 60 * 1000;
+}
+/** Fim = agora (próximo minuto para incluir o atual). */
+function getEndMs() {
+  return Date.now() + ONE_MINUTE_MS;
+}
 
 const prisma = new PrismaClient();
 
@@ -62,8 +66,21 @@ function klineToRow(k) {
 }
 
 async function main() {
+  const START_MS = getStartMs();
+  const END_MS = getEndMs();
   console.log("[binance-klines-backfill] Iniciando…");
-  console.log("[binance-klines-backfill] Período: 2024-01-01 00:00:00 UTC → 2025-09-01 00:00:00 UTC");
+  console.log("[binance-klines-backfill] Tabela: BinanceKlineFast | 1m | passado = " + FAST_DAYS + " dias até agora.");
+  console.log("[binance-klines-backfill] Período: " + new Date(START_MS).toISOString() + " → " + new Date(END_MS).toISOString());
+
+  // Reescrever se rodar novamente: remove o range que vamos preencher.
+  const deleted = await prisma.binanceKlineFast.deleteMany({
+    where: {
+      symbol: SYMBOL,
+      interval: INTERVAL,
+      openTime: { gte: BigInt(START_MS), lt: BigInt(END_MS) },
+    },
+  });
+  if (deleted.count > 0) console.log("[binance-klines-backfill] Removidas " + deleted.count + " linhas antigas do range (reescrevendo).");
 
   let startTime = START_MS;
   let totalInserted = 0;
@@ -80,7 +97,7 @@ async function main() {
     }
 
     const rows = klines.map(klineToRow);
-    const created = await prisma.binanceKline.createMany({
+    const created = await prisma.binanceKlineFast.createMany({
       data: rows,
       skipDuplicates: true,
     });

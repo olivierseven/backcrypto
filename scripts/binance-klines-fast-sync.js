@@ -119,6 +119,16 @@ async function expurgeKline1h() {
   return result.count;
 }
 
+async function refetchLastAndInsert1h(lastOpenTimeMs, rows) {
+  if (!rows || rows.length === 0) return 0;
+  // Regra: só o último candle pode estar errado -> deletar apenas esse e reinserir junto com os novos.
+  await prisma.binanceKline.deleteMany({
+    where: { symbol: SYMBOL, interval: INTERVAL_1H, openTime: BigInt(lastOpenTimeMs) },
+  });
+  const created = await prisma.binanceKline.createMany({ data: rows, skipDuplicates: true });
+  return created.count;
+}
+
 async function main() {
   initConsoleLogToFile();
   console.log("[binance-klines-fast-sync] Iniciando…");
@@ -158,7 +168,8 @@ async function main() {
       orderBy: { openTime: "desc" },
       select: { openTime: true },
     });
-    let startTime = lastRow ? Number(lastRow.openTime) + ONE_MINUTE_MS : startWindow;
+    // Regra: sempre refazer o último minuto gravado e inserir os novos.
+    let startTime = lastRow ? Number(lastRow.openTime) : startWindow;
     if (startTime >= now) {
       console.log("[binance-klines-fast-sync] 1m: nenhum dado novo (já em dia).");
     } else {
@@ -167,6 +178,11 @@ async function main() {
         const klines = await fetchKlines(startTime, now, INTERVAL_1M);
         if (klines.length === 0) break;
         const rows = klines.map((k) => klineToRow(k, INTERVAL_1M));
+        if (lastRow) {
+          await prisma.binanceKlineFast.deleteMany({
+            where: { symbol: SYMBOL, interval: INTERVAL_1M, openTime: lastRow.openTime },
+          });
+        }
         const created = await prisma.binanceKlineFast.createMany({
           data: rows,
           skipDuplicates: true,
@@ -204,11 +220,7 @@ async function main() {
       const klines1h = await fetchKlines(startTime1h, now, INTERVAL_1H);
       if (klines1h.length === 0) break;
       const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H));
-      const created1h = await prisma.binanceKline.createMany({
-        data: rows1h,
-        skipDuplicates: true,
-      });
-      totalInserted1h += created1h.count;
+      totalInserted1h += await overwriteBinanceKline1h(rows1h);
       const last1h = klines1h[klines1h.length - 1][0];
       startTime1h = last1h + ONE_HOUR_MS;
       console.log("  1h + " + klines1h.length + " velas (total: " + totalInserted1h + ")");
@@ -222,7 +234,9 @@ async function main() {
       orderBy: { openTime: "desc" },
       select: { openTime: true },
     });
-    const startTime1h = lastRow1h ? Number(lastRow1h.openTime) + ONE_HOUR_MS : startWindow1h;
+    // Regra: sempre refazer o último candle 1h gravado e inserir os novos.
+    const lastOpen = lastRow1h ? Number(lastRow1h.openTime) : null;
+    const startTime1h = lastOpen != null ? Math.max(startWindow1h, lastOpen) : startWindow1h;
     if (startTime1h >= now) {
       console.log("[binance-klines-fast-sync] BinanceKline 1h: já em dia.");
     } else {
@@ -232,11 +246,12 @@ async function main() {
         const klines1h = await fetchKlines(t, now, INTERVAL_1H);
         if (klines1h.length === 0) break;
         const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H));
-        const created1h = await prisma.binanceKline.createMany({
-          data: rows1h,
-          skipDuplicates: true,
-        });
-        totalInserted1h += created1h.count;
+        if (lastOpen != null) {
+          totalInserted1h += await refetchLastAndInsert1h(lastOpen, rows1h);
+        } else {
+          const created1h = await prisma.binanceKline.createMany({ data: rows1h, skipDuplicates: true });
+          totalInserted1h += created1h.count;
+        }
         const last1h = klines1h[klines1h.length - 1][0];
         t = last1h + ONE_HOUR_MS;
         console.log("  1h + " + klines1h.length + " velas (incremental: " + totalInserted1h + ")");

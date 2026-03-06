@@ -109,9 +109,17 @@ export async function GET(request: NextRequest) {
   const bucketMs = groupMinutes * 60 * 1000;
 
   const intervalParam = (searchParams.get("interval") ?? "").toLowerCase();
+  // Intervalo canônico para cache/histórico (baseado no agrupamento), mesmo que a UI envie interval=1m.
+  // Ex.: groupMinutes=60 => "1h"; 240 => "4h"; 1440 => "1d"; caso contrário usa "<n>m".
+  const canonicalIntervalParam =
+    groupMinutes === 1440
+      ? "1d"
+      : groupMinutes >= 60 && groupMinutes % 60 === 0 && groupMinutes < 1440
+        ? `${groupMinutes / 60}h`
+        : `${groupMinutes}m`;
   const useCache =
     groupMinutes !== 1 &&
-    CACHE_INTERVALS.has(intervalParam);
+    CACHE_INTERVALS.has(canonicalIntervalParam);
 
   try {
     if (groupMinutes === 1) {
@@ -170,32 +178,9 @@ export async function GET(request: NextRequest) {
       let cacheList: Record<string, unknown>[] = [];
       if (cacheLimit > 0) {
         const isGe1h = groupMinutes >= 60;
-        const hasCacheForInterval = await bioPrisma
-          .$queryRaw<[{ exists: boolean }]>(
-            Prisma.sql`
-              SELECT EXISTS (
-                SELECT 1 FROM backcrypto."BinanceKlineCache"
-                WHERE symbol = ${symbol} AND "interval" = ${intervalParam} LIMIT 1
-              ) AS "exists"
-            `
-          )
-          .then((r) => Array.isArray(r) && r[0]?.exists === true);
-
-        if (hasCacheForInterval) {
-          const cacheRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-            Prisma.sql`
-              SELECT "openTime", "open", "high", "low", "close", "volume",
-                     "closeTime", "quoteAssetVolume", "numberOfTrades",
-                     "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-              FROM backcrypto."BinanceKlineCache"
-              WHERE symbol = ${symbol} AND "interval" = ${intervalParam}
-              ORDER BY "openTime" DESC
-              LIMIT ${cacheLimit}
-            `
-          );
-          cacheList = Array.isArray(cacheRows) ? cacheRows : [];
-        } else if (isGe1h) {
-          // Sem cache para >= 1h: histórico a partir de BinanceKline (1h) agregado ao bucket
+        if (isGe1h) {
+          // REGRA: histórico (>=1h) vem sempre de BinanceKline até ontem (UTC).
+          // O dia atual (UTC) já é agregado acima via BinanceKlineFast (1m).
           const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
             Prisma.sql`
               WITH k AS (
@@ -228,7 +213,7 @@ export async function GET(request: NextRequest) {
           );
           cacheList = Array.isArray(historyRows) ? historyRows : [];
         } else {
-          // Sem cache para < 1h: histórico a partir de BinanceKlineFast (1m) agregado ao bucket
+          // < 1h: histórico a partir de BinanceKlineFast (1m) agregado ao bucket
           const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
             Prisma.sql`
               WITH k AS (
