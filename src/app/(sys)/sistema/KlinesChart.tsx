@@ -576,12 +576,20 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     availableForPlot >= maxPlotWidth
       ? maxPlotWidth
       : Math.max(MIN_PLOT_WIDTH, Math.min(availableForPlot, maxPlotWidth));
-  /** Proporções fixas: área dos candles 592×320 (razão 1,85). Altura = teto 320px; em larguras menores escala. Cada painel = 1/3 da altura do main. */
+  /** Proporções fixas: área dos candles 592×320 (razão 1,85). Em 100% mantém o teto 320px; no zoom (>=125%) a altura cresce com a largura. Cada painel = 1/3 da altura do main. */
   const MAIN_PLOT_HEIGHT_PER_WIDTH = 320 / 592;
-  const MAIN_PLOT_HEIGHT_CAP = 320;
+  // IMPORTANT: 100% já estava calibrado com teto fixo 320px. No zoom, liberamos teto proporcional.
+  const MAIN_PLOT_HEIGHT_CAP =
+    chartSizePercent <= 100
+      ? 320
+      : Math.round(maxPlotWidth * MAIN_PLOT_HEIGHT_PER_WIDTH);
   const PANEL_TO_MAIN_RATIO = 1 / 3;
   const minChartH = MIN_CHART_HEIGHT - MARGIN_TOP - marginBottom;
-  const chartH = Math.max(minChartH, Math.min(MAIN_PLOT_HEIGHT_CAP, Math.round(displayPlotWidth * MAIN_PLOT_HEIGHT_PER_WIDTH)));
+  // A largura "real" do plot (área dos candles) é `displayPlotWidth - GAP_PLOT_Y_AXIS`.
+  // Em zoom, o gap deve escalar (ex.: 8px → 10px em 125%) para manter 592→740 exatamente.
+  const gapPlotYAxisScaled = Math.round(GAP_PLOT_Y_AXIS * (chartSizePercent / 100));
+  const chartWForAspect = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
+  const chartH = Math.max(minChartH, Math.min(MAIN_PLOT_HEIGHT_CAP, Math.round(chartWForAspect * MAIN_PLOT_HEIGHT_PER_WIDTH)));
   const baseChartHeight = chartH + MARGIN_TOP + marginBottom;
   const panel2Height = hasPanel2 ? chartH * PANEL_TO_MAIN_RATIO : 0;
   const panel3Height = hasPanel3 ? chartH * PANEL_TO_MAIN_RATIO : 0;
@@ -593,7 +601,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const textScale = Math.max(0.6, Math.min(1, displayPlotWidth / maxPlotWidth));
 
   const is2hOrAbove = groupMinutes >= 120;
-  const chartW = displayPlotWidth - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
+  const chartW = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
   const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
   const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
