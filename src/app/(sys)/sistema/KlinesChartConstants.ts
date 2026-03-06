@@ -11,10 +11,8 @@ export const GAP_PLOT_Y_AXIS = 8;
 /** Margem esquerda do plot: 0 para o gráfico ocupar até a lateral (painel pode encostar). */
 export const MARGIN_LEFT = 0;
 export const MARGIN_TOP = 16;
-/** Altura da faixa de indicadores no topo do gráfico (alinhada à área de plot). */
-export const INDICATOR_STRIP_HEIGHT = 26;
-/** Deslocamento da faixa de indicadores para cima em relação ao topo da área (px). */
-export const INDICATOR_STRIP_OFFSET_UP = 18;
+/** Altura da faixa de indicadores; a base da faixa fica alinhada ao topo da área de plot. */
+export const INDICATOR_STRIP_HEIGHT = 18;
 /** Padding no topo do container do gráfico para os displays dos indicadores não serem cortados. */
 export const CHART_TOP_PADDING = 0;
 export const MARGIN_BOTTOM_TABLE = 28;

@@ -4,7 +4,7 @@
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
 import { useId, type RefObject } from "react";
-import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, INDICATOR_STRIP_OFFSET_UP } from "../KlinesChartConstants";
+import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
@@ -165,24 +165,26 @@ export function KlinesChartSvg({
   const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4" | "panel5", topY: number, lines: ChartIndicatorLine[]) => (
     <div
       key={panelKey}
-      className="absolute left-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
+      className="absolute left-0 z-10 flex items-end gap-1 flex-wrap pointer-events-none"
       style={{
-        top: topY === 0 ? 0 : topY - INDICATOR_STRIP_OFFSET_UP,
+        top: topY === 0 ? MARGIN_TOP - INDICATOR_STRIP_HEIGHT : topY - INDICATOR_STRIP_HEIGHT,
         height: INDICATOR_STRIP_HEIGHT,
         width,
         paddingLeft: Math.max(4, MARGIN_LEFT),
-        paddingTop: 2,
+        paddingTop: 0,
+        paddingBottom: 0,
+        lineHeight: 1.1,
       }}
       role="list"
       aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
     >
       {panelKey !== "main" && (
         <span
-          className="font-medium text-zinc-500 px-1.5 py-0.5 rounded shrink-0"
+          className="font-medium text-zinc-500 px-1 py-0 rounded shrink-0 leading-tight"
           style={{
             fontSize: `${fontSize}px`,
             backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
-            boxShadow: "0 0 4px rgba(0,0,0,0.15)",
+            boxShadow: "0 0 3px rgba(0,0,0,0.12)",
           }}
           aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : panelKey === "panel4" ? "Panel 4" : "Panel 5"}
         >
@@ -203,16 +205,16 @@ export function KlinesChartSvg({
         return (
           <span
             key={idx}
-            className="flex items-center gap-1.5 font-light px-1.5 py-0.5 rounded"
+            className="flex items-center gap-1 font-light px-1 py-0 rounded leading-tight"
             style={{
               fontSize: `${fontSize}px`,
               color: ind.color,
               backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
-              boxShadow: "0 0 4px rgba(0,0,0,0.15)",
+              boxShadow: "0 0 3px rgba(0,0,0,0.12)",
             }}
             role="listitem"
           >
-            <span className="w-2 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
+            <span className="w-1.5 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
             <span>{ind.shortLabel ?? ind.label ?? `Ind ${idx + 1}`}</span>
             {crosshairVal != null && <span className="font-mono opacity-90">{crosshairVal}</span>}
           </span>
