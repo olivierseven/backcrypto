@@ -6,6 +6,8 @@ import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
+import { useSistemaDebug } from "./SistemaDebugContext";
+import { useChartHeader } from "./ChartHeaderContext";
 import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
@@ -95,6 +97,8 @@ function dayKeyUtc(ms: number): string {
 export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
+  const { showKlinesTable } = useSistemaDebug();
+  const { setHeaderData } = useChartHeader();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(5); // default 5m
@@ -363,22 +367,6 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
 
   const intervalLabel = intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "5m";
 
-  if (loading && extendedKlines.length === 0) {
-    return (
-      <div className="p-4 text-center text-zinc-500">
-        {t.loading.replace("{interval}", intervalLabel)}
-      </div>
-    );
-  }
-
-  if (error && extendedKlines.length === 0) {
-    return (
-      <div className="p-4 text-center text-red-600">
-        {t.errorLoad}
-      </div>
-    );
-  }
-
   const last24h = (() => {
     if (extendedKlines.length === 0) return null;
     const first = extendedKlines[0];
@@ -407,57 +395,47 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       ? (chartRequestedWidth - SIDEBAR_WIDTH - Y_AXIS_WIDTH) / (chartReportedSizePercent / 100)
       : chartWidth;
 
-  return (
-    <div className="flex flex-col min-h-0 p-4">
-      <div
-        className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 mb-2 flex-shrink-0 items-baseline w-full min-w-0"
-        style={{ maxWidth: chartContainerWidth }}
-      >
-        <div className="flex flex-col gap-0 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <h2 className="text-sm font-semibold text-zinc-900 shrink-0">{t.title}</h2>
-            {(() => {
-              const current = spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
-              const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
-              const currentNum = current != null ? parseFloat(current) : null;
-              const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
-                ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
-                : null;
-              if (current == null) return null;
-              return (
-                <p className="text-xs font-medium text-zinc-600 font-mono flex items-baseline gap-1.5">
-                  <span>{formatNum(String(current))}</span>
-                  {pct != null && (
-                    <span className={pct >= 0 ? "text-emerald-600" : "text-red-600"}>
-                      ({pct >= 0 ? "+" : ""}{pct.toFixed(2)}%)
-                    </span>
-                  )}
-                </p>
-              );
-            })()}
-          </div>
-        </div>
-        {last24h && (
-          <div className="w-max max-w-full shrink-0">
-            <table className="border-collapse font-mono text-[11px] text-zinc-600 whitespace-nowrap leading-tight" role="presentation">
-              <tbody>
-                <tr>
-                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.max24h}</span> {formatNum(String(last24h.max))}</td>
-                </tr>
-                <tr>
-                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.min24h}</span> {formatNum(String(last24h.min))}</td>
-                </tr>
-                <tr>
-                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.vol24hBtc}</span> {formatAbbreviated(last24h.volBtc)}</td>
-                </tr>
-                <tr>
-                  <td className="py-0 align-baseline"><span className="text-zinc-500">{t.vol24hUsd}</span> {formatAbbreviated(last24h.volUsd)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
+  useEffect(() => {
+    const current = spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
+    const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
+    const currentNum = current != null ? parseFloat(current) : null;
+    const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
+      ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
+      : null;
+    setHeaderData({
+      chartContainerWidth,
+      priceText: current != null ? formatNum(String(current)) : null,
+      pctText: pct != null ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : null,
+      max24h: last24h != null ? formatNum(String(last24h.max)) : null,
+      min24h: last24h != null ? formatNum(String(last24h.min)) : null,
+      vol24hBtc: last24h != null ? formatAbbreviated(last24h.volBtc) : null,
+      vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
+    });
+  }, [spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, setHeaderData]);
+
+  const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
+    setChartRequestedWidth((prev) => (prev === w ? prev : w));
+    setChartReportedSizePercent((prev) => (sizePercent != null && prev !== sizePercent ? sizePercent : prev));
+  }, []);
+
+  if (loading && extendedKlines.length === 0) {
+    return (
+      <div className="p-4 text-center text-zinc-500">
+        {t.loading.replace("{interval}", intervalLabel)}
       </div>
+    );
+  }
+
+  if (error && extendedKlines.length === 0) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        {t.errorLoad}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-0 pt-1 px-4 pb-4">
       <div
         className="flex-shrink-0 mb-2 w-full min-w-0"
         style={{ minWidth: chartContainerWidth, maxWidth: chartContainerWidth }}
@@ -482,10 +460,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             intervalOptions={intervalOptions}
             onIntervalChange={setGroupMinutes}
             width={chartWidthToUse}
-            onChartDimensionsChange={(w, _h, sizePercent) => {
-              setChartRequestedWidth(w);
-              if (sizePercent != null) setChartReportedSizePercent(sizePercent);
-            }}
+            onChartDimensionsChange={onChartDimensionsChange}
             maxChartHeight={undefined}
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
@@ -551,6 +526,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           </div>
         )}
       </div>
+      {showKlinesTable && (
       <div className="min-h-0 overflow-auto rounded-lg border border-zinc-200 bg-white">
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-zinc-100 text-zinc-700 text-left">
@@ -617,6 +593,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

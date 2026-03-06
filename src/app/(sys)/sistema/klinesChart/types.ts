@@ -101,4 +101,4 @@ export type KlinesChartProps = {
   maxChartHeight?: number;
   /** Chamado quando as dimensões do gráfico mudam (ex.: tamanho 125%). Permite ao container se ajustar sem scroll horizontal. sizePercent = 100 | 125 para cálculo estável. */
   onChartDimensionsChange?: (width: number, height: number, sizePercent: number) => void;
-};
+}

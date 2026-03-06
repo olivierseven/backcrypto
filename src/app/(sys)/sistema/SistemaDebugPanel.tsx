@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
+import { useSistemaDebug } from "./SistemaDebugContext";
 
 type ValidateSingleResult = {
   symbol: string;
@@ -25,6 +26,7 @@ type ValidateResult =
 export default function SistemaDebugPanel() {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.debug;
+  const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [loading, setLoading] = useState(false);
@@ -255,6 +257,17 @@ export default function SistemaDebugPanel() {
             </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
+            <section>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={showKlinesTable}
+                  onChange={(e) => setShowKlinesTable(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span>{t.showKlinesTable}</span>
+              </label>
+            </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {t.validateKlines}
