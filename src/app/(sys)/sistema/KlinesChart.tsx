@@ -12,6 +12,7 @@ import {
   ASPECT_BREAKPOINT,
   MIN_CHART_HEIGHT,
   PAD_Y,
+  Y_PAD_OFFSET_MAX,
   BODY_WIDTH_RATIO,
   Y_AXIS_WIDTH,
   GAP_PLOT_Y_AXIS,
@@ -119,6 +120,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [volumeOnPrice, setVolumeOnPrice] = useState(false);
   const [volumeOnPriceOpacity, setVolumeOnPriceOpacity] = useState(20); // 0–30%, default 20%
   const [chartSizePercent, setChartSizePercent] = useState(CHART_SIZE_PERCENT_DEFAULT); // desktop 16:9, 100–200%
+  const [yPadOffset, setYPadOffset] = useState(0); // -3 a +3: margem extra no eixo Y para previsões
   /** Largura da tela: quando < 696px, área do plot reduz proporcional (40px e 56px fixos). */
   const [viewportWidth, setViewportWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 696));
   useEffect(() => {
@@ -712,21 +714,41 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const pad = range * PAD_Y;
   const yMinLinear = minPrice - pad;
   const yMaxLinear = maxPrice + pad;
-  const yRangeLinear = yMaxLinear - yMinLinear;
   const Y_TICK_STEP = 0.10;
   const floorToMultiple = (x: number, m: number) => Math.floor(x / m) * m;
   const ceilToMultiple = (x: number, m: number) => Math.ceil(x / m) * m;
   const roundToMultiple = (x: number, m: number) => Math.round(x / m) * m;
 
-  let yMin = logScale ? Math.max(yMinLinear, minPrice * 0.5 || 0.001) : yMinLinear;
-  let yMax = logScale ? (yMaxLinear <= 0 ? yMin * 1.1 : yMaxLinear + pad) : yMaxLinear;
-  // Sempre ajustar limites e marcas para múltiplos de 0,10 (valores originais); escala log só altera o posicionamento vertical
-  const yMinFloor = floorToMultiple(yMin, Y_TICK_STEP);
-  const yMaxCeil = ceilToMultiple(yMax, Y_TICK_STEP);
-  let step = roundToMultiple((yMaxCeil - yMinFloor) / 5, Y_TICK_STEP);
-  if (step < Y_TICK_STEP) step = Y_TICK_STEP;
-  yMin = yMinFloor;
-  yMax = yMinFloor + 5 * step;
+  // Offset 0: visão base — 5 intervalos, 6 rótulos, nada fora do gráfico.
+  // Offset 1..3: ↑ adiciona espaço igual pra cima e pra baixo (espreme candles pro centro); ↓ reduz até voltar ao original.
+  let yMin: number;
+  let yMax: number;
+  let step: number;
+  let numIntervals: number;
+
+  if (yPadOffset === 0) {
+    let yMinVal = logScale ? Math.max(yMinLinear, minPrice * 0.5 || 0.001) : yMinLinear;
+    let yMaxVal = logScale ? (yMaxLinear <= 0 ? yMinVal * 1.1 : yMaxLinear + pad) : yMaxLinear;
+    const yMinFloor = floorToMultiple(yMinVal, Y_TICK_STEP);
+    const yMaxCeil = ceilToMultiple(yMaxVal, Y_TICK_STEP);
+    step = roundToMultiple((yMaxCeil - yMinFloor) / 5, Y_TICK_STEP);
+    if (step < Y_TICK_STEP) step = Y_TICK_STEP;
+    yMin = yMinFloor;
+    yMax = yMinFloor + 5 * step;
+    numIntervals = 5;
+  } else {
+    const yMinFloorBase = floorToMultiple(yMinLinear, Y_TICK_STEP);
+    const yMaxCeilBase = ceilToMultiple(yMaxLinear, Y_TICK_STEP);
+    step = roundToMultiple((yMaxCeilBase - yMinFloorBase) / 5, Y_TICK_STEP);
+    if (step < Y_TICK_STEP) step = Y_TICK_STEP;
+    const yMinBase = yMinFloorBase;
+    const yMaxBase = yMinFloorBase + 5 * step;
+    // Espaço igual em cima e embaixo: +offset intervalos em cada lado
+    yMin = yMinBase - yPadOffset * step;
+    yMax = yMaxBase + yPadOffset * step;
+    numIntervals = 5 + 2 * yPadOffset;
+  }
+
   const yRange = yMax - yMin;
 
   const safeLog = (p: number) => Math.log(Math.max(p, 0.001));
@@ -805,10 +827,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   };
   crosshairPixelToDataRef.current = pixelToData;
 
-  const yTicks = 5;
   const yTickValues: number[] = [];
-  for (let i = 0; i <= yTicks; i++) {
-    const v = yMin + (yRange * i) / yTicks;
+  for (let i = 0; i <= numIntervals; i++) {
+    const v = yMin + (yRange * i) / numIntervals;
     yTickValues.push(Math.round(v * 10) / 10);
   }
 
@@ -992,6 +1013,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             chartWidth={width}
             chartSizePercent={chartSizePercent}
             setChartSizePercent={setChartSizePercent}
+            yPadOffset={yPadOffset}
+            setYPadOffset={setYPadOffset}
             drawOpen={drawOpen}
             setDrawOpen={setDrawOpen}
             drawingsVisible={drawingsVisible}

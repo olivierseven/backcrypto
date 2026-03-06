@@ -5,6 +5,9 @@
 export const ASPECT_BREAKPOINT = 480;
 export const MIN_CHART_HEIGHT = 180;
 export const PAD_Y = 0.02;
+/** Offset 0 = visão original; 1..3 = espaço igual em cima e embaixo (↑ aumenta, ↓ reduz). */
+export const Y_PAD_OFFSET_MIN = 0;
+export const Y_PAD_OFFSET_MAX = 3;
 export const BODY_WIDTH_RATIO = 0.7;
 export const Y_AXIS_WIDTH = 60;
 export const GAP_PLOT_Y_AXIS = 8;

@@ -87,6 +87,8 @@ export interface KlinesChartSidebarProps {
   chartWidth: number;
   chartSizePercent: number;
   setChartSizePercent: (v: number | ((v: number) => number)) => void;
+  yPadOffset: number;
+  setYPadOffset: (v: number | ((v: number) => number)) => void;
   // Draw
   drawOpen: boolean;
   setDrawOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -176,6 +178,8 @@ export function KlinesChartSidebar({
   chartWidth,
   chartSizePercent,
   setChartSizePercent,
+  yPadOffset,
+  setYPadOffset,
   drawOpen,
   setDrawOpen,
   drawingsVisible,
@@ -268,7 +272,7 @@ export function KlinesChartSidebar({
           className={
             isHorizontal
               ? "relative flex items-center px-1 border-r border-zinc-200/80"
-              : "w-full flex flex-col items-center py-2 px-1 border-b border-zinc-200/80"
+              : "w-full flex flex-col items-center px-1 border-b border-zinc-200/80"
           }
         >
           <button
@@ -285,8 +289,8 @@ export function KlinesChartSidebar({
             title={currentIntervalLabel}
             className={
               isHorizontal
-                ? "min-w-[64px] h-9 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 cursor-pointer"
-                : "w-full min-h-[28px] text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 py-1 cursor-pointer"
+                ? "w-10 h-10 flex items-center justify-center text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
+                : "w-full flex items-center justify-center py-2 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
             }
           >
             {currentIntervalLabel}
@@ -858,6 +862,42 @@ export function KlinesChartSidebar({
           )}
         </div>
       </div>
+      {isHorizontal && (
+        <div className="ml-auto flex items-center border-l border-zinc-200/80 pl-1">
+          <button
+            type="button"
+            onClick={() => setYPadOffset((v) => Math.max(0, v - 1))}
+            disabled={yPadOffset <= 0}
+            className={`${iconButtonClassName} !w-[30px]`}
+            title={(t as Record<string, string>).yPadLess ?? "Diminuir margem no eixo Y (voltar ao original)"}
+            aria-label={(t as Record<string, string>).yPadLess ?? "Diminuir margem eixo Y"}
+          >
+            <span className="inline-block h-4 w-3" aria-hidden>
+              <svg viewBox="0 0 12 16" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="6" y1="2" x2="6" y2="14" />
+                <path d="M3 11 l3-3 3 3" />
+                <path d="M3 5 l3 3 3-3" />
+              </svg>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setYPadOffset((v) => Math.min(3, v + 1))}
+            disabled={yPadOffset >= 3}
+            className={`${iconButtonClassName} !w-[30px]`}
+            title={(t as Record<string, string>).yPadMore ?? "Aumentar margem no eixo Y (previsões)"}
+            aria-label={(t as Record<string, string>).yPadMore ?? "Aumentar margem eixo Y"}
+          >
+            <span className="inline-block h-4 w-3" aria-hidden>
+              <svg viewBox="0 0 12 16" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="6" y1="2" x2="6" y2="14" />
+                <path d="M3 5 l3-3 3 3" />
+                <path d="M3 11 l3 3 3-3" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      )}
       {isHorizontal &&
         portalStyle &&
         (intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen) &&
