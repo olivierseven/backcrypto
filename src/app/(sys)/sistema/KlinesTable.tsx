@@ -435,7 +435,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }
 
   return (
-    <div className="flex flex-col min-h-0 pt-1 px-4 pb-4">
+    <div className="flex flex-col min-h-0 pt-1 pl-0 pr-4 pb-4">
       <div
         className="flex-shrink-0 mb-2 w-full min-w-0"
         style={{ minWidth: chartContainerWidth, maxWidth: chartContainerWidth }}
