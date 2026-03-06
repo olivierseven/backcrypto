@@ -79,6 +79,8 @@ export interface KlinesChartSvgProps {
   drawTool: "line" | "select";
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 } | null>>;
   t: Record<string, string>;
+  /** Escala dos textos (indicadores, etc.): 0.6–1 quando o plot está reduzido. */
+  textScale?: number;
 }
 
 export function KlinesChartSvg({
@@ -148,7 +150,11 @@ export function KlinesChartSvg({
   drawTool,
   setDrawDragging,
   t,
+  textScale = 1,
 }: KlinesChartSvgProps) {
+  const fontSize = Math.round(10 * textScale);
+  const fontSizeSmall = Math.round(9 * textScale);
+  const fontSizeAxis = Math.round(12 * textScale);
   const volumeOnPriceClipId = useId();
   const showCrosshairValues =
     crosshairPoint !== null &&
@@ -164,7 +170,7 @@ export function KlinesChartSvg({
         top: topY === 0 ? 0 : topY - INDICATOR_STRIP_OFFSET_UP,
         height: INDICATOR_STRIP_HEIGHT,
         width,
-        paddingLeft: MARGIN_LEFT,
+        paddingLeft: Math.max(4, MARGIN_LEFT),
         paddingTop: 2,
       }}
       role="list"
@@ -172,8 +178,9 @@ export function KlinesChartSvg({
     >
       {panelKey !== "main" && (
         <span
-          className="text-[10px] font-medium text-zinc-500 px-1.5 py-0.5 rounded shrink-0"
+          className="font-medium text-zinc-500 px-1.5 py-0.5 rounded shrink-0"
           style={{
+            fontSize: `${fontSize}px`,
             backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
             boxShadow: "0 0 4px rgba(0,0,0,0.15)",
           }}
@@ -196,8 +203,9 @@ export function KlinesChartSvg({
         return (
           <span
             key={idx}
-            className="flex items-center gap-1.5 text-[10px] font-light px-1.5 py-0.5 rounded"
+            className="flex items-center gap-1.5 font-light px-1.5 py-0.5 rounded"
             style={{
+              fontSize: `${fontSize}px`,
               color: ind.color,
               backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
               boxShadow: "0 0 4px rgba(0,0,0,0.15)",
@@ -305,7 +313,8 @@ export function KlinesChartSvg({
                         x={x}
                         y={yRow1}
                         textAnchor="middle"
-                        className="text-[12px] font-mono"
+                        className="font-mono"
+                        style={{ fontSize: fontSizeAxis }}
                         fill={backgroundTextHex}
                         transform={`rotate(-45, ${x}, ${yRow1})`}
                       >
@@ -314,14 +323,14 @@ export function KlinesChartSvg({
                     );
                   }
                   return (
-                    <text key={b.index} x={x} y={yRow1} textAnchor="middle">
+                    <text key={b.index} x={x} y={yRow1} textAnchor="middle" style={{ fontSize: fontSizeAxis }}>
                       {b.label}
                     </text>
                   );
                 })}
               </g>
               {showSecondaryAxis && (
-                <g className="text-[9px] font-mono" fill={secondaryGridHex}>
+                <g className="font-mono" style={{ fontSize: fontSizeSmall }} fill={secondaryGridHex}>
                   {verticalIndicesFiltered.map((idx) => (
                     <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
                       {formatTimeLabel(windowSlice[idx][0] as number)}
@@ -830,10 +839,10 @@ export function KlinesChartSvg({
               {openTimeMs != null && (
                 <g>
                   <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
-                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
+                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
                     {formatDateYyyyMmDd(openTimeMs)}
                   </text>
-                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
+                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
                     {formatTimeLabel(openTimeMs)}
                   </text>
                 </g>
@@ -878,17 +887,17 @@ export function KlinesChartSvg({
           return (
             <g pointerEvents="none" opacity={0.8}>
               <rect x={tx} y={ty} width={tw} height={th} rx={4} ry={4} fill="white" stroke="#e4e4e7" strokeWidth={1} />
-              <text x={tx + pad} y={y1} className="text-[10px] font-mono" fill="#171717">{t.date}: {formatDateLabel(openTimeMs)}</text>
-              <text x={tx + pad} y={y1 + lineH} className="text-[10px] font-mono" fill="#171717">{t.time}: {formatTimeLabel(openTimeMs)}</text>
-              <text x={tx + pad} y={y1 + lineH * 2} className="text-[10px] font-mono font-medium" fill="#171717">{t.open}: {fmt(openP)}</text>
-              <text x={tx + pad} y={y1 + lineH * 3} className="text-[10px] font-mono" fill="#171717">{t.high}: {fmt(highP)}</text>
-              <text x={tx + pad} y={y1 + lineH * 4} className="text-[10px] font-mono" fill="#171717">{t.low}: {fmt(lowP)}</text>
-              <text x={tx + pad} y={y1 + lineH * 5} className="text-[10px] font-mono" fill="#171717">{t.close}: {fmt(closeP)}</text>
-              <text x={tx + pad} y={y1 + lineH * 6} className="text-[10px] font-mono" fill={blue}>{t.amplitude}: {fmt(amplitude)}</text>
-              <text x={tx + pad} y={y1 + lineH * 7} className="text-[10px] font-mono" fill={blue}>{t.amplitudeVar}: {amplitudePct.toFixed(2)}%</text>
-              <text x={tx + pad} y={y1 + lineH * 8} className="text-[10px] font-mono" fill={pctVsPrev >= 0 ? green : red}>{t.vsPrevClose} {pctVsPrevStr}</text>
-              <text x={tx + pad} y={y1 + lineH * 9} className="text-[10px] font-mono" fill="#171717">{t.volumeBtc}: {formatAbbreviated(volume)}</text>
-              <text x={tx + pad} y={y1 + lineH * 10} className="text-[10px] font-mono" fill="#171717">{t.volUsdt}: {formatAbbreviated(volumeUsdt)}</text>
+              <text x={tx + pad} y={y1} className="font-mono" style={{ fontSize }} fill="#171717">{t.date}: {formatDateLabel(openTimeMs)}</text>
+              <text x={tx + pad} y={y1 + lineH} className="font-mono" style={{ fontSize }} fill="#171717">{t.time}: {formatTimeLabel(openTimeMs)}</text>
+              <text x={tx + pad} y={y1 + lineH * 2} className="font-mono font-medium" style={{ fontSize }} fill="#171717">{t.open}: {fmt(openP)}</text>
+              <text x={tx + pad} y={y1 + lineH * 3} className="font-mono" style={{ fontSize }} fill="#171717">{t.high}: {fmt(highP)}</text>
+              <text x={tx + pad} y={y1 + lineH * 4} className="font-mono" style={{ fontSize }} fill="#171717">{t.low}: {fmt(lowP)}</text>
+              <text x={tx + pad} y={y1 + lineH * 5} className="font-mono" style={{ fontSize }} fill="#171717">{t.close}: {fmt(closeP)}</text>
+              <text x={tx + pad} y={y1 + lineH * 6} className="font-mono" style={{ fontSize }} fill={blue}>{t.amplitude}: {fmt(amplitude)}</text>
+              <text x={tx + pad} y={y1 + lineH * 7} className="font-mono" style={{ fontSize }} fill={blue}>{t.amplitudeVar}: {amplitudePct.toFixed(2)}%</text>
+              <text x={tx + pad} y={y1 + lineH * 8} className="font-mono" style={{ fontSize }} fill={pctVsPrev >= 0 ? green : red}>{t.vsPrevClose} {pctVsPrevStr}</text>
+              <text x={tx + pad} y={y1 + lineH * 9} className="font-mono" style={{ fontSize }} fill="#171717">{t.volumeBtc}: {formatAbbreviated(volume)}</text>
+              <text x={tx + pad} y={y1 + lineH * 10} className="font-mono" style={{ fontSize }} fill="#171717">{t.volUsdt}: {formatAbbreviated(volumeUsdt)}</text>
             </g>
           );
         })()}
@@ -966,7 +975,7 @@ export function KlinesChartSvg({
                 return (
                   <g>
                     <rect x={labelX - padW} y={labelY - 12} width={padW * 2} height={padH * 2} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
-                    <text x={labelX} y={labelY} textAnchor="middle" fill={textColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>
+                    <text x={labelX} y={labelY} textAnchor="middle" fill={textColor} className="font-medium select-none" style={{ fontSize }}>
                       <tspan x={labelX} dy={0}>{percentStr}</tspan>
                       <tspan x={labelX} dy={11}>{daysStr}</tspan>
                     </text>
@@ -986,9 +995,9 @@ export function KlinesChartSvg({
                 return (
                   <>
                     <rect x={p1.x - vPadW} y={rectY1} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                    <text x={p1.x} y={p1.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v1}</text>
+                    <text x={p1.x} y={p1.y - 6} textAnchor="middle" fill={strokeColor} className="font-medium select-none" style={{ fontSize }}>{v1}</text>
                     <rect x={p2.x - vPadW} y={rectY2} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                    <text x={p2.x} y={p2.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v2}</text>
+                    <text x={p2.x} y={p2.y - 6} textAnchor="middle" fill={strokeColor} className="font-medium select-none" style={{ fontSize }}>{v2}</text>
                   </>
                 );
               })()}

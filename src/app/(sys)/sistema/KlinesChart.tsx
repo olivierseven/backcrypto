@@ -120,6 +120,33 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [volumeOnPrice, setVolumeOnPrice] = useState(false);
   const [volumeOnPriceOpacity, setVolumeOnPriceOpacity] = useState(20); // 0–30%, default 20%
   const [chartSizePercent, setChartSizePercent] = useState(CHART_SIZE_PERCENT_DEFAULT); // desktop 16:9, 100–200%
+  /** Largura da tela: quando < 696px, área do plot reduz proporcional (40px e 56px fixos). */
+  const [viewportWidth, setViewportWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 696));
+  useEffect(() => {
+    // Throttle por frame: evita re-render pesado a cada pixel no resize (melhora os warnings de performance).
+    let rafId: number | null = null;
+    let pendingWidth = typeof window !== "undefined" ? window.innerWidth : 696;
+
+    const flush = () => {
+      rafId = null;
+      setViewportWidth((prev) => (prev === pendingWidth ? prev : pendingWidth));
+    };
+
+    const onResize = () => {
+      pendingWidth = window.innerWidth;
+      if (rafId != null) return;
+      rafId = window.requestAnimationFrame(flush);
+    };
+
+    // Sincroniza ao montar (ex.: após hidratação / zoom / barras do navegador).
+    onResize();
+
+    window.addEventListener("resize", onResize, { passive: true } as AddEventListenerOptions);
+    return () => {
+      if (rafId != null) window.cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
   /** Exibir gráfico; loading só por um instante ao trocar o intervalo (evita travar por efeitos assíncronos). */
   const [chartReady, setChartReady] = useState(true);
   const [layoutApplied, setLayoutApplied] = useState(false);
@@ -511,7 +538,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   useLayoutEffect(() => {
     const d = chartDimensionsRef.current;
     if (d.w > 0 && onChartDimensionsChange) onChartDimensionsChange(d.w, d.h, d.sizePercent ?? 100);
-  }, [onChartDimensionsChange, width, chartSizePercent, chartReady, visibleCount, indicatorLines?.length, secondaryPanelHeightPercent, klines.length]);
+  }, [onChartDimensionsChange, width, chartSizePercent, chartReady, visibleCount, indicatorLines?.length, secondaryPanelHeightPercent, klines.length, viewportWidth]);
 
   if (klines.length === 0 || width < 100) {
     chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
@@ -537,28 +564,36 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
   const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0) + (hasPanel5 ? 1 : 0);
 
-  /** Desktop: escala proporcional (largura e altura). Mobile: sem escala. */
-  const effectiveWidth =
-    width >= ASPECT_BREAKPOINT ? Math.round(width * (chartSizePercent / 100)) : width;
-  const baseByAspect =
-    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(effectiveWidth * (9 / 16));
-  let baseChartHeight = Math.max(MIN_CHART_HEIGHT, baseByAspect);
-  if (hasAnySecondaryPanel && typeof maxChartHeight === "number" && maxChartHeight > 0 && nSecondaryPanels > 0) {
-    const gapsAndMargin = mainToPanelGap + gap2_3 + gap3_4 + gap4_5 + PANEL2_BOTTOM_MARGIN;
-    const denom = 1 + secondaryPanelRatio * nSecondaryPanels;
-    const baseToFit = (maxChartHeight - gapsAndMargin + (MARGIN_TOP + marginBottom) * secondaryPanelRatio * nSecondaryPanels) / denom;
-    if (baseToFit >= MIN_CHART_HEIGHT) baseChartHeight = Math.min(baseChartHeight, Math.round(baseToFit));
-  }
-
-  const chartH = baseChartHeight - MARGIN_TOP - marginBottom;
-  const panel2Height = hasPanel2 ? chartH * secondaryPanelRatio : 0;
-  const panel3Height = hasPanel3 ? chartH * secondaryPanelRatio : 0;
-  const panel4Height = hasPanel4 ? chartH * secondaryPanelRatio : 0;
-  const panel5Height = hasPanel5 ? chartH * secondaryPanelRatio : 0;
+  /** Teto do plot (600px em 100%, 750px em 125%). Largura máxima total do chart = 660px (600 + 60 eixo). */
+  const MAX_PLOT_WIDTH_BASE = 600;
+  const maxPlotWidth = Math.round(MAX_PLOT_WIDTH_BASE * (chartSizePercent / 100));
+  /** Sidebar agora fica no topo; na horizontal só o eixo Y é fixo. */
+  const FIXED_WIDTH = Y_AXIS_WIDTH;
+  const MIN_PLOT_WIDTH = 200;
+  // `width` aqui é a largura disponível para o plot (sem o eixo Y). Também limitamos pela viewport para não estourar em telas menores.
+  const availableForPlot = Math.min(width, viewportWidth - FIXED_WIDTH);
+  const displayPlotWidth =
+    availableForPlot >= maxPlotWidth
+      ? maxPlotWidth
+      : Math.max(MIN_PLOT_WIDTH, Math.min(availableForPlot, maxPlotWidth));
+  /** Proporções fixas: área dos candles 592×320 (razão 1,85). Altura = teto 320px; em larguras menores escala. Cada painel = 1/3 da altura do main. */
+  const MAIN_PLOT_HEIGHT_PER_WIDTH = 320 / 592;
+  const MAIN_PLOT_HEIGHT_CAP = 320;
+  const PANEL_TO_MAIN_RATIO = 1 / 3;
+  const minChartH = MIN_CHART_HEIGHT - MARGIN_TOP - marginBottom;
+  const chartH = Math.max(minChartH, Math.min(MAIN_PLOT_HEIGHT_CAP, Math.round(displayPlotWidth * MAIN_PLOT_HEIGHT_PER_WIDTH)));
+  const baseChartHeight = chartH + MARGIN_TOP + marginBottom;
+  const panel2Height = hasPanel2 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel3Height = hasPanel3 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel4Height = hasPanel4 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel5Height = hasPanel5 ? chartH * PANEL_TO_MAIN_RATIO : 0;
   const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + gap2_3 + gap3_4 + gap4_5 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
+  /** Escala dos textos (indicadores e eixo Y): reduz quando o plot está reduzido, não necessariamente na mesma proporção. */
+  const textScale = Math.max(0.6, Math.min(1, displayPlotWidth / maxPlotWidth));
+
   const is2hOrAbove = groupMinutes >= 120;
-  const chartW = effectiveWidth - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
+  const chartW = displayPlotWidth - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
   const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
   const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
@@ -852,7 +887,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     lastClose >= yMin && lastClose <= yMax;
   const showLastClose = lastClose > 0 && lastCloseInVisibleRange;
 
-  const totalChartWidth = SIDEBAR_WIDTH + effectiveWidth + Y_AXIS_WIDTH;
+  const totalChartWidth = displayPlotWidth + Y_AXIS_WIDTH;
   chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };
 
   const containerBgHex = BACKGROUND_PALETTE.find((b) => b.id === containerBackground)?.hex ?? "#ffffff";
@@ -872,8 +907,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
     return (
       <div
-        className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit flex items-center justify-center"
-        style={{ minWidth: effectiveWidth, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
+        className="rounded-lg border border-zinc-200 overflow-visible flex flex-col flex-shrink-0 w-fit flex items-center justify-center"
+        style={{ minWidth: totalChartWidth, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
       >
         <p className="text-zinc-500 text-sm">{t.loading.replace("{interval}", intervalLabel ?? "")}</p>
       </div>
@@ -884,17 +919,18 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
 
   return (
     <div
-      className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit"
+      className="rounded-lg border border-zinc-200 overflow-visible flex flex-col flex-shrink-0 w-fit"
       style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
-      <div className="flex min-w-0 flex-shrink-0">
-        <div className="flex-shrink-0 self-stretch" style={{ width: SIDEBAR_WIDTH, touchAction: "pan-x pan-y" }}>
+      <div className="flex flex-col min-w-0 flex-shrink-0">
+        <div className="flex-shrink-0" style={{ touchAction: "pan-x pan-y", marginBottom: 0 }}>
           <KlinesChartSidebar
             chartHeight={chartHeight}
             settingsRef={settingsRef}
             colorsRef={colorsRef}
             saveLoadRef={saveLoadRef}
             drawRef={drawRef}
+            orientation="horizontal"
             t={t}
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions ?? []}
@@ -1210,7 +1246,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
           <KlinesChartSvg
             chartSvgRef={chartSvgRef}
             crosshairOverlayRef={crosshairOverlayRef}
-            width={effectiveWidth}
+            width={displayPlotWidth}
             chartHeight={chartHeight}
             chartW={chartW}
             chartH={chartH}
@@ -1274,6 +1310,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             drawTool={drawTool}
             setDrawDragging={setDrawDragging}
             t={t}
+            textScale={textScale}
           />
           {!drawMode && (
             <>
@@ -1438,6 +1475,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     })()
                   : undefined
               }
+              textScale={textScale}
             />
           </div>
           <KlinesChartFooter

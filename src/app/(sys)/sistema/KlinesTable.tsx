@@ -8,10 +8,12 @@ import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn,
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
-import { SIDEBAR_WIDTH, Y_AXIS_WIDTH } from "./KlinesChartConstants";
+import { Y_AXIS_WIDTH } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
+/** Teto do plot em 100% (igual a KlinesChart MAX_PLOT_WIDTH_BASE). Largura máxima total = 660px (600 plot + 60 eixo). */
+const MAX_PLOT_WIDTH = 600;
 import { formatAbbreviated } from "./klinesFormatters";
 import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./IndicatorsPanel";
 import KlinesChart from "./KlinesChart";
@@ -274,9 +276,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const ro = new ResizeObserver((entries) => {
       const rect = entries[0]?.contentRect;
       if (rect) {
-        // Largura do plot = container - sidebar - eixo Y - gutter da scrollbar (barra fica fora do gráfico)
+        // Largura do plot = container - eixo Y (limite max 660px total = 600 plot + 60 eixo)
         if (typeof rect.width === "number" && rect.width > 0) {
-          const plotWidth = Math.max(100, rect.width - SIDEBAR_WIDTH - Y_AXIS_WIDTH - SCROLLBAR_GUTTER);
+          const plotWidth = Math.max(100, rect.width - Y_AXIS_WIDTH);
           setChartWidth(plotWidth);
         }
         if (typeof rect.height === "number" && rect.height > 0) setChartContainerHeight(rect.height);
@@ -388,11 +390,17 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return { max, min, volBtc, volUsd };
   })();
 
-  const headerWidth = chartWidth + SIDEBAR_WIDTH + Y_AXIS_WIDTH + SCROLLBAR_GUTTER;
-  const chartContainerWidth = chartRequestedWidth != null ? chartRequestedWidth + 2 : headerWidth;
+  const headerWidth = chartWidth + Y_AXIS_WIDTH;
+  /** Em 100%: container usa a largura disponível (até 660px). Em 125%: trava no tamanho reportado pelo chart. */
+  const chartContainerWidth =
+    chartRequestedWidth != null && chartReportedSizePercent >= 125
+      ? chartRequestedWidth + 2
+      : headerWidth;
+  const chartContainerMaxWidth = MAX_PLOT_WIDTH + Y_AXIS_WIDTH;
+  /** Em 100%: usar sempre a largura do container (ResizeObserver) para o gráfico crescer ao aumentar a tela. Em 125%: usar o tamanho reportado pelo chart. */
   const chartWidthToUse =
-    chartRequestedWidth != null
-      ? (chartRequestedWidth - SIDEBAR_WIDTH - Y_AXIS_WIDTH) / (chartReportedSizePercent / 100)
+    chartReportedSizePercent >= 125 && chartRequestedWidth != null
+      ? (chartRequestedWidth - Y_AXIS_WIDTH) / (chartReportedSizePercent / 100)
       : chartWidth;
 
   useEffect(() => {
@@ -435,22 +443,21 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }
 
   return (
-    <div className="flex flex-col min-h-0 pt-1 pl-0 pr-4 pb-4">
+    <div className="flex flex-col min-h-0 w-full pt-1 pl-0 pr-4 pb-4">
       <div
-        className="flex-shrink-0 mb-2 w-full min-w-0"
-        style={{ minWidth: chartContainerWidth, maxWidth: chartContainerWidth }}
+        ref={chartWrapRef}
+        className="flex-shrink-0 mb-2 min-w-0 rounded-lg border border-zinc-200 bg-white"
+        style={{
+          width: "100%",
+          minWidth: chartReportedSizePercent >= 125 && chartRequestedWidth != null ? chartRequestedWidth + 2 : undefined,
+          maxWidth: chartReportedSizePercent >= 125 && chartRequestedWidth != null ? chartRequestedWidth + 2 : chartContainerMaxWidth,
+          boxSizing: "border-box",
+          overflowX: "visible",
+          overflowY: "visible",
+          touchAction: "auto",
+          overscrollBehavior: "auto",
+        }}
       >
-        <div
-          ref={chartWrapRef}
-          className="w-full min-h-0 rounded-lg border border-zinc-200 bg-white"
-          style={{
-            boxSizing: "border-box",
-            overflowX: "visible",
-            overflowY: "visible",
-            touchAction: "auto",
-            overscrollBehavior: "auto",
-          }}
-        >
           <KlinesChart
             klines={extendedKlines}
             groupMinutes={groupMinutes}
@@ -523,7 +530,6 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             </span>
           </div>
         )}
-      </div>
       {showKlinesTable && (
       <div className="min-h-0 overflow-auto rounded-lg border border-zinc-200 bg-white">
         <table className="w-full text-sm">

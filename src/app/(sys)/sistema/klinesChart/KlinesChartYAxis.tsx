@@ -50,6 +50,8 @@ export interface KlinesChartYAxisProps {
   volumeLabelY?: number;
   volumeLabelValue?: string;
   volumeLabelColor?: string;
+  /** Escala dos textos do eixo Y: 0.6–1 quando o plot está reduzido. */
+  textScale?: number;
 }
 
 export function KlinesChartYAxis({
@@ -93,14 +95,16 @@ export function KlinesChartYAxis({
   volumeLabelY,
   volumeLabelValue,
   volumeLabelColor,
+  textScale = 1,
 }: KlinesChartYAxisProps) {
+  const fontSize = Math.round(10 * textScale);
   const boxWidth = yAxisAbbreviated ? 46 : 56;
   const boxX = Y_AXIS_WIDTH - 52;
   const boxXLong = Y_AXIS_WIDTH - 62;
 
   return (
     <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
-      <svg width={Y_AXIS_WIDTH} height={chartHeight} className="text-[10px] font-mono">
+      <svg width={Y_AXIS_WIDTH} height={chartHeight} className="font-mono" style={{ fontSize }}>
         {yTickValues.map((v, i) => (
           <text key={i} x={6} y={y(v) + 4} textAnchor="start" fill={footerYAxisTextHex}>
             {formatYAxis(v)}
@@ -119,7 +123,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p2-${v}`} x={6} y={yRsiPanel2(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+              <text key={`p2-${v}`} x={6} y={yRsiPanel2(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -137,7 +141,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p3-${v}`} x={6} y={yRsiPanel3(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+              <text key={`p3-${v}`} x={6} y={yRsiPanel3(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -155,7 +159,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p4-${v}`} x={6} y={yRsiPanel4(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+              <text key={`p4-${v}`} x={6} y={yRsiPanel4(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -173,7 +177,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p5-${v}`} x={6} y={yRsiPanel5(v) + 4} textAnchor="start" className="text-[10px] font-mono" fill={footerYAxisTextHex}>
+              <text key={`p5-${v}`} x={6} y={yRsiPanel5(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -191,7 +195,7 @@ export function KlinesChartYAxis({
               strokeWidth={1}
               rx={2}
             />
-            <text x={6} y={volumeLabelY + 4} textAnchor="start" className="font-mono font-medium text-[10px]" fill={volumeLabelColor}>
+            <text x={6} y={volumeLabelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={volumeLabelColor}>
               {volumeLabelValue}
             </text>
           </g>
@@ -208,7 +212,7 @@ export function KlinesChartYAxis({
               strokeWidth={1}
               rx={2}
             />
-            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" fill={lastCloseTextHex}>
+            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
               {formatYAxis(lastClose)}
             </text>
           </g>
@@ -264,7 +268,8 @@ export function KlinesChartYAxis({
                   x={6}
                   y={lastValY + 4}
                   textAnchor="start"
-                  className="font-semibold font-mono text-[10px]"
+                  className="font-semibold font-mono"
+                  style={{ fontSize }}
                   fill={textColor}
                 >
                   {panelKey === "main"
@@ -305,11 +310,11 @@ export function KlinesChartYAxis({
                   strokeDasharray="2 2"
                   rx={2}
                 />
-                <text x={6} y={crossY + 4} textAnchor="start" className="font-mono font-medium" fill={footerYAxisTextHex}>
+                <text x={6} y={crossY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={footerYAxisTextHex}>
                   {valueStr}
                 </text>
                 {pctStr != null && (
-                  <text x={6} y={crossY + 15} textAnchor="start" className="text-[10px] font-mono" fill={pctColor}>
+                  <text x={6} y={crossY + 15} textAnchor="start" className="font-mono" style={{ fontSize }} fill={pctColor}>
                     {pctStr}
                   </text>
                 )}

@@ -4,7 +4,7 @@
  * Sidebar do gráfico de candles: configuração, cores, desenho e save/load de layout.
  */
 import { useState, type RefObject } from "react";
-import { SIDEBAR_WIDTH, ASPECT_BREAKPOINT } from "../KlinesChartConstants";
+import { SIDEBAR_WIDTH } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
   DEFAULT_CANDLE_PRESET,
@@ -27,6 +27,8 @@ export interface KlinesChartSidebarProps {
   colorsRef: RefObject<HTMLDivElement | null>;
   saveLoadRef: RefObject<HTMLDivElement | null>;
   drawRef: RefObject<HTMLDivElement | null>;
+  /** Layout da sidebar: vertical (esquerda) ou horizontal (topo). */
+  orientation?: "vertical" | "horizontal";
   t: KlinesChartSidebarTranslations;
   /** Tempo selecionado (ex.: "4h") — exibido no topo da sidebar. */
   intervalLabel?: string;
@@ -118,6 +120,7 @@ export function KlinesChartSidebar({
   colorsRef,
   saveLoadRef,
   drawRef,
+  orientation = "vertical",
   t,
   intervalLabel,
   intervalOptions,
@@ -199,15 +202,31 @@ export function KlinesChartSidebar({
 }: KlinesChartSidebarProps) {
   const [intervalsOpen, setIntervalsOpen] = useState(false);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
+  const isHorizontal = orientation === "horizontal";
+  const popoverPositionClass = isHorizontal ? "absolute left-0 top-full mt-1" : "absolute left-full top-0 ml-1";
+  const rootClassName = isHorizontal
+    ? "flex-shrink-0 border-b border-zinc-200 bg-zinc-50 flex flex-row items-center relative w-full overflow-x-auto"
+    : "flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative h-full";
+  const rootStyle = isHorizontal ? ({ height: 44 } as const) : ({ width: SIDEBAR_WIDTH } as const);
+  const iconButtonClassName = isHorizontal
+    ? "w-10 h-10 flex items-center justify-center text-lg hover:bg-zinc-200/80 transition-colors"
+    : "w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors";
+  const sectionWrapClassName = isHorizontal ? "relative flex items-center" : "relative w-full flex flex-col items-center";
 
   return (
     <div
       ref={settingsRef}
-      className="flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative h-full"
-      style={{ width: SIDEBAR_WIDTH }}
+      className={rootClassName}
+      style={rootStyle}
     >
       {intervalOptions.length > 0 && (
-        <div className="w-full flex flex-col items-center py-2 px-1 border-b border-zinc-200/80">
+        <div
+          className={
+            isHorizontal
+              ? "relative flex items-center px-1 border-r border-zinc-200/80"
+              : "w-full flex flex-col items-center py-2 px-1 border-b border-zinc-200/80"
+          }
+        >
           <button
             type="button"
             id="interval-listbox"
@@ -220,13 +239,17 @@ export function KlinesChartSidebar({
             aria-expanded={intervalsOpen}
             aria-haspopup="dialog"
             title={currentIntervalLabel}
-            className="w-full min-h-[28px] text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 py-1 cursor-pointer"
+            className={
+              isHorizontal
+                ? "min-w-[64px] h-9 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 cursor-pointer"
+                : "w-full min-h-[28px] text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded px-2 py-1 cursor-pointer"
+            }
           >
             {currentIntervalLabel}
           </button>
           {intervalsOpen && (
             <div
-              className="absolute left-full top-0 ml-1 z-20 min-w-[140px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col"
+              className={`${popoverPositionClass} z-20 min-w-[140px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col`}
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-label={(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
@@ -267,26 +290,24 @@ export function KlinesChartSidebar({
           setSettingsOpen((o) => !o);
           setColorsOpen(false);
         }}
-        className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
+        className={iconButtonClassName}
         title={t.configTitle}
         aria-expanded={settingsOpen}
       >
         ⚙️
       </button>
-      {chartWidth >= ASPECT_BREAKPOINT && (
-        <button
-          type="button"
-          onClick={() => setChartSizePercent((v) => (v >= 125 ? 100 : 125))}
-          className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
-          title={chartSizePercent >= 125 ? ((t as Record<string, string>).chartSizeRestore ?? "Normal size (100%)") : ((t as Record<string, string>).chartSizeEnlarge ?? "Expand chart (125%)")}
-          aria-pressed={chartSizePercent >= 125}
-        >
-          🔍
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setChartSizePercent((v) => (v >= 125 ? 100 : 125))}
+        className={`${iconButtonClassName} ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
+        title={chartSizePercent >= 125 ? ((t as Record<string, string>).chartSizeRestore ?? "Normal size (100%)") : ((t as Record<string, string>).chartSizeEnlarge ?? "Expand chart (125%)")}
+        aria-pressed={chartSizePercent >= 125}
+      >
+        🔍
+      </button>
       {settingsOpen && (
         <div
-          className="absolute left-full top-0 ml-1 z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
+          className={`${popoverPositionClass} z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
           onClick={(e) => e.stopPropagation()}
         >
           <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
@@ -434,7 +455,7 @@ export function KlinesChartSidebar({
           )}
         </div>
       )}
-      <div ref={colorsRef} className="relative w-full flex flex-col items-center">
+      <div ref={colorsRef} className={sectionWrapClassName}>
         <button
           type="button"
           onClick={(e) => {
@@ -442,7 +463,7 @@ export function KlinesChartSidebar({
             setColorsOpen((o) => !o);
             setSettingsOpen(false);
           }}
-          className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
+          className={iconButtonClassName}
           title={t.candleColors}
           aria-expanded={colorsOpen}
         >
@@ -450,7 +471,7 @@ export function KlinesChartSidebar({
         </button>
         {colorsOpen && (
           <div
-            className="absolute left-full top-0 ml-1 z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
+            className={`${popoverPositionClass} z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
             style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -600,14 +621,14 @@ export function KlinesChartSidebar({
           </div>
         )}
       </div>
-      <div ref={drawRef} className="relative w-full flex flex-col items-center">
+      <div ref={drawRef} className={sectionWrapClassName}>
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             setDrawingsVisible((v) => !v);
           }}
-          className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${!drawingsVisible ? "opacity-60" : ""}`}
+          className={`${iconButtonClassName} ${!drawingsVisible ? "opacity-60" : ""}`}
           title={(t as Record<string, string>).drawVisibilityTitle}
           aria-label={(t as Record<string, string>).drawVisibilityAria}
           aria-pressed={!drawingsVisible}
@@ -622,7 +643,7 @@ export function KlinesChartSidebar({
             setSettingsOpen(false);
             openDrawPanel();
           }}
-          className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${drawMode ? "bg-zinc-200" : ""}`}
+          className={`${iconButtonClassName} ${drawMode ? "bg-zinc-200" : ""}`}
           title={t.drawTool}
           aria-expanded={drawOpen}
         >
@@ -630,7 +651,7 @@ export function KlinesChartSidebar({
         </button>
         {drawOpen && drawPanelSide === "left" && (
           <div
-            className="absolute left-full top-0 ml-1 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+            className={`${popoverPositionClass} z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
@@ -702,8 +723,8 @@ export function KlinesChartSidebar({
           </div>
         )}
       </div>
-      <div ref={saveLoadRef} className="w-full flex flex-col items-center">
-        <div className="relative w-full">
+      <div ref={saveLoadRef} className={isHorizontal ? "flex items-center" : "w-full flex flex-col items-center"}>
+        <div className={isHorizontal ? "relative" : "relative w-full"}>
           <button
             type="button"
             onClick={(e) => {
@@ -711,7 +732,7 @@ export function KlinesChartSidebar({
               setSaveOpen((o) => !o);
               setLoadOpen(false);
             }}
-            className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
+            className={iconButtonClassName}
             title={t.saveLayout}
             aria-expanded={saveOpen}
           >
@@ -719,7 +740,7 @@ export function KlinesChartSidebar({
           </button>
           {saveOpen && (
             <div
-              className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
+              className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
@@ -736,7 +757,7 @@ export function KlinesChartSidebar({
             </div>
           )}
         </div>
-        <div className="relative w-full">
+        <div className={isHorizontal ? "relative" : "relative w-full"}>
           <button
             type="button"
             onClick={async (e) => {
@@ -747,7 +768,7 @@ export function KlinesChartSidebar({
               });
               setSaveOpen(false);
             }}
-            className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
+            className={iconButtonClassName}
             title={t.loadLayout}
             aria-expanded={loadOpen}
           >
@@ -755,7 +776,7 @@ export function KlinesChartSidebar({
           </button>
           {loadOpen && (
             <div
-              className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
+              className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>

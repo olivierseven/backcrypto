@@ -6,9 +6,10 @@ export const ASPECT_BREAKPOINT = 480;
 export const MIN_CHART_HEIGHT = 180;
 export const PAD_Y = 0.02;
 export const BODY_WIDTH_RATIO = 0.7;
-export const Y_AXIS_WIDTH = 56;
+export const Y_AXIS_WIDTH = 60;
 export const GAP_PLOT_Y_AXIS = 8;
-export const MARGIN_LEFT = 8;
+/** Margem esquerda do plot: 0 para o gráfico ocupar até a lateral (painel pode encostar). */
+export const MARGIN_LEFT = 0;
 export const MARGIN_TOP = 16;
 /** Altura da faixa de indicadores no topo do gráfico (alinhada à área de plot). */
 export const INDICATOR_STRIP_HEIGHT = 26;
