@@ -44,7 +44,7 @@ export default async function BackcryptoSistemaPage() {
 
   return (
     <SistemaLayoutClient lang={lang} hideStatusBar={user.hideStatusBar} isAdmin={isAdmin}>
-      <div className="flex-1 min-h-0 w-full">
+      <div className="flex-1 min-h-0 w-full min-h-screen">
         <KlinesTable isAdmin={isAdmin} />
       </div>
     </SistemaLayoutClient>

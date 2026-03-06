@@ -445,12 +445,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           className="w-full min-h-0 rounded-lg border border-zinc-200 bg-white"
           style={{
             boxSizing: "border-box",
-            overflowX: chartRequestedWidth != null ? "hidden" : "auto",
+            overflowX: "visible",
             overflowY: "visible",
-            WebkitOverflowScrolling: "touch",
-            touchAction: "pan-x pan-y",
-            overscrollBehavior: "contain",
-            scrollbarGutter: chartRequestedWidth != null ? "auto" : "stable",
+            touchAction: "auto",
+            overscrollBehavior: "auto",
           }}
         >
           <KlinesChart

@@ -888,7 +888,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
       <div className="flex min-w-0 flex-shrink-0">
-        <div className="flex-shrink-0 self-stretch" style={{ width: SIDEBAR_WIDTH }}>
+        <div className="flex-shrink-0 self-stretch" style={{ width: SIDEBAR_WIDTH, touchAction: "pan-x pan-y" }}>
           <KlinesChartSidebar
             chartHeight={chartHeight}
             settingsRef={settingsRef}
@@ -975,7 +975,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0">
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: "pan-x pan-y" }}>
           <div className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
           {drawOpen && drawPanelSide === "right" && (
             <div
