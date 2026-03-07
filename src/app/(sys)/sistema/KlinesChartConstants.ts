@@ -45,6 +45,7 @@ export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
 export const KLINE_SYMBOL_KEY = "backcrypto-klines-symbol";
 export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";
 export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";
+export const KLINE_DRAW_DEFAULTS_KEY = "backcrypto-klines-draw-defaults";
 export const KLINE_USER_INDICATORS_KEY = "backcrypto-klines-user-indicators";
 export const KLINE_STRATEGIES_KEY = "backcrypto-klines-strategies";
 export const KLINE_STRATEGIES_APPLIED_KEY = "backcrypto-klines-strategies-applied";

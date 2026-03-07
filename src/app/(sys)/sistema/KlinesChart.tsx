@@ -39,6 +39,7 @@ import {
   KLINE_LAST_LAYOUT_KEY,
   KLINE_DRAW_SEGMENTS_KEY,
   KLINE_DRAW_VISIBLE_KEY,
+  KLINE_DRAW_DEFAULTS_KEY,
   MS_PER_DAY,
   type VisibleCount,
 } from "./KlinesChartConstants";
@@ -59,7 +60,7 @@ import {
   isStartOfDay,
 } from "./klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "./KlinesChartDrawing";
-import type { DrawSegment, SegmentCap } from "./KlinesChartDrawing";
+import type { DrawSegment, DrawDefaults, SegmentCap } from "./KlinesChartDrawing";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import type { Kline, KlinesChartProps } from "./klinesChart/types";
@@ -84,6 +85,11 @@ import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
+const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
+  segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
+  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false },
+};
+
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
@@ -106,6 +112,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   /** Posição (px) da caixa de opções do segmento; null = canto superior esquerdo (left: 8, top: 8). */
   const [segmentOptionsPosition, setSegmentOptionsPosition] = useState<{ x: number; y: number } | null>(null);
   const segmentOptionsRef = useRef<HTMLDivElement>(null);
+  /** Padrões iniciais para novos desenhos (persistidos no localStorage). */
+  const [drawDefaults, setDrawDefaults] = useState<DrawDefaults>(BUILTIN_DRAW_DEFAULTS);
   const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown> }[]>([]);
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
@@ -273,6 +281,37 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     setSegmentsApplied(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
   }, [groupMinutes]);
+
+  // Carregar padrões de desenho do localStorage (uma vez ao montar)
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_DEFAULTS_KEY) : null;
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<DrawDefaults>;
+      setDrawDefaults({
+        segment: { ...BUILTIN_DRAW_DEFAULTS.segment, ...parsed.segment },
+        fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
+      });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Persistir padrões quando o usuário altera opções de um segmento
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci", partial: Partial<DrawSegment>) => {
+    setDrawDefaults((prev) => {
+      const next: DrawDefaults = {
+        segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
+        fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
+      };
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   // Persistir visibilidade dos desenhos (por intervalo)
   useEffect(() => {
@@ -1271,12 +1310,14 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                                 aria-selected={isSelected}
                                 aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
                                 onClick={() => {
+                                  const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
                                   setDrawSegments((prev) => {
                                     const next = [...prev];
                                     const seg = next[selectedSegmentIndex];
                                     if (seg) next[selectedSegmentIndex] = { ...seg, color: hex };
                                     return next;
                                   });
+                                  persistDrawDefault(segType, { color: hex });
                                   setSegmentColorListboxOpen(false);
                                 }}
                                 className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
@@ -1331,6 +1372,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                                       if (s) next[selectedSegmentIndex] = { ...s, fibLevel618Color: hex };
                                       return next;
                                     });
+                                    persistDrawDefault("fibonacci", { fibLevel618Color: hex });
                                     setFibLevel618ColorListboxOpen(false);
                                   }}
                                   className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
@@ -1350,12 +1392,16 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                         <select
                           id="segment-startcap-listbox"
                           value={drawSegments[selectedSegmentIndex]?.startCap ?? "none"}
-                          onChange={(e) => setDrawSegments((prev) => {
-                            const next = [...prev];
-                            const seg = next[selectedSegmentIndex];
-                            if (seg) next[selectedSegmentIndex] = { ...seg, startCap: e.target.value as SegmentCap };
-                            return next;
-                          })}
+                          onChange={(e) => {
+                            const cap = e.target.value as SegmentCap;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, startCap: cap };
+                              return next;
+                            });
+                            persistDrawDefault("segment", { startCap: cap });
+                          }}
                           className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
                           aria-label={t.segmentStartCap}
                         >
@@ -1369,12 +1415,16 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                         <select
                           id="segment-endcap-listbox"
                           value={drawSegments[selectedSegmentIndex]?.endCap ?? "none"}
-                          onChange={(e) => setDrawSegments((prev) => {
-                            const next = [...prev];
-                            const seg = next[selectedSegmentIndex];
-                            if (seg) next[selectedSegmentIndex] = { ...seg, endCap: e.target.value as SegmentCap };
-                            return next;
-                          })}
+                          onChange={(e) => {
+                            const cap = e.target.value as SegmentCap;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, endCap: cap };
+                              return next;
+                            });
+                            persistDrawDefault("segment", { endCap: cap });
+                          }}
                           className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
                           aria-label={t.segmentEndCap}
                         >
@@ -1389,12 +1439,17 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     <input
                       type="checkbox"
                       checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: e.target.checked };
-                        return next;
-                      })}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
+                        setDrawSegments((prev) => {
+                          const next = [...prev];
+                          const seg = next[selectedSegmentIndex];
+                          if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
+                          return next;
+                        });
+                        persistDrawDefault(segType, { showPercent: checked });
+                      }}
                       className="rounded border-zinc-300"
                     />
                     <span>{t.segmentShowPercent}</span>
@@ -1403,12 +1458,17 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     <input
                       type="checkbox"
                       checked={drawSegments[selectedSegmentIndex]?.showValues === true}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, showValues: e.target.checked };
-                        return next;
-                      })}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
+                        setDrawSegments((prev) => {
+                          const next = [...prev];
+                          const seg = next[selectedSegmentIndex];
+                          if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                          return next;
+                        });
+                        persistDrawDefault(segType, { showValues: checked });
+                      }}
                       className="rounded border-zinc-300"
                     />
                     <span>{t.segmentShowValues}</span>
@@ -1488,6 +1548,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             drawingsVisible={drawingsVisible}
             drawSegments={drawSegments}
             setDrawSegments={setDrawSegments}
+            drawDefaults={drawDefaults}
             drawPending={drawPending}
             setDrawPending={setDrawPending}
             selectedSegmentIndex={selectedSegmentIndex}

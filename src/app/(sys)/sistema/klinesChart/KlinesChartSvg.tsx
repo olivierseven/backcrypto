@@ -8,11 +8,12 @@ import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartC
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
-import type { DrawSegment } from "../KlinesChartDrawing";
+import type { DrawSegment, DrawDefaults } from "../KlinesChartDrawing";
 import { SEGMENT_COLOR_PALETTE } from "./palettes";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
 
-const FIB_DEFAULT_COLOR = SEGMENT_COLOR_PALETTE[2];
+const FIB_DEFAULT_COLOR = SEGMENT_COLOR_PALETTE[8];
+const FIB_DEFAULT_618_COLOR = SEGMENT_COLOR_PALETTE[4];
 import { MS_PER_DAY } from "../KlinesChartConstants";
 
 export interface KlinesChartSvgProps {
@@ -74,6 +75,7 @@ export interface KlinesChartSvgProps {
   drawingsVisible: boolean;
   drawSegments: DrawSegment[];
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
+  drawDefaults: DrawDefaults;
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   selectedSegmentIndex: number | null;
@@ -151,6 +153,7 @@ export function KlinesChartSvg({
   drawingsVisible,
   drawSegments,
   setDrawSegments,
+  drawDefaults,
   drawPending,
   setDrawPending,
   selectedSegmentIndex,
@@ -1170,9 +1173,13 @@ export function KlinesChartSvg({
               if (drawPending === null) {
                 setDrawPending({ index1: d.index, price1: d.price });
               } else {
-                setDrawSegments((seg) => [...seg, drawTool === "fibonacci"
-                  ? { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: FIB_DEFAULT_COLOR }
-                  : { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: "point", endCap: "arrow", showPercent: true }]);
+                setDrawSegments((seg) => {
+                  const df = drawTool === "fibonacci" ? drawDefaults.fibonacci : drawDefaults.segment;
+                  const newSeg = drawTool === "fibonacci"
+                    ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: df.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: df.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: df.showPercent ?? false, showValues: df.showValues ?? false })
+                    : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: df.startCap ?? "point", endCap: df.endCap ?? "arrow", showPercent: df.showPercent ?? true, showValues: df.showValues ?? false, color: df.color ?? DEFAULT_SEGMENT_COLOR });
+                  return [...seg, newSeg];
+                });
                 setDrawPending(null);
               }
             }}

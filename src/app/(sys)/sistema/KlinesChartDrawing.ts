@@ -29,6 +29,12 @@ export type DrawSegment = {
   fibLevel618Color?: string;
 };
 
+/** Padrões iniciais para novos desenhos (persistidos no localStorage). */
+export type DrawDefaults = {
+  segment: Partial<Pick<DrawSegment, "color" | "startCap" | "endCap" | "showPercent" | "showValues">>;
+  fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues">>;
+};
+
 export const DEFAULT_SEGMENT_COLOR = "#000000";
 
 /** Parâmetros para converter entre pixel e dados (preenchido pelo chart a cada render). */
