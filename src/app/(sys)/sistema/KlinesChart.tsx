@@ -985,7 +985,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
       <div className="flex flex-col min-w-0 flex-shrink-0">
-        <div className="flex-shrink-0" style={{ touchAction: "pan-x pan-y", marginBottom: 0 }}>
+        <div className="flex-shrink-0 min-w-0 w-full" style={{ touchAction: "pan-x pan-y", marginBottom: 0, maxWidth: "100vw" }}>
           <KlinesChartSidebar
             chartHeight={chartHeight}
             settingsRef={settingsRef}
