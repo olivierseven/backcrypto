@@ -60,7 +60,8 @@ import {
   isStartOfDay,
 } from "./klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "./KlinesChartDrawing";
-import type { DrawSegment, DrawDefaults, SegmentCap } from "./KlinesChartDrawing";
+import type { DrawSegment, DrawDefaults, SegmentCap, FibStrokeWidth } from "./KlinesChartDrawing";
+import { FIB_STROKE_WIDTH_OPTIONS } from "./KlinesChartDrawing";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import type { Kline, KlinesChartProps } from "./klinesChart/types";
@@ -87,7 +88,7 @@ export type { ChartIndicatorLine } from "./klinesChart/types";
 
 const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
-  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false },
+  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin" },
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
@@ -1384,6 +1385,56 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                         )}
                       </div>
                     </div>
+                  )}
+                  {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-stroke-width-listbox">{t.fibStrokeWidth}</label>
+                        <select
+                          id="fib-stroke-width-listbox"
+                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { fibStrokeWidth?: FibStrokeWidth })?.fibStrokeWidth ?? "medium"}
+                          onChange={(e) => {
+                            const v = e.target.value as FibStrokeWidth;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, fibStrokeWidth: v };
+                              return next;
+                            });
+                            persistDrawDefault("fibonacci", { fibStrokeWidth: v });
+                          }}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={t.fibStrokeWidth}
+                        >
+                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-level618-stroke-width-listbox">{t.fibLevel618StrokeWidth}</label>
+                        <select
+                          id="fib-level618-stroke-width-listbox"
+                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { fibLevel618StrokeWidth?: FibStrokeWidth })?.fibLevel618StrokeWidth ?? "thin"}
+                          onChange={(e) => {
+                            const v = e.target.value as FibStrokeWidth;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, fibLevel618StrokeWidth: v };
+                              return next;
+                            });
+                            persistDrawDefault("fibonacci", { fibLevel618StrokeWidth: v });
+                          }}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={t.fibLevel618StrokeWidth}
+                        >
+                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
                   )}
                   {drawSegments[selectedSegmentIndex]?.type !== "fibonacci" && (
                     <>

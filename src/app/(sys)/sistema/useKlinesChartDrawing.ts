@@ -17,7 +17,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPending, setDrawPending] = useState<{ index1: number; price1: number } | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 } | null>(null);
+  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" } | null>(null);
 
   const drawRef = useRef<HTMLDivElement>(null);
   const drawConversionRef = useRef<DrawConversionParams | null>(null);
@@ -82,7 +82,11 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
         const segIdx = drawDragging.segmentIndex;
         if (segIdx < 0 || segIdx >= next.length) return prev;
         const s = { ...next[segIdx] };
-        if (drawDragging.point === 0) {
+        if (drawDragging.point === "extension") {
+          if (s.type !== "fibonacci") return prev;
+          const ext = Math.max(0, idx - s.index2);
+          s.fibExtensionIndices = ext;
+        } else if (drawDragging.point === 0) {
           s.index1 = idx;
           s.price1 = price;
         } else {
