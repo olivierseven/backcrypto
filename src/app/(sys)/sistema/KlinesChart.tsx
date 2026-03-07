@@ -4,7 +4,7 @@
  * Gráfico de candles (OHLC). Janela visível configurável.
  * Eixo Y: preço USDT (ajustado aos candles visíveis). Eixo X: tempo + subeixo por data.
  */
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
@@ -84,10 +84,9 @@ import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
-  const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
   const [visibleCount, setVisibleCount] = useState<VisibleCount>(DEFAULT_VISIBLE);
   const [startIndex, setStartIndex] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -282,7 +281,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number };
+      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number };
       if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
@@ -300,7 +299,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       if (typeof data.showLastCloseLine === "boolean") setShowLastCloseLine(data.showLastCloseLine);
       if (typeof data.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseLineColor)) setLastCloseLineColor(data.lastCloseLineColor as LineGridId);
       if (typeof data.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseTextColor)) setLastCloseTextColor(data.lastCloseTextColor as LineGridId);
-      if (typeof data.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(data.showIndicatorLastValueOnYAxis);
       if (typeof data.secondaryPanelHeightPercent === "number" && data.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && data.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(data.secondaryPanelHeightPercent));
       if (typeof data.volumeOnPrice === "boolean") setVolumeOnPrice(data.volumeOnPrice);
       if (typeof data.volumeOnPriceOpacity === "number" && data.volumeOnPriceOpacity >= 0 && data.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(data.volumeOnPriceOpacity));
@@ -316,12 +314,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       if (typeof window === "undefined") return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent]);
 
   // Ao montar: se existir último layout selecionado, aplicá-lo (default ou slot da API). Sempre chama done() para desbloquear o gráfico.
   useEffect(() => {
@@ -422,7 +420,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
     const extra = getLayoutExtraConfig?.() ?? {};
     const config = { ...baseConfig, ...extra };
     const res = await fetch(`${API_BASE}/chart-layouts`, {
@@ -456,7 +454,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     if (typeof c.showLastCloseLine === "boolean") setShowLastCloseLine(c.showLastCloseLine);
     if (typeof c.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseLineColor)) setLastCloseLineColor(c.lastCloseLineColor as LineGridId);
     if (typeof c.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseTextColor)) setLastCloseTextColor(c.lastCloseTextColor as LineGridId);
-    if (typeof c.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(c.showIndicatorLastValueOnYAxis);
     if (typeof c.invisibleCandlesEnd === "number" && c.invisibleCandlesEnd >= 0 && c.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(c.invisibleCandlesEnd);
     if (typeof c.secondaryPanelHeightPercent === "number" && c.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && c.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(c.secondaryPanelHeightPercent));
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
@@ -483,7 +480,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     showLastCloseLine: true,
     lastCloseLineColor: 1,
     lastCloseTextColor: 1,
-    showIndicatorLastValueOnYAxis: true,
     secondaryPanelHeightPercent: SECONDARY_PANEL_HEIGHT_DEFAULT,
     volumeOnPrice: false,
     volumeOnPriceOpacity: 20,
@@ -540,6 +536,16 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     const d = chartDimensionsRef.current;
     if (d.w > 0 && onChartDimensionsChange) onChartDimensionsChange(d.w, d.h, d.sizePercent ?? 100);
   }, [onChartDimensionsChange, width, chartSizePercent, chartReady, visibleCount, indicatorLines?.length, secondaryPanelHeightPercent, klines.length, viewportWidth]);
+
+  const onSelectToolPan = useCallback(
+    (deltaCandles: number) => {
+      setStartIndex((prev) => {
+        const maxStart = Math.max(0, n - visibleCount);
+        return Math.max(0, Math.min(maxStart, prev + deltaCandles));
+      });
+    },
+    [n, visibleCount]
+  );
 
   if (klines.length === 0 || width < 100) {
     chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
@@ -978,8 +984,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             setShowSecondaryAxis={setShowSecondaryAxis}
             showLastCloseLine={showLastCloseLine}
             setShowLastCloseLine={setShowLastCloseLine}
-            showIndicatorLastValueOnYAxis={showIndicatorLastValueOnYAxis}
-            setShowIndicatorLastValueOnYAxis={setShowIndicatorLastValueOnYAxis}
             invisibleCandlesEnd={invisibleCandlesEnd}
             setInvisibleCandlesEnd={setInvisibleCandlesEnd}
             secondaryPanelHeightPercent={secondaryPanelHeightPercent}
@@ -1339,8 +1343,10 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             drawMode={drawMode}
             drawTool={drawTool}
             setDrawDragging={setDrawDragging}
+            onSelectToolPan={onSelectToolPan}
             t={t}
             textScale={textScale}
+            strategyCandleOverlays={strategyCandleOverlays}
           />
           {!drawMode && (
             <>
@@ -1470,7 +1476,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               lastCloseY={lastCloseY}
               lastClose={lastClose}
               lastCloseTextHex={lastCloseTextHex}
-              showIndicatorLastValueOnYAxis={showIndicatorLastValueOnYAxis}
               indicatorLines={indicatorLines}
               klines={klines}
               n={n}
@@ -1522,6 +1527,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             n={n}
             canPrev={canPrev}
             canNext={canNext}
+            symbol={symbolProp}
+            onOpenSymbolPanel={onOpenSymbolPanel}
           />
         </div>
       </div>

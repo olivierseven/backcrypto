@@ -51,8 +51,6 @@ export interface KlinesChartSidebarProps {
   setShowSecondaryAxis: (v: boolean) => void;
   showLastCloseLine: boolean;
   setShowLastCloseLine: (v: boolean) => void;
-  showIndicatorLastValueOnYAxis: boolean;
-  setShowIndicatorLastValueOnYAxis: (v: boolean) => void;
   invisibleCandlesEnd: number;
   setInvisibleCandlesEnd: (v: number | ((v: number) => number)) => void;
   secondaryPanelHeightPercent: number;
@@ -143,8 +141,6 @@ export function KlinesChartSidebar({
   setShowSecondaryAxis,
   showLastCloseLine,
   setShowLastCloseLine,
-  showIndicatorLastValueOnYAxis,
-  setShowIndicatorLastValueOnYAxis,
   invisibleCandlesEnd,
   setInvisibleCandlesEnd,
   secondaryPanelHeightPercent,
@@ -407,15 +403,6 @@ export function KlinesChartSidebar({
               className="rounded border-zinc-300"
             />
             <span>{t.lastCloseLine}</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-            <input
-              type="checkbox"
-              checked={showIndicatorLastValueOnYAxis}
-              onChange={(e) => setShowIndicatorLastValueOnYAxis(e.target.checked)}
-              className="rounded border-zinc-300"
-            />
-            <span>{t.showIndicatorLastValueOnYAxis}</span>
           </label>
           <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
             <span className="shrink-0">{t.invisibleCandlesEnd}</span>
@@ -697,12 +684,54 @@ export function KlinesChartSidebar({
             setSettingsOpen(false);
             openDrawPanel();
           }}
-          className={`${iconButtonClassName} ${drawMode ? "bg-zinc-200" : ""}`}
+          className={`${iconButtonClassName} ${drawOpen ? "bg-zinc-200" : ""}`}
           title={t.drawTool}
           aria-expanded={drawOpen}
         >
           📐
         </button>
+        {isHorizontal ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (drawMode && drawTool === "select") {
+                closeDrawMode();
+              } else {
+                selectSelectTool();
+              }
+            }}
+            title={t.drawSelectSegment}
+            className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
+            aria-label={t.drawSelectSegment}
+            aria-pressed={drawMode && drawTool === "select"}
+          >
+            <span aria-hidden>👆</span>
+          </button>
+        ) : drawMode ? (
+          <>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); selectLineTool(); }}
+              title={t.lineSegment}
+              className={`${iconButtonClassName} ${drawTool === "line" ? "bg-zinc-200" : ""}`}
+              aria-label={t.lineSegment}
+              aria-pressed={drawTool === "line"}
+            >
+              <span aria-hidden>📏</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); selectSelectTool(); }}
+              title={t.drawSelectSegment}
+              className={`${iconButtonClassName} ${drawTool === "select" ? "bg-zinc-200" : ""}`}
+              aria-label={t.drawSelectSegment}
+              aria-pressed={drawTool === "select"}
+            >
+              <span aria-hidden>👆</span>
+            </button>
+          </>
+        ) : null}
         {drawOpen && drawPanelSide === "left" && !isHorizontal && (
           <div
             className={`${popoverPositionClass} z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1`}
@@ -954,10 +983,6 @@ export function KlinesChartSidebar({
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={showLastCloseLine} onChange={(e) => setShowLastCloseLine(e.target.checked)} className="rounded border-zinc-300" />
                   <span>{t.lastCloseLine}</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                  <input type="checkbox" checked={showIndicatorLastValueOnYAxis} onChange={(e) => setShowIndicatorLastValueOnYAxis(e.target.checked)} className="rounded border-zinc-300" />
-                  <span>{t.showIndicatorLastValueOnYAxis}</span>
                 </label>
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                   <span className="shrink-0">{t.invisibleCandlesEnd}</span>

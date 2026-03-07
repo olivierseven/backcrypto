@@ -34,7 +34,6 @@ export interface KlinesChartYAxisProps {
   lastCloseY: number;
   lastClose: number;
   lastCloseTextHex: string;
-  showIndicatorLastValueOnYAxis: boolean;
   indicatorLines: ChartIndicatorLine[];
   klines: unknown[][];
   n: number;
@@ -80,7 +79,6 @@ export function KlinesChartYAxis({
   lastCloseY,
   lastClose,
   lastCloseTextHex,
-  showIndicatorLastValueOnYAxis,
   indicatorLines,
   klines,
   n,
@@ -217,8 +215,9 @@ export function KlinesChartYAxis({
             </text>
           </g>
         )}
-        {showIndicatorLastValueOnYAxis &&
-          indicatorLines.map((ind, indIdx) => {
+        {indicatorLines
+          .filter((ind) => ind.showLastValueOnYAxis !== false)
+          .map((ind, indIdx) => {
             const lastVal =
               n > 0
                 ? (() => {

@@ -35,6 +35,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     isIntervalChecked,
     removeIndicator,
     getIndicatorLabel,
+    updateIndicator,
   } = useIndicatorsPanelContext();
 
   const visibleForEdit = fieldOptions.filter(
@@ -66,6 +67,15 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           {t.removeIndicator}
         </button>
       </div>
+      <label className="flex items-center gap-2 cursor-pointer text-[10px] text-zinc-600">
+        <input
+          type="checkbox"
+          checked={ind.showLastValueOnYAxis !== false}
+          onChange={() => updateIndicator(ind.id, { showLastValueOnYAxis: ind.showLastValueOnYAxis === false })}
+          className="rounded border-zinc-300"
+        />
+        <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
+      </label>
       <div className="text-[10px] text-zinc-500">
         {t.showOn}:{" "}
         {ind.intervals.length === 0

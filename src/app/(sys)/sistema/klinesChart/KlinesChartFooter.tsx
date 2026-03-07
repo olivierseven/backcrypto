@@ -20,6 +20,9 @@ export interface KlinesChartFooterProps {
   n: number;
   canPrev: boolean;
   canNext: boolean;
+  /** Símbolo exibido (ex.: BTCUSDT). Se onOpenSymbolPanel for passado, o símbolo é clicável. */
+  symbol?: string;
+  onOpenSymbolPanel?: () => void;
 }
 
 export function KlinesChartFooter({
@@ -36,14 +39,28 @@ export function KlinesChartFooter({
   n,
   canPrev,
   canNext,
+  symbol = "BTCUSDT",
+  onOpenSymbolPanel,
 }: KlinesChartFooterProps) {
+  const symbolNode = onOpenSymbolPanel ? (
+    <button
+      type="button"
+      onClick={onOpenSymbolPanel}
+      className="font-medium hover:underline underline-offset-1"
+      aria-label={t.symbolAria ?? "Select symbol"}
+    >
+      {symbol}
+    </button>
+  ) : (
+    <span>{symbol}</span>
+  );
   return (
     <div
       className={`px-3 pt-3 pb-2 text-[10px] border-t flex items-center justify-end gap-3 flex-wrap ${isDarkFooterYAxis ? "border-zinc-600" : "border-zinc-100"}`}
       style={{ backgroundColor: footerYAxisHex, color: footerYAxisTextHex }}
     >
       {saveLoadMsg && <span className="mr-auto text-emerald-600 font-medium">{saveLoadMsg}</span>}
-      <span className="mr-auto">BTCUSDT {intervalLabel ?? `${groupMinutes}m`} · USDT</span>
+      <span className="mr-auto">{symbolNode} {intervalLabel ?? `${groupMinutes}m`} · USDT</span>
       <div className="flex items-center gap-2">
         <label htmlFor="candles-listbox">{t.candles}:</label>
         <select

@@ -1,7 +1,7 @@
 /**
- * Sincroniza:
- * - BinanceKlineFast: klines BTCUSDT 1m, no máximo 90 dias (expurgo por idade).
- * - BinanceKline: klines BTCUSDT 1h, no máximo 5 anos (expurgo por idade).
+ * Sincroniza, para cada símbolo (BTCUSDT, ETHUSDT):
+ * - BinanceKlineFast: klines 1m, no máximo 90 dias (expurgo por idade).
+ * - BinanceKline: klines 1h, no máximo 5 anos (expurgo por idade).
  *
  * Uso: node scripts/binance-klines-fast-sync.js
  * Requer: DATABASE_URL no .env e prisma generate já rodado.
@@ -46,7 +46,7 @@ function closeConsoleLogToFile() {
 const { PrismaClient } = require("../src/lib/prisma-bio-client");
 
 const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
-const SYMBOL = "BTCUSDT";
+const SYMBOLS = ["BTCUSDT", "ETHUSDT"];
 const INTERVAL_1M = "1m";
 const INTERVAL_1H = "1h";
 const LIMIT = 1000;
@@ -72,9 +72,9 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function fetchKlines(startTime, endTime, interval) {
+async function fetchKlines(symbol, startTime, endTime, interval) {
   const url = new URL(BINANCE_KLINES);
-  url.searchParams.set("symbol", SYMBOL);
+  url.searchParams.set("symbol", symbol);
   url.searchParams.set("interval", interval);
   url.searchParams.set("limit", String(LIMIT));
   if (startTime != null) url.searchParams.set("startTime", String(startTime));
@@ -85,9 +85,9 @@ async function fetchKlines(startTime, endTime, interval) {
   return res.json();
 }
 
-function klineToRow(k, interval) {
+function klineToRow(k, interval, symbol) {
   return {
-    symbol: SYMBOL,
+    symbol,
     interval,
     openTime: BigInt(k[0]),
     open: k[1],
@@ -103,53 +103,55 @@ function klineToRow(k, interval) {
   };
 }
 
-async function expurgeFast() {
+async function expurgeFast(symbol) {
   const cutoff = BigInt(getCutoff90DaysMs());
   const result = await prisma.binanceKlineFast.deleteMany({
-    where: { symbol: SYMBOL, interval: INTERVAL_1M, openTime: { lt: cutoff } },
+    where: { symbol, interval: INTERVAL_1M, openTime: { lt: cutoff } },
   });
   return result.count;
 }
 
-async function expurgeKline1h() {
+async function expurgeKline1h(symbol) {
   const cutoff = BigInt(getCutoff5YearsMs());
   const result = await prisma.binanceKline.deleteMany({
-    where: { symbol: SYMBOL, interval: INTERVAL_1H, openTime: { lt: cutoff } },
+    where: { symbol, interval: INTERVAL_1H, openTime: { lt: cutoff } },
   });
   return result.count;
 }
 
-async function refetchLastAndInsert1h(lastOpenTimeMs, rows) {
+async function refetchLastAndInsert1h(symbol, lastOpenTimeMs, rows) {
   if (!rows || rows.length === 0) return 0;
-  // Regra: só o último candle pode estar errado -> deletar apenas esse e reinserir junto com os novos.
   await prisma.binanceKline.deleteMany({
-    where: { symbol: SYMBOL, interval: INTERVAL_1H, openTime: BigInt(lastOpenTimeMs) },
+    where: { symbol, interval: INTERVAL_1H, openTime: BigInt(lastOpenTimeMs) },
   });
   const created = await prisma.binanceKline.createMany({ data: rows, skipDuplicates: true });
   return created.count;
 }
 
-async function main() {
-  initConsoleLogToFile();
-  console.log("[binance-klines-fast-sync] Iniciando…");
+async function insertBinanceKline1h(rows) {
+  if (!rows || rows.length === 0) return 0;
+  const created = await prisma.binanceKline.createMany({ data: rows, skipDuplicates: true });
+  return created.count;
+}
+
+async function syncSymbol(SYMBOL) {
+  const now = Date.now();
+  const startWindow = getCutoff90DaysMs();
 
   const count = await prisma.binanceKlineFast.count({
     where: { symbol: SYMBOL, interval: INTERVAL_1M },
   });
 
-  const now = Date.now();
-  const startWindow = getCutoff90DaysMs();
-
   if (count === 0) {
-    console.log("[binance-klines-fast-sync] BinanceKlineFast vazia: carregando até " + FAST_DAYS + " dias…");
+    console.log("[binance-klines-fast-sync] " + SYMBOL + " BinanceKlineFast vazia: carregando até " + FAST_DAYS + " dias…");
     let startTime = startWindow;
     let totalInserted = 0;
 
     while (startTime < now) {
-      const klines = await fetchKlines(startTime, now, INTERVAL_1M);
+      const klines = await fetchKlines(SYMBOL, startTime, now, INTERVAL_1M);
       if (klines.length === 0) break;
 
-      const rows = klines.map((k) => klineToRow(k, INTERVAL_1M));
+      const rows = klines.map((k) => klineToRow(k, INTERVAL_1M, SYMBOL));
       const created = await prisma.binanceKlineFast.createMany({
         data: rows,
         skipDuplicates: true,
@@ -157,27 +159,26 @@ async function main() {
       totalInserted += created.count;
       const last = klines[klines.length - 1][0];
       startTime = last + ONE_MINUTE_MS;
-      console.log(`  + ${klines.length} velas (total inseridas: ${totalInserted})`);
+      console.log("  " + SYMBOL + " + " + klines.length + " velas (total inseridas: " + totalInserted + ")");
       if (klines.length < LIMIT) break;
       await sleep(DELAY_MS);
     }
-    console.log("[binance-klines-fast-sync] Carga inicial 1m: " + totalInserted + " linhas.");
+    console.log("[binance-klines-fast-sync] " + SYMBOL + " Carga inicial 1m: " + totalInserted + " linhas.");
   } else {
     const lastRow = await prisma.binanceKlineFast.findFirst({
       where: { symbol: SYMBOL, interval: INTERVAL_1M },
       orderBy: { openTime: "desc" },
       select: { openTime: true },
     });
-    // Regra: sempre refazer o último minuto gravado e inserir os novos.
     let startTime = lastRow ? Number(lastRow.openTime) : startWindow;
     if (startTime >= now) {
-      console.log("[binance-klines-fast-sync] 1m: nenhum dado novo (já em dia).");
+      console.log("[binance-klines-fast-sync] " + SYMBOL + " 1m: nenhum dado novo (já em dia).");
     } else {
       let totalInserted = 0;
       while (startTime < now) {
-        const klines = await fetchKlines(startTime, now, INTERVAL_1M);
+        const klines = await fetchKlines(SYMBOL, startTime, now, INTERVAL_1M);
         if (klines.length === 0) break;
-        const rows = klines.map((k) => klineToRow(k, INTERVAL_1M));
+        const rows = klines.map((k) => klineToRow(k, INTERVAL_1M, SYMBOL));
         if (lastRow) {
           await prisma.binanceKlineFast.deleteMany({
             where: { symbol: SYMBOL, interval: INTERVAL_1M, openTime: lastRow.openTime },
@@ -190,21 +191,21 @@ async function main() {
         totalInserted += created.count;
         const last = klines[klines.length - 1][0];
         startTime = last + ONE_MINUTE_MS;
-        console.log("  + " + klines.length + " velas 1m (total incremental: " + totalInserted + ")");
+        console.log("  " + SYMBOL + " + " + klines.length + " velas 1m (total incremental: " + totalInserted + ")");
         if (klines.length < LIMIT) break;
         await sleep(DELAY_MS);
       }
-      console.log("[binance-klines-fast-sync] 1m incremental: " + totalInserted + " novas velas.");
+      console.log("[binance-klines-fast-sync] " + SYMBOL + " 1m incremental: " + totalInserted + " novas velas.");
     }
   }
 
-  const purgedFast = await expurgeFast();
-  if (purgedFast > 0) console.log("[binance-klines-fast-sync] Expurgo BinanceKlineFast: " + purgedFast + " linhas (mantém " + FAST_DAYS + " dias).");
+  const purgedFast = await expurgeFast(SYMBOL);
+  if (purgedFast > 0) console.log("[binance-klines-fast-sync] " + SYMBOL + " Expurgo BinanceKlineFast: " + purgedFast + " linhas (mantém " + FAST_DAYS + " dias).");
 
   const finalFast = await prisma.binanceKlineFast.count({
     where: { symbol: SYMBOL, interval: INTERVAL_1M },
   });
-  console.log("[binance-klines-fast-sync] Total BinanceKlineFast: " + finalFast);
+  console.log("[binance-klines-fast-sync] " + SYMBOL + " Total BinanceKlineFast: " + finalFast);
 
   // --- BinanceKline 1h (máx. 5 anos) ---
   const startWindow1h = getCutoff5YearsMs();
@@ -213,62 +214,73 @@ async function main() {
   });
 
   if (count1h === 0) {
-    console.log("[binance-klines-fast-sync] BinanceKline 1h: tabela vazia, carregando " + KLINE_1H_YEARS + " anos…");
+    console.log("[binance-klines-fast-sync] " + SYMBOL + " BinanceKline 1h: tabela vazia, carregando " + KLINE_1H_YEARS + " anos…");
     let startTime1h = startWindow1h;
     let totalInserted1h = 0;
     while (startTime1h < now) {
-      const klines1h = await fetchKlines(startTime1h, now, INTERVAL_1H);
+      const klines1h = await fetchKlines(SYMBOL, startTime1h, now, INTERVAL_1H);
       if (klines1h.length === 0) break;
-      const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H));
-      totalInserted1h += await overwriteBinanceKline1h(rows1h);
+      const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H, SYMBOL));
+      totalInserted1h += await insertBinanceKline1h(rows1h);
       const last1h = klines1h[klines1h.length - 1][0];
       startTime1h = last1h + ONE_HOUR_MS;
-      console.log("  1h + " + klines1h.length + " velas (total: " + totalInserted1h + ")");
+      console.log("  " + SYMBOL + " 1h + " + klines1h.length + " velas (total: " + totalInserted1h + ")");
       if (klines1h.length < LIMIT) break;
       await sleep(DELAY_MS);
     }
-    console.log("[binance-klines-fast-sync] BinanceKline 1h carga inicial: " + totalInserted1h + " linhas.");
+    console.log("[binance-klines-fast-sync] " + SYMBOL + " BinanceKline 1h carga inicial: " + totalInserted1h + " linhas.");
   } else {
     const lastRow1h = await prisma.binanceKline.findFirst({
       where: { symbol: SYMBOL, interval: INTERVAL_1H },
       orderBy: { openTime: "desc" },
       select: { openTime: true },
     });
-    // Regra: sempre refazer o último candle 1h gravado e inserir os novos.
     const lastOpen = lastRow1h ? Number(lastRow1h.openTime) : null;
     const startTime1h = lastOpen != null ? Math.max(startWindow1h, lastOpen) : startWindow1h;
     if (startTime1h >= now) {
-      console.log("[binance-klines-fast-sync] BinanceKline 1h: já em dia.");
+      console.log("[binance-klines-fast-sync] " + SYMBOL + " BinanceKline 1h: já em dia.");
     } else {
       let totalInserted1h = 0;
       let t = startTime1h;
+      let lastOpenToRefetch = lastOpen;
       while (t < now) {
-        const klines1h = await fetchKlines(t, now, INTERVAL_1H);
+        const klines1h = await fetchKlines(SYMBOL, t, now, INTERVAL_1H);
         if (klines1h.length === 0) break;
-        const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H));
-        if (lastOpen != null) {
-          totalInserted1h += await refetchLastAndInsert1h(lastOpen, rows1h);
+        const rows1h = klines1h.map((k) => klineToRow(k, INTERVAL_1H, SYMBOL));
+        if (lastOpenToRefetch != null) {
+          totalInserted1h += await refetchLastAndInsert1h(SYMBOL, lastOpenToRefetch, rows1h);
+          lastOpenToRefetch = null;
         } else {
           const created1h = await prisma.binanceKline.createMany({ data: rows1h, skipDuplicates: true });
           totalInserted1h += created1h.count;
         }
         const last1h = klines1h[klines1h.length - 1][0];
         t = last1h + ONE_HOUR_MS;
-        console.log("  1h + " + klines1h.length + " velas (incremental: " + totalInserted1h + ")");
+        console.log("  " + SYMBOL + " 1h + " + klines1h.length + " velas (incremental: " + totalInserted1h + ")");
         if (klines1h.length < LIMIT) break;
         await sleep(DELAY_MS);
       }
-      console.log("[binance-klines-fast-sync] BinanceKline 1h incremental: " + totalInserted1h + " novas velas.");
+      console.log("[binance-klines-fast-sync] " + SYMBOL + " BinanceKline 1h incremental: " + totalInserted1h + " novas velas.");
     }
   }
 
-  const purged1h = await expurgeKline1h();
-  if (purged1h > 0) console.log("[binance-klines-fast-sync] Expurgo BinanceKline 1h: " + purged1h + " linhas (mantém " + KLINE_1H_YEARS + " anos).");
+  const purged1h = await expurgeKline1h(SYMBOL);
+  if (purged1h > 0) console.log("[binance-klines-fast-sync] " + SYMBOL + " Expurgo BinanceKline 1h: " + purged1h + " linhas (mantém " + KLINE_1H_YEARS + " anos).");
 
   const final1h = await prisma.binanceKline.count({
     where: { symbol: SYMBOL, interval: INTERVAL_1H },
   });
-  console.log("[binance-klines-fast-sync] Total BinanceKline 1h: " + final1h);
+  console.log("[binance-klines-fast-sync] " + SYMBOL + " Total BinanceKline 1h: " + final1h);
+}
+
+async function main() {
+  initConsoleLogToFile();
+  console.log("[binance-klines-fast-sync] Iniciando… (símbolos: " + SYMBOLS.join(", ") + ")");
+
+  for (const symbol of SYMBOLS) {
+    await syncSymbol(symbol);
+  }
+
   console.log("[binance-klines-fast-sync] Concluído.");
 }
 

@@ -8,6 +8,10 @@ import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn,
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
+import { useChartSymbol } from "./ChartSymbolContext";
+import { useStrategies } from "./strategies/StrategiesContext";
+import { strategiesForContext } from "./strategies/strategiesTypes";
+import { evaluateNode } from "./strategies/strategyEvaluator";
 import { Y_AXIS_WIDTH } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
@@ -16,6 +20,7 @@ const SCROLLBAR_GUTTER = 17;
 const MAX_PLOT_WIDTH = 600;
 import { formatAbbreviated } from "./klinesFormatters";
 import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./IndicatorsPanel";
+import { INDICATOR_COLOR_PALETTE } from "./indicatorsPanel/index";
 import KlinesChart from "./KlinesChart";
 
 /**
@@ -101,7 +106,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const t = getBioT(lang).sistema.klines;
   const { showKlinesTable } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
+  const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
+  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(5); // default 5m
   const [klines, setKlines] = useState<Kline[]>([]);
@@ -246,6 +253,40 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return col;
   }, [userIndicators]);
 
+  /** Estratégias que se aplicam ao intervalo e símbolo atuais e que estão aplicadas (coluna na tabela). */
+  const visibleStrategies = useMemo(
+    () =>
+      strategiesForContext(strategies, groupMinutes, symbol).filter((s) =>
+        appliedStrategyIds.includes(s.id)
+      ),
+    [strategies, groupMinutes, symbol, appliedStrategyIds]
+  );
+
+  /** Por estratégia: array de boolean por índice de linha (linha 0 = mais recente). */
+  const strategyResults = useMemo(() => {
+    const map = new Map<string, boolean[]>();
+    if (extendedKlines.length === 0) return map;
+    for (const strategy of visibleStrategies) {
+      const arr: boolean[] = [];
+      for (let i = 0; i < extendedKlines.length; i++) {
+        arr.push(evaluateNode(strategy.root, extendedKlines, i, userIndicators, getIndicatorColumnStart));
+      }
+      map.set(strategy.id, arr);
+    }
+    return map;
+  }, [visibleStrategies, extendedKlines, userIndicators, getIndicatorColumnStart]);
+
+  /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Paleta igual à das médias móveis. */
+  const strategyCandleOverlays = useMemo(() => {
+    const palette = INDICATOR_COLOR_PALETTE;
+    return visibleStrategies.map((s, idx) => ({
+      id: s.id,
+      name: s.name,
+      color: s.color ?? palette[Math.min(2 + (idx % Math.max(1, palette.length - 2)), palette.length - 1)] ?? "#6366f1",
+      results: strategyResults.get(s.id) ?? [],
+    }));
+  }, [visibleStrategies, strategyResults]);
+
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   const visibleIndicatorColumns = useMemo(() => {
     const list: { ind: (typeof userIndicators)[0]; columnIndex: number; isSignal: boolean; isHistogram: boolean }[] = [];
@@ -308,7 +349,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       setError(null);
       const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "5m";
       const res = await fetch(
-        `${API_BASE}/binance/klines?symbol=BTCUSDT&interval=${intervalParam}&limit=1000`
+        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(symbol)}&interval=${intervalParam}&limit=1000`
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -330,7 +371,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
 
   const fetchSpot = async () => {
     try {
-      const res = await fetch(`${API_BASE}/binance/spot?symbol=BTCUSDT`);
+      const res = await fetch(`${API_BASE}/binance/spot?symbol=${encodeURIComponent(symbol)}`);
       if (!res.ok) return;
       const data = await res.json();
       setSpot({
@@ -347,13 +388,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     fetchKlines();
     const interval = setInterval(fetchKlines, REFRESH_MS);
     return () => clearInterval(interval);
-  }, [groupMinutes]);
+  }, [groupMinutes, symbol]);
 
   useEffect(() => {
     fetchSpot();
     const interval = setInterval(fetchSpot, REFRESH_MS);
     return () => clearInterval(interval);
-  }, []);
+  }, [symbol]);
 
   // Ao voltar para a aba, atualiza na hora (evita depender do timer com aba em segundo plano)
   useEffect(() => {
@@ -365,7 +406,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [groupMinutes]);
+  }, [groupMinutes, symbol]);
 
   const intervalLabel = intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "5m";
 
@@ -470,8 +511,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             width={chartWidthToUse}
             onChartDimensionsChange={onChartDimensionsChange}
             maxChartHeight={undefined}
+            symbol={symbol}
+            onOpenSymbolPanel={openSymbolPanel}
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
+              showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
               color: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
               lineWidth: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
               lineStyle: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
@@ -518,11 +562,14 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               bollingerMiddleLineStyle: ind.type === "Bollinger" ? (ind.bollingerMiddleLineStyle ?? "dashed") : undefined,
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
             }))}
-            getLayoutExtraConfig={() => ({ userIndicators })}
+            strategyCandleOverlays={strategyCandleOverlays}
+            getLayoutExtraConfig={() => ({ userIndicators, strategies, appliedStrategyIds })}
             onLayoutConfigLoaded={(config) => {
               const v = config.groupMinutes;
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
               if (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) replaceUserIndicatorsFromLayout(config.userIndicators);
+              if (config.strategies !== undefined) replaceStrategiesFromLayout(config.strategies);
+              if (config.appliedStrategyIds !== undefined) replaceAppliedStrategyIdsFromLayout(config.appliedStrategyIds);
             }}
           />
         </div>
@@ -558,6 +605,14 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                   {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
+              {visibleStrategies.map((strategy) => (
+                <th
+                  key={strategy.id}
+                  className="px-3 py-2 font-medium text-right text-xs border-l-2 border-l-violet-300 bg-violet-50/50"
+                >
+                  {strategy.name}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -590,10 +645,22 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                   </td>
                 );
               });
+              const strategyCols = visibleStrategies.map((strategy) => {
+                const rowResult = strategyResults.get(strategy.id)?.[i];
+                return (
+                  <td
+                    key={strategy.id}
+                    className={`px-3 py-1.5 text-center font-medium border-l border-l-violet-200 ${rowResult ? "text-emerald-600 bg-emerald-50/50" : "text-zinc-400"}`}
+                  >
+                    {rowResult ? "✓" : "—"}
+                  </td>
+                );
+              });
               return (
                 <tr key={i} className="border-t border-zinc-100 hover:bg-zinc-50">
                   {baseCols}
                   {userCols}
+                  {strategyCols}
                 </tr>
               );
             })}

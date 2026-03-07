@@ -28,6 +28,8 @@ export interface ChartIndicatorLine {
   label?: string;
   /** Rótulo resumido para o display (ex.: "SMA(7) C"). */
   shortLabel?: string;
+  /** Exibir valor do indicador no eixo Y (default true). */
+  showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
   type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume";
   /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
@@ -86,6 +88,14 @@ export interface ChartIndicatorLine {
 
 export type IntervalOption = { value: number; label: string; param: string };
 
+/** Overlay de estratégia: pinta o candle com a cor quando a condição é verdadeira. results[i] = true para klines[i] (klines[0] = mais recente). */
+export interface StrategyCandleOverlay {
+  id: string;
+  name: string;
+  color: string;
+  results: boolean[];
+}
+
 export type KlinesChartProps = {
   klines: Kline[];
   groupMinutes: number;
@@ -101,4 +111,10 @@ export type KlinesChartProps = {
   maxChartHeight?: number;
   /** Chamado quando as dimensões do gráfico mudam (ex.: tamanho 125%). Permite ao container se ajustar sem scroll horizontal. sizePercent = 100 | 125 para cálculo estável. */
   onChartDimensionsChange?: (width: number, height: number, sizePercent: number) => void;
+  /** Símbolo exibido no rodapé (ex.: BTCUSDT). */
+  symbol?: string;
+  /** Abre o painel de seleção de símbolo (header/footer). */
+  onOpenSymbolPanel?: () => void;
+  /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
+  strategyCandleOverlays?: StrategyCandleOverlay[];
 }

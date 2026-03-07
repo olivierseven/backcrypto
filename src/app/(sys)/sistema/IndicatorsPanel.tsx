@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import {
@@ -113,13 +113,20 @@ const INITIAL_ADD_FORM: AddFormState = {
 };
 
 interface IndicatorsPanelProps {
+  initialView?: "list" | "add";
   onClose?: () => void;
 }
 
-export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
+export default function IndicatorsPanel({ initialView = "list", onClose }: IndicatorsPanelProps) {
   const lang = useBioLang();
   const t = getBioT(lang).sistema.klines;
-  const { userIndicators, currentGroupMinutes, showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
+  const { userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
+  const addFormRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (initialView === "add" && addFormRef.current) {
+      addFormRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [initialView]);
 
   const [addForm, setAddForm] = useState<AddFormState>(INITIAL_ADD_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -596,6 +603,7 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       setAllIntervals,
       isIntervalChecked,
       removeIndicator,
+      updateIndicator,
       getIndicatorLabel: getIndicatorLabel as IndicatorsPanelContextValue["getIndicatorLabel"],
     }),
     [
@@ -619,6 +627,7 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       setAllIntervals,
       isIntervalChecked,
       removeIndicator,
+      updateIndicator,
     ]
   );
 
@@ -629,22 +638,29 @@ export default function IndicatorsPanel({ onClose }: IndicatorsPanelProps) {
       aria-label={t.indicatorsPanelTitle}
     >
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50">
-        <h2 className="text-sm font-semibold text-zinc-800">{t.indicatorsPanelTitle}</h2>
+        <h2 className="text-sm font-semibold text-zinc-800">
+          {initialView === "list"
+            ? ((t as Record<string, string>).menuMyIndicators ?? t.indicatorsPanelTitle)
+            : ((t as Record<string, string>).menuAddIndicator ?? "Add indicator")}
+        </h2>
         {onClose && (
           <button type="button" onClick={onClose} className="p-1.5 rounded hover:bg-zinc-200 text-zinc-600" aria-label="Close">
             <span className="text-lg leading-none">×</span>
           </button>
         )}
       </div>
-      <div className="flex-1 min-h-0 overflow-auto p-3 space-y-4">
-        <label className="flex items-center gap-2 cursor-pointer px-1 py-2 rounded hover:bg-zinc-50 text-sm text-zinc-700 border-b border-zinc-100">
-          <input type="checkbox" checked={showIndicatorLastValueOnYAxis} onChange={(e) => setShowIndicatorLastValueOnYAxis(e.target.checked)} className="rounded border-zinc-300" />
-          <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valores dos indicadores no eixo Y"}</span>
-        </label>
+      <div className="panel-scroll flex-1 min-h-0 overflow-auto p-3 space-y-4">
         <IndicatorsPanelContext.Provider value={contextValue}>
-          <IndicatorsPanelAddForm form={addForm} setForm={setAddForm} />
-          {userIndicators.length > 0 && (
-            <div className="pt-3 border-t border-zinc-200 space-y-2">
+          {initialView === "add" && (
+            <div ref={addFormRef}>
+              <IndicatorsPanelAddForm form={addForm} setForm={setAddForm} />
+            </div>
+          )}
+          {initialView === "list" && userIndicators.length === 0 && (
+            <p className="text-sm text-zinc-500 py-2">{(t as Record<string, string>).noIndicatorsYet ?? "Nenhum indicador salvo. Use \"Adicionar indicador\" no menu para criar."}</p>
+          )}
+          {initialView === "list" && userIndicators.length > 0 && (
+            <div className="space-y-2">
               {userIndicators.map((ind) => (
                 <IndicatorsPanelIndicatorCard key={ind.id} ind={ind} />
               ))}

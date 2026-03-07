@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useBioLang } from "@/app/contexts/BioLangContext";
+import { useBioLang, useBioLangContext } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -25,6 +25,7 @@ type ValidateResult =
 
 export default function SistemaDebugPanel() {
   const lang = useBioLang();
+  const { lang: currentLang, setLang } = useBioLangContext();
   const t = getBioT(lang).sistema.debug;
   const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
   const [open, setOpen] = useState(false);
@@ -35,6 +36,8 @@ export default function SistemaDebugPanel() {
   const [backfillLoading, setBackfillLoading] = useState<string | null>(null);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [registerGapsLoading, setRegisterGapsLoading] = useState<string | null>(null);
+  const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "1h" | null>(null);
+  const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
 
   function clearPanel() {
     setResult(null);
@@ -42,6 +45,8 @@ export default function SistemaDebugPanel() {
     setBackfillMessage(null);
     setBackfillLoading(null);
     setRegisterGapsLoading(null);
+    setPastBackfillMessage(null);
+    setPastBackfillLoading(null);
     setLoading(false);
     setSymbol("BTCUSDT");
   }
@@ -133,6 +138,60 @@ export default function SistemaDebugPanel() {
       setBackfillMessage(e instanceof Error ? e.message : t.error);
     } finally {
       setBackfillLoading(null);
+    }
+  }
+
+  const ONE_MINUTE_MS = 60 * 1000;
+  const ONE_HOUR_MS = 60 * 60 * 1000;
+  const FAST_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+  const KLINE_1H_YEARS_MS = 5 * 365.25 * 24 * 60 * 60 * 1000;
+
+  function floorToHourMs(ms: number) {
+    return Math.floor(ms / ONE_HOUR_MS) * ONE_HOUR_MS;
+  }
+
+  async function runPastBackfill(interval: "1m" | "1h") {
+    const sym = symbol.trim();
+    if (!sym) {
+      setPastBackfillMessage((t as { error?: string }).error ?? "Informe o símbolo.");
+      return;
+    }
+    setPastBackfillMessage(null);
+    setPastBackfillLoading(interval);
+    await new Promise((r) => setTimeout(r, 0));
+    try {
+      const now = Date.now();
+      let from: number;
+      let to: number;
+      if (interval === "1m") {
+        from = now - FAST_DAYS_MS - ONE_MINUTE_MS;
+        to = now + ONE_MINUTE_MS;
+      } else {
+        from = floorToHourMs(now - KLINE_1H_YEARS_MS) - ONE_HOUR_MS;
+        to = floorToHourMs(now) + ONE_HOUR_MS;
+      }
+      const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          symbol: sym,
+          gaps: [{ interval, from, to }],
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setPastBackfillMessage((data && typeof data.error === "string" ? data.error : null) || t.error);
+        return;
+      }
+      const inserted = interval === "1m" ? data.inserted1m : data.inserted1h;
+      const msg = (t as { backfillPastSuccess?: string }).backfillPastSuccess?.replace("{n}", String(inserted ?? 0)) ?? `Concluído. Inseridas: ${inserted ?? 0}`;
+      setPastBackfillMessage(msg);
+      runValidate();
+    } catch (e) {
+      setPastBackfillMessage(e instanceof Error ? e.message : t.error);
+    } finally {
+      setPastBackfillLoading(null);
     }
   }
 
@@ -258,6 +317,33 @@ export default function SistemaDebugPanel() {
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
             <section>
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                {t.language}
+              </h4>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLang("pt")}
+                  title="Português"
+                  className={`flex items-center justify-center w-10 h-10 rounded-md border-2 text-lg transition-colors ${currentLang === "pt" ? "border-zinc-800 bg-zinc-100 ring-1 ring-zinc-400" : "border-zinc-200 hover:border-zinc-400"}`}
+                  aria-label="Português"
+                  aria-pressed={currentLang === "pt"}
+                >
+                  🇧🇷
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang("en")}
+                  title="English"
+                  className={`flex items-center justify-center w-10 h-10 rounded-md border-2 text-lg transition-colors ${currentLang === "en" ? "border-zinc-800 bg-zinc-100 ring-1 ring-zinc-400" : "border-zinc-200 hover:border-zinc-400"}`}
+                  aria-label="English"
+                  aria-pressed={currentLang === "en"}
+                >
+                  🇺🇸
+                </button>
+              </div>
+            </section>
+            <section>
               <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
                 <input
                   type="checkbox"
@@ -273,14 +359,15 @@ export default function SistemaDebugPanel() {
                 {t.validateKlines}
               </h4>
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <select
                   value={symbol}
                   onChange={(e) => setSymbol(e.target.value)}
-                  placeholder={t.symbol}
-                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded-md px-2.5 py-1.5 text-zinc-800"
+                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded-md px-2.5 py-1.5 text-zinc-800 bg-white"
                   aria-label={t.symbol}
-                />
+                >
+                  <option value="BTCUSDT">BTCUSDT</option>
+                  <option value="ETHUSDT">ETHUSDT</option>
+                </select>
                 <button
                   type="button"
                   onClick={runValidate}
@@ -310,6 +397,35 @@ export default function SistemaDebugPanel() {
                     />
                   )}
                 </div>
+              )}
+            </section>
+            <section>
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                {(t as { backfillPast?: string }).backfillPast ?? "Backfill do passado"}
+              </h4>
+              <p className="text-xs text-zinc-500 mb-2">
+                {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima."}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={pastBackfillLoading !== null || loading}
+                  onClick={() => runPastBackfill("1m")}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (90 dias)"}
+                </button>
+                <button
+                  type="button"
+                  disabled={pastBackfillLoading !== null || loading}
+                  onClick={() => runPastBackfill("1h")}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (5 anos)"}
+                </button>
+              </div>
+              {pastBackfillMessage && (
+                <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
               )}
             </section>
           </div>

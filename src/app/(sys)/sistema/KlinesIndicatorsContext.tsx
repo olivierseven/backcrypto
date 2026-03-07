@@ -10,29 +10,6 @@ import {
 } from "react";
 import { KLINE_USER_INDICATORS_KEY, KLINE_PREFS_KEY } from "./KlinesChartConstants";
 
-function loadShowIndicatorLastValueOnYAxis(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    const raw = localStorage.getItem(KLINE_PREFS_KEY);
-    if (!raw) return true;
-    const data = JSON.parse(raw) as { showIndicatorLastValueOnYAxis?: boolean };
-    return typeof data.showIndicatorLastValueOnYAxis === "boolean" ? data.showIndicatorLastValueOnYAxis : true;
-  } catch {
-    return true;
-  }
-}
-
-function saveShowIndicatorLastValueOnYAxis(value: boolean) {
-  try {
-    const raw = localStorage.getItem(KLINE_PREFS_KEY);
-    const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-    data.showIndicatorLastValueOnYAxis = value;
-    localStorage.setItem(KLINE_PREFS_KEY, JSON.stringify(data));
-  } catch {
-    /* ignore */
-  }
-}
-
 export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
@@ -58,6 +35,8 @@ export interface UserIndicatorConfig {
   color: string;
   /** groupMinutes em que o indicador aparece; vazio = todos. */
   intervals: number[];
+  /** Exibir valor do indicador no eixo Y (default true). Quando false, não mostra no gráfico apenas deste indicador. */
+  showLastValueOnYAxis?: boolean;
   /** Onde renderizar: main (SMA/EMA/WMA) ou panel2/panel3/panel4 (RSI e outros secundários). */
   panel?: IndicatorPanel;
   lineWidth?: IndicatorLineWidth;
@@ -392,15 +371,13 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow"
+  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis"
 >;
 
 interface ContextValue {
   userIndicators: UserIndicatorConfig[];
   currentGroupMinutes: number | null;
   setCurrentGroupMinutes: (v: number | null) => void;
-  showIndicatorLastValueOnYAxis: boolean;
-  setShowIndicatorLastValueOnYAxis: (v: boolean) => void;
   addIndicator: (config: Omit<UserIndicatorConfig, "id">) => void;
   removeIndicator: (id: string) => void;
   updateIndicator: (id: string, updates: Partial<UserIndicatorEditable>) => void;
@@ -414,16 +391,11 @@ const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
 export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) {
   const [userIndicators, setUserIndicators] = useState<UserIndicatorConfig[]>(loadFromStorage);
   const [currentGroupMinutes, setCurrentGroupMinutes] = useState<number | null>(null);
-  const [showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxisState] = useState(loadShowIndicatorLastValueOnYAxis);
-  const setShowIndicatorLastValueOnYAxis = useCallback((v: boolean) => {
-    setShowIndicatorLastValueOnYAxisState(v);
-    saveShowIndicatorLastValueOnYAxis(v);
-  }, []);
 
   const addIndicator = useCallback((config: Omit<UserIndicatorConfig, "id">) => {
     const id = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setUserIndicators((prev) => {
-      const next = [...prev, { ...config, id }];
+      const next = [...prev, { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false }];
       saveToStorage(next);
       return next;
     });
@@ -466,15 +438,13 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
       userIndicators,
       currentGroupMinutes,
       setCurrentGroupMinutes,
-      showIndicatorLastValueOnYAxis,
-      setShowIndicatorLastValueOnYAxis,
       addIndicator,
       removeIndicator,
       updateIndicator,
       updateIndicatorIntervals,
       replaceUserIndicatorsFromLayout,
     }),
-    [userIndicators, currentGroupMinutes, showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout]
+    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout]
   );
 
   return (

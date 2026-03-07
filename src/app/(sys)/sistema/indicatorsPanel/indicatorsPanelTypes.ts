@@ -202,5 +202,6 @@ export interface IndicatorsPanelContextValue {
   setAllIntervals: (id: string) => void;
   isIntervalChecked: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig, value: number) => boolean;
   removeIndicator: (id: string) => void;
+  updateIndicator: (id: string, updates: Partial<import("../KlinesIndicatorsContext").UserIndicatorEditable>) => void;
   getIndicatorLabel: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig, t: unknown, list: import("../KlinesIndicatorsContext").UserIndicatorConfig[]) => string;
 }

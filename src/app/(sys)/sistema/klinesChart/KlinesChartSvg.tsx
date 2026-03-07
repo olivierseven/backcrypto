@@ -3,13 +3,13 @@
 /**
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
-import { useId, type RefObject } from "react";
+import { useId, useRef, useState, useEffect, type RefObject } from "react";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
 import type { DrawSegment } from "../KlinesChartDrawing";
-import type { ChartIndicatorLine } from "./types";
+import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
 import { MS_PER_DAY } from "../KlinesChartConstants";
 
 export interface KlinesChartSvgProps {
@@ -78,9 +78,13 @@ export interface KlinesChartSvgProps {
   drawMode: boolean;
   drawTool: "line" | "select";
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 } | null>>;
+  /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
+  onSelectToolPan?: (deltaCandles: number) => void;
   t: Record<string, string>;
   /** Escala dos textos (indicadores, etc.): 0.6–1 quando o plot está reduzido. */
   textScale?: number;
+  /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
+  strategyCandleOverlays?: StrategyCandleOverlay[];
 }
 
 export function KlinesChartSvg({
@@ -149,9 +153,41 @@ export function KlinesChartSvg({
   drawMode,
   drawTool,
   setDrawDragging,
+  onSelectToolPan,
   t,
   textScale = 1,
+  strategyCandleOverlays = [],
 }: KlinesChartSvgProps) {
+  const selectPanLastClientX = useRef(0);
+  const justPannedRef = useRef(false);
+  const [selectPanActive, setSelectPanActive] = useState(false);
+
+  useEffect(() => {
+    if (!selectPanActive || !onSelectToolPan) return;
+    const PIXELS_PER_CANDLE = 12;
+    const MAX_DELTA_PER_MOVE = 4;
+    const onMove = (e: PointerEvent) => {
+      e.preventDefault();
+      const deltaX = e.clientX - selectPanLastClientX.current;
+      selectPanLastClientX.current = e.clientX;
+      let deltaCandles = -Math.round(deltaX / PIXELS_PER_CANDLE);
+      deltaCandles = Math.max(-MAX_DELTA_PER_MOVE, Math.min(MAX_DELTA_PER_MOVE, deltaCandles));
+      if (deltaCandles !== 0) onSelectToolPan(deltaCandles);
+    };
+    const onUp = () => {
+      setSelectPanActive(false);
+      justPannedRef.current = true;
+    };
+    document.addEventListener("pointermove", onMove, { passive: false });
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+    };
+  }, [selectPanActive, onSelectToolPan]);
+
   const fontSize = Math.round(10 * textScale);
   const fontSizeSmall = Math.round(9 * textScale);
   const fontSizeAxis = Math.round(12 * textScale);
@@ -626,7 +662,9 @@ export function KlinesChartSvg({
           const bodyH = Math.max(1, bodyBottom - bodyTop);
           const wickTop = y(highP);
           const wickBottom = y(lowP);
-          const color = bull ? candleColors.bull : candleColors.bear;
+          const klinesIndex = n - 1 - startIndex - i;
+          const strategyColor = strategyCandleOverlays.find((o) => o.results[klinesIndex])?.color;
+          const color = strategyColor ?? (bull ? candleColors.bull : candleColors.bear);
           const strokeColor = color === "#f5f5f5" ? "#171717" : color;
           const slotLeft = MARGIN_LEFT + i * gap;
           return (
@@ -1017,8 +1055,37 @@ export function KlinesChartSvg({
             width={chartW}
             height={chartH}
             fill="transparent"
-            style={{ cursor: drawTool === "select" ? "pointer" : "crosshair" }}
+            style={{ cursor: drawTool === "select" ? "pointer" : "crosshair", touchAction: "none" }}
+            onPointerDown={(e) => {
+              if (drawTool !== "select" || !drawingsVisible || !onSelectToolPan || !chartSvgRef.current) return;
+              const svg = chartSvgRef.current;
+              const rect = svg.getBoundingClientRect();
+              const svgW = svg.width.baseVal.value;
+              const svgH = svg.height.baseVal.value;
+              const px = (e.clientX - rect.left) * (svgW / rect.width);
+              const py = (e.clientY - rect.top) * (svgH / rect.height);
+              const HIT_THRESHOLD = 12;
+              let bestIdx = -1;
+              let bestD = HIT_THRESHOLD;
+              drawSegments.forEach((seg, index) => {
+                const segP1 = segmentToPixel(seg.index1, seg.price1);
+                const segP2 = segmentToPixel(seg.index2, seg.price2);
+                const d = distanceToSegment(px, py, segP1.x, segP1.y, segP2.x, segP2.y);
+                if (d < bestD) {
+                  bestD = d;
+                  bestIdx = index;
+                }
+              });
+              if (bestIdx < 0) {
+                selectPanLastClientX.current = e.clientX;
+                setSelectPanActive(true);
+              }
+            }}
             onClick={(e) => {
+              if (justPannedRef.current) {
+                justPannedRef.current = false;
+                return;
+              }
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();
