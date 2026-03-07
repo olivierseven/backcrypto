@@ -95,8 +95,17 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [loadOpen, setLoadOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
   const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
+  const [fibLevel618ColorListboxOpen, setFibLevel618ColorListboxOpen] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
-  const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("left");
+  const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("right");
+  /** Posição (px) da caixa de desenho na área do gráfico; null = canto superior direito (right-2 top-2). */
+  const [drawToolboxPosition, setDrawToolboxPosition] = useState<{ x: number; y: number } | null>(null);
+  const drawToolboxRef = useRef<HTMLDivElement>(null);
+  const chartRowRef = useRef<HTMLDivElement>(null);
+  const drawToolboxDragStartRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number } | null>(null);
+  /** Posição (px) da caixa de opções do segmento; null = canto superior esquerdo (left: 8, top: 8). */
+  const [segmentOptionsPosition, setSegmentOptionsPosition] = useState<{ x: number; y: number } | null>(null);
+  const segmentOptionsRef = useRef<HTMLDivElement>(null);
   const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown> }[]>([]);
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
@@ -190,6 +199,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     openDrawPanel,
     closeDrawMode,
     selectLineTool,
+    selectFibonacciTool,
     selectSelectTool,
     clearAllDrawing,
   } = drawing;
@@ -198,8 +208,26 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const n = fullReversed.length;
 
   useEffect(() => {
-    if (segmentToolboxCollapsed) setSegmentColorListboxOpen(false);
+    if (segmentToolboxCollapsed) {
+      setSegmentColorListboxOpen(false);
+      setFibLevel618ColorListboxOpen(false);
+    }
   }, [segmentToolboxCollapsed]);
+
+  // Sempre abrir a caixa de desenho encostada no canto esquerdo
+  useEffect(() => {
+    if (!drawOpen) setDrawToolboxPosition(null);
+  }, [drawOpen]);
+
+  // Sempre abrir a caixa de opções do segmento encostada no canto esquerdo
+  useEffect(() => {
+    if (selectedSegmentIndex === null) setSegmentOptionsPosition(null);
+  }, [selectedSegmentIndex]);
+
+  // Selecionar um desenho fecha a caixa de ferramentas de desenho
+  useEffect(() => {
+    if (selectedSegmentIndex !== null) setDrawOpen(false);
+  }, [selectedSegmentIndex]);
 
   // Ao trocar intervalo: loading breve (1 frame) para recarregar segmentos; em seguida voltar a exibir o gráfico
   useEffect(() => {
@@ -1032,6 +1060,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             openDrawPanel={openDrawPanel}
             closeDrawMode={closeDrawMode}
             selectLineTool={selectLineTool}
+            selectFibonacciTool={selectFibonacciTool}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
             saveOpen={saveOpen}
@@ -1046,64 +1075,95 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
           />
         </div>
         <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: "pan-x pan-y" }}>
-          <div className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
+          <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
           {drawOpen && drawPanelSide === "right" && (
             <div
-              className="absolute right-2 top-2 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+              ref={drawToolboxRef}
+              className="absolute z-[100] flex w-fit flex-col items-center rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+              style={drawToolboxPosition === null ? { left: 8, top: 8 } : { left: drawToolboxPosition.x, top: drawToolboxPosition.y }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawPanelSide((s) => s === "left" ? "right" : "left"); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                  title={t.segmentToolboxMoveLeft}
-                  aria-label={t.segmentToolboxMoveLeft}
-                >
-                  <span aria-hidden>←</span>
-                </button>
+              <div className="flex w-full min-w-0 items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold"
+                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold"
                   title={t.drawExitMode}
                   aria-label={t.drawExitMode}
                 >
                   <span aria-hidden>×</span>
                 </button>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none"
+                  title={t.drawToolboxDrag}
+                  aria-label={t.drawToolboxDrag}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!drawToolboxRef.current || !chartRowRef.current) return;
+                    const box = drawToolboxRef.current.getBoundingClientRect();
+                    const row = chartRowRef.current.getBoundingClientRect();
+                    const currentX = drawToolboxPosition?.x ?? 8;
+                    const currentY = drawToolboxPosition?.y ?? 8;
+                    if (drawToolboxPosition === null) setDrawToolboxPosition({ x: currentX, y: currentY });
+                    const startClientX = e.clientX;
+                    const startClientY = e.clientY;
+                    const startX = currentX;
+                    const startY = currentY;
+                    const onMove = (ev: PointerEvent) => {
+                      if (!drawToolboxRef.current || !chartRowRef.current) return;
+                      if (ev.cancelable) ev.preventDefault();
+                      const boxRect = drawToolboxRef.current.getBoundingClientRect();
+                      const rowRect = chartRowRef.current.getBoundingClientRect();
+                      const cw = rowRect.width;
+                      const ch = rowRect.height;
+                      let newX = startX + (ev.clientX - startClientX);
+                      let newY = startY + (ev.clientY - startClientY);
+                      newX = Math.max(0, Math.min(cw - boxRect.width, newX));
+                      newY = Math.max(0, Math.min(ch - boxRect.height, newY));
+                      setDrawToolboxPosition({ x: newX, y: newY });
+                    };
+                    const onUp = () => {
+                      document.removeEventListener("pointermove", onMove);
+                      document.removeEventListener("pointerup", onUp);
+                      document.removeEventListener("pointercancel", onUp);
+                    };
+                    document.addEventListener("pointermove", onMove);
+                    document.addEventListener("pointerup", onUp);
+                    document.addEventListener("pointercancel", onUp);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") e.preventDefault();
+                  }}
+                >
+                  <span aria-hidden>⠿</span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={selectLineTool}
                 title={t.lineSegment}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 w-full ${drawTool === "line" ? "bg-zinc-100" : ""}`}
+                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
                 aria-label={t.lineSegment}
               >
                 📏
               </button>
               <button
                 type="button"
-                onClick={selectSelectTool}
-                title={t.drawSelectSegment}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 w-full ${drawTool === "select" ? "bg-zinc-100" : ""}`}
-                aria-label={t.drawSelectSegment}
+                onClick={selectFibonacciTool}
+                title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
+                aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
               >
-                👆
+                ◫
               </button>
-              <label className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 w-full ${drawMagnetic ? "bg-zinc-100" : ""}`} title={t.drawMagnetic}>
-                <input
-                  type="checkbox"
-                  checked={drawMagnetic}
-                  onChange={(e) => setDrawMagnetic(e.target.checked)}
-                  className="rounded border-zinc-300 sr-only"
-                />
-                <span aria-hidden>🧲</span>
-              </label>
               <button
                 type="button"
                 onClick={clearAllDrawing}
                 title={t.drawClearAll}
-                className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 w-full"
+                className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
                 aria-label={t.drawClearAll}
               >
                 🗑️
@@ -1112,46 +1172,80 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
           )}
           {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
             <div
-              className={`absolute top-12 z-10 rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px] ${segmentToolboxSide === "left" ? "left-2" : "right-2"}`}
+              ref={segmentOptionsRef}
+              className="absolute z-[100] rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px]"
+              style={segmentOptionsPosition === null ? { left: 8, top: 8 } : { left: segmentOptionsPosition.x, top: segmentOptionsPosition.y }}
               onClick={(e) => e.stopPropagation()}
               role="group"
               aria-label={t.segmentOptionsTitle}
             >
-              <div
-                className="flex items-center justify-between gap-1 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1 cursor-pointer hover:bg-zinc-100 transition-colors"
-                onClick={() => setSegmentToolboxCollapsed((c) => !c)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSegmentToolboxCollapsed((c) => !c); } }}
-                aria-expanded={!segmentToolboxCollapsed}
-              >
-                <span className="text-[10px] font-medium text-zinc-600 truncate min-w-0">{t.segmentOptionsTitle}</span>
-                <span className="flex items-center gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setSegmentToolboxSide((s) => s === "left" ? "right" : "left"); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                    title={segmentToolboxSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                    aria-label={segmentToolboxSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                  >
-                    {segmentToolboxSide === "left" ? "→" : "←"}
-                  </button>
-                  <span className="text-zinc-500 text-xs leading-none" aria-hidden>
-                    {segmentToolboxCollapsed ? "▶" : "▼"}
-                  </span>
-                </span>
+              <div className="flex items-center justify-between gap-0.5 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1">
+                <span className="text-[11px] font-medium text-zinc-600 truncate min-w-0 flex-1">{t.segmentOptionsTitle}</span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
+                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
+                  title={t.drawExitMode}
+                  aria-label={t.drawExitMode}
+                >
+                  <span aria-hidden>×</span>
+                </button>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none shrink-0"
+                  title={t.drawToolboxDrag}
+                  aria-label={t.drawToolboxDrag}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!segmentOptionsRef.current || !chartRowRef.current) return;
+                    const box = segmentOptionsRef.current.getBoundingClientRect();
+                    const row = chartRowRef.current.getBoundingClientRect();
+                    const currentX = segmentOptionsPosition?.x ?? 8;
+                    const currentY = segmentOptionsPosition?.y ?? 8;
+                    if (segmentOptionsPosition === null) setSegmentOptionsPosition({ x: currentX, y: currentY });
+                    const startClientX = e.clientX;
+                    const startClientY = e.clientY;
+                    const startX = currentX;
+                    const startY = currentY;
+                    const onMove = (ev: PointerEvent) => {
+                      if (!segmentOptionsRef.current || !chartRowRef.current) return;
+                      if (ev.cancelable) ev.preventDefault();
+                      const boxRect = segmentOptionsRef.current.getBoundingClientRect();
+                      const rowRect = chartRowRef.current.getBoundingClientRect();
+                      const cw = rowRect.width;
+                      const ch = rowRect.height;
+                      let newX = startX + (ev.clientX - startClientX);
+                      let newY = startY + (ev.clientY - startClientY);
+                      newX = Math.max(0, Math.min(cw - boxRect.width, newX));
+                      newY = Math.max(0, Math.min(ch - boxRect.height, newY));
+                      setSegmentOptionsPosition({ x: newX, y: newY });
+                    };
+                    const onUp = () => {
+                      document.removeEventListener("pointermove", onMove);
+                      document.removeEventListener("pointerup", onUp);
+                      document.removeEventListener("pointercancel", onUp);
+                    };
+                    document.addEventListener("pointermove", onMove);
+                    document.addEventListener("pointerup", onUp);
+                    document.addEventListener("pointercancel", onUp);
+                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.preventDefault(); }}
+                >
+                  <span aria-hidden>⠿</span>
+                </div>
               </div>
-              {!segmentToolboxCollapsed && (
-                <div className="py-1.5 px-1.5 space-y-1.5">
+              <div className="py-1.5 px-1.5 space-y-1.5">
                   <div>
-                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{t.segmentColor}</div>
+                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}</div>
                     <div className="relative">
                       <button
                         type="button"
                         role="combobox"
                         aria-expanded={segmentColorListboxOpen}
                         aria-haspopup="listbox"
-                        aria-label={t.segmentColor}
+                        aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
                         onClick={() => setSegmentColorListboxOpen((o) => !o)}
                         className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
                       >
@@ -1164,7 +1258,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       {segmentColorListboxOpen && (
                         <div
                           role="listbox"
-                          aria-label={t.segmentColor}
+                          aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
                           className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
                         >
                           {SEGMENT_COLOR_PALETTE.map((hex) => {
@@ -1175,7 +1269,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                                 type="button"
                                 role="option"
                                 aria-selected={isSelected}
-                                aria-label={t.segmentColor}
+                                aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
                                 onClick={() => {
                                   setDrawSegments((prev) => {
                                     const next = [...prev];
@@ -1194,44 +1288,103 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       )}
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-startcap-listbox">{t.segmentStartCap}</label>
-                    <select
-                      id="segment-startcap-listbox"
-                      value={drawSegments[selectedSegmentIndex]?.startCap ?? "none"}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, startCap: e.target.value as SegmentCap };
-                        return next;
-                      })}
-                      className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                      aria-label={t.segmentStartCap}
-                    >
-                      {SEGMENT_CAP_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-endcap-listbox">{t.segmentEndCap}</label>
-                    <select
-                      id="segment-endcap-listbox"
-                      value={drawSegments[selectedSegmentIndex]?.endCap ?? "none"}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, endCap: e.target.value as SegmentCap };
-                        return next;
-                      })}
-                      className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                      aria-label={t.segmentEndCap}
-                    >
-                      {SEGMENT_CAP_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (
+                    <div>
+                      <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{t.fibLevel618Color}</div>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          role="combobox"
+                          aria-expanded={fibLevel618ColorListboxOpen}
+                          aria-haspopup="listbox"
+                          aria-label={t.fibLevel618Color}
+                          onClick={() => setFibLevel618ColorListboxOpen((o) => !o)}
+                          className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
+                        >
+                          <span
+                            className="w-4 h-4 rounded border border-zinc-300 shrink-0"
+                            style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.fibLevel618Color ?? drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
+                          />
+                          <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{fibLevel618ColorListboxOpen ? "▲" : "▼"}</span>
+                        </button>
+                        {fibLevel618ColorListboxOpen && (
+                          <div
+                            role="listbox"
+                            aria-label={t.fibLevel618Color}
+                            className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
+                          >
+                            {SEGMENT_COLOR_PALETTE.map((hex) => {
+                              const seg = drawSegments[selectedSegmentIndex];
+                              const currentColor = seg?.fibLevel618Color ?? seg?.color ?? DEFAULT_SEGMENT_COLOR;
+                              const isSelected = currentColor === hex;
+                              return (
+                                <button
+                                  key={hex}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={isSelected}
+                                  aria-label={t.fibLevel618Color}
+                                  onClick={() => {
+                                    setDrawSegments((prev) => {
+                                      const next = [...prev];
+                                      const s = next[selectedSegmentIndex];
+                                      if (s) next[selectedSegmentIndex] = { ...s, fibLevel618Color: hex };
+                                      return next;
+                                    });
+                                    setFibLevel618ColorListboxOpen(false);
+                                  }}
+                                  className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
+                                  style={{ backgroundColor: hex }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {drawSegments[selectedSegmentIndex]?.type !== "fibonacci" && (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-startcap-listbox">{t.segmentStartCap}</label>
+                        <select
+                          id="segment-startcap-listbox"
+                          value={drawSegments[selectedSegmentIndex]?.startCap ?? "none"}
+                          onChange={(e) => setDrawSegments((prev) => {
+                            const next = [...prev];
+                            const seg = next[selectedSegmentIndex];
+                            if (seg) next[selectedSegmentIndex] = { ...seg, startCap: e.target.value as SegmentCap };
+                            return next;
+                          })}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={t.segmentStartCap}
+                        >
+                          {SEGMENT_CAP_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-endcap-listbox">{t.segmentEndCap}</label>
+                        <select
+                          id="segment-endcap-listbox"
+                          value={drawSegments[selectedSegmentIndex]?.endCap ?? "none"}
+                          onChange={(e) => setDrawSegments((prev) => {
+                            const next = [...prev];
+                            const seg = next[selectedSegmentIndex];
+                            if (seg) next[selectedSegmentIndex] = { ...seg, endCap: e.target.value as SegmentCap };
+                            return next;
+                          })}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={t.segmentEndCap}
+                        >
+                          {SEGMENT_CAP_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
                   <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
                     <input
                       type="checkbox"
@@ -1274,7 +1427,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     <span aria-hidden>🗑️</span>
                   </button>
                 </div>
-              )}
             </div>
           )}
           <KlinesChartSvg
@@ -1344,6 +1496,10 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             drawTool={drawTool}
             setDrawDragging={setDrawDragging}
             onSelectToolPan={onSelectToolPan}
+            onChartDrawClick={() => {
+              setSegmentToolboxCollapsed(true);
+              setDrawOpen(false);
+            }}
             t={t}
             textScale={textScale}
             strategyCandleOverlays={strategyCandleOverlays}

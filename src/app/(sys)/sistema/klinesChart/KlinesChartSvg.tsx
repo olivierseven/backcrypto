@@ -9,7 +9,10 @@ import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
 import type { DrawSegment } from "../KlinesChartDrawing";
+import { SEGMENT_COLOR_PALETTE } from "./palettes";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
+
+const FIB_DEFAULT_COLOR = SEGMENT_COLOR_PALETTE[2];
 import { MS_PER_DAY } from "../KlinesChartConstants";
 
 export interface KlinesChartSvgProps {
@@ -76,10 +79,12 @@ export interface KlinesChartSvgProps {
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "select";
+  drawTool: "line" | "fibonacci" | "select";
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
+  /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
+  onChartDrawClick?: () => void;
   t: Record<string, string>;
   /** Escala dos textos (indicadores, etc.): 0.6–1 quando o plot está reduzido. */
   textScale?: number;
@@ -154,6 +159,7 @@ export function KlinesChartSvg({
   drawTool,
   setDrawDragging,
   onSelectToolPan,
+  onChartDrawClick,
   t,
   textScale = 1,
   strategyCandleOverlays = [],
@@ -957,10 +963,60 @@ export function KlinesChartSvg({
           const p1 = segmentToPixel(seg.index1, seg.price1);
           const p2 = segmentToPixel(seg.index2, seg.price2);
           const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
-          const startCap = seg.startCap ?? "none";
-          const endCap = seg.endCap ?? "none";
           const isSelected = selectedSegmentIndex === idx;
           const lineW = isSelected ? 2 : 1;
+
+          if (seg.type === "fibonacci") {
+            const range = seg.price1 - seg.price2;
+            const fibLevels = [
+              { k: 1 / 3, label: "33.3%" },
+              { k: 0.5, label: "50%" },
+              { k: 0.618, label: "61.8%" },
+            ] as const;
+            const yTop = segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y;
+            const yBottom = segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y;
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const ux = dx / len;
+            const uy = dy / len;
+            const arrowLen = 8;
+            const arrowW = 4;
+            const tip = p2;
+            const backX = tip.x - arrowLen * ux;
+            const backY = tip.y - arrowLen * uy;
+            const leftX = backX - uy * arrowW;
+            const leftY = backY + ux * arrowW;
+            const rightX = backX + uy * arrowW;
+            const rightY = backY - ux * arrowW;
+            return (
+              <g key={idx}>
+                <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={strokeColor} strokeWidth={lineW} strokeDasharray="4 2" />
+                <path d={`M ${tip.x} ${tip.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />
+                <line x1={p1.x} y1={yTop} x2={p2.x} y2={yTop} stroke={strokeColor} strokeWidth={lineW} />
+                <line x1={p1.x} y1={yBottom} x2={p2.x} y2={yBottom} stroke={strokeColor} strokeWidth={lineW} />
+                {fibLevels.map(({ k, label }) => {
+                  const priceLevel = seg.price2 + range * k;
+                  const py = segmentToPixel(seg.index1, priceLevel).y;
+                  const levelColor = k === 0.618 ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
+                  return (
+                    <g key={k}>
+                      <line x1={p1.x} y1={py} x2={p2.x} y2={py} stroke={levelColor} strokeWidth={1} />
+                      {seg.showPercent !== false && (
+                        <>
+                          <rect x={p2.x + 4} y={py - 8} width={36} height={12} rx={2} fill="#fff" fillOpacity={0.9} stroke={levelColor} strokeWidth={1} />
+                          <text x={p2.x + 22} y={py} textAnchor="middle" dominantBaseline="middle" fill={levelColor} className="font-mono select-none" style={{ fontSize: 9 }}>{label}</text>
+                        </>
+                      )}
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          }
+
+          const startCap = seg.startCap ?? "none";
+          const endCap = seg.endCap ?? "none";
           const dx = p2.x - p1.x;
           const dy = p2.y - p1.y;
           const len = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -1109,11 +1165,14 @@ export function KlinesChartSvg({
                 setSelectedSegmentIndex(bestIdx >= 0 ? bestIdx : null);
                 return;
               }
+              if (drawTool === "line" || drawTool === "fibonacci") onChartDrawClick?.();
               const d = snapToCandlePoint(px, py);
               if (drawPending === null) {
                 setDrawPending({ index1: d.index, price1: d.price });
               } else {
-                setDrawSegments((seg) => [...seg, { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: "point", endCap: "arrow", showPercent: true }]);
+                setDrawSegments((seg) => [...seg, drawTool === "fibonacci"
+                  ? { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: FIB_DEFAULT_COLOR }
+                  : { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: "point", endCap: "arrow", showPercent: true }]);
                 setDrawPending(null);
               }
             }}

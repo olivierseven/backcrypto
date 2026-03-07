@@ -93,7 +93,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "select";
+  drawTool: "line" | "fibonacci" | "select";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -101,6 +101,7 @@ export interface KlinesChartSidebarProps {
   openDrawPanel: () => void;
   closeDrawMode: () => void;
   selectLineTool: () => void;
+  selectFibonacciTool: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
   // Save/Load
@@ -189,6 +190,7 @@ export function KlinesChartSidebar({
   openDrawPanel,
   closeDrawMode,
   selectLineTool,
+  selectFibonacciTool,
   selectSelectTool,
   clearAllDrawing,
   saveOpen,
@@ -691,23 +693,29 @@ export function KlinesChartSidebar({
           📐
         </button>
         {isHorizontal ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (drawMode && drawTool === "select") {
-                closeDrawMode();
-              } else {
-                selectSelectTool();
-              }
-            }}
-            title={t.drawSelectSegment}
-            className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
-            aria-label={t.drawSelectSegment}
-            aria-pressed={drawMode && drawTool === "select"}
-          >
-            <span aria-hidden>👆</span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (drawMode && drawTool === "select") {
+                  closeDrawMode();
+                } else {
+                  selectSelectTool();
+                }
+              }}
+              title={t.drawSelectSegment}
+              className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
+              aria-label={t.drawSelectSegment}
+              aria-pressed={drawMode && drawTool === "select"}
+            >
+              <span aria-hidden>👆</span>
+            </button>
+            <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
+              <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
+              <span aria-hidden>🧲</span>
+            </label>
+          </>
         ) : drawMode ? (
           <>
             <button
@@ -730,6 +738,10 @@ export function KlinesChartSidebar({
             >
               <span aria-hidden>👆</span>
             </button>
+            <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
+              <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
+              <span aria-hidden>🧲</span>
+            </label>
           </>
         ) : null}
         {drawOpen && drawPanelSide === "left" && !isHorizontal && (
@@ -737,19 +749,7 @@ export function KlinesChartSidebar({
             className={`${popoverPositionClass} z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDrawPanelSide((s) => (s === "left" ? "right" : "left"));
-                }}
-                className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                title={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                aria-label={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-              >
-                {drawPanelSide === "left" ? "→" : "←"}
-              </button>
+            <div className="flex items-center justify-end gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
               <button
                 type="button"
                 onClick={(e) => {
@@ -772,6 +772,15 @@ export function KlinesChartSidebar({
               aria-label={t.lineSegment}
             >
               📏
+            </button>
+            <button
+              type="button"
+              onClick={selectFibonacciTool}
+              title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
+              aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+            >
+              ◫
             </button>
             <button
               type="button"
@@ -1091,16 +1100,11 @@ export function KlinesChartSidebar({
             )}
             {drawOpen && drawPanelSide === "left" && !intervalsOpen && !settingsOpen && !colorsOpen && (
               <div className="w-fit min-w-0 flex flex-col">
-                <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setDrawPanelSide((s) => (s === "left" ? "right" : "left")); }} className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none" title={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft} aria-label={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}>{drawPanelSide === "left" ? "\u2192" : "\u2190"}</button>
+                <div className="flex items-center justify-end gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
                   <button type="button" onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }} className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold" title={t.drawExitMode} aria-label={t.drawExitMode}><span aria-hidden>×</span></button>
                 </div>
                 <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`} aria-label={t.lineSegment}>📏</button>
-                <button type="button" onClick={selectSelectTool} title={t.drawSelectSegment} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "select" ? "bg-zinc-100" : ""}`} aria-label={t.drawSelectSegment}>👆</button>
-                <label className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 ${drawMagnetic ? "bg-zinc-100" : ""}`} title={t.drawMagnetic}>
-                  <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
-                  <span aria-hidden>🧲</span>
-                </label>
+                <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}>◫</button>
                 <button type="button" onClick={clearAllDrawing} title={t.drawClearAll} className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700" aria-label={t.drawClearAll}>🗑️</button>
               </div>
             )}

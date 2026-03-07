@@ -7,7 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
 
-export type DrawTool = "line" | "select";
+export type DrawTool = "line" | "fibonacci" | "select";
 
 export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement | null>) {
   const [drawOpen, setDrawOpen] = useState(false);
@@ -122,6 +122,12 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setSelectedSegmentIndex(null);
   }, []);
 
+  const selectFibonacciTool = useCallback(() => {
+    setDrawTool("fibonacci");
+    setDrawMode(true);
+    setSelectedSegmentIndex(null);
+  }, []);
+
   const selectSelectTool = useCallback(() => {
     setDrawTool("select");
     setDrawMode(true);
@@ -160,6 +166,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     lastDragPosRef,
     openDrawPanel,
     selectLineTool,
+    selectFibonacciTool,
     selectSelectTool,
     clearAllDrawing,
   };

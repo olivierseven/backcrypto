@@ -13,16 +13,20 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
+  /** Tipo: segmento de reta ou retração de Fibonacci. Default: segment */
+  type?: "segment" | "fibonacci";
   /** Cor do traço (hex). Default: #000000 */
   color?: string;
-  /** Ponta no início do segmento. Default: none */
+  /** Ponta no início do segmento. Default: none (fibonacci ignora) */
   startCap?: SegmentCap;
-  /** Ponta no fim do segmento. Default: none */
+  /** Ponta no fim do segmento. Default: none (fibonacci ignora) */
   endCap?: SegmentCap;
-  /** Exibir diferença percentual no meio do segmento. Default: true */
+  /** Exibir diferença percentual no meio do segmento. Default: true (só para segment) */
   showPercent?: boolean;
   /** Exibir valores (preço) no início e no fim do segmento. Default: false */
   showValues?: boolean;
+  /** Cor do nível 61,8% (só Fibonacci). Se não definido, usa color. */
+  fibLevel618Color?: string;
 };
 
 export const DEFAULT_SEGMENT_COLOR = "#000000";
