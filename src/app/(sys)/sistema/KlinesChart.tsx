@@ -5,7 +5,7 @@
  * Eixo Y: preço USDT (ajustado aos candles visíveis). Eixo X: tempo + subeixo por data.
  */
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
-import { API_BASE } from "@/app/constants";
+import { API_BASE, ASSET_PREFIX } from "@/app/constants";
 import { useBioLang } from "@/app/contexts/BioLangContext";
 import { getBioT } from "@/app/lib/translations";
 import {
@@ -88,7 +88,7 @@ export type { ChartIndicatorLine } from "./klinesChart/types";
 
 const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
-  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin" },
+  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33 },
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
@@ -1197,7 +1197,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
                 aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
               >
-                ◫
+                <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
               </button>
               <button
                 type="button"
@@ -1433,6 +1433,33 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                             <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
                           ))}
                         </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-level-pct1">{(t as Record<string, string>).fibLevelPct1 ?? "Primeiro nível (%)"}</label>
+                        <input
+                          id="fib-level-pct1"
+                          type="number"
+                          min={0}
+                          max={50}
+                          step={0.1}
+                          value={(() => {
+                            const raw = Math.max(0, Math.min(50, (drawSegments[selectedSegmentIndex] as DrawSegment & { fibLevelPct1?: number })?.fibLevelPct1 ?? 33.33));
+                            return Math.round(raw * 10000) / 10000;
+                          })()}
+                          onChange={(e) => {
+                            const raw = Math.max(0, Math.min(50, parseFloat(e.target.value) || 0));
+                            const v = Math.round(raw * 10000) / 10000;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, fibLevelPct1: v };
+                              return next;
+                            });
+                            persistDrawDefault("fibonacci", { fibLevelPct1: v });
+                          }}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={(t as Record<string, string>).fibLevelPct1 ?? "Primeiro nível (%)"}
+                        />
                       </div>
                     </>
                   )}

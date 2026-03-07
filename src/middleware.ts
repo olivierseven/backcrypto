@@ -19,5 +19,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|favicon|icon|manifest|robots).*)"],
+  // Não passa pelo middleware: _next, api, assets/* (toda a pasta public/assets), favicon, icon, manifest, robots
+  matcher: ["/((?!_next|api|assets|favicon|icon|manifest|robots).*)"],
 };

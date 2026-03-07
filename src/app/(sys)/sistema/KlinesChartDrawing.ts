@@ -33,6 +33,8 @@ export type DrawSegment = {
   fibLevel618StrokeWidth?: FibStrokeWidth;
   /** Número de índices (candles) que as 5 linhas se estendem à direita em pontilhado. Só Fibonacci. */
   fibExtensionIndices?: number;
+  /** Primeiro nível do Fibonacci em percentual (0–50). Default: 33.33. */
+  fibLevelPct1?: number;
 };
 
 /** Largura do traço: fino, médio ou grosso (só Fibonacci). */
@@ -45,7 +47,7 @@ export const FIB_STROKE_WIDTH_OPTIONS: FibStrokeWidth[] = ["thin", "medium", "th
 /** Padrões iniciais para novos desenhos (persistidos no localStorage). */
 export type DrawDefaults = {
   segment: Partial<Pick<DrawSegment, "color" | "startCap" | "endCap" | "showPercent" | "showValues">>;
-  fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth">>;
+  fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1">>;
 };
 
 export const DEFAULT_SEGMENT_COLOR = "#000000";

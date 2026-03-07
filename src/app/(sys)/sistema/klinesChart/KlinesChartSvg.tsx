@@ -82,7 +82,7 @@ export interface KlinesChartSvgProps {
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
   drawTool: "line" | "fibonacci" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -973,11 +973,13 @@ export function KlinesChartSvg({
             const range = seg.price1 - seg.price2;
             const priceTop = Math.max(seg.price1, seg.price2);
             const priceBottom = Math.min(seg.price1, seg.price2);
+            const pct1Raw = Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33));
+            const pct1 = Math.round(pct1Raw * 10000) / 10000;
             const fibLevels = [
-              { k: 1 / 3, label: "33.3%" },
+              { k: pct1 / 100, label: `${Number(pct1.toFixed(2))}%` },
               { k: 0.5, label: "50%" },
               { k: 0.618, label: "61.8%" },
-            ] as const;
+            ];
             const mainW = FIB_STROKE_WIDTH_VALUES[(seg.fibStrokeWidth as FibStrokeWidth) ?? "medium"];
             const w618 = FIB_STROKE_WIDTH_VALUES[(seg.fibLevel618StrokeWidth as FibStrokeWidth) ?? "thin"];
             const yTop = segmentToPixel(seg.index1, priceTop).y;
@@ -1025,12 +1027,12 @@ export function KlinesChartSvg({
                   <>
                     <line x1={p2.x} y1={yTop} x2={extendPx} y2={yTop} stroke={strokeColor} strokeWidth={mainW} strokeDasharray={dashArray} />
                     <line x1={p2.x} y1={yBottom} x2={extendPx} y2={yBottom} stroke={strokeColor} strokeWidth={mainW} strokeDasharray={dashArray} />
-                    {fibLevels.map(({ k }) => {
+                    {fibLevels.map(({ k, label }) => {
                       const priceLevel = seg.price2 + range * k;
                       const py = segmentToPixel(seg.index1, priceLevel).y;
                       const levelColor = k === 0.618 ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
                       const levelW = k === 0.618 ? w618 : mainW;
-                      return <line key={k} x1={p2.x} y1={py} x2={extendPx} y2={py} stroke={levelColor} strokeWidth={levelW} strokeDasharray={dashArray} />;
+                      return <line key={label} x1={p2.x} y1={py} x2={extendPx} y2={py} stroke={levelColor} strokeWidth={levelW} strokeDasharray={dashArray} />;
                     })}
                   </>
                 )}
@@ -1049,7 +1051,7 @@ export function KlinesChartSvg({
                   const labelW = 36;
                   const labelH = 12;
                   return (
-                    <g key={k}>
+                    <g key={label}>
                       <line x1={p1.x} y1={py} x2={p2.x} y2={py} stroke={levelColor} strokeWidth={levelW} />
                       {seg.showPercent !== false && (
                         <>
@@ -1178,13 +1180,28 @@ export function KlinesChartSvg({
               const svgH = svg.height.baseVal.value;
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
-              const HIT_THRESHOLD = 12;
+              const HIT_THRESHOLD = 24;
               let bestIdx = -1;
               let bestD = HIT_THRESHOLD;
               drawSegments.forEach((seg, index) => {
-                const segP1 = segmentToPixel(seg.index1, seg.price1);
-                const segP2 = segmentToPixel(seg.index2, seg.price2);
-                const d = distanceToSegment(px, py, segP1.x, segP1.y, segP2.x, segP2.y);
+                const p1 = segmentToPixel(seg.index1, seg.price1);
+                const p2 = segmentToPixel(seg.index2, seg.price2);
+                let d = distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y);
+                if (seg.type === "fibonacci") {
+                  const range = seg.price1 - seg.price2;
+                  const priceTop = Math.max(seg.price1, seg.price2);
+                  const priceBottom = Math.min(seg.price1, seg.price2);
+                  const extendPx = segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x;
+                  const xEnd = Math.max(p2.x, extendPx);
+                  const yTop = segmentToPixel(seg.index1, priceTop).y;
+                  const yBottom = segmentToPixel(seg.index1, priceBottom).y;
+                  const k1 = Math.round(Math.max(0, Math.min(0.5, (seg.fibLevelPct1 ?? 33.33) / 100)) * 10000) / 10000;
+                  const y1 = segmentToPixel(seg.index1, seg.price2 + range * k1).y;
+                  const y50 = segmentToPixel(seg.index1, seg.price2 + range * 0.5).y;
+                  const y618 = segmentToPixel(seg.index1, seg.price2 + range * 0.618).y;
+                  const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
+                  d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
+                }
                 if (d < bestD) {
                   bestD = d;
                   bestIdx = index;
@@ -1208,13 +1225,28 @@ export function KlinesChartSvg({
               const px = (e.nativeEvent.clientX - rect.left) * (svgW / rect.width);
               const py = (e.nativeEvent.clientY - rect.top) * (svgH / rect.height);
               if (drawTool === "select" && drawingsVisible) {
-                const HIT_THRESHOLD = 12;
+                const HIT_THRESHOLD = 24;
                 let bestIdx = -1;
                 let bestD = HIT_THRESHOLD;
                 drawSegments.forEach((seg, index) => {
-                  const segP1 = segmentToPixel(seg.index1, seg.price1);
-                  const segP2 = segmentToPixel(seg.index2, seg.price2);
-                  const d = distanceToSegment(px, py, segP1.x, segP1.y, segP2.x, segP2.y);
+                  const p1 = segmentToPixel(seg.index1, seg.price1);
+                  const p2 = segmentToPixel(seg.index2, seg.price2);
+                  let d = distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y);
+                  if (seg.type === "fibonacci") {
+                    const range = seg.price1 - seg.price2;
+                    const priceTop = Math.max(seg.price1, seg.price2);
+                    const priceBottom = Math.min(seg.price1, seg.price2);
+                    const extendPx = segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x;
+                    const xEnd = Math.max(p2.x, extendPx);
+                    const yTop = segmentToPixel(seg.index1, priceTop).y;
+                    const yBottom = segmentToPixel(seg.index1, priceBottom).y;
+                    const k1 = Math.round(Math.max(0, Math.min(0.5, (seg.fibLevelPct1 ?? 33.33) / 100)) * 10000) / 10000;
+                    const y1 = segmentToPixel(seg.index1, seg.price2 + range * k1).y;
+                    const y50 = segmentToPixel(seg.index1, seg.price2 + range * 0.5).y;
+                    const y618 = segmentToPixel(seg.index1, seg.price2 + range * 0.618).y;
+                    const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
+                    d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
+                  }
                   if (d < bestD) {
                     bestD = d;
                     bestIdx = index;
@@ -1231,7 +1263,7 @@ export function KlinesChartSvg({
                 setDrawSegments((seg) => {
                   const df = drawTool === "fibonacci" ? drawDefaults.fibonacci : drawDefaults.segment;
                   const newSeg = drawTool === "fibonacci"
-                    ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: df.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: df.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: df.showPercent ?? false, showValues: df.showValues ?? false, fibStrokeWidth: df.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: df.fibLevel618StrokeWidth ?? "thin" })
+                    ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: df.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: df.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: df.showPercent ?? false, showValues: df.showValues ?? false, fibStrokeWidth: df.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: df.fibLevel618StrokeWidth ?? "thin", fibLevelPct1: df.fibLevelPct1 ?? 33.33 })
                     : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: df.startCap ?? "point", endCap: df.endCap ?? "arrow", showPercent: df.showPercent ?? true, showValues: df.showValues ?? false, color: df.color ?? DEFAULT_SEGMENT_COLOR });
                   return [...seg, newSeg];
                 });
@@ -1248,6 +1280,10 @@ export function KlinesChartSvg({
           const isFib = seg.type === "fibonacci";
           const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
           const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
+          const fibLevel1Pct = isFib ? Math.round(Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33)) * 10000) / 10000 : 0;
+          const fibLevel1Price = isFib ? seg.price2 + (seg.price1 - seg.price2) * (fibLevel1Pct / 100) : 0;
+          const fibLevel1Pos = isFib ? segmentToPixel(seg.index1, fibLevel1Price) : { x: 0, y: 0 };
+          const fibLevel1MidX = isFib ? (h1.x + h2.x) / 2 : 0;
           return (
             <g pointerEvents="all">
               <circle
@@ -1274,6 +1310,24 @@ export function KlinesChartSvg({
                 onClick={(e) => e.stopPropagation()}
               />
               <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+              {isFib && (
+                <>
+                  <circle
+                    cx={fibLevel1MidX}
+                    cy={fibLevel1Pos.y}
+                    r={5}
+                    fill="transparent"
+                    stroke="none"
+                    style={{ cursor: "ns-resize" }}
+                    title={(t as Record<string, string>).fibLevel1Drag ?? "Arrastar para ajustar o primeiro nível (0–50%)"}
+                    aria-label={(t as Record<string, string>).fibLevel1Drag ?? "Arrastar para ajustar o primeiro nível"}
+                    onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "fibLevel1" }); }}
+                    onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "fibLevel1" }); }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <circle cx={fibLevel1MidX} cy={fibLevel1Pos.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+                </>
+              )}
               {isFib && (
                 <g
                   style={{ cursor: "grab" }}

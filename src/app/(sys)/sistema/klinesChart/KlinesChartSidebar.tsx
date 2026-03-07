@@ -5,6 +5,7 @@
  */
 import { useState, useRef, useLayoutEffect, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import { ASSET_PREFIX } from "@/app/constants";
 import { SIDEBAR_WIDTH } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
@@ -781,7 +782,7 @@ export function KlinesChartSidebar({
               className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
               aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
             >
-              ◫
+              <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
             </button>
             <button
               type="button"
@@ -1106,7 +1107,7 @@ export function KlinesChartSidebar({
                   <button type="button" onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }} className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold" title={t.drawExitMode} aria-label={t.drawExitMode}><span aria-hidden>×</span></button>
                 </div>
                 <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`} aria-label={t.lineSegment}>📏</button>
-                <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}>◫</button>
+                <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}><img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" /></button>
                 <button type="button" onClick={clearAllDrawing} title={t.drawClearAll} className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700" aria-label={t.drawClearAll}>🗑️</button>
               </div>
             )}

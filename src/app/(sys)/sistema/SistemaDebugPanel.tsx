@@ -252,7 +252,7 @@ export default function SistemaDebugPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="fixed top-20 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 shadow-sm"
+          className="fixed top-1/2 right-0 z-50 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-l-lg bg-amber-100 hover:bg-amber-200 text-amber-800 border border-r-0 border-amber-300 shadow-sm"
           title={t.title}
           aria-label={t.title}
         >
