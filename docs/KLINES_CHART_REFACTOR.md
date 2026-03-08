@@ -29,9 +29,12 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
   - KlinesChartSvg.tsx: **1861 → 1547 linhas** (−314).  
   - Novo arquivo: `DrawSegmentRender.tsx` (~334 linhas).
 
+- **Fase 3** – Overlay de desenho (preview do draw-pending + rect com pointer down/move/up e hit-test para seleção/criação de segmentos) extraído para `klinesChart/DrawOverlay.tsx`.  
+  - KlinesChartSvg.tsx: **1556 → 1181 linhas** (−375).  
+  - Novo arquivo: `DrawOverlay.tsx` (~457 linhas).
+
 ### Pendente
 
-- **Fase 3**: Extrair overlay de desenho para `klinesChart/DrawOverlay.tsx`.
 - **Fase 4**: Extrair handles do segmento selecionado para `klinesChart/DrawSegmentHandles.tsx`.
 
 ---
@@ -89,6 +92,28 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
 - Remover imports não mais usados (FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, FibStrokeWidth, MS_PER_DAY).
 
 **Critério de sucesso:** Comportamento idêntico; KlinesChartSvg.tsx com ~300–400 linhas a menos.
+
+---
+
+## Fase 3 – Detalhamento (concluída)
+
+**Objetivo:** Extrair o overlay de desenho (preview do segmento em construção + rect transparente com pointer down/move/up e hit-test) para um componente próprio.
+
+**Novo arquivo:** `src/app/(sys)/sistema/klinesChart/DrawOverlay.tsx`
+
+**Responsabilidades do componente:**
+
+- Renderizar o preview do primeiro ponto (círculo) e dos segmentos em construção (rect, line, channel, horizontalLine, fibonacci) conforme drawPending e drawTool.
+- Renderizar o `<rect>` transparente sobre o plot quando drawMode, com: onPointerDown (iniciar desenho ou pan do select), onPointerMove (atualizar segundo ponto), onPointerUp (confirmar segmento para line/rectangle/fibonacci/channel/horizontalLine), onClick (hit-test para selecionar segmento ou segundo clique para canal).
+- Helper getSvgPoint(svgRef, clientX, clientY) para converter evento de ponteiro em coordenadas SVG.
+- Props: chartSvgRef, chartW, chartH, drawMode, drawTool, todos os drawPending/setters, segmentToPixel, snapToCandlePoint, drawSegments/setDrawSegments, drawDefaults, selectedSegmentIndex/setSelectedSegmentIndex, drawingsVisible, callbacks (onChartDrawClick, onSegmentCreated, onSelectToolPan), selectPanActive/setSelectPanActive, selectPanLastClientXRef, justPannedRef.
+
+**Em KlinesChartSvg.tsx:**
+
+- Substituir o bloco de previews (drawPending) e o rect com pointer handlers por `<DrawOverlay ... />`.
+- Remover imports não usados (flushSync, distanceToSegment, SEGMENT_COLOR_PALETTE).
+
+**Critério de sucesso:** Comportamento idêntico; KlinesChartSvg.tsx com ~350–400 linhas a menos.
 
 ---
 
