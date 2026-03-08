@@ -25,9 +25,12 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
   - KlinesChart.tsx: **2118 → 1490 linhas** (−628).  
   - Novo arquivo: `KlinesChartSegmentOptions.tsx` (~560 linhas).
 
+- **Fase 2** – Render de cada tipo de segmento (fibonacci, channel, rectangle, horizontalLine, segment) extraído para `klinesChart/DrawSegmentRender.tsx`.  
+  - KlinesChartSvg.tsx: **1861 → 1547 linhas** (−314).  
+  - Novo arquivo: `DrawSegmentRender.tsx` (~334 linhas).
+
 ### Pendente
 
-- **Fase 2**: Extrair render de segmentos para `klinesChart/DrawSegmentRender.tsx` (ou componentes por tipo).
 - **Fase 3**: Extrair overlay de desenho para `klinesChart/DrawOverlay.tsx`.
 - **Fase 4**: Extrair handles do segmento selecionado para `klinesChart/DrawSegmentHandles.tsx`.
 
@@ -61,6 +64,31 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
 - Manter em KlinesChart os estados `segmentOptionsPosition` e `segmentOptionsRef` (e `chartRowRef`) para posicionamento e arraste.
 
 **Critério de sucesso:** Comportamento idêntico ao atual; KlinesChart.tsx com ~400–500 linhas a menos.
+
+---
+
+## Fase 2 – Detalhamento (concluída)
+
+**Objetivo:** Extrair o render de cada tipo de segmento (fibonacci, channel, rectangle, horizontalLine, segment) para um componente próprio.
+
+**Novo arquivo:** `src/app/(sys)/sistema/klinesChart/DrawSegmentRender.tsx`
+
+**Responsabilidades do componente:**
+
+- Receber um único `DrawSegment` e seu índice; renderizar o `<g>` correspondente ao tipo (fibonacci, channel, horizontalLine, rectangle, segment/line).
+- Props: `segment`, `index`, `segmentToPixel`, `isSelected`, `setDrawDragging`, `formatYAxis`, `fullReversed`, `n`, `fontSize`.
+- Fibonacci: linha principal, seta, níveis, extensão pontilhada, handle de arraste da extensão, valores e percentuais.
+- Canal: linha do meio tracejada + seta, paralelas, extensão, pontos nas extremidades, showValues.
+- Reta horizontal: linha com strokeWidth e strokeDasharray.
+- Retângulo: rect com opção de preenchimento.
+- Segment (line): linha, startCap/endCap (point/arrow), showPercent (label com % e dias), showValues.
+
+**Em KlinesChartSvg.tsx:**
+
+- Substituir o bloco `drawSegments.map((seg, idx) => { ... })` por `drawSegments.map((seg, idx) => <DrawSegmentRender key={idx} ... />)`.
+- Remover imports não mais usados (FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, FibStrokeWidth, MS_PER_DAY).
+
+**Critério de sucesso:** Comportamento idêntico; KlinesChartSvg.tsx com ~300–400 linhas a menos.
 
 ---
 
