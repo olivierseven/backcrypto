@@ -4,6 +4,7 @@
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
 import { useId, useRef, useState, useEffect, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
@@ -78,10 +79,12 @@ export interface KlinesChartSvgProps {
   drawDefaults: DrawDefaults;
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
+  drawPendingRectSecond: { index: number; price: number } | null;
+  setDrawPendingRectSecond: (p: { index: number; price: number } | null) => void;
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "select";
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
@@ -158,6 +161,8 @@ export function KlinesChartSvg({
   drawDefaults,
   drawPending,
   setDrawPending,
+  drawPendingRectSecond,
+  setDrawPendingRectSecond,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawMode,
@@ -176,8 +181,8 @@ export function KlinesChartSvg({
 
   useEffect(() => {
     if (!selectPanActive || !onSelectToolPan) return;
-    const PIXELS_PER_CANDLE = 12;
-    const MAX_DELTA_PER_MOVE = 4;
+    const PIXELS_PER_CANDLE = 5;
+    const MAX_DELTA_PER_MOVE = 14;
     const onMove = (e: PointerEvent) => {
       e.preventDefault();
       const deltaX = e.clientX - selectPanLastClientX.current;
@@ -1172,6 +1177,26 @@ export function KlinesChartSvg({
             );
           }
 
+          if (seg.type === "rectangle") {
+            const minI = Math.min(seg.index1, seg.index2);
+            const maxI = Math.max(seg.index1, seg.index2);
+            const minP = Math.min(seg.price1, seg.price2);
+            const maxP = Math.max(seg.price1, seg.price2);
+            const tl = segmentToPixel(minI, maxP);
+            const br = segmentToPixel(maxI, minP);
+            const rx = tl.x;
+            const ry = tl.y;
+            const rw = Math.max(0, br.x - tl.x);
+            const rh = Math.max(0, br.y - tl.y);
+            const rectStrokeW = FIB_STROKE_WIDTH_VALUES[(seg.rectangleStrokeWidth as FibStrokeWidth) ?? "medium"];
+            const filled = seg.rectangleFilled === true;
+            return (
+              <g key={idx}>
+                <rect x={rx} y={ry} width={rw} height={rh} fill={filled ? strokeColor : "none"} fillOpacity={filled ? 0.3 : undefined} stroke={strokeColor} strokeWidth={rectStrokeW} />
+              </g>
+            );
+          }
+
           const startCap = seg.startCap ?? "none";
           const endCap = seg.endCap ?? "none";
           const dx = p2.x - p1.x;
@@ -1261,6 +1286,17 @@ export function KlinesChartSvg({
           const p = segmentToPixel(drawPending.index1, drawPending.price1);
           return <circle cx={p.x} cy={p.y} r={4} fill="none" stroke="#000000" strokeWidth={1} />;
         })()}
+        {drawPending && drawTool === "rectangle" && drawPendingRectSecond && (() => {
+          const minI = Math.min(drawPending.index1, drawPendingRectSecond.index);
+          const maxI = Math.max(drawPending.index1, drawPendingRectSecond.index);
+          const minP = Math.min(drawPending.price1, drawPendingRectSecond.price);
+          const maxP = Math.max(drawPending.price1, drawPendingRectSecond.price);
+          const tl = segmentToPixel(minI, maxP);
+          const br = segmentToPixel(maxI, minP);
+          return (
+            <rect x={tl.x} y={tl.y} width={Math.max(0, br.x - tl.x)} height={Math.max(0, br.y - tl.y)} fill="none" stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />
+          );
+        })()}
         {drawMode && (
           <rect
             x={MARGIN_LEFT}
@@ -1270,13 +1306,22 @@ export function KlinesChartSvg({
             fill="transparent"
             style={{ cursor: drawTool === "select" ? "pointer" : "crosshair", touchAction: "none" }}
             onPointerDown={(e) => {
-              if (drawTool !== "select" || !drawingsVisible || !onSelectToolPan || !chartSvgRef.current) return;
+              if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();
               const svgW = svg.width.baseVal.value;
               const svgH = svg.height.baseVal.value;
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
+              if (drawTool === "rectangle" && drawPending === null) {
+                if (e.cancelable) e.preventDefault();
+                const d = snapToCandlePoint(px, py);
+                setDrawPending({ index1: d.index, price1: d.price });
+                e.currentTarget.setPointerCapture(e.pointerId);
+                onChartDrawClick?.();
+                return;
+              }
+              if (drawTool !== "select" || !drawingsVisible || !onSelectToolPan) return;
               const HIT_THRESHOLD = 24;
               let bestIdx = -1;
               let bestD = HIT_THRESHOLD;
@@ -1317,6 +1362,16 @@ export function KlinesChartSvg({
                     d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
                   }
                 }
+                if (seg.type === "rectangle") {
+                  const rMinI = Math.min(seg.index1, seg.index2);
+                  const rMaxI = Math.max(seg.index1, seg.index2);
+                  const rMinP = Math.min(seg.price1, seg.price2);
+                  const rMaxP = Math.max(seg.price1, seg.price2);
+                  const rTl = segmentToPixel(rMinI, rMaxP);
+                  const rBr = segmentToPixel(rMaxI, rMinP);
+                  const inside = px >= rTl.x && px <= rBr.x && py >= rTl.y && py <= rBr.y;
+                  d = inside ? 0 : Infinity;
+                }
                 if (d < bestD) {
                   bestD = d;
                   bestIdx = index;
@@ -1327,11 +1382,54 @@ export function KlinesChartSvg({
                 setSelectPanActive(true);
               }
             }}
+            onPointerMove={(e) => {
+              if (drawTool !== "rectangle" || drawPending === null) return;
+              if (e.cancelable) e.preventDefault();
+              if (!chartSvgRef.current) return;
+              const svg = chartSvgRef.current;
+              const rect = svg.getBoundingClientRect();
+              const svgW = svg.width.baseVal.value;
+              const svgH = svg.height.baseVal.value;
+              const px = (e.clientX - rect.left) * (svgW / rect.width);
+              const py = (e.clientY - rect.top) * (svgH / rect.height);
+              const d = snapToCandlePoint(px, py);
+              setDrawPendingRectSecond({ index: d.index, price: d.price });
+            }}
+            onPointerUp={(e) => {
+              if (drawTool === "rectangle" && drawPending !== null) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                if (!chartSvgRef.current) {
+                  setDrawPending(null);
+                  setDrawPendingRectSecond(null);
+                  return;
+                }
+                const svg = chartSvgRef.current;
+                const rect = svg.getBoundingClientRect();
+                const svgW = svg.width.baseVal.value;
+                const svgH = svg.height.baseVal.value;
+                const px = (e.clientX - rect.left) * (svgW / rect.width);
+                const py = (e.clientY - rect.top) * (svgH / rect.height);
+                const d = snapToCandlePoint(px, py);
+                const dfRect = drawDefaults.rectangle;
+                const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "rectangle", color: dfRect?.color ?? DEFAULT_SEGMENT_COLOR, rectangleStrokeWidth: dfRect?.rectangleStrokeWidth ?? "medium", rectangleFilled: dfRect?.rectangleFilled ?? false };
+                let newIndex = 0;
+                flushSync(() => {
+                  setDrawSegments((seg) => {
+                    newIndex = seg.length;
+                    return [...seg, newSeg];
+                  });
+                });
+                setDrawPending(null);
+                setDrawPendingRectSecond(null);
+                onSegmentCreated?.(newIndex);
+              }
+            }}
             onClick={(e) => {
               if (justPannedRef.current) {
                 justPannedRef.current = false;
                 return;
               }
+              if (drawTool === "rectangle") return;
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();
@@ -1380,6 +1478,16 @@ export function KlinesChartSvg({
                       d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
                     }
                   }
+                  if (seg.type === "rectangle") {
+                    const rMinI = Math.min(seg.index1, seg.index2);
+                    const rMaxI = Math.max(seg.index1, seg.index2);
+                    const rMinP = Math.min(seg.price1, seg.price2);
+                    const rMaxP = Math.max(seg.price1, seg.price2);
+                    const rTl = segmentToPixel(rMinI, rMaxP);
+                    const rBr = segmentToPixel(rMaxI, rMinP);
+                    const inside = px >= rTl.x && px <= rBr.x && py >= rTl.y && py <= rBr.y;
+                    d = inside ? 0 : Infinity;
+                  }
                   if (d < bestD) {
                     bestD = d;
                     bestIdx = index;
@@ -1388,9 +1496,9 @@ export function KlinesChartSvg({
                 setSelectedSegmentIndex(bestIdx >= 0 ? bestIdx : null);
                 return;
               }
-              if (drawTool === "line" || drawTool === "fibonacci" || drawTool === "channel") onChartDrawClick?.();
               const d = snapToCandlePoint(px, py);
               if (drawPending === null) {
+                if (drawTool === "line" || drawTool === "fibonacci" || drawTool === "channel") onChartDrawClick?.();
                 setDrawPending({ index1: d.index, price1: d.price });
               } else {
                 setDrawSegments((seg) => {
@@ -1404,7 +1512,7 @@ export function KlinesChartSvg({
                         ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "channel" as const, color: dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelOffset: 0, channelExtremityColor: dfCh?.channelExtremityColor ?? dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelMidStrokeWidth: dfCh?.channelMidStrokeWidth ?? "thin", channelExtremityStrokeWidth: dfCh?.channelExtremityStrokeWidth ?? "thin", showValues: dfCh?.showValues ?? false })
                         : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: dfSeg.startCap ?? "point", endCap: dfSeg.endCap ?? "arrow", showPercent: dfSeg.showPercent ?? true, showValues: dfSeg.showValues ?? false, color: dfSeg.color ?? DEFAULT_SEGMENT_COLOR });
                   const newIndex = seg.length;
-                  queueMicrotask(() => onSegmentCreated?.(newIndex));
+                  onSegmentCreated?.(newIndex);
                   return [...seg, newSeg];
                 });
                 setDrawPending(null);
