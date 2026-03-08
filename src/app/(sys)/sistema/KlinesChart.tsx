@@ -337,6 +337,28 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     return () => window.removeEventListener("backcrypto-drawings-updated", handler);
   }, [groupMinutes]);
 
+  // Editar desenho a partir do menu Desenhos: fecha o painel, seleciona o objeto e leva o gráfico até o candle do primeiro ponto
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ index: number }>;
+      const i = ev.detail?.index ?? -1;
+      if (i < 0) return;
+      const idx = Math.min(i, Math.max(0, drawSegments.length - 1));
+      if (idx < 0) return;
+      const seg = drawSegments[idx];
+      if (seg) {
+        const targetCandle = Math.min(seg.index1, seg.index2);
+        const newStart = Math.max(0, Math.min(n - visibleCount, targetCandle - Math.floor(visibleCount / 2)));
+        setStartIndex(newStart);
+      }
+      setSelectedSegmentIndex(idx);
+      selectSelectTool();
+      setDrawOpen(true); // abre a sidebar para mostrar as opções do segmento
+    };
+    window.addEventListener("backcrypto-drawings-edit", handler);
+    return () => window.removeEventListener("backcrypto-drawings-edit", handler);
+  }, [drawSegments, n, visibleCount, setSelectedSegmentIndex, selectSelectTool, setDrawOpen]);
+
   // Carregar padrões de desenho do localStorage (uma vez ao montar)
   useEffect(() => {
     try {

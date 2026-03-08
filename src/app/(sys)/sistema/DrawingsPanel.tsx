@@ -139,6 +139,18 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
                     </span>
                     <button
                       type="button"
+                      onClick={() => {
+                        window.dispatchEvent(new CustomEvent("backcrypto-drawings-edit", { detail: { index: i } }));
+                        onClose?.();
+                      }}
+                      className="shrink-0 p-1.5 rounded hover:bg-zinc-100 text-zinc-600 hover:text-zinc-800"
+                      title={t.segmentEdit ?? "Edit"}
+                      aria-label={t.segmentEdit ?? "Edit"}
+                    >
+                      <span aria-hidden>✏️</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => deleteDrawingAtIndex(i)}
                       className="shrink-0 p-1.5 rounded hover:bg-red-50 text-zinc-500 hover:text-red-600"
                       title={t.segmentDelete ?? "Delete segment"}
