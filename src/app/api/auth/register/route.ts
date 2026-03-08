@@ -1,6 +1,6 @@
 // POST /api/auth/register — cadastro Bio (banco BG, envia e-mail de verificação)
 import { NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import bcrypt from "bcryptjs";
 import { emailSearchHash, encryptEmail, normalizeEmail, decryptEmail } from "@/lib/crypto";
 import { createEmailVerificationToken } from "@/lib/token";
@@ -98,14 +98,14 @@ export async function POST(req: Request) {
     }
 
     const cutoff = new Date(Date.now() - UNVERIFIED_TTL_HOURS * 60 * 60 * 1000);
-    await bioPrisma.user.deleteMany({
+    await cryptoPrisma.user.deleteMany({
       where: {
         emailVerifiedAt: null,
         createdAt: { lt: cutoff },
       },
     });
 
-    const exists = await bioPrisma.user.findUnique({ where: { emailSearchHash: searchHash } });
+    const exists = await cryptoPrisma.user.findUnique({ where: { emailSearchHash: searchHash } });
 
     if (exists) {
       if (!exists.emailVerifiedAt) {
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
     const { enc, iv, tag } = encryptEmail(emailNorm);
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await bioPrisma.user.create({
+    const user = await cryptoPrisma.user.create({
       data: {
         emailEnc: enc,
         emailIv: iv,

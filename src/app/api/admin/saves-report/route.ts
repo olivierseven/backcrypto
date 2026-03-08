@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { warn } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const adminUser = await bioPrisma.user.findUnique({
+    const adminUser = await cryptoPrisma.user.findUnique({
       where: { id: adminId },
       select: { role: true },
     });
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Informe userId" }, { status: 400 });
     }
 
-    const rows = await bioPrisma.bioSavedConfig.findMany({
+    const rows = await cryptoPrisma.bioSavedConfig.findMany({
       where: { userId },
       select: { id: true, name: true, config: true, createdAt: true },
       orderBy: { createdAt: "asc" },

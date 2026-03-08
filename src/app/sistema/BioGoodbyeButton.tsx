@@ -3,15 +3,15 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createPortal } from "react-dom";
-import { useBioLang } from "../contexts/BioLangContext";
-import { getBioT } from "../lib/translations";
+import { useCryptoLang } from "../contexts/CryptoLangContext";
+import { getCryptoT } from "../lib/translations";
 import { ASSET_PREFIX, API_BASE } from "../constants";
 
 const iconClass = "flex items-center justify-center w-12 h-12 rounded-lg border-2 border-neutral-300 bg-white transition-colors hover:bg-neutral-50 hover:border-neutral-400 text-neutral-800 hover:text-black";
 
 export default function BioGoodbyeButton() {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema;
   const [showModal, setShowModal] = useState(false);
 
   const handleConfirm = () => {

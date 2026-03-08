@@ -1,6 +1,6 @@
 // POST /api/auth/forgot — solicita link de redefinição de senha (Bio). Sempre mesma resposta para não revelar se e-mail existe.
 import { NextRequest, NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { normalizeEmail, emailSearchHash, decryptEmail } from "@/lib/crypto";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       return redirect(`${RESET_PAGE}?sent=ok`, req);
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { emailSearchHash: emailSearchHash(emailNorm) },
       select: { id: true, emailEnc: true, emailIv: true, emailTag: true },
     });

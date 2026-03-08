@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Body: { gaps: [{ interval: '1m'|'1h', from, to }] }" }, { status: 400 });
     }
 
-    const created = await bioPrisma.binanceKlineGap.createMany({
+    const created = await cryptoPrisma.binanceKlineGap.createMany({
       data: valid.map((g) => ({
         symbol,
         interval: g.interval,

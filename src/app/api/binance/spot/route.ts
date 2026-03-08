@@ -4,7 +4,7 @@
  * GET /api/binance/spot?symbol=BTCUSDT
  */
 import { NextRequest, NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -28,12 +28,12 @@ export async function GET(request: NextRequest) {
     const lastHourPrevDayOpen = startOfToday - ONE_HOUR_MS; // 23:00 UTC do dia anterior
 
     const [latest, prevDayLastHour, prevDayLast1m] = await Promise.all([
-      bioPrisma.binanceKlineFast.findFirst({
+      cryptoPrisma.binanceKlineFast.findFirst({
         where: { symbol, interval: "1m" },
         orderBy: { openTime: "desc" },
         select: { close: true },
       }),
-      bioPrisma.binanceKline.findFirst({
+      cryptoPrisma.binanceKline.findFirst({
         where: {
           symbol,
           interval: "1h",
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         },
         select: { close: true },
       }),
-      bioPrisma.binanceKlineFast.findFirst({
+      cryptoPrisma.binanceKlineFast.findFirst({
         where: { symbol, interval: "1m", openTime: { lt: BigInt(startOfToday) } },
         orderBy: { openTime: "desc" },
         select: { close: true },

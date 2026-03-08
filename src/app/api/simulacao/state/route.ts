@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const row = await bioPrisma.bioSimulationState.findUnique({
+  const row = await cryptoPrisma.bioSimulationState.findUnique({
     where: { userId },
     select: { state: true, mapDisplayByYear: true, updatedAt: true },
   });
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       ? (mapDisplayByYear as object)
       : null;
 
-  await bioPrisma.bioSimulationState.upsert({
+  await cryptoPrisma.bioSimulationState.upsert({
     where: { userId },
     create: {
       userId,

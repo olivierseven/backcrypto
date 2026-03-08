@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { handleOrderPaid } from "@/lib/pagarme-order-paid";
 import { dbg } from "@/lib/logger";
 
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     const userId = typeof payload?.sub === "string" ? payload.sub : null;
     if (!userId) return NextResponse.json({ error: "invalid_user" }, { status: 401 });
 
-    let order = await bioPrisma.pagarMeOrder.findFirst({
+    let order = await cryptoPrisma.pagarMeOrder.findFirst({
       where: { id: orderId, userId },
       select: { id: true, status: true, coinsToCredit: true, amountTotalCents: true, completedAt: true },
     });
@@ -52,7 +52,7 @@ export async function GET(req: Request) {
           if (pgOrder?.status === "paid") {
             dbg(`[bio/checkout-pix/status] order paid at Pagar.me, processing orderId=${orderId}`);
             await handleOrderPaid(pgOrder);
-            order = await bioPrisma.pagarMeOrder.findFirst({
+            order = await cryptoPrisma.pagarMeOrder.findFirst({
               where: { id: orderId, userId },
               select: { id: true, status: true, coinsToCredit: true, amountTotalCents: true, completedAt: true },
             }) ?? order;

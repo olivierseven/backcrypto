@@ -2,12 +2,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { normalizeEmail, emailSearchHash, decryptEmail } from "@/lib/crypto";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { dbg, warn, error, log as vLog } from "@/lib/logger";
-import { isFirstLoginBio, createBioWelcomePackage } from "@/lib/bio-bonus";
+import { isFirstLoginCrypto, createCryptoWelcomePackage } from "@/lib/crypto-bonus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
     dbg(`[auth/login] processing email=${emailNorm.slice(0, 3)}...@${emailNorm.split("@")[1]}`);
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { emailSearchHash: emailSearchHash(emailNorm) },
       select: {
         id: true,
@@ -157,9 +157,9 @@ export async function POST(req: Request) {
 
     try {
       const isFirstBio = await isFirstLoginBio(user.id);
-      if (isFirstBio) {
+      if (isFirstCrypto) {
         dbg(`[auth/login] Bio first login, creating welcome package: userId=${user.id.slice(0, 8)}...`);
-        const result = await createBioWelcomePackage(user.id);
+        const result = await createCryptoWelcomePackage(user.id);
         if (result?.success) {
           vLog(`[auth/login] Bio welcome package created: userId=${user.id.slice(0, 8)}... coins=${result.coins}`);
         } else {

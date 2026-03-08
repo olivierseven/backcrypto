@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { log as vLog, warn, error } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -23,7 +23,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const adminUser = await bioPrisma.user.findUnique({
+    const adminUser = await cryptoPrisma.user.findUnique({
       where: { id: adminId },
       select: { role: true },
     });
@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Você não pode deletar sua própria conta" }, { status: 400 });
     }
 
-    const userToDelete = await bioPrisma.user.findUnique({
+    const userToDelete = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, role: true },
     });
@@ -57,7 +57,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Não é possível deletar outro administrador" }, { status: 403 });
     }
 
-    await bioPrisma.user.delete({
+    await cryptoPrisma.user.delete({
       where: { id: userId },
     });
 

@@ -1,9 +1,9 @@
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import ExpandableCreditsList from "@/app/components/ExpandableCreditsList";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 
-export default async function BioActiveCredits({ userId, lang = "pt" }: { userId: string; lang?: BioLang }) {
-  const t = getBioT(lang);
+export default async function CryptoActiveCredits({ userId, lang = "pt" }: { userId: string; lang?: CryptoLang }) {
+  const t = getCryptoT(lang);
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
   function fmtNum(n: number) {
@@ -14,7 +14,7 @@ export default async function BioActiveCredits({ userId, lang = "pt" }: { userId
   }
   const now = new Date();
 
-  const rows = await bioPrisma.walletCredit.findMany({
+  const rows = await cryptoPrisma.walletCredit.findMany({
     where: { userId, expiresAt: { gt: now } },
     select: { id: true, amount: true, consumed: true, expiresAt: true, createdAt: true },
     orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
@@ -50,7 +50,7 @@ export default async function BioActiveCredits({ userId, lang = "pt" }: { userId
   const c = t.historico.credits;
 
   return (
-    <div className="card-bio-generator bio-card rounded-lg">
+    <div className="card-crypto-generator crypto-card rounded-lg">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-zinc-900">{c.title}</h2>

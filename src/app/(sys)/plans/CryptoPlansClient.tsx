@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { API_BASE, APP_BACKCRYPTO_ROUTE_PREFIX, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 
 type PlanKey = "7" | "49";
 
@@ -34,8 +34,8 @@ function validateCpfForPix(cpf: string, p: { cpfInvalidDigits: string; cpfInvali
   return null;
 }
 
-export default function BioPlansClient({ lang = "pt" }: { lang?: BioLang }) {
-  const t = getBioT(lang);
+export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }) {
+  const t = getCryptoT(lang);
   const p = t.plans;
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
@@ -120,7 +120,7 @@ export default function BioPlansClient({ lang = "pt" }: { lang?: BioLang }) {
     setPoliciesLoading(true);
     setPoliciesError(false);
     const type = policiesTab;
-    fetch(`${API_BASE}/bio-policies?type=${type}&lang=${lang}`, { credentials: "include" })
+    fetch(`${API_BASE}/crypto-policies?type=${type}&lang=${lang}`, { credentials: "include" })
       .then((r) => r.json())
       .then((d: { html?: string; error?: string }) => {
         if (typeof d?.html === "string") {
@@ -659,7 +659,7 @@ export default function BioPlansClient({ lang = "pt" }: { lang?: BioLang }) {
           )}
           {policiesTab !== null && !policiesLoading && !policiesError && policiesCache[policiesTab] && (
             <div
-              className="bio-policies-content p-4 prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 text-zinc-700"
+              className="crypto-policies-content p-4 prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 text-zinc-700"
               dangerouslySetInnerHTML={{ __html: policiesCache[policiesTab]! }}
             />
           )}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/app/constants";
+import { CRYPTO_WELCOME_COINS, CRYPTO_WELCOME_DURATION_DAYS } from "@/lib/crypto-bonus";
 
 interface Props {
   userId: string;
@@ -39,10 +40,7 @@ interface SavesReportData {
   count: number;
 }
 
-const BIO_WELCOME_COINS = 3000;
-const BIO_WELCOME_DURATION_DAYS = 7;
-
-export default function BioAdminClient({ userId, userEmail }: Props) {
+export default function CryptoAdminClient({ userId, userEmail }: Props) {
   const router = useRouter();
 
   // Pacote de boas-vindas

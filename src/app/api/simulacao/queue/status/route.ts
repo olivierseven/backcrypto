@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { doOneTick } from "../queue-tick";
 import { dbg } from "@/lib/logger";
 
@@ -35,14 +35,14 @@ export async function GET() {
 
   await doOneTick();
 
-  const jobs = await bioPrisma.bioSimulationQueue.findMany({
+  const jobs = await cryptoPrisma.bioSimulationQueue.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
     select: { id: true, queueName: true, status: true, createdAt: true, result: true },
   });
   const completedIds = jobs.filter((j) => j.status === "COMPLETED").map((j) => j.id);
   if (completedIds.length > 0) {
-    await bioPrisma.bioSimulationQueue.deleteMany({ where: { id: { in: completedIds } } });
+    await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: { in: completedIds } } });
   }
   dbg(`[bio/queue/status] userId=${userId.slice(0, 8)}... count=${jobs.length} completed=${completedIds.length}`);
   return NextResponse.json({

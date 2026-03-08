@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ASSET_PREFIX, APP_BACKCRYPTO_ROUTE_PREFIX } from "./constants";
-import { useBioLang } from "./contexts/BioLangContext";
+import { useCryptoLang } from "./contexts/CryptoLangContext";
 import { bioTranslations } from "./lib/translations";
 
 const FORGOT_ACTION = `${APP_BACKCRYPTO_ROUTE_PREFIX}/api/auth/forgot`;
@@ -96,7 +96,7 @@ function Alert({
 
 export default function BioResetPasswordForm() {
   const searchParams = useSearchParams();
-  const lang = useBioLang();
+  const lang = useCryptoLang();
   const t = bioTranslations[lang].resetPassword;
 
   const token = searchParams?.get("token") ?? null;

@@ -1,9 +1,9 @@
 // Lógica de order.paid do webhook Pagar.me (Bio) — extraída para poder ser importada por outras rotas
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { CheckoutStatus, TxSource, TxType } from "@/lib/prisma-bio-client";
 import { sendEmail } from "@/lib/mailer";
 import { decryptEmail } from "@/lib/crypto";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn } from "@/lib/logger";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
@@ -39,7 +39,7 @@ export async function handleOrderPaid(data: any) {
     return;
   }
 
-  const bioOrder = await bioPrisma.pagarMeOrder.findUnique({
+  const bioOrder = await cryptoPrisma.pagarMeOrder.findUnique({
     where: { id: orderId },
     select: { id: true, userId: true, coinsToCredit: true, amountTotalCents: true },
   });
@@ -60,7 +60,7 @@ export async function handleOrderPaid(data: any) {
 
   dbg(`[pagarme-bio] order.paid orderId=${orderId} userId=${userId.slice(0, 8)}... coins=${coinsToCredit}`);
 
-  await bioPrisma.$transaction(async (tx) => {
+  await cryptoPrisma.$transaction(async (tx) => {
     await tx.pagarMeOrder.updateMany({
       where: { id: orderId, userId },
       data: { status: CheckoutStatus.COMPLETED, amountTotalCents: amountCents, coinsToCredit: coinsToCredit, completedAt },
@@ -117,11 +117,11 @@ export async function handleOrderPaid(data: any) {
 
   // Recibo por e-mail (PIX)
   const [user, localOrder] = await Promise.all([
-    bioPrisma.user.findUnique({
+    cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { emailEnc: true, emailIv: true, emailTag: true, language: true },
     }),
-    bioPrisma.pagarMeOrder.findUnique({
+    cryptoPrisma.pagarMeOrder.findUnique({
       where: { id: orderId },
       select: { status: true, coinsToCredit: true, amountTotalCents: true },
     }),
@@ -138,8 +138,8 @@ export async function handleOrderPaid(data: any) {
     const valor = (cents / 100).toFixed(2).replace(".", ",");
     const publicRef = `BG-${orderId.slice(-8).toUpperCase()}`;
     const dashboardUrl = `${EMAIL_LINK_BASE}${BASE_PATH}/sistema`;
-    const lang: BioLang = user?.language === "pt" ? "pt" : "en";
-    const t = getBioT(lang).receiptEmail;
+    const lang: CryptoLang = user?.language === "pt" ? "pt" : "en";
+    const t = getCryptoT(lang).receiptEmail;
     const countStr = coins.toLocaleString(lang === "pt" ? "pt-BR" : "en-US");
     const subject = t.subject;
     const receivedPayment = t.receivedPaymentPix.replace("{valor}", valor);

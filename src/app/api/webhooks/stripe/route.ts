@@ -4,11 +4,11 @@
 // e BG_STRIPE_WEBHOOK_SECRET do CLI, ou teste em ambiente com URL pública.
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { CheckoutStatus, TxSource, TxType } from "@/lib/prisma-bio-client";
 import { sendEmail } from "@/lib/mailer";
 import { decryptEmail } from "@/lib/crypto";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn, error } from "@/lib/logger";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
@@ -73,7 +73,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
   const amountCents = session.amount_total ?? 0;
   const completedAt = new Date((event.created ?? Math.floor(Date.now() / 1000)) * 1000);
 
-  await bioPrisma.$transaction(async (tx) => {
+  await cryptoPrisma.$transaction(async (tx) => {
     await tx.stripeCheckoutSession.upsert({
       where: { id: session.id },
       update: {
@@ -150,11 +150,11 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
   // Recibo por e-mail — priorizar email do usuário no banco (quem recebeu as coins)
   // para evitar envio ao email errado por autofill/Stripe Link no checkout
   const [local, user] = await Promise.all([
-    bioPrisma.stripeCheckoutSession.findUnique({
+    cryptoPrisma.stripeCheckoutSession.findUnique({
       where: { id: session.id },
       select: { status: true, coinsToCredit: true, amountTotalCents: true },
     }),
-    bioPrisma.user.findUnique({
+    cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { language: true, emailEnc: true, emailIv: true, emailTag: true },
     }),
@@ -177,8 +177,8 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
       const valor = (cents / 100).toFixed(2).replace(".", ",");
       const publicRef = `BG-${session.id.slice(-8).toUpperCase()}`;
       const dashboardUrl = `${EMAIL_LINK_BASE}${BASE_PATH}/sistema`;
-      const lang: BioLang = user?.language === "pt" ? "pt" : "en";
-      const t = getBioT(lang).receiptEmail;
+      const lang: CryptoLang = user?.language === "pt" ? "pt" : "en";
+      const t = getCryptoT(lang).receiptEmail;
       const countStr = coins.toLocaleString(lang === "pt" ? "pt-BR" : "en-US");
 
       const subject = t.subject;
@@ -254,7 +254,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await bioPrisma.stripeEvent.create({
+    await cryptoPrisma.stripeEvent.create({
       data: { id: event.id, type: event.type, payload: event as unknown as object },
     });
     dbg(`[bio/stripe] event persisted ${event.id} type=${event.type}`);
@@ -270,7 +270,7 @@ export async function POST(req: Request) {
     } else if (event.type === "checkout.session.expired") {
       const s = event.data.object as Stripe.Checkout.Session;
       if (s.metadata?.bio === "1") {
-        await bioPrisma.stripeCheckoutSession.updateMany({
+        await cryptoPrisma.stripeCheckoutSession.updateMany({
           where: { id: s.id, status: CheckoutStatus.CREATED },
           data: { status: CheckoutStatus.CANCELED },
         });

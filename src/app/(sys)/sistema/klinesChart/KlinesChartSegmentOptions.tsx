@@ -606,19 +606,30 @@ export function KlinesChartSegmentOptions({
             <span>{t.segmentShowValues}</span>
           </label>
         )}
-        <button
-          type="button"
-          onClick={() => {
-            if (selectedSegmentIndex === null) return;
-            setDrawSegments((prev) => prev.filter((_, i) => i !== selectedSegmentIndex));
-            setSelectedSegmentIndex(null);
-          }}
-          className="w-full flex items-center justify-center py-1 rounded border border-zinc-300 bg-zinc-50 hover:bg-red-50 hover:border-red-300 text-base"
-          title={t.segmentDelete}
-          aria-label={t.segmentDelete}
-        >
-          <span aria-hidden>🗑️</span>
-        </button>
+        <div className="flex items-center gap-1.5 w-full">
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedSegmentIndex === null) return;
+              setDrawSegments((prev) => prev.filter((_, i) => i !== selectedSegmentIndex));
+              setSelectedSegmentIndex(null);
+            }}
+            className="flex-1 flex items-center justify-center py-1 rounded border border-zinc-300 bg-zinc-50 hover:bg-red-50 hover:border-red-300 text-base"
+            title={t.segmentDelete}
+            aria-label={t.segmentDelete}
+          >
+            <span aria-hidden>🗑️</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
+            className="flex-1 flex items-center justify-center py-1 rounded border border-zinc-300 bg-zinc-50 hover:bg-zinc-100 text-sm font-medium text-zinc-700"
+            title={t.segmentOk}
+            aria-label={t.segmentOk}
+          >
+            {t.segmentOk}
+          </button>
+        </div>
       </div>
     </div>
   );

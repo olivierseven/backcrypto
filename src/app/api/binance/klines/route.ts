@@ -6,7 +6,7 @@
  * Resposta: array no formato Binance [openTime, open, high, low, close, volume, closeTime, ...]
  */
 import { NextRequest, NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
 
 const INTERVAL_TO_MINUTES: Record<string, number> = {
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (groupMinutes === 1) {
-      const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+      const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         Prisma.sql`
           SELECT "openTime", "open", "high", "low", "close", "volume",
                  "closeTime", "quoteAssetVolume", "numberOfTrades",
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       const startOfToday = startOfTodayUtcMs();
 
       // Agregação só do dia atual (UTC) a partir de BinanceKlineFast (1m)
-      const todayRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+      const todayRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         Prisma.sql`
           WITH k AS (
             SELECT
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest) {
         if (isGe1h) {
           // REGRA: histórico (>=1h) vem sempre de BinanceKline até ontem (UTC).
           // O dia atual (UTC) já é agregado acima via BinanceKlineFast (1m).
-          const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+          const historyRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
             Prisma.sql`
               WITH k AS (
                 SELECT
@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
           cacheList = Array.isArray(historyRows) ? historyRows : [];
         } else {
           // < 1h: histórico a partir de BinanceKlineFast (1m) agregado ao bucket
-          const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+          const historyRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
             Prisma.sql`
               WITH k AS (
                 SELECT
@@ -257,7 +257,7 @@ export async function GET(request: NextRequest) {
     if (ABOVE_1D_MINUTES.has(groupMinutes)) {
       const bucketExpr = above1dBucketExpr(groupMinutes, bucketMs);
       const startOfToday = startOfTodayUtcMs();
-      const hasCache1d = await bioPrisma
+      const hasCache1d = await cryptoPrisma
         .$queryRaw<[{ exists: boolean }]>(
           Prisma.sql`
             SELECT EXISTS (
@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
         )
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
-      const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+      const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         hasCache1d
           ? Prisma.sql`
           WITH k_today AS (
@@ -438,7 +438,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fallback: agregação direta da BinanceKlineFast (1m)
-    const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+    const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
       Prisma.sql`
         WITH k AS (
           SELECT

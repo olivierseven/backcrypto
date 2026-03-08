@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function GET() {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const rows = await bioPrisma.chartLayout.findMany({
+  const rows = await cryptoPrisma.chartLayout.findMany({
     where: { userId },
     select: { slot: true, config: true },
   });
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "config_too_large", message: "Config exceeds max size" }, { status: 400 });
   }
 
-  await bioPrisma.chartLayout.upsert({
+  await cryptoPrisma.chartLayout.upsert({
     where: { userId_slot: { userId, slot } },
     create: { userId, slot, config },
     update: { config },

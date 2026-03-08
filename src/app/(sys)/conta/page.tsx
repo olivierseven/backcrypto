@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
 import { decryptEmail } from "@/lib/crypto";
 import BioContaClient from "./ContaClient";
 import BioHeaderSafe from "@/app/BioHeaderSafe";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, SISTEMA_PATH } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { getBioT } from "@/app/lib/translations";
+import { getCryptoT } from "@/app/lib/translations";
 
 export const metadata: Metadata = {
   title: "Minha Conta | Backtest Crypto",
@@ -41,7 +41,7 @@ export default async function BioContaPage() {
   const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
   if (!userId) redirect(loginUrl);
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -63,7 +63,7 @@ export default async function BioContaPage() {
 
   if (!user) redirect(loginUrl);
 
-  const wallet = await bioPrisma.userCoinWallet.findUnique({
+  const wallet = await cryptoPrisma.userCoinWallet.findUnique({
     where: { userId },
     select: { balance: true },
   });
@@ -77,7 +77,7 @@ export default async function BioContaPage() {
   }
 
   const lang = (user.language ?? "en") as "en" | "pt";
-  const t = getBioT(lang);
+  const t = getCryptoT(lang);
 
   return (
     <main className="bio-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">

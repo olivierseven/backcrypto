@@ -1,8 +1,8 @@
 /** Traduções do Backtest Crypto (conta e demais páginas). */
 
-export type BioLang = "en" | "pt";
+export type CryptoLang = "en" | "pt";
 
-export const bioTranslations = {
+export const cryptoTranslations = {
   en: {
     conta: {
       backToSystem: "← System",
@@ -616,6 +616,7 @@ export const bioTranslations = {
         segmentStartCap: "Start",
         segmentEndCap: "End",
         segmentDelete: "Delete segment",
+        segmentOk: "OK",
         segmentShowPercent: "Show percentage",
         segmentShowValues: "Show values",
         capNone: "None",
@@ -650,6 +651,14 @@ export const bioTranslations = {
         menuStrategies: "Strategies",
         menuMyStrategies: "My strategies",
         menuAddStrategy: "Create strategy",
+        menuDrawings: "Drawings",
+        noDrawings: "No drawings",
+        drawingsWord: "drawings",
+        clearAllDrawingsCache: "Clear all drawing cache",
+        clearDrawingsConfirmMessage: "You will lose all saved drawings and this action cannot be undone. Continue?",
+        clearDrawingsConfirmMessageTimeframe: "Delete all drawings for {interval}? This action cannot be undone.",
+        clearDrawingsConfirmYes: "Yes",
+        clearDrawingsConfirmNo: "No",
         symbolAria: "Select symbol",
         indicatorsPanelTitle: "Indicators",
         noIndicatorsYet: "No saved indicators. Use \"Add indicator\" in the menu to create one.",
@@ -1488,6 +1497,7 @@ export const bioTranslations = {
         segmentStartCap: "Início",
         segmentEndCap: "Fim",
         segmentDelete: "Excluir segmento",
+        segmentOk: "OK",
         segmentShowPercent: "Mostrar percentual",
         segmentShowValues: "Mostrar valores",
         capNone: "Nada",
@@ -1522,6 +1532,14 @@ export const bioTranslations = {
         menuStrategies: "Estratégias",
         menuMyStrategies: "Minhas estratégias",
         menuAddStrategy: "Criar estratégia",
+        menuDrawings: "Desenhos",
+        noDrawings: "Nenhum desenho",
+        drawingsWord: "desenhos",
+        clearAllDrawingsCache: "Limpar todo o cache de desenhos",
+        clearDrawingsConfirmMessage: "Você perderá todos os desenhos salvos e essa ação é irreversível. Continuar?",
+        clearDrawingsConfirmMessageTimeframe: "Apagar todos os desenhos do timeframe {interval}? Essa ação é irreversível.",
+        clearDrawingsConfirmYes: "Sim",
+        clearDrawingsConfirmNo: "Não",
         symbolAria: "Selecionar símbolo",
         indicatorsPanelTitle: "Indicadores",
         noIndicatorsYet: "Nenhum indicador salvo. Use \"Adicionar indicador\" no menu para criar.",
@@ -1756,7 +1774,7 @@ export const bioTranslations = {
 } as const;
 
 /** Mapeia a mensagem PT retornada por validateNickname para a chave de tradução */
-const PT_TO_KEY: Record<string, keyof (typeof bioTranslations.en.conta.validation)> = {
+const PT_TO_KEY: Record<string, keyof (typeof cryptoTranslations.en.conta.validation)> = {
   "Nickname não pode ser vazio": "empty",
   "Permitido: letras, números, . _ -": "allowedChars",
   "Máximo 1 ponto (.)": "maxOneDot",
@@ -1769,13 +1787,13 @@ const PT_TO_KEY: Record<string, keyof (typeof bioTranslations.en.conta.validatio
   "Máximo de 30 caracteres": "maxLength",
 };
 
-export function translateValidationError(msg: string | null, lang: BioLang): string | null {
+export function translateValidationError(msg: string | null, lang: CryptoLang): string | null {
   if (!msg) return null;
   const key = PT_TO_KEY[msg];
-  if (key) return bioTranslations[lang].conta.validation[key];
+  if (key) return cryptoTranslations[lang].conta.validation[key];
   return msg;
 }
 
-export function getBioT(lang: BioLang) {
-  return bioTranslations[lang] ?? bioTranslations.en;
+export function getCryptoT(lang: CryptoLang) {
+  return cryptoTranslations[lang] ?? cryptoTranslations.en;
 }

@@ -1,6 +1,6 @@
 // GET /api/auth/verify?token=... — verificação de e-mail (cadastro Bio)
 import { NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { consumeEmailVerificationToken } from "@/lib/token";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
       return NextResponse.redirect(loginUrl(req, "verified=invalid"), { status: 303 });
     }
 
-    await bioPrisma.user.update({
+    await cryptoPrisma.user.update({
       where: { id: result.userId },
       data: { emailVerifiedAt: new Date() },
     });

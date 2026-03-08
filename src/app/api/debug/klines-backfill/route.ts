@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
 
         const rows = klines.map((k) => klineToRow(k, symbol, gap.interval));
         if (gap.interval === "1m") {
-          const created = await bioPrisma.binanceKlineFast.createMany({
+          const created = await cryptoPrisma.binanceKlineFast.createMany({
             data: rows,
             skipDuplicates: true,
           });
@@ -155,14 +155,14 @@ export async function POST(request: NextRequest) {
           // Para 1h: sobrescreve o range (se executar atrasado ou repetir, mantém consistência com a Binance)
           const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
           const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
-          await bioPrisma.binanceKline.deleteMany({
+          await cryptoPrisma.binanceKline.deleteMany({
             where: {
               symbol,
               interval: "1h",
               openTime: { gte: minOpen, lte: maxOpen },
             },
           });
-          const created = await bioPrisma.binanceKline.createMany({ data: rows });
+          const created = await cryptoPrisma.binanceKline.createMany({ data: rows });
           totalInserted1h += created.count;
           gapInserted += created.count;
         }

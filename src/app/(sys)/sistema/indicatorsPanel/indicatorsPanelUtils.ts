@@ -1,7 +1,7 @@
-import { getBioT } from "@/app/lib/translations";
+import { getCryptoT } from "@/app/lib/translations";
 import type { UserIndicatorConfig, IndicatorFieldKey } from "../KlinesIndicatorsContext";
 
-export type KlinesT = ReturnType<typeof getBioT>["sistema"]["klines"];
+export type KlinesT = ReturnType<typeof getCryptoT>["sistema"]["klines"];
 
 export function getFieldLabel(
   fieldKey: IndicatorFieldKey,

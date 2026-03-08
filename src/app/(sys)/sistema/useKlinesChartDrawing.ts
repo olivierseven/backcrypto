@@ -6,13 +6,26 @@
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
+import { KLINE_DRAW_MAGNETIC_KEY } from "./KlinesChartConstants";
 
 export type DrawTool = "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "select";
+
+function getInitialDrawMagnetic(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const v = window.localStorage.getItem(KLINE_DRAW_MAGNETIC_KEY);
+    if (v === "false") return false;
+    if (v === "true") return true;
+  } catch {
+    /* ignore */
+  }
+  return true;
+}
 
 export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement | null>) {
   const [drawOpen, setDrawOpen] = useState(false);
   const [drawMode, setDrawMode] = useState(false);
-  const [drawMagnetic, setDrawMagnetic] = useState(true);
+  const [drawMagnetic, setDrawMagneticState] = useState(getInitialDrawMagnetic);
   const [drawSegments, setDrawSegments] = useState<DrawSegment[]>([]);
   const [drawPending, setDrawPending] = useState<{ index1: number; price1: number } | null>(null);
   const [drawPendingRectSecond, setDrawPendingRectSecond] = useState<{ index: number; price: number } | null>(null);
@@ -28,6 +41,14 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const drawConversionRef = useRef<DrawConversionParams | null>(null);
   const drawSnapPointsRef = useRef<{ index: number; price: number }[]>([]);
   const lastDragPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_MAGNETIC_KEY, String(drawMagnetic));
+    } catch {
+      /* ignore */
+    }
+  }, [drawMagnetic]);
 
   const dataToPixel = useCallback((c: DrawConversionParams, index: number, price: number) => {
     const x = c.MARGIN_LEFT + (index - c.startIndex + 0.5) * c.gap;
@@ -242,7 +263,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     closeDrawMode,
     drawTool,
     drawMagnetic,
-    setDrawMagnetic,
+    setDrawMagnetic: setDrawMagneticState,
     drawSegments,
     setDrawSegments,
     drawPending,

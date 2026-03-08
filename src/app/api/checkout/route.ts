@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { CheckoutStatus } from "@/lib/prisma-bio-client";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { dbg, warn, error } from "@/lib/logger";
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "invalid_user" }, { status: 401 });
   }
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { id: true, emailEnc: true, emailIv: true, emailTag: true },
   });
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
       ...(customerEmail ? { customer_email: customerEmail } : {}),
     });
 
-    await bioPrisma.stripeCheckoutSession.upsert({
+    await cryptoPrisma.stripeCheckoutSession.upsert({
       where: { id: session.id },
       update: {
         userId,

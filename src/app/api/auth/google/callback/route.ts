@@ -1,11 +1,11 @@
 // GET /api/auth/google/callback — callback OAuth Google (Bio)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
 import { encryptEmail, emailSearchHash, normalizeEmail, decryptEmail } from "@/lib/crypto";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
-import { isFirstLoginBio, createBioWelcomePackage } from "@/lib/bio-bonus";
+import { isFirstLoginCrypto, createCryptoWelcomePackage } from "@/lib/crypto-bonus";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
@@ -135,7 +135,7 @@ export async function GET(req: Request) {
     }
 
     const searchHash = emailSearchHash(emailNorm);
-    let user = await bioPrisma.user.findUnique({
+    let user = await cryptoPrisma.user.findUnique({
       where: { emailSearchHash: searchHash },
       select: {
         id: true,
@@ -165,7 +165,7 @@ export async function GET(req: Request) {
       const oauthPasswordHash = await bcrypt.hash(`oauth_${emailNorm}_${Date.now()}`, 10);
       const nickname = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       dbg(`[bio/auth/google/callback] creating new user email=${emailNorm.slice(0, 3)}...`);
-      user = await bioPrisma.user.create({
+      user = await cryptoPrisma.user.create({
         data: {
           name,
           nickname,
@@ -189,7 +189,7 @@ export async function GET(req: Request) {
         },
       });
     } else if (!user.emailVerifiedAt) {
-      await bioPrisma.user.update({
+      await cryptoPrisma.user.update({
         where: { emailSearchHash: searchHash },
         data: { emailVerifiedAt: new Date() },
       });
@@ -199,9 +199,9 @@ export async function GET(req: Request) {
     const role = user.role || "user";
 
     try {
-      const isFirstBio = await isFirstLoginBio(user.id);
-      if (isFirstBio) {
-        const result = await createBioWelcomePackage(user.id);
+      const isFirstCrypto = await isFirstLoginCrypto(user.id);
+      if (isFirstCrypto) {
+        const result = await createCryptoWelcomePackage(user.id);
         if (result?.success) {
           vLog(`[bio/auth/google/callback] welcome package created userId=${user.id.slice(0, 8)}... coins=${result.coins}`);
         }

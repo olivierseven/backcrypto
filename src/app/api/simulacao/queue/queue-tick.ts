@@ -1,7 +1,7 @@
 // Lógica compartilhada do tick da fila: usa FOR UPDATE SKIP LOCKED. Limites lidos do banco (BioAppConfig).
 // Ao concluir, grava result e status COMPLETED e deduz coins.
-import { bioPrisma } from "@/lib/bio-db";
-import { getBioQueueConfigMap, getMaxConcurrentFromMap } from "@/lib/bio-app-config";
+import { cryptoPrisma } from "@/lib/crypto-db";
+import { getCryptoQueueConfigMap, getMaxConcurrentFromMap } from "@/lib/crypto-app-config";
 import { executeSimulationOne, executeSimulationN, type Body } from "@/app/api/simulacao/run/route";
 import { getBalance, spendCoins, COINS_PER_RUN } from "@/lib/spend-coins";
 import { dbg, warn, error } from "@/lib/logger";
@@ -18,7 +18,7 @@ async function claimOnePending(
   queueName: string,
   maxConcurrent: number
 ): Promise<ClaimedRow | null> {
-  const rows = await bioPrisma.$queryRawUnsafe<ClaimedRow[]>(
+  const rows = await cryptoPrisma.$queryRawUnsafe<ClaimedRow[]>(
     `UPDATE "BioSimulationQueue"
      SET status = 'RUNNING'
      WHERE id = (
@@ -40,7 +40,7 @@ async function claimOnePending(
 /** Um tick: para cada fila, claim atômico de 1 job, executa e grava result + COMPLETED. Cliente obtém resultado no GET status. */
 export async function doOneTick(): Promise<{ queueName: string; id: string }[]> {
   const processed: { queueName: string; id: string }[] = [];
-  const configMap = await getBioQueueConfigMap();
+  const configMap = await getCryptoQueueConfigMap();
 
   for (const queueName of QUEUE_NAMES) {
     const maxConcurrent = getMaxConcurrentFromMap(configMap, queueName);
@@ -51,7 +51,7 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
     const balance = await getBalance(row.userId);
     if (balance < coinsCost) {
       warn(`[bio/queue] insufficient coins id=${row.id} userId=${row.userId.slice(0, 8)}... balance=${balance} need=${coinsCost}`);
-      await bioPrisma.bioSimulationQueue.update({
+      await cryptoPrisma.bioSimulationQueue.update({
         where: { id: row.id },
         data: { status: "COMPLETED", result: { error: "insufficient_coins", message: "Saldo insuficiente de coins" } as unknown as object },
       });
@@ -66,7 +66,7 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
         const startIter = payload.currentIteration ?? 0;
         const actualSteps = Math.max(0, result.iteracao - startIter);
         if (actualSteps > 0) await spendCoins(row.userId, actualSteps, row.id, { queueName });
-        await bioPrisma.bioSimulationQueue.update({
+        await cryptoPrisma.bioSimulationQueue.update({
           where: { id: row.id },
           data: { status: "COMPLETED", result: result as unknown as object },
         });
@@ -76,18 +76,18 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
         const startIter = payload.currentIteration ?? 0;
         const actualIterations = Math.max(0, result.iteracao - startIter);
         if (actualIterations > 0) await spendCoins(row.userId, actualIterations, row.id, { queueName, N: actualIterations });
-        await bioPrisma.bioSimulationQueue.update({
+        await cryptoPrisma.bioSimulationQueue.update({
           where: { id: row.id },
           data: { status: "COMPLETED", result: result as unknown as object },
         });
         dbg(`[bio/queue] executed id=${row.id} queue=${queueName} N=${payload.N} actualIterations=${actualIterations} coins=${actualIterations}`);
       } else {
         warn(`[bio/queue] invalid payload mode/N id=${row.id}`);
-        await bioPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
+        await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
       }
     } catch (e) {
       error(`[bio/queue] run error id=${row.id}: ${e instanceof Error ? e.message : e}`);
-      await bioPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
+      await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
     }
     processed.push({ queueName, id: row.id });
   }

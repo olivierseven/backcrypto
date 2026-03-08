@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ASSET_PREFIX } from "./constants";
 import LanguageSwitcher from "./components/LanguageSwitcher";
-import { getBioT, type BioLang } from "./lib/translations";
+import { getCryptoT, type CryptoLang } from "./lib/translations";
 
 const SC_BASE = "https://sevencoins.com.br";
 const navLinks = [
@@ -15,14 +15,14 @@ const navLinks = [
 ] as const;
 
 type Props = {
-  lang: BioLang;
-  setLang: (lang: BioLang) => void;
+  lang: CryptoLang;
+  setLang: (lang: CryptoLang) => void;
 };
 
 export default function BioLandingHeader({ lang, setLang }: Props) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const t = getBioT(lang).landing;
+  const t = getCryptoT(lang).landing;
   const nav = t.nav;
 
   const linkClass = "px-3 py-1.5 rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700";

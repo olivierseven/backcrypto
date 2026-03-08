@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { validateNickname } from "@/lib/validate-nickname";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
-import { getBioT, translateValidationError, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, translateValidationError, type CryptoLang } from "@/app/lib/translations";
 
 interface UserData {
   id: string;
@@ -169,7 +169,7 @@ export default function BioContaClient({
 
   const canChangeNickname = user.role !== "user" || user.nicknameChanges < 2;
   const remainingChanges = user.role === "user" ? Math.max(0, 2 - user.nicknameChanges) : null;
-  const t = getBioT(language as BioLang);
+  const t = getCryptoT(language as CryptoLang);
 
   return (
     <div className="space-y-6">
@@ -216,7 +216,7 @@ export default function BioContaClient({
             {canChangeNickname && remainingChanges !== null && (
               <p className="mt-1 text-xs text-zinc-500">{t.conta.changesRemaining} {remainingChanges} {t.conta.of} 2.</p>
             )}
-            {validationError && canChangeNickname && <p className="mt-1 text-xs text-red-600">⚠️ {translateValidationError(validationError, language as BioLang) ?? validationError}</p>}
+            {validationError && canChangeNickname && <p className="mt-1 text-xs text-red-600">⚠️ {translateValidationError(validationError, language as CryptoLang) ?? validationError}</p>}
         {message && (
           <div className={`p-3 rounded-lg ${message.type === "success" ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"}`}>
             {message.text}

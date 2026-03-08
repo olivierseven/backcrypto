@@ -120,8 +120,8 @@ function shouldLogPerformance(): boolean {
 import { GenesisPlot } from "./components/GenesisPlot";
 import { PlayBIcon } from "./components/PlayBIcon";
 import { useBioDebug } from "@/app/sistema/BioDebugContext";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import { containsBlockedWord } from "@/lib/blocked-words";
 import { ASSET_PREFIX, API_BASE } from "@/app/constants";
 
@@ -249,8 +249,8 @@ const SCRIPTS: ScriptDef[] = [
 
 function BioDebugMenuContent() {
   const ctx = useBioDebug();
-  const lang = useBioLang();
-  const tSistema = getBioT(lang).sistema;
+  const lang = useCryptoLang();
+  const tSistema = getCryptoT(lang).sistema;
   if (!ctx) return null;
   const { flags, setGenesisId, setGenesisGrupo, setPerformance, setExecLog, setDados, setMortesAcum, setMapa } = ctx;
   return (
@@ -305,8 +305,8 @@ const EstatisticasDisplay = memo(function EstatisticasDisplay({
   nascimentos?: number;
   atualizando?: boolean;
 }) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema;
   const locale = lang === "en" ? "en-US" : "de-DE";
   const stats = useMemo(() => {
     const todos = [...vetor1, ...vetor2];
@@ -374,7 +374,7 @@ const ResultadoJSON = memo(function ResultadoJSON({
 }: {
   genesisResult: { vetor1: GenesisIndividual[]; vetor2: GenesisIndividual[]; especie: EspecieParams; resultadoPorId: ResultadoReproducaoPorId };
 }) {
-  const t = getBioT(useBioLang()).sistema;
+  const t = getCryptoT(useCryptoLang()).sistema;
   const jsonFormatado = useMemo(() => {
     const inicioFormatacao = performance.now();
     const vetor1Formatado = genesisResult.vetor1.map((ind) => ({
@@ -486,7 +486,7 @@ function Quadro0ConteudoInline({
   vals: Record<string, number>;
   setShowQuadro0PeriodosHelp: (v: boolean) => void;
 }) {
-  const t = getBioT(useBioLang()).sistema;
+  const t = getCryptoT(useCryptoLang()).sistema;
   const minR = -20000;
   const maxR = 20000;
   const getCurrent = () =>
@@ -992,7 +992,7 @@ function Quadro6ConteudoInline({
   setExpandPeriodo3Quadro6: React.Dispatch<React.SetStateAction<boolean>>;
   setShowQuadro6Help: (v: boolean) => void;
 }) {
-  const t = getBioT(useBioLang()).sistema;
+  const t = getCryptoT(useCryptoLang()).sistema;
   const habilitado = (vals.fator_continental_habilitado ?? 0) === 1;
   const keysPer1 = ["fator_mortalidade_cor0", "fator_mortalidade_cor1", "fator_mortalidade_cor2", "fator_mortalidade_cor3", "fator_mortalidade_cor4", "fator_mortalidade_cor5", "fator_mortalidade_cor6"] as const;
   const keysPer2 = ["fator_mortalidade_cor0_2", "fator_mortalidade_cor1_2", "fator_mortalidade_cor2_2", "fator_mortalidade_cor3_2", "fator_mortalidade_cor4_2", "fator_mortalidade_cor5_2", "fator_mortalidade_cor6_2"] as const;
@@ -1232,8 +1232,8 @@ function Quadro4ConteudoInline({
 }
 
 export default function SimuladorGenesisClient(props: { apiRun?: string; embedMode?: boolean; configSidebarId?: string; configPanelId?: string; mapBottomRightOverlay?: React.ReactNode } = {}) {
-  const lang = useBioLang();
-  const tSistema = getBioT(lang).sistema;
+  const lang = useCryptoLang();
+  const tSistema = getCryptoT(lang).sistema;
   const apiRun = props.apiRun ?? DEFAULT_API_RUN;
   const embedMode = props.embedMode ?? false;
   const configSidebarId = props.configSidebarId;

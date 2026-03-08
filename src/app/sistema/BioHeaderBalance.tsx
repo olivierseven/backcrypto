@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { useBioLang } from "../contexts/BioLangContext";
-import { getBioT } from "../lib/translations";
+import { useCryptoLang } from "../contexts/CryptoLangContext";
+import { getCryptoT } from "../lib/translations";
 import { API_BASE } from "../constants";
 
 const PAYMENT_RETURN_POLL_INTERVAL_MS = 2000;
 const PAYMENT_RETURN_POLL_COUNT = 2;
 
 export default function BioHeaderBalance() {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema;
   const locale = lang === "en" ? "en-US" : "pt-BR";
   const searchParams = useSearchParams();
   const [balance, setBalance] = useState<number | null>(null);

@@ -6,8 +6,8 @@
  */
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { API_BASE, ASSET_PREFIX } from "@/app/constants";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import {
   ASPECT_BREAKPOINT,
   MIN_CHART_HEIGHT,
@@ -93,8 +93,8 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.klines;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
   const [visibleCount, setVisibleCount] = useState<VisibleCount>(DEFAULT_VISIBLE);
   const [startIndex, setStartIndex] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -103,6 +103,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [loadOpen, setLoadOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
+  const [showClearDrawConfirm, setShowClearDrawConfirm] = useState(false);
   const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("right");
   /** Posição (px) da caixa de desenho na área do gráfico; null = canto superior direito (right-2 top-2). */
   const [drawToolboxPosition, setDrawToolboxPosition] = useState<{ x: number; y: number } | null>(null);
@@ -298,6 +299,40 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     }
     setSegmentsApplied(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
+  }, [groupMinutes]);
+
+  // Ouvir evento de limpeza de cache de desenhos (ex.: menu mobile "Limpar todo o cache")
+  useEffect(() => {
+    const handler = () => clearAllDrawing();
+    window.addEventListener("backcrypto-drawings-cleared", handler);
+    return () => window.removeEventListener("backcrypto-drawings-cleared", handler);
+  }, [clearAllDrawing]);
+
+  // Ouvir evento de atualização de um desenho (ex.: exclusão de um item no painel Desenhos)
+  useEffect(() => {
+    const handler = () => {
+      try {
+        const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY) : null;
+        if (!raw) {
+          setDrawSegments([]);
+          setSelectedSegmentIndex(null);
+          setDrawPending(null);
+          return;
+        }
+        const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
+        const key = String(groupMinutes);
+        const loaded = Array.isArray(data[key]) ? data[key] : [];
+        setDrawSegments(loaded);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
+      } catch {
+        setDrawSegments([]);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
+      }
+    };
+    window.addEventListener("backcrypto-drawings-updated", handler);
+    return () => window.removeEventListener("backcrypto-drawings-updated", handler);
   }, [groupMinutes]);
 
   // Carregar padrões de desenho do localStorage (uma vez ao montar)
@@ -1253,13 +1288,57 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 </button>
                 <button
                   type="button"
-                  onClick={clearAllDrawing}
+                  onClick={() => setShowClearDrawConfirm(true)}
                   title={t.drawClearAll}
                   className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
                   aria-label={t.drawClearAll}
                 >
                   🗑️
                 </button>
+              </div>
+            )}
+            {showClearDrawConfirm && (
+              <div className="absolute inset-0 z-[200] flex items-center justify-center">
+                <div
+                  className="absolute inset-0 bg-black/30"
+                  aria-hidden
+                  onClick={() => setShowClearDrawConfirm(false)}
+                />
+                <div
+                  className="relative z-[201] w-[min(320px,90vw)] rounded-xl border border-zinc-200 bg-white p-4 shadow-xl"
+                  role="alertdialog"
+                  aria-labelledby="clear-draw-confirm-title"
+                  aria-describedby="clear-draw-confirm-desc"
+                >
+                  <h3 id="clear-draw-confirm-title" className="text-sm font-semibold text-zinc-800 mb-2">
+                    {t.drawClearAll}
+                  </h3>
+                  <p id="clear-draw-confirm-desc" className="text-sm text-zinc-600 mb-4">
+                    {((t as Record<string, string>).clearDrawingsConfirmMessageTimeframe ?? "Delete all drawings for {interval}? This action cannot be undone.").replace(
+                      "{interval}",
+                      intervalLabel ?? (groupMinutes < 60 ? `${groupMinutes}m` : groupMinutes === 60 ? "1h" : groupMinutes < 1440 ? `${groupMinutes / 60}h` : groupMinutes === 1440 ? "1d" : groupMinutes === 10080 ? "1w" : `${groupMinutes}m`)
+                    )}
+                  </p>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowClearDrawConfirm(false)}
+                      className="px-3 py-2 text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-100 rounded-lg border border-zinc-300"
+                    >
+                      {(t as Record<string, string>).clearDrawingsConfirmNo ?? "No"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearAllDrawing();
+                        setShowClearDrawConfirm(false);
+                      }}
+                      className="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                    >
+                      {(t as Record<string, string>).clearDrawingsConfirmYes ?? "Yes"}
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (

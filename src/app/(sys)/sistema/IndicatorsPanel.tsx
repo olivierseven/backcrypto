@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import {
   useKlinesIndicators,
   type UserIndicatorConfig,
@@ -118,8 +118,8 @@ interface IndicatorsPanelProps {
 }
 
 export default function IndicatorsPanel({ initialView = "list", onClose }: IndicatorsPanelProps) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.klines;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
   const { userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
   const addFormRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

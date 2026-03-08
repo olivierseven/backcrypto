@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 
 interface Notification {
@@ -19,8 +19,8 @@ interface Notification {
 const API = `${API_BASE}/notifications`;
 
 export default function BioNotificationBell() {
-  const lang = useBioLang();
-  const t = getBioT(lang).notifications;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).notifications;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);

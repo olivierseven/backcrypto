@@ -1,8 +1,8 @@
-// POST /api/biogenerator/checkout-pix — Cria pedido PIX via Pagar.me (Bio, salva em bioPrisma)
+// POST /api/biogenerator/checkout-pix — Cria pedido PIX via Pagar.me (Bio, salva em cryptoPrisma)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import crypto from "node:crypto";
 import { decryptEmail } from "@/lib/crypto";
@@ -73,13 +73,13 @@ export async function POST(req: Request) {
   const userId = typeof payload?.sub === "string" ? payload.sub : null;
   if (!userId) return NextResponse.json({ error: "invalid_user" }, { status: 401 });
 
-  const exists = await bioPrisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  const exists = await cryptoPrisma.user.findUnique({ where: { id: userId }, select: { id: true } });
   if (!exists) {
     warn(`[bio/checkout-pix] user not in Bio DB userId=${userId.slice(0, 8)}...`);
     return NextResponse.json({ error: "user_not_found" }, { status: 403 });
   }
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { emailEnc: true, emailIv: true, emailTag: true, name: true },
   });
@@ -279,7 +279,7 @@ export async function POST(req: Request) {
     const { qrCode, qrCodeUrl, pixCopyPaste, expiresAt } = extracted;
     const expiresAtFallback = new Date(Date.now() + PIX_EXPIRES_IN_SECONDS * 1000);
 
-    await bioPrisma.pagarMeOrder.create({
+    await cryptoPrisma.pagarMeOrder.create({
       data: {
         id: orderId,
         userId,

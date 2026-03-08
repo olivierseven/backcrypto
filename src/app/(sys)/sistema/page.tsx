@@ -1,7 +1,7 @@
 // backcrypto/sistema — app Backtest Crypto (apenas header + fundo)
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
 import SistemaLayoutClient from "./SistemaLayoutClient";
 import KlinesTable from "./KlinesTable";
@@ -34,7 +34,7 @@ export default async function BackcryptoSistemaPage() {
   const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
   if (!userId) redirect(loginUrl);
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { id: true, language: true, hideStatusBar: true, role: true },
   });

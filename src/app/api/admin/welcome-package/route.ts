@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
-import { createBioWelcomePackage, BIO_WELCOME_COINS, BIO_WELCOME_DURATION_DAYS } from "@/lib/bio-bonus";
+import { cryptoPrisma } from "@/lib/crypto-db";
+import { createCryptoWelcomePackage, CRYPTO_WELCOME_COINS, CRYPTO_WELCOME_DURATION_DAYS } from "@/lib/crypto-bonus";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -21,7 +21,7 @@ async function requireAdmin(request: NextRequest): Promise<string> {
     throw new Error("Não autenticado");
   }
 
-  const adminUser = await bioPrisma.user.findUnique({
+  const adminUser = await cryptoPrisma.user.findUnique({
     where: { id: adminId },
     select: { role: true },
   });
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { id: true },
     });
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
-    const result = await createBioWelcomePackage(userId);
+    const result = await createCryptoWelcomePackage(userId);
 
     if (!result.success) {
       return NextResponse.json(
@@ -63,15 +63,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    vLog(`[bio/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${BIO_WELCOME_COINS}`);
+    vLog(`[crypto/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${CRYPTO_WELCOME_COINS}`);
 
     return NextResponse.json({
       success: true,
       message: "Pacote de boas-vindas criado com sucesso",
       data: {
         userId,
-        coins: BIO_WELCOME_COINS,
-        durationDays: BIO_WELCOME_DURATION_DAYS,
+        coins: CRYPTO_WELCOME_COINS,
+        durationDays: CRYPTO_WELCOME_DURATION_DAYS,
       },
     });
   } catch (err: unknown) {

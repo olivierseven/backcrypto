@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useBioLang, useBioLangContext } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
 
@@ -24,9 +24,9 @@ type ValidateResult =
   | null;
 
 export default function SistemaDebugPanel() {
-  const lang = useBioLang();
-  const { lang: currentLang, setLang } = useBioLangContext();
-  const t = getBioT(lang).sistema.debug;
+  const lang = useCryptoLang();
+  const { lang: currentLang, setLang } = useCryptoLangContext();
+  const t = getCryptoT(lang).sistema.debug;
   const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");

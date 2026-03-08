@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useBioLang } from "../contexts/BioLangContext";
-import { getBioT } from "../lib/translations";
+import { useCryptoLang } from "../contexts/CryptoLangContext";
+import { getCryptoT } from "../lib/translations";
 import { API_BASE } from "../constants";
 import { LineChart, type ChartPoint } from "../graficos/ChartComponents";
 
@@ -15,9 +15,9 @@ const iconClass =
 const STATE_ID = "__state__";
 
 export default function BioChartMenu() {
-  const lang = useBioLang();
-  const tSistema = getBioT(lang).sistema;
-  const t = getBioT(lang).graficos;
+  const lang = useCryptoLang();
+  const tSistema = getCryptoT(lang).sistema;
+  const t = getCryptoT(lang).graficos;
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
 

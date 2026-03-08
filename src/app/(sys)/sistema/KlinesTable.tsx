@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -102,8 +102,8 @@ function dayKeyUtc(ms: number): string {
 }
 
 export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.klines;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
   const { showKlinesTable } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();

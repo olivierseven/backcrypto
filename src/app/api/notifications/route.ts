@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -15,7 +15,7 @@ export async function GET() {
     const userId = typeof payload?.sub === "string" ? payload.sub : null;
     if (!userId) return NextResponse.json({ error: "Token inválido" }, { status: 401 });
 
-    const notifications = await bioPrisma.userNotification.findMany({
+    const notifications = await cryptoPrisma.userNotification.findMany({
       where: {
         userId,
         ativo: true,

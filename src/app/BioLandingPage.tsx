@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ASSET_PREFIX } from "./constants";
-import { getBioT, type BioLang } from "./lib/translations";
+import { getCryptoT, type CryptoLang } from "./lib/translations";
 import BioLandingHeader from "./BioLandingHeader";
 import BioLandingFooter from "./BioLandingFooter";
 
@@ -16,20 +16,20 @@ const FEATURES = [
   { emoji: "📱", key: "feature6" as const },
 ] as const;
 
-function getInitialLang(): BioLang {
+function getInitialLang(): CryptoLang {
   if (typeof document === "undefined") return "pt";
   const m = document.cookie.match(/sevencoins-lang=([^;]+)/);
   return m?.[1] === "en" ? "en" : "pt";
 }
 
 export default function BioLandingPage() {
-  const [lang, setLang] = useState<BioLang>("pt");
+  const [lang, setLang] = useState<CryptoLang>("pt");
   useEffect(() => {
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (urlLang === "en" || urlLang === "pt") setLang(urlLang);
     else setLang(getInitialLang());
   }, []);
-  const t = getBioT(lang).landing;
+  const t = getCryptoT(lang).landing;
 
   return (
     <div className="min-h-screen w-full flex flex-col">

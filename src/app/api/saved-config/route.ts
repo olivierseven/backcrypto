@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { gzipSync } from "node:zlib";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { validateConfigName } from "@/lib/validate-config-name";
 import { containsBlockedWord } from "@/lib/blocked-words";
 import { dbg, warn, error } from "@/lib/logger";
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
   const isPrivate = body.private !== false;
 
-  const exists = await bioPrisma.bioSavedConfig.findUnique({
+  const exists = await cryptoPrisma.bioSavedConfig.findUnique({
     where: { name },
     select: { id: true, userId: true },
   });
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
         );
       }
       // update: não conta contra o limite
-      await bioPrisma.bioSavedConfig.update({
+      await cryptoPrisma.bioSavedConfig.update({
         where: { id: exists.id },
         data: {
           config: toStore as object,
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     }
 
     // create: verificar limite
-    const count = await bioPrisma.bioSavedConfig.count({ where: { userId } });
+    const count = await cryptoPrisma.bioSavedConfig.count({ where: { userId } });
     if (count >= MAX_SAVED_CONFIGS_PER_USER) {
       return NextResponse.json(
         { error: "max_configs_reached", message: "Limite de 100 configurações salvas atingido. Exclua algumas para continuar." },
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const row = await bioPrisma.bioSavedConfig.create({
+    const row = await cryptoPrisma.bioSavedConfig.create({
       data: {
         userId,
         name,
@@ -142,7 +142,7 @@ export async function GET(req: Request) {
       ? { private: false }
       : { OR: [{ userId }, { private: false }] };
 
-    const list = await bioPrisma.bioSavedConfig.findMany({
+    const list = await cryptoPrisma.bioSavedConfig.findMany({
       where,
       select: {
         id: true,

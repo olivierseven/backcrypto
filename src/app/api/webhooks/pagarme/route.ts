@@ -2,7 +2,7 @@
 // Crédito de coins e e-mail de recibo só ocorrem quando este webhook é chamado. Em localhost o Pagar.me
 // precisa de URL pública (ex.: ngrok) ou teste em ambiente deployado.
 import { NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { CheckoutStatus } from "@/lib/prisma-bio-client";
 import { handleOrderPaid } from "@/lib/pagarme-order-paid";
 import { dbg, warn, error } from "@/lib/logger";
@@ -29,7 +29,7 @@ function parseBasicAuth(authHeader: string | null): { user: string; pass: string
 async function handleOrderCanceled(data: any) {
   const orderId = data?.id;
   if (!orderId) return;
-  const updated = await bioPrisma.pagarMeOrder.updateMany({
+  const updated = await cryptoPrisma.pagarMeOrder.updateMany({
     where: { id: orderId, status: CheckoutStatus.CREATED },
     data: { status: CheckoutStatus.CANCELED },
   });

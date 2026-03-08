@@ -129,7 +129,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <main className="w-full px-0 py-0">
           <AppBarSafeProvider>
             <StatusBarPref />
-            <div data-app="backcrypto" className="bio-generator-app min-h-screen text-zinc-900">
+            <div data-app="backcrypto" className="crypto-generator-app min-h-screen text-zinc-900">
               {children}
             </div>
           </AppBarSafeProvider>

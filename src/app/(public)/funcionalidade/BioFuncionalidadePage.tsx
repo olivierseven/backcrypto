@@ -3,27 +3,27 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ASSET_PREFIX } from "@/app/constants";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import BioLandingHeader from "@/app/BioLandingHeader";
 import BioLandingFooter from "@/app/BioLandingFooter";
 
 const STATS_KEYS = ["stats1", "stats2", "stats3", "stats4", "stats5"] as const;
 const PANEL_KEYS = [0, 1, 2, 3, 4, 5, 6] as const;
 const MGMT_KEYS = ["mgmt1", "mgmt2", "mgmt3", "mgmt4"] as const;
-function getInitialLang(): BioLang {
+function getInitialLang(): CryptoLang {
   if (typeof document === "undefined") return "pt";
   const m = document.cookie.match(/sevencoins-lang=([^;]+)/);
   return m?.[1] === "en" ? "en" : "pt";
 }
 
 export default function BioFuncionalidadePage() {
-  const [lang, setLang] = useState<BioLang>("pt");
+  const [lang, setLang] = useState<CryptoLang>("pt");
   useEffect(() => {
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (urlLang === "en" || urlLang === "pt") setLang(urlLang);
     else setLang(getInitialLang());
   }, []);
-  const t = getBioT(lang).landing.funcPage;
+  const t = getCryptoT(lang).landing.funcPage;
 
   return (
     <div className="min-h-screen w-full flex flex-col">

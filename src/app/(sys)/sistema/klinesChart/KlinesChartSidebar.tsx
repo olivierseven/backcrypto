@@ -255,9 +255,11 @@ export function KlinesChartSidebar({
 
   const popoverPositionClass = isHorizontal ? "absolute left-0 top-full mt-1" : "absolute left-full top-0 ml-1";
   const rootClassName = isHorizontal
-    ? "min-w-0 border-b border-zinc-200 bg-zinc-50 flex flex-row items-center relative w-full"
+    ? "min-w-0 border border-zinc-200 bg-zinc-50 flex flex-row items-center relative w-full rounded-lg"
     : "flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative h-full";
-  const rootStyle = isHorizontal ? ({ height: 44, maxWidth: "min(660px, 100vw)" } as const) : ({ width: SIDEBAR_WIDTH } as const);
+  const horizontalMaxWidth = Math.round(660 * (chartSizePercent / 100));
+  const horizontalInnerMaxWidth = Math.round(600 * (chartSizePercent / 100));
+  const rootStyle = isHorizontal ? ({ height: 44, maxWidth: `min(${horizontalMaxWidth}px, 100vw)` } as const) : ({ width: SIDEBAR_WIDTH } as const);
   const iconButtonClassName = isHorizontal
     ? "w-10 h-10 flex items-center justify-center text-lg hover:bg-zinc-200/80 transition-colors"
     : "w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors";
@@ -269,7 +271,7 @@ export function KlinesChartSidebar({
       className={rootClassName}
       style={rootStyle}
     >
-      <div className={isHorizontal ? "flex-1 min-w-0 overflow-x-auto flex flex-row items-center" : "contents"} style={isHorizontal ? { maxWidth: "min(600px, calc(100% - 60px))" } : undefined}>
+      <div className={isHorizontal ? "flex-1 min-w-0 overflow-x-auto flex flex-row items-center" : "contents"} style={isHorizontal ? { maxWidth: `min(${horizontalInnerMaxWidth}px, calc(100% - 60px))` } : undefined}>
       {intervalOptions.length > 0 && (
         <div
           ref={intervalTriggerRef}

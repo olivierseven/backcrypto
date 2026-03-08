@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { dbg } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -31,7 +31,7 @@ export async function POST() {
     return NextResponse.json({ error: "invalid_user" }, { status: 401 });
   }
 
-  const deleted = await bioPrisma.bioSimulationQueue.deleteMany({
+  const deleted = await cryptoPrisma.bioSimulationQueue.deleteMany({
     where: { userId },
   });
   dbg(`[bio/queue/cancel-mine] userId=${userId.slice(0, 8)}... deleted=${deleted.count}`);

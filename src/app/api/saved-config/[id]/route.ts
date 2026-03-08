@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { gunzipSync } from "node:zlib";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
 
-  const row = await bioPrisma.bioSavedConfig.findUnique({
+  const row = await cryptoPrisma.bioSavedConfig.findUnique({
     where: { id },
     select: { id: true, name: true, config: true, mapDisplayByYear: true, userId: true, private: true },
   });
@@ -69,7 +69,7 @@ export async function DELETE(
   const { id } = await params;
   if (!id) return NextResponse.json({ error: "id_required" }, { status: 400 });
 
-  const row = await bioPrisma.bioSavedConfig.findUnique({
+  const row = await cryptoPrisma.bioSavedConfig.findUnique({
     where: { id },
     select: { userId: true },
   });
@@ -79,6 +79,6 @@ export async function DELETE(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  await bioPrisma.bioSavedConfig.delete({ where: { id } });
+  await cryptoPrisma.bioSavedConfig.delete({ where: { id } });
   return NextResponse.json({ deleted: true });
 }

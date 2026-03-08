@@ -7,7 +7,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -30,7 +30,7 @@ type ValidateSingleResult = {
 };
 
 async function validate1m(symbol: string): Promise<ValidateSingleResult> {
-  const [statsRow] = await bioPrisma.$queryRaw<
+  const [statsRow] = await cryptoPrisma.$queryRaw<
     [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
   >(
     Prisma.sql`
@@ -46,7 +46,7 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
   if (oldest != null && newest != null && newest > oldest) {
     days = (newest - oldest) / (24 * 60 * 60 * 1000);
   }
-  const gaps = await bioPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
+  const gaps = await cryptoPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
     Prisma.sql`
       WITH ordered AS (
         SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
@@ -62,7 +62,7 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
     from: Number(g.openTime),
     to: Number(g.next_open),
   }));
-  const registered1m = await bioPrisma.binanceKlineGap.findMany({
+  const registered1m = await cryptoPrisma.binanceKlineGap.findMany({
     where: { symbol, interval: "1m" },
     select: { gapFrom: true, gapTo: true },
   });
@@ -82,7 +82,7 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
 }
 
 async function validate1h(symbol: string): Promise<ValidateSingleResult> {
-  const [statsRow] = await bioPrisma.$queryRaw<
+  const [statsRow] = await cryptoPrisma.$queryRaw<
     [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
   >(
     Prisma.sql`
@@ -98,7 +98,7 @@ async function validate1h(symbol: string): Promise<ValidateSingleResult> {
   if (oldest != null && newest != null && newest > oldest) {
     days = (newest - oldest) / (24 * 60 * 60 * 1000);
   }
-  const gaps = await bioPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
+  const gaps = await cryptoPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
     Prisma.sql`
       WITH ordered AS (
         SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
@@ -114,7 +114,7 @@ async function validate1h(symbol: string): Promise<ValidateSingleResult> {
     from: Number(g.openTime),
     to: Number(g.next_open),
   }));
-  const registered1h = await bioPrisma.binanceKlineGap.findMany({
+  const registered1h = await cryptoPrisma.binanceKlineGap.findMany({
     where: { symbol, interval: "1h" },
     select: { gapFrom: true, gapTo: true },
   });
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });

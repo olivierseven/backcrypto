@@ -1,7 +1,7 @@
 // POST /api/auth/reset — define nova senha com token do e-mail (Bio).
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { consumePasswordResetToken } from "@/lib/reset";
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    await bioPrisma.user.update({
+    await cryptoPrisma.user.update({
       where: { id: userId },
       data: { passwordHash },
     });

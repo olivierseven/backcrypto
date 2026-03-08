@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 import { ASSET_PREFIX } from "../constants";
+import type { CryptoLang } from "../lib/translations";
 
-export type BioLang = "en" | "pt";
+export type { CryptoLang };
 
 const LANG_COOKIE = "sevencoins-lang";
 
-function setLangCookie(lang: BioLang) {
+function setLangCookie(lang: CryptoLang) {
   if (typeof document !== "undefined") {
     document.cookie = `${LANG_COOKIE}=${lang};path=/;max-age=31536000`;
   }
 }
 
 type Props = {
-  currentLang: BioLang;
-  onLangChange: (lang: BioLang) => void;
+  currentLang: CryptoLang;
+  onLangChange: (lang: CryptoLang) => void;
   className?: string;
 };
 
@@ -31,8 +32,8 @@ function FlagButton({
   title,
   ariaLabel,
 }: {
-  lang: BioLang;
-  currentLang: BioLang;
+  lang: CryptoLang;
+  currentLang: CryptoLang;
   onSelect: () => void;
   src: string;
   label: string;

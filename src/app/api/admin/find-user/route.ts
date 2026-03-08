@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { decryptEmail, emailSearchHash, normalizeEmail } from "@/lib/crypto";
 import { warn } from "@/lib/logger";
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const adminUser = await bioPrisma.user.findUnique({
+    const adminUser = await cryptoPrisma.user.findUnique({
       where: { id: adminId },
       select: { role: true },
     });
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     let user = null;
 
     if (userId) {
-      user = await bioPrisma.user.findUnique({
+      user = await cryptoPrisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (email) {
       const searchHash = emailSearchHash(normalizeEmail(String(email).trim()));
-      user = await bioPrisma.user.findUnique({
+      user = await cryptoPrisma.user.findUnique({
         where: { emailSearchHash: searchHash },
         select: {
           id: true,

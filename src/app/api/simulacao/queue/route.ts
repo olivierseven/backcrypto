@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { gunzipSync } from "node:zlib";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { BioQueueStatus } from "@/lib/prisma-bio-client";
 import { getBalance, COINS_PER_RUN } from "@/lib/spend-coins";
 import { dbg, error } from "@/lib/logger";
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const row = await bioPrisma.bioSimulationQueue.create({
+    const row = await cryptoPrisma.bioSimulationQueue.create({
       data: {
         queueName: body.queueName,
         userId,

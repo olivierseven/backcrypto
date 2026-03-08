@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import { useChartSymbol } from "../ChartSymbolContext";
 import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
@@ -138,8 +138,8 @@ interface StrategiesPanelProps {
 }
 
 export default function StrategiesPanel({ onClose, initialView = "list" }: StrategiesPanelProps) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.strategies as Record<string, string>;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.strategies as Record<string, string>;
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
   const { strategies, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
@@ -155,7 +155,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const chartIntervalMinutes = currentGroupMinutes ?? 5;
   const chartIntervalLabel = intervalMinutesToLabel(chartIntervalMinutes);
 
-  const tKlines = getBioT(lang).sistema.klines;
+  const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
     ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");

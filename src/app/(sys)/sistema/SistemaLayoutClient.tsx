@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { BioLangProvider } from "@/app/contexts/BioLangContext";
+import { CryptoLangProvider } from "@/app/contexts/CryptoLangContext";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
-import { getBioT } from "@/app/lib/translations";
-import type { BioLang } from "@/app/lib/translations";
-import { useBioLang } from "@/app/contexts/BioLangContext";
+import { getCryptoT } from "@/app/lib/translations";
+import type { CryptoLang } from "@/app/lib/translations";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { useChartHeader } from "./ChartHeaderContext";
 import SistemaDebugPanel from "./SistemaDebugPanel";
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
@@ -14,6 +14,7 @@ import { SistemaDebugProvider } from "./SistemaDebugContext";
 import { ChartHeaderProvider } from "./ChartHeaderContext";
 import { ChartSymbolProvider, useChartSymbol } from "./ChartSymbolContext";
 import IndicatorsPanel from "./IndicatorsPanel";
+import DrawingsPanel from "./DrawingsPanel";
 import { StrategiesProvider } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
 
@@ -24,6 +25,7 @@ function SistemaHeader({
   onAddIndicatorClick,
   onMyStrategiesClick,
   onAddStrategyClick,
+  onDrawingsClick,
 }: {
   menuOpen: boolean;
   onMenuToggle: (open: boolean) => void;
@@ -31,11 +33,30 @@ function SistemaHeader({
   onAddIndicatorClick: () => void;
   onMyStrategiesClick: () => void;
   onAddStrategyClick: () => void;
+  onDrawingsClick: () => void;
 }) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.klines;
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
   const { data: headerData } = useChartHeader();
   const { symbol, setSymbol, symbolOptions, symbolPanelOpen, openSymbolPanel, closeSymbolPanel } = useChartSymbol();
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointer = (e: MouseEvent | TouchEvent) => {
+      const target = (e.target as Node) ?? null;
+      if (!target) return;
+      if (menuTriggerRef.current?.contains(target) || menuPanelRef.current?.contains(target)) return;
+      onMenuToggle(false);
+    };
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("touchstart", handlePointer, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("touchstart", handlePointer);
+    };
+  }, [menuOpen, onMenuToggle]);
 
   const innerStyle = headerData.chartContainerWidth != null
     ? { maxWidth: headerData.chartContainerWidth }
@@ -51,6 +72,7 @@ function SistemaHeader({
         style={innerStyle}
       >
         <button
+          ref={menuTriggerRef}
           type="button"
           onClick={() => onMenuToggle(!menuOpen)}
           className="p-1.5 sm:p-2 text-zinc-700 hover:bg-zinc-100 rounded-none shrink-0"
@@ -109,11 +131,12 @@ function SistemaHeader({
       {menuOpen && (
         <>
           <div
-            className="fixed inset-0 z-[1100]"
+            className="fixed inset-0 z-[1100] bg-black/10"
             aria-hidden
             onClick={() => onMenuToggle(false)}
           />
           <nav
+            ref={menuPanelRef}
             className="absolute left-0 top-full z-[1100] mt-0 w-[160px] rounded-b-lg border border-t-0 border-zinc-200 bg-white shadow-lg py-1"
             aria-label="Main"
           >
@@ -144,6 +167,13 @@ function SistemaHeader({
               className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
               {(t as Record<string, string>).menuAddStrategy ?? "Create strategy"}
+            </button>
+            <button
+              type="button"
+              onClick={onDrawingsClick}
+              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              {(t as Record<string, string>).menuDrawings ?? "Drawings"}
             </button>
           </nav>
         </>
@@ -189,17 +219,18 @@ export default function SistemaLayoutClient({
   isAdmin = false,
 }: {
   children: React.ReactNode;
-  lang?: BioLang;
+  lang?: CryptoLang;
   hideStatusBar?: boolean;
   isAdmin?: boolean;
 }) {
   const { hideStatusBar: prefHide } = useAppBarSafe();
-  const topBarGapClass = prefHide !== true ? "bio-status-bar-reserve" : "";
+  const topBarGapClass = prefHide !== true ? "crypto-status-bar-reserve" : "";
   const [menuOpen, setMenuOpen] = useState(false);
   const [indicatorsPanelOpen, setIndicatorsPanelOpen] = useState(false);
   const [indicatorsPanelInitialView, setIndicatorsPanelInitialView] = useState<"list" | "add">("list");
   const [strategiesPanelOpen, setStrategiesPanelOpen] = useState(false);
   const [strategiesPanelInitialView, setStrategiesPanelInitialView] = useState<"list" | "add">("list");
+  const [drawingsPanelOpen, setDrawingsPanelOpen] = useState(false);
 
   useEffect(() => {
     if (Capacitor?.isNativePlatform?.()) {
@@ -237,14 +268,20 @@ export default function SistemaLayoutClient({
     setMenuOpen(false);
   };
 
+  const openDrawings = () => {
+    setDrawingsPanelOpen(true);
+    setMenuOpen(false);
+  };
+
   const handleMenuToggle = (open: boolean) => {
     setIndicatorsPanelOpen(false);
     setStrategiesPanelOpen(false);
+    setDrawingsPanelOpen(false);
     setMenuOpen(open);
   };
 
   return (
-    <BioLangProvider lang={lang}>
+    <CryptoLangProvider lang={lang}>
       <KlinesIndicatorsProvider>
         <StrategiesProvider>
         <SistemaDebugProvider>
@@ -258,6 +295,7 @@ export default function SistemaLayoutClient({
               onAddIndicatorClick={openAddIndicator}
               onMyStrategiesClick={openMyStrategies}
               onAddStrategyClick={openAddStrategy}
+              onDrawingsClick={openDrawings}
             />
             <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto">
               {children}
@@ -282,6 +320,16 @@ export default function SistemaLayoutClient({
                 <StrategiesPanel initialView={strategiesPanelInitialView} onClose={() => setStrategiesPanelOpen(false)} />
               </>
             )}
+            {drawingsPanelOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-[39]"
+                  aria-hidden
+                  onClick={() => setDrawingsPanelOpen(false)}
+                />
+                <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
+              </>
+            )}
           </div>
           {isAdmin && <SistemaDebugPanel />}
           </ChartSymbolProvider>
@@ -289,6 +337,6 @@ export default function SistemaLayoutClient({
         </SistemaDebugProvider>
         </StrategiesProvider>
       </KlinesIndicatorsProvider>
-    </BioLangProvider>
+    </CryptoLangProvider>
   );
 }

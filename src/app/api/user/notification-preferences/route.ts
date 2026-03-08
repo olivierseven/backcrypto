@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { z } from "zod";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -21,7 +21,7 @@ export async function GET() {
     const userId = typeof payload?.sub === "string" ? payload.sub : null;
     if (!userId) return NextResponse.json({ error: "Token inválido" }, { status: 401 });
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { hideStatusBar: true, language: true },
     });
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: true, message: "Nada a atualizar" });
     }
 
-    await bioPrisma.user.update({ where: { id: userId }, data: updateData });
+    await cryptoPrisma.user.update({ where: { id: userId }, data: updateData });
     return NextResponse.json({ success: true, message: "Preferências atualizadas com sucesso" });
   } catch (error) {
     console.error("[backcrypto/notification-preferences]", error);

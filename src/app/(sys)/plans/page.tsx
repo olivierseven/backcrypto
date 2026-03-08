@@ -3,11 +3,11 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, SISTEMA_PATH } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { getBioT } from "@/app/lib/translations";
-import BioPlansClient from "./BioPlansClient";
+import { getCryptoT } from "@/app/lib/translations";
+import CryptoPlansClient from "./CryptoPlansClient";
 import BioHeaderSafe from "@/app/BioHeaderSafe";
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export const dynamic = "force-dynamic";
 
-export default async function BioPlansPage() {
+export default async function CryptoPlansPage() {
   const headersList = await headers();
   const origin = getRedirectOriginFromHeaders(headersList);
   const loginUrl = origin ? `${origin}${APP_BACKCRYPTO_ROUTE_PREFIX}/login` : `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
@@ -39,12 +39,12 @@ export default async function BioPlansPage() {
     redirect(loginUrl);
   }
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { language: true },
   });
   const lang = (user?.language ?? "en") as "en" | "pt";
-  const t = getBioT(lang);
+  const t = getCryptoT(lang);
 
   return (
     <main className="bio-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
@@ -65,7 +65,7 @@ export default async function BioPlansPage() {
 
       <div className="bio-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
         <div className="w-full">
-          <BioPlansClient lang={lang} />
+          <CryptoPlansClient lang={lang} />
         </div>
       </div>
     </main>

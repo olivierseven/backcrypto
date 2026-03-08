@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
-import BioActiveCredits from "./BioActiveCredits";
+import CryptoActiveCredits from "./CryptoActiveCredits";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, APP_BACKCRYPTO_SISTEMA_PATH, SISTEMA_PATH } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { getBioT, type BioLang } from "@/app/lib/translations";
+import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import BioHeaderSafe from "@/app/BioHeaderSafe";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ function fmtDate(d: Date, locale: string) {
   }
 }
 
-function sourceLabel(s: string, t: ReturnType<typeof getBioT>["historico"]["sources"]) {
+function sourceLabel(s: string, t: ReturnType<typeof getCryptoT>["historico"]["sources"]) {
   const key = s as keyof typeof t;
   return (t as Record<string, string>)[key] ?? s;
 }
@@ -63,21 +63,21 @@ export default async function BioHistoricoPage({
   const skip = (page - 1) * PAGE_SIZE;
 
   const [totalCount, entries, wallet, user] = await Promise.all([
-    bioPrisma.coinLedgerEntry.count({ where: { userId } }),
-    bioPrisma.coinLedgerEntry.findMany({
+    cryptoPrisma.coinLedgerEntry.count({ where: { userId } }),
+    cryptoPrisma.coinLedgerEntry.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       skip,
       take: PAGE_SIZE,
     }),
-    bioPrisma.userCoinWallet.findUnique({ where: { userId } }),
-    bioPrisma.user.findUnique({ where: { id: userId }, select: { language: true } }),
+    cryptoPrisma.userCoinWallet.findUnique({ where: { userId } }),
+    cryptoPrisma.user.findUnique({ where: { id: userId }, select: { language: true } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const balance = wallet?.balance ?? 0;
-  const lang = (user?.language ?? "en") as BioLang;
-  const t = getBioT(lang);
+  const lang = (user?.language ?? "en") as CryptoLang;
+  const t = getCryptoT(lang);
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
   return (
@@ -99,7 +99,7 @@ export default async function BioHistoricoPage({
 
       <div className="bio-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
         <div className="w-full">
-          <BioActiveCredits userId={userId} lang={lang} />
+          <CryptoActiveCredits userId={userId} lang={lang} />
 
           <div className="card-bio-generator bio-card rounded-lg overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
@@ -170,7 +170,7 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
   );
 }
 
-function Pager({ page, totalPages, t }: { page: number; totalPages: number; t: ReturnType<typeof getBioT>["historico"] }) {
+function Pager({ page, totalPages, t }: { page: number; totalPages: number; t: ReturnType<typeof getCryptoT>["historico"] }) {
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
   return (
