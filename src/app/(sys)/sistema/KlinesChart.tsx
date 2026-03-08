@@ -207,6 +207,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     setDrawPendingRectSecond,
     drawPendingFibSecond,
     setDrawPendingFibSecond,
+    drawPendingLineSecond,
+    setDrawPendingLineSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     setDrawDragging,
@@ -1829,6 +1831,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               setDrawPendingRectSecond={setDrawPendingRectSecond}
               drawPendingFibSecond={drawPendingFibSecond}
               setDrawPendingFibSecond={setDrawPendingFibSecond}
+              drawPendingLineSecond={drawPendingLineSecond}
+              setDrawPendingLineSecond={setDrawPendingLineSecond}
               selectedSegmentIndex={selectedSegmentIndex}
               setSelectedSegmentIndex={setSelectedSegmentIndex}
               drawMode={drawMode}
@@ -1849,7 +1853,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               textScale={textScale}
               strategyCandleOverlays={strategyCandleOverlays}
             />
-            {(!drawMode || segmentOptionsOpen) && (
+            {/* Overlay só no modo crosshair (!drawMode). Em modo desenho o rect do SVG cuida de select (pan + grab) e de desenho (line/rect/fib). */}
+            {!drawMode && (
               <>
                 <div
                   ref={crosshairOverlayDivRef}
@@ -1862,7 +1867,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     height: chartH,
                     touchAction: "none",
                     zIndex: 1,
-                    cursor: segmentOptionsOpen ? "default" : (crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair"),
+                    cursor: segmentOptionsOpen ? "grab" : (drawMode && drawTool === "select" ? (crosshairDragging ? "grabbing" : "grab") : (crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair")),
                   }}
                   onPointerDown={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
                     e.preventDefault();

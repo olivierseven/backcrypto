@@ -17,6 +17,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPending, setDrawPending] = useState<{ index1: number; price1: number } | null>(null);
   const [drawPendingRectSecond, setDrawPendingRectSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingFibSecond, setDrawPendingFibSecond] = useState<{ index: number; price: number } | null>(null);
+  const [drawPendingLineSecond, setDrawPendingLineSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
   const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" } | null>(null);
@@ -144,6 +145,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
   }, []);
 
   const selectFibonacciTool = useCallback(() => {
@@ -153,6 +155,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
   }, []);
 
   const selectChannelTool = useCallback(() => {
@@ -162,6 +165,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
   }, []);
 
   const selectSelectTool = useCallback(() => {
@@ -170,6 +174,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
   }, []);
 
   const selectRectangleTool = useCallback(() => {
@@ -179,6 +184,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
   }, []);
 
   const clearAllDrawing = useCallback(() => {
@@ -186,6 +192,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingLineSecond(null);
     setSelectedSegmentIndex(null);
     setDrawDragging(null);
   }, []);
@@ -209,6 +216,8 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingRectSecond,
     drawPendingFibSecond,
     setDrawPendingFibSecond,
+    drawPendingLineSecond,
+    setDrawPendingLineSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     drawDragging,

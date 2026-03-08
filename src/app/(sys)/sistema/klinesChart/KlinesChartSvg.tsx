@@ -83,6 +83,8 @@ export interface KlinesChartSvgProps {
   setDrawPendingRectSecond: (p: { index: number; price: number } | null) => void;
   drawPendingFibSecond: { index: number; price: number } | null;
   setDrawPendingFibSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingLineSecond: { index: number; price: number } | null;
+  setDrawPendingLineSecond: (p: { index: number; price: number } | null) => void;
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
@@ -167,6 +169,8 @@ export function KlinesChartSvg({
   setDrawPendingRectSecond,
   drawPendingFibSecond,
   setDrawPendingFibSecond,
+  drawPendingLineSecond,
+  setDrawPendingLineSecond,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawMode,
@@ -1301,6 +1305,11 @@ export function KlinesChartSvg({
             <rect x={tl.x} y={tl.y} width={Math.max(0, br.x - tl.x)} height={Math.max(0, br.y - tl.y)} fill="none" stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />
           );
         })()}
+        {drawPending && drawTool === "line" && drawPendingLineSecond && (() => {
+          const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
+          const p2 = segmentToPixel(drawPendingLineSecond.index, drawPendingLineSecond.price);
+          return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
+        })()}
         {drawPending && drawTool === "fibonacci" && drawPendingFibSecond && (() => {
           const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
           const p2 = segmentToPixel(drawPendingFibSecond.index, drawPendingFibSecond.price);
@@ -1332,7 +1341,7 @@ export function KlinesChartSvg({
             width={chartW}
             height={chartH}
             fill="transparent"
-            style={{ cursor: drawTool === "select" ? "pointer" : "crosshair", touchAction: "none" }}
+            style={{ cursor: drawTool === "select" ? (selectPanActive ? "grabbing" : "grab") : "crosshair", touchAction: "none" }}
             onPointerDown={(e) => {
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
@@ -1341,7 +1350,7 @@ export function KlinesChartSvg({
               const svgH = svg.height.baseVal.value;
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
-              if ((drawTool === "rectangle" || drawTool === "fibonacci") && drawPending === null) {
+              if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line") && drawPending === null) {
                 if (e.cancelable) e.preventDefault();
                 const d = snapToCandlePoint(px, py);
                 setDrawPending({ index1: d.index, price1: d.price });
@@ -1411,7 +1420,7 @@ export function KlinesChartSvg({
               }
             }}
             onPointerMove={(e) => {
-              if ((drawTool !== "rectangle" && drawTool !== "fibonacci") || drawPending === null) return;
+              if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line") || drawPending === null) return;
               if (e.cancelable) e.preventDefault();
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
@@ -1422,9 +1431,38 @@ export function KlinesChartSvg({
               const py = (e.clientY - rect.top) * (svgH / rect.height);
               const d = snapToCandlePoint(px, py);
               if (drawTool === "rectangle") setDrawPendingRectSecond({ index: d.index, price: d.price });
-              else setDrawPendingFibSecond({ index: d.index, price: d.price });
+              else if (drawTool === "fibonacci") setDrawPendingFibSecond({ index: d.index, price: d.price });
+              else if (drawTool === "line") setDrawPendingLineSecond({ index: d.index, price: d.price });
             }}
             onPointerUp={(e) => {
+              if (drawTool === "line" && drawPending !== null) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                if (!chartSvgRef.current) {
+                  setDrawPending(null);
+                  setDrawPendingLineSecond(null);
+                  return;
+                }
+                const svg = chartSvgRef.current;
+                const rect = svg.getBoundingClientRect();
+                const svgW = svg.width.baseVal.value;
+                const svgH = svg.height.baseVal.value;
+                const px = (e.clientX - rect.left) * (svgW / rect.width);
+                const py = (e.clientY - rect.top) * (svgH / rect.height);
+                const d = snapToCandlePoint(px, py);
+                const dfSeg = drawDefaults.segment;
+                const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "segment", startCap: dfSeg?.startCap ?? "point", endCap: dfSeg?.endCap ?? "arrow", showPercent: dfSeg?.showPercent ?? true, showValues: dfSeg?.showValues ?? false, color: dfSeg?.color ?? DEFAULT_SEGMENT_COLOR };
+                let newIndex = 0;
+                flushSync(() => {
+                  setDrawSegments((seg) => {
+                    newIndex = seg.length;
+                    return [...seg, newSeg];
+                  });
+                });
+                setDrawPending(null);
+                setDrawPendingLineSecond(null);
+                onSegmentCreated?.(newIndex);
+                return;
+              }
               if (drawTool === "rectangle" && drawPending !== null) {
                 e.currentTarget.releasePointerCapture(e.pointerId);
                 if (!chartSvgRef.current) {
@@ -1486,7 +1524,7 @@ export function KlinesChartSvg({
                 justPannedRef.current = false;
                 return;
               }
-              if (drawTool === "rectangle" || drawTool === "fibonacci") return;
+              if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line") return;
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();
