@@ -178,7 +178,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const crosshairDraggingRef = useRef(false);
   const crosshairStartedInPanelRef = useRef(false);
   const [crosshairDragging, setCrosshairDragging] = useState(false);
-  /** Conversão pixel → dados para o crosshair (sem atração magnética). */
+  /** Conversão pixel → dados para o crosshair (com snap aos OHLC quando drawMagnetic está ativo). */
   const crosshairPixelToDataRef = useRef<((x: number, yCoord: number) => { index: number; price: number }) | null>(null);
   const crosshairPointRef = useRef(crosshairPoint);
   const crosshairOverlayRef = useRef<SVGRectElement>(null);
@@ -905,7 +905,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     }
     return best;
   };
-  crosshairPixelToDataRef.current = pixelToData;
+  crosshairPixelToDataRef.current = snapToCandlePoint;
 
   const yTickValues: number[] = [];
   for (let i = 0; i <= numIntervals; i++) {
