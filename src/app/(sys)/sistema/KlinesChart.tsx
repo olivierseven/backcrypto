@@ -89,6 +89,7 @@ export type { ChartIndicatorLine } from "./klinesChart/types";
 const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
   fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33 },
+  channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
@@ -103,6 +104,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
   const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
   const [fibLevel618ColorListboxOpen, setFibLevel618ColorListboxOpen] = useState(false);
+  const [channelExtremityColorListboxOpen, setChannelExtremityColorListboxOpen] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
   const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("right");
   /** Posição (px) da caixa de desenho na área do gráfico; null = canto superior direito (right-2 top-2). */
@@ -209,6 +211,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     closeDrawMode,
     selectLineTool,
     selectFibonacciTool,
+    selectChannelTool,
     selectSelectTool,
     clearAllDrawing,
   } = drawing;
@@ -220,6 +223,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     if (segmentToolboxCollapsed) {
       setSegmentColorListboxOpen(false);
       setFibLevel618ColorListboxOpen(false);
+      setChannelExtremityColorListboxOpen(false);
     }
   }, [segmentToolboxCollapsed]);
 
@@ -292,6 +296,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       setDrawDefaults({
         segment: { ...BUILTIN_DRAW_DEFAULTS.segment, ...parsed.segment },
         fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
+        channel: { ...BUILTIN_DRAW_DEFAULTS.channel, ...parsed.channel },
       });
     } catch {
       /* ignore */
@@ -299,11 +304,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
         fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
+        channel: type === "channel" ? { ...prev.channel, ...partial } : prev.channel,
       };
       try {
         if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
@@ -1101,6 +1107,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             closeDrawMode={closeDrawMode}
             selectLineTool={selectLineTool}
             selectFibonacciTool={selectFibonacciTool}
+            selectChannelTool={selectChannelTool}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
             saveOpen={saveOpen}
@@ -1201,6 +1208,15 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               </button>
               <button
                 type="button"
+                onClick={selectChannelTool}
+                title={(t as Record<string, string>).channelTool ?? "Channel"}
+                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
+                aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
+              >
+                ⇔
+              </button>
+              <button
+                type="button"
                 onClick={clearAllDrawing}
                 title={t.drawClearAll}
                 className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
@@ -1278,14 +1294,14 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               </div>
               <div className="py-1.5 px-1.5 space-y-1.5">
                   <div>
-                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}</div>
+                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : t.segmentColor}</div>
                     <div className="relative">
                       <button
                         type="button"
                         role="combobox"
                         aria-expanded={segmentColorListboxOpen}
                         aria-haspopup="listbox"
-                        aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
+                        aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : t.segmentColor}
                         onClick={() => setSegmentColorListboxOpen((o) => !o)}
                         className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
                       >
@@ -1309,7 +1325,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                                 type="button"
                                 role="option"
                                 aria-selected={isSelected}
-                                aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : t.segmentColor}
+                                aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : t.segmentColor}
                                 onClick={() => {
                                   const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
                                   setDrawSegments((prev) => {
@@ -1330,6 +1346,109 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       )}
                     </div>
                   </div>
+                  {drawSegments[selectedSegmentIndex]?.type === "channel" && (
+                    <>
+                      <div>
+                        <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}</div>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            role="combobox"
+                            aria-expanded={channelExtremityColorListboxOpen}
+                            aria-haspopup="listbox"
+                            aria-label={(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}
+                            onClick={() => setChannelExtremityColorListboxOpen((o) => !o)}
+                            className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
+                          >
+                            <span
+                              className="w-4 h-4 rounded border border-zinc-300 shrink-0"
+                              style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.channelExtremityColor ?? drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
+                            />
+                            <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{channelExtremityColorListboxOpen ? "▲" : "▼"}</span>
+                          </button>
+                          {channelExtremityColorListboxOpen && (
+                            <div
+                              role="listbox"
+                              aria-label={(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}
+                              className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
+                            >
+                              {SEGMENT_COLOR_PALETTE.map((hex) => {
+                                const seg = drawSegments[selectedSegmentIndex];
+                                const currentColor = seg?.channelExtremityColor ?? seg?.color ?? DEFAULT_SEGMENT_COLOR;
+                                const isSelected = currentColor === hex;
+                                return (
+                                  <button
+                                    key={hex}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    onClick={() => {
+                                      setDrawSegments((prev) => {
+                                        const next = [...prev];
+                                        const s = next[selectedSegmentIndex];
+                                        if (s) next[selectedSegmentIndex] = { ...s, channelExtremityColor: hex };
+                                        return next;
+                                      });
+                                      persistDrawDefault("channel", { channelExtremityColor: hex });
+                                      setChannelExtremityColorListboxOpen(false);
+                                    }}
+                                    className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
+                                    style={{ backgroundColor: hex }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="channel-mid-stroke-width-listbox">{(t as Record<string, string>).channelMidStrokeWidth ?? "Largura linha do meio"}</label>
+                        <select
+                          id="channel-mid-stroke-width-listbox"
+                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { channelMidStrokeWidth?: FibStrokeWidth })?.channelMidStrokeWidth ?? "medium"}
+                          onChange={(e) => {
+                            const v = e.target.value as FibStrokeWidth;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, channelMidStrokeWidth: v };
+                              return next;
+                            });
+                            persistDrawDefault("channel", { channelMidStrokeWidth: v });
+                          }}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={(t as Record<string, string>).channelMidStrokeWidth ?? "Largura linha do meio"}
+                        >
+                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="channel-extremity-stroke-width-listbox">{(t as Record<string, string>).channelExtremityStrokeWidth ?? "Largura extremidades"}</label>
+                        <select
+                          id="channel-extremity-stroke-width-listbox"
+                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { channelExtremityStrokeWidth?: FibStrokeWidth })?.channelExtremityStrokeWidth ?? "medium"}
+                          onChange={(e) => {
+                            const v = e.target.value as FibStrokeWidth;
+                            setDrawSegments((prev) => {
+                              const next = [...prev];
+                              const seg = next[selectedSegmentIndex];
+                              if (seg) next[selectedSegmentIndex] = { ...seg, channelExtremityStrokeWidth: v };
+                              return next;
+                            });
+                            persistDrawDefault("channel", { channelExtremityStrokeWidth: v });
+                          }}
+                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                          aria-label={(t as Record<string, string>).channelExtremityStrokeWidth ?? "Largura extremidades"}
+                        >
+                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
                   {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (
                     <div>
                       <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{t.fibLevel618Color}</div>
@@ -1463,7 +1582,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       </div>
                     </>
                   )}
-                  {drawSegments[selectedSegmentIndex]?.type !== "fibonacci" && (
+                  {drawSegments[selectedSegmentIndex]?.type === "segment" && (
                     <>
                       <div>
                         <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-startcap-listbox">{t.segmentStartCap}</label>
@@ -1513,25 +1632,27 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       </div>
                     </>
                   )}
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
-                        setDrawSegments((prev) => {
-                          const next = [...prev];
-                          const seg = next[selectedSegmentIndex];
-                          if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
-                          return next;
-                        });
-                        persistDrawDefault(segType, { showPercent: checked });
-                      }}
-                      className="rounded border-zinc-300"
-                    />
-                    <span>{t.segmentShowPercent}</span>
-                  </label>
+                  {drawSegments[selectedSegmentIndex]?.type !== "channel" && (
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
+                      <input
+                        type="checkbox"
+                        checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
+                          setDrawSegments((prev) => {
+                            const next = [...prev];
+                            const seg = next[selectedSegmentIndex];
+                            if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
+                            return next;
+                          });
+                          persistDrawDefault(segType, { showPercent: checked });
+                        }}
+                        className="rounded border-zinc-300"
+                      />
+                      <span>{t.segmentShowPercent}</span>
+                    </label>
+                  )}
                   <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
                     <input
                       type="checkbox"
@@ -1638,6 +1759,10 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onChartDrawClick={() => {
               setSegmentToolboxCollapsed(true);
               setDrawOpen(false);
+            }}
+            onSegmentCreated={(newIndex) => {
+              setSelectedSegmentIndex(newIndex);
+              selectSelectTool();
             }}
             t={t}
             textScale={textScale}

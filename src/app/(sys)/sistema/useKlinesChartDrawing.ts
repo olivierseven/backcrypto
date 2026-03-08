@@ -7,7 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
 
-export type DrawTool = "line" | "fibonacci" | "select";
+export type DrawTool = "line" | "fibonacci" | "channel" | "select";
 
 export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement | null>) {
   const [drawOpen, setDrawOpen] = useState(false);
@@ -17,7 +17,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPending, setDrawPending] = useState<{ index1: number; price1: number } | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" } | null>(null);
+  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" } | null>(null);
 
   const drawRef = useRef<HTMLDivElement>(null);
   const drawConversionRef = useRef<DrawConversionParams | null>(null);
@@ -93,6 +93,14 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
           const pct = ((price - s.price2) / range) * 100;
           const rounded = Math.round(Math.max(0, Math.min(50, pct)) * 10000) / 10000;
           s.fibLevelPct1 = rounded;
+        } else if (drawDragging.point === "channelMid") {
+          if (s.type !== "channel") return prev;
+          const midPrice = (s.price1 + s.price2) / 2;
+          s.channelOffset = Math.round((price - midPrice) * 10000) / 10000;
+        } else if (drawDragging.point === "channelExtension") {
+          if (s.type !== "channel") return prev;
+          const ext = Math.max(0, idx - s.index2);
+          s.channelExtensionIndices = ext;
         } else if (drawDragging.point === 0) {
           s.index1 = idx;
           s.price1 = price;
@@ -139,6 +147,12 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setSelectedSegmentIndex(null);
   }, []);
 
+  const selectChannelTool = useCallback(() => {
+    setDrawTool("channel");
+    setDrawMode(true);
+    setSelectedSegmentIndex(null);
+  }, []);
+
   const selectSelectTool = useCallback(() => {
     setDrawTool("select");
     setDrawMode(true);
@@ -178,6 +192,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     openDrawPanel,
     selectLineTool,
     selectFibonacciTool,
+    selectChannelTool,
     selectSelectTool,
     clearAllDrawing,
   };

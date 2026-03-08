@@ -94,7 +94,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "select";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -103,6 +103,7 @@ export interface KlinesChartSidebarProps {
   closeDrawMode: () => void;
   selectLineTool: () => void;
   selectFibonacciTool: () => void;
+  selectChannelTool: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
   // Save/Load
@@ -192,6 +193,7 @@ export function KlinesChartSidebar({
   closeDrawMode,
   selectLineTool,
   selectFibonacciTool,
+  selectChannelTool,
   selectSelectTool,
   clearAllDrawing,
   saveOpen,
@@ -732,6 +734,16 @@ export function KlinesChartSidebar({
             </button>
             <button
               type="button"
+              onClick={(e) => { e.stopPropagation(); selectChannelTool(); }}
+              title={(t as Record<string, string>).channelTool ?? "Channel"}
+              className={`${iconButtonClassName} ${drawTool === "channel" ? "bg-zinc-200" : ""}`}
+              aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
+              aria-pressed={drawTool === "channel"}
+            >
+              <span aria-hidden>⇔</span>
+            </button>
+            <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); selectSelectTool(); }}
               title={t.drawSelectSegment}
               className={`${iconButtonClassName} ${drawTool === "select" ? "bg-zinc-200" : ""}`}
@@ -783,6 +795,15 @@ export function KlinesChartSidebar({
               aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
             >
               <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+            </button>
+            <button
+              type="button"
+              onClick={selectChannelTool}
+              title={(t as Record<string, string>).channelTool ?? "Channel"}
+              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
+              aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
+            >
+              ⇔
             </button>
             <button
               type="button"
@@ -1108,6 +1129,7 @@ export function KlinesChartSidebar({
                 </div>
                 <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`} aria-label={t.lineSegment}>📏</button>
                 <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}><img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" /></button>
+                <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "channel" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).channelTool ?? "Channel"}>⇔</button>
                 <button type="button" onClick={clearAllDrawing} title={t.drawClearAll} className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700" aria-label={t.drawClearAll}>🗑️</button>
               </div>
             )}

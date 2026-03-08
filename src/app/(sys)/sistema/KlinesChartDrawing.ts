@@ -13,8 +13,10 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta ou retração de Fibonacci. Default: segment */
-  type?: "segment" | "fibonacci";
+  /** Tipo: segmento de reta, retração de Fibonacci ou canal. Default: segment */
+  type?: "segment" | "fibonacci" | "channel";
+  /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
+  channelOffset?: number;
   /** Cor do traço (hex). Default: #000000 */
   color?: string;
   /** Ponta no início do segmento. Default: none (fibonacci ignora) */
@@ -35,6 +37,14 @@ export type DrawSegment = {
   fibExtensionIndices?: number;
   /** Primeiro nível do Fibonacci em percentual (0–50). Default: 33.33. */
   fibLevelPct1?: number;
+  /** Cor das linhas das extremidades (paralelas). Só canal. Se não definido, usa color. */
+  channelExtremityColor?: string;
+  /** Largura do traço da linha do meio. Só canal. */
+  channelMidStrokeWidth?: FibStrokeWidth;
+  /** Largura do traço das linhas das extremidades. Só canal. */
+  channelExtremityStrokeWidth?: FibStrokeWidth;
+  /** Número de índices (candles) que as 3 linhas do canal se estendem à direita em pontilhado. Só canal. */
+  channelExtensionIndices?: number;
 };
 
 /** Largura do traço: fino, médio ou grosso (só Fibonacci). */
@@ -48,6 +58,7 @@ export const FIB_STROKE_WIDTH_OPTIONS: FibStrokeWidth[] = ["thin", "medium", "th
 export type DrawDefaults = {
   segment: Partial<Pick<DrawSegment, "color" | "startCap" | "endCap" | "showPercent" | "showValues">>;
   fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1">>;
+  channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
 };
 
 export const DEFAULT_SEGMENT_COLOR = "#000000";

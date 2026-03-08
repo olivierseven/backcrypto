@@ -81,12 +81,14 @@ export interface KlinesChartSvgProps {
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" } | null>>;
+  drawTool: "line" | "fibonacci" | "channel" | "select";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
   onChartDrawClick?: () => void;
+  /** Chamado quando um novo segmento é criado (segundo clique). Recebe o índice do novo segmento para selecioná-lo e abrir opções. */
+  onSegmentCreated?: (newIndex: number) => void;
   t: Record<string, string>;
   /** Escala dos textos (indicadores, etc.): 0.6–1 quando o plot está reduzido. */
   textScale?: number;
@@ -163,6 +165,7 @@ export function KlinesChartSvg({
   setDrawDragging,
   onSelectToolPan,
   onChartDrawClick,
+  onSegmentCreated,
   t,
   textScale = 1,
   strategyCandleOverlays = [],
@@ -201,6 +204,7 @@ export function KlinesChartSvg({
   const fontSizeSmall = Math.round(9 * textScale);
   const fontSizeAxis = Math.round(12 * textScale);
   const volumeOnPriceClipId = useId();
+  const plotClipId = useId();
   const showCrosshairValues =
     crosshairPoint !== null &&
     (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
@@ -288,6 +292,11 @@ export function KlinesChartSvg({
         className={`flex-shrink-0 ${isDarkBg ? "text-zinc-400" : "text-zinc-700"}`}
       >
         <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} fill={chartBgHex} />
+        <defs>
+          <clipPath id={plotClipId}>
+            <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} />
+          </clipPath>
+        </defs>
         {showSecondaryAxis && (
           <>
             {verticalIndicesFiltered.map((idx) => (
@@ -962,6 +971,7 @@ export function KlinesChartSvg({
             aria-hidden
           />
         )}
+        <g clipPath={`url(#${plotClipId.replace(/:/g, "\\:")})`}>
         {drawingsVisible && drawSegments.map((seg, idx) => {
           const p1 = segmentToPixel(seg.index1, seg.price1);
           const p2 = segmentToPixel(seg.index2, seg.price2);
@@ -1071,6 +1081,93 @@ export function KlinesChartSvg({
                 >
                   <path d={`M ${extendPx + 5} ${midY} L ${extendPx - 2} ${midY - 4} L ${extendPx - 2} ${midY + 4} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />
                 </g>
+              </g>
+            );
+          }
+
+          if (seg.type === "channel") {
+            const offset = seg.channelOffset ?? 0;
+            const midColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
+            const extremityColor = seg.channelExtremityColor ?? midColor;
+            const midW = FIB_STROKE_WIDTH_VALUES[(seg.channelMidStrokeWidth as FibStrokeWidth) ?? "medium"];
+            const extremityW = FIB_STROKE_WIDTH_VALUES[(seg.channelExtremityStrokeWidth as FibStrokeWidth) ?? "medium"];
+            const pa = segmentToPixel(seg.index1, seg.price1);
+            const pb = segmentToPixel(seg.index2, seg.price2);
+            const paUp = segmentToPixel(seg.index1, seg.price1 + offset);
+            const pbUp = segmentToPixel(seg.index2, seg.price2 + offset);
+            const paDn = segmentToPixel(seg.index1, seg.price1 - offset);
+            const pbDn = segmentToPixel(seg.index2, seg.price2 - offset);
+            const dx = pb.x - pa.x;
+            const dy = pb.y - pa.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const ux = dx / len;
+            const uy = dy / len;
+            const arrowLen = 8;
+            const arrowW = 4;
+            const midDashArray = "6 3";
+            /** Extensão: mais pontilhado (traço curto, espaço maior) para diferenciar e dar continuidade visual. */
+            const extensionDashArray = "2 5";
+            const tipB = pb;
+            const backXB = tipB.x - arrowLen * ux;
+            const backYB = tipB.y - arrowLen * uy;
+            const leftXB = backXB - uy * arrowW;
+            const leftYB = backYB + ux * arrowW;
+            const rightXB = backXB + uy * arrowW;
+            const rightYB = backYB - ux * arrowW;
+            const extendIndices = Math.max(0, seg.channelExtensionIndices ?? 0);
+            const extendIndex = seg.index2 + extendIndices;
+            /** Mesmo ângulo da reta do meio: inclinação em espaço de dados (preço por índice). */
+            const deltaIndex = seg.index2 - seg.index1;
+            const deltaPrice = seg.price2 - seg.price1;
+            const slope = deltaIndex !== 0 ? deltaPrice / deltaIndex : 0;
+            const extendedPriceMid = seg.price2 + slope * extendIndices;
+            const extendedPriceUp = seg.price2 + offset + slope * extendIndices;
+            const extendedPriceDn = seg.price2 - offset + slope * extendIndices;
+            const pe = segmentToPixel(extendIndex, extendedPriceMid);
+            const pbUpExt = segmentToPixel(extendIndex, extendedPriceUp);
+            const pbDnExt = segmentToPixel(extendIndex, extendedPriceDn);
+            const topEnd = extendIndices > 0 ? pbUpExt : pbUp;
+            const bottomEnd = extendIndices > 0 ? pbDnExt : pbDn;
+            const extW = midW;
+            const extEW = extremityW;
+            return (
+              <g key={idx}>
+                {/* Linha do meio: tracejada + seta no fim (como estava) */}
+                <line x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke={midColor} strokeWidth={extW} strokeDasharray={midDashArray} />
+                <path d={`M ${tipB.x} ${tipB.y} L ${leftXB} ${leftYB} L ${rightXB} ${rightYB} Z`} fill={midColor} stroke="none" />
+                {extendIndices > 0 && (
+                  <line x1={pb.x} y1={pb.y} x2={pe.x} y2={pe.y} stroke={midColor} strokeWidth={midW} strokeDasharray={extensionDashArray} />
+                )}
+                {/* Paralelas: contínuas até pb; continuidade pontilhada até o fim; ponto na extremidade de cada uma */}
+                <line x1={paUp.x} y1={paUp.y} x2={pbUp.x} y2={pbUp.y} stroke={extremityColor} strokeWidth={extEW} />
+                <line x1={paDn.x} y1={paDn.y} x2={pbDn.x} y2={pbDn.y} stroke={extremityColor} strokeWidth={extEW} />
+                {extendIndices > 0 && (
+                  <>
+                    <line x1={pbUp.x} y1={pbUp.y} x2={pbUpExt.x} y2={pbUpExt.y} stroke={extremityColor} strokeWidth={extremityW} strokeDasharray={extensionDashArray} />
+                    <line x1={pbDn.x} y1={pbDn.y} x2={pbDnExt.x} y2={pbDnExt.y} stroke={extremityColor} strokeWidth={extremityW} strokeDasharray={extensionDashArray} />
+                  </>
+                )}
+                {/* Ponto na extremidade da paralela de cima (com extensão) */}
+                <circle cx={topEnd.x} cy={topEnd.y} r={3} fill={extremityColor} stroke={extremityColor} strokeWidth={1} />
+                {/* Ponto na extremidade da paralela de baixo (com extensão) */}
+                <circle cx={bottomEnd.x} cy={bottomEnd.y} r={3} fill={extremityColor} stroke={extremityColor} strokeWidth={1} />
+                {/* Valores no final de cada extremidade quando showValues ativo */}
+                {seg.showValues === true && (() => {
+                  const fmt = (v: number) => formatYAxis(v);
+                  const priceTop = extendIndices > 0 ? extendedPriceUp : seg.price2 + offset;
+                  const priceBottom = extendIndices > 0 ? extendedPriceDn : seg.price2 - offset;
+                  const vPadW = 34;
+                  const vHeight = 16;
+                  const offsetX = 6;
+                  return (
+                    <>
+                      <rect x={topEnd.x + offsetX} y={topEnd.y - vHeight / 2} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={extremityColor} strokeWidth={1} />
+                      <text x={topEnd.x + offsetX + vPadW} y={topEnd.y} textAnchor="middle" dominantBaseline="middle" fill={extremityColor} className="font-medium select-none font-mono" style={{ fontSize }}>{fmt(priceTop)}</text>
+                      <rect x={bottomEnd.x + offsetX} y={bottomEnd.y - vHeight / 2} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={extremityColor} strokeWidth={1} />
+                      <text x={bottomEnd.x + offsetX + vPadW} y={bottomEnd.y} textAnchor="middle" dominantBaseline="middle" fill={extremityColor} className="font-medium select-none font-mono" style={{ fontSize }}>{fmt(priceBottom)}</text>
+                    </>
+                  );
+                })()}
               </g>
             );
           }
@@ -1202,6 +1299,24 @@ export function KlinesChartSvg({
                   const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
                   d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
                 }
+                if (seg.type === "channel") {
+                  const off = seg.channelOffset ?? 0;
+                  const p1u = segmentToPixel(seg.index1, seg.price1 + off);
+                  const p2u = segmentToPixel(seg.index2, seg.price2 + off);
+                  const p1d = segmentToPixel(seg.index1, seg.price1 - off);
+                  const p2d = segmentToPixel(seg.index2, seg.price2 - off);
+                  d = Math.min(d, distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y), distanceToSegment(px, py, p1u.x, p1u.y, p2u.x, p2u.y), distanceToSegment(px, py, p1d.x, p1d.y, p2d.x, p2d.y));
+                  const ext = Math.max(0, seg.channelExtensionIndices ?? 0);
+                  if (ext > 0) {
+                    const deltaIdx = seg.index2 - seg.index1;
+                    const slopeCh = deltaIdx !== 0 ? (seg.price2 - seg.price1) / deltaIdx : 0;
+                    const extIdx = seg.index2 + ext;
+                    const pe = segmentToPixel(extIdx, seg.price2 + slopeCh * ext);
+                    const p2uExt = segmentToPixel(extIdx, seg.price2 + off + slopeCh * ext);
+                    const p2dExt = segmentToPixel(extIdx, seg.price2 - off + slopeCh * ext);
+                    d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
+                  }
+                }
                 if (d < bestD) {
                   bestD = d;
                   bestIdx = index;
@@ -1247,6 +1362,24 @@ export function KlinesChartSvg({
                     const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
                     d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
                   }
+                  if (seg.type === "channel") {
+                    const off = seg.channelOffset ?? 0;
+                    const p1u = segmentToPixel(seg.index1, seg.price1 + off);
+                    const p2u = segmentToPixel(seg.index2, seg.price2 + off);
+                    const p1d = segmentToPixel(seg.index1, seg.price1 - off);
+                    const p2d = segmentToPixel(seg.index2, seg.price2 - off);
+                    d = Math.min(d, distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y), distanceToSegment(px, py, p1u.x, p1u.y, p2u.x, p2u.y), distanceToSegment(px, py, p1d.x, p1d.y, p2d.x, p2d.y));
+                    const ext = Math.max(0, seg.channelExtensionIndices ?? 0);
+                    if (ext > 0) {
+                      const deltaIdx = seg.index2 - seg.index1;
+                      const slopeCh = deltaIdx !== 0 ? (seg.price2 - seg.price1) / deltaIdx : 0;
+                      const extIdx = seg.index2 + ext;
+                      const pe = segmentToPixel(extIdx, seg.price2 + slopeCh * ext);
+                      const p2uExt = segmentToPixel(extIdx, seg.price2 + off + slopeCh * ext);
+                      const p2dExt = segmentToPixel(extIdx, seg.price2 - off + slopeCh * ext);
+                      d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
+                    }
+                  }
                   if (d < bestD) {
                     bestD = d;
                     bestIdx = index;
@@ -1255,16 +1388,23 @@ export function KlinesChartSvg({
                 setSelectedSegmentIndex(bestIdx >= 0 ? bestIdx : null);
                 return;
               }
-              if (drawTool === "line" || drawTool === "fibonacci") onChartDrawClick?.();
+              if (drawTool === "line" || drawTool === "fibonacci" || drawTool === "channel") onChartDrawClick?.();
               const d = snapToCandlePoint(px, py);
               if (drawPending === null) {
                 setDrawPending({ index1: d.index, price1: d.price });
               } else {
                 setDrawSegments((seg) => {
-                  const df = drawTool === "fibonacci" ? drawDefaults.fibonacci : drawDefaults.segment;
-                  const newSeg = drawTool === "fibonacci"
-                    ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: df.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: df.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: df.showPercent ?? false, showValues: df.showValues ?? false, fibStrokeWidth: df.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: df.fibLevel618StrokeWidth ?? "thin", fibLevelPct1: df.fibLevelPct1 ?? 33.33 })
-                    : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: df.startCap ?? "point", endCap: df.endCap ?? "arrow", showPercent: df.showPercent ?? true, showValues: df.showValues ?? false, color: df.color ?? DEFAULT_SEGMENT_COLOR });
+                  const dfSeg = drawDefaults.segment;
+                  const dfFib = drawDefaults.fibonacci;
+                  const dfCh = drawDefaults.channel;
+                  const newSeg =
+                    drawTool === "fibonacci"
+                      ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: dfFib.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: dfFib.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: dfFib.showPercent ?? false, showValues: dfFib.showValues ?? false, fibStrokeWidth: dfFib.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: dfFib.fibLevel618StrokeWidth ?? "thin", fibLevelPct1: dfFib.fibLevelPct1 ?? 33.33 })
+                      : drawTool === "channel"
+                        ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "channel" as const, color: dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelOffset: 0, channelExtremityColor: dfCh?.channelExtremityColor ?? dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelMidStrokeWidth: dfCh?.channelMidStrokeWidth ?? "thin", channelExtremityStrokeWidth: dfCh?.channelExtremityStrokeWidth ?? "thin", showValues: dfCh?.showValues ?? false })
+                        : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: dfSeg.startCap ?? "point", endCap: dfSeg.endCap ?? "arrow", showPercent: dfSeg.showPercent ?? true, showValues: dfSeg.showValues ?? false, color: dfSeg.color ?? DEFAULT_SEGMENT_COLOR });
+                  const newIndex = seg.length;
+                  queueMicrotask(() => onSegmentCreated?.(newIndex));
                   return [...seg, newSeg];
                 });
                 setDrawPending(null);
@@ -1278,6 +1418,8 @@ export function KlinesChartSvg({
           const h2 = segmentToPixel(seg.index2, seg.price2);
           const handleColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
           const isFib = seg.type === "fibonacci";
+          const isChannel = seg.type === "channel";
+          const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
           const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
           const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
           const fibLevel1Pct = isFib ? Math.round(Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33)) * 10000) / 10000 : 0;
@@ -1309,7 +1451,68 @@ export function KlinesChartSvg({
                 onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
                 onClick={(e) => e.stopPropagation()}
               />
-              <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+              {!isChannel && <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />}
+              {isChannel && (
+                <>
+                  <circle
+                    cx={channelMidPos.x}
+                    cy={channelMidPos.y}
+                    r={5}
+                    fill="transparent"
+                    stroke="none"
+                    style={{ cursor: "ns-resize" }}
+                    title={(t as Record<string, string>).channelMidDrag ?? "Arrastar para ajustar a linha paralela"}
+                    aria-label={(t as Record<string, string>).channelMidDrag ?? "Arrastar para ajustar a linha paralela"}
+                    onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelMid" }); }}
+                    onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelMid" }); }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <circle cx={channelMidPos.x} cy={channelMidPos.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+                </>
+              )}
+              {isChannel && (() => {
+                const ext = Math.max(0, seg.channelExtensionIndices ?? 0);
+                const extIdx = seg.index2 + ext;
+                const deltaIdx = seg.index2 - seg.index1;
+                const slopeCh = deltaIdx !== 0 ? (seg.price2 - seg.price1) / deltaIdx : 0;
+                const off = seg.channelOffset ?? 0;
+                const extPriceUp = seg.price2 + off + slopeCh * ext;
+                const extPriceDn = seg.price2 - off + slopeCh * ext;
+                const topEnd = segmentToPixel(extIdx, extPriceUp);
+                const bottomEnd = segmentToPixel(extIdx, extPriceDn);
+                const extendHitR = 10;
+                const extendTitle = (t as Record<string, string>).channelExtensionDrag ?? t.fibExtensionDrag ?? "Arrastar para estender";
+                return (
+                  <>
+                    <circle
+                      cx={topEnd.x}
+                      cy={topEnd.y}
+                      r={extendHitR}
+                      fill="transparent"
+                      stroke="none"
+                      style={{ cursor: "grab" }}
+                      title={extendTitle}
+                      aria-label={extendTitle}
+                      onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
+                      onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <circle
+                      cx={bottomEnd.x}
+                      cy={bottomEnd.y}
+                      r={extendHitR}
+                      fill="transparent"
+                      stroke="none"
+                      style={{ cursor: "grab" }}
+                      title={extendTitle}
+                      aria-label={extendTitle}
+                      onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
+                      onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </>
+                );
+              })()}
               {isFib && (
                 <>
                   <circle
@@ -1344,6 +1547,7 @@ export function KlinesChartSvg({
             </g>
           );
         })()}
+        </g>
       </svg>
     </div>
   );
