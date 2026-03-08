@@ -81,6 +81,8 @@ export interface KlinesChartSvgProps {
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   drawPendingRectSecond: { index: number; price: number } | null;
   setDrawPendingRectSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingFibSecond: { index: number; price: number } | null;
+  setDrawPendingFibSecond: (p: { index: number; price: number } | null) => void;
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
@@ -163,6 +165,8 @@ export function KlinesChartSvg({
   setDrawPending,
   drawPendingRectSecond,
   setDrawPendingRectSecond,
+  drawPendingFibSecond,
+  setDrawPendingFibSecond,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawMode,
@@ -1297,6 +1301,30 @@ export function KlinesChartSvg({
             <rect x={tl.x} y={tl.y} width={Math.max(0, br.x - tl.x)} height={Math.max(0, br.y - tl.y)} fill="none" stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />
           );
         })()}
+        {drawPending && drawTool === "fibonacci" && drawPendingFibSecond && (() => {
+          const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
+          const p2 = segmentToPixel(drawPendingFibSecond.index, drawPendingFibSecond.price);
+          const priceTop = Math.max(drawPending.price1, drawPendingFibSecond.price);
+          const priceBottom = Math.min(drawPending.price1, drawPendingFibSecond.price);
+          const range = priceTop - priceBottom;
+          const yTop = segmentToPixel(drawPending.index1, priceTop).y;
+          const yBottom = segmentToPixel(drawPending.index1, priceBottom).y;
+          const fibLevels = [33.33 / 100, 0.5, 0.618];
+          const stroke = "#000000";
+          const dash = "4 2";
+          return (
+            <g>
+              <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={stroke} strokeWidth={1.5} strokeDasharray={dash} />
+              <line x1={p1.x} y1={yTop} x2={p2.x} y2={yTop} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />
+              <line x1={p1.x} y1={yBottom} x2={p2.x} y2={yBottom} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />
+              {fibLevels.map((k) => {
+                const priceLevel = priceBottom + range * k;
+                const py = segmentToPixel(drawPending.index1, priceLevel).y;
+                return <line key={k} x1={p1.x} y1={py} x2={p2.x} y2={py} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />;
+              })}
+            </g>
+          );
+        })()}
         {drawMode && (
           <rect
             x={MARGIN_LEFT}
@@ -1313,7 +1341,7 @@ export function KlinesChartSvg({
               const svgH = svg.height.baseVal.value;
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
-              if (drawTool === "rectangle" && drawPending === null) {
+              if ((drawTool === "rectangle" || drawTool === "fibonacci") && drawPending === null) {
                 if (e.cancelable) e.preventDefault();
                 const d = snapToCandlePoint(px, py);
                 setDrawPending({ index1: d.index, price1: d.price });
@@ -1383,7 +1411,7 @@ export function KlinesChartSvg({
               }
             }}
             onPointerMove={(e) => {
-              if (drawTool !== "rectangle" || drawPending === null) return;
+              if ((drawTool !== "rectangle" && drawTool !== "fibonacci") || drawPending === null) return;
               if (e.cancelable) e.preventDefault();
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
@@ -1393,7 +1421,8 @@ export function KlinesChartSvg({
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
               const d = snapToCandlePoint(px, py);
-              setDrawPendingRectSecond({ index: d.index, price: d.price });
+              if (drawTool === "rectangle") setDrawPendingRectSecond({ index: d.index, price: d.price });
+              else setDrawPendingFibSecond({ index: d.index, price: d.price });
             }}
             onPointerUp={(e) => {
               if (drawTool === "rectangle" && drawPending !== null) {
@@ -1422,6 +1451,34 @@ export function KlinesChartSvg({
                 setDrawPending(null);
                 setDrawPendingRectSecond(null);
                 onSegmentCreated?.(newIndex);
+                return;
+              }
+              if (drawTool === "fibonacci" && drawPending !== null) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                if (!chartSvgRef.current) {
+                  setDrawPending(null);
+                  setDrawPendingFibSecond(null);
+                  return;
+                }
+                const svg = chartSvgRef.current;
+                const rect = svg.getBoundingClientRect();
+                const svgW = svg.width.baseVal.value;
+                const svgH = svg.height.baseVal.value;
+                const px = (e.clientX - rect.left) * (svgW / rect.width);
+                const py = (e.clientY - rect.top) * (svgH / rect.height);
+                const d = snapToCandlePoint(px, py);
+                const dfFib = drawDefaults.fibonacci;
+                const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci", color: dfFib?.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: dfFib?.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: dfFib?.showPercent ?? false, showValues: dfFib?.showValues ?? false, fibStrokeWidth: dfFib?.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: dfFib?.fibLevel618StrokeWidth ?? "thin", fibLevelPct1: dfFib?.fibLevelPct1 ?? 33.33 };
+                let newIndex = 0;
+                flushSync(() => {
+                  setDrawSegments((seg) => {
+                    newIndex = seg.length;
+                    return [...seg, newSeg];
+                  });
+                });
+                setDrawPending(null);
+                setDrawPendingFibSecond(null);
+                onSegmentCreated?.(newIndex);
               }
             }}
             onClick={(e) => {
@@ -1429,7 +1486,7 @@ export function KlinesChartSvg({
                 justPannedRef.current = false;
                 return;
               }
-              if (drawTool === "rectangle") return;
+              if (drawTool === "rectangle" || drawTool === "fibonacci") return;
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();

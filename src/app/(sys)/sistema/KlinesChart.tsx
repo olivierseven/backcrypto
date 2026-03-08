@@ -112,6 +112,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [drawToolboxPosition, setDrawToolboxPosition] = useState<{ x: number; y: number } | null>(null);
   const drawToolboxRef = useRef<HTMLDivElement>(null);
   const chartRowRef = useRef<HTMLDivElement>(null);
+  const chartYAxisContainerRef = useRef<HTMLDivElement>(null);
   const drawToolboxDragStartRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number } | null>(null);
   /** Posição (px) da caixa de opções do segmento; null = canto superior esquerdo (left: 8, top: 8). */
   const [segmentOptionsPosition, setSegmentOptionsPosition] = useState<{ x: number; y: number } | null>(null);
@@ -204,6 +205,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     setDrawPending,
     drawPendingRectSecond,
     setDrawPendingRectSecond,
+    drawPendingFibSecond,
+    setDrawPendingFibSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     setDrawDragging,
@@ -246,21 +249,14 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     if (selectedSegmentIndex !== null) setDrawOpen(false);
   }, [selectedSegmentIndex]);
 
-  // Com a caixa de opções do segmento aberta, desativa só a rolagem por toque (mouse wheel continua)
+  // Com a caixa de opções do segmento aberta, desativa a rolagem por toque só na div role="presentation" (área do plot)
   const segmentOptionsOpen = drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] != null;
   useEffect(() => {
-    if (!segmentOptionsOpen) return;
-    const prevTouchAction = document.body.style.touchAction;
-    const prevOverscrollBehavior = document.body.style.overscrollBehavior;
-    document.body.style.touchAction = "none";
-    document.body.style.overscrollBehavior = "none";
+    if (!segmentOptionsOpen || !crosshairOverlayDivRef.current) return;
+    const el = crosshairOverlayDivRef.current;
     const preventTouchScroll = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener("touchmove", preventTouchScroll, { passive: false });
-    return () => {
-      document.body.style.touchAction = prevTouchAction;
-      document.body.style.overscrollBehavior = prevOverscrollBehavior;
-      document.removeEventListener("touchmove", preventTouchScroll);
-    };
+    el.addEventListener("touchmove", preventTouchScroll, { passive: false });
+    return () => el.removeEventListener("touchmove", preventTouchScroll);
   }, [segmentOptionsOpen]);
 
   // Ao trocar intervalo: loading breve (1 frame) para recarregar segmentos; em seguida voltar a exibir o gráfico
@@ -1066,7 +1062,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions ?? []}
             groupMinutes={groupMinutes}
-            onIntervalChange={onIntervalChange ?? (() => {})}
+            onIntervalChange={onIntervalChange ?? (() => { })}
             settingsOpen={settingsOpen}
             setSettingsOpen={setSettingsOpen}
             colorsOpen={colorsOpen}
@@ -1144,187 +1140,187 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
-          {drawOpen && (
-            <div
-              ref={drawToolboxRef}
-              className="absolute z-[100] flex w-fit flex-col items-center rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
-              style={drawToolboxPosition === null ? { left: 8, top: 8 } : { left: drawToolboxPosition.x, top: drawToolboxPosition.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex w-full min-w-0 items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold"
-                  title={t.drawExitMode}
-                  aria-label={t.drawExitMode}
-                >
-                  <span aria-hidden>×</span>
-                </button>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none"
-                  title={t.drawToolboxDrag}
-                  aria-label={t.drawToolboxDrag}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!drawToolboxRef.current || !chartRowRef.current) return;
-                    const box = drawToolboxRef.current.getBoundingClientRect();
-                    const row = chartRowRef.current.getBoundingClientRect();
-                    const currentX = drawToolboxPosition?.x ?? 8;
-                    const currentY = drawToolboxPosition?.y ?? 8;
-                    if (drawToolboxPosition === null) setDrawToolboxPosition({ x: currentX, y: currentY });
-                    const startClientX = e.clientX;
-                    const startClientY = e.clientY;
-                    const startX = currentX;
-                    const startY = currentY;
-                    const onMove = (ev: PointerEvent) => {
+            {drawOpen && (
+              <div
+                ref={drawToolboxRef}
+                className="absolute z-[100] flex w-fit flex-col items-center rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+                style={drawToolboxPosition === null ? { left: 8, top: 8 } : { left: drawToolboxPosition.x, top: drawToolboxPosition.y }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex w-full min-w-0 items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold"
+                    title={t.drawExitMode}
+                    aria-label={t.drawExitMode}
+                  >
+                    <span aria-hidden>×</span>
+                  </button>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none"
+                    title={t.drawToolboxDrag}
+                    aria-label={t.drawToolboxDrag}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       if (!drawToolboxRef.current || !chartRowRef.current) return;
-                      if (ev.cancelable) ev.preventDefault();
-                      const boxRect = drawToolboxRef.current.getBoundingClientRect();
-                      const rowRect = chartRowRef.current.getBoundingClientRect();
-                      const cw = rowRect.width;
-                      const ch = rowRect.height;
-                      let newX = startX + (ev.clientX - startClientX);
-                      let newY = startY + (ev.clientY - startClientY);
-                      newX = Math.max(0, Math.min(cw - boxRect.width, newX));
-                      newY = Math.max(0, Math.min(ch - boxRect.height, newY));
-                      setDrawToolboxPosition({ x: newX, y: newY });
-                    };
-                    const onUp = () => {
-                      document.removeEventListener("pointermove", onMove);
-                      document.removeEventListener("pointerup", onUp);
-                      document.removeEventListener("pointercancel", onUp);
-                    };
-                    document.addEventListener("pointermove", onMove);
-                    document.addEventListener("pointerup", onUp);
-                    document.addEventListener("pointercancel", onUp);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") e.preventDefault();
-                  }}
-                >
-                  <span aria-hidden>⠿</span>
+                      const box = drawToolboxRef.current.getBoundingClientRect();
+                      const row = chartRowRef.current.getBoundingClientRect();
+                      const currentX = drawToolboxPosition?.x ?? 8;
+                      const currentY = drawToolboxPosition?.y ?? 8;
+                      if (drawToolboxPosition === null) setDrawToolboxPosition({ x: currentX, y: currentY });
+                      const startClientX = e.clientX;
+                      const startClientY = e.clientY;
+                      const startX = currentX;
+                      const startY = currentY;
+                      const onMove = (ev: PointerEvent) => {
+                        if (!drawToolboxRef.current || !chartRowRef.current) return;
+                        if (ev.cancelable) ev.preventDefault();
+                        const boxRect = drawToolboxRef.current.getBoundingClientRect();
+                        const rowRect = chartRowRef.current.getBoundingClientRect();
+                        const cw = rowRect.width;
+                        const ch = rowRect.height;
+                        let newX = startX + (ev.clientX - startClientX);
+                        let newY = startY + (ev.clientY - startClientY);
+                        newX = Math.max(0, Math.min(cw - boxRect.width, newX));
+                        newY = Math.max(0, Math.min(ch - boxRect.height, newY));
+                        setDrawToolboxPosition({ x: newX, y: newY });
+                      };
+                      const onUp = () => {
+                        document.removeEventListener("pointermove", onMove);
+                        document.removeEventListener("pointerup", onUp);
+                        document.removeEventListener("pointercancel", onUp);
+                      };
+                      document.addEventListener("pointermove", onMove);
+                      document.addEventListener("pointerup", onUp);
+                      document.addEventListener("pointercancel", onUp);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") e.preventDefault();
+                    }}
+                  >
+                    <span aria-hidden>⠿</span>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={selectLineTool}
-                title={t.lineSegment}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
-                aria-label={t.lineSegment}
-              >
-                📏
-              </button>
-              <button
-                type="button"
-                onClick={selectFibonacciTool}
-                title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
-                aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
-              >
-                <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
-              </button>
-              <button
-                type="button"
-                onClick={selectChannelTool}
-                title={(t as Record<string, string>).channelTool ?? "Channel"}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
-                aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
-              >
-                <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
-              </button>
-              <button
-                type="button"
-                onClick={selectRectangleTool}
-                title={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-100" : ""}`}
-                aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
-              >
-                <span aria-hidden>▭</span>
-              </button>
-              <button
-                type="button"
-                onClick={clearAllDrawing}
-                title={t.drawClearAll}
-                className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
-                aria-label={t.drawClearAll}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
-          {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
-            <div
-              ref={segmentOptionsRef}
-              className="absolute z-[100] rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px]"
-              style={segmentOptionsPosition === null ? { left: 8, top: 8 } : { left: segmentOptionsPosition.x, top: segmentOptionsPosition.y }}
-              onClick={(e) => e.stopPropagation()}
-              role="group"
-              aria-label={t.segmentOptionsTitle}
-            >
-              <div className="flex items-center justify-between gap-0.5 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1">
-                <span className="text-[11px] font-medium text-zinc-600 truncate min-w-0 flex-1">{t.segmentOptionsTitle}</span>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
-                  title={t.drawExitMode}
-                  aria-label={t.drawExitMode}
+                  onClick={selectLineTool}
+                  title={t.lineSegment}
+                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
+                  aria-label={t.lineSegment}
                 >
-                  <span aria-hidden>×</span>
+                  📏
                 </button>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none shrink-0"
-                  title={t.drawToolboxDrag}
-                  aria-label={t.drawToolboxDrag}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!segmentOptionsRef.current || !chartRowRef.current) return;
-                    const box = segmentOptionsRef.current.getBoundingClientRect();
-                    const row = chartRowRef.current.getBoundingClientRect();
-                    const currentX = segmentOptionsPosition?.x ?? 8;
-                    const currentY = segmentOptionsPosition?.y ?? 8;
-                    if (segmentOptionsPosition === null) setSegmentOptionsPosition({ x: currentX, y: currentY });
-                    const startClientX = e.clientX;
-                    const startClientY = e.clientY;
-                    const startX = currentX;
-                    const startY = currentY;
-                    const onMove = (ev: PointerEvent) => {
-                      if (!segmentOptionsRef.current || !chartRowRef.current) return;
-                      if (ev.cancelable) ev.preventDefault();
-                      const boxRect = segmentOptionsRef.current.getBoundingClientRect();
-                      const rowRect = chartRowRef.current.getBoundingClientRect();
-                      const cw = rowRect.width;
-                      const ch = rowRect.height;
-                      let newX = startX + (ev.clientX - startClientX);
-                      let newY = startY + (ev.clientY - startClientY);
-                      newX = Math.max(0, Math.min(cw - boxRect.width, newX));
-                      newY = Math.max(0, Math.min(ch - boxRect.height, newY));
-                      setSegmentOptionsPosition({ x: newX, y: newY });
-                    };
-                    const onUp = () => {
-                      document.removeEventListener("pointermove", onMove);
-                      document.removeEventListener("pointerup", onUp);
-                      document.removeEventListener("pointercancel", onUp);
-                    };
-                    document.addEventListener("pointermove", onMove);
-                    document.addEventListener("pointerup", onUp);
-                    document.addEventListener("pointercancel", onUp);
-                  }}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.preventDefault(); }}
+                <button
+                  type="button"
+                  onClick={selectFibonacciTool}
+                  title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
+                  aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
                 >
-                  <span aria-hidden>⠿</span>
-                </div>
+                  <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                </button>
+                <button
+                  type="button"
+                  onClick={selectChannelTool}
+                  title={(t as Record<string, string>).channelTool ?? "Channel"}
+                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
+                  aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
+                >
+                  <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                </button>
+                <button
+                  type="button"
+                  onClick={selectRectangleTool}
+                  title={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
+                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-100" : ""}`}
+                  aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
+                >
+                  <span aria-hidden>▭</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={clearAllDrawing}
+                  title={t.drawClearAll}
+                  className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
+                  aria-label={t.drawClearAll}
+                >
+                  🗑️
+                </button>
               </div>
-              <div className="py-1.5 px-1.5 space-y-1.5">
+            )}
+            {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
+              <div
+                ref={segmentOptionsRef}
+                className="absolute z-[100] rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px]"
+                style={segmentOptionsPosition === null ? { left: 8, top: 8 } : { left: segmentOptionsPosition.x, top: segmentOptionsPosition.y }}
+                onClick={(e) => e.stopPropagation()}
+                role="group"
+                aria-label={t.segmentOptionsTitle}
+              >
+                <div className="flex items-center justify-between gap-0.5 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1">
+                  <span className="text-[11px] font-medium text-zinc-600 truncate min-w-0 flex-1">{t.segmentOptionsTitle}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
+                    title={t.drawExitMode}
+                    aria-label={t.drawExitMode}
+                  >
+                    <span aria-hidden>×</span>
+                  </button>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none shrink-0"
+                    title={t.drawToolboxDrag}
+                    aria-label={t.drawToolboxDrag}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!segmentOptionsRef.current || !chartRowRef.current) return;
+                      const box = segmentOptionsRef.current.getBoundingClientRect();
+                      const row = chartRowRef.current.getBoundingClientRect();
+                      const currentX = segmentOptionsPosition?.x ?? 8;
+                      const currentY = segmentOptionsPosition?.y ?? 8;
+                      if (segmentOptionsPosition === null) setSegmentOptionsPosition({ x: currentX, y: currentY });
+                      const startClientX = e.clientX;
+                      const startClientY = e.clientY;
+                      const startX = currentX;
+                      const startY = currentY;
+                      const onMove = (ev: PointerEvent) => {
+                        if (!segmentOptionsRef.current || !chartRowRef.current) return;
+                        if (ev.cancelable) ev.preventDefault();
+                        const boxRect = segmentOptionsRef.current.getBoundingClientRect();
+                        const rowRect = chartRowRef.current.getBoundingClientRect();
+                        const cw = rowRect.width;
+                        const ch = rowRect.height;
+                        let newX = startX + (ev.clientX - startClientX);
+                        let newY = startY + (ev.clientY - startClientY);
+                        newX = Math.max(0, Math.min(cw - boxRect.width, newX));
+                        newY = Math.max(0, Math.min(ch - boxRect.height, newY));
+                        setSegmentOptionsPosition({ x: newX, y: newY });
+                      };
+                      const onUp = () => {
+                        document.removeEventListener("pointermove", onMove);
+                        document.removeEventListener("pointerup", onUp);
+                        document.removeEventListener("pointercancel", onUp);
+                      };
+                      document.addEventListener("pointermove", onMove);
+                      document.addEventListener("pointerup", onUp);
+                      document.addEventListener("pointercancel", onUp);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.preventDefault(); }}
+                  >
+                    <span aria-hidden>⠿</span>
+                  </div>
+                </div>
+                <div className="py-1.5 px-1.5 space-y-1.5">
                   <div>
                     <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : drawSegments[selectedSegmentIndex]?.type === "rectangle" ? ((t as Record<string, string>).rectangleColor ?? t.segmentColor) : t.segmentColor}</div>
                     <div className="relative">
@@ -1731,25 +1727,25 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     </label>
                   )}
                   {drawSegments[selectedSegmentIndex]?.type !== "rectangle" && (
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={drawSegments[selectedSegmentIndex]?.showValues === true}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle";
-                        setDrawSegments((prev) => {
-                          const next = [...prev];
-                          const seg = next[selectedSegmentIndex];
-                          if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
-                          return next;
-                        });
-persistDrawDefault(segType, { showValues: checked });
-                      }}
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
+                      <input
+                        type="checkbox"
+                        checked={drawSegments[selectedSegmentIndex]?.showValues === true}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle";
+                          setDrawSegments((prev) => {
+                            const next = [...prev];
+                            const seg = next[selectedSegmentIndex];
+                            if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                            return next;
+                          });
+                          persistDrawDefault(segType, { showValues: checked });
+                        }}
                         className="rounded border-zinc-300"
-                    />
-                    <span>{t.segmentShowValues}</span>
-                  </label>
+                      />
+                      <span>{t.segmentShowValues}</span>
+                    </label>
                   )}
                   <button
                     type="button"
@@ -1765,256 +1761,260 @@ persistDrawDefault(segType, { showValues: checked });
                     <span aria-hidden>🗑️</span>
                   </button>
                 </div>
-            </div>
-          )}
-          <KlinesChartSvg
-            chartSvgRef={chartSvgRef}
-            crosshairOverlayRef={crosshairOverlayRef}
-            width={displayPlotWidth}
-            chartHeight={chartHeight}
-            chartW={chartW}
-            chartH={chartH}
-            gap={gap}
-            candleW={candleW}
-            y={y}
-            cx={cx}
-            segmentToPixel={segmentToPixel}
-            snapToCandlePoint={snapToCandlePoint}
-            windowSlice={windowSlice}
-            fullReversed={fullReversed}
-            startIndex={startIndex}
-            windowN={windowN}
-            n={n}
-            candleColors={candleColors}
-            yTickValues={yTickValues}
-            verticalIndicesFiltered={verticalIndicesFiltered}
-            dateBreaksFiltered={dateBreaksFiltered}
-            dayBreaksFiltered={dayBreaksFiltered}
-            showMainAxis={showMainAxis}
-            showSecondaryAxis={showSecondaryAxis}
-            showLastCloseLine={showLastCloseLine}
-            showLastClose={showLastClose}
-            lastCloseY={lastCloseY}
-            volumeOnPrice={volumeOnPrice}
-            volumeOnPriceOpacity={volumeOnPriceOpacity}
-            lineTableHex={lineTableHex}
-            secondaryGridHex={secondaryGridHex}
-            lastCloseLineHex={lastCloseLineHex}
-            chartBgHex={chartBgHex}
-            backgroundTextHex={backgroundTextHex}
-            formatYAxis={formatYAxis}
-            hasPanel2={hasPanel2}
-            hasPanel3={hasPanel3}
-            hasPanel4={hasPanel4}
-            hasPanel5={hasPanel5}
-            panel2Top={panel2Top}
-            panel3Top={panel3Top}
-            panel4Top={panel4Top}
-            panel5Top={panel5Top}
-            panelTop={panelTop}
-            panelHeight={panelHeight}
-            panelExtents={panelExtents}
-            indicatorLines={indicatorLines}
-            getPanel={getPanel}
-            yValInPanel={yValInPanel}
-            hasIndicatorStrip={hasIndicatorStrip}
-            isDarkBg={isDarkBg}
-            crosshairPoint={crosshairPoint}
-            crosshairDragging={crosshairDragging}
-            setCrosshairPoint={setCrosshairPoint}
-            setCrosshairDragging={setCrosshairDragging}
-            drawingsVisible={drawingsVisible}
-            drawSegments={drawSegments}
-            setDrawSegments={setDrawSegments}
-            drawDefaults={drawDefaults}
-            drawPending={drawPending}
-            setDrawPending={setDrawPending}
-            drawPendingRectSecond={drawPendingRectSecond}
-            setDrawPendingRectSecond={setDrawPendingRectSecond}
-            selectedSegmentIndex={selectedSegmentIndex}
-            setSelectedSegmentIndex={setSelectedSegmentIndex}
-            drawMode={drawMode}
-            drawTool={drawTool}
-            setDrawDragging={setDrawDragging}
-            onSelectToolPan={onSelectToolPan}
-            onChartDrawClick={() => {
-              setSegmentToolboxCollapsed(true);
-              setDrawOpen(false);
-            }}
-            onSegmentCreated={(newIndex) => {
-              setSelectedSegmentIndex(newIndex);
-              selectSelectTool();
-              setDrawOpen(true);
-              setSegmentToolboxCollapsed(false);
-            }}
-            t={t}
-            textScale={textScale}
-            strategyCandleOverlays={strategyCandleOverlays}
-          />
-          {!drawMode && (
-            <>
-              <div
-                ref={crosshairOverlayDivRef}
-                role="presentation"
-                style={{
-                  position: "absolute",
-                  left: MARGIN_LEFT,
-                  top: MARGIN_TOP,
-                  width: chartW,
-                  height: chartH,
-                  touchAction: "none",
-                  zIndex: 1,
-                  cursor: crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair",
-                }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
-                  const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
-                  const toData = crosshairPixelToDataRef.current;
-                  if (!toData) return;
-                  const newPoint = toData(px, py);
-                  const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
-                  if (isSamePoint) {
-                    setCrosshairPoint(null);
-                    return;
-                  }
-                  setCrosshairPoint(newPoint);
-                  crosshairDraggingRef.current = true;
-                  setCrosshairDragging(true);
-                }}
-                onPointerMove={(e) => {
-                  if (!crosshairDraggingRef.current) return;
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
-                  const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
-                  const toData = crosshairPixelToDataRef.current;
-                  if (toData) setCrosshairPoint(toData(px, py));
-                }}
-                onPointerUp={(e) => {
-                  e.currentTarget.releasePointerCapture(e.pointerId);
-                  crosshairDraggingRef.current = false;
-                  setCrosshairDragging(false);
-                }}
-                onPointerCancel={(e) => {
-                  e.currentTarget.releasePointerCapture(e.pointerId);
-                  crosshairDraggingRef.current = false;
-                  setCrosshairDragging(false);
-                }}
-              />
-              {hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 ? (
+              </div>
+            )}
+            <KlinesChartSvg
+              chartSvgRef={chartSvgRef}
+              crosshairOverlayRef={crosshairOverlayRef}
+              width={displayPlotWidth}
+              chartHeight={chartHeight}
+              chartW={chartW}
+              chartH={chartH}
+              gap={gap}
+              candleW={candleW}
+              y={y}
+              cx={cx}
+              segmentToPixel={segmentToPixel}
+              snapToCandlePoint={snapToCandlePoint}
+              windowSlice={windowSlice}
+              fullReversed={fullReversed}
+              startIndex={startIndex}
+              windowN={windowN}
+              n={n}
+              candleColors={candleColors}
+              yTickValues={yTickValues}
+              verticalIndicesFiltered={verticalIndicesFiltered}
+              dateBreaksFiltered={dateBreaksFiltered}
+              dayBreaksFiltered={dayBreaksFiltered}
+              showMainAxis={showMainAxis}
+              showSecondaryAxis={showSecondaryAxis}
+              showLastCloseLine={showLastCloseLine}
+              showLastClose={showLastClose}
+              lastCloseY={lastCloseY}
+              volumeOnPrice={volumeOnPrice}
+              volumeOnPriceOpacity={volumeOnPriceOpacity}
+              lineTableHex={lineTableHex}
+              secondaryGridHex={secondaryGridHex}
+              lastCloseLineHex={lastCloseLineHex}
+              chartBgHex={chartBgHex}
+              backgroundTextHex={backgroundTextHex}
+              formatYAxis={formatYAxis}
+              hasPanel2={hasPanel2}
+              hasPanel3={hasPanel3}
+              hasPanel4={hasPanel4}
+              hasPanel5={hasPanel5}
+              panel2Top={panel2Top}
+              panel3Top={panel3Top}
+              panel4Top={panel4Top}
+              panel5Top={panel5Top}
+              panelTop={panelTop}
+              panelHeight={panelHeight}
+              panelExtents={panelExtents}
+              indicatorLines={indicatorLines}
+              getPanel={getPanel}
+              yValInPanel={yValInPanel}
+              hasIndicatorStrip={hasIndicatorStrip}
+              isDarkBg={isDarkBg}
+              crosshairPoint={crosshairPoint}
+              crosshairDragging={crosshairDragging}
+              setCrosshairPoint={setCrosshairPoint}
+              setCrosshairDragging={setCrosshairDragging}
+              drawingsVisible={drawingsVisible}
+              drawSegments={drawSegments}
+              setDrawSegments={setDrawSegments}
+              drawDefaults={drawDefaults}
+              drawPending={drawPending}
+              setDrawPending={setDrawPending}
+              drawPendingRectSecond={drawPendingRectSecond}
+              setDrawPendingRectSecond={setDrawPendingRectSecond}
+              drawPendingFibSecond={drawPendingFibSecond}
+              setDrawPendingFibSecond={setDrawPendingFibSecond}
+              selectedSegmentIndex={selectedSegmentIndex}
+              setSelectedSegmentIndex={setSelectedSegmentIndex}
+              drawMode={drawMode}
+              drawTool={drawTool}
+              setDrawDragging={setDrawDragging}
+              onSelectToolPan={onSelectToolPan}
+              onChartDrawClick={() => {
+                setSegmentToolboxCollapsed(true);
+                setDrawOpen(false);
+              }}
+              onSegmentCreated={(newIndex) => {
+                setSelectedSegmentIndex(newIndex);
+                selectSelectTool();
+                setDrawOpen(true);
+                setSegmentToolboxCollapsed(false);
+              }}
+              t={t}
+              textScale={textScale}
+              strategyCandleOverlays={strategyCandleOverlays}
+            />
+            {(!drawMode || segmentOptionsOpen) && (
+              <>
                 <div
+                  ref={crosshairOverlayDivRef}
                   role="presentation"
                   style={{
                     position: "absolute",
                     left: MARGIN_LEFT,
-                    top: tableTop,
+                    top: MARGIN_TOP,
                     width: chartW,
-                    height: chartBottom - tableTop,
-                    touchAction: "pan-x pan-y",
+                    height: chartH,
+                    touchAction: "none",
                     zIndex: 1,
+                    cursor: segmentOptionsOpen ? "default" : (crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair"),
                   }}
-                  onPointerDown={(e) => {
+                  onPointerDown={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
                     const rect = e.currentTarget.getBoundingClientRect();
-                    const secH = chartBottom - tableTop;
                     const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
-                    const py = tableTop + (e.clientY - rect.top) * (secH / (rect.height || 1));
-                    const inPanel2 = hasPanel2 && py >= panel2Top && py < panel2Top + panel2Height;
-                    const inPanel3 = hasPanel3 && py >= panel3Top && py < panel3Top + panel3Height;
-                    const inPanel4 = hasPanel4 && py >= panel4Top && py < panel4Top + panel4Height;
-                    const inPanel5 = hasPanel5 && py >= panel5Top && py < panel5Top + panel5Height;
-                    if (!inPanel2 && !inPanel3 && !inPanel4 && !inPanel5) return;
-                    const idx = Math.max(0, Math.min(n - 1, Math.round((px - MARGIN_LEFT) / gap - 0.5) + startIndex));
-                    const close = parseNum(String(fullReversed[idx]?.[4] ?? 0));
-                    let panelValue: number;
-                    if (inPanel2) {
-                      const { min, max } = panelExtents.panel2;
-                      panelValue = min + (1 - (py - panel2Top) / panel2Height) * (max - min);
-                    } else if (inPanel3) {
-                      const { min, max } = panelExtents.panel3;
-                      panelValue = min + (1 - (py - panel3Top) / panel3Height) * (max - min);
-                    } else if (inPanel4) {
-                      const { min, max } = panelExtents.panel4;
-                      panelValue = min + (1 - (py - panel4Top) / panel4Height) * (max - min);
-                    } else {
-                      const { min, max } = panelExtents.panel5;
-                      panelValue = min + (1 - (py - panel5Top) / panel5Height) * (max - min);
-                    }
-                    const newPoint = { index: idx, price: close, panelClickY: py, panelValue };
+                    const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                    const toData = crosshairPixelToDataRef.current;
+                    if (!toData) return;
+                    const newPoint = toData(px, py);
                     const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
                     if (isSamePoint) {
                       setCrosshairPoint(null);
                       return;
                     }
                     setCrosshairPoint(newPoint);
-                  }}
+                    crosshairDraggingRef.current = true;
+                    setCrosshairDragging(true);
+                  }) : undefined}
+                  onPointerMove={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    if (!crosshairDraggingRef.current) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                    const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                    const toData = crosshairPixelToDataRef.current;
+                    if (toData) setCrosshairPoint(toData(px, py));
+                  }) : undefined}
+                  onPointerUp={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    crosshairDraggingRef.current = false;
+                    setCrosshairDragging(false);
+                  }) : undefined}
+                  onPointerCancel={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    crosshairDraggingRef.current = false;
+                    setCrosshairDragging(false);
+                  }) : undefined}
                 />
-              ) : null}
-            </>
-          )}
-          <KlinesChartYAxis
-              chartHeight={chartHeight}
-              yTickValues={yTickValues}
-              y={y}
-              formatYAxis={formatYAxis}
-              formatPanelValue={(v: number) => (v >= 0 && v <= 100 && v === Math.round(v) ? String(v) : formatAbbreviated(v))}
-              formatObvValue={formatObvYAxis}
-              footerYAxisTextHex={footerYAxisTextHex}
-              isDarkFooterYAxis={isDarkFooterYAxis}
-              footerYAxisHex={footerYAxisHex}
-              lineTableHex={lineTableHex}
-              yAxisAbbreviated={yAxisAbbreviated}
-              hasPanel2={hasPanel2}
-              hasPanel3={hasPanel3}
-              hasPanel4={hasPanel4}
-              hasPanel5={hasPanel5}
-              panelExtents={panelExtents}
-              yRsiPanel2={yRsiPanel2}
-              yRsiPanel3={yRsiPanel3}
-              yRsiPanel4={yRsiPanel4}
-              yRsiPanel5={yRsiPanel5}
-              yRsiByPanel={yRsiByPanel}
-              showLastClose={showLastClose}
-              lastCloseY={lastCloseY}
-              lastClose={lastClose}
-              lastCloseTextHex={lastCloseTextHex}
-              indicatorLines={indicatorLines}
-              klines={klines}
-              n={n}
-              getPanel={getPanel}
-              yMin={yMin}
-              yMax={yMax}
-              crosshairPoint={crosshairPoint}
-              startIndex={startIndex}
-              windowN={windowN}
-              crosshairDragging={crosshairDragging}
-              volumeOnPrice={volumeOnPrice}
-              volumeLabelY={volumeOnPrice && windowN > 0 ? MARGIN_TOP + chartH - chartH / 6 : undefined}
-              volumeLabelValue={
-                volumeOnPrice && windowN > 0
-                  ? (() => {
+                {hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 ? (
+                  <div
+                    role="presentation"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT,
+                      top: tableTop,
+                      width: chartW,
+                      height: chartBottom - tableTop,
+                      touchAction: "pan-x pan-y",
+                      zIndex: 1,
+                    }}
+                    onPointerDown={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const secH = chartBottom - tableTop;
+                      const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                      const py = tableTop + (e.clientY - rect.top) * (secH / (rect.height || 1));
+                      const inPanel2 = hasPanel2 && py >= panel2Top && py < panel2Top + panel2Height;
+                      const inPanel3 = hasPanel3 && py >= panel3Top && py < panel3Top + panel3Height;
+                      const inPanel4 = hasPanel4 && py >= panel4Top && py < panel4Top + panel4Height;
+                      const inPanel5 = hasPanel5 && py >= panel5Top && py < panel5Top + panel5Height;
+                      if (!inPanel2 && !inPanel3 && !inPanel4 && !inPanel5) return;
+                      const idx = Math.max(0, Math.min(n - 1, Math.round((px - MARGIN_LEFT) / gap - 0.5) + startIndex));
+                      const close = parseNum(String(fullReversed[idx]?.[4] ?? 0));
+                      let panelValue: number;
+                      if (inPanel2) {
+                        const { min, max } = panelExtents.panel2;
+                        panelValue = min + (1 - (py - panel2Top) / panel2Height) * (max - min);
+                      } else if (inPanel3) {
+                        const { min, max } = panelExtents.panel3;
+                        panelValue = min + (1 - (py - panel3Top) / panel3Height) * (max - min);
+                      } else if (inPanel4) {
+                        const { min, max } = panelExtents.panel4;
+                        panelValue = min + (1 - (py - panel4Top) / panel4Height) * (max - min);
+                      } else {
+                        const { min, max } = panelExtents.panel5;
+                        panelValue = min + (1 - (py - panel5Top) / panel5Height) * (max - min);
+                      }
+                      const newPoint = { index: idx, price: close, panelClickY: py, panelValue };
+                      const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                      if (isSamePoint) {
+                        setCrosshairPoint(null);
+                        return;
+                      }
+                      setCrosshairPoint(newPoint);
+                    }}
+                  />
+                ) : null}
+              </>
+            )}
+            <div ref={chartYAxisContainerRef} className="contents">
+              <KlinesChartYAxis
+                chartHeight={chartHeight}
+                yTickValues={yTickValues}
+                y={y}
+                formatYAxis={formatYAxis}
+                formatPanelValue={(v: number) => (v >= 0 && v <= 100 && v === Math.round(v) ? String(v) : formatAbbreviated(v))}
+                formatObvValue={formatObvYAxis}
+                footerYAxisTextHex={footerYAxisTextHex}
+                isDarkFooterYAxis={isDarkFooterYAxis}
+                footerYAxisHex={footerYAxisHex}
+                lineTableHex={lineTableHex}
+                yAxisAbbreviated={yAxisAbbreviated}
+                hasPanel2={hasPanel2}
+                hasPanel3={hasPanel3}
+                hasPanel4={hasPanel4}
+                hasPanel5={hasPanel5}
+                panelExtents={panelExtents}
+                yRsiPanel2={yRsiPanel2}
+                yRsiPanel3={yRsiPanel3}
+                yRsiPanel4={yRsiPanel4}
+                yRsiPanel5={yRsiPanel5}
+                yRsiByPanel={yRsiByPanel}
+                showLastClose={showLastClose}
+                lastCloseY={lastCloseY}
+                lastClose={lastClose}
+                lastCloseTextHex={lastCloseTextHex}
+                indicatorLines={indicatorLines}
+                klines={klines}
+                n={n}
+                getPanel={getPanel}
+                yMin={yMin}
+                yMax={yMax}
+                crosshairPoint={crosshairPoint}
+                startIndex={startIndex}
+                windowN={windowN}
+                crosshairDragging={crosshairDragging}
+                volumeOnPrice={volumeOnPrice}
+                volumeLabelY={volumeOnPrice && windowN > 0 ? MARGIN_TOP + chartH - chartH / 6 : undefined}
+                volumeLabelValue={
+                  volumeOnPrice && windowN > 0
+                    ? (() => {
                       const lastRow = windowSlice[windowN - 1];
                       if (!lastRow) return undefined;
                       const v = lastRow[5];
                       const num = v != null ? (typeof v === "number" ? v : Number(v)) : NaN;
                       return Number.isFinite(num) ? formatAbbreviated(num) : undefined;
                     })()
-                  : undefined
-              }
-              volumeLabelColor={
-                volumeOnPrice && windowN > 0
-                  ? (() => {
+                    : undefined
+                }
+                volumeLabelColor={
+                  volumeOnPrice && windowN > 0
+                    ? (() => {
                       const lastRow = windowSlice[windowN - 1];
                       if (!lastRow) return undefined;
                       const open = parseNum(String(lastRow[1] ?? ""));
                       const close = parseNum(String(lastRow[4] ?? ""));
                       return Number.isFinite(open) && Number.isFinite(close) && close >= open ? candleColors.bull : candleColors.bear;
                     })()
-                  : undefined
-              }
-              textScale={textScale}
-            />
+                    : undefined
+                }
+                textScale={textScale}
+              />
+            </div>
           </div>
           <KlinesChartFooter
             footerYAxisHex={footerYAxisHex}
