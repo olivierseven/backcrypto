@@ -33,9 +33,13 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
   - KlinesChartSvg.tsx: **1556 → 1181 linhas** (−375).  
   - Novo arquivo: `DrawOverlay.tsx` (~457 linhas).
 
+- **Fase 4** – Handles do segmento selecionado (círculos nas pontas, canal meio/extensão, fib nível 1/extensão, reta horizontal mover) extraídos para `klinesChart/DrawSegmentHandles.tsx`.  
+  - KlinesChartSvg.tsx: **1191 → 1045 linhas** (−146).  
+  - Novo arquivo: `DrawSegmentHandles.tsx` (~166 linhas).
+
 ### Pendente
 
-- **Fase 4**: Extrair handles do segmento selecionado para `klinesChart/DrawSegmentHandles.tsx`.
+- Nenhuma. As quatro fases do plano foram concluídas.
 
 ---
 
@@ -114,6 +118,26 @@ Ordem sugerida: 1 → 2 → 3 → 4 (da mais isolada à mais acoplada).
 - Remover imports não usados (flushSync, distanceToSegment, SEGMENT_COLOR_PALETTE).
 
 **Critério de sucesso:** Comportamento idêntico; KlinesChartSvg.tsx com ~350–400 linhas a menos.
+
+---
+
+## Fase 4 – Detalhamento (concluída)
+
+**Objetivo:** Extrair os handles do segmento selecionado (círculos de arraste, canal meio/extensão, fib nível 1/extensão, reta horizontal mover) para um componente próprio.
+
+**Novo arquivo:** `src/app/(sys)/sistema/klinesChart/DrawSegmentHandles.tsx`
+
+**Responsabilidades do componente:**
+
+- Renderizar o `<g>` de handles quando há segmento selecionado: círculos transparentes (r=5) nas pontas com setDrawDragging(0/1); reta horizontal: linha transparente para arrastar (horizontalLineMove); canal: meio (channelMid) e dois círculos de extensão (channelExtension); fibonacci: handle do nível 1 (fibLevel1) e retângulo + seta de extensão (extension).
+- Props: segment, selectedSegmentIndex, segmentToPixel, setDrawDragging, t (traduções para aria-label).
+
+**Em KlinesChartSvg.tsx:**
+
+- Substituir o bloco IIFE que desenhava os handles por `<DrawSegmentHandles segment={...} selectedSegmentIndex={...} ... />`.
+- Remover import não usado (DEFAULT_SEGMENT_COLOR).
+
+**Critério de sucesso:** Comportamento idêntico; KlinesChartSvg.tsx com ~150–200 linhas a menos.
 
 ---
 
