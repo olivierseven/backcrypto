@@ -209,6 +209,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     setDrawPendingFibSecond,
     drawPendingLineSecond,
     setDrawPendingLineSecond,
+    drawPendingChannelSecond,
+    setDrawPendingChannelSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     setDrawDragging,
@@ -1142,7 +1144,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -1833,6 +1835,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               setDrawPendingFibSecond={setDrawPendingFibSecond}
               drawPendingLineSecond={drawPendingLineSecond}
               setDrawPendingLineSecond={setDrawPendingLineSecond}
+              drawPendingChannelSecond={drawPendingChannelSecond}
+              setDrawPendingChannelSecond={setDrawPendingChannelSecond}
               selectedSegmentIndex={selectedSegmentIndex}
               setSelectedSegmentIndex={setSelectedSegmentIndex}
               drawMode={drawMode}
