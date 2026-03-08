@@ -696,147 +696,27 @@ export function KlinesChartSidebar({
         >
           📐
         </button>
-        {isHorizontal ? (
-          <>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (drawMode && drawTool === "select") {
-                  closeDrawMode();
-                } else {
-                  selectSelectTool();
-                }
-              }}
-              title={t.drawSelectSegment}
-              className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
-              aria-label={t.drawSelectSegment}
-              aria-pressed={drawMode && drawTool === "select"}
-            >
-              <span aria-hidden>👆</span>
-            </button>
-            <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
-              <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
-              <span aria-hidden>🧲</span>
-            </label>
-          </>
-        ) : drawMode ? (
-          <>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); selectLineTool(); }}
-              title={t.lineSegment}
-              className={`${iconButtonClassName} ${drawTool === "line" ? "bg-zinc-200" : ""}`}
-              aria-label={t.lineSegment}
-              aria-pressed={drawTool === "line"}
-            >
-              <span aria-hidden>📏</span>
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); selectChannelTool(); }}
-              title={(t as Record<string, string>).channelTool ?? "Channel"}
-              className={`${iconButtonClassName} ${drawTool === "channel" ? "bg-zinc-200" : ""}`}
-              aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
-              aria-pressed={drawTool === "channel"}
-            >
-              <span aria-hidden>⇔</span>
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); selectSelectTool(); }}
-              title={t.drawSelectSegment}
-              className={`${iconButtonClassName} ${drawTool === "select" ? "bg-zinc-200" : ""}`}
-              aria-label={t.drawSelectSegment}
-              aria-pressed={drawTool === "select"}
-            >
-              <span aria-hidden>👆</span>
-            </button>
-            <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
-              <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
-              <span aria-hidden>🧲</span>
-            </label>
-          </>
-        ) : null}
-        {drawOpen && drawPanelSide === "left" && !isHorizontal && (
-          <div
-            className={`${popoverPositionClass} z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-end gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDrawOpen(false);
-                  closeDrawMode();
-                }}
-                className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold"
-                title={t.drawExitMode}
-                aria-label={t.drawExitMode}
-              >
-                <span aria-hidden>×</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={selectLineTool}
-              title={t.lineSegment}
-              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
-              aria-label={t.lineSegment}
-            >
-              📏
-            </button>
-            <button
-              type="button"
-              onClick={selectFibonacciTool}
-              title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
-              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
-              aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
-            >
-              <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
-            </button>
-            <button
-              type="button"
-              onClick={selectChannelTool}
-              title={(t as Record<string, string>).channelTool ?? "Channel"}
-              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
-              aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
-            >
-              ⇔
-            </button>
-            <button
-              type="button"
-              onClick={selectSelectTool}
-              title={t.drawSelectSegment}
-              className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "select" ? "bg-zinc-100" : ""}`}
-              aria-label={t.drawSelectSegment}
-            >
-              👆
-            </button>
-            <label
-              className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 ${drawMagnetic ? "bg-zinc-100" : ""}`}
-              title={t.drawMagnetic}
-            >
-              <input
-                type="checkbox"
-                checked={drawMagnetic}
-                onChange={(e) => setDrawMagnetic(e.target.checked)}
-                className="rounded border-zinc-300 sr-only"
-              />
-              <span aria-hidden>🧲</span>
-            </label>
-            <button
-              type="button"
-              onClick={clearAllDrawing}
-              title={t.drawClearAll}
-              className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700"
-              aria-label={t.drawClearAll}
-            >
-              🗑️
-            </button>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (drawMode && drawTool === "select") {
+              closeDrawMode();
+            } else {
+              selectSelectTool();
+            }
+          }}
+          title={t.drawSelectSegment}
+          className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
+          aria-label={t.drawSelectSegment}
+          aria-pressed={drawMode && drawTool === "select"}
+        >
+          <span aria-hidden>👆</span>
+        </button>
+        <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
+          <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
+          <span aria-hidden>🧲</span>
+        </label>
       </div>
       <div ref={saveLoadRef} className={isHorizontal ? "flex items-center" : "w-full flex flex-col items-center"}>
         <div ref={saveTriggerRef} className={isHorizontal ? "relative flex items-center" : "relative w-full"}>
@@ -1120,17 +1000,6 @@ export function KlinesChartSidebar({
                     <button key={`ft-${bg.id}`} type="button" onClick={() => setFooterYAxisTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
-              </div>
-            )}
-            {drawOpen && drawPanelSide === "left" && !intervalsOpen && !settingsOpen && !colorsOpen && (
-              <div className="w-fit min-w-0 flex flex-col">
-                <div className="flex items-center justify-end gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }} className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold" title={t.drawExitMode} aria-label={t.drawExitMode}><span aria-hidden>×</span></button>
-                </div>
-                <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`} aria-label={t.lineSegment}>📏</button>
-                <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}><img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" /></button>
-                <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "channel" ? "bg-zinc-100" : ""}`} aria-label={(t as Record<string, string>).channelTool ?? "Channel"}>⇔</button>
-                <button type="button" onClick={clearAllDrawing} title={t.drawClearAll} className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700" aria-label={t.drawClearAll}>🗑️</button>
               </div>
             )}
             {saveOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (

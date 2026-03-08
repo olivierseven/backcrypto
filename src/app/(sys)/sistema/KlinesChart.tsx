@@ -1123,7 +1123,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
         </div>
         <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
-          {drawOpen && drawPanelSide === "right" && (
+          {drawOpen && (
             <div
               ref={drawToolboxRef}
               className="absolute z-[100] flex w-fit flex-col items-center rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
@@ -1213,7 +1213,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
                 aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
               >
-                ⇔
+                <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
               </button>
               <button
                 type="button"
