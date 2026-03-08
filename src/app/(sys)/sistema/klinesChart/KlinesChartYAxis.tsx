@@ -51,6 +51,8 @@ export interface KlinesChartYAxisProps {
   volumeLabelColor?: string;
   /** Escala dos textos do eixo Y: 0.6–1 quando o plot está reduzido. */
   textScale?: number;
+  /** Retas horizontais que pedem para marcar o valor no eixo Y (preço + cor). Apenas no painel principal. */
+  horizontalLineAxisLabels?: { price: number; color: string }[];
 }
 
 export function KlinesChartYAxis({
@@ -94,6 +96,7 @@ export function KlinesChartYAxis({
   volumeLabelValue,
   volumeLabelColor,
   textScale = 1,
+  horizontalLineAxisLabels,
 }: KlinesChartYAxisProps) {
   const fontSize = Math.round(10 * textScale);
   const boxWidth = yAxisAbbreviated ? 46 : 56;
@@ -198,23 +201,28 @@ export function KlinesChartYAxis({
             </text>
           </g>
         )}
-        {showLastClose && (
-          <g>
-            <rect
-              x={yAxisAbbreviated ? boxX : boxXLong}
-              y={lastCloseY - 7}
-              width={yAxisAbbreviated ? 46 : 56}
-              height={14}
-              fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-              stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
-              strokeWidth={1}
-              rx={2}
-            />
-            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
-              {formatYAxis(lastClose)}
-            </text>
-          </g>
-        )}
+        {horizontalLineAxisLabels?.map(({ price, color }, i) => {
+          if (price < yMin || price > yMax) return null;
+          const labelY = y(price);
+          return (
+            <g key={i}>
+              <rect
+                x={yAxisAbbreviated ? boxX : boxXLong}
+                y={labelY - 7}
+                width={yAxisAbbreviated ? 46 : 56}
+                height={14}
+                fill="white"
+                fillOpacity={0.9}
+                stroke={color}
+                strokeWidth={1}
+                rx={2}
+              />
+              <text x={6} y={labelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={color}>
+                {formatYAxis(price)}
+              </text>
+            </g>
+          );
+        })}
         {indicatorLines
           .filter((ind) => ind.showLastValueOnYAxis !== false)
           .map((ind, indIdx) => {
@@ -320,6 +328,23 @@ export function KlinesChartYAxis({
               </g>
             );
           })()}
+        {showLastClose && (
+          <g>
+            <rect
+              x={yAxisAbbreviated ? boxX : boxXLong}
+              y={lastCloseY - 7}
+              width={yAxisAbbreviated ? 46 : 56}
+              height={14}
+              fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
+              stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
+              strokeWidth={1}
+              rx={2}
+            />
+            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
+              {formatYAxis(lastClose)}
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   );

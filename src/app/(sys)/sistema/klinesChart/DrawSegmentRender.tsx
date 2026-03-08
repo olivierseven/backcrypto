@@ -12,11 +12,16 @@ export interface DrawSegmentRenderProps {
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;
   fontSize: number;
+  /** Índice máximo visível (último candle à direita) para estender reta horizontal até o fim do gráfico. */
+  maxVisibleIndex?: number;
+  /** Limites Y (pixels) do gráfico principal para reta vertical ocupar toda a altura. */
+  mainChartTopY?: number;
+  mainChartBottomY?: number;
 }
 
 export function DrawSegmentRender({
@@ -29,6 +34,9 @@ export function DrawSegmentRender({
   fullReversed,
   n,
   fontSize,
+  maxVisibleIndex = n - 1,
+  mainChartTopY = 0,
+  mainChartBottomY = 0,
 }: DrawSegmentRenderProps) {
   const p1 = segmentToPixel(seg.index1, seg.price1);
   const p2 = segmentToPixel(seg.index2, seg.price2);
@@ -227,9 +235,42 @@ export function DrawSegmentRender({
     const strokeW = FIB_STROKE_WIDTH_VALUES[(seg.horizontalLineStrokeWidth as FibStrokeWidth) ?? "medium"];
     const dashStyle = seg.horizontalLineStrokeStyle ?? "solid";
     const strokeDasharray = HORIZONTAL_LINE_STROKE_STYLE_DASH[dashStyle];
+    const showValue = seg.horizontalLineShowValue === true;
+    const extendToEnd = seg.horizontalLineExtendToEnd === true;
+    const rightEnd = extendToEnd ? segmentToPixel(Math.max(seg.index2, maxVisibleIndex), seg.price1) : null;
+    const dottedDash = HORIZONTAL_LINE_STROKE_STYLE_DASH.dotted;
+    const midX = (hp1.x + hp2.x) / 2;
+    const valueOffset = 2;
+    const valuePadW = 42;
+    const valuePadH = 10;
     return (
       <g key={idx}>
         <line x1={hp1.x} y1={hp1.y} x2={hp2.x} y2={hp2.y} stroke={strokeColor} strokeWidth={strokeW} strokeDasharray={strokeDasharray} />
+        {extendToEnd && rightEnd && hp2.x < rightEnd.x && (
+          <line x1={hp2.x} y1={hp2.y} x2={rightEnd.x} y2={rightEnd.y} stroke={strokeColor} strokeWidth={strokeW} strokeDasharray={dottedDash} />
+        )}
+        {showValue && (
+          <g>
+            <rect x={midX - valuePadW / 2} y={hp1.y - valuePadH - valueOffset} width={valuePadW} height={valuePadH} rx={2} fill="#fff" fillOpacity={0.9} stroke={strokeColor} strokeWidth={1} />
+            <text x={midX} y={hp1.y - valueOffset - valuePadH / 2} textAnchor="middle" dominantBaseline="middle" fill={strokeColor} className="font-mono select-none" style={{ fontSize: 9 }}>{formatYAxis(seg.price1)}</text>
+          </g>
+        )}
+      </g>
+    );
+  }
+
+  if (seg.type === "verticalLine") {
+    const vx = segmentToPixel(seg.index1, seg.price1).x;
+    const strokeW = FIB_STROKE_WIDTH_VALUES[(seg.verticalLineStrokeWidth as FibStrokeWidth) ?? "medium"];
+    const dashStyle = seg.verticalLineStrokeStyle ?? "solid";
+    const strokeDasharray = HORIZONTAL_LINE_STROKE_STYLE_DASH[dashStyle];
+    const topY = mainChartTopY ?? p1.y;
+    const bottomY = mainChartBottomY ?? p2.y;
+    const pointR = Math.max(2, strokeW + 1);
+    return (
+      <g key={idx}>
+        <line x1={vx} y1={topY} x2={vx} y2={bottomY} stroke={strokeColor} strokeWidth={strokeW} strokeDasharray={strokeDasharray} />
+        <circle cx={vx} cy={topY} r={pointR} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />
       </g>
     );
   }

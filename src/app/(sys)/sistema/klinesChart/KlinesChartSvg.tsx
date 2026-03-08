@@ -7,7 +7,7 @@ import { useId, useRef, useState, useEffect, type RefObject } from "react";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
-import { type DrawSegment, type DrawDefaults } from "../KlinesChartDrawing";
+import { FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSegment, type DrawDefaults } from "../KlinesChartDrawing";
 import { DrawSegmentRender } from "./DrawSegmentRender";
 import { DrawOverlay } from "./DrawOverlay";
 import { DrawSegmentHandles } from "./DrawSegmentHandles";
@@ -87,8 +87,8 @@ export interface KlinesChartSvgProps {
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" } | null>>;
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "select";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -1000,6 +1000,9 @@ export function KlinesChartSvg({
             fullReversed={fullReversed}
             n={n}
             fontSize={fontSize}
+            maxVisibleIndex={startIndex + windowN - 1}
+            mainChartTopY={MARGIN_TOP}
+            mainChartBottomY={MARGIN_TOP + chartH}
           />
         ))}
         <DrawOverlay
@@ -1043,9 +1046,68 @@ export function KlinesChartSvg({
             segmentToPixel={segmentToPixel}
             setDrawDragging={setDrawDragging}
             t={t}
+            mainChartTopY={MARGIN_TOP}
+            mainChartBottomY={MARGIN_TOP + chartH}
           />
         )}
         </g>
+        {drawingsVisible && (() => {
+          const extendedBottomY = hasPanel5
+            ? panelTop("panel5") + panelHeight("panel5")
+            : hasPanel4
+              ? panelTop("panel4") + panelHeight("panel4")
+              : hasPanel3
+                ? panelTop("panel3") + panelHeight("panel3")
+                : hasPanel2
+                  ? panelTop("panel2") + panelHeight("panel2")
+                  : null;
+          if (extendedBottomY == null) return null;
+          return drawSegments.map((seg, idx) => {
+            if (seg.type !== "verticalLine" || seg.verticalLineExtendToPanels !== true) return null;
+            const vx = segmentToPixel(seg.index1, seg.price1).x;
+            const strokeColor = seg.color ?? "#000000";
+            const strokeW = FIB_STROKE_WIDTH_VALUES[(seg.verticalLineStrokeWidth as "thin" | "medium" | "thick") ?? "medium"];
+            const dashStyle = seg.verticalLineStrokeStyle ?? "solid";
+            const strokeDasharray = HORIZONTAL_LINE_STROKE_STYLE_DASH[dashStyle];
+            const mainBottom = MARGIN_TOP + chartH;
+            return (
+              <line
+                key={`vline-ext-${idx}`}
+                x1={vx}
+                y1={mainBottom}
+                x2={vx}
+                y2={extendedBottomY}
+                stroke={strokeColor}
+                strokeWidth={strokeW}
+                strokeDasharray={strokeDasharray}
+                pointerEvents="none"
+              />
+            );
+          });
+        })()}
+        {drawingsVisible && drawSegments.map((seg, idx) => {
+          if (seg.type !== "verticalLine" || seg.verticalLineShowDateTimeOnXAxis !== true) return null;
+          const vx = segmentToPixel(seg.index1, seg.price1).x;
+          const openTimeMs = seg.index1 >= 0 && seg.index1 < fullReversed.length ? Number(fullReversed[seg.index1]?.[0]) : null;
+          if (openTimeMs == null || !Number.isFinite(openTimeMs)) return null;
+          const boxPad = 6;
+          const lineH = 10;
+          const boxW = 72;
+          const boxH = lineH * 2 + boxPad * 2;
+          const boxY = MARGIN_TOP + chartH + 2;
+          const boxX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW - boxW, vx - boxW / 2));
+          return (
+            <g key={`vline-dt-${idx}`} pointerEvents="none">
+              <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
+              <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
+                {formatDateYyyyMmDd(openTimeMs)}
+              </text>
+              <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
+                {formatTimeLabel(openTimeMs)}
+              </text>
+            </g>
+          );
+        })}
       </svg>
     </div>
   );

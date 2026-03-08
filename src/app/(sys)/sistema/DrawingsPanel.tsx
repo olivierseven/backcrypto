@@ -58,7 +58,11 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
             ? "channelTool"
             : type === "rectangle"
               ? "rectangleTool"
-              : "horizontalLine";
+              : type === "horizontalLine"
+                ? "horizontalLine"
+                : type === "verticalLine"
+                  ? "verticalLine"
+                  : "lineSegment";
     return t[key] ?? type;
   };
 

@@ -7,7 +7,7 @@
  */
 import { DEFAULT_SEGMENT_COLOR, type DrawSegment } from "../KlinesChartDrawing";
 
-export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove";
+export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove";
 
 export interface DrawSegmentHandlesProps {
   segment: DrawSegment;
@@ -15,6 +15,9 @@ export interface DrawSegmentHandlesProps {
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: DrawDraggingPoint } | null>>;
   t: Record<string, string>;
+  /** Limites Y (px) do gráfico principal para handle da reta vertical. */
+  mainChartTopY?: number;
+  mainChartBottomY?: number;
 }
 
 export function DrawSegmentHandles({
@@ -23,6 +26,8 @@ export function DrawSegmentHandles({
   segmentToPixel,
   setDrawDragging,
   t,
+  mainChartTopY = 0,
+  mainChartBottomY = 0,
 }: DrawSegmentHandlesProps) {
   const h1 = segmentToPixel(seg.index1, seg.price1);
   const h2 = segmentToPixel(seg.index2, seg.price2);
@@ -30,6 +35,7 @@ export function DrawSegmentHandles({
   const isFib = seg.type === "fibonacci";
   const isChannel = seg.type === "channel";
   const isHorizontalLine = seg.type === "horizontalLine";
+  const isVerticalLine = seg.type === "verticalLine";
   const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
   const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
@@ -55,30 +61,49 @@ export function DrawSegmentHandles({
           onClick={(e) => e.stopPropagation()}
         />
       )}
-      <circle
-        cx={h1.x}
-        cy={h1.y}
-        r={5}
-        fill="transparent"
-        stroke="none"
-        style={{ cursor: "grab" }}
-        onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-        onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-        onClick={(e) => e.stopPropagation()}
-      />
-      <circle cx={h1.x} cy={h1.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
-      <circle
-        cx={h2.x}
-        cy={h2.y}
-        r={5}
-        fill="transparent"
-        stroke="none"
-        style={{ cursor: "grab" }}
-        onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-        onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-        onClick={(e) => e.stopPropagation()}
-      />
-      {!isChannel && <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />}
+      {isVerticalLine && (
+        <line
+          x1={h1.x}
+          y1={mainChartTopY}
+          x2={h1.x}
+          y2={mainChartBottomY}
+          stroke="transparent"
+          strokeWidth={14}
+          style={{ cursor: "grab" }}
+          aria-label={(t as Record<string, string>).verticalLineMove ?? "Arrastar para mover"}
+          onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "verticalLineMove" }); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "verticalLineMove" }); }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+      {!isVerticalLine && (
+        <>
+          <circle
+            cx={h1.x}
+            cy={h1.y}
+            r={5}
+            fill="transparent"
+            stroke="none"
+            style={{ cursor: "grab" }}
+            onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
+            onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <circle cx={h1.x} cy={h1.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+          <circle
+            cx={h2.x}
+            cy={h2.y}
+            r={5}
+            fill="transparent"
+            stroke="none"
+            style={{ cursor: "grab" }}
+            onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
+            onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          {!isChannel && <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />}
+        </>
+      )}
       {isChannel && (
         <>
           <circle

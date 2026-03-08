@@ -14,7 +14,7 @@ export type DrawSegment = {
   index2: number;
   price2: number;
   /** Tipo: segmento de reta, retração de Fibonacci, canal, retângulo ou reta horizontal. Default: segment */
-  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine";
+  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
   /** Cor do traço (hex). Default: #000000 */
@@ -53,6 +53,20 @@ export type DrawSegment = {
   horizontalLineStrokeWidth?: FibStrokeWidth;
   /** Tipo de traço: contínuo, tracejado ou pontilhado. Só reta horizontal. */
   horizontalLineStrokeStyle?: "solid" | "dashed" | "dotted";
+  /** Mostrar valor do primeiro ponto (texto centralizado em cima da reta). Só reta horizontal. Default: false */
+  horizontalLineShowValue?: boolean;
+  /** Estender a reta horizontalmente até o final do gráfico em pontilhado. Só reta horizontal. Default: false */
+  horizontalLineExtendToEnd?: boolean;
+  /** Indicar o valor no eixo Y. Só reta horizontal. Default: false */
+  horizontalLineShowOnYAxis?: boolean;
+  /** Espessura do traço. Só reta vertical. */
+  verticalLineStrokeWidth?: FibStrokeWidth;
+  /** Tipo de traço: contínuo, tracejado ou pontilhado. Só reta vertical. */
+  verticalLineStrokeStyle?: "solid" | "dashed" | "dotted";
+  /** Mostrar data e hora no eixo X (estilo do crosshair). Só reta vertical. Default: false */
+  verticalLineShowDateTimeOnXAxis?: boolean;
+  /** Estender a reta vertical para baixo nos demais painéis visíveis. Só reta vertical. Default: false */
+  verticalLineExtendToPanels?: boolean;
 };
 
 /** Largura do traço: fino, médio ou grosso (só Fibonacci). */
@@ -68,7 +82,8 @@ export type DrawDefaults = {
   fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1">>;
   channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
   rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
-  horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle">>;
+  horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;
+  verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;
 };
 
 /** strokeDasharray para reta horizontal: contínuo, tracejado, pontilhado. */

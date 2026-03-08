@@ -19,7 +19,7 @@ export interface KlinesChartSegmentOptionsProps {
   selectedSegmentIndex: number | null;
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   setSelectedSegmentIndex: (i: number | null) => void;
-  persistDrawDefault: (type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine", partial: Partial<DrawSegment>) => void;
+  persistDrawDefault: (type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine", partial: Partial<DrawSegment>) => void;
   t: Record<string, string>;
   /** Quando true, fecha os listboxes (ex.: ao recolher a toolbox no sidebar). */
   segmentToolboxCollapsed?: boolean;
@@ -63,7 +63,9 @@ export function KlinesChartSegmentOptions({
           ? tAs.rectangleColor ?? t.segmentColor
           : drawSegments[selectedSegmentIndex]?.type === "horizontalLine"
             ? tAs.horizontalLineColor ?? t.segmentColor
-            : t.segmentColor;
+            : drawSegments[selectedSegmentIndex]?.type === "verticalLine"
+              ? tAs.verticalLineColor ?? t.segmentColor
+              : t.segmentColor;
 
   return (
     <div
@@ -164,7 +166,7 @@ export function KlinesChartSegmentOptions({
                       aria-selected={isSelected}
                       aria-label={colorLabel}
                       onClick={() => {
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine";
+                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
                         setDrawSegments((prev) => {
                           const next = [...prev];
                           const seg = next[selectedSegmentIndex];
@@ -231,6 +233,151 @@ export function KlinesChartSegmentOptions({
                 ))}
               </select>
             </div>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { horizontalLineShowValue?: boolean })?.horizontalLineShowValue === true}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, horizontalLineShowValue: v };
+                    return next;
+                  });
+                  persistDrawDefault("horizontalLine", { horizontalLineShowValue: v });
+                }}
+                className="rounded border-zinc-300"
+                aria-label={tAs.horizontalLineShowValue ?? "Mostrar valor"}
+              />
+              <span className="text-xs text-zinc-700">{tAs.horizontalLineShowValue ?? "Mostrar valor"}</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { horizontalLineExtendToEnd?: boolean })?.horizontalLineExtendToEnd === true}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, horizontalLineExtendToEnd: v };
+                    return next;
+                  });
+                  persistDrawDefault("horizontalLine", { horizontalLineExtendToEnd: v });
+                }}
+                className="rounded border-zinc-300"
+                aria-label={tAs.horizontalLineExtendToEnd ?? "Estender até o fim"}
+              />
+              <span className="text-xs text-zinc-700">{tAs.horizontalLineExtendToEnd ?? "Estender até o fim"}</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { horizontalLineShowOnYAxis?: boolean })?.horizontalLineShowOnYAxis === true}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, horizontalLineShowOnYAxis: v };
+                    return next;
+                  });
+                  persistDrawDefault("horizontalLine", { horizontalLineShowOnYAxis: v });
+                }}
+                className="rounded border-zinc-300"
+                aria-label={tAs.horizontalLineShowOnYAxis ?? "Marcar no eixo Y"}
+              />
+              <span className="text-xs text-zinc-700">{tAs.horizontalLineShowOnYAxis ?? "Marcar no eixo Y"}</span>
+            </label>
+          </>
+        )}
+        {drawSegments[selectedSegmentIndex]?.type === "verticalLine" && (
+          <>
+            <div>
+              <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{tAs.verticalLineStrokeStyle ?? "Tipo de traço"}</div>
+              <select
+                id="vertical-line-stroke-style-listbox"
+                value={(drawSegments[selectedSegmentIndex] as DrawSegment & { verticalLineStrokeStyle?: "solid" | "dashed" | "dotted" })?.verticalLineStrokeStyle ?? "solid"}
+                onChange={(e) => {
+                  const v = e.target.value as "solid" | "dashed" | "dotted";
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, verticalLineStrokeStyle: v };
+                    return next;
+                  });
+                  persistDrawDefault("verticalLine", { verticalLineStrokeStyle: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.verticalLineStrokeStyle ?? "Tipo de traço"}
+              >
+                <option value="solid">{tAs.strokeSolid ?? "Contínuo"}</option>
+                <option value="dashed">{tAs.strokeDashed ?? "Tracejado"}</option>
+                <option value="dotted">{tAs.strokeDotted ?? "Pontilhado"}</option>
+              </select>
+            </div>
+            <div>
+              <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{tAs.verticalLineStrokeWidth ?? "Espessura"}</div>
+              <select
+                id="vertical-line-stroke-width-listbox"
+                value={(drawSegments[selectedSegmentIndex] as DrawSegment & { verticalLineStrokeWidth?: FibStrokeWidth })?.verticalLineStrokeWidth ?? "medium"}
+                onChange={(e) => {
+                  const v = e.target.value as FibStrokeWidth;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, verticalLineStrokeWidth: v };
+                    return next;
+                  });
+                  persistDrawDefault("verticalLine", { verticalLineStrokeWidth: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.verticalLineStrokeWidth ?? "Espessura"}
+              >
+                {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{tAs[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { verticalLineShowDateTimeOnXAxis?: boolean })?.verticalLineShowDateTimeOnXAxis === true}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, verticalLineShowDateTimeOnXAxis: v };
+                    return next;
+                  });
+                  persistDrawDefault("verticalLine", { verticalLineShowDateTimeOnXAxis: v });
+                }}
+                className="rounded border-zinc-300"
+                aria-label={tAs.verticalLineShowDateTimeOnXAxis ?? "Marcar data e hora no eixo X"}
+              />
+              <span className="text-xs text-zinc-700">{tAs.verticalLineShowDateTimeOnXAxis ?? "Marcar data e hora no eixo X"}</span>
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { verticalLineExtendToPanels?: boolean })?.verticalLineExtendToPanels === true}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, verticalLineExtendToPanels: v };
+                    return next;
+                  });
+                  persistDrawDefault("verticalLine", { verticalLineExtendToPanels: v });
+                }}
+                className="rounded border-zinc-300"
+                aria-label={tAs.verticalLineExtendToPanels ?? "Estender nos painéis"}
+              />
+              <span className="text-xs text-zinc-700">{tAs.verticalLineExtendToPanels ?? "Estender nos painéis"}</span>
+            </label>
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "channel" && (
@@ -564,7 +711,7 @@ export function KlinesChartSegmentOptions({
             </div>
           </>
         )}
-        {drawSegments[selectedSegmentIndex]?.type !== "channel" && drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && (
+        {drawSegments[selectedSegmentIndex]?.type !== "channel" && drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && drawSegments[selectedSegmentIndex]?.type !== "verticalLine" && (
           <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
             <input
               type="checkbox"
@@ -585,14 +732,14 @@ export function KlinesChartSegmentOptions({
             <span>{t.segmentShowPercent}</span>
           </label>
         )}
-        {drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && (
+        {drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && drawSegments[selectedSegmentIndex]?.type !== "verticalLine" && (
           <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
             <input
               type="checkbox"
               checked={drawSegments[selectedSegmentIndex]?.showValues === true}
               onChange={(e) => {
                 const checked = e.target.checked;
-                const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine";
+                const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
                 setDrawSegments((prev) => {
                   const next = [...prev];
                   const seg = next[selectedSegmentIndex];

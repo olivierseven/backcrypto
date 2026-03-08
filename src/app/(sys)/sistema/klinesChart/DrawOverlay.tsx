@@ -31,7 +31,7 @@ export interface DrawOverlayProps {
   chartW: number;
   chartH: number;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "select";
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   drawPendingRectSecond: { index: number; price: number } | null;
@@ -134,6 +134,10 @@ export function DrawOverlay({
         const p2 = segmentToPixel(drawPendingHorizontalSecond.index, drawPending.price1);
         return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
       })()}
+      {drawPending && drawTool === "verticalLine" && (() => {
+        const p = segmentToPixel(drawPending.index1, drawPending.price1);
+        return <line x1={p.x} y1={MARGIN_TOP} x2={p.x} y2={MARGIN_TOP + chartH} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
+      })()}
       {drawPending && drawTool === "fibonacci" && drawPendingFibSecond && (() => {
         const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
         const p2 = segmentToPixel(drawPendingFibSecond.index, drawPendingFibSecond.price);
@@ -171,7 +175,7 @@ export function DrawOverlay({
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
             const { px, py } = point;
-            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine") && drawPending === null) {
+            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine") && drawPending === null) {
               if (e.cancelable) e.preventDefault();
               const d = snapToCandlePoint(px, py);
               setDrawPending({ index1: d.index, price1: d.price });
@@ -230,6 +234,10 @@ export function DrawOverlay({
                 const inside = px >= rTl.x && px <= rBr.x && py >= rTl.y && py <= rBr.y;
                 d = inside ? 0 : Infinity;
               }
+              if (seg.type === "verticalLine") {
+                const lineX = segmentToPixel(seg.index1, seg.price1).x;
+                d = Math.abs(px - lineX);
+              }
               if (d < bestD) {
                 bestD = d;
                 bestIdx = index;
@@ -241,7 +249,7 @@ export function DrawOverlay({
             }
           }}
           onPointerMove={(e) => {
-            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine") || drawPending === null) return;
+            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine") || drawPending === null) return;
             if (e.cancelable) e.preventDefault();
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
@@ -251,6 +259,7 @@ export function DrawOverlay({
             else if (drawTool === "line") setDrawPendingLineSecond({ index: d.index, price: d.price });
             else if (drawTool === "channel") setDrawPendingChannelSecond({ index: d.index, price: d.price });
             else if (drawTool === "horizontalLine") setDrawPendingHorizontalSecond({ index: d.index, price: drawPending.price1 });
+            else if (drawTool === "verticalLine") setDrawPending({ index1: d.index, price1: drawPending.price1 });
           }}
           onPointerUp={(e) => {
             if (drawTool === "line" && drawPending !== null) {
@@ -371,13 +380,30 @@ export function DrawOverlay({
               onSegmentCreated?.(newIndex);
               return;
             }
+            if (drawTool === "verticalLine" && drawPending !== null) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              const idx = drawPending.index1;
+              const price = drawPending.price1;
+              const dfV = drawDefaults.verticalLine;
+              const newSeg: DrawSegment = { index1: idx, price1: price, index2: idx, price2: price, type: "verticalLine", color: dfV?.color ?? DEFAULT_SEGMENT_COLOR, verticalLineStrokeWidth: dfV?.verticalLineStrokeWidth ?? "medium", verticalLineStrokeStyle: dfV?.verticalLineStrokeStyle ?? "solid" };
+              let newIndex = 0;
+              flushSync(() => {
+                setDrawSegments((seg) => {
+                  newIndex = seg.length;
+                  return [...seg, newSeg];
+                });
+              });
+              setDrawPending(null);
+              onSegmentCreated?.(newIndex);
+              return;
+            }
           }}
           onClick={(e) => {
             if (justPannedRef.current) {
               justPannedRef.current = false;
               return;
             }
-            if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "horizontalLine") return;
+            if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "horizontalLine" || drawTool === "verticalLine") return;
             const point = getSvgPoint(chartSvgRef, e.nativeEvent.clientX, e.nativeEvent.clientY);
             if (!point) return;
             const { px, py } = point;
@@ -431,6 +457,10 @@ export function DrawOverlay({
                   const rBr = segmentToPixel(rMaxI, rMinP);
                   const inside = px >= rTl.x && px <= rBr.x && py >= rTl.y && py <= rBr.y;
                   d = inside ? 0 : Infinity;
+                }
+                if (seg.type === "verticalLine") {
+                  const lineX = segmentToPixel(seg.index1, seg.price1).x;
+                  d = Math.abs(px - lineX);
                 }
                 if (d < bestD) {
                   bestD = d;
