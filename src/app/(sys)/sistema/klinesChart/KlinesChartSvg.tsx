@@ -9,7 +9,7 @@ import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartC
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
-import { FIB_STROKE_WIDTH_VALUES, type DrawSegment, type DrawDefaults, type FibStrokeWidth } from "../KlinesChartDrawing";
+import { FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSegment, type DrawDefaults, type FibStrokeWidth } from "../KlinesChartDrawing";
 import { SEGMENT_COLOR_PALETTE } from "./palettes";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
 
@@ -87,11 +87,13 @@ export interface KlinesChartSvgProps {
   setDrawPendingLineSecond: (p: { index: number; price: number } | null) => void;
   drawPendingChannelSecond: { index: number; price: number } | null;
   setDrawPendingChannelSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingHorizontalSecond: { index: number; price: number } | null;
+  setDrawPendingHorizontalSecond: (p: { index: number; price: number } | null) => void;
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" } | null>>;
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "select";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -175,6 +177,8 @@ export function KlinesChartSvg({
   setDrawPendingLineSecond,
   drawPendingChannelSecond,
   setDrawPendingChannelSecond,
+  drawPendingHorizontalSecond,
+  setDrawPendingHorizontalSecond,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawMode,
@@ -1189,6 +1193,19 @@ export function KlinesChartSvg({
             );
           }
 
+          if (seg.type === "horizontalLine") {
+            const p1 = segmentToPixel(seg.index1, seg.price1);
+            const p2 = segmentToPixel(seg.index2, seg.price1);
+            const strokeW = FIB_STROKE_WIDTH_VALUES[(seg.horizontalLineStrokeWidth as FibStrokeWidth) ?? "medium"];
+            const dashStyle = seg.horizontalLineStrokeStyle ?? "solid";
+            const strokeDasharray = HORIZONTAL_LINE_STROKE_STYLE_DASH[dashStyle];
+            return (
+              <g key={idx}>
+                <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={strokeColor} strokeWidth={strokeW} strokeDasharray={strokeDasharray} />
+              </g>
+            );
+          }
+
           if (seg.type === "rectangle") {
             const minI = Math.min(seg.index1, seg.index2);
             const maxI = Math.max(seg.index1, seg.index2);
@@ -1325,6 +1342,11 @@ export function KlinesChartSvg({
             </g>
           );
         })()}
+        {drawPending && drawTool === "horizontalLine" && drawPendingHorizontalSecond && (() => {
+          const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
+          const p2 = segmentToPixel(drawPendingHorizontalSecond.index, drawPending.price1);
+          return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
+        })()}
         {drawPending && drawTool === "fibonacci" && drawPendingFibSecond && (() => {
           const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
           const p2 = segmentToPixel(drawPendingFibSecond.index, drawPendingFibSecond.price);
@@ -1365,7 +1387,7 @@ export function KlinesChartSvg({
               const svgH = svg.height.baseVal.value;
               const px = (e.clientX - rect.left) * (svgW / rect.width);
               const py = (e.clientY - rect.top) * (svgH / rect.height);
-              if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel") && drawPending === null) {
+              if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine") && drawPending === null) {
                 if (e.cancelable) e.preventDefault();
                 const d = snapToCandlePoint(px, py);
                 setDrawPending({ index1: d.index, price1: d.price });
@@ -1435,7 +1457,7 @@ export function KlinesChartSvg({
               }
             }}
             onPointerMove={(e) => {
-              if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel") || drawPending === null) return;
+              if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine") || drawPending === null) return;
               if (e.cancelable) e.preventDefault();
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
@@ -1449,6 +1471,7 @@ export function KlinesChartSvg({
               else if (drawTool === "fibonacci") setDrawPendingFibSecond({ index: d.index, price: d.price });
               else if (drawTool === "line") setDrawPendingLineSecond({ index: d.index, price: d.price });
               else if (drawTool === "channel") setDrawPendingChannelSecond({ index: d.index, price: d.price });
+              else if (drawTool === "horizontalLine") setDrawPendingHorizontalSecond({ index: d.index, price: drawPending.price1 });
             }}
             onPointerUp={(e) => {
               if (drawTool === "line" && drawPending !== null) {
@@ -1563,13 +1586,44 @@ export function KlinesChartSvg({
                 onSegmentCreated?.(newIndex);
                 return;
               }
+              if (drawTool === "horizontalLine" && drawPending !== null) {
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                if (!chartSvgRef.current) {
+                  setDrawPending(null);
+                  setDrawPendingHorizontalSecond(null);
+                  return;
+                }
+                const svg = chartSvgRef.current;
+                const rect = svg.getBoundingClientRect();
+                const svgW = svg.width.baseVal.value;
+                const svgH = svg.height.baseVal.value;
+                const px = (e.clientX - rect.left) * (svgW / rect.width);
+                const py = (e.clientY - rect.top) * (svgH / rect.height);
+                const d = snapToCandlePoint(px, py);
+                const price = drawPending.price1;
+                const i1 = Math.min(drawPending.index1, d.index);
+                const i2 = Math.max(drawPending.index1, d.index);
+                const dfH = drawDefaults.horizontalLine;
+                const newSeg: DrawSegment = { index1: i1, price1: price, index2: i2, price2: price, type: "horizontalLine", color: dfH?.color ?? DEFAULT_SEGMENT_COLOR, horizontalLineStrokeWidth: dfH?.horizontalLineStrokeWidth ?? "medium", horizontalLineStrokeStyle: dfH?.horizontalLineStrokeStyle ?? "solid" };
+                let newIndex = 0;
+                flushSync(() => {
+                  setDrawSegments((seg) => {
+                    newIndex = seg.length;
+                    return [...seg, newSeg];
+                  });
+                });
+                setDrawPending(null);
+                setDrawPendingHorizontalSecond(null);
+                onSegmentCreated?.(newIndex);
+                return;
+              }
             }}
             onClick={(e) => {
               if (justPannedRef.current) {
                 justPannedRef.current = false;
                 return;
               }
-              if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line") return;
+              if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "horizontalLine") return;
               if (!chartSvgRef.current) return;
               const svg = chartSvgRef.current;
               const rect = svg.getBoundingClientRect();
@@ -1638,19 +1692,12 @@ export function KlinesChartSvg({
               }
               const d = snapToCandlePoint(px, py);
               if (drawPending === null) {
-                if (drawTool === "line" || drawTool === "fibonacci" || drawTool === "channel") onChartDrawClick?.();
+                if (drawTool === "channel") onChartDrawClick?.();
                 setDrawPending({ index1: d.index, price1: d.price });
-              } else {
+              } else if (drawTool === "channel") {
+                const dfCh = drawDefaults.channel;
                 setDrawSegments((seg) => {
-                  const dfSeg = drawDefaults.segment;
-                  const dfFib = drawDefaults.fibonacci;
-                  const dfCh = drawDefaults.channel;
-                  const newSeg =
-                    drawTool === "fibonacci"
-                      ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "fibonacci" as const, color: dfFib.color ?? FIB_DEFAULT_COLOR, fibLevel618Color: dfFib.fibLevel618Color ?? FIB_DEFAULT_618_COLOR, showPercent: dfFib.showPercent ?? false, showValues: dfFib.showValues ?? false, fibStrokeWidth: dfFib.fibStrokeWidth ?? "medium", fibLevel618StrokeWidth: dfFib.fibLevel618StrokeWidth ?? "thin", fibLevelPct1: dfFib.fibLevelPct1 ?? 33.33 })
-                      : drawTool === "channel"
-                        ? ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "channel" as const, color: dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelOffset: 0, channelExtremityColor: dfCh?.channelExtremityColor ?? dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelMidStrokeWidth: dfCh?.channelMidStrokeWidth ?? "thin", channelExtremityStrokeWidth: dfCh?.channelExtremityStrokeWidth ?? "thin", showValues: dfCh?.showValues ?? false })
-                        : ({ index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: dfSeg.startCap ?? "point", endCap: dfSeg.endCap ?? "arrow", showPercent: dfSeg.showPercent ?? true, showValues: dfSeg.showValues ?? false, color: dfSeg.color ?? DEFAULT_SEGMENT_COLOR });
+                  const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "channel", color: dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelOffset: 0, channelExtremityColor: dfCh?.channelExtremityColor ?? dfCh?.color ?? DEFAULT_SEGMENT_COLOR, channelMidStrokeWidth: dfCh?.channelMidStrokeWidth ?? "thin", channelExtremityStrokeWidth: dfCh?.channelExtremityStrokeWidth ?? "thin", showValues: dfCh?.showValues ?? false };
                   const newIndex = seg.length;
                   onSegmentCreated?.(newIndex);
                   return [...seg, newSeg];
@@ -1667,6 +1714,7 @@ export function KlinesChartSvg({
           const handleColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
           const isFib = seg.type === "fibonacci";
           const isChannel = seg.type === "channel";
+          const isHorizontalLine = seg.type === "horizontalLine";
           const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
           const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
           const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
@@ -1676,6 +1724,21 @@ export function KlinesChartSvg({
           const fibLevel1MidX = isFib ? (h1.x + h2.x) / 2 : 0;
           return (
             <g pointerEvents="all">
+              {isHorizontalLine && (
+                <line
+                  x1={h1.x}
+                  y1={h1.y}
+                  x2={h2.x}
+                  y2={h2.y}
+                  stroke="transparent"
+                  strokeWidth={14}
+                  style={{ cursor: "grab" }}
+                  aria-label={(t as Record<string, string>).horizontalLineMove ?? "Arrastar para mover"}
+                  onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "horizontalLineMove" }); }}
+                  onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "horizontalLineMove" }); }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              )}
               <circle
                 cx={h1.x}
                 cy={h1.y}
@@ -1709,7 +1772,6 @@ export function KlinesChartSvg({
                     fill="transparent"
                     stroke="none"
                     style={{ cursor: "ns-resize" }}
-                    title={(t as Record<string, string>).channelMidDrag ?? "Arrastar para ajustar a linha paralela"}
                     aria-label={(t as Record<string, string>).channelMidDrag ?? "Arrastar para ajustar a linha paralela"}
                     onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelMid" }); }}
                     onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelMid" }); }}
@@ -1739,7 +1801,6 @@ export function KlinesChartSvg({
                       fill="transparent"
                       stroke="none"
                       style={{ cursor: "grab" }}
-                      title={extendTitle}
                       aria-label={extendTitle}
                       onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
                       onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
@@ -1752,7 +1813,6 @@ export function KlinesChartSvg({
                       fill="transparent"
                       stroke="none"
                       style={{ cursor: "grab" }}
-                      title={extendTitle}
                       aria-label={extendTitle}
                       onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
                       onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "channelExtension" }); }}
@@ -1770,7 +1830,6 @@ export function KlinesChartSvg({
                     fill="transparent"
                     stroke="none"
                     style={{ cursor: "ns-resize" }}
-                    title={(t as Record<string, string>).fibLevel1Drag ?? "Arrastar para ajustar o primeiro nível (0–50%)"}
                     aria-label={(t as Record<string, string>).fibLevel1Drag ?? "Arrastar para ajustar o primeiro nível"}
                     onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "fibLevel1" }); }}
                     onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "fibLevel1" }); }}
@@ -1782,7 +1841,6 @@ export function KlinesChartSvg({
               {isFib && (
                 <g
                   style={{ cursor: "grab" }}
-                  title={t.fibExtensionDrag ?? "Arrastar para estender"}
                   aria-label={t.fibExtensionDrag ?? "Arrastar para estender"}
                   onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "extension" }); }}
                   onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "extension" }); }}

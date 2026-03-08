@@ -94,7 +94,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "select";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -104,6 +104,7 @@ export interface KlinesChartSidebarProps {
   selectLineTool: () => void;
   selectFibonacciTool: () => void;
   selectChannelTool: () => void;
+  selectHorizontalLineTool: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
   // Save/Load
@@ -194,6 +195,7 @@ export function KlinesChartSidebar({
   selectLineTool,
   selectFibonacciTool,
   selectChannelTool,
+  selectHorizontalLineTool,
   selectSelectTool,
   clearAllDrawing,
   saveOpen,

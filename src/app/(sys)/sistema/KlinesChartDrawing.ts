@@ -13,8 +13,8 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta, retração de Fibonacci, canal ou retângulo. Default: segment */
-  type?: "segment" | "fibonacci" | "channel" | "rectangle";
+  /** Tipo: segmento de reta, retração de Fibonacci, canal, retângulo ou reta horizontal. Default: segment */
+  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
   /** Cor do traço (hex). Default: #000000 */
@@ -49,6 +49,10 @@ export type DrawSegment = {
   rectangleStrokeWidth?: FibStrokeWidth;
   /** Preenchimento do retângulo com a cor da borda a 30% de opacidade. Só retângulo. */
   rectangleFilled?: boolean;
+  /** Espessura do traço. Só reta horizontal. */
+  horizontalLineStrokeWidth?: FibStrokeWidth;
+  /** Tipo de traço: contínuo, tracejado ou pontilhado. Só reta horizontal. */
+  horizontalLineStrokeStyle?: "solid" | "dashed" | "dotted";
 };
 
 /** Largura do traço: fino, médio ou grosso (só Fibonacci). */
@@ -64,6 +68,16 @@ export type DrawDefaults = {
   fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1">>;
   channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
   rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
+  horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle">>;
+};
+
+/** strokeDasharray para reta horizontal: contínuo, tracejado, pontilhado. */
+export type HorizontalLineStrokeStyle = "solid" | "dashed" | "dotted";
+
+export const HORIZONTAL_LINE_STROKE_STYLE_DASH: Record<HorizontalLineStrokeStyle, string> = {
+  solid: "none",
+  dashed: "8 4",
+  dotted: "2 2",
 };
 
 export const DEFAULT_SEGMENT_COLOR = "#000000";

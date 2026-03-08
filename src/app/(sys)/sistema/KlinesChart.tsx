@@ -59,9 +59,7 @@ import {
   formatMonthYearShort,
   isStartOfDay,
 } from "./klinesFormatters";
-import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "./KlinesChartDrawing";
-import type { DrawSegment, DrawDefaults, SegmentCap, FibStrokeWidth } from "./KlinesChartDrawing";
-import { FIB_STROKE_WIDTH_OPTIONS } from "./KlinesChartDrawing";
+import type { DrawSegment, DrawDefaults } from "./KlinesChartDrawing";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import type { Kline, KlinesChartProps } from "./klinesChart/types";
@@ -76,10 +74,10 @@ import {
   LINE_GRID_PALETTE,
   TEXT_PALETTE,
   SEGMENT_COLOR_PALETTE,
-  SEGMENT_CAP_OPTIONS,
 } from "./klinesChart/palettes";
 import type { CandleColorPresetId, BackgroundId, LineGridId, TextColorId } from "./klinesChart/palettes";
 import { KlinesChartSidebar } from "./klinesChart/KlinesChartSidebar";
+import { KlinesChartSegmentOptions } from "./klinesChart/KlinesChartSegmentOptions";
 import { KlinesChartSvg } from "./klinesChart/KlinesChartSvg";
 import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
 import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
@@ -91,6 +89,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33 },
   channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
   rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false },
+  horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid" },
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
@@ -103,9 +102,6 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [saveOpen, setSaveOpen] = useState(false);
   const [loadOpen, setLoadOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
-  const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
-  const [fibLevel618ColorListboxOpen, setFibLevel618ColorListboxOpen] = useState(false);
-  const [channelExtremityColorListboxOpen, setChannelExtremityColorListboxOpen] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
   const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("right");
   /** Posição (px) da caixa de desenho na área do gráfico; null = canto superior direito (right-2 top-2). */
@@ -222,21 +218,17 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     selectLineTool,
     selectFibonacciTool,
     selectChannelTool,
+    selectHorizontalLineTool,
     selectRectangleTool,
     selectSelectTool,
     clearAllDrawing,
+    drawPendingHorizontalSecond,
+    setDrawPendingHorizontalSecond,
   } = drawing;
 
   const fullReversed = [...klines].reverse();
   const n = fullReversed.length;
 
-  useEffect(() => {
-    if (segmentToolboxCollapsed) {
-      setSegmentColorListboxOpen(false);
-      setFibLevel618ColorListboxOpen(false);
-      setChannelExtremityColorListboxOpen(false);
-    }
-  }, [segmentToolboxCollapsed]);
 
   // Sempre abrir a caixa de desenho encostada no canto esquerdo
   useEffect(() => {
@@ -319,6 +311,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
         fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
         channel: { ...BUILTIN_DRAW_DEFAULTS.channel, ...parsed.channel },
         rectangle: { ...BUILTIN_DRAW_DEFAULTS.rectangle, ...parsed.rectangle },
+        horizontalLine: { ...BUILTIN_DRAW_DEFAULTS.horizontalLine, ...parsed.horizontalLine },
       });
     } catch {
       /* ignore */
@@ -326,13 +319,14 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel" | "rectangle", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
         fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
         channel: type === "channel" ? { ...prev.channel, ...partial } : prev.channel,
         rectangle: type === "rectangle" ? { ...prev.rectangle, ...partial } : prev.rectangle,
+        horizontalLine: type === "horizontalLine" ? { ...prev.horizontalLine, ...partial } : prev.horizontalLine,
       };
       try {
         if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
@@ -1131,6 +1125,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             selectLineTool={selectLineTool}
             selectFibonacciTool={selectFibonacciTool}
             selectChannelTool={selectChannelTool}
+            selectHorizontalLineTool={selectHorizontalLineTool}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
             saveOpen={saveOpen}
@@ -1144,7 +1139,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -1222,6 +1217,15 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 </button>
                 <button
                   type="button"
+                  onClick={selectHorizontalLineTool}
+                  title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}
+                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-100" : ""}`}
+                  aria-label={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}
+                >
+                  <span aria-hidden>―</span>
+                </button>
+                <button
+                  type="button"
                   onClick={selectFibonacciTool}
                   title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
                   className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
@@ -1259,513 +1263,19 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               </div>
             )}
             {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
-              <div
-                ref={segmentOptionsRef}
-                className="absolute z-[100] rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px]"
-                style={segmentOptionsPosition === null ? { left: 8, top: 8 } : { left: segmentOptionsPosition.x, top: segmentOptionsPosition.y }}
-                onClick={(e) => e.stopPropagation()}
-                role="group"
-                aria-label={t.segmentOptionsTitle}
-              >
-                <div className="flex items-center justify-between gap-0.5 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1">
-                  <span className="text-[11px] font-medium text-zinc-600 truncate min-w-0 flex-1">{t.segmentOptionsTitle}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
-                    title={t.drawExitMode}
-                    aria-label={t.drawExitMode}
-                  >
-                    <span aria-hidden>×</span>
-                  </button>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none shrink-0"
-                    title={t.drawToolboxDrag}
-                    aria-label={t.drawToolboxDrag}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!segmentOptionsRef.current || !chartRowRef.current) return;
-                      const box = segmentOptionsRef.current.getBoundingClientRect();
-                      const row = chartRowRef.current.getBoundingClientRect();
-                      const currentX = segmentOptionsPosition?.x ?? 8;
-                      const currentY = segmentOptionsPosition?.y ?? 8;
-                      if (segmentOptionsPosition === null) setSegmentOptionsPosition({ x: currentX, y: currentY });
-                      const startClientX = e.clientX;
-                      const startClientY = e.clientY;
-                      const startX = currentX;
-                      const startY = currentY;
-                      const onMove = (ev: PointerEvent) => {
-                        if (!segmentOptionsRef.current || !chartRowRef.current) return;
-                        if (ev.cancelable) ev.preventDefault();
-                        const boxRect = segmentOptionsRef.current.getBoundingClientRect();
-                        const rowRect = chartRowRef.current.getBoundingClientRect();
-                        const cw = rowRect.width;
-                        const ch = rowRect.height;
-                        let newX = startX + (ev.clientX - startClientX);
-                        let newY = startY + (ev.clientY - startClientY);
-                        newX = Math.max(0, Math.min(cw - boxRect.width, newX));
-                        newY = Math.max(0, Math.min(ch - boxRect.height, newY));
-                        setSegmentOptionsPosition({ x: newX, y: newY });
-                      };
-                      const onUp = () => {
-                        document.removeEventListener("pointermove", onMove);
-                        document.removeEventListener("pointerup", onUp);
-                        document.removeEventListener("pointercancel", onUp);
-                      };
-                      document.addEventListener("pointermove", onMove);
-                      document.addEventListener("pointerup", onUp);
-                      document.addEventListener("pointercancel", onUp);
-                    }}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.preventDefault(); }}
-                  >
-                    <span aria-hidden>⠿</span>
-                  </div>
-                </div>
-                <div className="py-1.5 px-1.5 space-y-1.5">
-                  <div>
-                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : drawSegments[selectedSegmentIndex]?.type === "rectangle" ? ((t as Record<string, string>).rectangleColor ?? t.segmentColor) : t.segmentColor}</div>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        role="combobox"
-                        aria-expanded={segmentColorListboxOpen}
-                        aria-haspopup="listbox"
-                        aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : drawSegments[selectedSegmentIndex]?.type === "rectangle" ? ((t as Record<string, string>).rectangleColor ?? t.segmentColor) : t.segmentColor}
-                        onClick={() => setSegmentColorListboxOpen((o) => !o)}
-                        className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
-                      >
-                        <span
-                          className="w-4 h-4 rounded border border-zinc-300 shrink-0"
-                          style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
-                        />
-                        <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{segmentColorListboxOpen ? "▲" : "▼"}</span>
-                      </button>
-                      {segmentColorListboxOpen && (
-                        <div
-                          role="listbox"
-                          aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "rectangle" ? ((t as Record<string, string>).rectangleColor ?? t.segmentColor) : t.segmentColor}
-                          className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
-                        >
-                          {SEGMENT_COLOR_PALETTE.map((hex) => {
-                            const isSelected = (drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR) === hex;
-                            return (
-                              <button
-                                key={hex}
-                                type="button"
-                                role="option"
-                                aria-selected={isSelected}
-                                aria-label={drawSegments[selectedSegmentIndex]?.type === "fibonacci" ? t.fibonacciColor : drawSegments[selectedSegmentIndex]?.type === "channel" ? ((t as Record<string, string>).channelMiddleColor ?? "Linha do meio") : drawSegments[selectedSegmentIndex]?.type === "rectangle" ? ((t as Record<string, string>).rectangleColor ?? t.segmentColor) : t.segmentColor}
-                                onClick={() => {
-                                  const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle";
-                                  setDrawSegments((prev) => {
-                                    const next = [...prev];
-                                    const seg = next[selectedSegmentIndex];
-                                    if (seg) next[selectedSegmentIndex] = { ...seg, color: hex };
-                                    return next;
-                                  });
-                                  persistDrawDefault(segType, { color: hex });
-                                  setSegmentColorListboxOpen(false);
-                                }}
-                                className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                                style={{ backgroundColor: hex }}
-                              />
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {drawSegments[selectedSegmentIndex]?.type === "channel" && (
-                    <>
-                      <div>
-                        <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}</div>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            role="combobox"
-                            aria-expanded={channelExtremityColorListboxOpen}
-                            aria-haspopup="listbox"
-                            aria-label={(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}
-                            onClick={() => setChannelExtremityColorListboxOpen((o) => !o)}
-                            className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
-                          >
-                            <span
-                              className="w-4 h-4 rounded border border-zinc-300 shrink-0"
-                              style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.channelExtremityColor ?? drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
-                            />
-                            <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{channelExtremityColorListboxOpen ? "▲" : "▼"}</span>
-                          </button>
-                          {channelExtremityColorListboxOpen && (
-                            <div
-                              role="listbox"
-                              aria-label={(t as Record<string, string>).channelExtremityColor ?? "Cor extremidades"}
-                              className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
-                            >
-                              {SEGMENT_COLOR_PALETTE.map((hex) => {
-                                const seg = drawSegments[selectedSegmentIndex];
-                                const currentColor = seg?.channelExtremityColor ?? seg?.color ?? DEFAULT_SEGMENT_COLOR;
-                                const isSelected = currentColor === hex;
-                                return (
-                                  <button
-                                    key={hex}
-                                    type="button"
-                                    role="option"
-                                    aria-selected={isSelected}
-                                    onClick={() => {
-                                      setDrawSegments((prev) => {
-                                        const next = [...prev];
-                                        const s = next[selectedSegmentIndex];
-                                        if (s) next[selectedSegmentIndex] = { ...s, channelExtremityColor: hex };
-                                        return next;
-                                      });
-                                      persistDrawDefault("channel", { channelExtremityColor: hex });
-                                      setChannelExtremityColorListboxOpen(false);
-                                    }}
-                                    className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                                    style={{ backgroundColor: hex }}
-                                  />
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="channel-mid-stroke-width-listbox">{(t as Record<string, string>).channelMidStrokeWidth ?? "Largura linha do meio"}</label>
-                        <select
-                          id="channel-mid-stroke-width-listbox"
-                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { channelMidStrokeWidth?: FibStrokeWidth })?.channelMidStrokeWidth ?? "medium"}
-                          onChange={(e) => {
-                            const v = e.target.value as FibStrokeWidth;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, channelMidStrokeWidth: v };
-                              return next;
-                            });
-                            persistDrawDefault("channel", { channelMidStrokeWidth: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={(t as Record<string, string>).channelMidStrokeWidth ?? "Largura linha do meio"}
-                        >
-                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="channel-extremity-stroke-width-listbox">{(t as Record<string, string>).channelExtremityStrokeWidth ?? "Largura extremidades"}</label>
-                        <select
-                          id="channel-extremity-stroke-width-listbox"
-                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { channelExtremityStrokeWidth?: FibStrokeWidth })?.channelExtremityStrokeWidth ?? "medium"}
-                          onChange={(e) => {
-                            const v = e.target.value as FibStrokeWidth;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, channelExtremityStrokeWidth: v };
-                              return next;
-                            });
-                            persistDrawDefault("channel", { channelExtremityStrokeWidth: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={(t as Record<string, string>).channelExtremityStrokeWidth ?? "Largura extremidades"}
-                        >
-                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type === "rectangle" && (
-                    <>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="rectangle-stroke-width-listbox">{(t as Record<string, string>).rectangleStrokeWidth ?? t.fibStrokeWidth}</label>
-                        <select
-                          id="rectangle-stroke-width-listbox"
-                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { rectangleStrokeWidth?: FibStrokeWidth })?.rectangleStrokeWidth ?? "medium"}
-                          onChange={(e) => {
-                            const v = e.target.value as FibStrokeWidth;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, rectangleStrokeWidth: v };
-                              return next;
-                            });
-                            persistDrawDefault("rectangle", { rectangleStrokeWidth: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={(t as Record<string, string>).rectangleStrokeWidth ?? t.fibStrokeWidth}
-                        >
-                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                        <input
-                          type="checkbox"
-                          checked={drawSegments[selectedSegmentIndex]?.rectangleFilled === true}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, rectangleFilled: checked };
-                              return next;
-                            });
-                            persistDrawDefault("rectangle", { rectangleFilled: checked });
-                          }}
-                          className="rounded border-zinc-300"
-                        />
-                        <span>{(t as Record<string, string>).rectangleFill ?? "Preenchimento"}</span>
-                      </label>
-                    </>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (
-                    <div>
-                      <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{t.fibLevel618Color}</div>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          role="combobox"
-                          aria-expanded={fibLevel618ColorListboxOpen}
-                          aria-haspopup="listbox"
-                          aria-label={t.fibLevel618Color}
-                          onClick={() => setFibLevel618ColorListboxOpen((o) => !o)}
-                          className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
-                        >
-                          <span
-                            className="w-4 h-4 rounded border border-zinc-300 shrink-0"
-                            style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.fibLevel618Color ?? drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
-                          />
-                          <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{fibLevel618ColorListboxOpen ? "▲" : "▼"}</span>
-                        </button>
-                        {fibLevel618ColorListboxOpen && (
-                          <div
-                            role="listbox"
-                            aria-label={t.fibLevel618Color}
-                            className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
-                          >
-                            {SEGMENT_COLOR_PALETTE.map((hex) => {
-                              const seg = drawSegments[selectedSegmentIndex];
-                              const currentColor = seg?.fibLevel618Color ?? seg?.color ?? DEFAULT_SEGMENT_COLOR;
-                              const isSelected = currentColor === hex;
-                              return (
-                                <button
-                                  key={hex}
-                                  type="button"
-                                  role="option"
-                                  aria-selected={isSelected}
-                                  aria-label={t.fibLevel618Color}
-                                  onClick={() => {
-                                    setDrawSegments((prev) => {
-                                      const next = [...prev];
-                                      const s = next[selectedSegmentIndex];
-                                      if (s) next[selectedSegmentIndex] = { ...s, fibLevel618Color: hex };
-                                      return next;
-                                    });
-                                    persistDrawDefault("fibonacci", { fibLevel618Color: hex });
-                                    setFibLevel618ColorListboxOpen(false);
-                                  }}
-                                  className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                                  style={{ backgroundColor: hex }}
-                                />
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (
-                    <>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-stroke-width-listbox">{t.fibStrokeWidth}</label>
-                        <select
-                          id="fib-stroke-width-listbox"
-                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { fibStrokeWidth?: FibStrokeWidth })?.fibStrokeWidth ?? "medium"}
-                          onChange={(e) => {
-                            const v = e.target.value as FibStrokeWidth;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, fibStrokeWidth: v };
-                              return next;
-                            });
-                            persistDrawDefault("fibonacci", { fibStrokeWidth: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={t.fibStrokeWidth}
-                        >
-                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-level618-stroke-width-listbox">{t.fibLevel618StrokeWidth}</label>
-                        <select
-                          id="fib-level618-stroke-width-listbox"
-                          value={(drawSegments[selectedSegmentIndex] as DrawSegment & { fibLevel618StrokeWidth?: FibStrokeWidth })?.fibLevel618StrokeWidth ?? "thin"}
-                          onChange={(e) => {
-                            const v = e.target.value as FibStrokeWidth;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, fibLevel618StrokeWidth: v };
-                              return next;
-                            });
-                            persistDrawDefault("fibonacci", { fibLevel618StrokeWidth: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={t.fibLevel618StrokeWidth}
-                        >
-                          {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>{(t as Record<string, string>)[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="fib-level-pct1">{(t as Record<string, string>).fibLevelPct1 ?? "Primeiro nível (%)"}</label>
-                        <input
-                          id="fib-level-pct1"
-                          type="number"
-                          min={0}
-                          max={50}
-                          step={0.1}
-                          value={(() => {
-                            const raw = Math.max(0, Math.min(50, (drawSegments[selectedSegmentIndex] as DrawSegment & { fibLevelPct1?: number })?.fibLevelPct1 ?? 33.33));
-                            return Math.round(raw * 10000) / 10000;
-                          })()}
-                          onChange={(e) => {
-                            const raw = Math.max(0, Math.min(50, parseFloat(e.target.value) || 0));
-                            const v = Math.round(raw * 10000) / 10000;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, fibLevelPct1: v };
-                              return next;
-                            });
-                            persistDrawDefault("fibonacci", { fibLevelPct1: v });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={(t as Record<string, string>).fibLevelPct1 ?? "Primeiro nível (%)"}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type === "segment" && (
-                    <>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-startcap-listbox">{t.segmentStartCap}</label>
-                        <select
-                          id="segment-startcap-listbox"
-                          value={drawSegments[selectedSegmentIndex]?.startCap ?? "none"}
-                          onChange={(e) => {
-                            const cap = e.target.value as SegmentCap;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, startCap: cap };
-                              return next;
-                            });
-                            persistDrawDefault("segment", { startCap: cap });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={t.segmentStartCap}
-                        >
-                          {SEGMENT_CAP_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-endcap-listbox">{t.segmentEndCap}</label>
-                        <select
-                          id="segment-endcap-listbox"
-                          value={drawSegments[selectedSegmentIndex]?.endCap ?? "none"}
-                          onChange={(e) => {
-                            const cap = e.target.value as SegmentCap;
-                            setDrawSegments((prev) => {
-                              const next = [...prev];
-                              const seg = next[selectedSegmentIndex];
-                              if (seg) next[selectedSegmentIndex] = { ...seg, endCap: cap };
-                              return next;
-                            });
-                            persistDrawDefault("segment", { endCap: cap });
-                          }}
-                          className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                          aria-label={t.segmentEndCap}
-                        >
-                          {SEGMENT_CAP_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type !== "channel" && drawSegments[selectedSegmentIndex]?.type !== "rectangle" && (
-                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                      <input
-                        type="checkbox"
-                        checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
-                          setDrawSegments((prev) => {
-                            const next = [...prev];
-                            const seg = next[selectedSegmentIndex];
-                            if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
-                            return next;
-                          });
-                          persistDrawDefault(segType, { showPercent: checked });
-                        }}
-                        className="rounded border-zinc-300"
-                      />
-                      <span>{t.segmentShowPercent}</span>
-                    </label>
-                  )}
-                  {drawSegments[selectedSegmentIndex]?.type !== "rectangle" && (
-                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                      <input
-                        type="checkbox"
-                        checked={drawSegments[selectedSegmentIndex]?.showValues === true}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle";
-                          setDrawSegments((prev) => {
-                            const next = [...prev];
-                            const seg = next[selectedSegmentIndex];
-                            if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
-                            return next;
-                          });
-                          persistDrawDefault(segType, { showValues: checked });
-                        }}
-                        className="rounded border-zinc-300"
-                      />
-                      <span>{t.segmentShowValues}</span>
-                    </label>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedSegmentIndex === null) return;
-                      setDrawSegments((prev) => prev.filter((_, i) => i !== selectedSegmentIndex));
-                      setSelectedSegmentIndex(null);
-                    }}
-                    className="w-full flex items-center justify-center py-1 rounded border border-zinc-300 bg-zinc-50 hover:bg-red-50 hover:border-red-300 text-base"
-                    title={t.segmentDelete}
-                    aria-label={t.segmentDelete}
-                  >
-                    <span aria-hidden>🗑️</span>
-                  </button>
-                </div>
-              </div>
+              <KlinesChartSegmentOptions
+                segmentOptionsRef={segmentOptionsRef}
+                segmentOptionsPosition={segmentOptionsPosition}
+                setSegmentOptionsPosition={setSegmentOptionsPosition}
+                chartRowRef={chartRowRef}
+                drawSegments={drawSegments}
+                selectedSegmentIndex={selectedSegmentIndex}
+                setDrawSegments={setDrawSegments}
+                setSelectedSegmentIndex={setSelectedSegmentIndex}
+                persistDrawDefault={persistDrawDefault}
+                t={t}
+                segmentToolboxCollapsed={segmentToolboxCollapsed}
+              />
             )}
             <KlinesChartSvg
               chartSvgRef={chartSvgRef}
@@ -1837,6 +1347,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               setDrawPendingLineSecond={setDrawPendingLineSecond}
               drawPendingChannelSecond={drawPendingChannelSecond}
               setDrawPendingChannelSecond={setDrawPendingChannelSecond}
+              drawPendingHorizontalSecond={drawPendingHorizontalSecond}
+              setDrawPendingHorizontalSecond={setDrawPendingHorizontalSecond}
               selectedSegmentIndex={selectedSegmentIndex}
               setSelectedSegmentIndex={setSelectedSegmentIndex}
               drawMode={drawMode}
