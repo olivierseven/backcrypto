@@ -13,7 +13,7 @@ export interface DrawSegmentRenderProps {
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;
@@ -44,19 +44,42 @@ export function DrawSegmentRender({
   const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
   const lineW = isSelected ? 2 : 1;
 
-  if (seg.type === "fibonacci") {
+  if (seg.type === "fibonacci" || seg.type === "freeRetracement") {
     const range = seg.price1 - seg.price2;
     const priceTop = Math.max(seg.price1, seg.price2);
     const priceBottom = Math.min(seg.price1, seg.price2);
-    const pct1Raw = Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33));
-    const pct1 = Math.round(pct1Raw * 10000) / 10000;
-    const fibLevels = [
-      { k: pct1 / 100, label: `${Number(pct1.toFixed(2))}%` },
-      { k: 0.5, label: "50%" },
-      { k: 0.618, label: "61.8%" },
-    ];
     const mainW = FIB_STROKE_WIDTH_VALUES[(seg.fibStrokeWidth as FibStrokeWidth) ?? "medium"];
-    const w618 = FIB_STROKE_WIDTH_VALUES[(seg.fibLevel618StrokeWidth as FibStrokeWidth) ?? "thin"];
+    const w618 = seg.type === "fibonacci" ? FIB_STROKE_WIDTH_VALUES[(seg.fibLevel618StrokeWidth as FibStrokeWidth) ?? "thin"] : mainW;
+    const fibLevels: { k: number; label: string }[] =
+      seg.type === "fibonacci"
+        ? (() => {
+            const pct1Raw = Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33));
+            const pct1 = Math.round(pct1Raw * 10000) / 10000;
+            const levels: { k: number; label: string }[] = [
+              { k: pct1 / 100, label: `${Number(pct1.toFixed(2))}%` },
+              { k: 0.5, label: "50%" },
+              { k: 0.618, label: "61.8%" },
+            ];
+            if (seg.fibShow1618 === true) levels.push({ k: 1.618, label: "161.8%" });
+            return levels;
+          })()
+        : (() => {
+            const pct1Raw = Math.max(0, Math.min(50, seg.freeRetracementLevelPct1 ?? 33.33));
+            const pct2Raw = Math.max(50, Math.min(100, seg.freeRetracementLevelPct ?? 61.8));
+            const pctExtRaw = Math.max(100, Math.min(200, seg.freeRetracementLevelPctExt ?? 100));
+            const pct1 = Math.round(pct1Raw * 10000) / 10000;
+            const pct2 = Math.round(pct2Raw * 10000) / 10000;
+            const pctExt = Math.round(pctExtRaw * 10000) / 10000;
+            return [
+              { k: pct1 / 100, label: `${Number(pct1.toFixed(2))}%` },
+              { k: 0.5, label: "50%" },
+              { k: pct2 / 100, label: `${Number(pct2.toFixed(2))}%` },
+              { k: pctExt / 100, label: `${Number(pctExt.toFixed(2))}%` },
+            ];
+          })();
+    const getLevelColor = (k: number) =>
+      seg.type === "fibonacci" && (k === 0.618 || k === 1.618) ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
+    const getLevelWidth = (k: number) => (seg.type === "fibonacci" && (k === 0.618 || k === 1.618) ? w618 : mainW);
     const yTop = segmentToPixel(seg.index1, priceTop).y;
     const yBottom = segmentToPixel(seg.index1, priceBottom).y;
     const dx = p2.x - p1.x;
@@ -73,25 +96,29 @@ export function DrawSegmentRender({
     const leftY = backY + ux * arrowW;
     const rightX = backX + uy * arrowW;
     const rightY = backY - ux * arrowW;
+    const extendIndices =
+      seg.type === "fibonacci"
+        ? Math.max(0, seg.fibExtensionIndices ?? 0)
+        : Math.max(0, seg.freeRetracementExtensionIndices ?? 0);
+    const extendPx = segmentToPixel(seg.index2 + extendIndices, seg.price2).x;
+    const midY = (yTop + yBottom) / 2;
+    const dashArray = "2 2";
     const fmt = (v: number) => formatYAxis(v);
-    const valueLevels: { price: number; y: number; color: string }[] = [
-      { price: priceTop, y: yTop, color: strokeColor },
-      ...fibLevels.map(({ k }) => {
-        const priceLevel = seg.price2 + range * k;
-        const py = segmentToPixel(seg.index1, priceLevel).y;
-        const levelColor = k === 0.618 ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
-        return { price: priceLevel, y: py, color: levelColor };
-      }),
-      { price: priceBottom, y: yBottom, color: strokeColor },
-    ];
     const valueLabelOffset = 6;
     const valuePadW = 42;
     const valuePadH = 10;
-    const extendIndices = Math.max(0, seg.fibExtensionIndices ?? 0);
-    const extendIndex = seg.index2 + extendIndices;
-    const extendPx = segmentToPixel(extendIndex, seg.price2).x;
-    const midY = (yTop + yBottom) / 2;
-    const dashArray = "2 2";
+    const labelW = 36;
+    const labelH = 12;
+    const midX = (p1.x + p2.x) / 2;
+    const valueLevels: { price: number; y: number; color: string }[] = [
+      { price: priceTop, y: yTop, color: strokeColor },
+      ...fibLevels.map(({ k }) => ({
+        price: seg.price2 + range * k,
+        y: segmentToPixel(seg.index1, seg.price2 + range * k).y,
+        color: getLevelColor(k),
+      })),
+      { price: priceBottom, y: yBottom, color: strokeColor },
+    ];
     return (
       <g key={idx}>
         <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={strokeColor} strokeWidth={mainW} strokeDasharray="4 2" />
@@ -102,12 +129,9 @@ export function DrawSegmentRender({
           <>
             <line x1={p2.x} y1={yTop} x2={extendPx} y2={yTop} stroke={strokeColor} strokeWidth={mainW} strokeDasharray={dashArray} />
             <line x1={p2.x} y1={yBottom} x2={extendPx} y2={yBottom} stroke={strokeColor} strokeWidth={mainW} strokeDasharray={dashArray} />
-            {fibLevels.map(({ k, label }) => {
-              const priceLevel = seg.price2 + range * k;
-              const py = segmentToPixel(seg.index1, priceLevel).y;
-              const levelColor = k === 0.618 ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
-              const levelW = k === 0.618 ? w618 : mainW;
-              return <line key={label} x1={p2.x} y1={py} x2={extendPx} y2={py} stroke={levelColor} strokeWidth={levelW} strokeDasharray={dashArray} />;
+            {fibLevels.map(({ k, label }, levelIdx) => {
+              const py = segmentToPixel(seg.index1, seg.price2 + range * k).y;
+              return <line key={`ext-${levelIdx}`} x1={p2.x} y1={py} x2={extendPx} y2={py} stroke={getLevelColor(k)} strokeWidth={getLevelWidth(k)} strokeDasharray={dashArray} />;
             })}
           </>
         )}
@@ -117,16 +141,12 @@ export function DrawSegmentRender({
             <text x={p1.x - valueLabelOffset} y={y} textAnchor="end" dominantBaseline="middle" fill={color} className="font-mono select-none" style={{ fontSize: 9 }}>{fmt(price)}</text>
           </g>
         ))}
-        {fibLevels.map(({ k, label }) => {
-          const priceLevel = seg.price2 + range * k;
-          const py = segmentToPixel(seg.index1, priceLevel).y;
-          const levelColor = k === 0.618 ? (seg.fibLevel618Color ?? strokeColor) : strokeColor;
-          const levelW = k === 0.618 ? w618 : mainW;
-          const midX = (p1.x + p2.x) / 2;
-          const labelW = 36;
-          const labelH = 12;
+        {fibLevels.map(({ k, label }, levelIdx) => {
+          const py = segmentToPixel(seg.index1, seg.price2 + range * k).y;
+          const levelColor = getLevelColor(k);
+          const levelW = getLevelWidth(k);
           return (
-            <g key={label}>
+            <g key={`level-${levelIdx}`}>
               <line x1={p1.x} y1={py} x2={p2.x} y2={py} stroke={levelColor} strokeWidth={levelW} />
               {seg.showPercent !== false && (
                 <>

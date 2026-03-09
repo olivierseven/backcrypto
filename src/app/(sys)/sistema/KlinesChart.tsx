@@ -87,7 +87,8 @@ export type { ChartIndicatorLine } from "./klinesChart/types";
 
 const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
-  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33 },
+  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33, fibShow1618: false, fibShowValuesOnYAxis: false },
+  freeRetracement: { color: SEGMENT_COLOR_PALETTE[0], freeRetracementLevelPct1: 25, freeRetracementLevelPct: 75, freeRetracementLevelPctExt: 100, freeRetracementShowValuesOnYAxis: false, freeRetracementExtensionIndices: 0, fibStrokeWidth: "medium", showPercent: true, showValues: false },
   channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
   rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false },
   horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid" },
@@ -209,6 +210,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     setDrawPendingRectSecond,
     drawPendingFibSecond,
     setDrawPendingFibSecond,
+    drawPendingFreeRetraceSecond,
+    setDrawPendingFreeRetraceSecond,
     drawPendingLineSecond,
     setDrawPendingLineSecond,
     drawPendingChannelSecond,
@@ -223,6 +226,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     closeDrawMode,
     selectLineTool,
     selectFibonacciTool,
+    selectFreeRetracementTool,
     selectChannelTool,
     selectHorizontalLineTool,
     selectVerticalLineTool,
@@ -379,6 +383,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       setDrawDefaults({
         segment: { ...BUILTIN_DRAW_DEFAULTS.segment, ...parsed.segment },
         fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
+        freeRetracement: { ...BUILTIN_DRAW_DEFAULTS.freeRetracement, ...parsed.freeRetracement },
         channel: { ...BUILTIN_DRAW_DEFAULTS.channel, ...parsed.channel },
         rectangle: { ...BUILTIN_DRAW_DEFAULTS.rectangle, ...parsed.rectangle },
         horizontalLine: { ...BUILTIN_DRAW_DEFAULTS.horizontalLine, ...parsed.horizontalLine },
@@ -392,11 +397,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
         fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
+        freeRetracement: type === "freeRetracement" ? { ...prev.freeRetracement, ...partial } : prev.freeRetracement,
         channel: type === "channel" ? { ...prev.channel, ...partial } : prev.channel,
         rectangle: type === "rectangle" ? { ...prev.rectangle, ...partial } : prev.rectangle,
         horizontalLine: type === "horizontalLine" ? { ...prev.horizontalLine, ...partial } : prev.horizontalLine,
@@ -1277,7 +1283,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             closeDrawMode={closeDrawMode}
             selectLineTool={selectLineTool}
             selectFibonacciTool={selectFibonacciTool}
+            selectFreeRetracementTool={selectFreeRetracementTool}
             selectChannelTool={selectChannelTool}
+            selectRectangleTool={selectRectangleTool}
+            selectVerticalLineTool={selectVerticalLineTool}
+            selectTextTool={selectTextTool}
+            selectArrowTool={selectArrowTool}
             selectHorizontalLineTool={selectHorizontalLineTool}
             exitRulerToCrosshair={exitRulerToCrosshair}
             toggleRuler={toggleRuler}
@@ -1294,7 +1305,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -1361,8 +1372,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     <span aria-hidden>⠿</span>
                   </div>
                 </div>
-                <div className="flex flex-col">
-                  <div className="grid grid-cols-2 gap-0.5">
+                <div className="flex flex-col min-h-0 max-h-[min(70vh,400px)]">
+                  <div className="grid grid-cols-2 gap-0.5 overflow-y-auto py-0.5">
                     <button
                       type="button"
                       onClick={selectLineTool}
@@ -1370,7 +1381,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
                       aria-label={t.lineSegment}
                     >
-                      📏
+                      <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
                     </button>
                     <button
                       type="button"
@@ -1392,12 +1403,21 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     </button>
                     <button
                       type="button"
+                      onClick={selectFreeRetracementTool}
+                      title={(t as Record<string, string>).freeRetracement ?? "Retração livre"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).freeRetracement ?? "Retração livre"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={selectRectangleTool}
                       title={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
                       className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-100" : ""}`}
                       aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
                     >
-                      <span aria-hidden>▭</span>
+                      <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
                     </button>
                     <button
                       type="button"
@@ -1424,7 +1444,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-100" : ""}`}
                       aria-label={(t as Record<string, string>).drawTextTool ?? "Text"}
                     >
-                      <span aria-hidden>T</span>
+                      <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
                     </button>
                     <button
                       type="button"
@@ -1433,7 +1453,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                       className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-100" : ""}`}
                       aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}
                     >
-                      <span aria-hidden>→</span>
+                      <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
                     </button>
                   </div>
                   <div className="flex justify-center border-t border-zinc-100 pt-0.5 mt-0.5">
@@ -1577,6 +1597,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               setDrawPendingRectSecond={setDrawPendingRectSecond}
               drawPendingFibSecond={drawPendingFibSecond}
               setDrawPendingFibSecond={setDrawPendingFibSecond}
+              drawPendingFreeRetraceSecond={drawPendingFreeRetraceSecond}
+              setDrawPendingFreeRetraceSecond={setDrawPendingFreeRetraceSecond}
               drawPendingLineSecond={drawPendingLineSecond}
               setDrawPendingLineSecond={setDrawPendingLineSecond}
               drawPendingChannelSecond={drawPendingChannelSecond}
@@ -1776,9 +1798,39 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 textScale={textScale}
                 horizontalLineAxisLabels={
                   drawingsVisible
-                    ? drawSegments
-                        .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
-                        .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR }))
+                    ? [
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
+                          .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const entries: { price: number; color: string }[] = [
+                              { price: s.price2 + range * 0.618, color: level618Color },
+                            ];
+                            if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
+                            return entries;
+                          }),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const c = s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
+                            const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
+                            const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
+                            return [
+                              { price: s.price2, color: c },
+                              { price: s.price2 + range * k1, color: c },
+                              { price: s.price2 + range * 0.5, color: c },
+                              { price: s.price2 + range * k3, color: c },
+                              { price: s.price1, color: c },
+                              { price: s.price2 + range * kExt, color: c },
+                            ];
+                          }),
+                      ]
                     : undefined
                 }
               />

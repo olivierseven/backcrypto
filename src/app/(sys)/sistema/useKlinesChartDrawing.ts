@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
 import { KLINE_DRAW_MAGNETIC_KEY } from "./KlinesChartConstants";
 
-export type DrawTool = "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+export type DrawTool = "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
 
 function getInitialDrawMagnetic(): boolean {
   if (typeof window === "undefined") return true;
@@ -30,6 +30,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPending, setDrawPending] = useState<{ index1: number; price1: number } | null>(null);
   const [drawPendingRectSecond, setDrawPendingRectSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingFibSecond, setDrawPendingFibSecond] = useState<{ index: number; price: number } | null>(null);
+  const [drawPendingFreeRetraceSecond, setDrawPendingFreeRetraceSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingLineSecond, setDrawPendingLineSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingChannelSecond, setDrawPendingChannelSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingHorizontalSecond, setDrawPendingHorizontalSecond] = useState<{ index: number; price: number } | null>(null);
@@ -37,7 +38,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPendingText, setDrawPendingText] = useState<{ index1: number; price1: number } | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>(null);
+  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>(null);
 
   const drawRef = useRef<HTMLDivElement>(null);
   const drawConversionRef = useRef<DrawConversionParams | null>(null);
@@ -111,9 +112,13 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
         if (segIdx < 0 || segIdx >= next.length) return prev;
         const s = { ...next[segIdx] };
         if (drawDragging.point === "extension") {
-          if (s.type !== "fibonacci") return prev;
-          const ext = Math.max(0, idx - s.index2);
-          s.fibExtensionIndices = ext;
+          if (s.type === "fibonacci") {
+            const ext = Math.max(0, idx - s.index2);
+            s.fibExtensionIndices = ext;
+          } else if (s.type === "freeRetracement") {
+            const ext = Math.max(0, idx - s.index2);
+            s.freeRetracementExtensionIndices = ext;
+          } else return prev;
         } else if (drawDragging.point === "fibLevel1") {
           if (s.type !== "fibonacci") return prev;
           const range = s.price1 - s.price2;
@@ -121,6 +126,27 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
           const pct = ((price - s.price2) / range) * 100;
           const rounded = Math.round(Math.max(0, Math.min(50, pct)) * 10000) / 10000;
           s.fibLevelPct1 = rounded;
+        } else if (drawDragging.point === "freeRetracementLevel1") {
+          if (s.type !== "freeRetracement") return prev;
+          const range = s.price1 - s.price2;
+          if (Math.abs(range) < 1e-12) return prev;
+          const pct = ((price - s.price2) / range) * 100;
+          const rounded = Math.round(Math.max(0, Math.min(50, pct)) * 10000) / 10000;
+          s.freeRetracementLevelPct1 = rounded;
+        } else if (drawDragging.point === "freeRetracementLevel") {
+          if (s.type !== "freeRetracement") return prev;
+          const range = s.price1 - s.price2;
+          if (Math.abs(range) < 1e-12) return prev;
+          const pct = ((price - s.price2) / range) * 100;
+          const rounded = Math.round(Math.max(50, Math.min(100, pct)) * 10000) / 10000;
+          s.freeRetracementLevelPct = rounded;
+        } else if (drawDragging.point === "freeRetracementLevelExt") {
+          if (s.type !== "freeRetracement") return prev;
+          const range = s.price1 - s.price2;
+          if (Math.abs(range) < 1e-12) return prev;
+          const pct = ((price - s.price2) / range) * 100;
+          const rounded = Math.round(Math.max(100, Math.min(200, pct)) * 10000) / 10000;
+          s.freeRetracementLevelPctExt = rounded;
         } else if (drawDragging.point === "channelMid") {
           if (s.type !== "channel") return prev;
           const midPrice = (s.price1 + s.price2) / 2;
@@ -202,6 +228,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -216,6 +243,22 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
+    setDrawPendingLineSecond(null);
+    setDrawPendingChannelSecond(null);
+    setDrawPendingHorizontalSecond(null);
+    setDrawPendingArrow(null);
+    setDrawPendingText(null);
+  }, []);
+
+  const selectFreeRetracementTool = useCallback(() => {
+    setDrawTool("freeRetracement");
+    setDrawMode(true);
+    setSelectedSegmentIndex(null);
+    setDrawPending(null);
+    setDrawPendingRectSecond(null);
+    setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -230,6 +273,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -244,6 +288,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -258,6 +303,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -272,6 +318,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -286,6 +333,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -300,6 +348,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -313,6 +362,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -327,6 +377,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -339,6 +390,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPending(null);
     setDrawPendingRectSecond(null);
     setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
     setDrawPendingHorizontalSecond(null);
@@ -367,6 +419,8 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingRectSecond,
     drawPendingFibSecond,
     setDrawPendingFibSecond,
+    drawPendingFreeRetraceSecond,
+    setDrawPendingFreeRetraceSecond,
     drawPendingLineSecond,
     setDrawPendingLineSecond,
     drawPendingChannelSecond,
@@ -388,6 +442,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     openDrawPanel,
     selectLineTool,
     selectFibonacciTool,
+    selectFreeRetracementTool,
     selectChannelTool,
     selectHorizontalLineTool,
     selectVerticalLineTool,

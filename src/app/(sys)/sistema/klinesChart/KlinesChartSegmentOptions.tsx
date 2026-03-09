@@ -19,7 +19,7 @@ export interface KlinesChartSegmentOptionsProps {
   selectedSegmentIndex: number | null;
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   setSelectedSegmentIndex: (i: number | null) => void;
-  persistDrawDefault: (type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
+  persistDrawDefault: (type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   pixelToData: (x: number, y: number) => { index: number; price: number };
   t: Record<string, string>;
@@ -61,6 +61,8 @@ export function KlinesChartSegmentOptions({
   const colorLabel =
     drawSegments[selectedSegmentIndex]?.type === "fibonacci"
       ? t.fibonacciColor
+      : drawSegments[selectedSegmentIndex]?.type === "freeRetracement"
+      ? (tAs.freeRetracementColor ?? "Retração livre")
       : drawSegments[selectedSegmentIndex]?.type === "channel"
         ? tAs.channelMiddleColor ?? "Linha do meio"
         : drawSegments[selectedSegmentIndex]?.type === "rectangle"
@@ -174,7 +176,7 @@ export function KlinesChartSegmentOptions({
                       aria-selected={isSelected}
                       aria-label={colorLabel}
                       onClick={() => {
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
                         setDrawSegments((prev) => {
                           const next = [...prev];
                           const seg = next[selectedSegmentIndex];
@@ -561,6 +563,24 @@ export function KlinesChartSegmentOptions({
                 ))}
               </select>
             </div>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showValues === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                    return next;
+                  });
+                  persistDrawDefault("channel", { showValues: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showValues ?? "Mostrar valores"}</span>
+            </label>
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "rectangle" && (
@@ -739,6 +759,204 @@ export function KlinesChartSegmentOptions({
                 aria-label={tAs.fibLevelPct1 ?? "Primeiro nível (%)"}
               />
             </div>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.fibShow1618 === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, fibShow1618: checked };
+                    return next;
+                  });
+                  persistDrawDefault("fibonacci", { fibShow1618: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{tAs.fibShow1618 ?? "Mostrar nível 161.8%"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.fibShowValuesOnYAxis === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, fibShowValuesOnYAxis: checked };
+                    return next;
+                  });
+                  persistDrawDefault("fibonacci", { fibShowValuesOnYAxis: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{tAs.fibShowValuesOnYAxis ?? "Fibo values on Y"}</span>
+            </label>
+          </>
+        )}
+        {drawSegments[selectedSegmentIndex]?.type === "freeRetracement" && (
+          <>
+            <div>
+              <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="free-retrace-level1-pct">{tAs.freeRetracementLevelPct1 ?? "Nível 1 (0–50%)"}</label>
+              <input
+                id="free-retrace-level1-pct"
+                type="number"
+                min={0}
+                max={50}
+                step={0.1}
+                value={(() => {
+                  const raw = Math.max(0, Math.min(50, (drawSegments[selectedSegmentIndex] as DrawSegment & { freeRetracementLevelPct1?: number })?.freeRetracementLevelPct1 ?? 33.33));
+                  return Math.round(raw * 10000) / 10000;
+                })()}
+                onChange={(e) => {
+                  const raw = Math.max(0, Math.min(50, parseFloat(e.target.value) || 33.33));
+                  const v = Math.round(raw * 10000) / 10000;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, freeRetracementLevelPct1: v };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { freeRetracementLevelPct1: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.freeRetracementLevelPct1 ?? "Nível 1 (0–50%)"}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="free-retrace-level-pct">{tAs.freeRetracementLevelPct ?? "Nível 3 (50–100%)"}</label>
+              <input
+                id="free-retrace-level-pct"
+                type="number"
+                min={50}
+                max={100}
+                step={0.1}
+                value={(() => {
+                  const raw = Math.max(50, Math.min(100, (drawSegments[selectedSegmentIndex] as DrawSegment & { freeRetracementLevelPct?: number })?.freeRetracementLevelPct ?? 61.8));
+                  return Math.round(raw * 10000) / 10000;
+                })()}
+                onChange={(e) => {
+                  const raw = Math.max(50, Math.min(100, parseFloat(e.target.value) || 61.8));
+                  const v = Math.round(raw * 10000) / 10000;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, freeRetracementLevelPct: v };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { freeRetracementLevelPct: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.freeRetracementLevelPct ?? "Nível 3 (50–100%)"}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="free-retrace-levelext-pct">{tAs.freeRetracementLevelPctExt ?? "Nível extensão (100–200%)"}</label>
+              <input
+                id="free-retrace-levelext-pct"
+                type="number"
+                min={100}
+                max={200}
+                step={0.1}
+                value={(() => {
+                  const raw = Math.max(100, Math.min(200, (drawSegments[selectedSegmentIndex] as DrawSegment & { freeRetracementLevelPctExt?: number })?.freeRetracementLevelPctExt ?? 100));
+                  return Math.round(raw * 10000) / 10000;
+                })()}
+                onChange={(e) => {
+                  const raw = Math.max(100, Math.min(200, parseFloat(e.target.value) || 100));
+                  const v = Math.round(raw * 10000) / 10000;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, freeRetracementLevelPctExt: v };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { freeRetracementLevelPctExt: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.freeRetracementLevelPctExt ?? "Nível extensão (100–200%)"}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="free-retrace-stroke-width-listbox">{t.fibStrokeWidth}</label>
+              <select
+                id="free-retrace-stroke-width-listbox"
+                value={(drawSegments[selectedSegmentIndex] as DrawSegment & { fibStrokeWidth?: FibStrokeWidth })?.fibStrokeWidth ?? "medium"}
+                onChange={(e) => {
+                  const v = e.target.value as FibStrokeWidth;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, fibStrokeWidth: v };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { fibStrokeWidth: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={t.fibStrokeWidth}
+              >
+                {FIB_STROKE_WIDTH_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{tAs[`stroke${opt.charAt(0).toUpperCase()}${opt.slice(1)}`] ?? opt}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { showPercent: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showPercent ?? "Mostrar %"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showValues === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { showValues: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showValues ?? "Mostrar valores"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { freeRetracementShowValuesOnYAxis?: boolean })?.freeRetracementShowValuesOnYAxis === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, freeRetracementShowValuesOnYAxis: checked };
+                    return next;
+                  });
+                  persistDrawDefault("freeRetracement", { freeRetracementShowValuesOnYAxis: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{tAs.freeRetracementShowValuesOnYAxis ?? "Values on Y"}</span>
+            </label>
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "segment" && (
@@ -789,6 +1007,42 @@ export function KlinesChartSegmentOptions({
                 ))}
               </select>
             </div>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
+                    return next;
+                  });
+                  persistDrawDefault("segment", { showPercent: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showPercent ?? "Mostrar %"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showValues === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                    return next;
+                  });
+                  persistDrawDefault("segment", { showValues: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showValues ?? "Mostrar valores"}</span>
+            </label>
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "text" && (

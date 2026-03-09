@@ -80,6 +80,8 @@ export interface KlinesChartSvgProps {
   setDrawPendingRectSecond: (p: { index: number; price: number } | null) => void;
   drawPendingFibSecond: { index: number; price: number } | null;
   setDrawPendingFibSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingFreeRetraceSecond: { index: number; price: number } | null;
+  setDrawPendingFreeRetraceSecond: (p: { index: number; price: number } | null) => void;
   drawPendingLineSecond: { index: number; price: number } | null;
   setDrawPendingLineSecond: (p: { index: number; price: number } | null) => void;
   drawPendingChannelSecond: { index: number; price: number } | null;
@@ -95,8 +97,8 @@ export interface KlinesChartSvgProps {
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -176,6 +178,8 @@ export function KlinesChartSvg({
   setDrawPendingRectSecond,
   drawPendingFibSecond,
   setDrawPendingFibSecond,
+  drawPendingFreeRetraceSecond,
+  setDrawPendingFreeRetraceSecond,
   drawPendingLineSecond,
   setDrawPendingLineSecond,
   drawPendingChannelSecond,
@@ -1031,6 +1035,8 @@ export function KlinesChartSvg({
           setDrawPendingRectSecond={setDrawPendingRectSecond}
           drawPendingFibSecond={drawPendingFibSecond}
           setDrawPendingFibSecond={setDrawPendingFibSecond}
+          drawPendingFreeRetraceSecond={drawPendingFreeRetraceSecond}
+          setDrawPendingFreeRetraceSecond={setDrawPendingFreeRetraceSecond}
           drawPendingLineSecond={drawPendingLineSecond}
           setDrawPendingLineSecond={setDrawPendingLineSecond}
           drawPendingChannelSecond={drawPendingChannelSecond}

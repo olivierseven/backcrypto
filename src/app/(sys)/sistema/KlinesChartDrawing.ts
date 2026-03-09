@@ -13,8 +13,8 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta, retração de Fibonacci, canal, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
-  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+  /** Tipo: segmento de reta, retração de Fibonacci, retração livre, canal, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
+  type?: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
   /** Cor do traço (hex). Default: #000000 */
@@ -37,6 +37,20 @@ export type DrawSegment = {
   fibExtensionIndices?: number;
   /** Primeiro nível do Fibonacci em percentual (0–50). Default: 33.33. */
   fibLevelPct1?: number;
+  /** Exibir nível fixo em 161,8% (1.618). Só Fibonacci. Default: false */
+  fibShow1618?: boolean;
+  /** Marcar os valores dos níveis no eixo Y. Só Fibonacci. Default: false */
+  fibShowValuesOnYAxis?: boolean;
+  /** Primeiro nível da retração livre em percentual (0–50). Só freeRetracement. Default: 33.33 */
+  freeRetracementLevelPct1?: number;
+  /** Terceiro nível da retração livre em percentual (50–100). Só freeRetracement. Default: 61.8 */
+  freeRetracementLevelPct?: number;
+  /** Nível de extensão da retração livre em percentual (100–200). Só freeRetracement. Default: 100 */
+  freeRetracementLevelPctExt?: number;
+  /** Marcar os valores dos níveis no eixo Y. Só freeRetracement. Default: false */
+  freeRetracementShowValuesOnYAxis?: boolean;
+  /** Número de índices que a linha da retração livre se estende à direita em pontilhado. Só freeRetracement. */
+  freeRetracementExtensionIndices?: number;
   /** Cor das linhas das extremidades (paralelas). Só canal. Se não definido, usa color. */
   channelExtremityColor?: string;
   /** Largura do traço da linha do meio. Só canal. */
@@ -108,7 +122,8 @@ export const FIB_STROKE_WIDTH_OPTIONS: FibStrokeWidth[] = ["thin", "medium", "th
 /** Padrões iniciais para novos desenhos (persistidos no localStorage). */
 export type DrawDefaults = {
   segment: Partial<Pick<DrawSegment, "color" | "startCap" | "endCap" | "showPercent" | "showValues">>;
-  fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1">>;
+  fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1" | "fibShow1618" | "fibShowValuesOnYAxis">>;
+  freeRetracement: Partial<Pick<DrawSegment, "color" | "freeRetracementLevelPct1" | "freeRetracementLevelPct" | "freeRetracementLevelPctExt" | "freeRetracementShowValuesOnYAxis" | "freeRetracementExtensionIndices" | "fibStrokeWidth" | "showPercent" | "showValues">>;
   channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
   rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
   horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;

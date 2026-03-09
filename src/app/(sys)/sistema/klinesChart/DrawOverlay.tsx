@@ -31,13 +31,15 @@ export interface DrawOverlayProps {
   chartW: number;
   chartH: number;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   drawPendingRectSecond: { index: number; price: number } | null;
   setDrawPendingRectSecond: (p: { index: number; price: number } | null) => void;
   drawPendingFibSecond: { index: number; price: number } | null;
   setDrawPendingFibSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingFreeRetraceSecond: { index: number; price: number } | null;
+  setDrawPendingFreeRetraceSecond: (p: { index: number; price: number } | null) => void;
   drawPendingLineSecond: { index: number; price: number } | null;
   setDrawPendingLineSecond: (p: { index: number; price: number } | null) => void;
   drawPendingChannelSecond: { index: number; price: number } | null;
@@ -80,6 +82,8 @@ export function DrawOverlay({
   setDrawPendingRectSecond,
   drawPendingFibSecond,
   setDrawPendingFibSecond,
+  drawPendingFreeRetraceSecond,
+  setDrawPendingFreeRetraceSecond,
   drawPendingLineSecond,
   setDrawPendingLineSecond,
   drawPendingChannelSecond,
@@ -255,6 +259,29 @@ export function DrawOverlay({
           </g>
         );
       })()}
+      {drawPending && drawTool === "freeRetracement" && drawPendingFreeRetraceSecond && (() => {
+        const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
+        const p2 = segmentToPixel(drawPendingFreeRetraceSecond.index, drawPendingFreeRetraceSecond.price);
+        const priceTop = Math.max(drawPending.price1, drawPendingFreeRetraceSecond.price);
+        const priceBottom = Math.min(drawPending.price1, drawPendingFreeRetraceSecond.price);
+        const range = priceTop - priceBottom;
+        const k1 = Math.max(0, Math.min(0.5, (drawDefaults.freeRetracement?.freeRetracementLevelPct1 ?? 25) / 100));
+        const k2 = 0.5;
+        const k3 = Math.max(0.5, Math.min(1, (drawDefaults.freeRetracement?.freeRetracementLevelPct ?? 75) / 100));
+        const py1 = segmentToPixel(drawPending.index1, priceBottom + range * k1).y;
+        const py50 = segmentToPixel(drawPending.index1, priceBottom + range * k2).y;
+        const py3 = segmentToPixel(drawPending.index1, priceBottom + range * k3).y;
+        const stroke = "#000000";
+        const dash = "4 2";
+        return (
+          <g>
+            <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={stroke} strokeWidth={1.5} strokeDasharray={dash} />
+            <line x1={p1.x} y1={py1} x2={p2.x} y2={py1} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />
+            <line x1={p1.x} y1={py50} x2={p2.x} y2={py50} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />
+            <line x1={p1.x} y1={py3} x2={p2.x} y2={py3} stroke={stroke} strokeWidth={1} strokeDasharray={dash} />
+          </g>
+        );
+      })()}
       {drawMode && (
         <rect
           x={MARGIN_LEFT}
@@ -268,7 +295,7 @@ export function DrawOverlay({
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
             const { px, py } = point;
-            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler") && drawPending === null && drawPendingArrow === null && (drawTool !== "text" || drawPendingText === null)) {
+            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler") && drawPending === null && drawPendingArrow === null && (drawTool !== "text" || drawPendingText === null)) {
               if (e.cancelable) e.preventDefault();
               const d = snapToCandlePoint(px, py);
               if (drawTool === "text") {
@@ -303,7 +330,30 @@ export function DrawOverlay({
                 const y50 = segmentToPixel(seg.index1, seg.price2 + range * 0.5).y;
                 const y618 = segmentToPixel(seg.index1, seg.price2 + range * 0.618).y;
                 const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
-                d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
+                let fibD = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y618, xEnd, y618));
+                if (seg.fibShow1618 === true) {
+                  const y1618 = segmentToPixel(seg.index1, seg.price2 + range * 1.618).y;
+                  fibD = Math.min(fibD, distToLine(p1.x, y1618, xEnd, y1618));
+                }
+                d = fibD;
+              }
+              if (seg.type === "freeRetracement") {
+                const range = seg.price1 - seg.price2;
+                const priceTop = Math.max(seg.price1, seg.price2);
+                const priceBottom = Math.min(seg.price1, seg.price2);
+                const extendPx = segmentToPixel(seg.index2 + Math.max(0, seg.freeRetracementExtensionIndices ?? 0), seg.price2).x;
+                const xEnd = Math.max(p2.x, extendPx);
+                const yTop = segmentToPixel(seg.index1, priceTop).y;
+                const yBottom = segmentToPixel(seg.index1, priceBottom).y;
+                const k1 = Math.round(Math.max(0, Math.min(0.5, (seg.freeRetracementLevelPct1 ?? 33.33) / 100)) * 10000) / 10000;
+                const k3 = Math.round(Math.max(0.5, Math.min(1, (seg.freeRetracementLevelPct ?? 61.8) / 100)) * 10000) / 10000;
+                const kExt = Math.round(Math.max(1, Math.min(2, (seg.freeRetracementLevelPctExt ?? 100) / 100)) * 10000) / 10000;
+                const y1 = segmentToPixel(seg.index1, seg.price2 + range * k1).y;
+                const y50 = segmentToPixel(seg.index1, seg.price2 + range * 0.5).y;
+                const y3 = segmentToPixel(seg.index1, seg.price2 + range * k3).y;
+                const yExt = segmentToPixel(seg.index1, seg.price2 + range * kExt).y;
+                const distToLine = (x1: number, y1: number, x2: number, y2: number) => distanceToSegment(px, py, x1, y1, x2, y2);
+                d = Math.min(d, distToLine(p1.x, yTop, xEnd, yTop), distToLine(p1.x, yBottom, xEnd, yBottom), distToLine(p1.x, y1, xEnd, y1), distToLine(p1.x, y50, xEnd, y50), distToLine(p1.x, y3, xEnd, y3), distToLine(p1.x, yExt, xEnd, yExt));
               }
               if (seg.type === "channel") {
                 const off = seg.channelOffset ?? 0;
@@ -374,12 +424,13 @@ export function DrawOverlay({
               setDrawPendingArrow((prev) => prev ? { ...prev, angleRad } : null);
               return;
             }
-            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
+            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "freeRetracement" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
             if (e.cancelable) e.preventDefault();
             const d = snapToCandlePoint(point.px, point.py);
             if (drawTool === "arrow") setArrowPreviewTipPx({ x: point.px, y: point.py });
             else if (drawTool === "rectangle") setDrawPendingRectSecond({ index: d.index, price: d.price });
             else if (drawTool === "fibonacci") setDrawPendingFibSecond({ index: d.index, price: d.price });
+            else if (drawTool === "freeRetracement") setDrawPendingFreeRetraceSecond({ index: d.index, price: d.price });
             else if (drawTool === "line" || drawTool === "ruler") setDrawPendingLineSecond({ index: d.index, price: d.price });
             else if (drawTool === "channel") setDrawPendingChannelSecond({ index: d.index, price: d.price });
             else if (drawTool === "horizontalLine") setDrawPendingHorizontalSecond({ index: d.index, price: drawPending.price1 });
@@ -458,6 +509,29 @@ export function DrawOverlay({
               });
               setDrawPending(null);
               setDrawPendingFibSecond(null);
+              onSegmentCreated?.(newIndex);
+              return;
+            }
+            if (drawTool === "freeRetracement" && drawPending !== null) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
+              if (!point) {
+                setDrawPending(null);
+                setDrawPendingFreeRetraceSecond(null);
+                return;
+              }
+              const d = snapToCandlePoint(point.px, point.py);
+              const dfFr = drawDefaults.freeRetracement;
+              const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "freeRetracement", color: dfFr?.color ?? "#000000", freeRetracementLevelPct1: dfFr?.freeRetracementLevelPct1 ?? 25, freeRetracementLevelPct: dfFr?.freeRetracementLevelPct ?? 75, freeRetracementLevelPctExt: dfFr?.freeRetracementLevelPctExt ?? 100, freeRetracementShowValuesOnYAxis: dfFr?.freeRetracementShowValuesOnYAxis ?? false, freeRetracementExtensionIndices: dfFr?.freeRetracementExtensionIndices ?? 0, fibStrokeWidth: dfFr?.fibStrokeWidth ?? "medium", showPercent: dfFr?.showPercent !== false, showValues: dfFr?.showValues ?? false };
+              let newIndex = 0;
+              flushSync(() => {
+                setDrawSegments((seg) => {
+                  newIndex = seg.length;
+                  return [...seg, newSeg];
+                });
+              });
+              setDrawPending(null);
+              setDrawPendingFreeRetraceSecond(null);
               onSegmentCreated?.(newIndex);
               return;
             }

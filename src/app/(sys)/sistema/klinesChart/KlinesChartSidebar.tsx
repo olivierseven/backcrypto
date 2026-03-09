@@ -94,7 +94,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -103,7 +103,12 @@ export interface KlinesChartSidebarProps {
   closeDrawMode: () => void;
   selectLineTool: () => void;
   selectFibonacciTool: () => void;
+  selectFreeRetracementTool: () => void;
   selectChannelTool: () => void;
+  selectRectangleTool: () => void;
+  selectVerticalLineTool: () => void;
+  selectTextTool: () => void;
+  selectArrowTool: () => void;
   selectHorizontalLineTool: () => void;
   exitRulerToCrosshair: () => void;
   toggleRuler: () => void;
@@ -196,7 +201,12 @@ export function KlinesChartSidebar({
   closeDrawMode,
   selectLineTool,
   selectFibonacciTool,
+  selectFreeRetracementTool,
   selectChannelTool,
+  selectRectangleTool,
+  selectVerticalLineTool,
+  selectTextTool,
+  selectArrowTool,
   selectHorizontalLineTool,
   exitRulerToCrosshair,
   toggleRuler,
@@ -702,7 +712,7 @@ export function KlinesChartSidebar({
           title={t.drawTool}
           aria-expanded={drawOpen}
         >
-          📐
+          <img src={`${ASSET_PREFIX}/assets/draw/esquadro.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
         </button>
         <button
           type="button"
@@ -733,7 +743,7 @@ export function KlinesChartSidebar({
           aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
           aria-pressed={drawMode && drawTool === "ruler"}
         >
-          <span aria-hidden>{drawMode && drawTool === "ruler" ? "📏" : "✚"}</span>
+          <img src={`${ASSET_PREFIX}/assets/draw/${drawMode && drawTool === "ruler" ? "ruler" : "crosshair"}.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
         </button>
         <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
           <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
@@ -1023,6 +1033,42 @@ export function KlinesChartSidebar({
                   ))}
                 </div>
               </div>
+            )}
+            {drawOpen && drawPanelSide === "left" && !intervalsOpen && !settingsOpen && !colorsOpen && !saveOpen && !loadOpen && (
+              <>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
+                  {t.drawTool}
+                </p>
+                <div className="grid grid-cols-2 gap-1">
+                  <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`} aria-label={t.lineSegment}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                  <button type="button" onClick={selectHorizontalLineTool} title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}>
+                    <span aria-hidden>―</span>
+                  </button>
+                  <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                  <button type="button" onClick={selectFreeRetracementTool} title={(t as Record<string, string>).freeRetracement ?? "Retração livre"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).freeRetracement ?? "Retração livre"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
+                  </button>
+                  <button type="button" onClick={selectRectangleTool} title={(t as Record<string, string>).rectangleTool ?? "Rectangle"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                  <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).channelTool ?? "Channel"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                  <button type="button" onClick={selectVerticalLineTool} title={(t as Record<string, string>).verticalLine ?? "Vertical line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).verticalLine ?? "Vertical line"}>
+                    <span aria-hidden>|</span>
+                  </button>
+                  <button type="button" onClick={selectTextTool} title={(t as Record<string, string>).drawTextTool ?? "Text"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).drawTextTool ?? "Text"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                  <button type="button" onClick={selectArrowTool} title={(t as Record<string, string>).arrowTool ?? "Arrow"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}>
+                    <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+                  </button>
+                </div>
+              </>
             )}
             {saveOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
               <>
