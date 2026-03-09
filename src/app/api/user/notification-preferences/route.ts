@@ -10,6 +10,7 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const schema = z.object({
   hideStatusBar: z.boolean().optional(),
   language: z.enum(["en", "pt"]).optional(),
+  timezoneOffset: z.number().int().min(-12).max(12).optional(),
 });
 
 export async function GET() {
@@ -23,11 +24,11 @@ export async function GET() {
 
     const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
-      select: { hideStatusBar: true, language: true },
+      select: { hideStatusBar: true, language: true, timezoneOffset: true },
     });
     if (!user) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
 
-    return NextResponse.json({ hideStatusBar: user.hideStatusBar, language: user.language });
+    return NextResponse.json({ hideStatusBar: user.hideStatusBar, language: user.language, timezoneOffset: user.timezoneOffset ?? 0 });
   } catch (error) {
     console.error("[backcrypto/notification-preferences GET]", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
@@ -49,9 +50,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Dados inválidos", details: parsed.error.errors }, { status: 400 });
     }
 
-    const updateData: { hideStatusBar?: boolean; language?: "en" | "pt" } = {};
+    const updateData: { hideStatusBar?: boolean; language?: "en" | "pt"; timezoneOffset?: number } = {};
     if (parsed.data.hideStatusBar !== undefined) updateData.hideStatusBar = parsed.data.hideStatusBar;
     if (parsed.data.language !== undefined) updateData.language = parsed.data.language;
+    if (parsed.data.timezoneOffset !== undefined) updateData.timezoneOffset = parsed.data.timezoneOffset;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ success: true, message: "Nada a atualizar" });

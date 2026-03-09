@@ -5,6 +5,7 @@
  * Inclui apenas openTime < início do dia atual (UTC).
  *
  * Uso: node scripts/binance-kline-cache-refresh.js
+ *      CACHE_SYMBOLS=BTCUSDT,ETHUSDT node scripts/binance-kline-cache-refresh.js
  * Requer: DATABASE_URL no .env, migração da BinanceKlineCache aplicada, prisma generate.
  */
 
@@ -13,7 +14,11 @@ require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
 const { PrismaClient, Prisma } = require("../src/lib/prisma-bio-client");
 
-const SYMBOL = "BTCUSDT";
+/** Símbolos a popular no cache (env CACHE_SYMBOLS ou BTCUSDT,ETHUSDT). */
+const CACHE_SYMBOLS = (process.env.CACHE_SYMBOLS || "BTCUSDT,ETHUSDT")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 // Até 45m: BinanceKlineFast (1m); >= 1h: BinanceKline (1h)
 const CACHE_INTERVALS_FAST = [
@@ -61,7 +66,7 @@ async function main() {
   console.log("[binance-kline-cache-refresh] Truncating BinanceKlineCache...");
   await prisma.$executeRaw(Prisma.sql`TRUNCATE TABLE backcrypto."BinanceKlineCache"`);
 
-  async function runInterval({ param, minutes }, fromFast) {
+  async function runInterval(symbol, { param, minutes }, fromFast) {
     const bucketMs = BigInt(minutes * 60 * 1000);
     const intervalLabel = param;
     if (fromFast) {
@@ -79,10 +84,10 @@ async function main() {
             "quoteAssetVolume", "numberOfTrades",
             "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           FROM backcrypto."BinanceKlineFast"
-          WHERE symbol = ${SYMBOL} AND "interval" = '1m' AND "openTime" < ${cutoffMs}
+          WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" < ${cutoffMs}
         )
         SELECT
-          ${SYMBOL},
+          ${symbol},
           ${intervalLabel},
           k.bucket,
           (array_agg(k."open" ORDER BY k."openTime"))[1],
@@ -113,10 +118,10 @@ async function main() {
           "quoteAssetVolume", "numberOfTrades",
           "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
         FROM backcrypto."BinanceKline"
-        WHERE symbol = ${SYMBOL} AND "interval" = '1h' AND "openTime" < ${cutoffMs}
+        WHERE symbol = ${symbol} AND "interval" = '1h' AND "openTime" < ${cutoffMs}
       )
       SELECT
-        ${SYMBOL},
+        ${symbol},
         ${intervalLabel},
         k.bucket,
         (array_agg(k."open" ORDER BY k."openTime"))[1],
@@ -134,17 +139,20 @@ async function main() {
     `);
   }
 
-  for (const interval of CACHE_INTERVALS_FAST) {
-    const result = await runInterval(interval, true);
-    console.log(
-      `[binance-kline-cache-refresh] ${interval.param} (Fast): inserted ${typeof result === "number" ? result : "?"} rows`
-    );
-  }
-  for (const interval of CACHE_INTERVALS_NORMAL) {
-    const result = await runInterval(interval, false);
-    console.log(
-      `[binance-kline-cache-refresh] ${interval.param}: inserted ${typeof result === "number" ? result : "?"} rows`
-    );
+  for (const symbol of CACHE_SYMBOLS) {
+    console.log(`[binance-kline-cache-refresh] Symbol: ${symbol}`);
+    for (const interval of CACHE_INTERVALS_FAST) {
+      const result = await runInterval(symbol, interval, true);
+      console.log(
+        `[binance-kline-cache-refresh] ${symbol} ${interval.param} (Fast): inserted ${typeof result === "number" ? result : "?"} rows`
+      );
+    }
+    for (const interval of CACHE_INTERVALS_NORMAL) {
+      const result = await runInterval(symbol, interval, false);
+      console.log(
+        `[binance-kline-cache-refresh] ${symbol} ${interval.param}: inserted ${typeof result === "number" ? result : "?"} rows`
+      );
+    }
   }
 
   console.log("[binance-kline-cache-refresh] Done.");

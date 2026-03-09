@@ -58,6 +58,7 @@ export default async function BioContaPage() {
       createdAt: true,
       hideStatusBar: true,
       language: true,
+      timezoneOffset: true,
     },
   });
 
@@ -104,6 +105,7 @@ export default async function BioContaPage() {
             coinsBalance={coinsBalance}
             hideStatusBar={user.hideStatusBar}
             language={user.language ?? "en"}
+            timezoneOffset={(user as { timezoneOffset?: number }).timezoneOffset ?? 0}
           />
         </div>
       </div>

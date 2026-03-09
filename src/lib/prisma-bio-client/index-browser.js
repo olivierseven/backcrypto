@@ -157,7 +157,8 @@ exports.Prisma.UserScalarFieldEnum = {
   notifyQuina: 'notifyQuina',
   hideStatusBar: 'hideStatusBar',
   progress: 'progress',
-  language: 'language'
+  language: 'language',
+  timezoneOffset: 'timezoneOffset'
 };
 
 exports.Prisma.ChartLayoutScalarFieldEnum = {

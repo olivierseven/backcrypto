@@ -114,6 +114,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [klines, setKlines] = useState<Kline[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const chartWrapRef = useRef<HTMLDivElement>(null);
@@ -347,6 +348,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const fetchKlines = async () => {
     try {
       setError(null);
+      setNeedsRefresh(false);
       const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "5m";
       const res = await fetch(
         `${API_BASE}/binance/klines?symbol=${encodeURIComponent(symbol)}&interval=${intervalParam}&limit=1000`
@@ -355,15 +357,18 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         const err = await res.json().catch(() => ({}));
         throw new Error(err.details || err.error || `HTTP ${res.status}`);
       }
-      const data: Kline[] = await res.json();
-      const list = Array.isArray(data) ? data : [];
+      const body = await res.json();
+      const list = Array.isArray(body) ? body : (body.klines ?? []);
+      const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
       setKlines(list);
+      setNeedsRefresh(refreshFlag);
       // Last update = closeTime (UTC) do candle mais recente, para bater com a coluna Close Time
       const latestCloseTime = list.length > 0 && list[0][6] != null ? Number(list[0][6]) : null;
       setLastUpdate(latestCloseTime != null ? new Date(latestCloseTime) : new Date());
     } catch (e) {
       setError(e instanceof Error ? e.message : t.errorLoad);
       setKlines([]);
+      setNeedsRefresh(false);
     } finally {
       setLoading(false);
     }
@@ -482,6 +487,24 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return (
       <div className="p-4 text-center text-red-600">
         {t.errorLoad}
+      </div>
+    );
+  }
+
+  if (needsRefresh && extendedKlines.length === 0) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center gap-4 text-center">
+        <p className="text-zinc-600 text-sm">{(t as Record<string, string>).klinesNotUpdatedYet ?? "Data has not been updated yet. Please wait or refresh the page."}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            fetchKlines();
+          }}
+          className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2"
+        >
+          {(t as Record<string, string>).refresh ?? "Refresh"}
+        </button>
       </div>
     );
   }

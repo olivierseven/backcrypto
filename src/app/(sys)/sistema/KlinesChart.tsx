@@ -853,8 +853,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const panel5Height = hasPanel5 ? chartH * PANEL_TO_MAIN_RATIO : 0;
   const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + gap2_3 + gap3_4 + gap4_5 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
-  /** Escala dos textos (indicadores e eixo Y): reduz quando o plot está reduzido, não necessariamente na mesma proporção. */
-  const textScale = Math.max(0.6, Math.min(1, displayPlotWidth / maxPlotWidth));
+  /** Escala dos textos (indicadores e eixo Y): reduz quando o plot está reduzido; aumento global (~25%). */
+  const textScale = Math.min(1.15, Math.max(0.7, Math.min(1, displayPlotWidth / maxPlotWidth)) * 1.25);
 
   const is2hOrAbove = groupMinutes >= 120;
   const chartW = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
@@ -1799,38 +1799,38 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 horizontalLineAxisLabels={
                   drawingsVisible
                     ? [
-                        ...drawSegments
-                          .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
-                          .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
-                        ...drawSegments
-                          .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
-                          .flatMap((s) => {
-                            const range = s.price1 - s.price2;
-                            const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
-                            const entries: { price: number; color: string }[] = [
-                              { price: s.price2 + range * 0.618, color: level618Color },
-                            ];
-                            if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
-                            return entries;
-                          }),
-                        ...drawSegments
-                          .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
-                          .flatMap((s) => {
-                            const range = s.price1 - s.price2;
-                            const c = s.color ?? DEFAULT_SEGMENT_COLOR;
-                            const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
-                            const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
-                            const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
-                            return [
-                              { price: s.price2, color: c },
-                              { price: s.price2 + range * k1, color: c },
-                              { price: s.price2 + range * 0.5, color: c },
-                              { price: s.price2 + range * k3, color: c },
-                              { price: s.price1, color: c },
-                              { price: s.price2 + range * kExt, color: c },
-                            ];
-                          }),
-                      ]
+                      ...drawSegments
+                        .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
+                        .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
+                      ...drawSegments
+                        .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
+                        .flatMap((s) => {
+                          const range = s.price1 - s.price2;
+                          const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
+                          const entries: { price: number; color: string }[] = [
+                            { price: s.price2 + range * 0.618, color: level618Color },
+                          ];
+                          if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
+                          return entries;
+                        }),
+                      ...drawSegments
+                        .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
+                        .flatMap((s) => {
+                          const range = s.price1 - s.price2;
+                          const c = s.color ?? DEFAULT_SEGMENT_COLOR;
+                          const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
+                          const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
+                          const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
+                          return [
+                            { price: s.price2, color: c },
+                            { price: s.price2 + range * k1, color: c },
+                            { price: s.price2 + range * 0.5, color: c },
+                            { price: s.price2 + range * k3, color: c },
+                            { price: s.price1, color: c },
+                            { price: s.price2 + range * kExt, color: c },
+                          ];
+                        }),
+                    ]
                     : undefined
                 }
               />

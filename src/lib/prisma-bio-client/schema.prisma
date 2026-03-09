@@ -119,6 +119,7 @@ model User {
   hideStatusBar    Boolean     @default(true)
   progress         Int         @default(0)
   language         BioLanguage @default(en)
+  timezoneOffset   Int         @default(0) // UTC offset in hours, -12 to +12
 
   accessRequests      AccessRequest[]
   coinLedger          CoinLedgerEntry[]

@@ -2899,6 +2899,7 @@ export namespace Prisma {
     ganhoSimulado: Decimal | null
     position: number | null
     progress: number | null
+    timezoneOffset: number | null
   }
 
   export type UserSumAggregateOutputType = {
@@ -2910,6 +2911,7 @@ export namespace Prisma {
     ganhoSimulado: Decimal | null
     position: number | null
     progress: number | null
+    timezoneOffset: number | null
   }
 
   export type UserMinAggregateOutputType = {
@@ -2949,6 +2951,7 @@ export namespace Prisma {
     hideStatusBar: boolean | null
     progress: number | null
     language: $Enums.BioLanguage | null
+    timezoneOffset: number | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -2988,6 +2991,7 @@ export namespace Prisma {
     hideStatusBar: boolean | null
     progress: number | null
     language: $Enums.BioLanguage | null
+    timezoneOffset: number | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -3027,6 +3031,7 @@ export namespace Prisma {
     hideStatusBar: number
     progress: number
     language: number
+    timezoneOffset: number
     _all: number
   }
 
@@ -3040,6 +3045,7 @@ export namespace Prisma {
     ganhoSimulado?: true
     position?: true
     progress?: true
+    timezoneOffset?: true
   }
 
   export type UserSumAggregateInputType = {
@@ -3051,6 +3057,7 @@ export namespace Prisma {
     ganhoSimulado?: true
     position?: true
     progress?: true
+    timezoneOffset?: true
   }
 
   export type UserMinAggregateInputType = {
@@ -3090,6 +3097,7 @@ export namespace Prisma {
     hideStatusBar?: true
     progress?: true
     language?: true
+    timezoneOffset?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -3129,6 +3137,7 @@ export namespace Prisma {
     hideStatusBar?: true
     progress?: true
     language?: true
+    timezoneOffset?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -3168,6 +3177,7 @@ export namespace Prisma {
     hideStatusBar?: true
     progress?: true
     language?: true
+    timezoneOffset?: true
     _all?: true
   }
 
@@ -3294,6 +3304,7 @@ export namespace Prisma {
     hideStatusBar: boolean
     progress: number
     language: $Enums.BioLanguage
+    timezoneOffset: number
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -3352,6 +3363,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: boolean
     language?: boolean
+    timezoneOffset?: boolean
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
     coinWallet?: boolean | User$coinWalletArgs<ExtArgs>
@@ -3405,6 +3417,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: boolean
     language?: boolean
+    timezoneOffset?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -3444,6 +3457,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: boolean
     language?: boolean
+    timezoneOffset?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -3483,9 +3497,10 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: boolean
     language?: boolean
+    timezoneOffset?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language" | "timezoneOffset", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
@@ -3559,6 +3574,7 @@ export namespace Prisma {
       hideStatusBar: boolean
       progress: number
       language: $Enums.BioLanguage
+      timezoneOffset: number
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -4031,6 +4047,7 @@ export namespace Prisma {
     readonly hideStatusBar: FieldRef<"User", 'Boolean'>
     readonly progress: FieldRef<"User", 'Int'>
     readonly language: FieldRef<"User", 'BioLanguage'>
+    readonly timezoneOffset: FieldRef<"User", 'Int'>
   }
     
 
@@ -25706,7 +25723,8 @@ export namespace Prisma {
     notifyQuina: 'notifyQuina',
     hideStatusBar: 'hideStatusBar',
     progress: 'progress',
-    language: 'language'
+    language: 'language',
+    timezoneOffset: 'timezoneOffset'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -26298,6 +26316,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFilter<"User"> | boolean
     progress?: IntFilter<"User"> | number
     language?: EnumBioLanguageFilter<"User"> | $Enums.BioLanguage
+    timezoneOffset?: IntFilter<"User"> | number
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -26350,6 +26369,7 @@ export namespace Prisma {
     hideStatusBar?: SortOrder
     progress?: SortOrder
     language?: SortOrder
+    timezoneOffset?: SortOrder
     accessRequests?: AccessRequestOrderByRelationAggregateInput
     coinLedger?: CoinLedgerEntryOrderByRelationAggregateInput
     coinWallet?: UserCoinWalletOrderByWithRelationInput
@@ -26405,6 +26425,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFilter<"User"> | boolean
     progress?: IntFilter<"User"> | number
     language?: EnumBioLanguageFilter<"User"> | $Enums.BioLanguage
+    timezoneOffset?: IntFilter<"User"> | number
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -26457,6 +26478,7 @@ export namespace Prisma {
     hideStatusBar?: SortOrder
     progress?: SortOrder
     language?: SortOrder
+    timezoneOffset?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -26504,6 +26526,7 @@ export namespace Prisma {
     hideStatusBar?: BoolWithAggregatesFilter<"User"> | boolean
     progress?: IntWithAggregatesFilter<"User"> | number
     language?: EnumBioLanguageWithAggregatesFilter<"User"> | $Enums.BioLanguage
+    timezoneOffset?: IntWithAggregatesFilter<"User"> | number
   }
 
   export type ChartLayoutWhereInput = {
@@ -27860,6 +27883,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -27912,6 +27936,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -27964,6 +27989,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -28016,6 +28042,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -28068,6 +28095,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
   }
 
   export type UserUpdateManyMutationInput = {
@@ -28107,6 +28135,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -28146,6 +28175,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
   }
 
   export type ChartLayoutCreateInput = {
@@ -29835,6 +29865,7 @@ export namespace Prisma {
     hideStatusBar?: SortOrder
     progress?: SortOrder
     language?: SortOrder
+    timezoneOffset?: SortOrder
   }
 
   export type UserAvgOrderByAggregateInput = {
@@ -29846,6 +29877,7 @@ export namespace Prisma {
     ganhoSimulado?: SortOrder
     position?: SortOrder
     progress?: SortOrder
+    timezoneOffset?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -29885,6 +29917,7 @@ export namespace Prisma {
     hideStatusBar?: SortOrder
     progress?: SortOrder
     language?: SortOrder
+    timezoneOffset?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -29924,6 +29957,7 @@ export namespace Prisma {
     hideStatusBar?: SortOrder
     progress?: SortOrder
     language?: SortOrder
+    timezoneOffset?: SortOrder
   }
 
   export type UserSumOrderByAggregateInput = {
@@ -29935,6 +29969,7 @@ export namespace Prisma {
     ganhoSimulado?: SortOrder
     position?: SortOrder
     progress?: SortOrder
+    timezoneOffset?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -33230,6 +33265,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -33281,6 +33317,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -33348,6 +33385,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -33399,6 +33437,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -33450,6 +33489,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -33501,6 +33541,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -33568,6 +33609,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -33619,6 +33661,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -33670,6 +33713,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -33721,6 +33765,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -33788,6 +33833,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -33839,6 +33885,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -33890,6 +33937,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -33941,6 +33989,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -34008,6 +34057,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -34059,6 +34109,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -34110,6 +34161,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -34161,6 +34213,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -34228,6 +34281,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -34279,6 +34333,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -34330,6 +34385,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -34381,6 +34437,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -34448,6 +34505,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -34499,6 +34557,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -34584,6 +34643,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -34635,6 +34695,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -34718,6 +34779,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -34769,6 +34831,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -34820,6 +34883,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -34871,6 +34935,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -34984,6 +35049,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -35035,6 +35101,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -35173,6 +35240,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -35224,6 +35292,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -35326,6 +35395,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -35377,6 +35447,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -35428,6 +35499,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -35479,6 +35551,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -35546,6 +35619,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -35597,6 +35671,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -35648,6 +35723,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -35699,6 +35775,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -35766,6 +35843,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -35817,6 +35895,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -35868,6 +35947,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -35919,6 +35999,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -35986,6 +36067,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -36037,6 +36119,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -36088,6 +36171,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -36139,6 +36223,7 @@ export namespace Prisma {
     hideStatusBar?: boolean
     progress?: number
     language?: $Enums.BioLanguage
+    timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -36206,6 +36291,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -36257,6 +36343,7 @@ export namespace Prisma {
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
