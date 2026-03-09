@@ -514,7 +514,7 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Erro ao executar simulação";
     const stack = e instanceof Error ? e.stack : undefined;
-    console.error("[api/backcrypto/simulacao/run]", e);
+    console.error("[api/crypto/simulacao/run]", e);
     return NextResponse.json(
       {
         error: message,

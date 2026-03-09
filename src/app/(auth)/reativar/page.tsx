@@ -92,7 +92,7 @@ export default function ReativarPage() {
         </div>
 
         <p className="mt-4 text-center text-sm text-zinc-600">
-          Ao reativar, sua conta será restaurada imediatamente e você poderá continuar usando o Backtest Crypto normalmente.
+          Ao reativar, sua conta será restaurada imediatamente e você poderá continuar usando o Crypto normalmente.
         </p>
       </div>
     </main>

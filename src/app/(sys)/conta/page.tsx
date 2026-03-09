@@ -5,11 +5,11 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
 import { decryptEmail } from "@/lib/crypto";
 import BioContaClient from "./ContaClient";
-import { APP_BACKCRYPTO_ROUTE_PREFIX } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
 
 export const metadata: Metadata = {
-  title: "Minha Conta | Backtest Crypto",
+  title: "Minha Conta | Crypto",
   description: "Gerencie suas informações e preferências.",
 };
 
@@ -21,11 +21,11 @@ export const dynamic = "force-dynamic";
 export default async function BioContaPage() {
   const headersList = await headers();
   const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_BACKCRYPTO_ROUTE_PREFIX}/login` : `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
+  const loginUrl = origin ? `${origin}${APP_CRYPTO_ROUTE_PREFIX}/login` : `${APP_CRYPTO_ROUTE_PREFIX}/login`;
 
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${APP_BACKCRYPTO_ROUTE_PREFIX}/conta`);
+  if (!token) redirect(`${loginUrl}?next=${APP_CRYPTO_ROUTE_PREFIX}/conta`);
 
   let payload: { sub?: string };
   try {

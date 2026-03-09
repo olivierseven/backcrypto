@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { APP_BACKCRYPTO_ROUTE_PREFIX } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import SistemaLayoutClient from "@/app/(sys)/sistema/SistemaLayoutClient";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -15,11 +15,11 @@ export const dynamic = "force-dynamic";
 export default async function SysLayout({ children }: { children: ReactNode }) {
   const headersList = await headers();
   const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_BACKCRYPTO_ROUTE_PREFIX}/login` : `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
+  const loginUrl = origin ? `${origin}${APP_CRYPTO_ROUTE_PREFIX}/login` : `${APP_CRYPTO_ROUTE_PREFIX}/login`;
 
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${encodeURIComponent(APP_BACKCRYPTO_ROUTE_PREFIX + "/sistema")}`);
+  if (!token) redirect(`${loginUrl}?next=${encodeURIComponent(APP_CRYPTO_ROUTE_PREFIX + "/sistema")}`);
 
   let payload: { sub?: string };
   try {

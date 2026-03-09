@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { API_BASE, APP_BACKCRYPTO_ROUTE_PREFIX, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
+import { API_BASE, APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 
 type PlanKey = "7" | "49";
@@ -60,7 +60,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
   const next = useMemo(() => sp.get("next") || SISTEMA_PATH, [sp]);
   /** Path completo para redirect (Stripe/PIX); inclui basePath para location.href */
   const fullReturnTo = useMemo(
-    () => (next.startsWith(APP_BACKCRYPTO_ROUTE_PREFIX) ? next : `${APP_BACKCRYPTO_ROUTE_PREFIX}${next}`),
+    () => (next.startsWith(APP_CRYPTO_ROUTE_PREFIX) ? next : `${APP_CRYPTO_ROUTE_PREFIX}${next}`),
     [next]
   );
   const [accepted, setAccepted] = useState(false);

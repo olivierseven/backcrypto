@@ -1,4 +1,4 @@
-/** Traduções do Backtest Crypto (conta e demais páginas). */
+/** Traduções do Crypto (conta e demais páginas). */
 
 export type CryptoLang = "en" | "pt";
 
@@ -182,19 +182,19 @@ export const cryptoTranslations = {
       policiesClickTab: "Click a tab above to load content.",
     },
     receiptEmail: {
-      subject: "Purchase confirmed — Backtest Crypto",
+      subject: "Purchase confirmed — Crypto",
       title: "Purchase confirmed",
       receivedPayment: "We received your payment of <b>US$ {valor}</b>.",
       receivedPaymentPix: "We received your payment of <b>R$ {valor}</b>.",
-      creditedCoins: "<b>{count}</b> coins have been credited to your Backtest Crypto account.",
+      creditedCoins: "<b>{count}</b> coins have been credited to your Crypto account.",
       viewCoins: "View my coins",
       codeOp: "Transaction code: {ref}",
-      automaticMessage: "This is an automated message from Backtest Crypto (SevenCoins).",
+      automaticMessage: "This is an automated message from Crypto (SevenCoins).",
       doNotReply: "Please do not reply to this email.",
       website: "https://sevencoins.com.br",
     },
     landing: {
-      title: "Backtest Crypto",
+      title: "Crypto",
       subtitle: "by SevenCoins",
       tagline: "Advanced crypto strategy simulator with statistical modeling applied to historical data.",
       description: "Test strategies based on technical indicators such as moving averages, MACD and RSI using real market data. Evaluate performance, risk and consistency over time — from high volatility scenarios to full market cycles.",
@@ -229,7 +229,7 @@ export const cryptoTranslations = {
       feature6Desc: "Intuitive interface with capital curve charts, comparisons and key metrics in real time.",
       funcPage: {
         title: "Features",
-        intro: "The Backtest Crypto simulator offers an integrated interface to configure, run, and analyze demographic simulations.",
+        intro: "The Crypto simulator offers an integrated interface to configure, run, and analyze demographic simulations.",
         mainTitle: "Main features",
         statsTitle: "Statistics on the map",
         stats1: "Total population by year",
@@ -266,7 +266,7 @@ export const cryptoTranslations = {
     },
     graficos: {
       title: "Charts",
-      chartsBy: "Charts Backtest Crypto",
+      chartsBy: "Charts Crypto",
       chartsSubtitle: "by SevenCoins",
       backToSystem: "← System",
       selectSave: "Select save",
@@ -1130,19 +1130,19 @@ export const cryptoTranslations = {
       policiesClickTab: "Clique em uma aba acima para carregar o conteúdo.",
     },
     receiptEmail: {
-      subject: "Compra confirmada — Backtest Crypto",
+      subject: "Compra confirmada — Crypto",
       title: "Compra confirmada",
       receivedPayment: "Recebemos seu pagamento de <b>US$ {valor}</b>.",
       receivedPaymentPix: "Recebemos seu pagamento de <b>R$ {valor}</b>.",
-      creditedCoins: "Foram creditados <b>{count} coins</b> na sua conta Backtest Crypto.",
+      creditedCoins: "Foram creditados <b>{count} coins</b> na sua conta Crypto.",
       viewCoins: "Ver meus coins",
       codeOp: "Código da operação: {ref}",
-      automaticMessage: "Esta é uma mensagem automática do Backtest Crypto (SevenCoins).",
+      automaticMessage: "Esta é uma mensagem automática do Crypto (SevenCoins).",
       doNotReply: "Por favor, não responda a este e-mail.",
       website: "https://sevencoins.com.br",
     },
     landing: {
-      title: "Backtest Crypto",
+      title: "Crypto",
       subtitle: "by SevenCoins",
       tagline: "Simulador avançado de estratégias para criptomoedas com modelagem estatística aplicada a dados históricos.",
       description: "Teste estratégias baseadas em indicadores técnicos como médias móveis, MACD e IFR utilizando dados reais do mercado. Avalie desempenho, risco e consistência ao longo do tempo — de cenários de alta volatilidade a ciclos completos de mercado.",
@@ -1177,7 +1177,7 @@ export const cryptoTranslations = {
       feature6Desc: "Interface intuitiva com visualização gráfica da curva de capital, comparativos e métricas essenciais em tempo real.",
       funcPage: {
         title: "Funcionalidades",
-        intro: "O simulador Backtest Crypto oferece uma interface integrada para configurar, executar e analisar simulações demográficas.",
+        intro: "O simulador Crypto oferece uma interface integrada para configurar, executar e analisar simulações demográficas.",
         mainTitle: "Principais funcionalidades",
         statsTitle: "Estatísticas no mapa",
         stats1: "População total por ano",
@@ -1214,7 +1214,7 @@ export const cryptoTranslations = {
     },
     graficos: {
       title: "Gráficos",
-      chartsBy: "Charts Backtest Crypto",
+      chartsBy: "Charts Crypto",
       chartsSubtitle: "by SevenCoins",
       backToSystem: "← Sistema",
       selectSave: "Selecionar save",

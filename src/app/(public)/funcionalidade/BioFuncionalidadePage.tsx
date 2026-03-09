@@ -36,7 +36,7 @@ export default function BioFuncionalidadePage() {
               <div className="mb-6 flex justify-center">
                 <img
                   src={`${ASSET_PREFIX}/icon.png`}
-                  alt="Backtest Crypto"
+                  alt="Crypto"
                   width={64}
                   height={64}
                   className="h-16 w-16 object-contain"

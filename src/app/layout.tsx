@@ -5,19 +5,19 @@ import { getLocaleFromRequest } from "@/lib/get-locale-server";
 import { AppBarSafeProvider } from "./AppBarSafeContext";
 import StatusBarPref from "./StatusBarPref";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br";
 
 const ROOT_META = {
   pt: {
-    title: "Backtest Crypto | Simulador de Estratégias para Criptomoedas",
+    title: "Crypto | Simulador de Estratégias para Criptomoedas",
     description:
       "Simulador avançado de estratégias para criptomoedas com modelagem estatística aplicada a dados históricos. Teste indicadores técnicos, MACD, RSI e compare com Buy & Hold.",
     keywords:
       "backtest criptomoedas, simulador estratégias, MACD, RSI, médias móveis, Bitcoin, SevenCoins, análise técnica",
   },
   en: {
-    title: "Backtest Crypto | Crypto Strategy Simulator",
+    title: "Crypto | Crypto Strategy Simulator",
     description:
       "Advanced crypto strategy simulator with statistical modeling applied to historical data. Test technical indicators, MACD, RSI and compare with Buy & Hold.",
     keywords:
@@ -39,10 +39,10 @@ const SHARED_META: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Backtest Crypto",
+    title: "Crypto",
   },
   openGraph: {
-    siteName: "Backtest Crypto",
+    siteName: "Crypto",
     type: "website",
     images: [{ url: `${BASE_PATH}/icon.png` }],
   },
@@ -104,7 +104,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "Backtest Crypto",
+              name: "Crypto",
               applicationCategory: "EducationalApplication",
               operatingSystem: "Web",
               description: ROOT_META[lang].description,
@@ -125,7 +125,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <main className="w-full px-0 py-0">
           <AppBarSafeProvider>
             <StatusBarPref />
-            <div data-app="backcrypto" className="crypto-generator-app min-h-screen text-zinc-900">
+            <div data-app="crypto" className="crypto-generator-app min-h-screen text-zinc-900">
               {children}
             </div>
           </AppBarSafeProvider>

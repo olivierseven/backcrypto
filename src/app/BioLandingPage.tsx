@@ -50,7 +50,7 @@ export default function BioLandingPage() {
             <div className="mb-6 flex items-center justify-center gap-4">
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto"
                 width={80}
                 height={80}
                 className="h-20 w-20 object-contain"

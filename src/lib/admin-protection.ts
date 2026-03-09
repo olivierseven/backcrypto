@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { decryptEmail } from "@/lib/crypto";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret");
 

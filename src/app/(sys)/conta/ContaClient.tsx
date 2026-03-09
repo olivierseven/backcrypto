@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { validateNickname } from "@/lib/validate-nickname";
-import { APP_BACKCRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
 import { getCryptoT, translateValidationError, type CryptoLang } from "@/app/lib/translations";
 
 interface UserData {

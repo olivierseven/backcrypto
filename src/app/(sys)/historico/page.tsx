@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
 import CryptoActiveCredits from "./CryptoActiveCredits";
-import { APP_BACKCRYPTO_ROUTE_PREFIX, APP_BACKCRYPTO_SISTEMA_PATH, SISTEMA_PATH } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX, APP_CRYPTO_SISTEMA_PATH, SISTEMA_PATH } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 
@@ -39,11 +39,11 @@ export default async function BioHistoricoPage({
 }) {
   const headersList = await headers();
   const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_BACKCRYPTO_ROUTE_PREFIX}/login` : `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
+  const loginUrl = origin ? `${origin}${APP_CRYPTO_ROUTE_PREFIX}/login` : `${APP_CRYPTO_ROUTE_PREFIX}/login`;
 
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${APP_BACKCRYPTO_ROUTE_PREFIX}/historico`);
+  if (!token) redirect(`${loginUrl}?next=${APP_CRYPTO_ROUTE_PREFIX}/historico`);
 
   let payload: { sub?: string };
   try {

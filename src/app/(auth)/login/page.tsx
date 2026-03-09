@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const BIO_NEXT = "/backcrypto/sistema";
+const BIO_NEXT = "/crypto/sistema";
 
 function safeNext(raw: string | undefined): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return BIO_NEXT;
@@ -53,7 +53,7 @@ export default async function LoginPage({
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
       <BioLoginForm
         nextPath={nextPath}
-        loginPagePath="/backcrypto/login"
+        loginPagePath="/crypto/login"
       />
     </Suspense>
   );

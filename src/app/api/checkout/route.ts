@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
-const BASE_PATH = process.env.APP_BASE_PATH || "/backcrypto";
+const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
 
 const BG_STRIPE_SECRET = process.env.BG_STRIPE_SECRET_KEY;
 const BG_PRICE_7 = process.env.BG_PRICE_COINS_7;
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       mode: "payment",
       line_items: [{ price: plan.priceId, quantity: 1 }],
       success_url: `${APP_URL}${fullReturnTo}?status=success`,
-      cancel_url: `${APP_URL}/backcrypto/plans?status=cancel`,
+      cancel_url: `${APP_URL}/crypto/plans?status=cancel`,
       client_reference_id: userId,
       metadata,
       ...(customerEmail ? { customer_email: customerEmail } : {}),

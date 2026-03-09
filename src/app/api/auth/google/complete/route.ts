@@ -5,7 +5,7 @@ import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { verifyCompleteToken } from "@/lib/oauth-complete-token";
 import { log as vLog, warn, error, dbg } from "@/lib/logger";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const LOGIN_PAGE = `${BASE_PATH}/login`;
 const DEFAULT_NEXT = `${BASE_PATH}/sistema`;
 

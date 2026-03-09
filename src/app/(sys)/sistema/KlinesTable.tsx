@@ -66,6 +66,9 @@ const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] =
   { value: 43200, label: "1M", param: "1M" },
 ];
 
+/** Timeframe padrão para novo usuário (primeira visita): BTCUSDT + 1M. */
+const DEFAULT_GROUP_MINUTES_FIRST_LOAD = 43200; // 1M (1 mês)
+
 /** Opções de intervalo: admin vê também 1m. */
 function getIntervalOptions(isAdmin: boolean): { value: number; label: string; param: string }[] {
   if (!isAdmin) return INTERVAL_OPTIONS_BASE;
@@ -73,7 +76,7 @@ function getIntervalOptions(isAdmin: boolean): { value: number; label: string; p
 }
 
 function getStoredGroupMinutes(isAdmin: boolean): number {
-  if (typeof window === "undefined") return 5;
+  if (typeof window === "undefined") return DEFAULT_GROUP_MINUTES_FIRST_LOAD;
   try {
     const raw = window.localStorage.getItem(KLINE_GROUP_MINUTES_KEY);
     const n = Number(raw);
@@ -82,7 +85,7 @@ function getStoredGroupMinutes(isAdmin: boolean): number {
   } catch {
     /* ignore */
   }
-  return 5;
+  return DEFAULT_GROUP_MINUTES_FIRST_LOAD;
 }
 
 function formatTime(ms: number): string {
@@ -123,10 +126,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
-  const [groupMinutes, setGroupMinutes] = useState(5);
+  const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
+  /** Só true após restaurar do localStorage no cliente; evita fetch com 1M antes de aplicar o timeframe salvo. */
+  const [timeframeRestored, setTimeframeRestored] = useState(false);
   useLayoutEffect(() => {
     const stored = getStoredGroupMinutes(isAdmin);
-    if (stored !== 5) setGroupMinutes(stored);
+    setGroupMinutes(stored);
+    setTimeframeRestored(true);
   }, [isAdmin]);
   const [klines, setKlines] = useState<Kline[]>([]);
   const [loading, setLoading] = useState(true);
@@ -466,7 +472,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     try {
       setError(null);
       setNeedsRefresh(false);
-      const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "5m";
+      const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
       const res = await fetch(
         `${API_BASE}/binance/klines?symbol=${encodeURIComponent(symbol)}&interval=${intervalParam}&limit=1000`
       );
@@ -506,11 +512,12 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   };
 
   useEffect(() => {
+    if (!timeframeRestored) return;
     setLoading(true);
     fetchKlines();
     const interval = setInterval(fetchKlines, REFRESH_MS);
     return () => clearInterval(interval);
-  }, [groupMinutes, symbol]);
+  }, [groupMinutes, symbol, timeframeRestored]);
 
   useEffect(() => {
     fetchSpot();
@@ -595,7 +602,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [groupMinutes, symbol]);
 
-  const intervalLabel = intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "5m";
+  const intervalLabel = intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1M";
 
   const last24h = (() => {
     if (extendedKlines.length === 0) return null;

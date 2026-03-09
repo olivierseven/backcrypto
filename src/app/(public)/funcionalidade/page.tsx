@@ -6,18 +6,18 @@ export const dynamic = "force-dynamic";
 
 const PAGE_META = {
   pt: {
-    title: "Funcionalidades | Backtest Crypto",
+    title: "Funcionalidades | Crypto",
     description:
-      "Conheça as funcionalidades do Backtest Crypto: menu lateral, exibição de gráficos, mapa interativo e gráficos de análise.",
+      "Conheça as funcionalidades do Crypto: menu lateral, exibição de gráficos, mapa interativo e gráficos de análise.",
     keywords:
-      "Backtest Crypto, funcionalidades, simulador populacional, painéis de configuração, gráficos de análise, SevenCoins",
+      "Crypto, funcionalidades, simulador populacional, painéis de configuração, gráficos de análise, SevenCoins",
   },
   en: {
-    title: "Features | Backtest Crypto",
+    title: "Features | Crypto",
     description:
-      "Discover Backtest Crypto features: sidebar menu, chart display, interactive map and analysis charts.",
+      "Discover Crypto features: sidebar menu, chart display, interactive map and analysis charts.",
     keywords:
-      "Backtest Crypto, features, population simulator, configuration panels, analysis charts, SevenCoins",
+      "Crypto, features, population simulator, configuration panels, analysis charts, SevenCoins",
   },
 } as const;
 

@@ -11,7 +11,7 @@ import { warn } from "@/lib/logger";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const RESET_PAGE = `${BASE_PATH}/reset-password`;
 
 const MAX_ATTEMPTS_PER_IP = 5;

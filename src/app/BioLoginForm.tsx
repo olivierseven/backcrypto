@@ -135,7 +135,7 @@ export default function BioLoginForm({
 
   const log = useFormLock();
 
-  // Com basePath (ex: /backcrypto), a API fica em /backcrypto/api/auth/login
+  // Com basePath (ex: /crypto), a API fica em /crypto/api/auth/login
   const basePath = loginPagePath.replace(/\/login$/, "") || "";
   const action = basePath ? `${basePath}/api/auth/login` : (AUTH_BASE ? `${AUTH_BASE.replace(/\/$/, "")}/api/auth/login` : "/api/auth/login");
   // Paths sem basePath para Link — Next adiciona basePath automaticamente
@@ -173,7 +173,7 @@ export default function BioLoginForm({
             >
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto"
                 width={80}
                 height={80}
                 className="protected-logo h-20 w-20 object-contain"
@@ -205,7 +205,7 @@ export default function BioLoginForm({
           </div>
           <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Backtest Crypto
+              Crypto
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
           </header>

@@ -16,11 +16,11 @@ function getAppVersion() {
 }
 
 const nextConfig = {
-  basePath: '/backcrypto',
+  basePath: '/crypto',
   env: {
     NEXT_PUBLIC_APP_VERSION: getAppVersion(),
   },
-  assetPrefix: '/backcrypto',
+  assetPrefix: '/crypto',
   outputFileTracingRoot: projectRoot,
   experimental: {
     serverActions: {

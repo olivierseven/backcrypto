@@ -3,14 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ASSET_PREFIX, APP_BACKCRYPTO_ROUTE_PREFIX } from "./constants";
+import { ASSET_PREFIX, APP_CRYPTO_ROUTE_PREFIX } from "./constants";
 import { useCryptoLang } from "./contexts/CryptoLangContext";
 import { bioTranslations } from "./lib/translations";
 
-const FORGOT_ACTION = `${APP_BACKCRYPTO_ROUTE_PREFIX}/api/auth/forgot`;
-const RESET_ACTION = `${APP_BACKCRYPTO_ROUTE_PREFIX}/api/auth/reset`;
-const LOGIN_PATH = `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
-const RESET_PATH = `${APP_BACKCRYPTO_ROUTE_PREFIX}/reset-password`;
+const FORGOT_ACTION = `${APP_CRYPTO_ROUTE_PREFIX}/api/auth/forgot`;
+const RESET_ACTION = `${APP_CRYPTO_ROUTE_PREFIX}/api/auth/reset`;
+const LOGIN_PATH = `${APP_CRYPTO_ROUTE_PREFIX}/login`;
+const RESET_PATH = `${APP_CRYPTO_ROUTE_PREFIX}/reset-password`;
 
 function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
@@ -125,7 +125,7 @@ export default function BioResetPasswordForm() {
           <div className="mb-5 flex items-center justify-center">
             <img
               src={`${ASSET_PREFIX}/icon.png`}
-              alt="Backtest Crypto"
+              alt="Crypto"
               width={80}
               height={80}
               className="protected-logo h-20 w-20 object-contain"
@@ -135,7 +135,7 @@ export default function BioResetPasswordForm() {
           </div>
           <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Backtest Crypto
+              Crypto
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
           </header>

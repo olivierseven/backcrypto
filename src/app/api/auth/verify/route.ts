@@ -4,7 +4,7 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { consumeEmailVerificationToken } from "@/lib/token";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
-import { APP_BACKCRYPTO_ROUTE_PREFIX } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ const VERIFY_PER_TOKEN_LIMIT = 3; // permite retries (duplo clique, prefetch do 
 const VERIFY_PER_TOKEN_WINDOW = 60_000;
 
 function getBaseUrl(req: Request): string {
-  return getRedirectOrigin(req) + APP_BACKCRYPTO_ROUTE_PREFIX;
+  return getRedirectOrigin(req) + APP_CRYPTO_ROUTE_PREFIX;
 }
 
 function loginUrl(req: Request, query = "") {

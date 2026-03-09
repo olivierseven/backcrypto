@@ -11,7 +11,7 @@ import crypto from "crypto";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { createCompleteToken } from "@/lib/oauth-complete-token";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const LOGIN_PAGE = `${BASE_PATH}/login`;
 const DEFAULT_NEXT = `${BASE_PATH}/sistema`;
 

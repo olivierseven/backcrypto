@@ -43,7 +43,7 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
             <Link href="/" className="flex items-center gap-2">
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto"
                 width={36}
                 height={36}
                 className="h-9 w-9 object-contain"

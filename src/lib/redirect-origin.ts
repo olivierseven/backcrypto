@@ -1,6 +1,6 @@
 /**
  * Origem para redirects: preservar host do domínio de entrada quando o app
- * é acessado via proxy (ex.: sevencoins.com.br/backcrypto → rewrite para o app).
+ * é acessado via proxy (ex.: sevencoins.com.br/crypto → rewrite para o app).
  * Usa X-Forwarded-Host e X-Forwarded-Proto para não expor a URL do app externo.
  */
 

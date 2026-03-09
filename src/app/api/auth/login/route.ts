@@ -16,8 +16,8 @@ const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const COOKIE_LAST = `${COOKIE}_last`;
 const COOKIE_IAT = `${COOKIE}_iat`;
 
-const LOGIN_PAGE = "/backcrypto/login";
-const DEFAULT_NEXT = "/backcrypto/sistema";
+const LOGIN_PAGE = "/crypto/login";
+const DEFAULT_NEXT = "/crypto/sistema";
 
 const MAX_LOGIN_ATTEMPTS = 10;
 const LOGIN_WINDOW_MS = 60_000;
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         .setIssuedAt()
         .setExpirationTime("1h")
         .sign(JWT_SECRET);
-      const res = redirect("/backcrypto/reativar", req);
+      const res = redirect("/crypto/reativar", req);
       res.cookies.set(COOKIE, tempJWT, {
         httpOnly: true,
         sameSite: "lax",

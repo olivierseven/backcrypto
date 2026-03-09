@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { dbg, log as vLog } from "@/lib/logger";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const CID = process.env.GOOGLE_CLIENT_ID;
 
 function rand(n = 16): string {

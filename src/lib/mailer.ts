@@ -161,7 +161,7 @@ function renderPasswordResetEmailText(resetUrl: string, expiresMin: number) {
 
 /**
  * Envia e-mail com link para redefinir senha (Bio).
- * baseUrl: origem do app (ex.: https://sevencoins.com.br); resetPath deve incluir basePath (ex.: /backcrypto/reset-password).
+ * baseUrl: origem do app (ex.: https://sevencoins.com.br); resetPath deve incluir basePath (ex.: /crypto/reset-password).
  */
 export async function sendPasswordResetEmail(args: {
   to: Address;
@@ -176,7 +176,7 @@ export async function sendPasswordResetEmail(args: {
     to,
     token,
     baseUrl,
-    resetPath = `/backcrypto/reset-password?token=${encodeURIComponent(token)}`,
+    resetPath = `/crypto/reset-password?token=${encodeURIComponent(token)}`,
     expiresMinutes = 30,
     from,
     replyTo,

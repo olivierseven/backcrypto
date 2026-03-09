@@ -12,7 +12,7 @@ import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn, error } from "@/lib/logger";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
-const BASE_PATH = process.env.APP_BASE_PATH || "/backcrypto";
+const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
 /** URL usada em links de e-mail; deve ser o domínio de envio (ex: https://sevencoins.com.br) para evitar spam. */
 const EMAIL_LINK_BASE =
   process.env.EMAIL_APP_URL ||

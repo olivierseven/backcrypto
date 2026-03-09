@@ -18,18 +18,18 @@ export default function OAuthReturnPage() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
-    const next = params.get("next") || "/backcrypto/sistema";
+    const next = params.get("next") || "/crypto/sistema";
 
     if (!token) {
       setMsg("Token ausente. Redirecionando para login…");
       setTimeout(() => {
-        window.location.href = "/backcrypto/login?login=server";
+        window.location.href = "/crypto/login?login=server";
       }, 1500);
       return;
     }
 
     const origin = window.location.origin;
-    const url = `${origin}/backcrypto/api/auth/google/complete?token=${encodeURIComponent(token)}&next=${encodeURIComponent(next)}`;
+    const url = `${origin}/crypto/api/auth/google/complete?token=${encodeURIComponent(token)}&next=${encodeURIComponent(next)}`;
     setCompleteUrl(url);
 
     if (Capacitor?.isNativePlatform?.()) {
@@ -60,7 +60,7 @@ export default function OAuthReturnPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center gap-4 bg-zinc-50 text-zinc-700 p-4"
-      data-app="backcrypto"
+      data-app="crypto"
     >
       <p className="text-center">{msg}</p>
       {showButton && completeUrl && (
