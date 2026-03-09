@@ -10,6 +10,7 @@ export interface ChartHeaderData {
   min24h: string | null;
   vol24hBtc: string | null;
   vol24hUsd: string | null;
+  intervalLabel: string | null;
 }
 
 const defaultData: ChartHeaderData = {
@@ -20,6 +21,7 @@ const defaultData: ChartHeaderData = {
   min24h: null,
   vol24hBtc: null,
   vol24hUsd: null,
+  intervalLabel: null,
 };
 
 interface ChartHeaderContextValue {
@@ -37,7 +39,8 @@ function chartHeaderDataEqual(a: ChartHeaderData, b: ChartHeaderData): boolean {
     a.max24h === b.max24h &&
     a.min24h === b.min24h &&
     a.vol24hBtc === b.vol24hBtc &&
-    a.vol24hUsd === b.vol24hUsd
+    a.vol24hUsd === b.vol24hUsd &&
+    a.intervalLabel === b.intervalLabel
   );
 }
 

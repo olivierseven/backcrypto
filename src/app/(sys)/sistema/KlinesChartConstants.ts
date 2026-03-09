@@ -42,6 +42,7 @@ export const INVISIBLE_CANDLES_END = 3;
 export const SIDEBAR_WIDTH = 40;
 export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
+export const KLINE_GROUP_MINUTES_KEY = "backcrypto-klines-group-minutes";
 export const KLINE_SYMBOL_KEY = "backcrypto-klines-symbol";
 export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";
 export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";

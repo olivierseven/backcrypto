@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useLayoutEffect, type ReactNode } from "react";
 import { KLINE_SYMBOL_KEY } from "./KlinesChartConstants";
 
 export const SYMBOL_OPTIONS = ["BTCUSDT", "ETHUSDT"] as const;
@@ -27,9 +27,9 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
   const [symbol, setSymbolState] = useState<string>("BTCUSDT");
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const stored = getStoredSymbol();
-    if (stored !== "BTCUSDT") setSymbolState(stored);
+    setSymbolState(stored);
   }, []);
 
   const setSymbol = useCallback((s: string) => {

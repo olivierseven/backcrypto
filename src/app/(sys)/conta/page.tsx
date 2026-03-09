@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { jwtVerify } from "jose";
 import { decryptEmail } from "@/lib/crypto";
 import BioContaClient from "./ContaClient";
-import BioHeaderSafe from "@/app/BioHeaderSafe";
-import { APP_BACKCRYPTO_ROUTE_PREFIX, SISTEMA_PATH } from "@/app/constants";
+import { APP_BACKCRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { getCryptoT } from "@/app/lib/translations";
 
 export const metadata: Metadata = {
   title: "Minha Conta | Backtest Crypto",
@@ -77,27 +74,9 @@ export default async function BioContaPage() {
     // ignore
   }
 
-  const lang = (user.language ?? "en") as "en" | "pt";
-  const t = getCryptoT(lang);
-
   return (
-    <main className="bio-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <BioHeaderSafe>
-      <header className="bio-header sticky top-0 z-10 shrink-0 w-full">
-        <div className="bio-header-inner mx-auto max-w-2xl px-4 sm:px-6">
-          <Link
-            href={SISTEMA_PATH}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
-          >
-            {t.conta.backToSystem}
-          </Link>
-          <span className="text-sm font-semibold text-neutral-800">{t.conta.title}</span>
-          <span className="w-14 shrink-0" aria-hidden />
-        </div>
-      </header>
-      </BioHeaderSafe>
-
-      <div className="bio-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
+    <main className="crypto-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
         <div className="w-full">
           <BioContaClient
             user={user}

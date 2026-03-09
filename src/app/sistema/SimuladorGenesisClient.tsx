@@ -322,7 +322,7 @@ const EstatisticasDisplay = memo(function EstatisticasDisplay({
     atualizando ? "—" : Math.round(v).toLocaleString(locale, { maximumFractionDigits: 0 });
 
   return (
-    <div className="card-bio-generator mt-4 rounded-xl p-4">
+    <div className="card-crypto-generator mt-4 rounded-xl p-4">
       <h3 className="text-sm font-semibold text-neutral-800 mb-3">
         {t.dataTitle} {atualizando && <span className="text-neutral-500 font-normal">({t.updating})</span>}
       </h3>
@@ -413,7 +413,7 @@ const ResultadoJSON = memo(function ResultadoJSON({
 
   return (
     <>
-      <div className="card-bio-generator mt-4 rounded-xl p-4">
+      <div className="card-crypto-generator mt-4 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-neutral-800 mb-3">{t.responseValidate}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -2687,7 +2687,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="repro-help-title" className="text-base font-semibold text-neutral-800">
                 🧬 {tSistema.helpReproduction}
               </h2>
@@ -2700,7 +2700,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <section>
                 <dt className="font-semibold text-neutral-800 font-mono">min_fertile_age</dt>
                 <dd className="mt-1 pl-0">{tSistema.helpRepro.idade_fertil_min}</dd>
@@ -2755,7 +2755,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="deslocamento-help-title" className="text-base font-semibold text-neutral-800">
                 🚶 {tSistema.helpDisplacement}
               </h2>
@@ -2768,7 +2768,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <section>
                 <dt className="font-semibold text-neutral-800 font-mono">annual_mean_dispersal (km)</dt>
                 <dd className="mt-1 pl-0">{tSistema.helpDisplacementContent.dispersaoDesc}</dd>
@@ -2794,7 +2794,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="fecundidade-parto-help-title" className="text-base font-semibold text-neutral-800">
                 🧬 {tSistema.helpBirthFecundity}
               </h2>
@@ -2807,7 +2807,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <section>
                 <dt className="font-semibold text-neutral-800 font-mono">mean_fertility_per_birth (mean children per birth)</dt>
                 <dd className="mt-1 pl-0">{tSistema.helpBirthFecundityContent.fecundidade_media}</dd>
@@ -2853,7 +2853,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="quadro0-periodos-help-title" className="text-base font-semibold text-neutral-800">
                 {tSistema.helpPeriods}
               </h2>
@@ -2866,7 +2866,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <p className="text-neutral-600">{tSistema.helpPeriodos.p1}</p>
               <p className="text-neutral-600">{tSistema.helpPeriodos.p2}</p>
               <p className="text-neutral-600">{tSistema.helpPeriodos.p3}</p>
@@ -2886,7 +2886,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="quadro1-mortalidade-help-title" className="text-base font-semibold text-neutral-800">
                 ☠️ {tSistema.helpMortalityResidual}
               </h2>
@@ -2899,7 +2899,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <section>
                 <dt className="font-semibold text-neutral-800 font-mono">initial_mortality_rate (%)</dt>
                 <dd className="mt-1 pl-0">{tSistema.helpMortalidade1.tx_inicial}</dd>
@@ -2964,7 +2964,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="mortalidade-velhice-help-title" className="text-base font-semibold text-neutral-800">
                 🧬 {tSistema.helpOldAgeMortality}
               </h2>
@@ -2977,7 +2977,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <section>
                 <dt className="font-semibold text-neutral-800 font-mono">old_age_start</dt>
                 <dd className="mt-1 pl-0">{tSistema.helpVelhice.idade_inicio}</dd>
@@ -3027,7 +3027,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
             className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bio-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
+            <div className="crypto-help-header flex items-center justify-between shrink-0 px-4 py-3 border-b border-neutral-200">
               <h2 id="quadro6-help-title" className="text-base font-semibold text-neutral-800">
                 {tSistema.helpContinental}
               </h2>
@@ -3040,7 +3040,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 ✕
               </button>
             </div>
-            <div className="bio-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
+            <div className="crypto-help-content overflow-y-auto p-4 space-y-4 text-sm text-neutral-700">
               <p>{tSistema.helpContinentalContent.p1}</p>
               <p>{tSistema.helpContinentalContent.p2}</p>
               <p>{tSistema.helpContinentalContent.p3}</p>
@@ -3303,12 +3303,12 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
         const f1Resumo = vals.periodo_f1 ?? 2026;
         return createPortal(
           (
-            <div className={`bio-panel-prose w-full min-w-0 h-full overflow-y-auto overflow-x-hidden box-border bg-white ${configLocked ? "pointer-events-none select-none opacity-75" : ""}`}>
+            <div className={`crypto-panel-prose w-full min-w-0 h-full overflow-y-auto overflow-x-hidden box-border bg-white ${configLocked ? "pointer-events-none select-none opacity-75" : ""}`}>
               {expandQuadro0 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelPeriods}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelPeriods}</h2>
                       <button type="button" onClick={() => setShowQuadro0PeriodosHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpPeriods} aria-label={`${tSistema.help}: ${tSistema.panelPeriods}`}>?</button>
                     </div>
                     <button
@@ -3320,17 +3320,17 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                       ✕
                     </button>
                   </div>
-                  <p className="bio-panel-subtitle font-mono">
+                  <p className="crypto-panel-subtitle font-mono">
                     {numPeriodosResumo} período(s): {i1Resumo} .. {f1Resumo}
                   </p>
                   <Quadro0ConteudoInline script={script} inputValues={inputValues} setInputValues={setInputValues} vals={vals} setShowQuadro0PeriodosHelp={setShowQuadro0PeriodosHelp} />
                 </section>
               )}
               {expandQuadro1 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelMortalityResidual}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelMortalityResidual}</h2>
                       <button type="button" onClick={() => setShowQuadro1MortalidadeHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpMortalityResidual} aria-label={`${tSistema.help}: ${tSistema.panelMortalityResidual}`}>?</button>
                     </div>
                     <button
@@ -3346,10 +3346,10 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandQuadro2 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelReproduction}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelReproduction}</h2>
                       <button type="button" onClick={() => setShowReproHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpReproduction} aria-label={`${tSistema.help}: ${tSistema.panelReproduction}`}>?</button>
                     </div>
                     <button type="button" onClick={() => setExpandQuadro2(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelReproduction}`}>✕</button>
@@ -3358,10 +3358,10 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandQuadro3 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelDisplacement}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelDisplacement}</h2>
                       <button type="button" onClick={() => setShowDeslocamentoHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpDisplacement} aria-label={`${tSistema.help}: ${tSistema.panelDisplacement}`}>?</button>
                     </div>
                     <button type="button" onClick={() => setExpandQuadro3(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelDisplacement}`}>✕</button>
@@ -3370,10 +3370,10 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandQuadro4 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelBirthFecundity}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelBirthFecundity}</h2>
                       <button type="button" onClick={() => setShowFecundidadePartoHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpBirthFecundity} aria-label={`${tSistema.help}: ${tSistema.panelBirthFecundity}`}>?</button>
                     </div>
                     <button type="button" onClick={() => setExpandQuadro4(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelBirthFecundity}`}>✕</button>
@@ -3382,10 +3382,10 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandQuadro5 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelOldAgeMortality}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelOldAgeMortality}</h2>
                       <button type="button" onClick={() => setShowMortalidadeVelhiceHelp(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpOldAgeMortality} aria-label={`${tSistema.help}: ${tSistema.panelOldAgeMortality}`}>?</button>
                     </div>
                     <button type="button" onClick={() => setExpandQuadro5(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelOldAgeMortality}`}>✕</button>
@@ -3394,10 +3394,10 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandQuadro6 && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h2 className="bio-panel-title">{tSistema.panelContinentalFactor}</h2>
+                      <h2 className="crypto-panel-title">{tSistema.panelContinentalFactor}</h2>
                       <button type="button" onClick={() => setShowQuadro6Help(true)} className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full border border-neutral-400 bg-neutral-200/80 text-neutral-600 hover:bg-neutral-300 text-xs font-bold leading-none" title={tSistema.helpContinental} aria-label={`${tSistema.help}: ${tSistema.panelContinentalFactor}`}>?</button>
                     </div>
                     <button type="button" onClick={() => setExpandQuadro6(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelContinentalFactor}`}>✕</button>
@@ -3406,9 +3406,9 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandOrigemMenu && (
-                <section className="bio-panel-section">
+                <section className="crypto-panel-section">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <h2 className="bio-panel-title">📌 {tSistema.panelDefineOrigin}</h2>
+                    <h2 className="crypto-panel-title">📌 {tSistema.panelDefineOrigin}</h2>
                     <button type="button" onClick={() => setExpandOrigemMenu(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.origins}`}>✕</button>
                   </div>
                   <button
@@ -3437,9 +3437,9 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                 </section>
               )}
               {expandConfigSaved && (
-                <section className="bio-panel-section" style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
+                <section className="crypto-panel-section" style={{ paddingLeft: "0.5rem", paddingRight: "0.5rem" }}>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <h2 className="bio-panel-title">☁️ {tSistema.panelSavedConfigs}</h2>
+                    <h2 className="crypto-panel-title">☁️ {tSistema.panelSavedConfigs}</h2>
                     <button type="button" onClick={() => setExpandConfigSaved(false)} className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100" aria-label={`${tSistema.collapsePanel} ${tSistema.panelSavedConfigs}`}>✕</button>
                   </div>
                   <div style={{ paddingLeft: "0.125rem", paddingRight: "0.125rem" }}>
@@ -3497,8 +3497,8 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
         );
       })()}
       {(!configSidebarId || !execHeaderCtx) && (
-        <header className="bio-header shrink-0">
-          <div className="bio-header-inner">
+        <header className="crypto-header shrink-0">
+          <div className="crypto-header-inner">
             {execButtons}
           </div>
         </header>
@@ -3506,7 +3506,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
       <div className={`flex flex-1 min-h-0 overflow-hidden ${!configSidebarId ? "flex-row" : ""}`}>
         {!configSidebarId && (
           <aside ref={sidebarAsideRef} className={`shrink-0 border-r border-neutral-200 bg-white flex flex-col items-stretch py-2 gap-1 transition-[width] z-[100] relative min-w-[3.5rem] ${expandOrigemMenu ? "w-56" : "w-14"}`} aria-label="Menu origem" style={{ pointerEvents: "auto" }}>
-            <div className="card-bio-generator rounded-md shadow-sm overflow-visible">
+            <div className="card-crypto-generator rounded-md shadow-sm overflow-visible">
               <div
                 role="button"
                 tabIndex={0}
@@ -4351,7 +4351,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                             {!fatorContinentalHabilitado && (
                               <p className="text-xs text-neutral-500 italic mb-2">Desabilitado: cor = 0 e fator = 1 para todos os vetores.</p>
                             )}
-                            <div className="bio-continental-rows flex flex-col gap-y-2">
+                            <div className="crypto-continental-rows flex flex-col gap-y-2">
                               {(["fator_mortalidade_cor0", "fator_mortalidade_cor1", "fator_mortalidade_cor2", "fator_mortalidade_cor3", "fator_mortalidade_cor4", "fator_mortalidade_cor5", "fator_mortalidade_cor6"] as const).map((key) => {
                                 const input = script.inputs.find((i) => i.key === key)!;
                                 const d = input.default;
@@ -4359,7 +4359,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                                 const storedVal = (rawVal !== undefined && rawVal !== null) ? rawVal : d;
                                 const inputId = `q6-${key}`;
                                 return (
-                                  <div key={key} className="bio-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
+                                  <div key={key} className="crypto-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
                                     <label htmlFor={inputId} className={`text-sm truncate cursor-pointer ${fatorContinentalHabilitado ? "text-neutral-700" : "text-neutral-500"}`}>
                                       {input.label}:
                                     </label>
@@ -4400,7 +4400,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                                     <span>Period 2</span>
                                   </button>
                                   {expandPeriodo2Quadro6 && (
-                                    <div className="bio-continental-rows flex flex-col gap-y-2 mt-2 pl-4">
+                                    <div className="crypto-continental-rows flex flex-col gap-y-2 mt-2 pl-4">
                                       {keysPer2.map((key) => {
                                         const input = script.inputs.find((i) => i.key === key)!;
                                         const d = input.default;
@@ -4408,7 +4408,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                                         const storedVal = (rawVal !== undefined && rawVal !== null) ? rawVal : d;
                                         const inputId = `q6-p2-${key}`;
                                         return (
-                                          <div key={key} className="bio-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
+                                          <div key={key} className="crypto-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
                                             <label htmlFor={inputId} className={`text-sm truncate cursor-pointer ${fatorContinentalHabilitado ? "text-neutral-700" : "text-neutral-500"}`}>
                                               {input.label}:
                                             </label>
@@ -4453,7 +4453,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                                     <span>Period 3</span>
                                   </button>
                                   {expandPeriodo3Quadro6 && (
-                                    <div className="bio-continental-rows flex flex-col gap-y-2 mt-2 pl-4">
+                                    <div className="crypto-continental-rows flex flex-col gap-y-2 mt-2 pl-4">
                                       {keysPer3.map((key) => {
                                         const input = script.inputs.find((i) => i.key === key)!;
                                         const d = input.default;
@@ -4461,7 +4461,7 @@ export default function SimuladorGenesisClient(props: { apiRun?: string; embedMo
                                         const storedVal = (rawVal !== undefined && rawVal !== null) ? rawVal : d;
                                         const inputId = `q6-p3-${key}`;
                                         return (
-                                          <div key={key} className="bio-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
+                                          <div key={key} className="crypto-continental-row grid grid-cols-[minmax(8rem,1fr)_7rem_auto] gap-x-3 items-center">
                                             <label htmlFor={inputId} className={`text-sm truncate cursor-pointer ${fatorContinentalHabilitado ? "text-neutral-700" : "text-neutral-500"}`}>
                                               {input.label}:
                                             </label>

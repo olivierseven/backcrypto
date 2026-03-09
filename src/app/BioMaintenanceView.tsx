@@ -7,8 +7,8 @@ const MAINTENANCE_MSG = {
 
 export default function BioMaintenanceView() {
   return (
-    <div className="bio-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="bio-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-12 sm:py-10">
+    <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-12 sm:py-10">
         <div className="mx-auto max-w-4xl w-full">
           <div className="mb-8 flex items-center justify-center">
             <div
@@ -44,7 +44,7 @@ export default function BioMaintenanceView() {
               />
             </div>
           </div>
-          <header className="bio-login-header w-full text-center">
+          <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
               Backtest Crypto
             </h1>
@@ -54,12 +54,12 @@ export default function BioMaintenanceView() {
 
         <div className="mx-auto w-full max-w-md">
           <section
-            className="bio-login-card card-bio-generator w-full rounded-2xl px-6 py-8 text-center"
+            className="crypto-login-card card-crypto-generator w-full rounded-2xl px-6 py-8 text-center"
             aria-live="polite"
           >
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-0.5">
-                <h2 className="bio-login-title text-lg font-semibold tracking-tight text-zinc-800">
+                <h2 className="crypto-login-title text-lg font-semibold tracking-tight text-zinc-800">
                   Maintenance
                 </h2>
                 <p className="text-zinc-700">{MAINTENANCE_MSG.en}</p>

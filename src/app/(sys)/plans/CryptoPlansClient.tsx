@@ -240,7 +240,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
           setTimeout(() => setPixCopied(false), 2000);
         });
       } else {
-        const el = document.getElementById("bio-pix-copy-input") as HTMLInputElement | null;
+        const el = document.getElementById("crypto-pix-copy-input") as HTMLInputElement | null;
         if (el) {
           el.select();
           el.setSelectionRange(0, 99999);
@@ -250,7 +250,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
         }
       }
     } catch {
-      const el = document.getElementById("bio-pix-copy-input") as HTMLInputElement | null;
+      const el = document.getElementById("crypto-pix-copy-input") as HTMLInputElement | null;
       if (el) {
         el.select();
         el.setSelectionRange(0, 99999);
@@ -263,7 +263,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
 
   return (
     <>
-    <div className="card-bio-generator bio-card shadow-lg">
+    <div className="card-crypto-generator crypto-card shadow-lg">
       <div className="relative z-10">
                   <p className="text-sm text-zinc-700 mb-4">
                     {p.choosePlan}
@@ -341,7 +341,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                           {pixOrder.pixCopyPaste ? (
                             <div className="flex gap-2">
                               <input
-                                id="bio-pix-copy-input"
+                                id="crypto-pix-copy-input"
                                 type="text"
                                 readOnly
                                 value={pixOrder.pixCopyPaste}
@@ -350,7 +350,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                               <button
                                 type="button"
                                 onClick={copyPix}
-                                className="bio-btn rounded-lg bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 disabled:opacity-70 min-w-[72px]"
+                                className="crypto-btn rounded-lg bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 disabled:opacity-70 min-w-[72px]"
                               >
                                 {pixCopied ? p.copied : p.copy}
                               </button>
@@ -374,7 +374,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                   )}
 
                   {/* Cards dos planos — mesmo formato e cores da labs */}
-                  <div className="bio-plans-grid px-2 py-2 sm:px-3 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                  <div className="crypto-plans-grid px-2 py-2 sm:px-3 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                     {(Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][]).map(([planKey, plan]) => {
                       const isLoadingCard = loading === planKey && loadingMethod === "card";
                       const isLoadingPix = loading === planKey && loadingMethod === "pix";
@@ -385,8 +385,8 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                           className="group rounded-3xl p-[1px] bg-gradient-to-br from-white/40 to-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.25)]"
                         >
                           <div
-                            className="bio-plan-value-card relative w-full rounded-3xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-purple-300/70"
-                            style={{ backgroundImage: "linear-gradient(to bottom right, #f0f4e8, #ffffff)" }}
+                            className="crypto-plan-value-card relative w-full rounded-3xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-purple-300/70"
+                            style={{ background: "rgb(255 255 255 / 0.8)" }}
                           >
                             {plan.badge && (
                               <span className="absolute -top-2 -right-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 text-xs font-semibold text-white shadow">
@@ -463,7 +463,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                                         beginCheckoutPix(planKey, v);
                                       }}
                                       disabled={!accepted || anyLoading || !canPurchase}
-                                      className="bio-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                       {isLoadingPix ? (
                                         <>
@@ -536,7 +536,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                                         beginCheckout(planKey, v || undefined);
                                       }}
                                       disabled={!accepted || anyLoading || !canPurchase}
-                                      className="bio-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                       {isLoadingCard ? (
                                         <>
@@ -570,7 +570,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                                       type="button"
                                       onClick={() => { setCardTaxIdPlan(planKey); setCardTaxIdError(null); setPixCpfPlan(null); }}
                                       disabled={!accepted || anyLoading || !canPurchase}
-                                      className="bio-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                       {isLoadingCard ? (
                                         <>
@@ -588,7 +588,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                                       type="button"
                                       onClick={() => { setPixCpfPlan(planKey); setPixCpfError(null); setCardTaxIdPlan(null); }}
                                       disabled={!accepted || anyLoading || !canPurchase}
-                                      className="bio-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                       {isLoadingPix ? (
                                         <>
@@ -616,7 +616,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
     </div>
 
     {accepted && (
-      <div className="card-bio-generator bio-card shadow-lg mt-6 overflow-hidden">
+      <div className="card-crypto-generator crypto-card shadow-lg mt-6 overflow-hidden">
         <div className="flex flex-wrap border-b border-purple-100">
           {(["terms", "privacy", "refund-policy", "contato"] as const).map((tab) => (
             <button

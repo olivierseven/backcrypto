@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import { CryptoLangProvider } from "@/app/contexts/CryptoLangContext";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
@@ -101,6 +102,9 @@ function SistemaHeader({
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
 }) {
+  const pathname = usePathname();
+  const isContaPage = pathname === "/conta" || pathname?.endsWith("/conta") === true;
+  const isPlansPage = pathname === "/plans" || pathname?.endsWith("/plans") === true;
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const { data: headerData } = useChartHeader();
@@ -158,7 +162,42 @@ function SistemaHeader({
           aria-label={t.symbolAria ?? "Select symbol"}
         >
           {symbol}
+          {headerData.intervalLabel != null && headerData.intervalLabel !== "" && (
+            <span className="font-normal text-zinc-600"> ({headerData.intervalLabel})</span>
+          )}
         </button>
+        <Link
+          href="/sistema"
+          className="p-1.5 sm:p-2 text-zinc-700 hover:bg-zinc-100 rounded shrink-0"
+          aria-label={(t as Record<string, string>).menuChart ?? "Chart"}
+          title={(t as Record<string, string>).menuChart ?? "Chart"}
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </Link>
+        <Link
+          href="/conta"
+          className={`p-1.5 sm:p-2 rounded shrink-0 ${isContaPage ? "bg-zinc-200 text-zinc-900" : "text-zinc-700 hover:bg-zinc-100"}`}
+          aria-label={(t as Record<string, string>).menuConta ?? "Account"}
+          title={(t as Record<string, string>).menuConta ?? "Account"}
+          aria-current={isContaPage ? "page" : undefined}
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </Link>
+        <Link
+          href="/plans"
+          className={`p-1.5 sm:p-2 rounded shrink-0 ${isPlansPage ? "bg-zinc-200 text-zinc-900" : "text-zinc-700 hover:bg-zinc-100"}`}
+          aria-label={(t as Record<string, string>).menuPlans ?? "Plans"}
+          title={(t as Record<string, string>).menuPlans ?? "Plans"}
+          aria-current={isPlansPage ? "page" : undefined}
+        >
+          <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </Link>
       </div>
       {menuOpen && (
         <>
@@ -319,6 +358,8 @@ export default function SistemaLayoutClient({
     setMenuOpen(open);
   };
 
+  const pathname = usePathname();
+  const isSistemaChartPage = pathname === "/sistema" || pathname?.endsWith("/sistema") === true;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const stripScrollRef = useRef<HTMLDivElement>(null);
   const stripInnerRef = useRef<HTMLDivElement>(null);
@@ -376,17 +417,19 @@ export default function SistemaLayoutClient({
                   />
                   <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
                     <div ref={scrollContainerRef} className="flex-1 min-h-0 min-w-0 overflow-auto">
-                      <SistemaHeaderCard />
+                      {isSistemaChartPage && <SistemaHeaderCard />}
                       {children}
                     </div>
-                    <div
-                      ref={stripScrollRef}
-                      className="absolute right-0 top-0 bottom-0 w-[60px] z-10 overflow-y-auto overflow-x-hidden touch-pan-y"
-                      style={{ touchAction: "pan-y" }}
-                      aria-hidden
-                    >
-                      <div ref={stripInnerRef} className="w-px min-h-full" style={{ height: 0 }} />
-                    </div>
+                    {isSistemaChartPage && (
+                      <div
+                        ref={stripScrollRef}
+                        className="absolute right-0 top-0 bottom-0 w-[60px] z-10 overflow-y-auto overflow-x-hidden touch-pan-y"
+                        style={{ touchAction: "pan-y" }}
+                        aria-hidden
+                      >
+                        <div ref={stripInnerRef} className="w-px min-h-full" style={{ height: 0 }} />
+                      </div>
+                    )}
                   </div>
                   {indicatorsPanelOpen && (
                     <>

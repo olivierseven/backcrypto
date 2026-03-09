@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
@@ -12,7 +12,7 @@ import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { strategiesForContext } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
-import { Y_AXIS_WIDTH } from "./KlinesChartConstants";
+import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -72,6 +72,19 @@ function getIntervalOptions(isAdmin: boolean): { value: number; label: string; p
   return [{ value: 1, label: "1m", param: "1m" }, ...INTERVAL_OPTIONS_BASE];
 }
 
+function getStoredGroupMinutes(isAdmin: boolean): number {
+  if (typeof window === "undefined") return 5;
+  try {
+    const raw = window.localStorage.getItem(KLINE_GROUP_MINUTES_KEY);
+    const n = Number(raw);
+    const opts = getIntervalOptions(isAdmin);
+    if (Number.isFinite(n) && opts.some((o) => o.value === n)) return n;
+  } catch {
+    /* ignore */
+  }
+  return 5;
+}
+
 function formatTime(ms: number): string {
   const d = new Date(ms);
   return d.toLocaleString("en-CA", {
@@ -110,7 +123,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
-  const [groupMinutes, setGroupMinutes] = useState(5); // default 5m
+  const [groupMinutes, setGroupMinutes] = useState(5);
+  useLayoutEffect(() => {
+    const stored = getStoredGroupMinutes(isAdmin);
+    if (stored !== 5) setGroupMinutes(stored);
+  }, [isAdmin]);
   const [klines, setKlines] = useState<Kline[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -405,6 +422,14 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }, [groupMinutes, setCurrentGroupMinutes]);
 
   useEffect(() => {
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(groupMinutes));
+    } catch {
+      /* ignore */
+    }
+  }, [groupMinutes]);
+
+  useEffect(() => {
     const el = chartWrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
@@ -624,8 +649,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       min24h: last24h != null ? formatNum(String(last24h.min)) : null,
       vol24hBtc: last24h != null ? formatAbbreviated(last24h.volBtc) : null,
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
+      intervalLabel: intervalLabel ?? null,
     });
-  }, [spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, setHeaderData]);
+  }, [spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));

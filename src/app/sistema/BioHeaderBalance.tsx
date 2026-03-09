@@ -61,7 +61,7 @@ export default function BioHeaderBalance() {
 
   if (loading) {
     return (
-      <div className="bio-header-balance flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20">
+      <div className="crypto-header-balance flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20">
         <div className="w-3 h-3 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
         <span className="text-xs font-medium text-blue-700">...</span>
       </div>
@@ -72,7 +72,7 @@ export default function BioHeaderBalance() {
     <button
       type="button"
       onClick={() => setHidden((h) => !h)}
-      className="bio-header-balance flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 transition-colors text-sm font-semibold text-blue-700"
+      className="crypto-header-balance flex items-center gap-2 rounded-full bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 transition-colors text-sm font-semibold text-blue-700"
       title={hidden ? t.showBalance : t.hideBalance}
     >
       <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">

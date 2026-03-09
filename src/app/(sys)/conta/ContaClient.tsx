@@ -201,9 +201,9 @@ export default function BioContaClient({
     <>
     <div className="space-y-6">
       {/* Card: Informações de Perfil */}
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-4 sm:p-6">
+      <div className="card-crypto-generator crypto-card">
         <h2 className="text-base font-semibold mb-3 text-zinc-900">{t.conta.profileInfo}</h2>
-        <div className="bio-form">
+        <div className="crypto-form">
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-2">{t.conta.fullName}</label>
             <input
@@ -232,7 +232,7 @@ export default function BioContaClient({
               <button
                 onClick={handleSaveNickname}
                 disabled={saving || !nickname.trim() || nickname === (user.nickname || "") || !!validationError || !canChangeNickname}
-                className="bio-btn shrink-0 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap px-3 py-2"
+                className="crypto-btn shrink-0 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap px-3 py-2"
               >
                 {saving ? t.conta.saving : t.conta.save}
               </button>
@@ -254,7 +254,7 @@ export default function BioContaClient({
       </div>
 
       {/* Card: Informações da Conta */}
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-4 sm:p-6">
+      <div className="card-crypto-generator crypto-card">
         <h2 className="text-base font-semibold text-zinc-900 mb-3">{t.conta.accountInfo}</h2>
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between"><dt className="text-zinc-700">{t.conta.plan}</dt><dd className="font-semibold uppercase">{user.tier}</dd></div>
@@ -273,7 +273,7 @@ export default function BioContaClient({
                 type="button"
                 onClick={() => handleTimezoneChange(-1)}
                 disabled={savingTimezone || timezoneOffset <= -12}
-                className="bio-btn flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="crypto-btn flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={t.conta.timezoneDecrease}
               >
                 −
@@ -285,7 +285,7 @@ export default function BioContaClient({
                 type="button"
                 onClick={() => handleTimezoneChange(1)}
                 disabled={savingTimezone || timezoneOffset >= 12}
-                className="bio-btn flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                className="crypto-btn flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label={t.conta.timezoneIncrease}
               >
                 +
@@ -300,7 +300,7 @@ export default function BioContaClient({
                 onClick={() => handleLanguageSelect("en")}
                 disabled={savingLang}
                 title="English"
-                className={`bio-btn flex items-center gap-2 rounded-lg border-2 transition-colors px-1.5 py-1 ${language === "en" ? "border-purple-500 bg-purple-50" : "border-zinc-200 bg-white hover:border-zinc-300"} ${savingLang ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                className={`crypto-btn flex items-center gap-2 rounded-lg border-2 transition-colors px-1.5 py-1 ${language === "en" ? "border-purple-500 bg-purple-50" : "border-zinc-200 bg-white hover:border-zinc-300"} ${savingLang ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <img src={`${ASSET_PREFIX}/assets/bio/usa.WEBP`} alt="" className="w-6 h-4 object-cover rounded-sm" />
                 <span className="text-sm font-medium">EN</span>
@@ -310,7 +310,7 @@ export default function BioContaClient({
                 onClick={() => handleLanguageSelect("pt")}
                 disabled={savingLang}
                 title="Português"
-                className={`bio-btn flex items-center gap-2 rounded-lg border-2 transition-colors px-1.5 py-1 ${language === "pt" ? "border-purple-500 bg-purple-50" : "border-zinc-200 bg-white hover:border-zinc-300"} ${savingLang ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                className={`crypto-btn flex items-center gap-2 rounded-lg border-2 transition-colors px-1.5 py-1 ${language === "pt" ? "border-purple-500 bg-purple-50" : "border-zinc-200 bg-white hover:border-zinc-300"} ${savingLang ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <img src={`${ASSET_PREFIX}/assets/bio/brazil.WEBP`} alt="" className="w-6 h-4 object-cover rounded-sm" />
                 <span className="text-sm font-medium">PT</span>
@@ -326,7 +326,7 @@ export default function BioContaClient({
       </div>
 
       {/* Card: Preferências do app */}
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-4 sm:p-6">
+      <div className="card-crypto-generator crypto-card">
         <h2 className="text-base font-semibold text-zinc-900 mb-3">📱 {t.conta.appPreferences}</h2>
         <div className="flex items-center justify-between">
           <div>
@@ -344,10 +344,10 @@ export default function BioContaClient({
       </div>
 
       {/* Card: Desativar/Excluir */}
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm p-4 sm:p-6">
+      <div className="card-crypto-generator crypto-card">
         <h2 className="text-base font-semibold text-zinc-900 mb-3">{t.conta.deactivateSection}</h2>
         <p className="text-sm text-zinc-700 mb-4">{t.conta.deactivateDesc}</p>
-        <button onClick={() => setShowDeactivateModal(true)} className="bio-btn bio-btn-top-spaced rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-2">
+        <button onClick={() => setShowDeactivateModal(true)} className="crypto-btn crypto-btn-top-spaced rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-2">
           {t.conta.deactivateAccount}
         </button>
       </div>
@@ -360,10 +360,10 @@ export default function BioContaClient({
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">{t.conta.confirmDeactivation}</h3>
             <p className="text-sm text-zinc-700 mb-4">{t.conta.confirmDeactivationDesc}</p>
             <div className="flex flex-wrap gap-4 justify-end">
-              <button onClick={() => setShowDeactivateModal(false)} disabled={deactivating} className="bio-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-900 font-medium disabled:opacity-50">
+              <button onClick={() => setShowDeactivateModal(false)} disabled={deactivating} className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-900 font-medium disabled:opacity-50">
                 {t.conta.cancel}
               </button>
-              <button onClick={handleDeactivateAccount} disabled={deactivating} className="bio-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50">
+              <button onClick={handleDeactivateAccount} disabled={deactivating} className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50">
                 {deactivating ? t.conta.deactivating : t.conta.confirm}
               </button>
             </div>

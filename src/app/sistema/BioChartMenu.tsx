@@ -45,7 +45,7 @@ export default function BioChartMenu() {
     const onOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (buttonRef.current?.contains(target)) return;
-      const portal = document.getElementById("bio-chart-menu-portal");
+      const portal = document.getElementById("crypto-chart-menu-portal");
       if (portal?.contains(target)) return;
       setOpen(false);
     };
@@ -133,7 +133,7 @@ export default function BioChartMenu() {
     open && dropdownPos && typeof document !== "undefined"
       ? createPortal(
           <div
-            id="bio-chart-menu-portal"
+            id="crypto-chart-menu-portal"
             className="fixed z-[200] w-auto min-w-[160px] max-w-[min(220px,calc(100vw-24px))] rounded-xl border border-neutral-200 bg-white/80 backdrop-blur p-4 shadow-xl"
             style={{
               top: dropdownPos.top,

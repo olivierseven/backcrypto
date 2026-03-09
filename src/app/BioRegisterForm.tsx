@@ -58,8 +58,8 @@ function Button(
 
 function Card({ title, children, version }: { title: string; children: React.ReactNode; version?: string }) {
   return (
-    <section className="bio-login-card card-bio-generator w-full rounded-2xl">
-      <h2 className="bio-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
+    <section className="crypto-login-card card-crypto-generator w-full rounded-2xl">
+      <h2 className="crypto-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
       {children}
       {version && (
         <div className="mt-4 pt-2 text-center text-xs text-zinc-400" aria-hidden>
@@ -152,8 +152,8 @@ export default function BioRegisterForm({ registerPagePath }: { registerPagePath
   const loginPath = "/login";
 
   return (
-    <div className="bio-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="bio-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
+    <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-4xl w-full">
           <div className="mb-5 flex items-center justify-center">
             <div
@@ -199,7 +199,7 @@ export default function BioRegisterForm({ registerPagePath }: { registerPagePath
               />
             </div>
           </div>
-          <header className="bio-login-header w-full text-center">
+          <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
               Backtest Crypto
             </h1>
@@ -225,7 +225,7 @@ export default function BioRegisterForm({ registerPagePath }: { registerPagePath
         <div className="mx-auto w-full max-w-md">
           <Card title="Create account" version={process.env.NEXT_PUBLIC_APP_VERSION}>
             <form
-              className="bio-login-form space-y-2"
+              className="crypto-login-form space-y-2"
               method="post"
               action={registerAction}
               noValidate

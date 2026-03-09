@@ -4,8 +4,8 @@ import SimuladorGenesisClient from "./SimuladorGenesisClient";
 import { useMapOverlay } from "./MapOverlayContext";
 import { API_BASE } from "../constants";
 
-const CONFIG_SIDEBAR_ID = "bio-sistema-config-sidebar";
-const CONFIG_PANEL_ID = "bio-sistema-config-panel";
+const CONFIG_SIDEBAR_ID = "crypto-sistema-config-sidebar";
+const CONFIG_PANEL_ID = "crypto-sistema-config-panel";
 
 /** Conteúdo principal: mapa ocupa a tela; formulário e estatísticas na sidebar/painel. */
 export default function SistemaSimuladorCard() {

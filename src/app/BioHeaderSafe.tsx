@@ -6,5 +6,5 @@ import { useAppBarSafe } from "./AppBarSafeContext";
 export default function BioHeaderSafe({ children }: { children: React.ReactNode }) {
   const { hideStatusBar } = useAppBarSafe();
   if (hideStatusBar === true) return <>{children}</>;
-  return <div className="bio-status-bar-reserve bio-status-bar-reserve-header">{children}</div>;
+  return <div className="crypto-status-bar-reserve crypto-status-bar-reserve-header">{children}</div>;
 }

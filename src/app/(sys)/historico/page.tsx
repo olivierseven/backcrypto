@@ -7,7 +7,6 @@ import CryptoActiveCredits from "./CryptoActiveCredits";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, APP_BACKCRYPTO_SISTEMA_PATH, SISTEMA_PATH } from "@/app/constants";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
-import BioHeaderSafe from "@/app/BioHeaderSafe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,28 +80,13 @@ export default async function BioHistoricoPage({
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
   return (
-    <main className="bio-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <BioHeaderSafe>
-      <header className="bio-header sticky top-0 z-10 shrink-0 w-full">
-        <div className="bio-header-inner mx-auto max-w-2xl px-4 sm:px-6">
-          <Link
-            href={SISTEMA_PATH}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
-          >
-            {t.historico.backToSystem}
-          </Link>
-          <span className="text-sm font-semibold text-neutral-800">{t.historico.title}</span>
-          <span className="text-sm font-medium text-neutral-700 shrink-0">{balance.toLocaleString(locale)} coins</span>
-        </div>
-      </header>
-      </BioHeaderSafe>
-
-      <div className="bio-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
+    <main className="crypto-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
         <div className="w-full">
           <CryptoActiveCredits userId={userId} lang={lang} />
 
-          <div className="card-bio-generator bio-card rounded-lg overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
+          <div className="card-crypto-generator crypto-card rounded-lg border border-zinc-200 bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
               <div>
                 <h2 className="text-base font-semibold text-zinc-900">{t.historico.transactions}</h2>
                 <p className="text-sm text-zinc-600">{t.historico.sortDesc}</p>
@@ -110,7 +94,7 @@ export default async function BioHistoricoPage({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="bio-historico-table w-full text-sm">
+              <table className="crypto-historico-table w-full text-sm">
                 <thead>
                   <tr className="bg-purple-100">
                     <Th>{t.historico.date}</Th>
@@ -147,7 +131,7 @@ export default async function BioHistoricoPage({
               </table>
             </div>
 
-            <div className="px-4 py-3 border-t border-neutral-200">
+            <div className="px-4 py-3 border-t border-zinc-200">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm text-zinc-600">
                   {t.historico.showing} {entries.length} {t.historico.of} {totalCount.toLocaleString(locale)}
@@ -179,7 +163,7 @@ function Pager({ page, totalPages, t }: { page: number; totalPages: number; t: R
         href={hasPrev ? qlink(page - 1) : "#"}
         aria-disabled={!hasPrev}
         className={
-          "bio-btn rounded-lg border text-sm " +
+          "crypto-btn rounded-lg border text-sm " +
           (hasPrev
             ? "border-neutral-200 bg-white hover:bg-neutral-50 text-zinc-900"
             : "border-neutral-200 bg-neutral-50 text-neutral-400 cursor-not-allowed pointer-events-none")
@@ -194,7 +178,7 @@ function Pager({ page, totalPages, t }: { page: number; totalPages: number; t: R
         href={hasNext ? qlink(page + 1) : "#"}
         aria-disabled={!hasNext}
         className={
-          "bio-btn rounded-lg border text-sm " +
+          "crypto-btn rounded-lg border text-sm " +
           (hasNext
             ? "border-neutral-200 bg-white hover:bg-neutral-50 text-zinc-900"
             : "border-neutral-200 bg-neutral-50 text-neutral-400 cursor-not-allowed pointer-events-none")

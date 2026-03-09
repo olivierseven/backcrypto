@@ -237,8 +237,8 @@
 [data-app="backcrypto"] .card-crypto-generator {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(to bottom right, #f5ebe0, #ede0d4, #e6d5c4) !important;
-  border: 1px solid rgb(216 180 254);
+  background: rgb(255 255 255 / 0.8) !important;
+  border: 1px solid rgb(228 228 231);
   border-radius: 1.5rem;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
@@ -271,7 +271,7 @@
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(139, 90, 43, 0.06) 0%, transparent 50%);
+  background: transparent;
 }
 [data-app="backcrypto"] .crypto-header {
   min-height: 44px;
