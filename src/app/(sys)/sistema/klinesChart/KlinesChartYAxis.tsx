@@ -98,16 +98,17 @@ export function KlinesChartYAxis({
   textScale = 1,
   horizontalLineAxisLabels,
 }: KlinesChartYAxisProps) {
-  const fontSize = Math.round(10 * textScale);
-  const boxWidth = yAxisAbbreviated ? 46 : 56;
-  const boxX = Y_AXIS_WIDTH - 52;
-  const boxXLong = Y_AXIS_WIDTH - 62;
+  // Compacto para caber em 60px: valor máximo -999.999,99 (ou -999999.99) sem abreviação
+  const fontSize = Math.round(8 * textScale);
+  const boxWidth = yAxisAbbreviated ? 44 : 56;
+  const boxX = Y_AXIS_WIDTH - boxWidth - 2; // 60 - 44 - 2 = 14 (abbrev) ou 60 - 56 - 2 = 2 (long)
+  const textX = 4;
 
   return (
     <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
-      <svg width={Y_AXIS_WIDTH} height={chartHeight} className="font-mono" style={{ fontSize }}>
+      <svg width={Y_AXIS_WIDTH} height={chartHeight} className="font-mono tabular-nums" style={{ fontSize }}>
         {yTickValues.map((v, i) => (
-          <text key={i} x={6} y={y(v) + 4} textAnchor="start" fill={footerYAxisTextHex}>
+          <text key={i} x={textX} y={y(v) + 4} textAnchor="start" fill={footerYAxisTextHex}>
             {formatYAxis(v)}
           </text>
         ))}
@@ -124,7 +125,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p2-${v}`} x={6} y={yRsiPanel2(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+              <text key={`p2-${v}`} x={textX} y={yRsiPanel2(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -142,7 +143,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p3-${v}`} x={6} y={yRsiPanel3(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+              <text key={`p3-${v}`} x={textX} y={yRsiPanel3(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -160,7 +161,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p4-${v}`} x={6} y={yRsiPanel4(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+              <text key={`p4-${v}`} x={textX} y={yRsiPanel4(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -178,7 +179,7 @@ export function KlinesChartYAxis({
                   ? formatObvValue(val)
                   : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
             return ticks.map((v) => (
-              <text key={`p5-${v}`} x={6} y={yRsiPanel5(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+              <text key={`p5-${v}`} x={textX} y={yRsiPanel5(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
                 {fmt(v)}
               </text>
             ));
@@ -186,9 +187,9 @@ export function KlinesChartYAxis({
         {volumeOnPrice && volumeLabelValue != null && volumeLabelY != null && volumeLabelColor != null && (
           <g>
             <rect
-              x={yAxisAbbreviated ? boxX : boxXLong}
+              x={boxX}
               y={volumeLabelY - 7}
-              width={yAxisAbbreviated ? 46 : 56}
+              width={boxWidth}
               height={14}
               fill="white"
               fillOpacity={0.8}
@@ -196,7 +197,7 @@ export function KlinesChartYAxis({
               strokeWidth={1}
               rx={2}
             />
-            <text x={6} y={volumeLabelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={volumeLabelColor}>
+            <text x={textX} y={volumeLabelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={volumeLabelColor}>
               {volumeLabelValue}
             </text>
           </g>
@@ -207,9 +208,9 @@ export function KlinesChartYAxis({
           return (
             <g key={i}>
               <rect
-                x={yAxisAbbreviated ? boxX : boxXLong}
+                x={boxX}
                 y={labelY - 7}
-                width={yAxisAbbreviated ? 46 : 56}
+                width={boxWidth}
                 height={14}
                 fill="white"
                 fillOpacity={0.9}
@@ -217,7 +218,7 @@ export function KlinesChartYAxis({
                 strokeWidth={1}
                 rx={2}
               />
-              <text x={6} y={labelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={color}>
+              <text x={textX} y={labelY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={color}>
                 {formatYAxis(price)}
               </text>
             </g>
@@ -261,9 +262,9 @@ export function KlinesChartYAxis({
             return (
               <g key={indIdx}>
                 <rect
-                  x={yAxisAbbreviated ? boxX : boxXLong}
+                  x={boxX}
                   y={lastValY - 7}
-                  width={yAxisAbbreviated ? 46 : 56}
+                  width={boxWidth}
                   height={14}
                   fill="white"
                   fillOpacity={isVolumeStyle ? 0.8 : 0.9}
@@ -272,7 +273,7 @@ export function KlinesChartYAxis({
                   rx={2}
                 />
                 <text
-                  x={6}
+                  x={textX}
                   y={lastValY + 4}
                   textAnchor="start"
                   className="font-semibold font-mono"
@@ -307,9 +308,9 @@ export function KlinesChartYAxis({
             return (
               <g>
                 <rect
-                  x={yAxisAbbreviated ? boxX : boxXLong}
+                  x={boxX}
                   y={boxY}
-                  width={yAxisAbbreviated ? 46 : 56}
+                  width={boxWidth}
                   height={boxH}
                   fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
                   stroke={lineTableHex}
@@ -317,11 +318,11 @@ export function KlinesChartYAxis({
                   strokeDasharray="2 2"
                   rx={2}
                 />
-                <text x={6} y={crossY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={footerYAxisTextHex}>
+                <text x={textX} y={crossY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={footerYAxisTextHex}>
                   {valueStr}
                 </text>
                 {pctStr != null && (
-                  <text x={6} y={crossY + 15} textAnchor="start" className="font-mono" style={{ fontSize }} fill={pctColor}>
+                  <text x={textX} y={crossY + 15} textAnchor="start" className="font-mono" style={{ fontSize }} fill={pctColor}>
                     {pctStr}
                   </text>
                 )}
@@ -331,16 +332,16 @@ export function KlinesChartYAxis({
         {showLastClose && (
           <g>
             <rect
-              x={yAxisAbbreviated ? boxX : boxXLong}
+              x={boxX}
               y={lastCloseY - 7}
-              width={yAxisAbbreviated ? 46 : 56}
+              width={boxWidth}
               height={14}
               fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
               stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
               strokeWidth={1}
               rx={2}
             />
-            <text x={6} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
+            <text x={textX} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
               {formatYAxis(lastClose)}
             </text>
           </g>

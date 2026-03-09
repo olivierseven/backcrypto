@@ -117,11 +117,103 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
+  const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
+  const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
+  const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
+  const lastSpotPersistAtRef = useRef(0);
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
   const [chartRequestedWidth, setChartRequestedWidth] = useState<number | null>(null);
   const [chartReportedSizePercent, setChartReportedSizePercent] = useState(100);
+
+  const spotExtremesStorageKey = useMemo(() => {
+    const first = klines?.[0] as unknown as (string | number)[] | undefined;
+    const openTime = first?.[0] != null ? String(first[0]) : "none";
+    return `backcrypto:spot_extremes:${symbol}:${groupMinutes}:${openTime}`;
+  }, [klines, symbol, groupMinutes]);
+
+  const SPOT_EXTREMES_PREFIX = "backcrypto:spot_extremes:";
+  const SPOT_EXTREMES_CLEANUP_DAY_KEY = "backcrypto:spot_extremes_last_cleanup";
+
+  // Limpa chaves antigas de spot_extremes só quando muda o dia (yyyy-mm-dd), para não ser pesado a cada candle
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const currentKey = spotExtremesStorageKey;
+      const today = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
+      const lastCleanupDay = window.localStorage.getItem(SPOT_EXTREMES_CLEANUP_DAY_KEY);
+      if (lastCleanupDay !== today) {
+        for (let i = window.localStorage.length - 1; i >= 0; i--) {
+          const key = window.localStorage.key(i);
+          if (key != null && key.startsWith(SPOT_EXTREMES_PREFIX)) {
+            window.localStorage.removeItem(key);
+          }
+        }
+        window.localStorage.setItem(SPOT_EXTREMES_CLEANUP_DAY_KEY, today);
+      }
+
+      const raw = window.localStorage.getItem(currentKey);
+      if (!raw) {
+        setSpotWsHigh(null);
+        setSpotWsLow(null);
+        return;
+      }
+      const parsed = JSON.parse(raw) as { high?: number; low?: number } | null;
+      const high = parsed && typeof parsed.high === "number" && Number.isFinite(parsed.high) ? parsed.high : null;
+      const low = parsed && typeof parsed.low === "number" && Number.isFinite(parsed.low) ? parsed.low : null;
+      setSpotWsHigh(high);
+      setSpotWsLow(low);
+    } catch {
+      setSpotWsHigh(null);
+      setSpotWsLow(null);
+    }
+  }, [spotExtremesStorageKey]);
+
+  // Atualiza extremos com base no spot (enquanto o socket estiver mandando preços)
+  useEffect(() => {
+    if (spotWsPrice == null) return;
+    const p = Number(spotWsPrice);
+    if (!Number.isFinite(p)) return;
+    setSpotWsHigh((prev) => (prev == null ? p : Math.max(prev, p)));
+    setSpotWsLow((prev) => (prev == null ? p : Math.min(prev, p)));
+  }, [spotWsPrice]);
+
+  // Persiste extremos no localStorage (throttle simples para não gravar demais)
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      if (spotWsHigh == null && spotWsLow == null) return;
+      const now = Date.now();
+      if (now - lastSpotPersistAtRef.current < 1000) return; // no máx. 1x/seg
+      lastSpotPersistAtRef.current = now;
+      window.localStorage.setItem(
+        spotExtremesStorageKey,
+        JSON.stringify({ high: spotWsHigh, low: spotWsLow })
+      );
+    } catch {
+      // ignore
+    }
+  }, [spotWsHigh, spotWsLow, spotExtremesStorageKey]);
+
+  const klinesWithSpot = useMemo((): Kline[] => {
+    if (spotWsPrice == null || klines.length === 0) return klines;
+    const p = Number(spotWsPrice);
+    if (!Number.isFinite(p)) return klines;
+    const first = klines[0] as (string | number)[];
+    const out = [...klines] as unknown as (string | number)[][];
+    const next0 = [...first] as (string | number)[];
+    // OHLC: [1]=open [2]=high [3]=low [4]=close
+    const baseHigh = Number(next0[2]);
+    const baseLow = Number(next0[3]);
+    next0[4] = spotWsPrice;
+    const hi = spotWsHigh != null ? spotWsHigh : (Number.isFinite(baseHigh) ? Math.max(baseHigh, p) : p);
+    const lo = spotWsLow != null ? spotWsLow : (Number.isFinite(baseLow) ? Math.min(baseLow, p) : p);
+    next0[2] = String(hi);
+    next0[3] = String(lo);
+    out[0] = next0;
+    return out as unknown as Kline[];
+  }, [klines, spotWsPrice, spotWsHigh, spotWsLow]);
 
   const visibleUserIndicators = useMemo(
     () =>
@@ -132,8 +224,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   );
 
   const extendedKlines = useMemo((): Kline[] => {
-    const base = klines as (string | number)[][];
-    if (base.length === 0 || userIndicators.length === 0) return klines;
+    const base = klinesWithSpot as (string | number)[][];
+    if (base.length === 0 || userIndicators.length === 0) return klinesWithSpot;
     const out = base.map((row) => [...row] as (string | number | null)[]);
     /** Indicadores só leem colunas 0–11 (OHLC etc.); fazer cast para satisfazer a API. */
     const data = out as (string | number)[][];
@@ -228,7 +320,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       }
     }
     return out as Kline[];
-  }, [klines, userIndicators]);
+  }, [klinesWithSpot, userIndicators]);
 
   /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
@@ -401,6 +493,71 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return () => clearInterval(interval);
   }, [symbol]);
 
+  // Preço spot em tempo real (miniTicker) direto da Binance via WebSocket — usado no header
+  useEffect(() => {
+    const sym = symbol.trim();
+    if (!sym) return;
+
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const lastEmitAtRef = { current: 0 };
+    const reconnectDelayRef = { current: 1000 };
+    let ws: WebSocket | null = null;
+
+    const connect = () => {
+      if (!alive) return;
+      const streamSym = sym.toLowerCase();
+      const url = `wss://stream.binance.com:9443/ws/${streamSym}@miniTicker`;
+      try {
+        ws = new WebSocket(url);
+        ws.onmessage = (ev) => {
+          if (!alive) return;
+          try {
+            const msg = JSON.parse(String(ev.data)) as { c?: string };
+            const price = typeof msg?.c === "string" ? msg.c : null;
+            const now = Date.now();
+            // Throttle: no máximo 4 updates/segundo
+            if (price != null && now - lastEmitAtRef.current >= 250) {
+              lastEmitAtRef.current = now;
+              setSpotWsPrice(price);
+            }
+          } catch {
+            // ignore parse errors
+          }
+        };
+        ws.onclose = () => {
+          if (!alive) return;
+          const delay = reconnectDelayRef.current;
+          reconnectDelayRef.current = Math.min(30000, Math.round(reconnectDelayRef.current * 1.5));
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(connect, delay);
+        };
+        ws.onerror = () => {
+          // alguns browsers disparam error antes do close
+        };
+      } catch {
+        const delay = reconnectDelayRef.current;
+        reconnectDelayRef.current = Math.min(30000, Math.round(reconnectDelayRef.current * 1.5));
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(connect, delay);
+      }
+    };
+
+    // ao trocar símbolo, limpa o preço anterior para evitar mostrar BTC quando mudou para ETH (até chegar 1.º evento)
+    setSpotWsPrice(null);
+    connect();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      try {
+        ws?.close();
+      } catch {
+        // ignore
+      }
+      ws = null;
+    };
+  }, [symbol]);
+
   // Ao voltar para a aba, atualiza na hora (evita depender do timer com aba em segundo plano)
   useEffect(() => {
     const onVisibility = () => {
@@ -453,7 +610,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       : chartWidth;
 
   useEffect(() => {
-    const current = spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
+    const current = spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
     const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
     const currentNum = current != null ? parseFloat(current) : null;
     const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
@@ -468,7 +625,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       vol24hBtc: last24h != null ? formatAbbreviated(last24h.volBtc) : null,
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
     });
-  }, [spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, setHeaderData]);
+  }, [spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, setHeaderData]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));

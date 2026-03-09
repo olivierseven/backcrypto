@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
@@ -30,6 +30,10 @@ export default function SistemaDebugPanel() {
   const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");
+  const [binanceSpotPrice, setBinanceSpotPrice] = useState<string | null>(null);
+  const [binanceSpotLastEventAtUtc, setBinanceSpotLastEventAtUtc] = useState<number | null>(null);
+  const [binanceSpotStatus, setBinanceSpotStatus] = useState<"connecting" | "open" | "closed" | "error">("closed");
+  const [binanceSpotError, setBinanceSpotError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ValidateResult>(null);
@@ -39,6 +43,111 @@ export default function SistemaDebugPanel() {
   const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "1h" | null>(null);
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
 
+  function formatTime(ms: number): string {
+    const d = new Date(ms);
+    return d.toLocaleString("en-CA", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).replace(",", " ");
+  }
+
+  function formatPrice2(v: string | null): string | null {
+    if (v == null) return null;
+    const n = Number(v);
+    if (!Number.isFinite(n)) return v;
+    return n.toFixed(2);
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const sym = symbol.trim();
+    if (!sym) return;
+
+    let alive = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const lastEmitAtRef = { current: 0 };
+    const latestPriceRef = { current: null as string | null };
+    const wsRef = { current: null as WebSocket | null };
+    const reconnectDelayRef = { current: 1000 };
+
+    const connect = () => {
+      if (!alive) return;
+      const streamSym = sym.toLowerCase();
+      // miniTicker: atualizações frequentes com last price em `c`
+      const url = `wss://stream.binance.com:9443/ws/${streamSym}@miniTicker`;
+      setBinanceSpotStatus("connecting");
+      setBinanceSpotError(null);
+
+      try {
+        const ws = new WebSocket(url);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          if (!alive) return;
+          reconnectDelayRef.current = 1000;
+          setBinanceSpotStatus("open");
+          setBinanceSpotError(null);
+        };
+
+        ws.onmessage = (ev) => {
+          if (!alive) return;
+          try {
+            const msg = JSON.parse(String(ev.data)) as { c?: string; E?: number };
+            const raw = msg?.c ?? null;
+            latestPriceRef.current = raw;
+            const now = Date.now();
+            setBinanceSpotLastEventAtUtc(now);
+
+            // Throttle: no máximo 4 updates/segundo no React
+            if (now - lastEmitAtRef.current >= 250) {
+              lastEmitAtRef.current = now;
+              setBinanceSpotPrice(formatPrice2(latestPriceRef.current));
+            }
+          } catch {
+            // ignore parse errors
+          }
+        };
+
+        ws.onerror = () => {
+          if (!alive) return;
+          setBinanceSpotStatus("error");
+          setBinanceSpotError("WebSocket error");
+        };
+
+        ws.onclose = () => {
+          if (!alive) return;
+          setBinanceSpotStatus("closed");
+          const delay = reconnectDelayRef.current;
+          reconnectDelayRef.current = Math.min(30000, Math.round(reconnectDelayRef.current * 1.5));
+          if (timer) clearTimeout(timer as unknown as number);
+          timer = setTimeout(connect, delay);
+        };
+      } catch (e) {
+        setBinanceSpotStatus("error");
+        setBinanceSpotError(e instanceof Error ? e.message : "WebSocket error");
+      }
+    };
+
+    connect();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer as unknown as number);
+      try {
+        wsRef.current?.close();
+      } catch {
+        // ignore
+      }
+      wsRef.current = null;
+    };
+  }, [open, symbol]);
+
   function clearPanel() {
     setResult(null);
     setError(null);
@@ -47,6 +156,10 @@ export default function SistemaDebugPanel() {
     setRegisterGapsLoading(null);
     setPastBackfillMessage(null);
     setPastBackfillLoading(null);
+    setBinanceSpotPrice(null);
+    setBinanceSpotLastEventAtUtc(null);
+    setBinanceSpotStatus("closed");
+    setBinanceSpotError(null);
     setLoading(false);
     setSymbol("BTCUSDT");
   }
@@ -353,6 +466,43 @@ export default function SistemaDebugPanel() {
                 />
                 <span>{t.showKlinesTable}</span>
               </label>
+            </section>
+            <section>
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                {(t as Record<string, string>).binanceSpotTitle ?? "Binance spot (direct)"}
+              </h4>
+              <p className="text-xs text-zinc-500 mb-2">
+                {(t as Record<string, string>).binanceSpotHint ?? "WebSocket miniTicker direto da Binance (tempo real)."}
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2">
+                <div>
+                  <div className="text-[10px] text-zinc-500">
+                    {(t as Record<string, string>).binanceSpotPriceLabel ?? "Spot price"}
+                  </div>
+                  <div className="text-sm font-mono text-zinc-800">
+                    {binanceSpotPrice ?? "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500">
+                    {(t as Record<string, string>).binanceSpotStatusLabel ?? "Status"}
+                  </div>
+                  <div className="text-sm font-mono text-zinc-800">
+                    {binanceSpotStatus}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-zinc-500">
+                    {(t as Record<string, string>).binanceSpotLastEventAtLabel ?? "Last event"}
+                  </div>
+                  <div className="text-sm font-mono text-zinc-800">
+                    {binanceSpotLastEventAtUtc != null ? formatTime(binanceSpotLastEventAtUtc) : "—"}
+                  </div>
+                </div>
+              </div>
+              {binanceSpotError && (
+                <p className="mt-1 text-xs text-red-600">{binanceSpotError}</p>
+              )}
             </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
