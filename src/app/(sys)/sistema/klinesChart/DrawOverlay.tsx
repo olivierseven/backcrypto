@@ -5,10 +5,10 @@
  * com pointer down/move/up + hit-test para seleção e criação de segmentos.
  * Extraído de KlinesChartSvg para reduzir tamanho e isolar responsabilidade.
  */
-import { type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { flushSync } from "react-dom";
-import { MARGIN_LEFT, MARGIN_TOP } from "../KlinesChartConstants";
-import { distanceToSegment, DEFAULT_SEGMENT_COLOR, type DrawSegment, type DrawDefaults } from "../KlinesChartDrawing";
+import { MARGIN_LEFT, MARGIN_TOP, MS_PER_DAY } from "../KlinesChartConstants";
+import { distanceToSegment, DEFAULT_SEGMENT_COLOR, ARROW_LENGTH_PX, ARROW_OPACITY, getTextSegmentBox, type DrawSegment, type DrawDefaults, type ArrowSize, type TextSize } from "../KlinesChartDrawing";
 import { SEGMENT_COLOR_PALETTE } from "./palettes";
 
 const FIB_DEFAULT_COLOR = SEGMENT_COLOR_PALETTE[8];
@@ -31,7 +31,7 @@ export interface DrawOverlayProps {
   chartW: number;
   chartH: number;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   drawPendingRectSecond: { index: number; price: number } | null;
@@ -44,11 +44,18 @@ export interface DrawOverlayProps {
   setDrawPendingChannelSecond: (p: { index: number; price: number } | null) => void;
   drawPendingHorizontalSecond: { index: number; price: number } | null;
   setDrawPendingHorizontalSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingArrow: { index1: number; price1: number; angleRad: number } | null;
+  setDrawPendingArrow: (p: { index1: number; price1: number; angleRad: number } | null) => void;
+  drawPendingText: { index1: number; price1: number } | null;
+  setDrawPendingText: (p: { index1: number; price1: number } | null) => void;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   snapToCandlePoint: (px: number, py: number) => { index: number; price: number };
+  pixelToData: (x: number, y: number) => { index: number; price: number };
   drawSegments: DrawSegment[];
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   drawDefaults: DrawDefaults;
+  fullReversed: (number | string | null)[][];
+  n: number;
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawingsVisible: boolean;
@@ -79,11 +86,18 @@ export function DrawOverlay({
   setDrawPendingChannelSecond,
   drawPendingHorizontalSecond,
   setDrawPendingHorizontalSecond,
+  drawPendingArrow,
+  setDrawPendingArrow,
+  drawPendingText,
+  setDrawPendingText,
   segmentToPixel,
   snapToCandlePoint,
+  pixelToData,
   drawSegments,
   setDrawSegments,
   drawDefaults,
+  fullReversed,
+  n,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawingsVisible,
@@ -95,12 +109,64 @@ export function DrawOverlay({
   selectPanLastClientXRef,
   justPannedRef,
 }: DrawOverlayProps) {
+  const [arrowPreviewTipPx, setArrowPreviewTipPx] = useState<{ x: number; y: number } | null>(null);
+  const defaultArrowSize: ArrowSize = (drawDefaults.arrow?.arrowSize as ArrowSize) ?? "medium";
+  const arrowLengthPx = ARROW_LENGTH_PX[defaultArrowSize];
+
+  const ARROW_PREVIEW_EXTEND_PX = 600;
+  const renderArrowPreview = (tailX: number, tailY: number, tipX: number, tipY: number) => {
+    const dx = tipX - tailX;
+    const dy = tipY - tailY;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const headLen = 10;
+    const headW = 6;
+    const backX = tipX - headLen * ux;
+    const backY = tipY - headLen * uy;
+    const leftX = backX - uy * headW;
+    const leftY = backY + ux * headW;
+    const rightX = backX + uy * headW;
+    const rightY = backY - ux * headW;
+    const ext = ARROW_PREVIEW_EXTEND_PX;
+    const tailExtX = tailX - ux * ext;
+    const tailExtY = tailY - uy * ext;
+    const tipExtX = tipX + ux * ext;
+    const tipExtY = tipY + uy * ext;
+    const stroke = drawDefaults.arrow?.color ?? DEFAULT_SEGMENT_COLOR;
+    return (
+      <g>
+        <line x1={tailX} y1={tailY} x2={tailExtX} y2={tailExtY} stroke={stroke} strokeWidth={1} strokeDasharray="4 3" strokeOpacity={0.7} />
+        <line x1={tipX} y1={tipY} x2={tipExtX} y2={tipExtY} stroke={stroke} strokeWidth={1} strokeDasharray="4 3" strokeOpacity={0.7} />
+        <line x1={tailX} y1={tailY} x2={tipX} y2={tipY} stroke={stroke} strokeWidth={2} strokeDasharray="4 2" />
+        <path d={`M ${tipX} ${tipY} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={stroke} fillOpacity={ARROW_OPACITY} stroke={stroke} strokeWidth={1} />
+      </g>
+    );
+  };
+
   return (
     <>
       {/* Preview: primeiro ponto */}
-      {drawPending && (() => {
+      {drawPending && drawTool !== "arrow" && (() => {
         const p = segmentToPixel(drawPending.index1, drawPending.price1);
         return <circle cx={p.x} cy={p.y} r={4} fill="none" stroke="#000000" strokeWidth={1} />;
+      })()}
+      {/* Arrow phase 1: tail set, drag to set direction (preview) */}
+      {drawPending && drawTool === "arrow" && arrowPreviewTipPx && (() => {
+        const tail = segmentToPixel(drawPending.index1, drawPending.price1);
+        const dx = arrowPreviewTipPx.x - tail.x;
+        const dy = arrowPreviewTipPx.y - tail.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const tipX = tail.x + (arrowLengthPx * dx) / len;
+        const tipY = tail.y + (arrowLengthPx * dy) / len;
+        return renderArrowPreview(tail.x, tail.y, tipX, tipY);
+      })()}
+      {/* Arrow phase 2: angle phase (preview with fixed length) */}
+      {drawPendingArrow && (() => {
+        const tail = segmentToPixel(drawPendingArrow.index1, drawPendingArrow.price1);
+        const tipX = tail.x + arrowLengthPx * Math.cos(drawPendingArrow.angleRad);
+        const tipY = tail.y - arrowLengthPx * Math.sin(drawPendingArrow.angleRad);
+        return renderArrowPreview(tail.x, tail.y, tipX, tipY);
       })()}
       {drawPending && drawTool === "rectangle" && drawPendingRectSecond && (() => {
         const minI = Math.min(drawPending.index1, drawPendingRectSecond.index);
@@ -113,10 +179,37 @@ export function DrawOverlay({
           <rect x={tl.x} y={tl.y} width={Math.max(0, br.x - tl.x)} height={Math.max(0, br.y - tl.y)} fill="none" stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />
         );
       })()}
-      {drawPending && drawTool === "line" && drawPendingLineSecond && (() => {
+      {drawPending && (drawTool === "line" || drawTool === "ruler") && drawPendingLineSecond && (() => {
         const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
         const p2 = segmentToPixel(drawPendingLineSecond.index, drawPendingLineSecond.price);
-        return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
+        const price1 = drawPending.price1;
+        const price2 = drawPendingLineSecond.price;
+        const i1 = Math.max(0, Math.min(drawPending.index1, n - 1));
+        const i2 = Math.max(0, Math.min(drawPendingLineSecond.index, n - 1));
+        const percent = price1 !== 0 ? ((price2 - price1) / price1) * 100 : 0;
+        const percentStr = percent >= 0 ? `+${percent.toFixed(4)}%` : `${percent.toFixed(4)}%`;
+        const openTime1 = fullReversed[i1]?.[0] ?? 0;
+        const openTime2 = fullReversed[i2]?.[0] ?? 0;
+        const days = Math.round((Number(openTime2) - Number(openTime1)) / MS_PER_DAY);
+        const candles = Math.abs(i2 - i1);
+        const daysAndCandlesStr = `${days}d, ${candles}c`;
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        const offset = 14;
+        const labelY = midY - offset;
+        const textColor = percent >= 0 ? "#059669" : "#dc2626";
+        const padW = 48;
+        const padH = 14;
+        return (
+          <g>
+            <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />
+            <rect x={midX - padW} y={labelY - 12} width={padW * 2} height={padH * 2} rx={4} ry={4} fill="#ffffff" fillOpacity={0.9} stroke={textColor} strokeWidth={1} />
+            <text x={midX} y={labelY} textAnchor="middle" fill={textColor} className="font-medium select-none" style={{ fontSize: 10 }}>
+              <tspan x={midX} dy={0}>{percentStr}</tspan>
+              <tspan x={midX} dy={11}>{daysAndCandlesStr}</tspan>
+            </text>
+          </g>
+        );
       })()}
       {drawPending && drawTool === "channel" && drawPendingChannelSecond && (() => {
         const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
@@ -175,10 +268,16 @@ export function DrawOverlay({
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
             const { px, py } = point;
-            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine") && drawPending === null) {
+            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler") && drawPending === null && drawPendingArrow === null && (drawTool !== "text" || drawPendingText === null)) {
               if (e.cancelable) e.preventDefault();
               const d = snapToCandlePoint(px, py);
+              if (drawTool === "text") {
+                setDrawPendingText({ index1: d.index, price1: d.price });
+                onChartDrawClick?.();
+                return;
+              }
               setDrawPending({ index1: d.index, price1: d.price });
+              if (drawTool === "arrow") setArrowPreviewTipPx({ x: px, y: py });
               e.currentTarget.setPointerCapture(e.pointerId);
               onChartDrawClick?.();
               return;
@@ -238,6 +337,18 @@ export function DrawOverlay({
                 const lineX = segmentToPixel(seg.index1, seg.price1).x;
                 d = Math.abs(px - lineX);
               }
+              if (seg.type === "text") {
+                const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
+                const sizeKey = (seg.textSize as TextSize) ?? "small";
+                const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10);
+                const hitPadding = 14;
+                const left = p1.x - hitPadding;
+                const right = p1.x + boxW + hitPadding;
+                const top = p1.y - boxH - hitPadding;
+                const bottom = p1.y + hitPadding;
+                const inside = px >= left && px <= right && py >= top && py <= bottom;
+                d = inside ? 0 : Infinity;
+              }
               if (d < bestD) {
                 bestD = d;
                 bestIdx = index;
@@ -249,19 +360,38 @@ export function DrawOverlay({
             }
           }}
           onPointerMove={(e) => {
-            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine") || drawPending === null) return;
-            if (e.cancelable) e.preventDefault();
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
+            if ((drawTool === "line" || drawTool === "ruler") && drawPending !== null && e.buttons === 0) {
+              setDrawPending(null);
+              setDrawPendingLineSecond(null);
+              return;
+            }
+            if (drawPendingArrow !== null) {
+              if (e.cancelable) e.preventDefault();
+              const tail = segmentToPixel(drawPendingArrow.index1, drawPendingArrow.price1);
+              const angleRad = Math.atan2(tail.y - point.py, point.px - tail.x);
+              setDrawPendingArrow((prev) => prev ? { ...prev, angleRad } : null);
+              return;
+            }
+            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
+            if (e.cancelable) e.preventDefault();
             const d = snapToCandlePoint(point.px, point.py);
-            if (drawTool === "rectangle") setDrawPendingRectSecond({ index: d.index, price: d.price });
+            if (drawTool === "arrow") setArrowPreviewTipPx({ x: point.px, y: point.py });
+            else if (drawTool === "rectangle") setDrawPendingRectSecond({ index: d.index, price: d.price });
             else if (drawTool === "fibonacci") setDrawPendingFibSecond({ index: d.index, price: d.price });
-            else if (drawTool === "line") setDrawPendingLineSecond({ index: d.index, price: d.price });
+            else if (drawTool === "line" || drawTool === "ruler") setDrawPendingLineSecond({ index: d.index, price: d.price });
             else if (drawTool === "channel") setDrawPendingChannelSecond({ index: d.index, price: d.price });
             else if (drawTool === "horizontalLine") setDrawPendingHorizontalSecond({ index: d.index, price: drawPending.price1 });
             else if (drawTool === "verticalLine") setDrawPending({ index1: d.index, price1: drawPending.price1 });
           }}
           onPointerUp={(e) => {
+            if (drawTool === "ruler" && drawPending !== null) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              setDrawPending(null);
+              setDrawPendingLineSecond(null);
+              return;
+            }
             if (drawTool === "line" && drawPending !== null) {
               e.currentTarget.releasePointerCapture(e.pointerId);
               const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
@@ -397,13 +527,69 @@ export function DrawOverlay({
               onSegmentCreated?.(newIndex);
               return;
             }
+            if (drawTool === "arrow" && drawPending !== null && arrowPreviewTipPx) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              const tail = segmentToPixel(drawPending.index1, drawPending.price1);
+              const dx = arrowPreviewTipPx.x - tail.x;
+              const dy = arrowPreviewTipPx.y - tail.y;
+              const len = Math.sqrt(dx * dx + dy * dy) || 1;
+              const tipX = tail.x + (arrowLengthPx * dx) / len;
+              const tipY = tail.y + (arrowLengthPx * dy) / len;
+              const angleRad = Math.atan2(tail.y - tipY, tipX - tail.x);
+              setDrawPendingArrow({ index1: drawPending.index1, price1: drawPending.price1, angleRad });
+              setDrawPending(null);
+              setArrowPreviewTipPx(null);
+              return;
+            }
+          }}
+          onPointerLeave={(e) => {
+            if ((drawTool === "line" || drawTool === "ruler") && drawPending !== null) {
+              e.currentTarget.releasePointerCapture?.(e.pointerId);
+              setDrawPending(null);
+              setDrawPendingLineSecond(null);
+            }
+          }}
+          onPointerCancel={(e) => {
+            if ((drawTool === "line" || drawTool === "ruler") && drawPending !== null) {
+              e.currentTarget.releasePointerCapture?.(e.pointerId);
+              setDrawPending(null);
+              setDrawPendingLineSecond(null);
+            }
           }}
           onClick={(e) => {
             if (justPannedRef.current) {
               justPannedRef.current = false;
               return;
             }
-            if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "horizontalLine" || drawTool === "verticalLine") return;
+            if (drawTool === "arrow" && drawPendingArrow !== null) {
+              const tail = segmentToPixel(drawPendingArrow.index1, drawPendingArrow.price1);
+              const tipX = tail.x + arrowLengthPx * Math.cos(drawPendingArrow.angleRad);
+              const tipY = tail.y - arrowLengthPx * Math.sin(drawPendingArrow.angleRad);
+              const tipData = pixelToData(tipX, tipY);
+              const dfArr = drawDefaults.arrow;
+              const angleDeg = ((drawPendingArrow.angleRad * 180) / Math.PI + 360) % 360;
+              const newSeg: DrawSegment = {
+                index1: drawPendingArrow.index1,
+                price1: drawPendingArrow.price1,
+                index2: tipData.index,
+                price2: tipData.price,
+                type: "arrow",
+                color: dfArr?.color ?? DEFAULT_SEGMENT_COLOR,
+                arrowSize: (dfArr?.arrowSize as ArrowSize) ?? "medium",
+                arrowAngle: Math.round(angleDeg * 10) / 10,
+              };
+              let newIndex = 0;
+              flushSync(() => {
+                setDrawSegments((seg) => {
+                  newIndex = seg.length;
+                  return [...seg, newSeg];
+                });
+              });
+              setDrawPendingArrow(null);
+              onSegmentCreated?.(newIndex);
+              return;
+            }
+            if (drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "horizontalLine" || drawTool === "verticalLine" || (drawTool === "arrow" && drawPendingArrow === null)) return;
             const point = getSvgPoint(chartSvgRef, e.nativeEvent.clientX, e.nativeEvent.clientY);
             if (!point) return;
             const { px, py } = point;

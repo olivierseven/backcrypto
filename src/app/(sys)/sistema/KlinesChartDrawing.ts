@@ -13,8 +13,8 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta, retração de Fibonacci, canal, retângulo ou reta horizontal. Default: segment */
-  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
+  /** Tipo: segmento de reta, retração de Fibonacci, canal, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
+  type?: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
   /** Cor do traço (hex). Default: #000000 */
@@ -67,7 +67,36 @@ export type DrawSegment = {
   verticalLineShowDateTimeOnXAxis?: boolean;
   /** Estender a reta vertical para baixo nos demais painéis visíveis. Só reta vertical. Default: false */
   verticalLineExtendToPanels?: boolean;
+  /** Tamanho da seta: pequeno, médio ou grande. Só arrow. Default: medium */
+  arrowSize?: ArrowSize;
+  /** Ângulo da seta em graus (0–360). 0 = direita, 90 = cima. Só arrow. */
+  arrowAngle?: number;
+  /** Conteúdo do texto (UTF-8). Quebras de linha com \\n. Caixa compacta ao redor do texto. Só text. */
+  textContent?: string;
+  /** Texto em negrito. Só text. */
+  textBold?: boolean;
+  /** Tamanho da fonte do texto. Só text. Default: medium */
+  textSize?: TextSize;
 };
+
+/** Tamanho da fonte do texto (pequeno, médio, grande). */
+export type TextSize = "small" | "medium" | "large";
+
+export const TEXT_SIZE_OPTIONS: TextSize[] = ["small", "medium", "large"];
+
+/** Fator multiplicador do fontSize base para cada tamanho de texto. */
+export const TEXT_SIZE_FACTOR: Record<TextSize, number> = { small: 1.25, medium: 2, large: 2.75 };
+
+/** Tamanho da seta (pequeno, médio, grande). */
+export type ArrowSize = "small" | "medium" | "large";
+
+export const ARROW_SIZE_OPTIONS: ArrowSize[] = ["small", "medium", "large"];
+
+/** Comprimento da seta em pixels por tamanho (para criação e preview). */
+export const ARROW_LENGTH_PX: Record<ArrowSize, number> = { small: 16, medium: 28, large: 42 };
+
+/** Opacidade fixa das setas (0–1). */
+export const ARROW_OPACITY = 1;
 
 /** Largura do traço: fino, médio ou grosso (só Fibonacci). */
 export type FibStrokeWidth = "thin" | "medium" | "thick";
@@ -84,6 +113,8 @@ export type DrawDefaults = {
   rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
   horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;
   verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;
+  arrow: Partial<Pick<DrawSegment, "color" | "arrowSize" | "arrowAngle">>;
+  text: Partial<Pick<DrawSegment, "color" | "textBold" | "textSize">>;
 };
 
 /** strokeDasharray para reta horizontal: contínuo, tracejado, pontilhado. */
@@ -96,6 +127,41 @@ export const HORIZONTAL_LINE_STROKE_STYLE_DASH: Record<HorizontalLineStrokeStyle
 };
 
 export const DEFAULT_SEGMENT_COLOR = "#000000";
+
+/** Cor padrão do texto (estilo ANSI / terminal). */
+export const DEFAULT_TEXT_COLOR = "#1a1a1a";
+
+const TEXT_PAD_X = 4;
+const TEXT_PAD_Y = 4;
+
+/**
+ * Calcula dimensões da caixa de texto de forma compacta ao redor do conteúdo (sem limite de largura).
+ * baseFontSize: tamanho base da fonte (ex.: 10).
+ */
+export function getTextSegmentBox(
+  lines: string[],
+  textSize: TextSize,
+  baseFontSize: number
+): {
+  wrappedLines: string[];
+  boxW: number;
+  boxH: number;
+  contentW: number;
+  lineHeight: number;
+  approxCharWidth: number;
+  textFontSize: number;
+} {
+  const textFontSize = baseFontSize * TEXT_SIZE_FACTOR[textSize];
+  const charWidthFactor = textSize === "small" ? 0.42 : textSize === "medium" ? 0.46 : 0.54;
+  const approxCharWidth = textFontSize * charWidthFactor;
+  const lineHeight = textFontSize * 1.35;
+  const wrappedLines = lines.length ? lines : [""];
+  const maxLineLen = Math.max(1, ...wrappedLines.map((l) => l.length));
+  const contentW = maxLineLen * approxCharWidth;
+  const boxW = Math.ceil(contentW) + TEXT_PAD_X * 2;
+  const boxH = Math.ceil(wrappedLines.length * lineHeight) + TEXT_PAD_Y * 2;
+  return { wrappedLines, boxW, boxH, contentW, lineHeight, approxCharWidth, textFontSize };
+}
 
 /** Parâmetros para converter entre pixel e dados (preenchido pelo chart a cada render). */
 export type DrawConversionParams = {

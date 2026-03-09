@@ -4,7 +4,8 @@
  * Render de um único segmento de desenho (fibonacci, channel, rectangle, horizontalLine, segment).
  * Extraído de KlinesChartSvg para reduzir tamanho e isolar responsabilidade.
  */
-import { DEFAULT_SEGMENT_COLOR, FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSegment, type FibStrokeWidth } from "../KlinesChartDrawing";
+import { DEFAULT_SEGMENT_COLOR, DEFAULT_TEXT_COLOR, FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, ARROW_OPACITY, getTextSegmentBox, type DrawSegment, type FibStrokeWidth, type ArrowSize, type TextSize } from "../KlinesChartDrawing";
+const ARROW_EDIT_EXTEND_PX = 600;
 import { MS_PER_DAY } from "../KlinesChartConstants";
 
 export interface DrawSegmentRenderProps {
@@ -12,7 +13,7 @@ export interface DrawSegmentRenderProps {
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;
@@ -275,6 +276,62 @@ export function DrawSegmentRender({
     );
   }
 
+  if (seg.type === "text") {
+    const textColor = seg.color ?? DEFAULT_TEXT_COLOR;
+    const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
+    const sizeKey = (seg.textSize as TextSize) ?? "small";
+    const { wrappedLines, boxW, boxH, lineHeight, textFontSize } = getTextSegmentBox(lines, sizeKey, fontSize);
+    const padX = 4;
+    const padY = 4;
+    const textX = p1.x + padX;
+    const firstLineY = p1.y - boxH + padY + lineHeight / 2;
+    const fontWeight = seg.textBold ? "bold" : "normal";
+    return (
+      <g key={idx}>
+        <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
+        <text x={textX} y={firstLineY} textAnchor="start" fill={textColor} className="select-none" style={{ fontSize: textFontSize, fontWeight }} dominantBaseline="middle">
+          {wrappedLines.map((line, i) => (
+            <tspan key={i} x={textX} dy={i === 0 ? 0 : lineHeight}>{line}</tspan>
+          ))}
+        </text>
+      </g>
+    );
+  }
+
+  if (seg.type === "arrow") {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const size = (seg.arrowSize as ArrowSize) ?? "medium";
+    const headLen = size === "small" ? 8 : size === "large" ? 14 : 10;
+    const headW = size === "small" ? 6 : size === "large" ? 14 : 10;
+    const backX = p2.x - headLen * ux;
+    const backY = p2.y - headLen * uy;
+    const leftX = backX - uy * headW;
+    const leftY = backY + ux * headW;
+    const rightX = backX + uy * headW;
+    const rightY = backY - ux * headW;
+    const ext = ARROW_EDIT_EXTEND_PX;
+    const tailExtX = p1.x - ux * ext;
+    const tailExtY = p1.y - uy * ext;
+    const tipExtX = p2.x + ux * ext;
+    const tipExtY = p2.y + uy * ext;
+    return (
+      <g key={idx}>
+        {isSelected && (
+          <>
+            <line x1={p1.x} y1={p1.y} x2={tailExtX} y2={tailExtY} stroke={strokeColor} strokeWidth={1} strokeDasharray="4 3" strokeOpacity={0.7} />
+            <line x1={p2.x} y1={p2.y} x2={tipExtX} y2={tipExtY} stroke={strokeColor} strokeWidth={1} strokeDasharray="4 3" strokeOpacity={0.7} />
+          </>
+        )}
+        <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={strokeColor} strokeWidth={2} strokeLinecap="round" />
+        <path d={`M ${p2.x} ${p2.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} fillOpacity={ARROW_OPACITY} stroke={strokeColor} strokeWidth={1} />
+      </g>
+    );
+  }
+
   if (seg.type === "rectangle") {
     const minI = Math.min(seg.index1, seg.index2);
     const maxI = Math.max(seg.index1, seg.index2);
@@ -345,16 +402,17 @@ export function DrawSegmentRender({
         const openTime1 = fullReversed[i1]?.[0] ?? 0;
         const openTime2 = fullReversed[i2]?.[0] ?? 0;
         const days = Math.round((Number(openTime2) - Number(openTime1)) / MS_PER_DAY);
-        const daysStr = `${days}d`;
+        const candles = Math.abs(i2 - i1);
+        const daysAndCandlesStr = `${days}d, ${candles}c`;
         const textColor = percent >= 0 ? "#059669" : "#dc2626";
-        const padW = 44;
+        const padW = 48;
         const padH = 14;
         return (
           <g>
             <rect x={labelX - padW} y={labelY - 12} width={padW * 2} height={padH * 2} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
             <text x={labelX} y={labelY} textAnchor="middle" fill={textColor} className="font-medium select-none" style={{ fontSize }}>
               <tspan x={labelX} dy={0}>{percentStr}</tspan>
-              <tspan x={labelX} dy={11}>{daysStr}</tspan>
+              <tspan x={labelX} dy={11}>{daysAndCandlesStr}</tspan>
             </text>
           </g>
         );

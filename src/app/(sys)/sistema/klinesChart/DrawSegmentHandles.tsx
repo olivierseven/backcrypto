@@ -5,9 +5,9 @@
  * fibonacci (nível 1 + extensão), reta horizontal (arrastar para mover).
  * Extraído de KlinesChartSvg para reduzir tamanho e isolar responsabilidade.
  */
-import { DEFAULT_SEGMENT_COLOR, type DrawSegment } from "../KlinesChartDrawing";
+import { DEFAULT_SEGMENT_COLOR, getTextSegmentBox, type DrawSegment, type TextSize } from "../KlinesChartDrawing";
 
-export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove";
+export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove";
 
 export interface DrawSegmentHandlesProps {
   segment: DrawSegment;
@@ -36,6 +36,8 @@ export function DrawSegmentHandles({
   const isChannel = seg.type === "channel";
   const isHorizontalLine = seg.type === "horizontalLine";
   const isVerticalLine = seg.type === "verticalLine";
+  const isArrow = seg.type === "arrow";
+  const isText = seg.type === "text";
   const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
   const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
@@ -76,7 +78,45 @@ export function DrawSegmentHandles({
           onClick={(e) => e.stopPropagation()}
         />
       )}
-      {!isVerticalLine && (
+      {isArrow && (
+        <line
+          x1={h1.x}
+          y1={h1.y}
+          x2={h2.x}
+          y2={h2.y}
+          stroke="transparent"
+          strokeWidth={14}
+          style={{ cursor: "grab" }}
+          aria-label={(t as Record<string, string>).arrowMove ?? "Arrastar para mover"}
+          onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "arrowMove" }); }}
+          onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "arrowMove" }); }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+      {isText && (() => {
+        const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
+        const sizeKey = (seg.textSize as TextSize) ?? "small";
+        const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10);
+        return (
+          <>
+            <rect
+              x={h1.x}
+              y={h1.y - boxH}
+              width={boxW}
+              height={boxH}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "grab" }}
+              aria-label={(t as Record<string, string>).textMove ?? "Arrastar para mover"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "textMove" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "textMove" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={h1.x} cy={h1.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+          </>
+        );
+      })()}
+      {!isVerticalLine && !isArrow && !isText && (
         <>
           <circle
             cx={h1.x}

@@ -94,7 +94,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "select";
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -105,6 +105,8 @@ export interface KlinesChartSidebarProps {
   selectFibonacciTool: () => void;
   selectChannelTool: () => void;
   selectHorizontalLineTool: () => void;
+  exitRulerToCrosshair: () => void;
+  toggleRuler: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
   // Save/Load
@@ -196,6 +198,8 @@ export function KlinesChartSidebar({
   selectFibonacciTool,
   selectChannelTool,
   selectHorizontalLineTool,
+  exitRulerToCrosshair,
+  toggleRuler,
   selectSelectTool,
   clearAllDrawing,
   saveOpen,
@@ -716,6 +720,20 @@ export function KlinesChartSidebar({
           aria-pressed={drawMode && drawTool === "select"}
         >
           <span aria-hidden>👆</span>
+        </button>
+        <button
+          type="button"
+          data-ruler-toggle
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleRuler();
+          }}
+          title={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
+          className={`${iconButtonClassName} ${drawMode && drawTool === "ruler" ? "bg-zinc-200" : ""}`}
+          aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
+          aria-pressed={drawMode && drawTool === "ruler"}
+        >
+          <span aria-hidden>{drawMode && drawTool === "ruler" ? "📏" : "✚"}</span>
         </button>
         <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
           <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />

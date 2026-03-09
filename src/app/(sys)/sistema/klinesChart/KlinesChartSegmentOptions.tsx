@@ -5,8 +5,8 @@
  * Extraído de KlinesChart para reduzir tamanho do arquivo principal.
  */
 import { useState, useEffect, type RefObject } from "react";
-import type { DrawSegment, FibStrokeWidth, SegmentCap } from "../KlinesChartDrawing";
-import { FIB_STROKE_WIDTH_OPTIONS } from "../KlinesChartDrawing";
+import type { DrawSegment, FibStrokeWidth, SegmentCap, ArrowSize } from "../KlinesChartDrawing";
+import { FIB_STROKE_WIDTH_OPTIONS, ARROW_SIZE_OPTIONS, ARROW_LENGTH_PX, TEXT_SIZE_OPTIONS, type TextSize } from "../KlinesChartDrawing";
 import { DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
 import { SEGMENT_COLOR_PALETTE, SEGMENT_CAP_OPTIONS } from "./palettes";
 
@@ -19,7 +19,9 @@ export interface KlinesChartSegmentOptionsProps {
   selectedSegmentIndex: number | null;
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   setSelectedSegmentIndex: (i: number | null) => void;
-  persistDrawDefault: (type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine", partial: Partial<DrawSegment>) => void;
+  persistDrawDefault: (type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
+  segmentToPixel: (index: number, price: number) => { x: number; y: number };
+  pixelToData: (x: number, y: number) => { index: number; price: number };
   t: Record<string, string>;
   /** Quando true, fecha os listboxes (ex.: ao recolher a toolbox no sidebar). */
   segmentToolboxCollapsed?: boolean;
@@ -35,6 +37,8 @@ export function KlinesChartSegmentOptions({
   setDrawSegments,
   setSelectedSegmentIndex,
   persistDrawDefault,
+  segmentToPixel,
+  pixelToData,
   t,
   segmentToolboxCollapsed = false,
 }: KlinesChartSegmentOptionsProps) {
@@ -65,7 +69,11 @@ export function KlinesChartSegmentOptions({
             ? tAs.horizontalLineColor ?? t.segmentColor
             : drawSegments[selectedSegmentIndex]?.type === "verticalLine"
               ? tAs.verticalLineColor ?? t.segmentColor
-              : t.segmentColor;
+              : drawSegments[selectedSegmentIndex]?.type === "arrow"
+                ? tAs.arrowColor ?? t.segmentColor
+                : drawSegments[selectedSegmentIndex]?.type === "text"
+                  ? tAs.textColor ?? t.segmentColor
+                  : t.segmentColor;
 
   return (
     <div
@@ -166,7 +174,7 @@ export function KlinesChartSegmentOptions({
                       aria-selected={isSelected}
                       aria-label={colorLabel}
                       onClick={() => {
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
+                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
                         setDrawSegments((prev) => {
                           const next = [...prev];
                           const seg = next[selectedSegmentIndex];
@@ -380,6 +388,78 @@ export function KlinesChartSegmentOptions({
             </label>
           </>
         )}
+        {drawSegments[selectedSegmentIndex]?.type === "arrow" && (() => {
+          const seg = drawSegments[selectedSegmentIndex] as DrawSegment & { arrowAngle?: number };
+          const currentAngle = seg?.arrowAngle ?? (() => {
+            const p1 = segmentToPixel(seg.index1, seg.price1);
+            const p2 = segmentToPixel(seg.index2, seg.price2);
+            const rad = Math.atan2(p1.y - p2.y, p2.x - p1.x);
+            return Math.round(((rad * 180) / Math.PI + 360) % 360 * 10) / 10;
+          })();
+          const size = (seg?.arrowSize as ArrowSize) ?? "medium";
+          const lengthPx = ARROW_LENGTH_PX[size];
+          const applyArrowAngle = (angleDeg: number) => {
+            const seg2 = drawSegments[selectedSegmentIndex];
+            if (!seg2 || seg2.type !== "arrow") return;
+            const tail = segmentToPixel(seg2.index1, seg2.price1);
+            const rad = (angleDeg * Math.PI) / 180;
+            const tipX = tail.x + lengthPx * Math.cos(rad);
+            const tipY = tail.y - lengthPx * Math.sin(rad);
+            const tipData = pixelToData(tipX, tipY);
+            setDrawSegments((prev) => {
+              const next = [...prev];
+              const s = next[selectedSegmentIndex];
+              if (s && s.type === "arrow") next[selectedSegmentIndex] = { ...s, arrowAngle: angleDeg, index2: tipData.index, price2: tipData.price };
+              return next;
+            });
+            persistDrawDefault("arrow", { arrowAngle: angleDeg });
+          };
+          return (
+            <>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="arrow-angle-input">{tAs.arrowAngle ?? "Ângulo (°)"}</label>
+                <input
+                  id="arrow-angle-input"
+                  type="number"
+                  min={0}
+                  max={360}
+                  step={1}
+                  value={currentAngle}
+                  onChange={(e) => {
+                    const v = Math.max(0, Math.min(360, Number(e.target.value) || 0));
+                    applyArrowAngle(v);
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                  aria-label={tAs.arrowAngle ?? "Ângulo"}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="arrow-size-listbox">{tAs.arrowSize ?? "Tamanho"}</label>
+                <select
+                  id="arrow-size-listbox"
+                  value={(seg?.arrowSize as ArrowSize) ?? "medium"}
+                  onChange={(e) => {
+                    const v = e.target.value as ArrowSize;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, arrowSize: v };
+                      return next;
+                    });
+                    persistDrawDefault("arrow", { arrowSize: v });
+                    applyArrowAngle(seg?.arrowAngle ?? currentAngle);
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                  aria-label={tAs.arrowSize ?? "Tamanho"}
+                >
+                  {ARROW_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>{tAs[`arrowSize${size.charAt(0).toUpperCase() + size.slice(1)}`] ?? size}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          );
+        })()}
         {drawSegments[selectedSegmentIndex]?.type === "channel" && (
           <>
             <div>
@@ -711,47 +791,50 @@ export function KlinesChartSegmentOptions({
             </div>
           </>
         )}
-        {drawSegments[selectedSegmentIndex]?.type !== "channel" && drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && drawSegments[selectedSegmentIndex]?.type !== "verticalLine" && (
-          <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-            <input
-              type="checkbox"
-              checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                const segType = drawSegments[selectedSegmentIndex]?.type ?? "segment";
-                setDrawSegments((prev) => {
-                  const next = [...prev];
-                  const seg = next[selectedSegmentIndex];
-                  if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
-                  return next;
-                });
-                persistDrawDefault(segType, { showPercent: checked });
-              }}
-              className="rounded border-zinc-300"
-            />
-            <span>{t.segmentShowPercent}</span>
-          </label>
-        )}
-        {drawSegments[selectedSegmentIndex]?.type !== "rectangle" && drawSegments[selectedSegmentIndex]?.type !== "horizontalLine" && drawSegments[selectedSegmentIndex]?.type !== "verticalLine" && (
-          <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-            <input
-              type="checkbox"
-              checked={drawSegments[selectedSegmentIndex]?.showValues === true}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine";
-                setDrawSegments((prev) => {
-                  const next = [...prev];
-                  const seg = next[selectedSegmentIndex];
-                  if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
-                  return next;
-                });
-                persistDrawDefault(segType, { showValues: checked });
-              }}
-              className="rounded border-zinc-300"
-            />
-            <span>{t.segmentShowValues}</span>
-          </label>
+        {drawSegments[selectedSegmentIndex]?.type === "text" && (
+          <>
+            <div>
+              <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="text-size-listbox">{tAs.textSize ?? "Font size"}</label>
+              <select
+                id="text-size-listbox"
+                value={(drawSegments[selectedSegmentIndex]?.textSize as TextSize) ?? "small"}
+                onChange={(e) => {
+                  const v = e.target.value as TextSize;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, textSize: v };
+                    return next;
+                  });
+                  persistDrawDefault("text", { textSize: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.textSize ?? "Font size"}
+              >
+                {TEXT_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{tAs[`textSize${size.charAt(0).toUpperCase() + size.slice(1)}`] ?? size}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.textBold === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, textBold: checked };
+                    return next;
+                  });
+                  persistDrawDefault("text", { textBold: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{tAs.textBold ?? "Bold"}</span>
+            </label>
+          </>
         )}
         <div className="flex items-center gap-1.5 w-full">
           <button

@@ -59,7 +59,8 @@ import {
   formatMonthYearShort,
   isStartOfDay,
 } from "./klinesFormatters";
-import { DEFAULT_SEGMENT_COLOR, type DrawSegment, type DrawDefaults } from "./KlinesChartDrawing";
+import { DEFAULT_SEGMENT_COLOR, DEFAULT_TEXT_COLOR as DEFAULT_DRAW_TEXT_COLOR, type DrawSegment, type DrawDefaults } from "./KlinesChartDrawing";
+import { flushSync } from "react-dom";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import type { Kline, KlinesChartProps } from "./klinesChart/types";
@@ -91,6 +92,8 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false },
   horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid" },
   verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid" },
+  arrow: { color: SEGMENT_COLOR_PALETTE[0], arrowSize: "medium" },
+  text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
 export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
@@ -188,6 +191,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const saveLoadRef = useRef<HTMLDivElement>(null);
   const chartSvgRef = useRef<SVGSVGElement>(null);
   const chartDimensionsRef = useRef<{ w: number; h: number; sizePercent?: number }>({ w: 0, h: 0 });
+  const candleAreaRef = useRef({ left: MARGIN_LEFT, top: MARGIN_TOP, width: 0, height: 0 });
 
   const drawing = useKlinesChartDrawing(chartSvgRef);
   const {
@@ -222,11 +226,18 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     selectChannelTool,
     selectHorizontalLineTool,
     selectVerticalLineTool,
+    selectArrowTool,
+    selectTextTool,
+    selectRulerTool,
     selectRectangleTool,
     selectSelectTool,
     clearAllDrawing,
     drawPendingHorizontalSecond,
     setDrawPendingHorizontalSecond,
+    drawPendingArrow,
+    setDrawPendingArrow,
+    drawPendingText,
+    setDrawPendingText,
   } = drawing;
 
   const fullReversed = [...klines].reverse();
@@ -372,6 +383,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
         rectangle: { ...BUILTIN_DRAW_DEFAULTS.rectangle, ...parsed.rectangle },
         horizontalLine: { ...BUILTIN_DRAW_DEFAULTS.horizontalLine, ...parsed.horizontalLine },
         verticalLine: { ...BUILTIN_DRAW_DEFAULTS.verticalLine, ...parsed.verticalLine },
+        arrow: { ...BUILTIN_DRAW_DEFAULTS.arrow, ...parsed.arrow },
+        text: { ...BUILTIN_DRAW_DEFAULTS.text, ...parsed.text },
       });
     } catch {
       /* ignore */
@@ -379,7 +392,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
@@ -388,6 +401,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
         rectangle: type === "rectangle" ? { ...prev.rectangle, ...partial } : prev.rectangle,
         horizontalLine: type === "horizontalLine" ? { ...prev.horizontalLine, ...partial } : prev.horizontalLine,
         verticalLine: type === "verticalLine" ? { ...prev.verticalLine, ...partial } : prev.verticalLine,
+        arrow: type === "arrow" ? { ...prev.arrow, ...partial } : prev.arrow,
+        text: type === "text" ? { ...prev.text, ...partial } : prev.text,
       };
       try {
         if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
@@ -397,6 +412,38 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       return next;
     });
   }, []);
+
+  const handleCreateTextSegment = useCallback(
+    (textContent: string) => {
+      if (!drawPendingText) return;
+      const { index1, price1 } = drawPendingText;
+      const df = drawDefaults.text;
+      const newSeg: DrawSegment = {
+        index1,
+        price1,
+        index2: index1,
+        price2: price1,
+        type: "text",
+        textContent: textContent || " ",
+        color: df?.color ?? DEFAULT_DRAW_TEXT_COLOR,
+        textBold: df?.textBold ?? false,
+        textSize: df?.textSize ?? "small",
+      };
+      let newIndex = 0;
+      flushSync(() => {
+        setDrawSegments((prev) => {
+          newIndex = prev.length;
+          return [...prev, newSeg];
+        });
+      });
+      setDrawPendingText(null);
+      setSelectedSegmentIndex(newIndex);
+      selectSelectTool();
+      setDrawOpen(true);
+      setSegmentToolboxCollapsed(false);
+    },
+    [drawPendingText, drawDefaults.text, setDrawSegments, setDrawPendingText, setSelectedSegmentIndex, selectSelectTool, setDrawOpen, setSegmentToolboxCollapsed]
+  );
 
   // Persistir visibilidade dos desenhos (por intervalo)
   useEffect(() => {
@@ -684,6 +731,50 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     return () => document.removeEventListener("click", onDocClick);
   }, [crosshairPoint]);
 
+  const exitRulerToCrosshair = useCallback(() => {
+    closeDrawMode();
+    setDrawPending(null);
+    setDrawPendingLineSecond(null);
+  }, [closeDrawMode, setDrawPending, setDrawPendingLineSecond]);
+
+  const toggleRuler = useCallback(() => {
+    if (drawMode && drawTool === "ruler") {
+      exitRulerToCrosshair();
+    } else {
+      selectRulerTool();
+    }
+  }, [drawMode, drawTool, exitRulerToCrosshair, selectRulerTool]);
+
+  // Clique fora da área dos candles: desativa a régua (volta ao crosshair)
+  useEffect(() => {
+    if (drawTool !== "ruler" || !drawMode) return;
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest?.("[data-ruler-toggle]")) return;
+      const svg = chartSvgRef.current;
+      const area = candleAreaRef.current;
+      if (!svg) {
+        exitRulerToCrosshair();
+        return;
+      }
+      if (!svg.contains(target as Node)) {
+        exitRulerToCrosshair();
+        return;
+      }
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+      const svgPt = pt.matrixTransform(ctm.inverse());
+      if (area.width > 0 && area.height > 0 && (svgPt.x < area.left || svgPt.x > area.left + area.width || svgPt.y < area.top || svgPt.y > area.top + area.height)) {
+        exitRulerToCrosshair();
+      }
+    };
+    document.addEventListener("pointerdown", handler, true);
+    return () => document.removeEventListener("pointerdown", handler, true);
+  }, [drawTool, drawMode, exitRulerToCrosshair]);
+
   useLayoutEffect(() => {
     const d = chartDimensionsRef.current;
     if (d.w > 0 && onChartDimensionsChange) onChartDimensionsChange(d.w, d.h, d.sizePercent ?? 100);
@@ -761,6 +852,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
 
   const is2hOrAbove = groupMinutes >= 120;
   const chartW = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
+  candleAreaRef.current = { left: MARGIN_LEFT, top: MARGIN_TOP, width: chartW, height: chartH };
   const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
   const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
@@ -1187,6 +1279,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             selectFibonacciTool={selectFibonacciTool}
             selectChannelTool={selectChannelTool}
             selectHorizontalLineTool={selectHorizontalLineTool}
+            exitRulerToCrosshair={exitRulerToCrosshair}
+            toggleRuler={toggleRuler}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
             saveOpen={saveOpen}
@@ -1200,7 +1294,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -1323,6 +1417,24 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                     >
                       <span aria-hidden>|</span>
                     </button>
+                    <button
+                      type="button"
+                      onClick={selectTextTool}
+                      title={(t as Record<string, string>).drawTextTool ?? "Text"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).drawTextTool ?? "Text"}
+                    >
+                      <span aria-hidden>T</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectArrowTool}
+                      title={(t as Record<string, string>).arrowTool ?? "Arrow"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}
+                    >
+                      <span aria-hidden>→</span>
+                    </button>
                   </div>
                   <div className="flex justify-center border-t border-zinc-100 pt-0.5 mt-0.5">
                     <button
@@ -1393,6 +1505,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 setDrawSegments={setDrawSegments}
                 setSelectedSegmentIndex={setSelectedSegmentIndex}
                 persistDrawDefault={persistDrawDefault}
+                segmentToPixel={segmentToPixel}
+                pixelToData={pixelToData}
                 t={t}
                 segmentToolboxCollapsed={segmentToolboxCollapsed}
               />
@@ -1469,6 +1583,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               setDrawPendingChannelSecond={setDrawPendingChannelSecond}
               drawPendingHorizontalSecond={drawPendingHorizontalSecond}
               setDrawPendingHorizontalSecond={setDrawPendingHorizontalSecond}
+              drawPendingArrow={drawPendingArrow}
+              setDrawPendingArrow={setDrawPendingArrow}
+              drawPendingText={drawPendingText}
+              setDrawPendingText={setDrawPendingText}
+              onCreateTextSegment={handleCreateTextSegment}
+              pixelToData={pixelToData}
               selectedSegmentIndex={selectedSegmentIndex}
               setSelectedSegmentIndex={setSelectedSegmentIndex}
               drawMode={drawMode}

@@ -11,6 +11,8 @@ import { FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSe
 import { DrawSegmentRender } from "./DrawSegmentRender";
 import { DrawOverlay } from "./DrawOverlay";
 import { DrawSegmentHandles } from "./DrawSegmentHandles";
+import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
+import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
 export interface KlinesChartSvgProps {
   chartSvgRef: RefObject<SVGSVGElement | null>;
@@ -84,11 +86,17 @@ export interface KlinesChartSvgProps {
   setDrawPendingChannelSecond: (p: { index: number; price: number } | null) => void;
   drawPendingHorizontalSecond: { index: number; price: number } | null;
   setDrawPendingHorizontalSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingArrow: { index1: number; price1: number; angleRad: number } | null;
+  setDrawPendingArrow: (p: { index1: number; price1: number; angleRad: number } | null) => void;
+  drawPendingText: { index1: number; price1: number } | null;
+  setDrawPendingText: (p: { index1: number; price1: number } | null) => void;
+  onCreateTextSegment?: (textContent: string) => void;
+  pixelToData: (x: number, y: number) => { index: number; price: number };
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" } | null>>;
+  drawTool: "line" | "fibonacci" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -174,6 +182,12 @@ export function KlinesChartSvg({
   setDrawPendingChannelSecond,
   drawPendingHorizontalSecond,
   setDrawPendingHorizontalSecond,
+  drawPendingArrow,
+  setDrawPendingArrow,
+  drawPendingText,
+  setDrawPendingText,
+  onCreateTextSegment,
+  pixelToData,
   selectedSegmentIndex,
   setSelectedSegmentIndex,
   drawMode,
@@ -1023,11 +1037,18 @@ export function KlinesChartSvg({
           setDrawPendingChannelSecond={setDrawPendingChannelSecond}
           drawPendingHorizontalSecond={drawPendingHorizontalSecond}
           setDrawPendingHorizontalSecond={setDrawPendingHorizontalSecond}
+          drawPendingArrow={drawPendingArrow}
+          setDrawPendingArrow={setDrawPendingArrow}
+          drawPendingText={drawPendingText}
+          setDrawPendingText={setDrawPendingText}
           segmentToPixel={segmentToPixel}
           snapToCandlePoint={snapToCandlePoint}
+          pixelToData={pixelToData}
           drawSegments={drawSegments}
           setDrawSegments={setDrawSegments}
           drawDefaults={drawDefaults}
+          fullReversed={fullReversed}
+          n={n}
           selectedSegmentIndex={selectedSegmentIndex}
           setSelectedSegmentIndex={setSelectedSegmentIndex}
           drawingsVisible={drawingsVisible}
@@ -1039,6 +1060,17 @@ export function KlinesChartSvg({
           selectPanLastClientXRef={selectPanLastClientX}
           justPannedRef={justPannedRef}
         />
+        {drawPendingText && onCreateTextSegment && (
+          <DrawTextInputOverlay
+            x={segmentToPixel(drawPendingText.index1, drawPendingText.price1).x}
+            y={segmentToPixel(drawPendingText.index1, drawPendingText.price1).y}
+            defaultColor={drawDefaults.text?.color ?? DEFAULT_TEXT_COLOR}
+            onSubmit={onCreateTextSegment}
+            onCancel={() => setDrawPendingText(null)}
+            tOk={t.drawTextOk}
+            tCancel={t.drawTextCancel}
+          />
+        )}
         {drawingsVisible && drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
           <DrawSegmentHandles
             segment={drawSegments[selectedSegmentIndex]!}

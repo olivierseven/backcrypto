@@ -60,9 +60,13 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
               ? "rectangleTool"
               : type === "horizontalLine"
                 ? "horizontalLine"
-                : type === "verticalLine"
+                  : type === "verticalLine"
                   ? "verticalLine"
-                  : "lineSegment";
+                  : type === "arrow"
+                    ? "arrowTool"
+                    : type === "text"
+                      ? "drawTextTool"
+                      : "lineSegment";
     return t[key] ?? type;
   };
 
