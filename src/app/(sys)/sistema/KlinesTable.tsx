@@ -362,9 +362,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
       setKlines(list);
       setNeedsRefresh(refreshFlag);
-      // Last update = closeTime (UTC) do candle mais recente, para bater com a coluna Close Time
-      const latestCloseTime = list.length > 0 && list[0][6] != null ? Number(list[0][6]) : null;
-      setLastUpdate(latestCloseTime != null ? new Date(latestCloseTime) : new Date());
+      // Última atualização sempre da BinanceKlineFast (1m), vinda da API (lastUpdateUtc)
+      const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
+      setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
     } catch (e) {
       setError(e instanceof Error ? e.message : t.errorLoad);
       setKlines([]);
@@ -597,7 +597,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           />
         </div>
         {lastUpdate && (
-          <div className="text-right mt-1">
+          <div className="text-left mt-1">
             <span className="text-[10px] text-zinc-500">
               {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
             </span>

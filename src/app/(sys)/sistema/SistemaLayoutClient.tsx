@@ -243,8 +243,8 @@ export default function SistemaLayoutClient({
   useEffect(() => {
     if (Capacitor?.isNativePlatform?.()) {
       import("@capacitor/status-bar").then(({ StatusBar }) => {
-        if (hideStatusBar) StatusBar.hide().catch(() => {});
-        else StatusBar.show().catch(() => {});
+        if (hideStatusBar) StatusBar.hide().catch(() => { });
+        else StatusBar.show().catch(() => { });
       });
     }
   }, [hideStatusBar]);
@@ -252,7 +252,7 @@ export default function SistemaLayoutClient({
   useEffect(() => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
-    return () => {};
+    return () => { };
   }, []);
 
   const openMyIndicators = () => {
@@ -292,57 +292,57 @@ export default function SistemaLayoutClient({
     <CryptoLangProvider lang={lang}>
       <KlinesIndicatorsProvider>
         <StrategiesProvider>
-        <SistemaDebugProvider>
-          <ChartHeaderProvider>
-          <ChartSymbolProvider>
-          <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
-            <SistemaHeader
-              menuOpen={menuOpen}
-              onMenuToggle={handleMenuToggle}
-              onMyIndicatorsClick={openMyIndicators}
-              onAddIndicatorClick={openAddIndicator}
-              onMyStrategiesClick={openMyStrategies}
-              onAddStrategyClick={openAddStrategy}
-              onDrawingsClick={openDrawings}
-            />
-            <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto">
-              {children}
-            </div>
-            {indicatorsPanelOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-[39]"
-                  aria-hidden
-                  onClick={() => setIndicatorsPanelOpen(false)}
-                />
-                <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} />
-              </>
-            )}
-            {strategiesPanelOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-[39]"
-                  aria-hidden
-                  onClick={() => setStrategiesPanelOpen(false)}
-                />
-                <StrategiesPanel initialView={strategiesPanelInitialView} onClose={() => setStrategiesPanelOpen(false)} />
-              </>
-            )}
-            {drawingsPanelOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-[39]"
-                  aria-hidden
-                  onClick={() => setDrawingsPanelOpen(false)}
-                />
-                <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
-              </>
-            )}
-          </div>
-          {isAdmin && <SistemaDebugPanel />}
-          </ChartSymbolProvider>
-          </ChartHeaderProvider>
-        </SistemaDebugProvider>
+          <SistemaDebugProvider>
+            <ChartHeaderProvider>
+              <ChartSymbolProvider>
+                <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
+                  <SistemaHeader
+                    menuOpen={menuOpen}
+                    onMenuToggle={handleMenuToggle}
+                    onMyIndicatorsClick={openMyIndicators}
+                    onAddIndicatorClick={openAddIndicator}
+                    onMyStrategiesClick={openMyStrategies}
+                    onAddStrategyClick={openAddStrategy}
+                    onDrawingsClick={openDrawings}
+                  />
+                  <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto">
+                    {children}
+                  </div>
+                  {indicatorsPanelOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-[39]"
+                        aria-hidden
+                        onClick={() => setIndicatorsPanelOpen(false)}
+                      />
+                      <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} />
+                    </>
+                  )}
+                  {strategiesPanelOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-[39]"
+                        aria-hidden
+                        onClick={() => setStrategiesPanelOpen(false)}
+                      />
+                      <StrategiesPanel initialView={strategiesPanelInitialView} onClose={() => setStrategiesPanelOpen(false)} />
+                    </>
+                  )}
+                  {drawingsPanelOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-[39]"
+                        aria-hidden
+                        onClick={() => setDrawingsPanelOpen(false)}
+                      />
+                      <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
+                    </>
+                  )}
+                </div>
+                {isAdmin && <SistemaDebugPanel />}
+              </ChartSymbolProvider>
+            </ChartHeaderProvider>
+          </SistemaDebugProvider>
         </StrategiesProvider>
       </KlinesIndicatorsProvider>
     </CryptoLangProvider>

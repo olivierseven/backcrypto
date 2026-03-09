@@ -367,12 +367,14 @@ export function KlinesChartSidebar({
         </button>
       <button
         type="button"
-        onClick={() => setChartSizePercent((v) => (v >= 125 ? 100 : 125))}
+        onClick={() => setChartSizePercent((v) => (v >= 150 ? 100 : v >= 125 ? 150 : 125))}
         className={`${iconButtonClassName} ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
         title={
-          chartSizePercent >= 125
-            ? ((t as Record<string, string>).chartSizeRestore ?? "Tamanho atual: 125% (clique para voltar a 100%)")
-            : ((t as Record<string, string>).chartSizeEnlarge ?? "Tamanho atual: 100% (clique para expandir a 125%)")
+          chartSizePercent >= 150
+            ? ((t as Record<string, string>).chartSizeRestore150 ?? "Tamanho atual: 150% (clique para voltar a 100%)")
+            : chartSizePercent >= 125
+              ? ((t as Record<string, string>).chartSizeTo150 ?? "Tamanho atual: 125% (clique para 150%)")
+              : ((t as Record<string, string>).chartSizeEnlarge ?? "Tamanho atual: 100% (clique para expandir a 125%)")
         }
         aria-pressed={chartSizePercent >= 125}
       >

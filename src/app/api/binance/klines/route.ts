@@ -4,7 +4,7 @@
  * Agregação do dia atual (UTC) em todos os intervalos: sempre a partir de BinanceKlineFast (1m).
  * openTime/closeTime são ajustados pelo timezoneOffset do utilizador (horas, -12..12) antes de devolver.
  * GET /api/binance/klines?symbol=BTCUSDT&interval=5m&limit=1000
- * Resposta: array no formato Binance [openTime, open, high, low, close, volume, closeTime, ...]
+ * Resposta: { klines: array Binance [openTime, open, high, low, close, volume, closeTime, ...], lastUpdateUtc?: ms (openTime do último 1m em Fast), needsRefresh?: true }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -158,6 +158,20 @@ export async function GET(request: NextRequest) {
     groupMinutes !== 1 &&
     CACHE_INTERVALS.has(canonicalIntervalParam);
 
+  // Última atualização sempre da tabela BinanceKlineFast (1m), independente do timeframe; aplicar timezoneOffset como em openTime/closeTime
+  const lastUpdateFromFast = await cryptoPrisma
+    .$queryRaw<[{ openTime: number | bigint } | null]>(
+      Prisma.sql`
+        SELECT "openTime" FROM backcrypto."BinanceKlineFast"
+        WHERE symbol = ${symbol} AND "interval" = '1m'
+        ORDER BY "openTime" DESC
+        LIMIT 1
+      `
+    )
+    .then((r) => (Array.isArray(r) && r[0] != null ? Number(r[0].openTime) : null));
+  const offsetMs = timezoneOffset * 60 * 60 * 1000;
+  const lastUpdateUtc = lastUpdateFromFast != null ? lastUpdateFromFast + offsetMs : null;
+
   try {
     if (groupMinutes === 1) {
       const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
@@ -174,11 +188,12 @@ export async function GET(request: NextRequest) {
       const list = Array.isArray(rows) ? rows : [];
       let data = list.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json(data);
+      return NextResponse.json({ klines: data, lastUpdateUtc });
     }
 
     if (useCache) {
-      // Apenas cache: sem fallback para tabelas de origem. Se não houver cache, retornar needsRefresh.
+      // Sem cache: retornar needsRefresh. Com cache: histórico do cache + dia atual sempre de BinanceKlineFast (1m).
+      const startOfToday = startOfTodayUtcMs();
       const hasCache = await cryptoPrisma
         .$queryRaw<[{ exists: boolean }]>(
           Prisma.sql`
@@ -192,24 +207,61 @@ export async function GET(request: NextRequest) {
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
       if (!hasCache) {
-        return NextResponse.json({ klines: [], needsRefresh: true });
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
       }
 
-      const cacheRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
+      // Dia atual (UTC): sempre agregar a partir de BinanceKlineFast (1m), independente do timeframe.
+      const todayRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         Prisma.sql`
-          SELECT "openTime", "open", "high", "low", "close", "volume",
-                 "closeTime", "quoteAssetVolume", "numberOfTrades",
-                 "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-          FROM backcrypto."BinanceKlineCache"
-          WHERE symbol = ${symbol} AND "interval" = ${canonicalIntervalParam}
-          ORDER BY "openTime" DESC
-          LIMIT ${limit}
+          WITH k AS (
+            SELECT
+              (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
+              "openTime",
+              "open", "high", "low", "close", "volume", "closeTime",
+              "quoteAssetVolume", "numberOfTrades",
+              "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
+            FROM backcrypto."BinanceKlineFast"
+            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
+          )
+          SELECT
+            k.bucket::bigint AS "openTime",
+            (array_agg(k."open" ORDER BY k."openTime"))[1] AS "open",
+            max(k."high") AS "high",
+            min(k."low") AS "low",
+            (array_agg(k."close" ORDER BY k."openTime" DESC))[1] AS "close",
+            sum(k."volume") AS "volume",
+            max(k."closeTime") AS "closeTime",
+            sum(k."quoteAssetVolume") AS "quoteAssetVolume",
+            sum(k."numberOfTrades")::int AS "numberOfTrades",
+            sum(k."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
+            sum(k."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
+          FROM k
+          GROUP BY k.bucket
+          ORDER BY k.bucket DESC
         `
       );
-      const list = Array.isArray(cacheRows) ? cacheRows : [];
-      let data = list.map(rowToKline);
+      const todayList = Array.isArray(todayRows) ? todayRows : [];
+      const cacheLimit = Math.max(0, limit - todayList.length);
+      let cacheList: Record<string, unknown>[] = [];
+      if (cacheLimit > 0) {
+        const cacheRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
+          Prisma.sql`
+            SELECT "openTime", "open", "high", "low", "close", "volume",
+                   "closeTime", "quoteAssetVolume", "numberOfTrades",
+                   "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
+            FROM backcrypto."BinanceKlineCache"
+            WHERE symbol = ${symbol} AND "interval" = ${canonicalIntervalParam}
+              AND "openTime" < ${startOfToday}
+            ORDER BY "openTime" DESC
+            LIMIT ${cacheLimit}
+          `
+        );
+        cacheList = Array.isArray(cacheRows) ? cacheRows : [];
+      }
+      const combined = [...todayList, ...cacheList].slice(0, limit);
+      let data = combined.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json(data);
+      return NextResponse.json({ klines: data, lastUpdateUtc });
     }
 
     // Intervalos acima de 1d (3d, 1w, 1M): cache 1d + dia atual em 1d, depois reagrupa. Sem cache: 1d a partir de BinanceKline (1h).
@@ -228,7 +280,7 @@ export async function GET(request: NextRequest) {
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
       if (!hasCache1d) {
-        return NextResponse.json({ klines: [], needsRefresh: true });
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
       }
 
       const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
@@ -307,11 +359,11 @@ export async function GET(request: NextRequest) {
       const list = Array.isArray(rows) ? rows : [];
       let data = list.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json(data);
+      return NextResponse.json({ klines: data, lastUpdateUtc });
     }
 
     // Sem cache: não usar tabelas de origem; pedir refresh no front.
-    return NextResponse.json({ klines: [], needsRefresh: true });
+    return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
   } catch (e) {
     console.error("[api/binance/klines]", e);
     return NextResponse.json(
