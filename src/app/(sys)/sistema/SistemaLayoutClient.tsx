@@ -319,6 +319,44 @@ export default function SistemaLayoutClient({
     setMenuOpen(open);
   };
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const stripScrollRef = useRef<HTMLDivElement>(null);
+  const stripInnerRef = useRef<HTMLDivElement>(null);
+  const syncingScrollRef = useRef(false);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const strip = stripScrollRef.current;
+    const stripInner = stripInnerRef.current;
+    if (!container || !strip || !stripInner) return;
+    const syncHeight = () => {
+      const sh = container.scrollHeight;
+      if (stripInner.style.height !== `${sh}px`) stripInner.style.height = `${sh}px`;
+    };
+    const onContainerScroll = () => {
+      if (syncingScrollRef.current) return;
+      syncingScrollRef.current = true;
+      if (strip.scrollTop !== container.scrollTop) strip.scrollTop = container.scrollTop;
+      requestAnimationFrame(() => { syncingScrollRef.current = false; });
+    };
+    const onStripScroll = () => {
+      if (syncingScrollRef.current) return;
+      syncingScrollRef.current = true;
+      if (container.scrollTop !== strip.scrollTop) container.scrollTop = strip.scrollTop;
+      requestAnimationFrame(() => { syncingScrollRef.current = false; });
+    };
+    syncHeight();
+    const ro = new ResizeObserver(syncHeight);
+    ro.observe(container);
+    container.addEventListener("scroll", onContainerScroll, { passive: true });
+    strip.addEventListener("scroll", onStripScroll, { passive: true });
+    return () => {
+      ro.disconnect();
+      container.removeEventListener("scroll", onContainerScroll);
+      strip.removeEventListener("scroll", onStripScroll);
+    };
+  }, []);
+
   return (
     <CryptoLangProvider lang={lang}>
       <KlinesIndicatorsProvider>
@@ -336,9 +374,19 @@ export default function SistemaLayoutClient({
                     onAddStrategyClick={openAddStrategy}
                     onDrawingsClick={openDrawings}
                   />
-                  <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto">
-                    <SistemaHeaderCard />
-                    {children}
+                  <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+                    <div ref={scrollContainerRef} className="flex-1 min-h-0 min-w-0 overflow-auto">
+                      <SistemaHeaderCard />
+                      {children}
+                    </div>
+                    <div
+                      ref={stripScrollRef}
+                      className="absolute right-0 top-0 bottom-0 w-[60px] z-10 overflow-y-auto overflow-x-hidden touch-pan-y"
+                      style={{ touchAction: "pan-y" }}
+                      aria-hidden
+                    >
+                      <div ref={stripInnerRef} className="w-px min-h-full" style={{ height: 0 }} />
+                    </div>
                   </div>
                   {indicatorsPanelOpen && (
                     <>

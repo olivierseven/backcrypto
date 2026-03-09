@@ -667,12 +667,15 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }
 
   return (
-    <div className="flex flex-col min-h-0 w-full pt-1 px-0 pb-4">
+    <div
+      className={`flex flex-col min-h-0 pt-1 px-0 pb-4 ${chartReportedSizePercent >= 125 ? "" : "w-full"}`}
+      style={chartReportedSizePercent >= 125 ? { width: chartContainerMaxWidth, minWidth: chartContainerMaxWidth } : undefined}
+    >
       <div
         ref={chartWrapRef}
         className="flex-shrink-0 mb-2 min-w-0 rounded-lg border border-zinc-200 bg-white/90 shadow-sm"
         style={{
-          width: "100%",
+          width: chartReportedSizePercent >= 125 ? chartContainerMaxWidth : "100%",
           maxWidth: chartReportedSizePercent >= 125 ? chartContainerMaxWidth : "min(663px, 100%)",
           boxSizing: "border-box",
           overflow: "visible",
