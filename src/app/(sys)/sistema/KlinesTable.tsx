@@ -594,14 +594,14 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   })();
 
   const headerWidth = chartWidth + Y_AXIS_WIDTH;
-  /** Em 100%: container até 660px (600+60). Em 125%: até 810px (750+60) para a lupa mostrar 592×320 em 100% e maior em 125%. */
+  /** Em 100%: 663px. Em 125%: 814px. Em 150%: 964px (+4px por aumento da lupa). */
   const chartContainerMaxWidth =
     chartReportedSizePercent >= 125
-      ? Math.round(MAX_PLOT_WIDTH * (chartReportedSizePercent / 100)) + Y_AXIS_WIDTH
-      : MAX_PLOT_WIDTH + Y_AXIS_WIDTH;
+      ? Math.round(MAX_PLOT_WIDTH * (chartReportedSizePercent / 100)) + Y_AXIS_WIDTH + 4
+      : 663;
   const chartContainerWidth =
-    chartRequestedWidth != null && chartReportedSizePercent >= 125
-      ? chartRequestedWidth + 2
+    chartReportedSizePercent >= 125
+      ? chartContainerMaxWidth
       : headerWidth;
   /** Em 100%: largura do container (ResizeObserver). Em 125%: largura de plot do tamanho escolhido (ex.: 750px). */
   const chartWidthToUse =
@@ -667,19 +667,18 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }
 
   return (
-    <div className="flex flex-col min-h-0 w-full pt-1 pl-0 pr-4 pb-4">
+    <div className="flex flex-col min-h-0 w-full pt-1 px-0 pb-4">
       <div
         ref={chartWrapRef}
-        className="flex-shrink-0 mb-2 min-w-0 rounded-lg border border-zinc-200 bg-white"
+        className="flex-shrink-0 mb-2 min-w-0 rounded-lg border border-zinc-200 bg-white/90 shadow-sm"
         style={{
           width: "100%",
-          minWidth: chartReportedSizePercent >= 125 ? chartContainerMaxWidth : undefined,
-          maxWidth: chartContainerMaxWidth,
+          maxWidth: chartReportedSizePercent >= 125 ? chartContainerMaxWidth : "min(663px, 100%)",
           boxSizing: "border-box",
-          overflowX: "visible",
-          overflowY: "visible",
+          overflow: "visible",
           touchAction: "auto",
           overscrollBehavior: "auto",
+          ...(chartReportedSizePercent >= 125 ? { minWidth: chartContainerMaxWidth } : {}),
         }}
       >
           <KlinesChart

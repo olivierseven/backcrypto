@@ -19,6 +19,71 @@ import DrawingsPanel from "./DrawingsPanel";
 import { StrategiesProvider } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
 
+function SistemaHeaderCard() {
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
+  const { data: headerData } = useChartHeader();
+  const { symbol, openSymbolPanel, symbolPanelOpen } = useChartSymbol();
+  const hasAny = headerData.priceText != null || headerData.max24h != null || headerData.min24h != null || headerData.vol24hBtc != null || headerData.vol24hUsd != null;
+  if (!hasAny) return null;
+  const cardMaxWidth = headerData.chartContainerWidth ?? 663;
+  return (
+    <div
+      className="w-full max-w-full px-1 py-1 shrink-0 text-left"
+      style={{ maxWidth: `min(${cardMaxWidth}px, 100%)` }}
+    >
+      <div
+        className="rounded-lg border border-zinc-200 bg-white/90 shadow-sm px-1.5 py-1 text-left grid gap-x-3 gap-y-0"
+        style={{ gridTemplateColumns: "1.3fr 1fr 1fr" }}
+      >
+        {/* Coluna 1: símbolo (clicável = abre lista como no header) ao lado do valor; % embaixo do valor */}
+        <div className="min-w-0 flex items-center gap-x-3">
+          <button
+            type="button"
+            onClick={openSymbolPanel}
+            className="text-xs font-semibold text-zinc-900 shrink-0 hover:bg-zinc-100 rounded px-0.5 -mx-0.5 text-left"
+            aria-expanded={symbolPanelOpen}
+            aria-haspopup="listbox"
+            aria-label={t.symbolAria ?? "Select symbol"}
+          >
+            {symbol}
+          </button>
+          {(headerData.priceText != null || headerData.pctText != null) && (
+            <div className="flex flex-col gap-y-0 leading-tight min-w-0">
+              {headerData.priceText != null && (
+                <span className="font-mono text-xs text-zinc-700">{headerData.priceText}</span>
+              )}
+              {headerData.pctText != null && (
+                <span className={`font-mono text-xs ${headerData.pctText.startsWith("+") ? "text-emerald-600" : "text-red-600"}`}>
+                  ({headerData.pctText})
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        {/* Coluna 2: mín e máx 24h — centralizado na coluna, texto à esquerda */}
+        <div className="min-w-0 flex flex-col items-start justify-center gap-y-0 leading-tight text-[10px] sm:text-[11px] font-mono text-zinc-600 text-left">
+          {headerData.max24h != null && (
+            <span className="truncate w-full"><span className="text-zinc-500">{t.max24h}</span> {headerData.max24h}</span>
+          )}
+          {headerData.min24h != null && (
+            <span className="truncate w-full"><span className="text-zinc-500">{t.min24h}</span> {headerData.min24h}</span>
+          )}
+        </div>
+        {/* Coluna 3: volumes — centralizado na coluna, texto à esquerda */}
+        <div className="min-w-0 flex flex-col items-start justify-center gap-y-0 leading-tight text-[10px] sm:text-[11px] font-mono text-zinc-600 text-left">
+          {headerData.vol24hBtc != null && (
+            <span className="truncate w-full"><span className="text-zinc-500">{t.vol24hBtc}</span> {headerData.vol24hBtc}</span>
+          )}
+          {headerData.vol24hUsd != null && (
+            <span className="truncate w-full"><span className="text-zinc-500">{t.vol24hUsd}</span> {headerData.vol24hUsd}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SistemaHeader({
   menuOpen,
   onMenuToggle,
@@ -84,50 +149,16 @@ function SistemaHeader({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink">
-          <button
-            type="button"
-            onClick={openSymbolPanel}
-            className="text-xs sm:text-sm font-semibold text-zinc-900 shrink-0 hover:bg-zinc-100 rounded px-0.5 -mx-0.5"
-            aria-expanded={symbolPanelOpen}
-            aria-haspopup="listbox"
-            aria-label={t.symbolAria ?? "Select symbol"}
-          >
-            {symbol}
-          </button>
-          {headerData.priceText != null && (
-            <div className="flex flex-col text-[10px] sm:text-xs font-medium font-mono shrink-0 leading-tight">
-              <span className="text-zinc-600">{headerData.priceText}</span>
-              {headerData.pctText != null && (
-                <span className={`shrink-0 ${headerData.pctText.startsWith("+") ? "text-emerald-600" : "text-red-600"}`}>
-                  ({headerData.pctText})
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0 flex items-center justify-center gap-0">
-          <div className="flex-1 min-w-0 flex flex-col items-center justify-center">
-            <div className="flex flex-col text-[10px] sm:text-[11px] font-mono text-zinc-600 whitespace-nowrap text-left">
-              {headerData.max24h != null && (
-                <span><span className="text-zinc-500">{t.max24h}</span> {headerData.max24h}</span>
-              )}
-              {headerData.min24h != null && (
-                <span><span className="text-zinc-500">{t.min24h}</span>{headerData.min24h}</span>
-              )}
-            </div>
-          </div>
-          <div className="flex-1 min-w-0 flex flex-col items-center justify-center">
-            <div className="flex flex-col text-[10px] sm:text-[11px] font-mono text-zinc-600 whitespace-nowrap text-left">
-              {headerData.vol24hBtc != null && (
-                <span><span className="text-zinc-500">{t.vol24hBtc}</span> {headerData.vol24hBtc}</span>
-              )}
-              {headerData.vol24hUsd != null && (
-                <span><span className="text-zinc-500">{t.vol24hUsd}</span> {headerData.vol24hUsd}</span>
-              )}
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={openSymbolPanel}
+          className="text-xs sm:text-sm font-semibold text-zinc-900 shrink-0 hover:bg-zinc-100 rounded px-0.5 -mx-0.5"
+          aria-expanded={symbolPanelOpen}
+          aria-haspopup="listbox"
+          aria-label={t.symbolAria ?? "Select symbol"}
+        >
+          {symbol}
+        </button>
       </div>
       {menuOpen && (
         <>
@@ -306,6 +337,7 @@ export default function SistemaLayoutClient({
                     onDrawingsClick={openDrawings}
                   />
                   <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto">
+                    <SistemaHeaderCard />
                     {children}
                   </div>
                   {indicatorsPanelOpen && (

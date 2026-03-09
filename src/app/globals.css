@@ -229,7 +229,7 @@
 
 [data-app="backcrypto"].crypto-generator-app {
   min-height: 100dvh;
-  background: linear-gradient(to bottom right, #2563eb, #ffffff, #7dd3fc);
+  background: linear-gradient(to bottom right, #d4d4d8, #52525b);
   background-repeat: no-repeat;
   background-size: cover;
 }
@@ -356,7 +356,7 @@
   color-scheme: light;
 }
 [data-app="backcrypto"] .crypto-generator-app {
-  background: linear-gradient(to bottom right, #2563eb, #ffffff, #7dd3fc);
+  background: linear-gradient(to bottom right, #d4d4d8, #52525b);
   color: #171717;
 }
 /* Forçar tabelas e cards em light dentro do app */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { validateNickname } from "@/lib/validate-nickname";
 import { APP_BACKCRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
@@ -318,9 +319,9 @@ export default function BioContaClient({
           </div>
         </dl>
         <div className="mt-2.5">
-          <a href="/historico" className="inline-block rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-sm font-medium text-zinc-900 px-3 py-2">
+          <Link href="/historico" className="inline-block rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-sm font-medium text-zinc-900 px-3 py-2">
             {t.conta.viewTransactionHistory}
-          </a>
+          </Link>
         </div>
       </div>
 

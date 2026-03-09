@@ -1,36 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useCryptoLang } from "../contexts/CryptoLangContext";
-import { useBioDebug } from "./BioDebugContext";
-import { getCryptoT } from "../lib/translations";
-import { ASSET_PREFIX } from "../constants";
-import BioChartMenu from "./BioChartMenu";
-
-const iconClass = "flex items-center justify-center w-12 h-12 rounded-lg border-2 border-neutral-300 bg-white transition-colors text-3xl hover:bg-neutral-50 hover:border-neutral-400 text-neutral-800 hover:text-black";
-
+/** Header normal, sem ícones (barra mínima para consistência de layout). */
 export default function BioHeaderIcons() {
-  const lang = useCryptoLang();
-  const debug = useBioDebug();
-  const t = getCryptoT(lang).sistema;
   return (
-    <div className="flex items-center gap-1.5 flex-nowrap flex-shrink-0">
-      <BioChartMenu />
-      {debug?.isAdmin && (
-        <Link href="/admin" className={iconClass} title="Admin">
-          🔑
-        </Link>
-      )}
-      <Link href="/conta" className={iconClass} title={t.accountTitle}>
-        👤
-      </Link>
-      <Link href="/historico" className={iconClass} title={t.historyTitle}>
-        📒
-      </Link>
-      <Link href="/plans" className={iconClass} title={t.plansTitle}>
-        <Image src={`${ASSET_PREFIX}/assets/bio/getcoins.WEBP`} alt={t.plansTitle} width={28} height={28} className="object-contain" />
-      </Link>
-    </div>
+    <header className="shrink-0 h-0 min-h-0 border-b border-transparent w-full" aria-hidden />
   );
 }

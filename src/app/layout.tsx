@@ -121,11 +121,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-dvh bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 antialiased">
-        <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-200/40 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-violet-200/40 blur-3xl" />
-        </div>
+      <body className="min-h-dvh bg-gradient-to-br from-zinc-300 to-zinc-600 text-zinc-900 antialiased">
         <main className="w-full px-0 py-0">
           <AppBarSafeProvider>
             <StatusBarPref />
