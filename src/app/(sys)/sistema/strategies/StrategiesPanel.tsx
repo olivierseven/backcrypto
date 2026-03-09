@@ -28,7 +28,6 @@ import {
   createEmptyGroup,
   createEmptyCondition,
   createEmptyCrossoverCondition,
-  createEmptyCrossunderCondition,
   createEmptyNot,
   normalizeOffset,
   normalizeBarsAfter,
@@ -464,10 +463,6 @@ function GroupEditor({
     if (!canAddMore) return;
     updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyCrossoverCondition()] }));
   };
-  const addCrossunder = () => {
-    if (!canAddMore) return;
-    updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyCrossunderCondition()] }));
-  };
   const addNot = () => {
     if (!canAddMore) return;
     updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyNot()] }));
@@ -565,9 +560,6 @@ function GroupEditor({
             </button>
             <button type="button" onClick={addCrossover} className="text-xs px-2 py-1 rounded bg-white border border-zinc-300 hover:bg-zinc-100">
               {t.addCrossover}
-            </button>
-            <button type="button" onClick={addCrossunder} className="text-xs px-2 py-1 rounded bg-white border border-zinc-300 hover:bg-zinc-100">
-              {t.addCrossunder}
             </button>
             <button type="button" onClick={addNot} className="text-xs px-2 py-1 rounded bg-amber-100 border border-amber-300 hover:bg-amber-200 text-amber-900">
               {t.addNot}

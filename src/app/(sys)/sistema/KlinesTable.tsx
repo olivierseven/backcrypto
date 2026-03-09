@@ -595,14 +595,14 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               if (config.appliedStrategyIds !== undefined) replaceAppliedStrategyIdsFromLayout(config.appliedStrategyIds);
             }}
           />
+          {lastUpdate && (
+            <div className="w-full text-center mt-1 pb-0.5">
+              <span className="text-[10px] text-zinc-500">
+                {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
+              </span>
+            </div>
+          )}
         </div>
-        {lastUpdate && (
-          <div className="text-left mt-1">
-            <span className="text-[10px] text-zinc-500">
-              {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
-            </span>
-          </div>
-        )}
       {showKlinesTable && (
       <div className="min-h-0 overflow-auto rounded-lg border border-zinc-200 bg-white">
         <table className="w-full text-sm">
