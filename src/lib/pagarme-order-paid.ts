@@ -1,6 +1,6 @@
-// Lógica de order.paid do webhook Pagar.me (Bio) — extraída para poder ser importada por outras rotas
+// Lógica de order.paid do webhook Pagar.me (Crypto) — extraída para poder ser importada por outras rotas
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { CheckoutStatus, TxSource, TxType } from "@/lib/prisma-bio-client";
+import { CheckoutStatus, TxSource, TxType, Tier } from "@/lib/prisma-bio-client";
 import { sendEmail } from "@/lib/mailer";
 import { decryptEmail } from "@/lib/crypto";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
@@ -14,15 +14,15 @@ const EMAIL_LINK_BASE =
     ? "https://sevencoins.com.br"
     : APP_URL);
 
-function getDurationMonthsBio(coins: number): number {
-  if (coins >= 490_000) return 12;
-  if (coins >= 49_000) return 1;
+function getDurationMonthsCrypto(coins: number): number {
+  if (coins >= 49) return 12;
+  if (coins >= 7) return 1;
   return 1;
 }
 
-function computeExpiryBio(coins: number, base: Date): Date {
+function computeExpiryCrypto(coins: number, base: Date): Date {
   const d = new Date(base);
-  const months = getDurationMonthsBio(coins);
+  const months = getDurationMonthsCrypto(coins);
   const day = d.getUTCDate();
   d.setUTCDate(1);
   d.setUTCMonth(d.getUTCMonth() + months);
@@ -35,7 +35,7 @@ function computeExpiryBio(coins: number, base: Date): Date {
 export async function handleOrderPaid(data: any) {
   const orderId = data?.id;
   if (!orderId) {
-    warn(`[pagarme-bio] order.paid missing data.id`);
+    warn(`[pagarme-crypto] order.paid missing data.id`);
     return;
   }
 
@@ -44,7 +44,7 @@ export async function handleOrderPaid(data: any) {
     select: { id: true, userId: true, coinsToCredit: true, amountTotalCents: true },
   });
   if (!bioOrder) {
-    dbg(`[pagarme-bio] order.paid orderId=${orderId} not in Bio DB, skip`);
+    dbg(`[pagarme-crypto] order.paid orderId=${orderId} not in DB, skip`);
     return;
   }
 
@@ -52,13 +52,13 @@ export async function handleOrderPaid(data: any) {
   // Coins: prefer DB (set at order creation). Fallback to metadata; do NOT use data.amount (PIX amount is BRL cents, e.g. 26950).
   let coinsToCredit = (bioOrder.coinsToCredit ?? Number(data?.metadata?.coins)) || 0;
   if (coinsToCredit <= 0) {
-    warn(`[pagarme-bio] order.paid orderId=${orderId} missing coinsToCredit and metadata.coins, defaulting to 49_000`);
-    coinsToCredit = 49_000;
+    warn(`[pagarme-crypto] order.paid orderId=${orderId} missing coinsToCredit and metadata.coins, defaulting to 7`);
+    coinsToCredit = 7;
   }
-  const amountCents = data?.amount ?? (bioOrder.amountTotalCents ?? (coinsToCredit >= 490_000 ? 4900 : 700));
+  const amountCents = data?.amount ?? (bioOrder.amountTotalCents ?? (coinsToCredit >= 49 ? 4900 : 700));
   const completedAt = data?.updated_at ? new Date(data.updated_at) : new Date();
 
-  dbg(`[pagarme-bio] order.paid orderId=${orderId} userId=${userId.slice(0, 8)}... coins=${coinsToCredit}`);
+  dbg(`[pagarme-crypto] order.paid orderId=${orderId} userId=${userId.slice(0, 8)}... coins=${coinsToCredit}`);
 
   await cryptoPrisma.$transaction(async (tx) => {
     await tx.pagarMeOrder.updateMany({
@@ -87,7 +87,7 @@ export async function handleOrderPaid(data: any) {
           source: TxSource.PAGARME,
           amount: coinsToCredit,
           refId: orderId,
-          meta: { orderId, amount_total: amountCents, event: "order.paid", bio: true },
+          meta: { orderId, amount_total: amountCents, event: "order.paid", crypto: true },
           createdAt: completedAt,
         },
         select: { id: true, walletId: true },
@@ -96,10 +96,10 @@ export async function handleOrderPaid(data: any) {
         where: { userId },
         data: { balance: { increment: coinsToCredit } },
       });
-      dbg(`[pagarme-bio] credited +${coinsToCredit} userId=${userId.slice(0, 8)}...`);
+      dbg(`[pagarme-crypto] credited +${coinsToCredit} userId=${userId.slice(0, 8)}...`);
     }
 
-    const expiresAt = computeExpiryBio(coinsToCredit, completedAt);
+    const expiresAt = computeExpiryCrypto(coinsToCredit, completedAt);
     await tx.walletCredit.upsert({
       where: { entryId: entry.id },
       update: {},
@@ -112,6 +112,10 @@ export async function handleOrderPaid(data: any) {
         createdAt: completedAt,
       },
       select: { id: true },
+    });
+    await tx.user.updateMany({
+      where: { id: userId },
+      data: { tier: Tier.lite },
     });
   });
 
@@ -171,10 +175,10 @@ export async function handleOrderPaid(data: any) {
             </div>
           `,
       });
-      dbg(`[pagarme-bio] receipt email OK to=${receiptTo} orderId=${orderId} lang=${lang}`);
+      dbg(`[pagarme-crypto] receipt email OK to=${receiptTo} orderId=${orderId} lang=${lang}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      warn(`[pagarme-bio] receipt email ERROR to=${receiptTo} orderId=${orderId} msg=${msg}`);
+      warn(`[pagarme-crypto] receipt email ERROR to=${receiptTo} orderId=${orderId} msg=${msg}`);
     }
   }
 }

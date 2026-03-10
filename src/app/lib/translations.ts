@@ -134,6 +134,7 @@ export const cryptoTranslations = {
     plans: {
       title: "Buy coins",
       balanceLimitReached: "You already have the maximum limit of coins. Cannot purchase more.",
+      alreadyHasActivePlan: "You already have active credits. Use them or wait until they expire before purchasing again.",
       back: "Back",
       choosePlan: "Choose a plan. Terms and Privacy Policy links will be available soon.",
       iAgree: "I have read and agree to the",
@@ -1082,6 +1083,7 @@ export const cryptoTranslations = {
     plans: {
       title: "Comprar coins",
       balanceLimitReached: "Você já possui o limite máximo de coins. Não é possível comprar mais.",
+      alreadyHasActivePlan: "Você já possui créditos ativos. Use-os ou aguarde o vencimento antes de comprar novamente.",
       back: "Voltar",
       choosePlan: "Escolha um plano. Os links de Termos e Política de Privacidade serão disponibilizados em breve.",
       iAgree: "Eu li e concordo com os",

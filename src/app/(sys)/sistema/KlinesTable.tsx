@@ -784,7 +784,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
               if (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) replaceUserIndicatorsFromLayout(config.userIndicators);
               if (config.strategies !== undefined) replaceStrategiesFromLayout(config.strategies);
-              if (config.appliedStrategyIds !== undefined) replaceAppliedStrategyIdsFromLayout(config.appliedStrategyIds);
+              // Só restaura appliedStrategyIds do layout quando o layout tem lista não vazia; layout com [] não sobrescreve
+              // o localStorage (evita que "carregar layout" apague as estratégias aplicadas ao abrir a página).
+              if (config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds) && config.appliedStrategyIds.length > 0) {
+                replaceAppliedStrategyIdsFromLayout(config.appliedStrategyIds);
+              }
             }}
           />
           {lastUpdate && (

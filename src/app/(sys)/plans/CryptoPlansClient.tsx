@@ -41,18 +41,18 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
 
   const PLANS: Record<PlanKey, { label: string; coins: number; priceUsd: number; duration: string; img: string; badge?: string }> = {
     "7": {
-      label: `$7 → ${(49_000).toLocaleString(locale)} ${p.coins}`,
-      coins: 49_000,
+      label: "$7",
+      coins: 7,
       priceUsd: 7,
       duration: `${p.validFor} 1 ${p.month}`,
-      img: `${ASSET_PREFIX}/coins/sevencoin_49K.svg`,
+      img: `${ASSET_PREFIX}/coins/sevencoin_007.svg`,
     },
     "49": {
-      label: `$49 → ${(490_000).toLocaleString(locale)} ${p.coins}`,
-      coins: 490_000,
+      label: "$49",
+      coins: 49,
       priceUsd: 49,
       duration: `${p.validFor} 12 ${p.months}`,
-      img: `${ASSET_PREFIX}/coins/sevencoin_490K.svg`,
+      img: `${ASSET_PREFIX}/coins/sevencoin_049.svg`,
       badge: p.badgeRecommended,
     },
   };
@@ -147,7 +147,13 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.url) {
-        setErr(data?.error === "balance_limit_reached" ? p.balanceLimitReached : (data?.message ?? data?.error ?? p.errorCheckout));
+        setErr(
+          data?.error === "balance_limit_reached"
+            ? p.balanceLimitReached
+            : data?.error === "already_has_active_plan"
+              ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
+              : (data?.message ?? data?.error ?? p.errorCheckout)
+        );
         setLoading(null);
         setLoadingMethod(null);
         return;
@@ -179,7 +185,13 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
       setLoadingMethod(null);
 
       if (!res.ok || !data?.orderId) {
-        setErr(data?.error === "balance_limit_reached" ? p.balanceLimitReached : (data?.message ?? data?.error ?? p.errorPix));
+        setErr(
+          data?.error === "balance_limit_reached"
+            ? p.balanceLimitReached
+            : data?.error === "already_has_active_plan"
+              ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
+              : (data?.message ?? data?.error ?? p.errorPix)
+        );
         return;
       }
       setPixOrder({
@@ -189,7 +201,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
         pixCopyPaste: data.pixCopyPaste ?? null,
         amountCents: data.amountCents ?? (plan === "49" ? 26950 : 3850),
         amountUsd: data.amountUsd ?? (plan === "49" ? 49 : 7),
-        coins: data.coins ?? (plan === "49" ? 490_000 : 49_000),
+        coins: data.coins ?? (plan === "49" ? 49 : 7),
         returnTo: fullReturnTo,
       });
     } catch {
@@ -322,7 +334,6 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                         {pixOrder.amountUsd != null && (
                           <> <span className="text-zinc-500">(equiv. a ${pixOrder.amountUsd})</span></>
                         )}
-                        {" "}— {pixOrder.coins.toLocaleString(locale)} {p.coins}
                       </p>
                       <div className="flex flex-col gap-4">
                         {(pixOrder.qrCodeUrl || pixOrder.qrCode) && (
@@ -397,7 +408,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                               <div className="relative">
                                 <Image
                                   src={plan.img}
-                                  alt={`${plan.coins} coins`}
+                                  alt={plan.label}
                                   width={72}
                                   height={72}
                                   className="rounded-xl"

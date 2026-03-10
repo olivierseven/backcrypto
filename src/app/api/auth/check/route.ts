@@ -1,8 +1,10 @@
-// GET /api/auth/check — verifica sessão (cookie JWT) e devolve role/tier do usuário no banco Bio. Para debug admin.
+// GET /api/auth/check — verifica sessão (cookie JWT) e devolve role/tier do usuário no banco Bio.
+// Sincroniza tier a partir dos créditos ativos (se todos expirados → free). Para debug admin.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
+import { syncUserTierFromCredits } from "@/lib/user-tier";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,14 +31,15 @@ export async function GET() {
 
     const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, tier: true },
+      select: { role: true },
     });
+    const tier = await syncUserTierFromCredits(userId);
 
     return NextResponse.json({
       authenticated: true,
       userId,
       role: user?.role ?? "user",
-      tier: user?.tier ?? "free",
+      tier,
     });
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });

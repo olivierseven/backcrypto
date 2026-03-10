@@ -1,4 +1,4 @@
-// POST /api/biogenerator/checkout — cria sessão Stripe Checkout (Bio, variáveis BG_*)
+// POST /api/biogenerator/checkout — cria sessão Stripe Checkout (Crypto)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
@@ -8,6 +8,7 @@ import { CheckoutStatus } from "@/lib/prisma-bio-client";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { dbg, warn, error } from "@/lib/logger";
 import { getBalance } from "@/lib/spend-coins";
+import { hasActiveCredits } from "@/lib/user-tier";
 import { decryptEmail } from "@/lib/crypto";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
@@ -20,25 +21,25 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
 const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
 
-const BG_STRIPE_SECRET = process.env.BG_STRIPE_SECRET_KEY;
-const BG_PRICE_7 = process.env.BG_PRICE_COINS_7;
-const BG_PRICE_49 = process.env.BG_PRICE_COINS_49;
+const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
+const PRICE_7 = process.env.PRICE_COINS_7;
+const PRICE_49 = process.env.PRICE_COINS_49;
 
-// $7 → 49.000 coins | $49 → 490.000 coins (30% desconto)
+// $7 → 7 coins | $49 → 49 coins
 const PLANS = {
-  "7": { priceId: BG_PRICE_7!, coins: 49_000, amountCents: 700 },
-  "49": { priceId: BG_PRICE_49!, coins: 490_000, amountCents: 4900 },
+  "7": { priceId: PRICE_7!, coins: 7, amountCents: 700 },
+  "49": { priceId: PRICE_49!, coins: 49, amountCents: 4900 },
 } as const;
 
 type PlanKey = keyof typeof PLANS;
 
 export async function POST(req: Request) {
-  if (!BG_STRIPE_SECRET || !BG_PRICE_7 || !BG_PRICE_49) {
-    error("[bio/checkout] missing BG_STRIPE_SECRET_KEY or BG_PRICE_COINS_7/49");
+  if (!STRIPE_SECRET || !PRICE_7 || !PRICE_49) {
+    error("[crypto/checkout] missing STRIPE_SECRET_KEY or PRICE_COINS_7/49");
     return NextResponse.json({ error: "checkout_not_configured" }, { status: 503 });
   }
 
-  const { ok } = rateLimit(clientKeyFromRequest(req, "bio-checkout"), 10, 60_000);
+  const { ok } = rateLimit(clientKeyFromRequest(req, "crypto-checkout"), 10, 60_000);
   if (!ok) {
     return NextResponse.json({ error: "too_many_requests" }, { status: 429 });
   }
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
     select: { id: true, emailEnc: true, emailIv: true, emailTag: true },
   });
   if (!user) {
-    warn(`[bio/checkout] user not in Bio DB userId=${userId.slice(0, 8)}...`);
+    warn(`[crypto/checkout] user not in DB userId=${userId.slice(0, 8)}...`);
     return NextResponse.json({ error: "user_not_found" }, { status: 403 });
   }
 
@@ -98,15 +99,23 @@ export async function POST(req: Request) {
     );
   }
 
+  const hasActive = await hasActiveCredits(userId);
+  if (hasActive) {
+    return NextResponse.json(
+      { error: "already_has_active_plan", message: "Você já possui créditos ativos. Use-os ou aguarde o vencimento antes de comprar novamente." },
+      { status: 409 }
+    );
+  }
+
   if (!plan?.priceId) {
-    error(`[bio/checkout] missing priceId for plan ${planKey}`);
+    error(`[crypto/checkout] missing priceId for plan ${planKey}`);
     return NextResponse.json({ error: "missing_price" }, { status: 500 });
   }
 
   let returnTo = typeof body?.returnTo === "string" && body.returnTo.startsWith("/") ? body.returnTo : `${BASE_PATH}/sistema`;
   const fullReturnTo = returnTo.startsWith(BASE_PATH) ? returnTo : `${BASE_PATH}${returnTo}`;
 
-  const stripe = new Stripe(BG_STRIPE_SECRET);
+  const stripe = new Stripe(STRIPE_SECRET);
 
   try {
     const metadata: Record<string, string> = {
@@ -114,17 +123,20 @@ export async function POST(req: Request) {
       coins: String(plan.coins),
       plan: planKey,
       returnTo: fullReturnTo,
-      bio: "1",
+      crypto: "1",
       taxId: taxId ?? "",
     };
 
+    // Stripe: assinatura recorrente — $7/mês ou $49/ano; crédito a cada invoice.payment_succeeded no webhook
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: "subscription",
       line_items: [{ price: plan.priceId, quantity: 1 }],
       success_url: `${APP_URL}${fullReturnTo}?status=success`,
       cancel_url: `${APP_URL}/crypto/plans?status=cancel`,
       client_reference_id: userId,
-      metadata,
+      subscription_data: {
+        metadata: { userId, coins: String(plan.coins), plan: planKey, crypto: "1" },
+      },
       ...(customerEmail ? { customer_email: customerEmail } : {}),
     });
 
@@ -134,7 +146,7 @@ export async function POST(req: Request) {
         userId,
         amountTotalCents: plan.amountCents,
         coinsToCredit: plan.coins,
-        pricingLabel: planKey === "7" ? "$7→49k" : "$49→490k",
+        pricingLabel: planKey === "7" ? "$7/mês" : "$49/ano",
         currency: "USD",
       },
       create: {
@@ -144,15 +156,15 @@ export async function POST(req: Request) {
         amountTotalCents: plan.amountCents,
         coinsToCredit: plan.coins,
         currency: "USD",
-        pricingLabel: planKey === "7" ? "$7→49k" : "$49→490k",
+        pricingLabel: planKey === "7" ? "$7/mês" : "$49/ano",
       },
     });
 
-    dbg(`[bio/checkout] session created session=${session.id.slice(0, 12)}... plan=${planKey} coins=${plan.coins}`);
+    dbg(`[crypto/checkout] session created session=${session.id.slice(0, 12)}... plan=${planKey} coins=${plan.coins}`);
     return NextResponse.json({ url: session.url });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    error(`[bio/checkout] stripe error: ${msg}`);
+    error(`[crypto/checkout] stripe error: ${msg}`);
     return NextResponse.json({ error: msg || "internal_error" }, { status: 500 });
   }
 }

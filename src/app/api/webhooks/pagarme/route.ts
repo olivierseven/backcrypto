@@ -1,6 +1,5 @@
-// POST /api/biogenerator/webhooks/pagarme — Webhook Pagar.me para Bio (auth: BG_PAGARME_WEBHOOK_*)
-// Crédito de coins e e-mail de recibo só ocorrem quando este webhook é chamado. Em localhost o Pagar.me
-// precisa de URL pública (ex.: ngrok) ou teste em ambiente deployado.
+// POST /api/biogenerator/webhooks/pagarme — Webhook Pagar.me para Crypto (auth: PAGARME_WEBHOOK_*)
+// Crédito de coins e e-mail de recibo quando o webhook é chamado. Em localhost use URL pública (ex.: ngrok) ou teste em deploy.
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { CheckoutStatus } from "@/lib/prisma-bio-client";
@@ -10,8 +9,8 @@ import { dbg, warn, error } from "@/lib/logger";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const BG_WEBHOOK_USER = process.env.BG_PAGARME_WEBHOOK_USER!;
-const BG_WEBHOOK_PASSWORD = process.env.BG_PAGARME_WEBHOOK_PASSWORD!;
+const WEBHOOK_USER = process.env.PAGARME_WEBHOOK_USER!;
+const WEBHOOK_PASSWORD = process.env.PAGARME_WEBHOOK_PASSWORD!;
 
 function parseBasicAuth(authHeader: string | null): { user: string; pass: string } | null {
   if (!authHeader || !authHeader.startsWith("Basic ")) return null;
@@ -33,19 +32,19 @@ async function handleOrderCanceled(data: any) {
     where: { id: orderId, status: CheckoutStatus.CREATED },
     data: { status: CheckoutStatus.CANCELED },
   });
-  if (updated.count > 0) dbg(`[pagarme-bio] order.canceled orderId=${orderId}`);
+  if (updated.count > 0) dbg(`[pagarme-crypto] order.canceled orderId=${orderId}`);
 }
 
 export async function POST(req: Request) {
   const auth = parseBasicAuth(req.headers.get("authorization"));
   if (
-    !BG_WEBHOOK_USER ||
-    !BG_WEBHOOK_PASSWORD ||
+    !WEBHOOK_USER ||
+    !WEBHOOK_PASSWORD ||
     !auth ||
-    auth.user !== BG_WEBHOOK_USER ||
-    auth.pass !== BG_WEBHOOK_PASSWORD
+    auth.user !== WEBHOOK_USER ||
+    auth.pass !== WEBHOOK_PASSWORD
   ) {
-    warn(`[pagarme-bio] webhook auth failed`);
+    warn(`[pagarme-crypto] webhook auth failed`);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -59,7 +58,7 @@ export async function POST(req: Request) {
   const eventType = body?.type ?? body?.event ?? "";
   const data = body?.data ?? body;
 
-  dbg(`[pagarme-bio] webhook type=${eventType} id=${body?.id ?? "-"}`);
+  dbg(`[pagarme-crypto] webhook type=${eventType} id=${body?.id ?? "-"}`);
 
   try {
     switch (eventType) {
@@ -70,15 +69,15 @@ export async function POST(req: Request) {
         await handleOrderCanceled(data);
         break;
       case "order.payment_failed":
-        dbg(`[pagarme-bio] order.payment_failed orderId=${data?.id ?? "-"}`);
+        dbg(`[pagarme-crypto] order.payment_failed orderId=${data?.id ?? "-"}`);
         break;
       default:
-        dbg(`[pagarme-bio] unhandled event type=${eventType}`);
+        dbg(`[pagarme-crypto] unhandled event type=${eventType}`);
     }
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    error(`[pagarme-bio] webhook error type=${eventType} ${msg}`);
+    error(`[pagarme-crypto] webhook error type=${eventType} ${msg}`);
     return NextResponse.json({ error: msg || "internal_error" }, { status: 500 });
   }
 }

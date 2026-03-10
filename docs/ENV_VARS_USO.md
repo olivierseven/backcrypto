@@ -17,14 +17,15 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 | **NODE_ENV** | `api/auth/login/route.ts`, `api/simulacao/run/route.ts`, `lib/bio-db.ts`, `lib/logger.ts` |
 | **EMAIL_ENC_KEY_B64** | `src/lib/crypto.ts` — criptografia de e-mail |
 | **DEBUG_LOGS** | `src/app/api/simulacao/run/route.ts`, `src/lib/simulacao-genesis.ts` |
-| **BG_STRIPE_SECRET_KEY** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` |
-| **BG_PRICE_COINS_7** | `api/checkout/route.ts` |
-| **BG_PRICE_COINS_49** | `api/checkout/route.ts` |
-| **BG_STRIPE_WEBHOOK_SECRET** | `api/webhooks/stripe/route.ts` |
-| **BG_PAGARME_SECRET_KEY** | `api/checkout-pix/route.ts` |
-| **BG_PAGARME_ACCOUNT_ID** | `api/checkout-pix/route.ts` |
-| **BG_PAGARME_WEBHOOK_USER** | `api/webhooks/pagarme/route.ts` |
-| **BG_PAGARME_WEBHOOK_PASSWORD** | `api/webhooks/pagarme/route.ts` |
+| **STRIPE_SECRET_KEY** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` |
+| **PRICE_COINS_7** | `api/checkout/route.ts` |
+| **PRICE_COINS_49** | `api/checkout/route.ts` |
+| **STRIPE_WEBHOOK_SECRET** | `api/webhooks/stripe/route.ts` |
+| **PAGARME_SECRET_KEY** | `api/checkout-pix/route.ts` |
+| **PAGARME_ACCOUNT_ID** | `api/checkout-pix/route.ts` |
+| **PAGARME_WEBHOOK_USER** | `api/webhooks/pagarme/route.ts` |
+| **PAGARME_WEBHOOK_PASSWORD** | `api/webhooks/pagarme/route.ts` |
+| **PIX_TEST_AMOUNT_BRL_CENTS** | `api/checkout-pix/route.ts` (opcional; override valor teste PIX) |
 | **BG_USD_BRL_CACHE_HOURS** | `src/lib/usd-brl-rate.ts` (opcional) |
 | **BG_USD_TO_BRL_RATE** | `src/lib/usd-brl-rate.ts` (opcional) |
 | **RESEND_API_KEY** | `src/lib/mailer.ts` — envio de e-mail de verificação (cadastro) |
@@ -61,7 +62,6 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 - **ERBI_API_KEY**, **GEMINI_***, **SUMMARIZER_ENGINE**, **NEXT_PUBLIC_ERBI_API_KEY**
 - **CRON_SECRET**
 - **FIREBASE_PROJECT_ID**, **FIREBASE_SERVICE_ACCOUNT_JSON**
-- **PAGARME_SECRET_KEY**, **PAGARME_WEBHOOK_***, **PAGARME_ACCOUNT_ID** (sem prefixo BG_)
 - **BLOB_READ_WRITE_TOKEN**, **NEXT_PUBLIC_NEWS_IMAGES_BASE_URL**
 
 *(Busca feita em `src/`. Variáveis usadas só em scripts, Vercel ou outro app do monoreto podem não constar aqui.)*
@@ -70,6 +70,6 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 
 ## Resumo
 
-- **Obrigatórias para o Bio:** BG_DATABASE_URL, JWT_SECRET, JWT_COOKIE_NAME, EMAIL_ENC_KEY_B64, APP_URL, NEXT_PUBLIC_APP_URL; RESEND_API_KEY (para e-mail de verificação no cadastro); e as BG_STRIPE_* / BG_PAGARME_* se usar Stripe/Pagar.me.
+- **Obrigatórias para o Bio:** BG_DATABASE_URL, JWT_SECRET, JWT_COOKIE_NAME, EMAIL_ENC_KEY_B64, APP_URL, NEXT_PUBLIC_APP_URL; RESEND_API_KEY (para e-mail de verificação no cadastro); e as STRIPE_* / PAGARME_* se usar Stripe/Pagar.me.
 - **Opcionais:** DEBUG_LOGS, BG_USD_BRL_CACHE_HOURS, BG_USD_TO_BRL_RATE, NODE_ENV.
 - **Não usadas neste projeto:** DATABASE_URL e toda a lista "Não usadas" acima (podem ser do app principal Seven Coins ou de outro serviço).
