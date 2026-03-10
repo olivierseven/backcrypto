@@ -6,6 +6,7 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
 import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import SistemaLayoutClient from "@/app/(sys)/sistema/SistemaLayoutClient";
+import ConnectionErrorView from "@/app/(sys)/sistema/ConnectionErrorView";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -32,10 +33,27 @@ export default async function SysLayout({ children }: { children: ReactNode }) {
   const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
   if (!userId) redirect(loginUrl);
 
-  const user = await cryptoPrisma.user.findUnique({
-    where: { id: userId },
-    select: { language: true, hideStatusBar: true, role: true },
-  });
+  let user: { language: string | null; hideStatusBar: boolean | null; role: string | null } | null;
+  try {
+    user = await cryptoPrisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true, hideStatusBar: true, role: true },
+    });
+  } catch (err) {
+    const isConnectionError =
+      err &&
+      typeof err === "object" &&
+      "name" in err &&
+      (err as { name?: string }).name === "PrismaClientKnownRequestError" &&
+      ("code" in err && (err as { code?: string }).code === "P1001" ||
+        "message" in err && typeof (err as { message?: string }).message === "string" &&
+        (err as { message: string }).message.includes("Can't reach database"));
+    if (isConnectionError) {
+      const preferredLang = headersList.get("accept-language")?.toLowerCase().includes("pt") ? "pt" : "en";
+      return <ConnectionErrorView lang={preferredLang} />;
+    }
+    throw err;
+  }
   if (!user) redirect(loginUrl);
 
   const lang = (user.language ?? "en") as "en" | "pt";

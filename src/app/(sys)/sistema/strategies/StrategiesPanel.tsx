@@ -27,7 +27,6 @@ import {
   countConditionLeaves,
   createEmptyGroup,
   createEmptyCondition,
-  createEmptyCrossoverCondition,
   createEmptyNot,
   normalizeOffset,
   normalizeBarsAfter,
@@ -518,10 +517,6 @@ function GroupEditor({
     if (!canAddMore) return;
     updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyCondition()] }));
   };
-  const addCrossover = () => {
-    if (!canAddMore) return;
-    updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyCrossoverCondition()] }));
-  };
   const addNot = () => {
     if (!canAddMore) return;
     updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyNot()] }));
@@ -616,9 +611,6 @@ function GroupEditor({
           <>
             <button type="button" onClick={addCondition} className="text-xs px-2 py-1 rounded bg-white border border-zinc-300 hover:bg-zinc-100">
               {t.addCondition}
-            </button>
-            <button type="button" onClick={addCrossover} className="text-xs px-2 py-1 rounded bg-white border border-zinc-300 hover:bg-zinc-100">
-              {t.addCrossover}
             </button>
             <button type="button" onClick={addNot} className="text-xs px-2 py-1 rounded bg-amber-100 border border-amber-300 hover:bg-amber-200 text-amber-900">
               {t.addNot}
