@@ -134,16 +134,27 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
       .finally(() => setPoliciesLoading(false));
   }, [accepted, policiesTab, policiesCache.terms, policiesCache.privacy, policiesCache["refund-policy"], policiesCache.contato, lang]);
 
-  async function beginCheckout(plan: PlanKey, taxId?: string) {
+  async function beginCheckout(plan: PlanKey, taxId?: string, cpfForCard?: string) {
     if (!accepted || loading || !canPurchase) return;
     setErr(null);
     setLoading(plan);
     setLoadingMethod("card");
     try {
+      const payload: { plan: PlanKey; returnTo: string; taxId?: string; cpf?: string } = {
+        plan,
+        returnTo: next,
+        taxId: taxId?.trim() || undefined,
+      };
+      if (lang === "pt" && cpfForCard?.trim()) {
+        const digits = cpfForCard.replace(/\D/g, "").slice(0, 11);
+        if (digits.length === 11) payload.cpf = digits;
+      } else if (taxId?.trim()) {
+        payload.taxId = taxId.trim();
+      }
       const res = await fetch(`${API_BASE}/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, returnTo: next, taxId: taxId?.trim() || undefined }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.url) {
@@ -152,7 +163,9 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
             ? p.balanceLimitReached
             : data?.error === "already_has_active_plan"
               ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
-              : (data?.message ?? data?.error ?? p.errorCheckout)
+              : data?.error === "cpf_required"
+                ? (data?.message ?? (p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice)
+                : (data?.message ?? data?.error ?? p.errorCheckout)
         );
         setLoading(null);
         setLoadingMethod(null);
@@ -508,72 +521,151 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                                   </div>
                                 </>
                               ) : cardTaxIdPlan === planKey ? (
-                                <>
-                                  <label className="block text-xs font-medium text-neutral-700">{p.taxIdForCard}</label>
-                                  <input
-                                    type="text"
-                                    inputMode="text"
-                                    autoComplete="off"
-                                    placeholder={p.taxIdPlaceholder}
-                                    value={cardTaxId}
-                                    onChange={(e) => {
-                                      setCardTaxId(e.target.value.slice(0, 30));
-                                      setCardTaxIdError(null);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        const v = cardTaxId.trim();
-                                        if (v.length > 0 && v.length < 3) {
-                                          setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
-                                          return;
-                                        }
-                                        beginCheckout(planKey, v || undefined);
-                                      }
-                                    }}
-                                    className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                  />
-                                  {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
-                                  <div className="flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const v = cardTaxId.trim();
-                                        if (v.length > 0 && v.length < 3) {
-                                          setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
-                                          return;
-                                        }
+                                lang === "pt" ? (
+                                  <>
+                                    <label className="block text-xs font-medium text-neutral-700">{p.cpfForInvoice}</label>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      autoComplete="off"
+                                      placeholder={p.cpfPlaceholder}
+                                      value={cpf}
+                                      onChange={(e) => {
+                                        setCpf(e.target.value.replace(/\D/g, "").slice(0, 11));
                                         setCardTaxIdError(null);
-                                        beginCheckout(planKey, v || undefined);
                                       }}
-                                      disabled={!accepted || anyLoading || !canPurchase}
-                                      className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                    >
-                                      {isLoadingCard ? (
-                                        <>
-                                          <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                          </svg>
-                                          {p.processing}
-                                        </>
-                                      ) : (
-                                        <>{p.payWithCard}</>
-                                      )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
-                                      className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
-                                      aria-label={p.back}
-                                    >
-                                      <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                  <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
-                                </>
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          const v = cpf.trim().replace(/\D/g, "");
+                                          if (v.length === 0) {
+                                            setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
+                                            return;
+                                          }
+                                          const err = validateCpfForPix(cpf, p);
+                                          if (err) {
+                                            setCardTaxIdError(err);
+                                            return;
+                                          }
+                                          beginCheckout(planKey, undefined, v);
+                                        }
+                                      }}
+                                      className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    />
+                                    {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
+                                    <div className="flex flex-wrap gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const v = cpf.trim().replace(/\D/g, "");
+                                          if (v.length === 0) {
+                                            setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
+                                            return;
+                                          }
+                                          const err = validateCpfForPix(cpf, p);
+                                          if (err) {
+                                            setCardTaxIdError(err);
+                                            return;
+                                          }
+                                          setCardTaxIdError(null);
+                                          beginCheckout(planKey, undefined, v);
+                                        }}
+                                        disabled={!accepted || anyLoading || !canPurchase}
+                                        className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        {isLoadingCard ? (
+                                          <>
+                                            <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                              <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                            </svg>
+                                            {p.processing}
+                                          </>
+                                        ) : (
+                                          <>{p.payWithCard}</>
+                                        )}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
+                                        className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
+                                        aria-label={p.back}
+                                      >
+                                        <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                          <path d="M19 12H5M12 19l-7-7 7-7" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <label className="block text-xs font-medium text-neutral-700">{p.taxIdForCard}</label>
+                                    <input
+                                      type="text"
+                                      inputMode="text"
+                                      autoComplete="off"
+                                      placeholder={p.taxIdPlaceholder}
+                                      value={cardTaxId}
+                                      onChange={(e) => {
+                                        setCardTaxId(e.target.value.slice(0, 30));
+                                        setCardTaxIdError(null);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          const v = cardTaxId.trim();
+                                          if (v.length > 0 && v.length < 3) {
+                                            setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
+                                            return;
+                                          }
+                                          beginCheckout(planKey, v || undefined);
+                                        }
+                                      }}
+                                      className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    />
+                                    {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
+                                    <div className="flex flex-wrap gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const v = cardTaxId.trim();
+                                          if (v.length > 0 && v.length < 3) {
+                                            setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
+                                            return;
+                                          }
+                                          setCardTaxIdError(null);
+                                          beginCheckout(planKey, v || undefined);
+                                        }}
+                                        disabled={!accepted || anyLoading || !canPurchase}
+                                        className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                                      >
+                                        {isLoadingCard ? (
+                                          <>
+                                            <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                              <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                            </svg>
+                                            {p.processing}
+                                          </>
+                                        ) : (
+                                          <>{p.payWithCard}</>
+                                        )}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
+                                        className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
+                                        aria-label={p.back}
+                                      >
+                                        <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                          <path d="M19 12H5M12 19l-7-7 7-7" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                    <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                                  </>
+                                )
                               ) : (
                                 <>
                                   <div className="flex flex-wrap gap-2">

@@ -33,6 +33,24 @@ const PLANS = {
 
 type PlanKey = keyof typeof PLANS;
 
+/** Valida CPF pelos dígitos verificadores (mesmo critério do PIX/Pagar.me). */
+function isValidCpf(digits: string): boolean {
+  if (typeof digits !== "string" || digits.length !== 11) return false;
+  const d = digits.split("").map(Number);
+  if (d.some((n) => !Number.isFinite(n))) return false;
+  if (new Set(d).size === 1) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += d[i]! * (10 - i);
+  let first = (sum * 10) % 11;
+  if (first === 10) first = 0;
+  if (first !== d[9]) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += d[i]! * (11 - i);
+  let second = (sum * 10) % 11;
+  if (second === 10) second = 0;
+  return second === d[10];
+}
+
 export async function POST(req: Request) {
   if (!STRIPE_SECRET || !PRICE_7 || !PRICE_49) {
     error("[crypto/checkout] missing STRIPE_SECRET_KEY or PRICE_COINS_7/49");
@@ -65,7 +83,7 @@ export async function POST(req: Request) {
 
   const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, emailEnc: true, emailIv: true, emailTag: true },
+    select: { id: true, language: true, emailEnc: true, emailIv: true, emailTag: true },
   });
   if (!user) {
     warn(`[crypto/checkout] user not in DB userId=${userId.slice(0, 8)}...`);
@@ -79,7 +97,7 @@ export async function POST(req: Request) {
     // ignora se não conseguir descriptografar
   }
 
-  let body: { plan?: string; returnTo?: string; taxId?: string } = {};
+  let body: { plan?: string; returnTo?: string; taxId?: string; cpf?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -89,6 +107,23 @@ export async function POST(req: Request) {
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
   const taxIdRaw = typeof body?.taxId === "string" ? body.taxId.trim().slice(0, 30) : "";
   const taxId = taxIdRaw.length >= 3 ? taxIdRaw : null;
+  const cpfRaw = typeof body?.cpf === "string" ? body.cpf.replace(/\D/g, "").slice(0, 11) : "";
+  let userCpf = cpfRaw.length === 11 && isValidCpf(cpfRaw) ? cpfRaw : "";
+  // Em modo en: se taxId for um CPF válido (11 dígitos), incluir em user_cpf
+  if (!userCpf && taxIdRaw) {
+    const taxIdDigits = taxIdRaw.replace(/\D/g, "").slice(0, 11);
+    if (taxIdDigits.length === 11 && isValidCpf(taxIdDigits)) userCpf = taxIdDigits;
+  }
+  const userLang = user.language?.toLowerCase();
+  const requireCpfForPt = userLang === "pt" || userLang === "pt-br";
+
+  if (requireCpfForPt && !userCpf) {
+    return NextResponse.json(
+      { error: "cpf_required", message: "Para pagamento com cartão, informe o CPF." },
+      { status: 400 }
+    );
+  }
+
   const plan = PLANS[planKey];
 
   const balance = await getBalance(userId);
@@ -117,14 +152,19 @@ export async function POST(req: Request) {
 
   const stripe = new Stripe(STRIPE_SECRET);
 
+  const productName =
+    process.env.NODE_ENV === "production" ? "Crypto Strategy Coins" : "Crypto Strategy Coins Test";
+
   try {
     const metadata: Record<string, string> = {
+      product_name: productName,
       userId,
       coins: String(plan.coins),
       plan: planKey,
       returnTo: fullReturnTo,
       crypto: "1",
       taxId: taxId ?? "",
+      user_cpf: userCpf,
     };
 
     // Stripe: assinatura recorrente — $7/mês ou $49/ano; crédito a cada invoice.payment_succeeded no webhook
