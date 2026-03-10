@@ -7,7 +7,6 @@ import { normalizeEmail, emailSearchHash, decryptEmail } from "@/lib/crypto";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { dbg, warn, error, log as vLog } from "@/lib/logger";
-import { isFirstLoginCrypto, createCryptoWelcomePackage } from "@/lib/crypto-bonus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -154,22 +153,6 @@ export async function POST(req: Request) {
       rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : DEFAULT_NEXT;
 
     vLog(`[auth/login] success redirect=${safeNext}`);
-
-    try {
-      const isFirstBio = await isFirstLoginBio(user.id);
-      if (isFirstCrypto) {
-        dbg(`[auth/login] Bio first login, creating welcome package: userId=${user.id.slice(0, 8)}...`);
-        const result = await createCryptoWelcomePackage(user.id);
-        if (result?.success) {
-          vLog(`[auth/login] Bio welcome package created: userId=${user.id.slice(0, 8)}... coins=${result.coins}`);
-        } else {
-          warn(`[auth/login] Bio welcome package failed: userId=${user.id.slice(0, 8)}... error=${result?.error ?? "unknown"}`);
-        }
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      warn(`[auth/login] Bio welcome package error: userId=${user.id.slice(0, 8)}... error=${msg}`);
-    }
 
     const res = redirect(safeNext, req);
     const maxAge = 24 * 60 * 60;

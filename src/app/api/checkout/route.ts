@@ -134,6 +134,7 @@ export async function POST(req: Request) {
       success_url: `${APP_URL}${fullReturnTo}?status=success`,
       cancel_url: `${APP_URL}/crypto/plans?status=cancel`,
       client_reference_id: userId,
+      metadata,
       subscription_data: {
         metadata: { userId, coins: String(plan.coins), plan: planKey, crypto: "1" },
       },

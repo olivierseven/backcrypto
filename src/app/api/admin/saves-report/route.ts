@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get(COOKIE)?.value;
     if (!token) {
-      warn("[bio/admin/saves-report] unauthorized: no token");
+      warn("[crypto/admin/saves-report] unauthorized: no token");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const adminId = typeof payload?.sub === "string" ? payload.sub : "";
     if (!adminId) {
-      warn("[bio/admin/saves-report] unauthorized: invalid payload");
+      warn("[crypto/admin/saves-report] unauthorized: invalid payload");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       select: { role: true },
     });
     if (!adminUser || adminUser.role !== "admin") {
-      warn(`[bio/admin/saves-report] forbidden: userId=${adminId.slice(0, 8)}...`);
+      warn(`[crypto/admin/saves-report] forbidden: userId=${adminId.slice(0, 8)}...`);
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 

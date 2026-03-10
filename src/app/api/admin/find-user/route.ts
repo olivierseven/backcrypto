@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const token = request.cookies.get(COOKIE)?.value;
 
     if (!token) {
-      warn("[bio/admin/find-user] unauthorized: no token");
+      warn("[crypto/admin/find-user] unauthorized: no token");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const adminId = typeof payload?.sub === "string" ? payload.sub : "";
 
     if (!adminId) {
-      warn("[bio/admin/find-user] unauthorized: invalid payload");
+      warn("[crypto/admin/find-user] unauthorized: invalid payload");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!adminUser || adminUser.role !== "admin") {
-      warn(`[bio/admin/find-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
+      warn(`[crypto/admin/find-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 

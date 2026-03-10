@@ -1,6 +1,24 @@
+import Stripe from "stripe";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import ExpandableCreditsList from "@/app/components/ExpandableCreditsList";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
+
+const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
+
+async function getCancelledSubscriptionIds(subscriptionIds: string[]): Promise<Set<string>> {
+  const cancelled = new Set<string>();
+  if (!STRIPE_SECRET || subscriptionIds.length === 0) return cancelled;
+  const stripe = new Stripe(STRIPE_SECRET);
+  for (const subId of subscriptionIds) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(subId);
+      if (sub.cancel_at_period_end) cancelled.add(subId);
+    } catch {
+      // ignore
+    }
+  }
+  return cancelled;
+}
 
 export default async function CryptoActiveCredits({ userId, lang = "pt" }: { userId: string; lang?: CryptoLang }) {
   const t = getCryptoT(lang);
@@ -16,20 +34,43 @@ export default async function CryptoActiveCredits({ userId, lang = "pt" }: { use
 
   const rows = await cryptoPrisma.walletCredit.findMany({
     where: { userId, expiresAt: { gt: now } },
-    select: { id: true, amount: true, consumed: true, expiresAt: true, createdAt: true },
+    select: {
+      id: true,
+      amount: true,
+      consumed: true,
+      expiresAt: true,
+      createdAt: true,
+      entry: { select: { meta: true } },
+    },
     orderBy: [{ expiresAt: "asc" }, { createdAt: "asc" }],
   });
 
-  const credits = rows
-    .map((c) => ({
-      id: c.id,
-      amount: c.amount,
-      consumed: c.consumed,
-      remaining: Math.max(0, c.amount - c.consumed),
-      expiresAt: c.expiresAt,
-      createdAt: c.createdAt,
-    }))
+  const withSub = rows
+    .map((c) => {
+      const meta = c.entry?.meta as { subscriptionId?: string; recurring?: boolean } | null;
+      const subscriptionId = meta?.subscriptionId && meta?.recurring ? meta.subscriptionId : null;
+      const packageLabel =
+        c.amount === 7 ? t.historico.credits.packageMonthly.replace("{valor}", "7") : c.amount === 49 ? t.historico.credits.packageAnnual.replace("{valor}", "49") : `${t.historico.credits.package} ${c.amount}`;
+      return {
+        id: c.id,
+        amount: c.amount,
+        consumed: c.consumed,
+        remaining: Math.max(0, c.amount - c.consumed),
+        expiresAt: c.expiresAt,
+        createdAt: c.createdAt,
+        packageLabel,
+        subscriptionId,
+      };
+    })
     .filter((c) => c.remaining > 0);
+
+  const uniqueSubIds = [...new Set(withSub.map((c) => c.subscriptionId).filter(Boolean))] as string[];
+  const cancelledIds = await getCancelledSubscriptionIds(uniqueSubIds);
+
+  const credits = withSub.map((c) => ({
+    ...c,
+    subscriptionCancelled: c.subscriptionId ? cancelledIds.has(c.subscriptionId) : false,
+  }));
 
   if (credits.length === 0) return null;
 
@@ -82,6 +123,13 @@ export default async function CryptoActiveCredits({ userId, lang = "pt" }: { use
             seeLess: c.seeLess,
             seeAll: c.seeAll,
             remainingPct: c.remainingPct,
+            cancelPlan: c.cancelPlan,
+            cancelPlanConfirm: c.cancelPlanConfirm,
+            cancelPlanModalBack: c.cancelPlanModalBack,
+            cancelPlanModalConfirm: c.cancelPlanModalConfirm,
+            renewalCancelled: c.renewalCancelled,
+            cancelPlanSuccess: c.cancelPlanSuccess,
+            cancelPlanError: c.cancelPlanError,
           }}
           locale={locale}
         />

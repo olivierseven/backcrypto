@@ -46,6 +46,8 @@ export default function BioContaClient({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showActiveSubscriptionModal, setShowActiveSubscriptionModal] = useState(false);
+  const [checkingDeactivate, setCheckingDeactivate] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
   const [hideStatusBar, setHideStatusBar] = useState(initialHideStatusBar);
   const [language, setLanguage] = useState<"en" | "pt">(initialLanguage);
@@ -181,7 +183,8 @@ export default function BioContaClient({
       const res = await fetch(`${API_PREFIX}/deactivate`, { method: "POST", headers: { "Content-Type": "application/json" } });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || t.conta.errorDeactivate);
+        const message = data.error === "active_subscription" ? t.conta.deactivateActiveSubscription : (data.error || t.conta.errorDeactivate);
+        throw new Error(message);
       }
       setShowDeactivateModal(false);
       setMessage({ type: "success", text: t.conta.deactivatedSuccess });
@@ -347,12 +350,49 @@ export default function BioContaClient({
       <div className="card-crypto-generator crypto-card">
         <h2 className="text-base font-semibold text-zinc-900 mb-3">{t.conta.deactivateSection}</h2>
         <p className="text-sm text-zinc-700 mb-4">{t.conta.deactivateDesc}</p>
-        <button onClick={() => setShowDeactivateModal(true)} className="crypto-btn crypto-btn-top-spaced rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-2">
-          {t.conta.deactivateAccount}
+        <button
+          onClick={async () => {
+            if (checkingDeactivate) return;
+            setCheckingDeactivate(true);
+            setMessage(null);
+            try {
+              const res = await fetch(`${API_PREFIX}/deactivate`, { method: "GET" });
+              const data = await res.json().catch(() => ({}));
+              if (data.canDeactivate === false && data.reason === "active_subscription") {
+                setShowActiveSubscriptionModal(true);
+              } else {
+                setShowDeactivateModal(true);
+              }
+            } catch {
+              setMessage({ type: "error", text: t.conta.errorDeactivate });
+            } finally {
+              setCheckingDeactivate(false);
+            }
+          }}
+          disabled={checkingDeactivate}
+          className="crypto-btn crypto-btn-top-spaced rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-2 disabled:opacity-50"
+        >
+          {checkingDeactivate ? "…" : t.conta.deactivateAccount}
         </button>
       </div>
 
     </div>
+
+      {showActiveSubscriptionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <p className="text-sm text-zinc-700 mb-4">{t.conta.deactivateActiveSubscription}</p>
+            <div className="flex flex-wrap gap-3 justify-end">
+              <button onClick={() => setShowActiveSubscriptionModal(false)} className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-900 font-medium">
+                {t.conta.understood}
+              </button>
+              <Link href="/historico" onClick={() => setShowActiveSubscriptionModal(false)} className="crypto-btn rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2">
+                {t.conta.goToHistory}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showDeactivateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

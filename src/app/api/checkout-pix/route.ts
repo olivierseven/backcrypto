@@ -21,10 +21,13 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY!;
 const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID;
 const PIX_EXPIRES_IN_SECONDS = 30 * 60;
-/** Override para teste: ex. 100 = R$ 1,00. Quando definido, o plano $7 usa esse valor em centavos em vez da cotação real. */
-const PIX_TEST_AMOUNT_BRL_CENTS = process.env.PIX_TEST_AMOUNT_BRL_CENTS
-  ? Math.max(1, Math.min(50000, parseInt(process.env.PIX_TEST_AMOUNT_BRL_CENTS, 10) || 100))
-  : 0;
+/** Override para teste: ex. 100 = R$ 1,00. Em dev (NODE_ENV !== 'production') usa 100 se não definido; em produção só usa se a variável estiver definida. */
+const PIX_TEST_AMOUNT_BRL_CENTS = (() => {
+  const raw = process.env.PIX_TEST_AMOUNT_BRL_CENTS;
+  const parsed = raw != null && raw !== "" ? Math.max(1, Math.min(50000, parseInt(raw, 10) || 100)) : null;
+  if (parsed != null) return parsed;
+  return process.env.NODE_ENV !== "production" ? 100 : 0;
+})();
 const PIX_CPF_SEM_INFORMAR = "01234567890";
 
 // Crypto: $7 → 7 coins | $49 → 49 coins (valores em USD; PIX converte para BRL na hora)
@@ -122,9 +125,9 @@ export async function POST(req: Request) {
 
   let amountBrlCents: number;
   let usdToBrlForLog: number | undefined;
-  if (PIX_TEST_AMOUNT_BRL_CENTS > 0 && planKey === "7") {
+  if (PIX_TEST_AMOUNT_BRL_CENTS > 0) {
     amountBrlCents = PIX_TEST_AMOUNT_BRL_CENTS;
-    dbg(`[crypto/checkout-pix] using test override amountBrlCents=${amountBrlCents} (plan $7)`);
+    dbg(`[crypto/checkout-pix] using test override amountBrlCents=${amountBrlCents} (plan $${plan.amountUsdCents / 100})`);
   } else {
     const { rate } = await getUsdToBrlRate();
     usdToBrlForLog = rate;

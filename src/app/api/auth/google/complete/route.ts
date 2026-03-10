@@ -26,20 +26,20 @@ export async function GET(req: Request) {
   }
 
   if (!token) {
-    warn("[bio/auth/google/complete] missing token");
+    warn("[crypto/auth/google/complete] missing token");
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 
   const jwt = verifyCompleteToken(token);
   if (!jwt) {
-    warn("[bio/auth/google/complete] invalid or expired token");
+    warn("[crypto/auth/google/complete] invalid or expired token");
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 
   const redirectPath = next.startsWith("/") ? next : DEFAULT_NEXT;
   const ua = req.headers.get("user-agent") || "";
-  vLog(`[bio/auth/google/complete] success redirect=${redirectPath} ua=${ua.slice(0, 60)}...`);
-  dbg(`[bio/auth/google/complete] referer=${req.headers.get("referer") || "(none)"}`);
+  vLog(`[crypto/auth/google/complete] success redirect=${redirectPath} ua=${ua.slice(0, 60)}...`);
+  dbg(`[crypto/auth/google/complete] referer=${req.headers.get("referer") || "(none)"}`);
 
   const r = redirectTo(redirectPath);
 

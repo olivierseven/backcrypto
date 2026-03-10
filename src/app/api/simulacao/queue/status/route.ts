@@ -44,7 +44,7 @@ export async function GET() {
   if (completedIds.length > 0) {
     await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: { in: completedIds } } });
   }
-  dbg(`[bio/queue/status] userId=${userId.slice(0, 8)}... count=${jobs.length} completed=${completedIds.length}`);
+  dbg(`[crypto/queue/status] userId=${userId.slice(0, 8)}... count=${jobs.length} completed=${completedIds.length}`);
   return NextResponse.json({
     jobs: jobs.map((j) => ({
       id: j.id,

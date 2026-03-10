@@ -5,7 +5,6 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { SignJWT, jwtVerify, createRemoteJWKSet } from "jose";
 import { encryptEmail, emailSearchHash, normalizeEmail, decryptEmail } from "@/lib/crypto";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
-import { isFirstLoginCrypto, createCryptoWelcomePackage } from "@/lib/crypto-bonus";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
@@ -56,7 +55,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(target, { status });
   }
 
-  dbg(`[bio/auth/google/callback] code=${code ? "present" : "missing"} state=${stateRaw.slice(0, 8)}...`);
+  dbg(`[crypto/auth/google/callback] code=${code ? "present" : "missing"} state=${stateRaw.slice(0, 8)}...`);
 
   const cookieStore = await cookies();
   const cookieState = cookieStore.get("oauth_state")?.value;
@@ -75,12 +74,12 @@ export async function GET(req: Request) {
   }
 
   if (!code || !signedState || !validatedState) {
-    warn(`[bio/auth/google/callback] invalid state or missing code`);
+    warn(`[crypto/auth/google/callback] invalid state or missing code`);
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 
   if (!CID || !CSECRET) {
-    error("[bio/auth/google/callback] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured");
+    error("[crypto/auth/google/callback] GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not configured");
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 
@@ -100,13 +99,13 @@ export async function GET(req: Request) {
     });
     const tok = await tokenResp.json();
     if (!tokenResp.ok) {
-      error(`[bio/auth/google/callback] token exchange failed status=${tokenResp.status}`);
+      error(`[crypto/auth/google/callback] token exchange failed status=${tokenResp.status}`);
       return redirectTo(`${LOGIN_PAGE}?login=server`);
     }
 
     const idToken = tok.id_token as string;
     if (!idToken) {
-      warn("[bio/auth/google/callback] no id_token in response");
+      warn("[crypto/auth/google/callback] no id_token in response");
       return redirectTo(`${LOGIN_PAGE}?login=server`);
     }
 
@@ -118,19 +117,19 @@ export async function GET(req: Request) {
       });
       payload = result.payload as { email?: string; name?: string; nonce?: string };
     } catch (verifyError) {
-      error(`[bio/auth/google/callback] id_token verification failed`);
+      error(`[crypto/auth/google/callback] id_token verification failed`);
       return redirectTo(`${LOGIN_PAGE}?login=server`);
     }
 
     if (payload.nonce && cookieNonce && payload.nonce !== cookieNonce) {
-      warn("[bio/auth/google/callback] nonce mismatch");
+      warn("[crypto/auth/google/callback] nonce mismatch");
       return redirectTo(`${LOGIN_PAGE}?login=server`);
     }
 
     const emailClaim = String(payload.email || "");
     const emailNorm = normalizeEmail(emailClaim);
     if (!emailNorm) {
-      warn("[bio/auth/google/callback] invalid email claim");
+      warn("[crypto/auth/google/callback] invalid email claim");
       return redirectTo(`${LOGIN_PAGE}?login=server`);
     }
 
@@ -152,10 +151,10 @@ export async function GET(req: Request) {
 
     if (user?.isDeleted) {
       if (user.dataExpiracao && new Date(user.dataExpiracao) < new Date()) {
-        warn("[bio/auth/google/callback] account expired");
+        warn("[crypto/auth/google/callback] account expired");
         return redirectTo(`${LOGIN_PAGE}?login=expired`);
       }
-      warn("[bio/auth/google/callback] account deactivated");
+      warn("[crypto/auth/google/callback] account deactivated");
       return redirectTo(`${LOGIN_PAGE}?login=expired`);
     }
 
@@ -164,7 +163,7 @@ export async function GET(req: Request) {
       const { enc, iv, tag } = encryptEmail(emailNorm);
       const oauthPasswordHash = await bcrypt.hash(`oauth_${emailNorm}_${Date.now()}`, 10);
       const nickname = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      dbg(`[bio/auth/google/callback] creating new user email=${emailNorm.slice(0, 3)}...`);
+      dbg(`[crypto/auth/google/callback] creating new user email=${emailNorm.slice(0, 3)}...`);
       user = await cryptoPrisma.user.create({
         data: {
           name,
@@ -198,18 +197,6 @@ export async function GET(req: Request) {
     const emailPlain = decryptEmail(user.emailEnc, user.emailIv, user.emailTag);
     const role = user.role || "user";
 
-    try {
-      const isFirstCrypto = await isFirstLoginCrypto(user.id);
-      if (isFirstCrypto) {
-        const result = await createCryptoWelcomePackage(user.id);
-        if (result?.success) {
-          vLog(`[bio/auth/google/callback] welcome package created userId=${user.id.slice(0, 8)}... coins=${result.coins}`);
-        }
-      }
-    } catch (err: unknown) {
-      warn(`[bio/auth/google/callback] welcome package error: ${err instanceof Error ? err.message : err}`);
-    }
-
     const jwt = await new SignJWT({
       sub: user.id,
       email: emailPlain,
@@ -235,7 +222,7 @@ export async function GET(req: Request) {
         : `biogenerator://oauth?url=${encodeURIComponent(completeUrl)}&next=${encodeURIComponent(redirectPath)}`;
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${esc(intentUrl)}"></head><body><p>Redirecionando…</p></body></html>`;
-      vLog(`[bio/auth/google/callback] from_app=1 HTML intent (android=${isAndroid}) userId=${user.id.slice(0, 8)}... took=${Date.now() - start}ms`);
+      vLog(`[crypto/auth/google/callback] from_app=1 HTML intent (android=${isAndroid}) userId=${user.id.slice(0, 8)}... took=${Date.now() - start}ms`);
       return new NextResponse(html, {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -257,10 +244,10 @@ export async function GET(req: Request) {
     r.cookies.set("oauth_state", "", { ...baseCookie, maxAge: 0 });
     r.cookies.set("oauth_nonce", "", { ...baseCookie, maxAge: 0 });
 
-    vLog(`[bio/auth/google/callback] success userId=${user.id.slice(0, 8)}... next=${redirectPath} took=${Date.now() - start}ms`);
+    vLog(`[crypto/auth/google/callback] success userId=${user.id.slice(0, 8)}... next=${redirectPath} took=${Date.now() - start}ms`);
     return r;
   } catch (e) {
-    error(`[bio/auth/google/callback] internal error: ${e instanceof Error ? e.message : e}`);
+    error(`[crypto/auth/google/callback] internal error: ${e instanceof Error ? e.message : e}`);
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 }

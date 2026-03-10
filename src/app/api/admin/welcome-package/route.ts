@@ -36,7 +36,7 @@ async function requireAdmin(request: NextRequest): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     const adminId = await requireAdmin(request);
-    dbg(`[bio/admin/welcome-package] admin=${adminId.slice(0, 8)}... creating welcome package`);
+    dbg(`[crypto/admin/welcome-package] admin=${adminId.slice(0, 8)}... creating welcome package`);
 
     const body = await request.json();
     const { userId } = body;
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (msg === "Acesso negado") {
       return NextResponse.json({ error: msg }, { status: 403 });
     }
-    error(`[bio/admin/welcome-package] error: ${msg}`);
+    error(`[crypto/admin/welcome-package] error: ${msg}`);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

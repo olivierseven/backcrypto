@@ -34,6 +34,6 @@ export async function POST() {
   const deleted = await cryptoPrisma.bioSimulationQueue.deleteMany({
     where: { userId },
   });
-  dbg(`[bio/queue/cancel-mine] userId=${userId.slice(0, 8)}... deleted=${deleted.count}`);
+  dbg(`[crypto/queue/cancel-mine] userId=${userId.slice(0, 8)}... deleted=${deleted.count}`);
   return NextResponse.json({ ok: true, deleted: deleted.count });
 }

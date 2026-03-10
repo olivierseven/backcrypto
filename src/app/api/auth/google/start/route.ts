@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   const fromApp = fromAppParam || isMobile;
 
   if (!CID) {
-    dbg("[bio/auth/google/start] GOOGLE_CLIENT_ID not configured");
+    dbg("[crypto/auth/google/start] GOOGLE_CLIENT_ID not configured");
     const origin = getRedirectOrigin(req);
     return NextResponse.redirect(`${origin}${BASE_PATH}/login?login=server`, { status: 303 });
   }
@@ -37,8 +37,8 @@ export async function GET(req: Request) {
   const state = rand(24);
   const nonce = rand(24);
 
-  vLog(`[bio/auth/google/start] next=${next} fromApp=${fromApp} isMobile=${isMobile} ua=${ua.slice(0, 50)}...`);
-  dbg(`[bio/auth/google/start] state=${state.slice(0, 8)}...`);
+  vLog(`[crypto/auth/google/start] next=${next} fromApp=${fromApp} isMobile=${isMobile} ua=${ua.slice(0, 50)}...`);
+  dbg(`[crypto/auth/google/start] state=${state.slice(0, 8)}...`);
 
   const origin = getRedirectOrigin(req);
   const redirectUri = `${origin}${BASE_PATH}/api/auth/google/callback`;
@@ -68,6 +68,6 @@ export async function GET(req: Request) {
   res.cookies.set("oauth_state", state, opts);
   res.cookies.set("oauth_nonce", nonce, opts);
 
-  vLog(`[bio/auth/google/start] success next=${next} took=${Date.now() - start}ms`);
+  vLog(`[crypto/auth/google/start] success next=${next} took=${Date.now() - start}ms`);
   return res;
 }

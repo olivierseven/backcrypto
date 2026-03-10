@@ -5,6 +5,7 @@ import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangCo
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
+import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 
 type ValidateSingleResult = {
   symbol: string;
@@ -28,6 +29,7 @@ export default function SistemaDebugPanel() {
   const { lang: currentLang, setLang } = useCryptoLangContext();
   const t = getCryptoT(lang).sistema.debug;
   const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
+  const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [binanceSpotPrice, setBinanceSpotPrice] = useState<string | null>(null);
@@ -64,10 +66,14 @@ export default function SistemaDebugPanel() {
     return n.toFixed(2);
   }
 
+  /** WebSocket Binance spot no debug — desativado após testes. Alterar para true para reativar. */
+  const DEBUG_BINANCE_SPOT_WS_ENABLED = false;
+
   useEffect(() => {
     if (!open) return;
     const sym = symbol.trim();
     if (!sym) return;
+    if (!DEBUG_BINANCE_SPOT_WS_ENABLED) return;
 
     let alive = true;
     let timer: ReturnType<typeof setInterval> | null = null;
@@ -429,6 +435,11 @@ export default function SistemaDebugPanel() {
             </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
+            <section>
+              <p className="text-sm text-zinc-700">
+                {t.activeIndicators}: <strong>{userIndicators.length}</strong>
+              </p>
+            </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {t.language}

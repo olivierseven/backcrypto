@@ -50,7 +50,7 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
     const coinsCost = COINS_PER_RUN[queueName] ?? 1;
     const balance = await getBalance(row.userId);
     if (balance < coinsCost) {
-      warn(`[bio/queue] insufficient coins id=${row.id} userId=${row.userId.slice(0, 8)}... balance=${balance} need=${coinsCost}`);
+      warn(`[crypto/queue] insufficient coins id=${row.id} userId=${row.userId.slice(0, 8)}... balance=${balance} need=${coinsCost}`);
       await cryptoPrisma.bioSimulationQueue.update({
         where: { id: row.id },
         data: { status: "COMPLETED", result: { error: "insufficient_coins", message: "Saldo insuficiente de coins" } as unknown as object },
@@ -70,7 +70,7 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
           where: { id: row.id },
           data: { status: "COMPLETED", result: result as unknown as object },
         });
-        dbg(`[bio/queue] executed id=${row.id} queue=${queueName} mode=one coins=${actualSteps}`);
+        dbg(`[crypto/queue] executed id=${row.id} queue=${queueName} mode=one coins=${actualSteps}`);
       } else if (payload?.mode === "n" && payload?.N != null && payload.N >= 1) {
         const result = executeSimulationN(payload, null);
         const startIter = payload.currentIteration ?? 0;
@@ -80,13 +80,13 @@ export async function doOneTick(): Promise<{ queueName: string; id: string }[]> 
           where: { id: row.id },
           data: { status: "COMPLETED", result: result as unknown as object },
         });
-        dbg(`[bio/queue] executed id=${row.id} queue=${queueName} N=${payload.N} actualIterations=${actualIterations} coins=${actualIterations}`);
+        dbg(`[crypto/queue] executed id=${row.id} queue=${queueName} N=${payload.N} actualIterations=${actualIterations} coins=${actualIterations}`);
       } else {
-        warn(`[bio/queue] invalid payload mode/N id=${row.id}`);
+        warn(`[crypto/queue] invalid payload mode/N id=${row.id}`);
         await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
       }
     } catch (e) {
-      error(`[bio/queue] run error id=${row.id}: ${e instanceof Error ? e.message : e}`);
+      error(`[crypto/queue] run error id=${row.id}: ${e instanceof Error ? e.message : e}`);
       await cryptoPrisma.bioSimulationQueue.deleteMany({ where: { id: row.id } });
     }
     processed.push({ queueName, id: row.id });

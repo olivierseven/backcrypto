@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Não passa pelo middleware: _next, api, assets/* (toda a pasta public/assets), favicon, icon, manifest, robots
+  // Não passa pelo middleware: _next, api (incl. /api/webhooks/stripe), assets, favicon, icon, manifest, robots
+  // Com basePath /crypto, o path interno é /api/... → o webhook Stripe não deve ser interceptado.
   matcher: ["/((?!_next|api|assets|favicon|icon|manifest|robots).*)"],
 };

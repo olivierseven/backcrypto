@@ -68,6 +68,7 @@ export default async function BioHistoricoPage({
       orderBy: { createdAt: "desc" },
       skip,
       take: PAGE_SIZE,
+      select: { id: true, type: true, source: true, amount: true, createdAt: true, meta: true },
     }),
     cryptoPrisma.userCoinWallet.findUnique({ where: { userId } }),
     cryptoPrisma.user.findUnique({ where: { id: userId }, select: { language: true } }),
@@ -113,6 +114,19 @@ export default async function BioHistoricoPage({
                     </tr>
                   ) : (
                     entries.map((e) => {
+                      const meta = e.meta as { reason?: string; cancelledAt?: string } | null;
+                      const isCancellation = meta?.reason === "subscription_cancelled";
+                      if (isCancellation) {
+                        const cancelDate = meta?.cancelledAt ? fmtDate(new Date(meta.cancelledAt), locale) : fmtDate(e.createdAt, locale);
+                        return (
+                          <tr key={e.id}>
+                            <td className="py-2 text-purple-800">{cancelDate}</td>
+                            <td className="py-2 text-purple-900 font-medium">{t.historico.typeCancellation}</td>
+                            <td className="py-2 text-purple-800">{t.historico.sourceCancellation}</td>
+                            <td className="py-2 text-right text-zinc-600">—</td>
+                          </tr>
+                        );
+                      }
                       const positive = e.amount > 0;
                       const sign = positive ? "+" : "";
                       return (

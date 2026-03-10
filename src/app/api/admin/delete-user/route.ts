@@ -11,7 +11,7 @@ export async function DELETE(request: NextRequest) {
     const token = request.cookies.get(COOKIE)?.value;
 
     if (!token) {
-      warn("[bio/admin/delete-user] unauthorized: no token");
+      warn("[crypto/admin/delete-user] unauthorized: no token");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -19,7 +19,7 @@ export async function DELETE(request: NextRequest) {
     const adminId = typeof payload?.sub === "string" ? payload.sub : "";
 
     if (!adminId) {
-      warn("[bio/admin/delete-user] unauthorized: invalid payload");
+      warn("[crypto/admin/delete-user] unauthorized: invalid payload");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -29,7 +29,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!adminUser || adminUser.role !== "admin") {
-      warn(`[bio/admin/delete-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
+      warn(`[crypto/admin/delete-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
@@ -61,14 +61,14 @@ export async function DELETE(request: NextRequest) {
       where: { id: userId },
     });
 
-    vLog(`[bio/admin/delete-user] user deleted: userId=${userId.slice(0, 8)}... by admin=${adminId.slice(0, 8)}...`);
+    vLog(`[crypto/admin/delete-user] user deleted: userId=${userId.slice(0, 8)}... by admin=${adminId.slice(0, 8)}...`);
 
     return NextResponse.json({
       success: true,
       message: "Usuário deletado com sucesso",
     });
   } catch (err) {
-    error(`[bio/admin/delete-user] error: ${err instanceof Error ? err.message : err}`);
+    error(`[crypto/admin/delete-user] error: ${err instanceof Error ? err.message : err}`);
     return NextResponse.json({ error: "Erro ao deletar usuário" }, { status: 500 });
   }
 }

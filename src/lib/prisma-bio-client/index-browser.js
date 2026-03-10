@@ -267,6 +267,13 @@ exports.Prisma.StripeCheckoutSessionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.SubscriptionCancellationScalarFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  userId: 'userId',
+  cancelledAt: 'cancelledAt'
+};
+
 exports.Prisma.PagarMeOrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -474,6 +481,7 @@ exports.Prisma.ModelName = {
   WalletCredit: 'WalletCredit',
   StripeEvent: 'StripeEvent',
   StripeCheckoutSession: 'StripeCheckoutSession',
+  SubscriptionCancellation: 'SubscriptionCancellation',
   PagarMeOrder: 'PagarMeOrder',
   BioSimulationQueue: 'BioSimulationQueue',
   BioSimulationState: 'BioSimulationState',

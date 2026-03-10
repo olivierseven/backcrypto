@@ -1,7 +1,10 @@
-// POST /api/biogenerator/webhooks/stripe — webhook Stripe para Crypto (STRIPE_WEBHOOK_SECRET)
+// POST /api/webhooks/stripe — webhook Stripe para Crypto (STRIPE_WEBHOOK_SECRET)
 // Eventos: checkout.session.completed (pagamento avulso), checkout.session.expired, invoice.payment_succeeded (assinatura: 7$/mês ou 49$/ano).
 // No Dashboard Stripe → Webhooks → adicione invoice.payment_succeeded ao endpoint.
-// Em localhost: "stripe listen --forward-to localhost:PORT/.../api/webhooks/stripe" e use o signing secret do CLI.
+// URL produção (com basePath): https://<seu-dominio>/crypto/api/webhooks/stripe
+// Se a entrega falhar com 308 "Redirecting...": a URL está sendo redirecionada pela hospedagem (ex.: Vercel Deployment Protection).
+//   Solução: em Vercel → Project Settings → Deployment Protection → desative para o projeto ou adicione exceção para /crypto/api/webhooks/stripe se existir.
+// Em localhost (porta 3004): "stripe listen --forward-to localhost:3004/crypto/api/webhooks/stripe" e use o signing secret do CLI.
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { cryptoPrisma } from "@/lib/crypto-db";
@@ -43,7 +46,14 @@ function computeExpiryMonths(coins: number): number {
 function computeExpiresAt(coins: number, base: Date): Date {
   const months = computeExpiryMonths(coins);
   const d = new Date(base);
+  const dayBefore = d.getUTCDate();
   d.setUTCMonth(d.getUTCMonth() + months);
+  // Se o mês não tem esse dia (ex.: 31/01 + 1 mês → 31 não existe em fev), o JS vira 2/3 de março.
+  // Ajustar para o último dia do mês alvo (ex.: 28 ou 29 de fevereiro).
+  if (d.getUTCDate() !== dayBefore) {
+    d.setUTCMonth(d.getUTCMonth() + 1);
+    d.setUTCDate(0);
+  }
   d.setUTCHours(23, 59, 59, 999);
   return d;
 }
@@ -248,7 +258,25 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
  * creditamos 7 ou 49 coins. Se o usuário cancelar o cartão ou parar de pagar, não há evento → não creditamos.
  */
 async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Invoice): Promise<void> {
-  const subscriptionId = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id;
+  let subscriptionId: string | null = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id ?? null;
+  // API 2025+: subscription pode vir em parent.subscription_details.subscription
+  if (!subscriptionId && invoice.parent && typeof invoice.parent === "object") {
+    const parent = invoice.parent as { subscription_details?: { subscription?: string } };
+    const subFromParent = parent.subscription_details?.subscription;
+    if (typeof subFromParent === "string") subscriptionId = subFromParent;
+  }
+  if (!subscriptionId) {
+    try {
+      const fullInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ["subscription"] });
+      subscriptionId = typeof fullInvoice.subscription === "string" ? fullInvoice.subscription : fullInvoice.subscription?.id ?? null;
+      if (!subscriptionId && (fullInvoice as { parent?: { subscription_details?: { subscription?: string } } }).parent?.subscription_details?.subscription) {
+        subscriptionId = (fullInvoice as { parent: { subscription_details: { subscription: string } } }).parent.subscription_details.subscription;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      dbg(`[crypto/stripe] invoice ${invoice.id} retrieve failed: ${msg}`);
+    }
+  }
   if (!subscriptionId) {
     dbg(`[crypto/stripe] invoice ${invoice.id} has no subscription, skip`);
     return;
@@ -261,7 +289,10 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     return;
   }
 
-  const priceId = invoice.lines?.data?.[0]?.price?.id;
+  const firstLine = invoice.lines?.data?.[0];
+  const priceId =
+    firstLine?.price?.id ??
+    (firstLine as { pricing?: { price_details?: { price?: string } } } | undefined)?.pricing?.price_details?.price;
   let coins = 0;
   if (priceId === PRICE_ID_7) coins = 7;
   else if (priceId === PRICE_ID_49) coins = 49;

@@ -88,10 +88,10 @@ export async function POST(req: Request) {
       },
       select: { id: true, queueName: true, createdAt: true },
     });
-    dbg(`[bio/queue] enqueued id=${row.id} queue=${row.queueName} userId=${userId.slice(0, 8)}...`);
+    dbg(`[crypto/queue] enqueued id=${row.id} queue=${row.queueName} userId=${userId.slice(0, 8)}...`);
     return NextResponse.json({ id: row.id, queueName: row.queueName, createdAt: row.createdAt });
   } catch (e) {
-    error(`[bio/queue] enqueue error: ${e instanceof Error ? e.message : e}`);
+    error(`[crypto/queue] enqueue error: ${e instanceof Error ? e.message : e}`);
     return NextResponse.json({ error: "enqueue_failed" }, { status: 500 });
   }
 }

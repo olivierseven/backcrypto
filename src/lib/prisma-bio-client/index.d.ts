@@ -74,6 +74,11 @@ export type StripeEvent = $Result.DefaultSelection<Prisma.$StripeEventPayload>
  */
 export type StripeCheckoutSession = $Result.DefaultSelection<Prisma.$StripeCheckoutSessionPayload>
 /**
+ * Model SubscriptionCancellation
+ * 
+ */
+export type SubscriptionCancellation = $Result.DefaultSelection<Prisma.$SubscriptionCancellationPayload>
+/**
  * Model PagarMeOrder
  * 
  */
@@ -488,6 +493,16 @@ export class PrismaClient<
     * ```
     */
   get stripeCheckoutSession(): Prisma.StripeCheckoutSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.subscriptionCancellation`: Exposes CRUD operations for the **SubscriptionCancellation** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SubscriptionCancellations
+    * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany()
+    * ```
+    */
+  get subscriptionCancellation(): Prisma.SubscriptionCancellationDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.pagarMeOrder`: Exposes CRUD operations for the **PagarMeOrder** model.
@@ -1021,6 +1036,7 @@ export namespace Prisma {
     WalletCredit: 'WalletCredit',
     StripeEvent: 'StripeEvent',
     StripeCheckoutSession: 'StripeCheckoutSession',
+    SubscriptionCancellation: 'SubscriptionCancellation',
     PagarMeOrder: 'PagarMeOrder',
     BioSimulationQueue: 'BioSimulationQueue',
     BioSimulationState: 'BioSimulationState',
@@ -1047,7 +1063,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "bioSavedConfig" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "bioSimulationQueue" | "bioSimulationState" | "bioAppConfig" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
+      modelProps: "user" | "chartLayout" | "bioSavedConfig" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "subscriptionCancellation" | "pagarMeOrder" | "bioSimulationQueue" | "bioSimulationState" | "bioAppConfig" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1939,6 +1955,80 @@ export namespace Prisma {
           }
         }
       }
+      SubscriptionCancellation: {
+        payload: Prisma.$SubscriptionCancellationPayload<ExtArgs>
+        fields: Prisma.SubscriptionCancellationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SubscriptionCancellationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          findFirst: {
+            args: Prisma.SubscriptionCancellationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          findMany: {
+            args: Prisma.SubscriptionCancellationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
+          }
+          create: {
+            args: Prisma.SubscriptionCancellationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          createMany: {
+            args: Prisma.SubscriptionCancellationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
+          }
+          delete: {
+            args: Prisma.SubscriptionCancellationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          update: {
+            args: Prisma.SubscriptionCancellationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          deleteMany: {
+            args: Prisma.SubscriptionCancellationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SubscriptionCancellationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
+          }
+          upsert: {
+            args: Prisma.SubscriptionCancellationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
+          }
+          aggregate: {
+            args: Prisma.SubscriptionCancellationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSubscriptionCancellation>
+          }
+          groupBy: {
+            args: Prisma.SubscriptionCancellationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SubscriptionCancellationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SubscriptionCancellationCountArgs<ExtArgs>
+            result: $Utils.Optional<SubscriptionCancellationCountAggregateOutputType> | number
+          }
+        }
+      }
       PagarMeOrder: {
         payload: Prisma.$PagarMeOrderPayload<ExtArgs>
         fields: Prisma.PagarMeOrderFieldRefs
@@ -2639,6 +2729,7 @@ export namespace Prisma {
     walletCredit?: WalletCreditOmit
     stripeEvent?: StripeEventOmit
     stripeCheckoutSession?: StripeCheckoutSessionOmit
+    subscriptionCancellation?: SubscriptionCancellationOmit
     pagarMeOrder?: PagarMeOrderOmit
     bioSimulationQueue?: BioSimulationQueueOmit
     bioSimulationState?: BioSimulationStateOmit
@@ -16827,6 +16918,988 @@ export namespace Prisma {
 
 
   /**
+   * Model SubscriptionCancellation
+   */
+
+  export type AggregateSubscriptionCancellation = {
+    _count: SubscriptionCancellationCountAggregateOutputType | null
+    _min: SubscriptionCancellationMinAggregateOutputType | null
+    _max: SubscriptionCancellationMaxAggregateOutputType | null
+  }
+
+  export type SubscriptionCancellationMinAggregateOutputType = {
+    id: string | null
+    subscriptionId: string | null
+    userId: string | null
+    cancelledAt: Date | null
+  }
+
+  export type SubscriptionCancellationMaxAggregateOutputType = {
+    id: string | null
+    subscriptionId: string | null
+    userId: string | null
+    cancelledAt: Date | null
+  }
+
+  export type SubscriptionCancellationCountAggregateOutputType = {
+    id: number
+    subscriptionId: number
+    userId: number
+    cancelledAt: number
+    _all: number
+  }
+
+
+  export type SubscriptionCancellationMinAggregateInputType = {
+    id?: true
+    subscriptionId?: true
+    userId?: true
+    cancelledAt?: true
+  }
+
+  export type SubscriptionCancellationMaxAggregateInputType = {
+    id?: true
+    subscriptionId?: true
+    userId?: true
+    cancelledAt?: true
+  }
+
+  export type SubscriptionCancellationCountAggregateInputType = {
+    id?: true
+    subscriptionId?: true
+    userId?: true
+    cancelledAt?: true
+    _all?: true
+  }
+
+  export type SubscriptionCancellationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SubscriptionCancellation to aggregate.
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SubscriptionCancellations to fetch.
+     */
+    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SubscriptionCancellationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SubscriptionCancellations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SubscriptionCancellations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SubscriptionCancellations
+    **/
+    _count?: true | SubscriptionCancellationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SubscriptionCancellationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SubscriptionCancellationMaxAggregateInputType
+  }
+
+  export type GetSubscriptionCancellationAggregateType<T extends SubscriptionCancellationAggregateArgs> = {
+        [P in keyof T & keyof AggregateSubscriptionCancellation]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSubscriptionCancellation[P]>
+      : GetScalarType<T[P], AggregateSubscriptionCancellation[P]>
+  }
+
+
+
+
+  export type SubscriptionCancellationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SubscriptionCancellationWhereInput
+    orderBy?: SubscriptionCancellationOrderByWithAggregationInput | SubscriptionCancellationOrderByWithAggregationInput[]
+    by: SubscriptionCancellationScalarFieldEnum[] | SubscriptionCancellationScalarFieldEnum
+    having?: SubscriptionCancellationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SubscriptionCancellationCountAggregateInputType | true
+    _min?: SubscriptionCancellationMinAggregateInputType
+    _max?: SubscriptionCancellationMaxAggregateInputType
+  }
+
+  export type SubscriptionCancellationGroupByOutputType = {
+    id: string
+    subscriptionId: string
+    userId: string
+    cancelledAt: Date
+    _count: SubscriptionCancellationCountAggregateOutputType | null
+    _min: SubscriptionCancellationMinAggregateOutputType | null
+    _max: SubscriptionCancellationMaxAggregateOutputType | null
+  }
+
+  type GetSubscriptionCancellationGroupByPayload<T extends SubscriptionCancellationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SubscriptionCancellationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SubscriptionCancellationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SubscriptionCancellationGroupByOutputType[P]>
+            : GetScalarType<T[P], SubscriptionCancellationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SubscriptionCancellationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    subscriptionId?: boolean
+    userId?: boolean
+    cancelledAt?: boolean
+  }, ExtArgs["result"]["subscriptionCancellation"]>
+
+  export type SubscriptionCancellationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    subscriptionId?: boolean
+    userId?: boolean
+    cancelledAt?: boolean
+  }, ExtArgs["result"]["subscriptionCancellation"]>
+
+  export type SubscriptionCancellationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    subscriptionId?: boolean
+    userId?: boolean
+    cancelledAt?: boolean
+  }, ExtArgs["result"]["subscriptionCancellation"]>
+
+  export type SubscriptionCancellationSelectScalar = {
+    id?: boolean
+    subscriptionId?: boolean
+    userId?: boolean
+    cancelledAt?: boolean
+  }
+
+  export type SubscriptionCancellationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "subscriptionId" | "userId" | "cancelledAt", ExtArgs["result"]["subscriptionCancellation"]>
+
+  export type $SubscriptionCancellationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SubscriptionCancellation"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      subscriptionId: string
+      userId: string
+      cancelledAt: Date
+    }, ExtArgs["result"]["subscriptionCancellation"]>
+    composites: {}
+  }
+
+  type SubscriptionCancellationGetPayload<S extends boolean | null | undefined | SubscriptionCancellationDefaultArgs> = $Result.GetResult<Prisma.$SubscriptionCancellationPayload, S>
+
+  type SubscriptionCancellationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SubscriptionCancellationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SubscriptionCancellationCountAggregateInputType | true
+    }
+
+  export interface SubscriptionCancellationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SubscriptionCancellation'], meta: { name: 'SubscriptionCancellation' } }
+    /**
+     * Find zero or one SubscriptionCancellation that matches the filter.
+     * @param {SubscriptionCancellationFindUniqueArgs} args - Arguments to find a SubscriptionCancellation
+     * @example
+     * // Get one SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SubscriptionCancellationFindUniqueArgs>(args: SelectSubset<T, SubscriptionCancellationFindUniqueArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SubscriptionCancellation that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SubscriptionCancellationFindUniqueOrThrowArgs} args - Arguments to find a SubscriptionCancellation
+     * @example
+     * // Get one SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SubscriptionCancellationFindUniqueOrThrowArgs>(args: SelectSubset<T, SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SubscriptionCancellation that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationFindFirstArgs} args - Arguments to find a SubscriptionCancellation
+     * @example
+     * // Get one SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SubscriptionCancellationFindFirstArgs>(args?: SelectSubset<T, SubscriptionCancellationFindFirstArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SubscriptionCancellation that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationFindFirstOrThrowArgs} args - Arguments to find a SubscriptionCancellation
+     * @example
+     * // Get one SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SubscriptionCancellationFindFirstOrThrowArgs>(args?: SelectSubset<T, SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SubscriptionCancellations that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SubscriptionCancellations
+     * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany()
+     * 
+     * // Get first 10 SubscriptionCancellations
+     * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SubscriptionCancellationFindManyArgs>(args?: SelectSubset<T, SubscriptionCancellationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SubscriptionCancellation.
+     * @param {SubscriptionCancellationCreateArgs} args - Arguments to create a SubscriptionCancellation.
+     * @example
+     * // Create one SubscriptionCancellation
+     * const SubscriptionCancellation = await prisma.subscriptionCancellation.create({
+     *   data: {
+     *     // ... data to create a SubscriptionCancellation
+     *   }
+     * })
+     * 
+     */
+    create<T extends SubscriptionCancellationCreateArgs>(args: SelectSubset<T, SubscriptionCancellationCreateArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SubscriptionCancellations.
+     * @param {SubscriptionCancellationCreateManyArgs} args - Arguments to create many SubscriptionCancellations.
+     * @example
+     * // Create many SubscriptionCancellations
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SubscriptionCancellationCreateManyArgs>(args?: SelectSubset<T, SubscriptionCancellationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SubscriptionCancellations and returns the data saved in the database.
+     * @param {SubscriptionCancellationCreateManyAndReturnArgs} args - Arguments to create many SubscriptionCancellations.
+     * @example
+     * // Create many SubscriptionCancellations
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SubscriptionCancellations and only return the `id`
+     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SubscriptionCancellationCreateManyAndReturnArgs>(args?: SelectSubset<T, SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SubscriptionCancellation.
+     * @param {SubscriptionCancellationDeleteArgs} args - Arguments to delete one SubscriptionCancellation.
+     * @example
+     * // Delete one SubscriptionCancellation
+     * const SubscriptionCancellation = await prisma.subscriptionCancellation.delete({
+     *   where: {
+     *     // ... filter to delete one SubscriptionCancellation
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SubscriptionCancellationDeleteArgs>(args: SelectSubset<T, SubscriptionCancellationDeleteArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SubscriptionCancellation.
+     * @param {SubscriptionCancellationUpdateArgs} args - Arguments to update one SubscriptionCancellation.
+     * @example
+     * // Update one SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SubscriptionCancellationUpdateArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SubscriptionCancellations.
+     * @param {SubscriptionCancellationDeleteManyArgs} args - Arguments to filter SubscriptionCancellations to delete.
+     * @example
+     * // Delete a few SubscriptionCancellations
+     * const { count } = await prisma.subscriptionCancellation.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SubscriptionCancellationDeleteManyArgs>(args?: SelectSubset<T, SubscriptionCancellationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SubscriptionCancellations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SubscriptionCancellations
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SubscriptionCancellationUpdateManyArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SubscriptionCancellations and returns the data updated in the database.
+     * @param {SubscriptionCancellationUpdateManyAndReturnArgs} args - Arguments to update many SubscriptionCancellations.
+     * @example
+     * // Update many SubscriptionCancellations
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SubscriptionCancellations and only return the `id`
+     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SubscriptionCancellationUpdateManyAndReturnArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SubscriptionCancellation.
+     * @param {SubscriptionCancellationUpsertArgs} args - Arguments to update or create a SubscriptionCancellation.
+     * @example
+     * // Update or create a SubscriptionCancellation
+     * const subscriptionCancellation = await prisma.subscriptionCancellation.upsert({
+     *   create: {
+     *     // ... data to create a SubscriptionCancellation
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SubscriptionCancellation we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SubscriptionCancellationUpsertArgs>(args: SelectSubset<T, SubscriptionCancellationUpsertArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SubscriptionCancellations.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationCountArgs} args - Arguments to filter SubscriptionCancellations to count.
+     * @example
+     * // Count the number of SubscriptionCancellations
+     * const count = await prisma.subscriptionCancellation.count({
+     *   where: {
+     *     // ... the filter for the SubscriptionCancellations we want to count
+     *   }
+     * })
+    **/
+    count<T extends SubscriptionCancellationCountArgs>(
+      args?: Subset<T, SubscriptionCancellationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SubscriptionCancellationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SubscriptionCancellation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SubscriptionCancellationAggregateArgs>(args: Subset<T, SubscriptionCancellationAggregateArgs>): Prisma.PrismaPromise<GetSubscriptionCancellationAggregateType<T>>
+
+    /**
+     * Group by SubscriptionCancellation.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SubscriptionCancellationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SubscriptionCancellationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SubscriptionCancellationGroupByArgs['orderBy'] }
+        : { orderBy?: SubscriptionCancellationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SubscriptionCancellationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSubscriptionCancellationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SubscriptionCancellation model
+   */
+  readonly fields: SubscriptionCancellationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SubscriptionCancellation.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SubscriptionCancellationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SubscriptionCancellation model
+   */
+  interface SubscriptionCancellationFieldRefs {
+    readonly id: FieldRef<"SubscriptionCancellation", 'String'>
+    readonly subscriptionId: FieldRef<"SubscriptionCancellation", 'String'>
+    readonly userId: FieldRef<"SubscriptionCancellation", 'String'>
+    readonly cancelledAt: FieldRef<"SubscriptionCancellation", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SubscriptionCancellation findUnique
+   */
+  export type SubscriptionCancellationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter, which SubscriptionCancellation to fetch.
+     */
+    where: SubscriptionCancellationWhereUniqueInput
+  }
+
+  /**
+   * SubscriptionCancellation findUniqueOrThrow
+   */
+  export type SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter, which SubscriptionCancellation to fetch.
+     */
+    where: SubscriptionCancellationWhereUniqueInput
+  }
+
+  /**
+   * SubscriptionCancellation findFirst
+   */
+  export type SubscriptionCancellationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter, which SubscriptionCancellation to fetch.
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SubscriptionCancellations to fetch.
+     */
+    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SubscriptionCancellations.
+     */
+    cursor?: SubscriptionCancellationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SubscriptionCancellations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SubscriptionCancellations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SubscriptionCancellations.
+     */
+    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
+  }
+
+  /**
+   * SubscriptionCancellation findFirstOrThrow
+   */
+  export type SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter, which SubscriptionCancellation to fetch.
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SubscriptionCancellations to fetch.
+     */
+    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SubscriptionCancellations.
+     */
+    cursor?: SubscriptionCancellationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SubscriptionCancellations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SubscriptionCancellations.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SubscriptionCancellations.
+     */
+    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
+  }
+
+  /**
+   * SubscriptionCancellation findMany
+   */
+  export type SubscriptionCancellationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter, which SubscriptionCancellations to fetch.
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SubscriptionCancellations to fetch.
+     */
+    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SubscriptionCancellations.
+     */
+    cursor?: SubscriptionCancellationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SubscriptionCancellations from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SubscriptionCancellations.
+     */
+    skip?: number
+    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
+  }
+
+  /**
+   * SubscriptionCancellation create
+   */
+  export type SubscriptionCancellationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SubscriptionCancellation.
+     */
+    data: XOR<SubscriptionCancellationCreateInput, SubscriptionCancellationUncheckedCreateInput>
+  }
+
+  /**
+   * SubscriptionCancellation createMany
+   */
+  export type SubscriptionCancellationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SubscriptionCancellations.
+     */
+    data: SubscriptionCancellationCreateManyInput | SubscriptionCancellationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SubscriptionCancellation createManyAndReturn
+   */
+  export type SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * The data used to create many SubscriptionCancellations.
+     */
+    data: SubscriptionCancellationCreateManyInput | SubscriptionCancellationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SubscriptionCancellation update
+   */
+  export type SubscriptionCancellationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SubscriptionCancellation.
+     */
+    data: XOR<SubscriptionCancellationUpdateInput, SubscriptionCancellationUncheckedUpdateInput>
+    /**
+     * Choose, which SubscriptionCancellation to update.
+     */
+    where: SubscriptionCancellationWhereUniqueInput
+  }
+
+  /**
+   * SubscriptionCancellation updateMany
+   */
+  export type SubscriptionCancellationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SubscriptionCancellations.
+     */
+    data: XOR<SubscriptionCancellationUpdateManyMutationInput, SubscriptionCancellationUncheckedUpdateManyInput>
+    /**
+     * Filter which SubscriptionCancellations to update
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * Limit how many SubscriptionCancellations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SubscriptionCancellation updateManyAndReturn
+   */
+  export type SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * The data used to update SubscriptionCancellations.
+     */
+    data: XOR<SubscriptionCancellationUpdateManyMutationInput, SubscriptionCancellationUncheckedUpdateManyInput>
+    /**
+     * Filter which SubscriptionCancellations to update
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * Limit how many SubscriptionCancellations to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SubscriptionCancellation upsert
+   */
+  export type SubscriptionCancellationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SubscriptionCancellation to update in case it exists.
+     */
+    where: SubscriptionCancellationWhereUniqueInput
+    /**
+     * In case the SubscriptionCancellation found by the `where` argument doesn't exist, create a new SubscriptionCancellation with this data.
+     */
+    create: XOR<SubscriptionCancellationCreateInput, SubscriptionCancellationUncheckedCreateInput>
+    /**
+     * In case the SubscriptionCancellation was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SubscriptionCancellationUpdateInput, SubscriptionCancellationUncheckedUpdateInput>
+  }
+
+  /**
+   * SubscriptionCancellation delete
+   */
+  export type SubscriptionCancellationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+    /**
+     * Filter which SubscriptionCancellation to delete.
+     */
+    where: SubscriptionCancellationWhereUniqueInput
+  }
+
+  /**
+   * SubscriptionCancellation deleteMany
+   */
+  export type SubscriptionCancellationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SubscriptionCancellations to delete
+     */
+    where?: SubscriptionCancellationWhereInput
+    /**
+     * Limit how many SubscriptionCancellations to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SubscriptionCancellation without action
+   */
+  export type SubscriptionCancellationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SubscriptionCancellation
+     */
+    select?: SubscriptionCancellationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SubscriptionCancellation
+     */
+    omit?: SubscriptionCancellationOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model PagarMeOrder
    */
 
@@ -25869,6 +26942,16 @@ export namespace Prisma {
   export type StripeCheckoutSessionScalarFieldEnum = (typeof StripeCheckoutSessionScalarFieldEnum)[keyof typeof StripeCheckoutSessionScalarFieldEnum]
 
 
+  export const SubscriptionCancellationScalarFieldEnum: {
+    id: 'id',
+    subscriptionId: 'subscriptionId',
+    userId: 'userId',
+    cancelledAt: 'cancelledAt'
+  };
+
+  export type SubscriptionCancellationScalarFieldEnum = (typeof SubscriptionCancellationScalarFieldEnum)[keyof typeof SubscriptionCancellationScalarFieldEnum]
+
+
   export const PagarMeOrderScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -27245,6 +28328,53 @@ export namespace Prisma {
     pricingLabel?: StringWithAggregatesFilter<"StripeCheckoutSession"> | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"StripeCheckoutSession"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"StripeCheckoutSession"> | Date | string
+  }
+
+  export type SubscriptionCancellationWhereInput = {
+    AND?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
+    OR?: SubscriptionCancellationWhereInput[]
+    NOT?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
+    id?: StringFilter<"SubscriptionCancellation"> | string
+    subscriptionId?: StringFilter<"SubscriptionCancellation"> | string
+    userId?: StringFilter<"SubscriptionCancellation"> | string
+    cancelledAt?: DateTimeFilter<"SubscriptionCancellation"> | Date | string
+  }
+
+  export type SubscriptionCancellationOrderByWithRelationInput = {
+    id?: SortOrder
+    subscriptionId?: SortOrder
+    userId?: SortOrder
+    cancelledAt?: SortOrder
+  }
+
+  export type SubscriptionCancellationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    subscriptionId?: string
+    AND?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
+    OR?: SubscriptionCancellationWhereInput[]
+    NOT?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
+    userId?: StringFilter<"SubscriptionCancellation"> | string
+    cancelledAt?: DateTimeFilter<"SubscriptionCancellation"> | Date | string
+  }, "id" | "subscriptionId">
+
+  export type SubscriptionCancellationOrderByWithAggregationInput = {
+    id?: SortOrder
+    subscriptionId?: SortOrder
+    userId?: SortOrder
+    cancelledAt?: SortOrder
+    _count?: SubscriptionCancellationCountOrderByAggregateInput
+    _max?: SubscriptionCancellationMaxOrderByAggregateInput
+    _min?: SubscriptionCancellationMinOrderByAggregateInput
+  }
+
+  export type SubscriptionCancellationScalarWhereWithAggregatesInput = {
+    AND?: SubscriptionCancellationScalarWhereWithAggregatesInput | SubscriptionCancellationScalarWhereWithAggregatesInput[]
+    OR?: SubscriptionCancellationScalarWhereWithAggregatesInput[]
+    NOT?: SubscriptionCancellationScalarWhereWithAggregatesInput | SubscriptionCancellationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
+    subscriptionId?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
+    userId?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
+    cancelledAt?: DateTimeWithAggregatesFilter<"SubscriptionCancellation"> | Date | string
   }
 
   export type PagarMeOrderWhereInput = {
@@ -28914,6 +30044,55 @@ export namespace Prisma {
     pricingLabel?: StringFieldUpdateOperationsInput | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SubscriptionCancellationCreateInput = {
+    id?: string
+    subscriptionId: string
+    userId: string
+    cancelledAt?: Date | string
+  }
+
+  export type SubscriptionCancellationUncheckedCreateInput = {
+    id?: string
+    subscriptionId: string
+    userId: string
+    cancelledAt?: Date | string
+  }
+
+  export type SubscriptionCancellationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SubscriptionCancellationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SubscriptionCancellationCreateManyInput = {
+    id?: string
+    subscriptionId: string
+    userId: string
+    cancelledAt?: Date | string
+  }
+
+  export type SubscriptionCancellationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SubscriptionCancellationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionId?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PagarMeOrderCreateInput = {
@@ -30686,6 +31865,27 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCheckoutStatusFilter<$PrismaModel>
     _max?: NestedEnumCheckoutStatusFilter<$PrismaModel>
+  }
+
+  export type SubscriptionCancellationCountOrderByAggregateInput = {
+    id?: SortOrder
+    subscriptionId?: SortOrder
+    userId?: SortOrder
+    cancelledAt?: SortOrder
+  }
+
+  export type SubscriptionCancellationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    subscriptionId?: SortOrder
+    userId?: SortOrder
+    cancelledAt?: SortOrder
+  }
+
+  export type SubscriptionCancellationMinOrderByAggregateInput = {
+    id?: SortOrder
+    subscriptionId?: SortOrder
+    userId?: SortOrder
+    cancelledAt?: SortOrder
   }
 
   export type PagarMeOrderCountOrderByAggregateInput = {
