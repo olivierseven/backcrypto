@@ -17,7 +17,7 @@ export type StrategyOperand =
 /** Tipo de condição folha: comparação, cruzamento acima ou abaixo. */
 export type StrategyConditionKind = "compare" | "crossover" | "crossunder";
 
-/** Condição folha: compare (left op right), crossover (left cruza acima de right, válido por barsAfter candles), crossunder (left cruza abaixo). */
+/** Condição folha: compare (left op right), crossover (left cruza acima de right), crossunder (left cruza abaixo de right). */
 export interface StrategyConditionNode {
   type: "condition";
   id: string;
@@ -144,19 +144,6 @@ export function createEmptyCrossoverCondition(): StrategyConditionNode {
     kind: "crossover",
     left: { type: "series", seriesKey: "close", offset: 0 },
     operator: ">",
-    right: { type: "series", seriesKey: "close", offset: -1 },
-    barsAfter: 0,
-  };
-}
-
-/** Cria condição CROSSUNDER (duas séries; barsAfter 0..7). */
-export function createEmptyCrossunderCondition(): StrategyConditionNode {
-  return {
-    type: "condition",
-    id: `cond_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-    kind: "crossunder",
-    left: { type: "series", seriesKey: "close", offset: 0 },
-    operator: "<",
     right: { type: "series", seriesKey: "close", offset: -1 },
     barsAfter: 0,
   };
@@ -291,7 +278,9 @@ export function validateStrategyReferences(
   const missingIds: string[] = [];
   for (const key of keys) {
     if (key.startsWith("ind_")) {
-      const id = key.slice(4);
+      // Suporta sub-séries como "ind_<id>:sig", "ind_<id>:hist", "ind_<id>:d"
+      const raw = key.slice(4);
+      const id = raw.split(":")[0] ?? "";
       if (id && !indicatorIds.has(id)) missingIds.push(id);
     }
   }

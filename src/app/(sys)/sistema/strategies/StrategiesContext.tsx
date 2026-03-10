@@ -18,6 +18,8 @@ interface StrategiesContextValue {
   addStrategy: (s: Strategy) => void;
   updateStrategy: (id: string, s: Partial<Strategy>) => void;
   removeStrategy: (id: string) => void;
+  /** Incrementa quando uma estratégia nova é criada (para autosave do layout atual). */
+  strategyCreatedTick: number;
   /** IDs das estratégias que têm coluna na tabela (aplicadas). */
   appliedStrategyIds: string[];
   applyStrategy: (id: string) => void;
@@ -79,6 +81,7 @@ function saveAppliedStrategyIds(ids: string[]) {
 export function StrategiesProvider({ children }: { children: ReactNode }) {
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [appliedStrategyIds, setAppliedStrategyIds] = useState<string[]>([]);
+  const [strategyCreatedTick, setStrategyCreatedTick] = useState(0);
 
   useEffect(() => {
     setStrategies(loadStrategies());
@@ -91,6 +94,7 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       saveStrategies(next);
       return next;
     });
+    setStrategyCreatedTick((x) => x + 1);
   }, []);
 
   const updateStrategy = useCallback((id: string, patch: Partial<Strategy>) => {
@@ -156,6 +160,7 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       addStrategy,
       updateStrategy,
       removeStrategy,
+      strategyCreatedTick,
       appliedStrategyIds,
       applyStrategy,
       unapplyStrategy,
@@ -163,7 +168,7 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       replaceStrategiesFromLayout,
       replaceAppliedStrategyIdsFromLayout,
     }),
-    [strategies, addStrategy, updateStrategy, removeStrategy, appliedStrategyIds, applyStrategy, unapplyStrategy, isApplied, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout]
+    [strategies, addStrategy, updateStrategy, removeStrategy, strategyCreatedTick, appliedStrategyIds, applyStrategy, unapplyStrategy, isApplied, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout]
   );
 
   return (
@@ -181,6 +186,7 @@ export function useStrategies(): StrategiesContextValue {
       addStrategy: () => {},
       updateStrategy: () => {},
       removeStrategy: () => {},
+      strategyCreatedTick: 0,
       appliedStrategyIds: [],
       applyStrategy: () => {},
       unapplyStrategy: () => {},

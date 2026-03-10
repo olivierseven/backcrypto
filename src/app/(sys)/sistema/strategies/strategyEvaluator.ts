@@ -51,11 +51,21 @@ export function getSeriesValue(
   }
 
   if (seriesKey.startsWith("ind_")) {
-    const id = seriesKey.slice(4);
+    const raw = seriesKey.slice(4);
+    const [id, part] = raw.split(":");
     const indIdx = userIndicators.findIndex((i) => i.id === id);
     if (indIdx < 0) return null;
     const col = getIndicatorColumnStart(indIdx);
-    const v = k[col];
+    const ind = userIndicators[indIdx];
+    const extraOffset = (() => {
+      if (!part) return 0;
+      if (part === "sig") return ind.type === "MACD" ? 1 : null;
+      if (part === "hist") return ind.type === "MACD" ? 2 : null;
+      if (part === "d") return ind.type === "Stochastic" ? 1 : null;
+      return null;
+    })();
+    if (extraOffset == null) return null;
+    const v = k[col + extraOffset];
     if (v == null) return null;
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
@@ -115,6 +125,18 @@ function evaluateCondition(
     const leftKey = condition.left.type === "series" ? condition.left.seriesKey : null;
     const rightKey = condition.right.type === "series" ? condition.right.seriesKey : null;
     if (leftKey == null || rightKey == null) return false;
+
+    // Só é verdadeiro enquanto continuar acima/abaixo no "agora": t(0) e t(-1) precisam manter a relação.
+    const nowPrevLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, -1, userIndicators, getIndicatorColumnStart);
+    const nowPrevRight = getSeriesValue(extendedKlines, rowIndex, rightKey, -1, userIndicators, getIndicatorColumnStart);
+    const nowLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, 0, userIndicators, getIndicatorColumnStart);
+    const nowRight = getSeriesValue(extendedKlines, rowIndex, rightKey, 0, userIndicators, getIndicatorColumnStart);
+    if (nowPrevLeft == null || nowPrevRight == null || nowLeft == null || nowRight == null) return false;
+    if (kind === "crossover") {
+      if (!(nowPrevLeft > nowPrevRight && nowLeft > nowRight)) return false;
+    } else {
+      if (!(nowPrevLeft < nowPrevRight && nowLeft < nowRight)) return false;
+    }
 
     for (let j = 0; j <= barsAfter; j++) {
       const crossRow = rowIndex + j;

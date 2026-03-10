@@ -10,7 +10,7 @@ import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
-import { strategiesForContext } from "./strategies/strategiesTypes";
+import { legacyToRoot, strategiesForContext, validateStrategyReferences, type Strategy } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
 import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY } from "./KlinesChartConstants";
 
@@ -124,7 +124,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
-  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
+  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout, strategyCreatedTick } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
   /** Só true após restaurar do localStorage no cliente; evita fetch com 1M antes de aplicar o timeframe salvo. */
@@ -778,16 +778,36 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
+            layoutAutoSaveTick={strategyCreatedTick}
             getLayoutExtraConfig={() => ({ userIndicators, strategies, appliedStrategyIds })}
             onLayoutConfigLoaded={(config) => {
               const v = config.groupMinutes;
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
-              if (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) replaceUserIndicatorsFromLayout(config.userIndicators);
+              // Indicadores do layout (precisamos deles para validar referências das estratégias)
+              const indicatorsFromLayout = (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) ? config.userIndicators : null;
+              if (indicatorsFromLayout) replaceUserIndicatorsFromLayout(indicatorsFromLayout);
+
+              // Estratégias do layout (precisamos da lista para validar e aplicar os IDs)
+              const strategiesFromLayoutRaw = (config.strategies !== undefined && Array.isArray(config.strategies)) ? config.strategies : null;
               if (config.strategies !== undefined) replaceStrategiesFromLayout(config.strategies);
-              // Só restaura appliedStrategyIds do layout quando o layout tem lista não vazia; layout com [] não sobrescreve
-              // o localStorage (evita que "carregar layout" apague as estratégias aplicadas ao abrir a página).
-              if (config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds) && config.appliedStrategyIds.length > 0) {
-                replaceAppliedStrategyIdsFromLayout(config.appliedStrategyIds);
+
+              // Se o layout trouxer appliedStrategyIds, ele é a "fonte da verdade" — inclusive quando vier [].
+              // Antes de aplicar, validamos se as estratégias existem e se todas as referências a indicadores ainda existem.
+              if (config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds)) {
+                const appliedIds = config.appliedStrategyIds.filter((x): x is string => typeof x === "string");
+                const indicatorIds = new Set<string>(
+                  (indicatorsFromLayout ?? userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
+                );
+                const strategiesList: Strategy[] = strategiesFromLayoutRaw
+                  ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
+                  : strategies;
+                const byId = new Map<string, Strategy>(strategiesList.map((s) => [s.id, s]));
+                const validApplied = appliedIds.filter((id) => {
+                  const st = byId.get(id);
+                  if (!st) return false;
+                  return validateStrategyReferences(st, indicatorIds).ok;
+                });
+                replaceAppliedStrategyIdsFromLayout(validApplied);
               }
             }}
           />

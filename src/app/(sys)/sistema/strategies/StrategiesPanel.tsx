@@ -142,6 +142,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
   const { strategies, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
+  const [validationModal, setValidationModal] = useState<{ title: string; lines: string[] } | null>(null);
   const [addOpen, setAddOpen] = useState(initialView === "add");
   const [editingStrategyId, setEditingStrategyId] = useState<string | null>(null);
   const [addName, setAddName] = useState("");
@@ -171,6 +172,25 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       const panel = getIndicatorPanel(ind);
       const num = panelToNum(panel);
       opts.push({ key: `ind_${ind.id}`, label: `(${num}) ${getIndicatorLabel(ind, tKlines, userIndicators)}` });
+      // Subindicadores (precisam existir no dropdown para usar em estratégias):
+      // - MACD: Signal e Histogram
+      if (ind.type === "MACD" && ind.macdSignalLine) {
+        const sigLabel = (tKlines as Record<string, string>).macdSignalLabel
+          ? String((tKlines as Record<string, string>).macdSignalLabel).replace("{period}", String(ind.macdSignalPeriod ?? 9))
+          : `MACD Signal(${ind.macdSignalPeriod ?? 9})`;
+        opts.push({ key: `ind_${ind.id}:sig`, label: `(${num}) ${sigLabel}` });
+        if (ind.macdHistogram) {
+          const histLabel = (tKlines as Record<string, string>).macdHistogramLabel ?? "MACD (histogram)";
+          opts.push({ key: `ind_${ind.id}:hist`, label: `(${num}) ${histLabel}` });
+        }
+      }
+      // - Stochastic: %D
+      if (ind.type === "Stochastic" && ind.stochDLine) {
+        const dLabel = (tKlines as Record<string, string>).stochDLabel
+          ? String((tKlines as Record<string, string>).stochDLabel).replace("{period}", String(ind.stochDPeriod ?? 3))
+          : `Stoch %D(${ind.stochDPeriod ?? 3})`;
+        opts.push({ key: `ind_${ind.id}:d`, label: `(${num}) ${dLabel}` });
+      }
     });
     return opts;
   }, [userIndicators, tKlines]);
@@ -182,7 +202,10 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     const raw = addName.trim() || t.defaultStrategyName;
     const name = normalizeStrategyName(raw).slice(0, 36);
     if (!name) {
-      alert(t.strategyNameInvalid ?? "Use only letters (a-z, A-Z), numbers, underscore and hyphen. No spaces or accents.");
+      setValidationModal({
+        title: t.validationErrorTitle ?? "Validation error",
+        lines: [t.strategyNameInvalid ?? "Use only letters (a-z, A-Z), numbers, underscore and hyphen. No spaces or accents."],
+      });
       return;
     }
     if (addRoot.children.length === 0) return;
@@ -230,6 +253,38 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       role="dialog"
       aria-label={t.panelTitle}
     >
+      {validationModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={validationModal.title}>
+          <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-zinc-900">{validationModal.title}</h3>
+              <button type="button" onClick={() => setValidationModal(null)} className="p-1 rounded hover:bg-zinc-200 text-zinc-600" aria-label={t.close ?? "Close"}>
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="px-4 py-3 text-sm text-zinc-700">
+              {validationModal.lines.length <= 1 ? (
+                <p className="whitespace-pre-wrap">{validationModal.lines[0] ?? ""}</p>
+              ) : (
+                <ul className="list-disc pl-5 space-y-1">
+                  {validationModal.lines.map((line, i) => (
+                    <li key={i} className="whitespace-pre-wrap">{line}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="px-4 py-3 border-t border-zinc-200 bg-white flex justify-end">
+              <button
+                type="button"
+                onClick={() => setValidationModal(null)}
+                className="crypto-btn rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2"
+              >
+                {t.modalOk ?? "OK"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50">
         <h2 className="text-sm font-semibold text-zinc-800">{t.panelTitle}</h2>
         {onClose && (
@@ -257,10 +312,14 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
                     const result = validateStrategyReferences(s, indicatorIds);
                     if (!result.ok) {
-                      const msg = result.missingIds
-                        .map((id) => (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).").replace("{id}", id))
-                        .join("\n");
-                      alert(msg);
+                      const lines = result.missingIds.map((id) =>
+                        (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).")
+                          .replace("{id}", id)
+                      );
+                      setValidationModal({
+                        title: t.validationErrorTitle ?? "Validation error",
+                        lines,
+                      });
                       return;
                     }
                     applyStrategy(s.id);
@@ -714,31 +773,47 @@ function ConditionRow({
         )}
         {(kind === "crossover" || kind === "crossunder") && (
           <>
-            <span className="text-zinc-500">{kind === "crossover" ? "↑" : "↓"}</span>
-            <SeriesOnlyInput
-              operand={condition.left}
-              onChange={(left) => onUpdate({ left })}
-              seriesOptions={seriesOptions}
-              offsetLabel={t.operandOffset}
-            />
-            <span className="text-zinc-500">×</span>
-            <SeriesOnlyInput
-              operand={condition.right}
-              onChange={(right) => onUpdate({ right })}
-              seriesOptions={seriesOptions}
-              offsetLabel={t.operandOffset}
-            />
-            <span className="text-zinc-500 text-[10px]">{t.barsAfter}</span>
-            <HelpPopover content={t.barsAfter} />
-            <select
-              value={barsAfter}
-              onChange={(e) => onUpdate({ barsAfter: Number(e.target.value) })}
-              className="text-xs border border-zinc-300 rounded px-1 py-1 w-10"
-            >
-              {Array.from({ length: STRATEGY_BARSAFTER_MAX - STRATEGY_BARSAFTER_MIN + 1 }, (_, i) => i).map((v) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
+            <div className="w-full flex flex-col gap-1 pt-1">
+              <div className="flex items-center gap-1 text-[10px] text-zinc-600">
+                <span>{kind === "crossover" ? t.kindCrossover : t.kindCrossunder}</span>
+                <HelpPopover content={t.conditionKind} />
+                <span className="text-zinc-500">{kind === "crossover" ? "↑" : "↓"}</span>
+              </div>
+
+              <div className="flex items-stretch gap-1">
+                <div className="flex flex-col gap-1 min-w-0">
+                  <SeriesOnlyInput
+                    operand={condition.left}
+                    onChange={(left) => onUpdate({ left })}
+                    seriesOptions={seriesOptions}
+                  />
+                  <SeriesOnlyInput
+                    operand={condition.right}
+                    onChange={(right) => onUpdate({ right })}
+                    seriesOptions={seriesOptions}
+                  />
+                </div>
+                <span className="flex items-center justify-center text-zinc-400 shrink-0 w-16 h-16" aria-hidden title="Cruzamento">
+                  <svg width="64" height="64" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M4 4l8 8M12 4l-8 8" />
+                  </svg>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <select
+                  value={barsAfter}
+                  onChange={(e) => onUpdate({ barsAfter: Number(e.target.value) })}
+                  className="text-xs border border-zinc-300 rounded px-1 py-1 w-10"
+                >
+                  {Array.from({ length: STRATEGY_BARSAFTER_MAX - STRATEGY_BARSAFTER_MIN + 1 }, (_, i) => i).map((v) => (
+                    <option key={v} value={v}>{v === 0 ? "0" : `-${v}`}</option>
+                  ))}
+                </select>
+                <span className="text-zinc-500 text-[10px]">{t.barsAfter}</span>
+                <HelpPopover content={t.barsAfterHint ?? t.barsAfter} />
+              </div>
+            </div>
           </>
         )}
         {onRemove && (
@@ -749,42 +824,28 @@ function ConditionRow({
   );
 }
 
-/** Operando só série (para crossover/crossunder). */
+/** Operando só série (para crossover). */
 function SeriesOnlyInput({
   operand,
   onChange,
   seriesOptions,
-  offsetLabel,
 }: {
   operand: StrategyOperand;
   onChange: (o: StrategyOperand) => void;
   seriesOptions: { key: string; label: string }[];
-  offsetLabel: string;
 }) {
-  const op = operand.type === "series" ? operand : { type: "series" as const, seriesKey: "close", offset: 0 };
-  const offset = normalizeOffset(op.offset);
+  const op = operand.type === "series" ? operand : { type: "series" as const, seriesKey: "close" };
   return (
     <div className="flex gap-1 flex-wrap items-center">
       <select
         value={op.seriesKey}
-        onChange={(e) => onChange({ type: "series", seriesKey: e.target.value, offset })}
+        onChange={(e) => onChange({ type: "series", seriesKey: e.target.value })}
         className="text-xs border border-zinc-300 rounded px-1.5 py-1 max-w-[100px]"
       >
         {seriesOptions.map((o) => (
           <option key={o.key} value={o.key}>{o.label}</option>
         ))}
       </select>
-      <select
-        value={offset}
-        onChange={(e) => onChange({ type: "series", seriesKey: op.seriesKey, offset: Number(e.target.value) })}
-        className="text-xs border border-zinc-300 rounded px-1 py-1 w-14"
-        aria-label={offsetLabel}
-      >
-        {Array.from({ length: STRATEGY_OFFSET_MAX - STRATEGY_OFFSET_MIN + 1 }, (_, i) => STRATEGY_OFFSET_MAX - i).map((v) => (
-          <option key={v} value={v}>{v === 0 ? "0" : v}</option>
-        ))}
-      </select>
-      <HelpPopover content={offsetLabel} />
     </div>
   );
 }

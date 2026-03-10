@@ -97,7 +97,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const [visibleCount, setVisibleCount] = useState<VisibleCount>(DEFAULT_VISIBLE);
@@ -638,6 +638,30 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       setTimeout(() => setSaveLoadMsg(null), 2000);
     }
   };
+
+  const autoSaveCurrentLayoutIfAny = useCallback(async () => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+      if (!raw || raw === "default") return;
+      const slot = Number(raw);
+      if (!Number.isInteger(slot)) return;
+      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
+      const extra = getLayoutExtraConfig?.() ?? {};
+      const config = { ...baseConfig, ...extra };
+      await fetch(`${API_BASE}/chart-layouts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot, config }),
+      }).catch(() => {});
+    } catch {
+      /* ignore */
+    }
+  }, [backgroundTextColor, candleColorPreset, chartBackground, chartSizePercent, containerBackground, footerYAxisBgColor, footerYAxisTextColor, getLayoutExtraConfig, groupMinutes, invisibleCandlesEnd, lastCloseLineColor, lastCloseTextColor, lineTableColor, logScale, secondaryGridColor, secondaryPanelHeightPercent, showLastCloseLine, showMainAxis, showSecondaryAxis, volumeOnPrice, volumeOnPriceOpacity, visibleCount, yAxisAbbreviated]);
+
+  useEffect(() => {
+    if (!layoutAutoSaveTick) return;
+    autoSaveCurrentLayoutIfAny();
+  }, [layoutAutoSaveTick, autoSaveCurrentLayoutIfAny]);
 
   const applyLayoutConfig = (c: Record<string, unknown>) => {
     if (typeof c.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(c.visibleCount)) setVisibleCount(c.visibleCount as VisibleCount);

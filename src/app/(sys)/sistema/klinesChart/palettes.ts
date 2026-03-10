@@ -7,8 +7,17 @@ export const CANDLE_COLOR_PRESETS = [
   { id: "greenRed" as const, bull: "#059669", bear: "#dc2626" },
   { id: "blueOrange" as const, bull: "#2563eb", bear: "#ea580c" },
   { id: "blackWhite" as const, bull: "#f5f5f5", bear: "#171717" },
-  { id: "purpleAmber" as const, bull: "#7c3aed", bear: "#f59e0b" },
+  { id: "purpleAmber" as const, bull: "#f59e0b", bear: "#7c3aed" },
   { id: "cyanRose" as const, bull: "#0891b2", bear: "#e11d48" },
+  // Novos presets (mais opções)
+  { id: "amberBlue" as const, bull: "#f59e0b", bear: "#3b82f6" },
+  { id: "limePurple" as const, bull: "#84cc16", bear: "#8b5cf6" },
+  { id: "tealOrange" as const, bull: "#10b981", bear: "#f97316" },
+  { id: "pinkIndigo" as const, bull: "#6366f1", bear: "#ec4899" },
+  { id: "redCyan" as const, bull: "#06b6d4", bear: "#ef4444" },
+  // Pedidos: branco/branco e preto/preto
+  { id: "whiteWhite" as const, bull: "#f5f5f5", bear: "#f5f5f5" },
+  { id: "blackBlack" as const, bull: "#171717", bear: "#171717" },
 ] as const;
 export type CandleColorPresetId = (typeof CANDLE_COLOR_PRESETS)[number]["id"];
 export const DEFAULT_CANDLE_PRESET: CandleColorPresetId = "greenRed";

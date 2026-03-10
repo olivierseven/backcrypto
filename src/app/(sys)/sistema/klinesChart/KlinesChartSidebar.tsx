@@ -222,6 +222,24 @@ export function KlinesChartSidebar({
   onLoadLayout,
   onFetchSavedLayouts,
 }: KlinesChartSidebarProps) {
+  const candlePresetLabel = (id: string) => {
+    const map: Record<string, string> = {
+      greenRed: t.candleColorGreenRed,
+      blueOrange: t.candleColorBlueOrange,
+      blackWhite: t.candleColorBlackWhite,
+      purpleAmber: t.candleColorPurpleAmber,
+      cyanRose: t.candleColorCyanRose,
+      amberBlue: t.candleColorAmberBlue,
+      limePurple: t.candleColorLimePurple,
+      tealOrange: t.candleColorTealOrange,
+      pinkIndigo: t.candleColorPinkIndigo,
+      redCyan: t.candleColorRedCyan,
+      whiteWhite: t.candleColorWhiteWhite,
+      blackBlack: t.candleColorBlackBlack,
+    };
+    return map[id] ?? id;
+  };
+
   const [intervalsOpen, setIntervalsOpen] = useState(false);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
   const isHorizontal = orientation === "horizontal";
@@ -552,13 +570,7 @@ export function KlinesChartSidebar({
               >
                 <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bull }} />
                 <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bear }} />
-                <span>
-                  {preset.id === "greenRed" && t.candleColorGreenRed}
-                  {preset.id === "blueOrange" && t.candleColorBlueOrange}
-                  {preset.id === "blackWhite" && t.candleColorBlackWhite}
-                  {preset.id === "purpleAmber" && t.candleColorPurpleAmber}
-                  {preset.id === "cyanRose" && t.candleColorCyanRose}
-                </span>
+                <span>{candlePresetLabel(preset.id)}</span>
               </button>
             ))}
             <button
@@ -970,13 +982,7 @@ export function KlinesChartSidebar({
                   <button key={preset.id} type="button" onClick={() => setCandleColorPreset(preset.id)} className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 ${candleColorPreset === preset.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}>
                     <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bull }} />
                     <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bear }} />
-                    <span>
-                      {preset.id === "greenRed" && t.candleColorGreenRed}
-                      {preset.id === "blueOrange" && t.candleColorBlueOrange}
-                      {preset.id === "blackWhite" && t.candleColorBlackWhite}
-                      {preset.id === "purpleAmber" && t.candleColorPurpleAmber}
-                      {preset.id === "cyanRose" && t.candleColorCyanRose}
-                    </span>
+                    <span>{candlePresetLabel(preset.id)}</span>
                   </button>
                 ))}
                 <button type="button" onClick={() => setCandleColorPreset(DEFAULT_CANDLE_PRESET)} className="w-full text-left px-2 py-1.5 rounded text-sm mt-1 border-t border-zinc-100 hover:bg-zinc-100 text-zinc-600">{t.default}</button>

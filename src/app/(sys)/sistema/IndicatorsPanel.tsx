@@ -10,6 +10,7 @@ import {
   type IndicatorLineWidth,
   type IndicatorLineStyle,
 } from "./KlinesIndicatorsContext";
+import { useStrategies } from "./strategies/StrategiesContext";
 import {
   INDICATOR_COLOR_PALETTE,
   INTERVAL_OPTIONS,
@@ -121,6 +122,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const { userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
+  const { appliedStrategyIds, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const addFormRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (initialView === "add" && addFormRef.current) {
@@ -379,16 +381,36 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     });
   }, [addForm, panelsWithSecondary, currentGroupMinutes, addIndicator]);
 
+  const deactivateAllStrategies = useCallback(() => {
+    if (appliedStrategyIds.length === 0) return;
+    replaceAppliedStrategyIdsFromLayout([]);
+  }, [appliedStrategyIds.length, replaceAppliedStrategyIdsFromLayout]);
+
+  const removeIndicatorWithStrategyReset = useCallback((id: string) => {
+    deactivateAllStrategies();
+    removeIndicator(id);
+  }, [deactivateAllStrategies, removeIndicator]);
+
+  const updateIndicatorWithStrategyReset = useCallback((id: string, updates: Parameters<typeof updateIndicator>[1]) => {
+    deactivateAllStrategies();
+    updateIndicator(id, updates);
+  }, [deactivateAllStrategies, updateIndicator]);
+
+  const updateIndicatorIntervalsWithStrategyReset = useCallback((id: string, intervals: number[]) => {
+    deactivateAllStrategies();
+    updateIndicatorIntervals(id, intervals);
+  }, [deactivateAllStrategies, updateIndicatorIntervals]);
+
   const toggleInterval = useCallback((id: string, groupMinutes: number) => {
     const ind = userIndicators.find((u) => u.id === id);
     if (!ind) return;
     const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : [...ind.intervals];
     const idx = current.indexOf(groupMinutes);
     const next = idx >= 0 ? (current.filter((v) => v !== groupMinutes).length === 0 ? [] : current.filter((v) => v !== groupMinutes)) : [...current, groupMinutes].sort((a, b) => a - b);
-    updateIndicatorIntervals(id, next);
-  }, [userIndicators, updateIndicatorIntervals]);
+    updateIndicatorIntervalsWithStrategyReset(id, next);
+  }, [userIndicators, updateIndicatorIntervalsWithStrategyReset]);
 
-  const setAllIntervals = useCallback((id: string) => updateIndicatorIntervals(id, []), [updateIndicatorIntervals]);
+  const setAllIntervals = useCallback((id: string) => updateIndicatorIntervalsWithStrategyReset(id, []), [updateIndicatorIntervalsWithStrategyReset]);
 
   const isIntervalChecked = useCallback((ind: UserIndicatorConfig, value: number) => {
     if (ind.intervals.length === 0) return true;
@@ -492,7 +514,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     })();
     const fastP = ind?.type === "MACD" ? (Number(editForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
-    updateIndicator(editingId, {
+    updateIndicatorWithStrategyReset(editingId, {
       period: ind?.type === "MACD" ? fastP : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "Volume" ? "volume" : editForm.fieldKey,
       color: editForm.color,
@@ -565,7 +587,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     });
     setEditingId(null);
     setEditForm(null);
-  }, [editingId, editForm, userIndicators, updateIndicator]);
+  }, [editingId, editForm, userIndicators, updateIndicatorWithStrategyReset]);
 
   const cancelEdit = useCallback(() => {
     setEditingId(null);
@@ -602,8 +624,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       toggleInterval,
       setAllIntervals,
       isIntervalChecked,
-      removeIndicator,
-      updateIndicator,
+      removeIndicator: removeIndicatorWithStrategyReset,
+      updateIndicator: updateIndicatorWithStrategyReset,
       getIndicatorLabel: getIndicatorLabel as IndicatorsPanelContextValue["getIndicatorLabel"],
     }),
     [
@@ -626,8 +648,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       toggleInterval,
       setAllIntervals,
       isIntervalChecked,
-      removeIndicator,
-      updateIndicator,
+      removeIndicatorWithStrategyReset,
+      updateIndicatorWithStrategyReset,
     ]
   );
 
