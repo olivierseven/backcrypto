@@ -140,16 +140,16 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
     setLoading(plan);
     setLoadingMethod("card");
     try {
-      const payload: { plan: PlanKey; returnTo: string; taxId?: string; cpf?: string } = {
+      const payload: { plan: PlanKey; returnTo: string; tax_code?: string; cpf?: string } = {
         plan,
         returnTo: next,
-        taxId: taxId?.trim() || undefined,
+        tax_code: taxId?.trim() || undefined,
       };
       if (lang === "pt" && cpfForCard?.trim()) {
         const digits = cpfForCard.replace(/\D/g, "").slice(0, 11);
         if (digits.length === 11) payload.cpf = digits;
       } else if (taxId?.trim()) {
-        payload.taxId = taxId.trim();
+        payload.tax_code = taxId.trim();
       }
       const res = await fetch(`${API_BASE}/checkout`, {
         method: "POST",

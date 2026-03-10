@@ -97,7 +97,7 @@ export async function POST(req: Request) {
     // ignora se não conseguir descriptografar
   }
 
-  let body: { plan?: string; returnTo?: string; taxId?: string; cpf?: string } = {};
+  let body: { plan?: string; returnTo?: string; tax_code?: string; cpf?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -105,14 +105,14 @@ export async function POST(req: Request) {
   }
 
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
-  const taxIdRaw = typeof body?.taxId === "string" ? body.taxId.trim().slice(0, 30) : "";
-  const taxId = taxIdRaw.length >= 3 ? taxIdRaw : null;
+  const taxCodeRaw = typeof body?.tax_code === "string" ? body.tax_code.trim().slice(0, 30) : "";
+  const taxCode = taxCodeRaw.length >= 3 ? taxCodeRaw : null;
   const cpfRaw = typeof body?.cpf === "string" ? body.cpf.replace(/\D/g, "").slice(0, 11) : "";
   let userCpf = cpfRaw.length === 11 && isValidCpf(cpfRaw) ? cpfRaw : "";
-  // Em modo en: se taxId for um CPF válido (11 dígitos), incluir em user_cpf
-  if (!userCpf && taxIdRaw) {
-    const taxIdDigits = taxIdRaw.replace(/\D/g, "").slice(0, 11);
-    if (taxIdDigits.length === 11 && isValidCpf(taxIdDigits)) userCpf = taxIdDigits;
+  // Em modo en: se tax_code for um CPF válido (11 dígitos), incluir em user_cpf
+  if (!userCpf && taxCodeRaw) {
+    const taxCodeDigits = taxCodeRaw.replace(/\D/g, "").slice(0, 11);
+    if (taxCodeDigits.length === 11 && isValidCpf(taxCodeDigits)) userCpf = taxCodeDigits;
   }
   const userLang = user.language?.toLowerCase();
   const requireCpfForPt = userLang === "pt" || userLang === "pt-br";
@@ -163,7 +163,7 @@ export async function POST(req: Request) {
       plan: planKey,
       returnTo: fullReturnTo,
       crypto: "1",
-      taxId: taxId ?? "",
+      tax_code: taxCode ?? "",
       user_cpf: userCpf,
     };
 
