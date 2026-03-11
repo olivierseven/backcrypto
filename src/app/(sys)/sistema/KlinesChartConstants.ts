@@ -51,5 +51,6 @@ export const KLINE_DRAW_DEFAULTS_KEY = "backcrypto-klines-draw-defaults";
 export const KLINE_USER_INDICATORS_KEY = "backcrypto-klines-user-indicators";
 export const KLINE_STRATEGIES_KEY = "backcrypto-klines-strategies";
 export const KLINE_STRATEGIES_APPLIED_KEY = "backcrypto-klines-strategies-applied";
+export const KLINE_HEIKIN_ASHI_KEY = "backcrypto-klines-heikin-ashi";
 
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;

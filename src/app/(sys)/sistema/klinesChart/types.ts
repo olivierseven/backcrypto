@@ -122,4 +122,8 @@ export type KlinesChartProps = {
   onOpenSymbolPanel?: () => void;
   /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
   strategyCandleOverlays?: StrategyCandleOverlay[];
+  /** Gráfico em modo Heikin Ashi (OHLC suavizado). */
+  heikinAshi?: boolean;
+  /** Alterna modo Heikin Ashi; ao ativar, a tabela e o gráfico passam a usar OHLC Heikin Ashi. */
+  onHeikinAshiChange?: (enabled: boolean) => void;
 }

@@ -13,7 +13,7 @@ import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, type Strategy } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
-import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY } from "./KlinesChartConstants";
+import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -89,6 +89,47 @@ function getStoredGroupMinutes(isAdmin: boolean): number {
   return DEFAULT_GROUP_MINUTES_FIRST_LOAD;
 }
 
+function getStoredHeikinAshi(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = window.localStorage.getItem(KLINE_HEIKIN_ASHI_KEY);
+    return raw === "1" || raw === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Converte OHLC para Heikin Ashi. klines[0] = mais recente.
+ * Retorna novas linhas com [1]=HA_Open, [2]=HA_High, [3]=HA_Low, [4]=HA_Close (resto igual).
+ */
+function computeHeikinAshi(klines: Kline[]): Kline[] {
+  if (klines.length === 0) return [];
+  const chrono = [...klines].reverse() as (string | number)[][];
+  const out: (string | number)[][] = [];
+  let prevHaOpen = 0;
+  let prevHaClose = 0;
+  for (let i = 0; i < chrono.length; i++) {
+    const row = [...chrono[i]] as (string | number)[];
+    const o = Number(row[1]);
+    const h = Number(row[2]);
+    const l = Number(row[3]);
+    const c = Number(row[4]);
+    const haClose = (o + h + l + c) / 4;
+    const haOpen = i === 0 ? (o + c) / 2 : (prevHaOpen + prevHaClose) / 2;
+    const haHigh = Math.max(h, haOpen, haClose);
+    const haLow = Math.min(l, haOpen, haClose);
+    row[1] = String(haOpen);
+    row[2] = String(haHigh);
+    row[3] = String(haLow);
+    row[4] = String(haClose);
+    out.push(row);
+    prevHaOpen = haOpen;
+    prevHaClose = haClose;
+  }
+  return (out.reverse() as unknown) as Kline[];
+}
+
 function formatTime(ms: number): string {
   const d = new Date(ms);
   return d.toLocaleString("en-CA", {
@@ -152,6 +193,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
   const [chartRequestedWidth, setChartRequestedWidth] = useState<number | null>(null);
   const [chartReportedSizePercent, setChartReportedSizePercent] = useState(100);
+  const [heikinAshiEnabled, setHeikinAshiEnabled] = useState(false);
+  useLayoutEffect(() => {
+    setHeikinAshiEnabled(getStoredHeikinAshi());
+  }, []);
 
   const spotExtremesStorageKey = useMemo(() => {
     const first = klines?.[0] as unknown as (string | number)[] | undefined;
@@ -241,6 +286,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return out as unknown as Kline[];
   }, [klines, spotWsPrice, spotWsHigh, spotWsLow]);
 
+  const heikinAshiKlines = useMemo(() => computeHeikinAshi(klinesWithSpot), [klinesWithSpot]);
+  const baseForIndicators = heikinAshiEnabled ? heikinAshiKlines : klinesWithSpot;
+
   const visibleUserIndicators = useMemo(
     () =>
       userIndicators.filter(
@@ -250,8 +298,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   );
 
   const extendedKlines = useMemo((): Kline[] => {
-    const base = klinesWithSpot as (string | number)[][];
-    if (base.length === 0 || userIndicators.length === 0) return klinesWithSpot;
+    const base = baseForIndicators as (string | number)[][];
+    if (base.length === 0 || userIndicators.length === 0) return baseForIndicators;
     const out = base.map((row) => [...row] as (string | number | null)[]);
     /** Indicadores só leem colunas 0–11 (OHLC etc.); fazer cast para satisfazer a API. */
     const data = out as (string | number)[][];
@@ -346,7 +394,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       }
     }
     return out as Kline[];
-  }, [klinesWithSpot, userIndicators]);
+  }, [baseForIndicators, userIndicators]);
 
   /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
@@ -732,6 +780,15 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             maxChartHeight={undefined}
             symbol={symbol}
             onOpenSymbolPanel={openSymbolPanel}
+            heikinAshi={heikinAshiEnabled}
+            onHeikinAshiChange={(v) => {
+              setHeikinAshiEnabled(v);
+              try {
+                if (typeof window !== "undefined") window.localStorage.setItem(KLINE_HEIKIN_ASHI_KEY, v ? "1" : "0");
+              } catch {
+                /* ignore */
+              }
+            }}
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,

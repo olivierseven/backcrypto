@@ -100,7 +100,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange }: KlinesChartProps) {
   const pathname = usePathname();
   const { addLayoutLoadLog } = useSistemaDebug();
   const lang = useCryptoLang();
@@ -1273,6 +1273,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             intervalOptions={intervalOptions ?? []}
             groupMinutes={groupMinutes}
             onIntervalChange={onIntervalChange ?? (() => { })}
+            heikinAshi={heikinAshi}
+            onHeikinAshiChange={onHeikinAshiChange}
             settingsOpen={settingsOpen}
             setSettingsOpen={setSettingsOpen}
             colorsOpen={colorsOpen}

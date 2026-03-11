@@ -37,6 +37,8 @@ export interface KlinesChartSidebarProps {
   intervalOptions: IntervalOption[];
   groupMinutes: number;
   onIntervalChange: (value: number) => void;
+  heikinAshi?: boolean;
+  onHeikinAshiChange?: (enabled: boolean) => void;
   // Settings
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -139,6 +141,8 @@ export function KlinesChartSidebar({
   intervalOptions,
   groupMinutes,
   onIntervalChange,
+  heikinAshi = false,
+  onHeikinAshiChange,
   settingsOpen,
   setSettingsOpen,
   colorsOpen,
@@ -368,6 +372,30 @@ export function KlinesChartSidebar({
               </p>
             </div>
           )}
+        </div>
+      )}
+      {onHeikinAshiChange != null && (
+        <div
+          className={
+            isHorizontal
+              ? "relative flex items-center px-1 border-r border-zinc-200/80"
+              : "w-full flex flex-col items-center px-1 border-b border-zinc-200/80"
+          }
+        >
+          <button
+            type="button"
+            onClick={() => onHeikinAshiChange(!heikinAshi)}
+            className={
+              isHorizontal
+                ? `w-10 h-10 flex items-center justify-center text-xs font-semibold rounded cursor-pointer border ${heikinAshi ? "bg-amber-100 border-amber-300 text-amber-800" : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border-zinc-200"}`
+                : `w-full flex items-center justify-center py-2 text-xs font-semibold rounded cursor-pointer border ${heikinAshi ? "bg-amber-100 border-amber-300 text-amber-800" : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border-zinc-200"}`
+            }
+            title={(t as Record<string, string>).heikinAshiTitle ?? "Heikin Ashi – OHLC suavizado"}
+            aria-pressed={heikinAshi}
+            aria-label={(t as Record<string, string>).heikinAshi ?? "Heikin Ashi"}
+          >
+            {(t as Record<string, string>).heikinAshi ?? "HA"}
+          </button>
         </div>
       )}
       <div ref={settingsTriggerRef} className={isHorizontal ? "relative flex items-center" : undefined}>
