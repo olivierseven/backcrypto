@@ -13,7 +13,7 @@ import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, type Strategy } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
-import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY } from "./KlinesChartConstants";
+import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY, KLINE_VOLUME_AT_PRICE_KEY } from "./KlinesChartConstants";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -99,6 +99,89 @@ function getStoredHeikinAshi(): boolean {
   }
 }
 
+const VOLUME_AT_PRICE_BUCKETS_MIN = 20;
+const VOLUME_AT_PRICE_BUCKETS_MAX = 60;
+/** Apenas valores pares (6, 8, 10, …, 60). */
+function clampEvenBuckets(v: number): number {
+  const n = Math.max(VOLUME_AT_PRICE_BUCKETS_MIN, Math.min(VOLUME_AT_PRICE_BUCKETS_MAX, Math.round(v)));
+  return n % 2 === 0 ? n : n - 1;
+}
+const VOLUME_AT_PRICE_OPACITY_MIN = 10;
+const VOLUME_AT_PRICE_OPACITY_MAX = 70;
+const VOLUME_AT_PRICE_WIDTH_PERCENT_MIN = 30;
+const VOLUME_AT_PRICE_WIDTH_PERCENT_MAX = 100;
+const VOLUME_AT_PRICE_PERCENT_MIN = 20;
+const VOLUME_AT_PRICE_PERCENT_MAX = 100;
+const VOLUME_AT_PRICE_PERCENT_DEFAULT = 100;
+
+/** Config do cache VAP por intervalo do gráfico: param (API), maxCandles, label para exibição, minutos do candle do cache. */
+export function getVapCacheConfig(groupMinutes: number): { param: string; maxCandles: number; paramLabel: string; paramMinutes: number } {
+  const map: Record<number, { param: string; maxCandles: number; paramLabel: string; paramMinutes: number }> = {
+    1: { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 },
+    3: { param: "1m", maxCandles: 450, paramLabel: "1m", paramMinutes: 1 },
+    5: { param: "1m", maxCandles: 750, paramLabel: "1m", paramMinutes: 1 },
+    15: { param: "5m", maxCandles: 450, paramLabel: "5m", paramMinutes: 5 },
+    30: { param: "5m", maxCandles: 900, paramLabel: "5m", paramMinutes: 5 },
+    45: { param: "15m", maxCandles: 450, paramLabel: "15m", paramMinutes: 15 },
+    60: { param: "15m", maxCandles: 600, paramLabel: "15m", paramMinutes: 15 },
+    120: { param: "30m", maxCandles: 600, paramLabel: "30m", paramMinutes: 30 },
+    180: { param: "1h", maxCandles: 450, paramLabel: "1h", paramMinutes: 60 },
+    240: { param: "1h", maxCandles: 600, paramLabel: "1h", paramMinutes: 60 },
+    360: { param: "2h", maxCandles: 450, paramLabel: "2h", paramMinutes: 120 },
+    480: { param: "2h", maxCandles: 600, paramLabel: "2h", paramMinutes: 120 },
+    720: { param: "3h", maxCandles: 600, paramLabel: "3h", paramMinutes: 180 },
+    1440: { param: "6h", maxCandles: 600, paramLabel: "6h", paramMinutes: 360 },
+    4320: { param: "1d", maxCandles: 450, paramLabel: "1D", paramMinutes: 1440 },
+    10080: { param: "3d", maxCandles: 350, paramLabel: "3D", paramMinutes: 4320 },
+    43200: { param: "1w", maxCandles: 600, paramLabel: "1S", paramMinutes: 10080 },
+  };
+  return map[groupMinutes] ?? { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 };
+}
+
+/** Formata o equivalente em tempo: "N velas de X = Y dias/horas/minutos". lang opcional para en. */
+export function formatVapTimeSpan(candles: number, paramLabel: string, paramMinutes: number, lang?: "pt" | "en"): string {
+  const totalMinutes = candles * paramMinutes;
+  const isEn = lang === "en";
+  const velasDe = isEn ? "candles of" : "velas de";
+  if (totalMinutes >= 43200) {
+    const n = Math.round((totalMinutes / 43200) * 10) / 10;
+    const unit = isEn ? (n === 1 ? "month" : "months") : (n === 1 ? "mês" : "meses");
+    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+  }
+  if (totalMinutes >= 1440) {
+    const n = Math.round((totalMinutes / 1440) * 10) / 10;
+    const unit = isEn ? (n === 1 ? "day" : "days") : (n === 1 ? "dia" : "dias");
+    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+  }
+  if (totalMinutes >= 60) {
+    const n = Math.round((totalMinutes / 60) * 10) / 10;
+    const unit = isEn ? (n === 1 ? "hour" : "hours") : (n === 1 ? "hora" : "horas");
+    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+  }
+  const n = Math.round(totalMinutes);
+  const unit = isEn ? (n === 1 ? "minute" : "minutes") : (n === 1 ? "minuto" : "minutos");
+  return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+}
+
+function getStoredVolumeAtPrice(): { enabled: boolean; buckets: number; percent: number; opacity: number; widthPercent: number; side: "left" | "right"; colorAbove: string; colorBelow: string } {
+  if (typeof window === "undefined") return { enabled: false, buckets: VOLUME_AT_PRICE_BUCKETS_MIN, percent: VOLUME_AT_PRICE_PERCENT_DEFAULT, opacity: 40, widthPercent: 100, side: "left", colorAbove: "#059669", colorBelow: "#dc2626" };
+  try {
+    const raw = window.localStorage.getItem(KLINE_VOLUME_AT_PRICE_KEY);
+    if (!raw) return { enabled: false, buckets: VOLUME_AT_PRICE_BUCKETS_MIN, percent: VOLUME_AT_PRICE_PERCENT_DEFAULT, opacity: 40, widthPercent: 100, side: "left", colorAbove: "#059669", colorBelow: "#dc2626" };
+    const p = JSON.parse(raw) as { enabled?: boolean; buckets?: number; candles?: number; percent?: number; opacity?: number; widthPercent?: number; side?: "left" | "right"; colorAbove?: string; colorBelow?: string };
+    const buckets = clampEvenBuckets(typeof p.buckets === "number" ? p.buckets : VOLUME_AT_PRICE_BUCKETS_MIN);
+    const percent = typeof p.percent === "number" && p.percent >= VOLUME_AT_PRICE_PERCENT_MIN && p.percent <= VOLUME_AT_PRICE_PERCENT_MAX ? Math.round(p.percent) : VOLUME_AT_PRICE_PERCENT_DEFAULT;
+    const opacity = typeof p.opacity === "number" && p.opacity >= VOLUME_AT_PRICE_OPACITY_MIN && p.opacity <= VOLUME_AT_PRICE_OPACITY_MAX ? p.opacity : 40;
+    const widthPercent = typeof p.widthPercent === "number" && p.widthPercent >= VOLUME_AT_PRICE_WIDTH_PERCENT_MIN && p.widthPercent <= VOLUME_AT_PRICE_WIDTH_PERCENT_MAX ? p.widthPercent : 100;
+    const side = p.side === "left" || p.side === "right" ? p.side : "left";
+    const colorAbove = typeof p.colorAbove === "string" && /^#[0-9A-Fa-f]{6}$/.test(p.colorAbove) ? p.colorAbove : "#059669";
+    const colorBelow = typeof p.colorBelow === "string" && /^#[0-9A-Fa-f]{6}$/.test(p.colorBelow) ? p.colorBelow : "#dc2626";
+    return { enabled: p.enabled === true, buckets, percent, opacity, widthPercent, side, colorAbove, colorBelow };
+  } catch {
+    return { enabled: false, buckets: VOLUME_AT_PRICE_BUCKETS_MIN, percent: VOLUME_AT_PRICE_PERCENT_DEFAULT, opacity: 40, widthPercent: 100, side: "left", colorAbove: "#059669", colorBelow: "#dc2626" };
+  }
+}
+
 /**
  * Converte OHLC para Heikin Ashi. klines[0] = mais recente.
  * Retorna novas linhas com [1]=HA_Open, [2]=HA_High, [3]=HA_Low, [4]=HA_Close (resto igual).
@@ -179,6 +262,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     setTimeframeRestored(true);
   }, [isAdmin]);
   const [klines, setKlines] = useState<Kline[]>([]);
+  const [vapCacheKlines, setVapCacheKlines] = useState<Kline[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
@@ -196,6 +280,26 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [heikinAshiEnabled, setHeikinAshiEnabled] = useState(false);
   useLayoutEffect(() => {
     setHeikinAshiEnabled(getStoredHeikinAshi());
+  }, []);
+
+  const [volumeAtPriceEnabled, setVolumeAtPriceEnabled] = useState(false);
+  const [volumeAtPriceBuckets, setVolumeAtPriceBuckets] = useState(20);
+  const [volumeAtPricePercent, setVolumeAtPricePercent] = useState(VOLUME_AT_PRICE_PERCENT_DEFAULT);
+  const [volumeAtPriceOpacity, setVolumeAtPriceOpacity] = useState(40);
+  const [volumeAtPriceSide, setVolumeAtPriceSide] = useState<"left" | "right">("left");
+  const [volumeAtPriceColorAbove, setVolumeAtPriceColorAbove] = useState("#059669");
+  const [volumeAtPriceColorBelow, setVolumeAtPriceColorBelow] = useState("#dc2626");
+  const [volumeAtPriceWidthPercent, setVolumeAtPriceWidthPercent] = useState(100);
+  useLayoutEffect(() => {
+    const stored = getStoredVolumeAtPrice();
+    setVolumeAtPriceEnabled(stored.enabled);
+    setVolumeAtPriceBuckets(stored.buckets);
+    setVolumeAtPricePercent(stored.percent);
+    setVolumeAtPriceOpacity(stored.opacity);
+    setVolumeAtPriceWidthPercent(stored.widthPercent);
+    setVolumeAtPriceSide(stored.side);
+    setVolumeAtPriceColorAbove(stored.colorAbove);
+    setVolumeAtPriceColorBelow(stored.colorBelow);
   }, []);
 
   const spotExtremesStorageKey = useMemo(() => {
@@ -487,6 +591,18 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }, [groupMinutes]);
 
   useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      window.localStorage.setItem(
+        KLINE_VOLUME_AT_PRICE_KEY,
+        JSON.stringify({ enabled: volumeAtPriceEnabled, buckets: volumeAtPriceBuckets, percent: volumeAtPricePercent, opacity: volumeAtPriceOpacity, widthPercent: volumeAtPriceWidthPercent, side: volumeAtPriceSide, colorAbove: volumeAtPriceColorAbove, colorBelow: volumeAtPriceColorBelow })
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [volumeAtPriceEnabled, volumeAtPriceBuckets, volumeAtPricePercent, volumeAtPriceOpacity, volumeAtPriceWidthPercent, volumeAtPriceSide, volumeAtPriceColorAbove, volumeAtPriceColorBelow]);
+
+  useEffect(() => {
     const el = chartWrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
@@ -569,6 +685,36 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const interval = setInterval(fetchKlines, REFRESH_MS);
     return () => clearInterval(interval);
   }, [groupMinutes, symbol, timeframeRestored]);
+
+  const fetchVapCacheKlines = async () => {
+    if (!volumeAtPriceEnabled) {
+      setVapCacheKlines([]);
+      return;
+    }
+    try {
+      const config = getVapCacheConfig(groupMinutes);
+      const candlesToUse = Math.max(1, Math.round(config.maxCandles * volumeAtPricePercent / 100));
+      const res = await fetch(
+        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(symbol)}&interval=${config.param}&limit=${candlesToUse}`
+      );
+      if (!res.ok) {
+        setVapCacheKlines([]);
+        return;
+      }
+      const body = await res.json();
+      const list = Array.isArray(body) ? body : (body.klines ?? []);
+      setVapCacheKlines(list);
+    } catch {
+      setVapCacheKlines([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchVapCacheKlines();
+    if (!volumeAtPriceEnabled) return;
+    const interval = setInterval(fetchVapCacheKlines, REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [volumeAtPriceEnabled, groupMinutes, symbol, volumeAtPricePercent]);
 
   useEffect(() => {
     fetchSpot();
@@ -789,6 +935,28 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 /* ignore */
               }
             }}
+            volumeAtPriceEnabled={volumeAtPriceEnabled}
+            volumeAtPriceKlines={volumeAtPriceEnabled ? vapCacheKlines : []}
+            volumeAtPriceBuckets={volumeAtPriceBuckets}
+            volumeAtPricePercent={volumeAtPricePercent}
+            onVolumeAtPricePercentChange={(v) => setVolumeAtPricePercent(Math.max(VOLUME_AT_PRICE_PERCENT_MIN, Math.min(VOLUME_AT_PRICE_PERCENT_MAX, Math.round(v))))}
+            vapTimeSpanLabel={volumeAtPriceEnabled ? (() => {
+              const config = getVapCacheConfig(groupMinutes);
+              const candlesToUse = Math.max(1, Math.round(config.maxCandles * volumeAtPricePercent / 100));
+              return formatVapTimeSpan(candlesToUse, config.paramLabel, config.paramMinutes, lang);
+            })() : ""}
+            volumeAtPriceOpacity={volumeAtPriceOpacity}
+            volumeAtPriceWidthPercent={volumeAtPriceWidthPercent}
+            onVolumeAtPriceWidthPercentChange={(v) => setVolumeAtPriceWidthPercent(Math.max(VOLUME_AT_PRICE_WIDTH_PERCENT_MIN, Math.min(VOLUME_AT_PRICE_WIDTH_PERCENT_MAX, v)))}
+            volumeAtPriceSide={volumeAtPriceSide}
+            volumeAtPriceColorAbove={volumeAtPriceColorAbove}
+            volumeAtPriceColorBelow={volumeAtPriceColorBelow}
+            onVolumeAtPriceEnabledChange={setVolumeAtPriceEnabled}
+            onVolumeAtPriceSideChange={setVolumeAtPriceSide}
+            onVolumeAtPriceColorAboveChange={setVolumeAtPriceColorAbove}
+            onVolumeAtPriceColorBelowChange={setVolumeAtPriceColorBelow}
+            onVolumeAtPriceBucketsChange={(v) => setVolumeAtPriceBuckets(clampEvenBuckets(v))}
+            onVolumeAtPriceOpacityChange={(v) => setVolumeAtPriceOpacity(Math.max(VOLUME_AT_PRICE_OPACITY_MIN, Math.min(VOLUME_AT_PRICE_OPACITY_MAX, v)))}
             indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
               columnIndex,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,

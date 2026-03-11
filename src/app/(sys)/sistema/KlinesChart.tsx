@@ -4,7 +4,7 @@
  * Gráfico de candles (OHLC). Janela visível configurável.
  * Eixo Y: preço USDT (ajustado aos candles visíveis). Eixo X: tempo + subeixo por data.
  */
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { API_BASE, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -85,6 +85,7 @@ import { KlinesChartSegmentOptions } from "./klinesChart/KlinesChartSegmentOptio
 import { KlinesChartSvg } from "./klinesChart/KlinesChartSvg";
 import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
 import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
+import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
@@ -100,7 +101,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange }: KlinesChartProps) {
   const pathname = usePathname();
   const { addLayoutLoadLog } = useSistemaDebug();
   const lang = useCryptoLang();
@@ -254,6 +255,13 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const fullReversed = [...klines].reverse();
   const n = fullReversed.length;
 
+  /** Volume no preço: usa klines do cache (volumeAtPriceKlines) quando fornecido; já vêm com a quantidade certa do fetch. */
+  const volumeAtPriceData = useMemo(() => {
+    const source = volumeAtPriceKlines?.length ? volumeAtPriceKlines : klines;
+    return volumeAtPriceEnabled && source.length > 0
+      ? computeVolumeAtPriceBuckets(source as (string | number)[][], volumeAtPriceBuckets)
+      : null;
+  }, [volumeAtPriceEnabled, volumeAtPriceKlines, klines, volumeAtPriceBuckets]);
 
   // Sempre abrir a caixa de desenho encostada no canto esquerdo
   useEffect(() => {
@@ -1327,6 +1335,24 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             setVolumeOnPrice={setVolumeOnPrice}
             volumeOnPriceOpacity={volumeOnPriceOpacity}
             setVolumeOnPriceOpacity={setVolumeOnPriceOpacity}
+            volumeAtPriceData={volumeAtPriceData}
+            volumeAtPriceEnabled={volumeAtPriceEnabled}
+            volumeAtPriceBuckets={volumeAtPriceBuckets}
+            volumeAtPricePercent={volumeAtPricePercent}
+            onVolumeAtPricePercentChange={onVolumeAtPricePercentChange}
+            vapTimeSpanLabel={vapTimeSpanLabel}
+            volumeAtPriceOpacity={volumeAtPriceOpacity}
+            volumeAtPriceWidthPercent={volumeAtPriceWidthPercent}
+            onVolumeAtPriceWidthPercentChange={onVolumeAtPriceWidthPercentChange}
+            onVolumeAtPriceEnabledChange={onVolumeAtPriceEnabledChange}
+            onVolumeAtPriceBucketsChange={onVolumeAtPriceBucketsChange}
+            onVolumeAtPriceOpacityChange={onVolumeAtPriceOpacityChange}
+            volumeAtPriceSide={volumeAtPriceSide}
+            volumeAtPriceColorAbove={volumeAtPriceColorAbove}
+            volumeAtPriceColorBelow={volumeAtPriceColorBelow}
+            onVolumeAtPriceSideChange={onVolumeAtPriceSideChange}
+            onVolumeAtPriceColorAboveChange={onVolumeAtPriceColorAboveChange}
+            onVolumeAtPriceColorBelowChange={onVolumeAtPriceColorBelowChange}
             chartWidth={width}
             chartSizePercent={chartSizePercent}
             setChartSizePercent={setChartSizePercent}
@@ -1626,6 +1652,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
               lastCloseY={lastCloseY}
               volumeOnPrice={volumeOnPrice}
               volumeOnPriceOpacity={volumeOnPriceOpacity}
+              volumeAtPriceData={volumeAtPriceData}
+              volumeAtPriceOpacity={volumeAtPriceOpacity}
+              volumeAtPriceWidthPercent={volumeAtPriceWidthPercent}
+              volumeAtPriceSide={volumeAtPriceSide}
+              volumeAtPriceColorAbove={volumeAtPriceColorAbove}
+              volumeAtPriceColorBelow={volumeAtPriceColorBelow}
               lineTableHex={lineTableHex}
               secondaryGridHex={secondaryGridHex}
               lastCloseLineHex={lastCloseLineHex}

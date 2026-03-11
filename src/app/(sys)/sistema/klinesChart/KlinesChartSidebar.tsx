@@ -89,6 +89,24 @@ export interface KlinesChartSidebarProps {
   setVolumeOnPrice: (v: boolean) => void;
   volumeOnPriceOpacity: number;
   setVolumeOnPriceOpacity: (v: number | ((v: number) => number)) => void;
+  volumeAtPriceData?: unknown;
+  volumeAtPriceEnabled?: boolean;
+  volumeAtPriceBuckets?: number;
+  volumeAtPricePercent?: number;
+  onVolumeAtPricePercentChange?: (v: number) => void;
+  vapTimeSpanLabel?: string;
+  volumeAtPriceOpacity?: number;
+  volumeAtPriceWidthPercent?: number;
+  onVolumeAtPriceWidthPercentChange?: (v: number) => void;
+  volumeAtPriceSide?: "left" | "right";
+  volumeAtPriceColorAbove?: string;
+  volumeAtPriceColorBelow?: string;
+  onVolumeAtPriceEnabledChange?: (v: boolean) => void;
+  onVolumeAtPriceBucketsChange?: (v: number) => void;
+  onVolumeAtPriceOpacityChange?: (v: number) => void;
+  onVolumeAtPriceSideChange?: (v: "left" | "right") => void;
+  onVolumeAtPriceColorAboveChange?: (v: string) => void;
+  onVolumeAtPriceColorBelowChange?: (v: string) => void;
   chartWidth: number;
   chartSizePercent: number;
   setChartSizePercent: (v: number | ((v: number) => number)) => void;
@@ -195,6 +213,23 @@ export function KlinesChartSidebar({
   setVolumeOnPrice,
   volumeOnPriceOpacity,
   setVolumeOnPriceOpacity,
+  volumeAtPriceEnabled = false,
+  volumeAtPriceBuckets = 20,
+  volumeAtPricePercent = 100,
+  onVolumeAtPricePercentChange,
+  vapTimeSpanLabel = "",
+  volumeAtPriceOpacity = 40,
+  volumeAtPriceWidthPercent = 100,
+  onVolumeAtPriceWidthPercentChange,
+  volumeAtPriceSide = "left",
+  volumeAtPriceColorAbove = "#059669",
+  volumeAtPriceColorBelow = "#dc2626",
+  onVolumeAtPriceEnabledChange,
+  onVolumeAtPriceBucketsChange,
+  onVolumeAtPriceOpacityChange,
+  onVolumeAtPriceSideChange,
+  onVolumeAtPriceColorAboveChange,
+  onVolumeAtPriceColorBelowChange,
   chartWidth,
   chartSizePercent,
   setChartSizePercent,
@@ -255,6 +290,14 @@ export function KlinesChartSidebar({
 
   const [intervalsOpen, setIntervalsOpen] = useState(false);
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
+  const [vapColorAboveOpen, setVapColorAboveOpen] = useState(false);
+  const [vapColorBelowOpen, setVapColorBelowOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (!settingsOpen) {
+      setVapColorAboveOpen(false);
+      setVapColorBelowOpen(false);
+    }
+  }, [settingsOpen]);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
   const isHorizontal = orientation === "horizontal";
   const intervalTriggerRef = useRef<HTMLDivElement>(null);
@@ -265,43 +308,61 @@ export function KlinesChartSidebar({
   const [portalStyle, setPortalStyle] = useState<{ top: number; left: number } | null>(null);
 
   useLayoutEffect(() => {
-    if (!isHorizontal) return;
+    const anyOpen = chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen;
+    if (!anyOpen) {
+      setPortalStyle(null);
+      return;
+    }
     const el =
       chartTypeOpen
         ? chartTypeTriggerRef.current
         : intervalsOpen
           ? intervalTriggerRef.current
           : settingsOpen
-          ? settingsTriggerRef.current
-          : colorsOpen
-            ? colorsRef.current
-            : drawOpen && drawPanelSide === "left"
-              ? drawRef.current
-              : saveOpen
-                ? saveTriggerRef.current
-                : loadOpen
-                  ? loadTriggerRef.current
-                  : null;
+            ? settingsTriggerRef.current
+            : colorsOpen
+              ? colorsRef.current
+              : drawOpen && drawPanelSide === "left"
+                ? drawRef.current
+                : saveOpen
+                  ? saveTriggerRef.current
+                  : loadOpen
+                    ? loadTriggerRef.current
+                    : null;
     if (!el) {
       setPortalStyle(null);
       return;
     }
-    const rect = el.getBoundingClientRect();
-    setPortalStyle({
-      top: rect.bottom + 4,
-      left: rect.left,
-    });
-  }, [
-    isHorizontal,
-    chartTypeOpen,
-    intervalsOpen,
-    settingsOpen,
-    colorsOpen,
-    drawOpen,
-    drawPanelSide,
-    saveOpen,
-    loadOpen,
-  ]);
+    const updatePosition = () => {
+      const r = el.getBoundingClientRect();
+      if (isHorizontal) {
+        setPortalStyle((prev) => {
+          const next = { top: r.bottom + 4, left: r.left };
+          if (prev && prev.top === next.top && prev.left === next.left) return prev;
+          return next;
+        });
+      } else {
+        setPortalStyle((prev) => {
+          const next = { top: r.top, left: r.right + 4 };
+          if (prev && prev.top === next.top && prev.left === next.left) return prev;
+          return next;
+        });
+      }
+    };
+    updatePosition();
+    let rafId: number;
+    const tick = () => {
+      updatePosition();
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    const onResize = () => updatePosition();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [isHorizontal, chartTypeOpen, intervalsOpen, settingsOpen, colorsOpen, drawOpen, drawPanelSide, saveOpen, loadOpen]);
 
   const popoverPositionClass = isHorizontal ? "absolute left-0 top-full mt-1" : "absolute left-full top-0 ml-1";
   const rootClassName = isHorizontal
@@ -351,40 +412,6 @@ export function KlinesChartSidebar({
           >
             {currentIntervalLabel}
           </button>
-          {intervalsOpen && !isHorizontal && (
-            <div
-              className={`${popoverPositionClass} z-20 min-w-[140px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col`}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-label={(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
-            >
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
-              </p>
-              <div className="grid grid-cols-3 gap-1 mb-3">
-                {intervalOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => {
-                      onIntervalChange(opt.value);
-                      setIntervalsOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors ${
-                      opt.value === groupMinutes
-                        ? "bg-zinc-200 border-zinc-300 text-zinc-900"
-                        : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-100">
-                {t.tableNote}
-              </p>
-            </div>
-          )}
         </div>
       )}
       {onHeikinAshiChange != null && onChartStyleChange != null && onCandleBodyStyleChange != null && (
@@ -431,89 +458,6 @@ export function KlinesChartSidebar({
                 >
                   6
                 </button>
-                {chartTypeOpen && !isHorizontal && (
-                  <div
-                    className={`${popoverPositionClass} z-20 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col`}
-                    onClick={(e) => e.stopPropagation()}
-                    role="dialog"
-                    aria-label={(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
-                  >
-                    <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                      {(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
-                    </p>
-                    <div className="grid grid-cols-1 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(false);
-                          onChartStyleChange("candles");
-                          onCandleBodyStyleChange("filled");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(false);
-                          onChartStyleChange("candles");
-                          onCandleBodyStyleChange("hollow");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(false);
-                          onChartStyleChange("bars");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeBars ?? "Barras"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(false);
-                          onChartStyleChange("line");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(false);
-                          onChartStyleChange("linePoints");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHeikinAshiChange(true);
-                          onChartStyleChange("candles");
-                          onCandleBodyStyleChange("filled");
-                          setChartTypeOpen(false);
-                        }}
-                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                      >
-                        {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </>
             );
           })()}
@@ -548,10 +492,12 @@ export function KlinesChartSidebar({
       >
         🔍
       </button>
-      {settingsOpen && !isHorizontal && (
+      {false && settingsOpen && !isHorizontal && (
         <div
-          className={`${popoverPositionClass} z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
+          className={`${popoverPositionClass} z-10 min-w-[160px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-label={t.configTitle}
         >
           <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
             <input
@@ -657,7 +603,7 @@ export function KlinesChartSidebar({
               onChange={(e) => setVolumeOnPrice(e.target.checked)}
               className="rounded border-zinc-300"
             />
-            <span>{(t as Record<string, string>).volumeOnPrice ?? "Volume on price"}</span>
+            <span>{(t as Record<string, string>).volumeOnPrice ?? "Volume"}</span>
           </label>
           {volumeOnPrice && (
             <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
@@ -687,6 +633,105 @@ export function KlinesChartSidebar({
               </div>
             </div>
           )}
+          {onVolumeAtPriceEnabledChange != null && (
+            <>
+              <div className="border-t border-zinc-100 pt-2 mt-2" />
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+                <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange(e.target.checked)} className="rounded border-zinc-300" />
+                <span>{(t as Record<string, string>).volumeAtPrice ?? "Volume no preço"}</span>
+              </label>
+              {volumeAtPriceEnabled && (
+                <>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+                    <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceBuckets ?? "Intervalos (eixo Y)"}</span>
+                    <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                      <button type="button" onClick={() => onVolumeAtPriceBucketsChange?.(Math.max(20, (volumeAtPriceBuckets ?? 20) - 2))} disabled={(volumeAtPriceBuckets ?? 20) <= 20} aria-label="−2" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                      <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{volumeAtPriceBuckets ?? 20}</span>
+                      <button type="button" onClick={() => onVolumeAtPriceBucketsChange?.(Math.min(60, (volumeAtPriceBuckets ?? 20) + 2))} disabled={(volumeAtPriceBuckets ?? 20) >= 60} aria-label="+2" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 px-2 py-1.5 text-sm text-zinc-700">
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0">{(t as Record<string, string>).volumeAtPricePercent ?? "Percentual de velas"}</span>
+                      <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                        <button type="button" onClick={() => onVolumeAtPricePercentChange?.(Math.max(20, (volumeAtPricePercent ?? 100) - 1))} disabled={(volumeAtPricePercent ?? 100) <= 20} aria-label="−1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                        <span className="w-10 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{volumeAtPricePercent ?? 100}%</span>
+                        <button type="button" onClick={() => onVolumeAtPricePercentChange?.(Math.min(100, (volumeAtPricePercent ?? 100) + 1))} disabled={(volumeAtPricePercent ?? 100) >= 100} aria-label="+1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                      </div>
+                    </div>
+                    {vapTimeSpanLabel ? <span className="text-xs text-zinc-500">({vapTimeSpanLabel})</span> : null}
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+                    <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceSide ?? "Lado"}</span>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => onVolumeAtPriceSideChange?.("left")} className={`px-2 py-1 rounded border text-xs font-medium ${(volumeAtPriceSide ?? "left") === "left" ? "bg-zinc-200 border-zinc-400" : "border-zinc-200 hover:bg-zinc-100"}`}>{(t as Record<string, string>).volumeAtPriceSideLeft ?? "Esquerda"}</button>
+                      <button type="button" onClick={() => onVolumeAtPriceSideChange?.("right")} className={`px-2 py-1 rounded border text-xs font-medium ${(volumeAtPriceSide ?? "left") === "right" ? "bg-zinc-200 border-zinc-400" : "border-zinc-200 hover:bg-zinc-100"}`}>{(t as Record<string, string>).volumeAtPriceSideRight ?? "Direita"}</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+                    <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceOpacity ?? "Opacidade"}</span>
+                    <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                      <button type="button" onClick={() => onVolumeAtPriceOpacityChange?.(Math.max(10, (volumeAtPriceOpacity ?? 40) - 5))} disabled={(volumeAtPriceOpacity ?? 40) <= 10} aria-label="−5%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                      <span className="w-10 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{volumeAtPriceOpacity ?? 40}%</span>
+                      <button type="button" onClick={() => onVolumeAtPriceOpacityChange?.(Math.min(70, (volumeAtPriceOpacity ?? 40) + 5))} disabled={(volumeAtPriceOpacity ?? 40) >= 70} aria-label="+5%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
+                    <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceWidth ?? "Largura"}</span>
+                    <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                      <button type="button" onClick={() => onVolumeAtPriceWidthPercentChange?.(Math.max(30, (volumeAtPriceWidthPercent ?? 100) - 1))} disabled={(volumeAtPriceWidthPercent ?? 100) <= 30} aria-label="−1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                      <span className="w-10 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{volumeAtPriceWidthPercent ?? 100}%</span>
+                      <button type="button" onClick={() => onVolumeAtPriceWidthPercentChange?.(Math.min(100, (volumeAtPriceWidthPercent ?? 100) + 1))} disabled={(volumeAtPriceWidthPercent ?? 100) >= 100} aria-label="+1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                    </div>
+                  </div>
+                  <div className="px-2 py-1.5 text-sm text-zinc-700 relative">
+                    <button
+                      type="button"
+                      onClick={() => { setVapColorBelowOpen(false); setVapColorAboveOpen((o) => !o); }}
+                      aria-expanded={vapColorAboveOpen}
+                      aria-haspopup="listbox"
+                      aria-label={(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor metade acima"}
+                      className="w-full flex items-center gap-2 rounded border border-zinc-300 bg-white px-2 py-1.5 text-left hover:bg-zinc-50"
+                    >
+                      <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor metade acima"}</span>
+                      <span className="w-5 h-5 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorAbove ?? "#059669" }} aria-hidden />
+                    </button>
+                    {vapColorAboveOpen && (
+                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] max-h-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor metade acima"} onClick={(e) => e.stopPropagation()}>
+                        <div className="grid grid-cols-4 gap-1">
+                          {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
+                            <button key={hex} type="button" role="option" aria-selected={(volumeAtPriceColorAbove ?? "#059669") === hex} onClick={() => { onVolumeAtPriceColorAboveChange?.(hex); setVapColorAboveOpen(false); }} title={hex} className={`w-6 h-6 rounded border-2 shrink-0 ${(volumeAtPriceColorAbove ?? "#059669") === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: hex }} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="px-2 py-1.5 text-sm text-zinc-700 relative">
+                    <button
+                      type="button"
+                      onClick={() => { setVapColorAboveOpen(false); setVapColorBelowOpen((o) => !o); }}
+                      aria-expanded={vapColorBelowOpen}
+                      aria-haspopup="listbox"
+                      aria-label={(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor metade abaixo"}
+                      className="w-full flex items-center gap-2 rounded border border-zinc-300 bg-white px-2 py-1.5 text-left hover:bg-zinc-50"
+                    >
+                      <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor metade abaixo"}</span>
+                      <span className="w-5 h-5 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorBelow ?? "#dc2626" }} aria-hidden />
+                    </button>
+                    {vapColorBelowOpen && (
+                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] max-h-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor metade abaixo"} onClick={(e) => e.stopPropagation()}>
+                        <div className="grid grid-cols-4 gap-1">
+                          {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
+                            <button key={hex} type="button" role="option" aria-selected={(volumeAtPriceColorBelow ?? "#dc2626") === hex} onClick={() => { onVolumeAtPriceColorBelowChange?.(hex); setVapColorBelowOpen(false); }} title={hex} className={`w-6 h-6 rounded border-2 shrink-0 ${(volumeAtPriceColorBelow ?? "#dc2626") === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: hex }} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
       </div>
@@ -704,7 +749,7 @@ export function KlinesChartSidebar({
         >
           🎨
         </button>
-        {colorsOpen && !isHorizontal && (
+        {false && colorsOpen && !isHorizontal && (
           <div
             className={`${popoverPositionClass} z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
             style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}
@@ -913,6 +958,40 @@ export function KlinesChartSidebar({
           <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
           <span aria-hidden>🧲</span>
         </label>
+        {false && drawOpen && drawPanelSide === "left" && !isHorizontal && (
+          <div className={`${popoverPositionClass} z-20 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t.drawTool}>
+            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{t.drawTool}</p>
+            <div className="grid grid-cols-2 gap-1">
+              <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`} aria-label={t.lineSegment}>
+                <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+              <button type="button" onClick={selectHorizontalLineTool} title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`}>
+                <span aria-hidden>―</span>
+              </button>
+              <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+              <button type="button" onClick={selectFreeRetracementTool} title={(t as Record<string, string>).freeRetracement ?? "Retração livre"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
+              </button>
+              <button type="button" onClick={selectRectangleTool} title={(t as Record<string, string>).rectangleTool ?? "Rectangle"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+              <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+              <button type="button" onClick={selectVerticalLineTool} title={(t as Record<string, string>).verticalLine ?? "Vertical line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}>
+                <span aria-hidden>|</span>
+              </button>
+              <button type="button" onClick={selectTextTool} title={(t as Record<string, string>).drawTextTool ?? "Text"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+              <button type="button" onClick={selectArrowTool} title={(t as Record<string, string>).arrowTool ?? "Arrow"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div ref={saveLoadRef} className={isHorizontal ? "flex items-center" : "w-full flex flex-col items-center"}>
         <div ref={saveTriggerRef} className={isHorizontal ? "relative flex items-center" : "relative w-full"}>
@@ -929,7 +1008,7 @@ export function KlinesChartSidebar({
           >
             💾
           </button>
-          {saveOpen && !isHorizontal && (
+          {false && saveOpen && !isHorizontal && (
             <div
               className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
               onClick={(e) => e.stopPropagation()}
@@ -965,7 +1044,7 @@ export function KlinesChartSidebar({
           >
             📂
           </button>
-          {loadOpen && !isHorizontal && (
+          {false && loadOpen && !isHorizontal && (
             <div
               className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
               onClick={(e) => e.stopPropagation()}
@@ -1026,8 +1105,7 @@ export function KlinesChartSidebar({
           </button>
         </div>
       )}
-      {isHorizontal &&
-        portalStyle &&
+      {portalStyle &&
         (chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen) &&
         typeof document !== "undefined" &&
         createPortal(
@@ -1038,109 +1116,30 @@ export function KlinesChartSidebar({
           >
             {chartTypeOpen && (
               <>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                  {(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
-                </p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}</p>
                 <div className="grid grid-cols-1 gap-1 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(false);
-                      onChartStyleChange?.("candles");
-                      onCandleBodyStyleChange?.("filled");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(false);
-                      onChartStyleChange?.("candles");
-                      onCandleBodyStyleChange?.("hollow");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(false);
-                      onChartStyleChange?.("bars");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeBars ?? "Barras"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(false);
-                      onChartStyleChange?.("line");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(false);
-                      onChartStyleChange?.("linePoints");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onHeikinAshiChange?.(true);
-                      onChartStyleChange?.("candles");
-                      onCandleBodyStyleChange?.("filled");
-                      setChartTypeOpen(false);
-                    }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
-                  </button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeCandles ?? "Candles"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeBars ?? "Barras"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLine ?? "Linhas"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}</button>
                 </div>
               </>
             )}
             {intervalsOpen && !chartTypeOpen && (
               <>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                  {(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
-                </p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalsPanelTitle ?? t.interval}</p>
                 <div className="grid grid-cols-3 gap-1 mb-3">
                   {intervalOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => {
-                        onIntervalChange(opt.value);
-                        setIntervalsOpen(false);
-                      }}
-                      className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors ${
-                        opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
+                    <button key={opt.value} type="button" onClick={() => { onIntervalChange(opt.value); setIntervalsOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{opt.label}</button>
                   ))}
                 </div>
                 <p className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-100">{t.tableNote}</p>
               </>
             )}
             {settingsOpen && !chartTypeOpen && !intervalsOpen && (
-              <>
+              <div className="min-w-[160px] max-h-[80vh] overflow-y-auto">
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={yAxisAbbreviated} onChange={(e) => setYAxisAbbreviated(e.target.checked)} className="rounded border-zinc-300" />
                   <span>{t.yAxisAbbreviated}</span>
@@ -1164,37 +1163,122 @@ export function KlinesChartSidebar({
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                   <span className="shrink-0">{t.invisibleCandlesEnd}</span>
                   <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.max(0, v - 1))} disabled={invisibleCandlesEnd <= 0} aria-label="-" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">−</button>
-                    <span className="w-6 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{invisibleCandlesEnd}</span>
-                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))} disabled={invisibleCandlesEnd >= 30} aria-label="+" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">+</button>
+                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.max(0, v - 1))} disabled={invisibleCandlesEnd <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                    <span className="w-6 text-center font-mono text-zinc-800 tabular-nums">{invisibleCandlesEnd}</span>
+                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))} disabled={invisibleCandlesEnd >= 30} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                   <span className="shrink-0">{t.secondaryPanelHeight}</span>
                   <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                    <button type="button" onClick={() => setSecondaryPanelHeightPercent((v) => Math.max(secondaryPanelHeightMin, v - 1))} disabled={secondaryPanelHeightPercent <= secondaryPanelHeightMin} aria-label="-" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">−</button>
-                    <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{secondaryPanelHeightPercent}%</span>
-                    <button type="button" onClick={() => setSecondaryPanelHeightPercent((v) => Math.min(secondaryPanelHeightMax, v + 1))} disabled={secondaryPanelHeightPercent >= secondaryPanelHeightMax} aria-label="+" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">+</button>
+                    <button type="button" onClick={() => setSecondaryPanelHeightPercent((v) => Math.max(secondaryPanelHeightMin, v - 1))} disabled={secondaryPanelHeightPercent <= secondaryPanelHeightMin} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                    <span className="w-8 text-center font-mono text-zinc-800 tabular-nums">{secondaryPanelHeightPercent}%</span>
+                    <button type="button" onClick={() => setSecondaryPanelHeightPercent((v) => Math.min(secondaryPanelHeightMax, v + 1))} disabled={secondaryPanelHeightPercent >= secondaryPanelHeightMax} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
                   </div>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={volumeOnPrice} onChange={(e) => setVolumeOnPrice(e.target.checked)} className="rounded border-zinc-300" />
-                  <span>{(t as Record<string, string>).volumeOnPrice ?? "Volume on price"}</span>
+                  <span>{(t as Record<string, string>).volumeOnPrice ?? "Volume"}</span>
                 </label>
                 {volumeOnPrice && (
                   <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                     <span className="shrink-0">{(t as Record<string, string>).volOpacity ?? "Vol opacity"}</span>
                     <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                      <button type="button" onClick={() => setVolumeOnPriceOpacity((v) => Math.max(0, v - 1))} disabled={volumeOnPriceOpacity <= 0} aria-label="-1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">−</button>
-                      <span className="w-8 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">{volumeOnPriceOpacity}%</span>
-                      <button type="button" onClick={() => setVolumeOnPriceOpacity((v) => Math.min(30, v + 1))} disabled={volumeOnPriceOpacity >= 30} aria-label="+1%" className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed">+</button>
+                      <button type="button" onClick={() => setVolumeOnPriceOpacity((v) => Math.max(0, v - 1))} disabled={volumeOnPriceOpacity <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                      <span className="w-8 text-center font-mono text-zinc-800 tabular-nums">{volumeOnPriceOpacity}%</span>
+                      <button type="button" onClick={() => setVolumeOnPriceOpacity((v) => Math.min(30, v + 1))} disabled={volumeOnPriceOpacity >= 30} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
                     </div>
                   </div>
                 )}
-              </>
+                {onVolumeAtPriceEnabledChange != null && (
+                  <>
+                    <div className="border-t border-zinc-100 pt-2 mt-2" />
+                    <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+                      <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange(e.target.checked)} className="rounded border-zinc-300" />
+                      <span>{(t as Record<string, string>).volumeAtPrice ?? "Volume no preço"}</span>
+                    </label>
+                    {volumeAtPriceEnabled && (
+                      <div className="space-y-2 py-1">
+                        <div className="flex items-center gap-2 px-2 text-sm text-zinc-700">
+                          <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceBuckets ?? "Intervalos"}</span>
+                          <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                            <button type="button" onClick={() => onVolumeAtPriceBucketsChange?.(Math.max(20, (volumeAtPriceBuckets ?? 20) - 2))} disabled={(volumeAtPriceBuckets ?? 20) <= 20} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                            <span className="w-8 text-center font-mono text-zinc-800 tabular-nums">{volumeAtPriceBuckets ?? 20}</span>
+                            <button type="button" onClick={() => onVolumeAtPriceBucketsChange?.(Math.min(60, (volumeAtPriceBuckets ?? 20) + 2))} disabled={(volumeAtPriceBuckets ?? 20) >= 60} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-0.5 px-2 text-sm text-zinc-700">
+                          <div className="flex items-center gap-2">
+                            <span className="shrink-0">{(t as Record<string, string>).volumeAtPricePercent ?? "Percentual de velas"}</span>
+                            <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                              <button type="button" onClick={() => onVolumeAtPricePercentChange?.(Math.max(20, (volumeAtPricePercent ?? 100) - 1))} disabled={(volumeAtPricePercent ?? 100) <= 20} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                              <span className="w-10 text-center font-mono text-zinc-800 tabular-nums">{volumeAtPricePercent ?? 100}%</span>
+                              <button type="button" onClick={() => onVolumeAtPricePercentChange?.(Math.min(100, (volumeAtPricePercent ?? 100) + 1))} disabled={(volumeAtPricePercent ?? 100) >= 100} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                            </div>
+                          </div>
+                          {vapTimeSpanLabel ? <span className="text-xs text-zinc-500">({vapTimeSpanLabel})</span> : null}
+                        </div>
+                        <div className="flex items-center gap-2 px-2 text-sm text-zinc-700">
+                          <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceSide ?? "Lado"}</span>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={() => onVolumeAtPriceSideChange?.("left")} className={`px-2 py-1 rounded border text-xs ${(volumeAtPriceSide ?? "left") === "left" ? "bg-zinc-200 border-zinc-400" : "border-zinc-200 hover:bg-zinc-100"}`}>{(t as Record<string, string>).volumeAtPriceSideLeft ?? "Esq."}</button>
+                            <button type="button" onClick={() => onVolumeAtPriceSideChange?.("right")} className={`px-2 py-1 rounded border text-xs ${(volumeAtPriceSide ?? "left") === "right" ? "bg-zinc-200 border-zinc-400" : "border-zinc-200 hover:bg-zinc-100"}`}>{(t as Record<string, string>).volumeAtPriceSideRight ?? "Dir."}</button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 px-2 text-sm text-zinc-700">
+                          <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceOpacity ?? "Opacidade"}</span>
+                          <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                            <button type="button" onClick={() => onVolumeAtPriceOpacityChange?.(Math.max(10, (volumeAtPriceOpacity ?? 40) - 5))} disabled={(volumeAtPriceOpacity ?? 40) <= 10} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                            <span className="w-10 text-center font-mono text-zinc-800 tabular-nums">{volumeAtPriceOpacity ?? 40}%</span>
+                            <button type="button" onClick={() => onVolumeAtPriceOpacityChange?.(Math.min(70, (volumeAtPriceOpacity ?? 40) + 5))} disabled={(volumeAtPriceOpacity ?? 40) >= 70} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 px-2 text-sm text-zinc-700">
+                          <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceWidth ?? "Largura"}</span>
+                          <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                            <button type="button" onClick={() => onVolumeAtPriceWidthPercentChange?.(Math.max(30, (volumeAtPriceWidthPercent ?? 100) - 1))} disabled={(volumeAtPriceWidthPercent ?? 100) <= 30} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+                            <span className="w-10 text-center font-mono text-zinc-800 tabular-nums">{volumeAtPriceWidthPercent ?? 100}%</span>
+                            <button type="button" onClick={() => onVolumeAtPriceWidthPercentChange?.(Math.min(100, (volumeAtPriceWidthPercent ?? 100) + 1))} disabled={(volumeAtPriceWidthPercent ?? 100) >= 100} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                          </div>
+                        </div>
+                        <div className="px-2 relative">
+                          <button type="button" onClick={() => { setVapColorBelowOpen(false); setVapColorAboveOpen((o) => !o); }} className="w-full flex items-center gap-2 rounded border border-zinc-300 bg-white px-2 py-1.5 text-left hover:bg-zinc-50 text-sm">
+                            <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor acima"}</span>
+                            <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorAbove ?? "#059669" }} />
+                          </button>
+                          {vapColorAboveOpen && (
+                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] max-h-[160px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
+                              <div className="grid grid-cols-4 gap-0.5">
+                                {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
+                                  <button key={hex} type="button" onClick={() => { onVolumeAtPriceColorAboveChange?.(hex); setVapColorAboveOpen(false); }} className={`w-5 h-5 rounded border shrink-0 ${(volumeAtPriceColorAbove ?? "#059669") === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-2 relative">
+                          <button type="button" onClick={() => { setVapColorAboveOpen(false); setVapColorBelowOpen((o) => !o); }} className="w-full flex items-center gap-2 rounded border border-zinc-300 bg-white px-2 py-1.5 text-left hover:bg-zinc-50 text-sm">
+                            <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor abaixo"}</span>
+                            <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorBelow ?? "#dc2626" }} />
+                          </button>
+                          {vapColorBelowOpen && (
+                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] max-h-[160px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
+                              <div className="grid grid-cols-4 gap-0.5">
+                                {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
+                                  <button key={hex} type="button" onClick={() => { onVolumeAtPriceColorBelowChange?.(hex); setVapColorBelowOpen(false); }} className={`w-5 h-5 rounded border shrink-0 ${(volumeAtPriceColorBelow ?? "#dc2626") === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             )}
             {colorsOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && (
-              <div className="min-w-[180px]" style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}>
+              <div className="min-w-[180px]" style={{ maxHeight: "70vh" }}>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.candleColors}</div>
                 {CANDLE_COLOR_PRESETS.map((preset) => (
                   <button key={preset.id} type="button" onClick={() => setCandleColorPreset(preset.id)} className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 ${candleColorPreset === preset.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}>
@@ -1207,92 +1291,72 @@ export function KlinesChartSidebar({
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.background}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {BACKGROUND_PALETTE.map((bg) => (
-                    <button key={`cb-${bg.id}`} type="button" onClick={() => setContainerBackground(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${containerBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`cb-${bg.id}`} type="button" onClick={() => setContainerBackground(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${containerBackground === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.areaPlot}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {BACKGROUND_PALETTE.map((bg) => (
-                    <button key={bg.id} type="button" onClick={() => setChartBackground(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${chartBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={bg.id} type="button" onClick={() => setChartBackground(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${chartBackground === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.footerAndYAxis}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {BACKGROUND_PALETTE.map((bg) => (
-                    <button key={`fy-${bg.id}`} type="button" onClick={() => setFooterYAxisBgColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisBgColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`fy-${bg.id}`} type="button" onClick={() => setFooterYAxisBgColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisBgColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.linesAndTable}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {LINE_GRID_PALETTE.map((bg) => (
-                    <button key={`lt-${bg.id}`} type="button" onClick={() => setLineTableColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lineTableColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`lt-${bg.id}`} type="button" onClick={() => setLineTableColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lineTableColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.secondaryGrid}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {LINE_GRID_PALETTE.map((bg) => (
-                    <button key={`sg-${bg.id}`} type="button" onClick={() => setSecondaryGridColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${secondaryGridColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`sg-${bg.id}`} type="button" onClick={() => setSecondaryGridColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${secondaryGridColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseLineColor}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {LINE_GRID_PALETTE.map((bg) => (
-                    <button key={`lcl-${bg.id}`} type="button" onClick={() => setLastCloseLineColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseLineColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`lcl-${bg.id}`} type="button" onClick={() => setLastCloseLineColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseLineColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseTextColor}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {LINE_GRID_PALETTE.map((bg) => (
-                    <button key={`lct-${bg.id}`} type="button" onClick={() => setLastCloseTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`lct-${bg.id}`} type="button" onClick={() => setLastCloseTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textBackground}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {TEXT_PALETTE.map((bg) => (
-                    <button key={`bt-${bg.id}`} type="button" onClick={() => setBackgroundTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${backgroundTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`bt-${bg.id}`} type="button" onClick={() => setBackgroundTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${backgroundTextColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textFooterYAxis}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {TEXT_PALETTE.map((bg) => (
-                    <button key={`ft-${bg.id}`} type="button" onClick={() => setFooterYAxisTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    <button key={`ft-${bg.id}`} type="button" onClick={() => setFooterYAxisTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisTextColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
               </div>
             )}
             {drawOpen && drawPanelSide === "left" && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !saveOpen && !loadOpen && (
               <>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                  {t.drawTool}
-                </p>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{t.drawTool}</p>
                 <div className="grid grid-cols-2 gap-1">
-                  <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`} aria-label={t.lineSegment}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
-                  <button type="button" onClick={selectHorizontalLineTool} title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}>
-                    <span aria-hidden>―</span>
-                  </button>
-                  <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
-                  <button type="button" onClick={selectFreeRetracementTool} title={(t as Record<string, string>).freeRetracement ?? "Retração livre"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).freeRetracement ?? "Retração livre"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
-                  </button>
-                  <button type="button" onClick={selectRectangleTool} title={(t as Record<string, string>).rectangleTool ?? "Rectangle"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
-                  <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).channelTool ?? "Channel"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
-                  <button type="button" onClick={selectVerticalLineTool} title={(t as Record<string, string>).verticalLine ?? "Vertical line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).verticalLine ?? "Vertical line"}>
-                    <span aria-hidden>|</span>
-                  </button>
-                  <button type="button" onClick={selectTextTool} title={(t as Record<string, string>).drawTextTool ?? "Text"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).drawTextTool ?? "Text"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
-                  <button type="button" onClick={selectArrowTool} title={(t as Record<string, string>).arrowTool ?? "Arrow"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}>
-                    <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-                  </button>
+                  <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectHorizontalLineTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`}><span aria-hidden>―</span></button>
+                  <button type="button" onClick={selectFibonacciTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectFreeRetracementTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden /></button>
+                  <button type="button" onClick={selectRectangleTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectChannelTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectVerticalLineTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}><span aria-hidden>|</span></button>
+                  <button type="button" onClick={selectTextTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectArrowTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                 </div>
               </>
             )}

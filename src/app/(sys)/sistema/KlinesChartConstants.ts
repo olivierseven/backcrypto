@@ -52,5 +52,8 @@ export const KLINE_USER_INDICATORS_KEY = "backcrypto-klines-user-indicators";
 export const KLINE_STRATEGIES_KEY = "backcrypto-klines-strategies";
 export const KLINE_STRATEGIES_APPLIED_KEY = "backcrypto-klines-strategies-applied";
 export const KLINE_HEIKIN_ASHI_KEY = "backcrypto-klines-heikin-ashi";
+export const KLINE_VOLUME_AT_PRICE_KEY = "backcrypto-klines-volume-at-price";
+/** Largura máxima (px) das barras do volume no preço; o usuário pode reduzir até 70% via escala. */
+export const VOLUME_AT_PRICE_MAX_WIDTH_PX = 120;
 
 export const MS_PER_DAY = 24 * 60 * 60 * 1000;

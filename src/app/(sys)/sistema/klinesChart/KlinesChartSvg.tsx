@@ -4,7 +4,7 @@
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
 import { useId, useRef, useState, useEffect, type RefObject } from "react";
-import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT } from "../KlinesChartConstants";
+import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, VOLUME_AT_PRICE_MAX_WIDTH_PX } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
 import { FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSegment, type DrawDefaults } from "../KlinesChartDrawing";
@@ -110,6 +110,13 @@ export interface KlinesChartSvgProps {
   /** Chamado quando um novo segmento é criado (segundo clique). Recebe o índice do novo segmento para selecioná-lo e abrir opções. */
   onSegmentCreated?: (newIndex: number) => void;
   t: Record<string, string>;
+  volumeAtPriceData?: { buckets: { priceLow: number; priceHigh: number; volume: number }[]; maxVolume: number } | null;
+  volumeAtPriceOpacity?: number;
+  /** Escala da largura das barras: 30–100% de VOLUME_AT_PRICE_MAX_WIDTH_PX. */
+  volumeAtPriceWidthPercent?: number;
+  volumeAtPriceSide?: "left" | "right";
+  volumeAtPriceColorAbove?: string;
+  volumeAtPriceColorBelow?: string;
   /** Escala dos textos (indicadores, etc.): 0.6–1 quando o plot está reduzido. */
   textScale?: number;
   /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
@@ -209,6 +216,12 @@ export function KlinesChartSvg({
   t,
   textScale = 1,
   strategyCandleOverlays = [],
+  volumeAtPriceData = null,
+  volumeAtPriceOpacity = 40,
+  volumeAtPriceWidthPercent = 100,
+  volumeAtPriceSide = "left",
+  volumeAtPriceColorAbove = "#059669",
+  volumeAtPriceColorBelow = "#dc2626",
 }: KlinesChartSvgProps) {
   const selectPanLastClientX = useRef(0);
   const justPannedRef = useRef(false);
@@ -769,6 +782,42 @@ export function KlinesChartSvg({
             </g>
           );
         })}
+        {volumeAtPriceData && volumeAtPriceData.buckets.length > 0 && volumeAtPriceData.maxVolume > 0 && (() => {
+          const widthPercent = Math.max(30, Math.min(100, volumeAtPriceWidthPercent ?? 100)) / 100;
+          const maxWidthBase = Math.min(VOLUME_AT_PRICE_MAX_WIDTH_PX, chartW / 3);
+          const maxBarWidth = maxWidthBase * widthPercent;
+          const opacity = Math.max(0.1, Math.min(0.7, (volumeAtPriceOpacity ?? 40) / 100));
+          const side = volumeAtPriceSide ?? "left";
+          const colorAbove = volumeAtPriceColorAbove ?? "#059669";
+          const colorBelow = volumeAtPriceColorBelow ?? "#dc2626";
+          const mid = Math.floor(volumeAtPriceData.buckets.length / 2);
+          return (
+            <g key="volume-at-price" pointerEvents="none">
+              {volumeAtPriceData.buckets.map((b, i) => {
+                const yTop = y(b.priceHigh);
+                const yBottom = y(b.priceLow);
+                const h = Math.max(1, yBottom - yTop);
+                const w = maxBarWidth * (b.volume / volumeAtPriceData.maxVolume);
+                const fillColor = i >= mid ? colorAbove : colorBelow;
+                const x = side === "right" ? MARGIN_LEFT + chartW - w : MARGIN_LEFT;
+                return (
+                  <rect
+                    key={i}
+                    x={x}
+                    y={yTop}
+                    width={w}
+                    height={h}
+                    fill={fillColor}
+                    fillOpacity={opacity}
+                    stroke="#000000"
+                    strokeOpacity={opacity}
+                    strokeWidth={1}
+                  />
+                );
+              })}
+            </g>
+          );
+        })()}
         {indicatorLines.filter((ind) => getPanel(ind) === "main").map((ind, indIdx) => {
           const col = ind.columnIndex;
           if (ind.type === "Bollinger") {

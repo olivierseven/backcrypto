@@ -126,4 +126,33 @@ export type KlinesChartProps = {
   heikinAshi?: boolean;
   /** Alterna modo Heikin Ashi; ao ativar, a tabela e o gráfico passam a usar OHLC Heikin Ashi. */
   onHeikinAshiChange?: (enabled: boolean) => void;
+  /** Indicador vertical "volume no preço": usa cache do intervalo mapeado (ex.: 1h → 15m). */
+  volumeAtPriceEnabled?: boolean;
+  /** Klines do intervalo de cache para VAP (mesma moeda, tempo menor); quando definido, usa em vez de klines. */
+  volumeAtPriceKlines?: (string | number)[][];
+  volumeAtPriceBuckets?: number;
+  /** Percentual (20–100%) do máximo de velas do cache para o VAP; passo 1%. */
+  volumeAtPricePercent?: number;
+  onVolumeAtPricePercentChange?: (v: number) => void;
+  /** Texto ex.: "180 velas de 2h = 15 dias" para exibir ao lado do controle. */
+  vapTimeSpanLabel?: string;
+  volumeAtPriceOpacity?: number;
+  /** Escala da largura das barras: 30–100% da largura máxima (120px). */
+  volumeAtPriceWidthPercent?: number;
+  volumeAtPriceSide?: "left" | "right";
+  volumeAtPriceColorAbove?: string;
+  volumeAtPriceColorBelow?: string;
+  onVolumeAtPriceEnabledChange?: (v: boolean) => void;
+  onVolumeAtPriceBucketsChange?: (v: number) => void;
+  onVolumeAtPriceOpacityChange?: (v: number) => void;
+  onVolumeAtPriceWidthPercentChange?: (v: number) => void;
+  onVolumeAtPriceSideChange?: (v: "left" | "right") => void;
+  onVolumeAtPriceColorAboveChange?: (v: string) => void;
+  onVolumeAtPriceColorBelowChange?: (v: string) => void;
+}
+
+/** Dados para desenho do volume no preço: intervalos simétricos no eixo Y com volume acumulado por faixa de fechamento. */
+export interface VolumeAtPriceData {
+  buckets: { priceLow: number; priceHigh: number; volume: number }[];
+  maxVolume: number;
 }
