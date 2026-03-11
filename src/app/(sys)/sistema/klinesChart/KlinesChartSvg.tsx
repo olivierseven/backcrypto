@@ -23,6 +23,10 @@ export interface KlinesChartSvgProps {
   chartH: number;
   gap: number;
   candleW: number;
+  /** "candles" = candle sticks; "bars" = OHLC bar; "line" = close line only; "linePoints" = close line with points. */
+  chartStyle?: "candles" | "bars" | "line" | "linePoints";
+  /** When "hollow": candle de alta = vazio (só contorno), de baixa = preenchido. */
+  candleBodyStyle?: "filled" | "hollow";
   y: (price: number) => number;
   cx: (i: number) => number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
@@ -121,6 +125,8 @@ export function KlinesChartSvg({
   chartH,
   gap,
   candleW,
+  chartStyle = "candles",
+  candleBodyStyle = "filled",
   y,
   cx,
   segmentToPixel,
@@ -702,7 +708,21 @@ export function KlinesChartSvg({
             </g>
           );
         })}
-        {windowSlice.map((k, i) => {
+        {(chartStyle === "line" || chartStyle === "linePoints") ? (
+          (() => {
+            const linePoints = windowSlice.map((k, i) => ({ x: cx(i), y: y(parseNum(String(k[4] ?? ""))) }));
+            const lineColor = candleColors.bull === "#f5f5f5" ? "#171717" : candleColors.bull;
+            const d = linePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+            return (
+              <g key="close-line">
+                <path d={d} stroke={lineColor} strokeWidth={2} fill="none" />
+                {chartStyle === "linePoints" && linePoints.map((p, i) => (
+                  <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={lineColor} stroke={chartBgHex} strokeWidth={1} />
+                ))}
+              </g>
+            );
+          })()
+        ) : windowSlice.map((k, i) => {
           const openP = parseNum(String(k[1] ?? ""));
           const highP = parseNum(String(k[2] ?? ""));
           const lowP = parseNum(String(k[3] ?? ""));
@@ -719,6 +739,20 @@ export function KlinesChartSvg({
           const color = strategyColor ?? (bull ? candleColors.bull : candleColors.bear);
           const strokeColor = color === "#f5f5f5" ? "#171717" : color;
           const slotLeft = MARGIN_LEFT + i * gap;
+          const tickLen = Math.max(2, candleW / 2);
+          const openY = y(openP);
+          const closeY = y(closeP);
+          if (chartStyle === "bars") {
+            return (
+              <g key={i}>
+                <rect x={slotLeft} y={MARGIN_TOP} width={gap} height={chartH} fill="transparent" />
+                <line x1={x} y1={wickTop} x2={x} y2={wickBottom} stroke={strokeColor} strokeWidth={1} />
+                <line x1={x - tickLen} y1={openY} x2={x} y2={openY} stroke={strokeColor} strokeWidth={1} />
+                <line x1={x} y1={closeY} x2={x + tickLen} y2={closeY} stroke={strokeColor} strokeWidth={1} />
+              </g>
+            );
+          }
+          const bodyFill = chartStyle === "candles" && candleBodyStyle === "hollow" && bull ? chartBgHex : color;
           return (
             <g key={i}>
               <rect x={slotLeft} y={MARGIN_TOP} width={gap} height={chartH} fill="transparent" />
@@ -728,7 +762,7 @@ export function KlinesChartSvg({
                 y={bodyTop}
                 width={candleW}
                 height={bodyH}
-                fill={color}
+                fill={bodyFill}
                 stroke={strokeColor}
                 strokeWidth={1}
               />

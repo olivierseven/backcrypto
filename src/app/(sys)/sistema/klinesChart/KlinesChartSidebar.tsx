@@ -39,6 +39,10 @@ export interface KlinesChartSidebarProps {
   onIntervalChange: (value: number) => void;
   heikinAshi?: boolean;
   onHeikinAshiChange?: (enabled: boolean) => void;
+  chartStyle?: "candles" | "bars" | "line" | "linePoints";
+  onChartStyleChange?: (style: "candles" | "bars" | "line" | "linePoints") => void;
+  candleBodyStyle?: "filled" | "hollow";
+  onCandleBodyStyleChange?: (style: "filled" | "hollow") => void;
   // Settings
   settingsOpen: boolean;
   setSettingsOpen: (v: boolean | ((o: boolean) => boolean)) => void;
@@ -143,6 +147,10 @@ export function KlinesChartSidebar({
   onIntervalChange,
   heikinAshi = false,
   onHeikinAshiChange,
+  chartStyle = "candles",
+  onChartStyleChange,
+  candleBodyStyle = "filled",
+  onCandleBodyStyleChange,
   settingsOpen,
   setSettingsOpen,
   colorsOpen,
@@ -246,9 +254,11 @@ export function KlinesChartSidebar({
   };
 
   const [intervalsOpen, setIntervalsOpen] = useState(false);
+  const [chartTypeOpen, setChartTypeOpen] = useState(false);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
   const isHorizontal = orientation === "horizontal";
   const intervalTriggerRef = useRef<HTMLDivElement>(null);
+  const chartTypeTriggerRef = useRef<HTMLDivElement>(null);
   const settingsTriggerRef = useRef<HTMLDivElement>(null);
   const saveTriggerRef = useRef<HTMLDivElement>(null);
   const loadTriggerRef = useRef<HTMLDivElement>(null);
@@ -257,9 +267,11 @@ export function KlinesChartSidebar({
   useLayoutEffect(() => {
     if (!isHorizontal) return;
     const el =
-      intervalsOpen
-        ? intervalTriggerRef.current
-        : settingsOpen
+      chartTypeOpen
+        ? chartTypeTriggerRef.current
+        : intervalsOpen
+          ? intervalTriggerRef.current
+          : settingsOpen
           ? settingsTriggerRef.current
           : colorsOpen
             ? colorsRef.current
@@ -281,6 +293,7 @@ export function KlinesChartSidebar({
     });
   }, [
     isHorizontal,
+    chartTypeOpen,
     intervalsOpen,
     settingsOpen,
     colorsOpen,
@@ -374,28 +387,136 @@ export function KlinesChartSidebar({
           )}
         </div>
       )}
-      {onHeikinAshiChange != null && (
+      {onHeikinAshiChange != null && onChartStyleChange != null && onCandleBodyStyleChange != null && (
         <div
+          ref={chartTypeTriggerRef}
           className={
             isHorizontal
               ? "relative flex items-center px-1 border-r border-zinc-200/80"
               : "w-full flex flex-col items-center px-1 border-b border-zinc-200/80"
           }
         >
-          <button
-            type="button"
-            onClick={() => onHeikinAshiChange(!heikinAshi)}
-            className={
-              isHorizontal
-                ? `w-10 h-10 flex items-center justify-center text-xs font-semibold rounded cursor-pointer border ${heikinAshi ? "bg-amber-100 border-amber-300 text-amber-800" : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border-zinc-200"}`
-                : `w-full flex items-center justify-center py-2 text-xs font-semibold rounded cursor-pointer border ${heikinAshi ? "bg-amber-100 border-amber-300 text-amber-800" : "text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border-zinc-200"}`
-            }
-            title={(t as Record<string, string>).heikinAshiTitle ?? "Heikin Ashi – OHLC suavizado"}
-            aria-pressed={heikinAshi}
-            aria-label={(t as Record<string, string>).heikinAshi ?? "Heikin Ashi"}
-          >
-            {(t as Record<string, string>).heikinAshi ?? "HA"}
-          </button>
+          {(() => {
+            const chartTypeLabel = heikinAshi
+              ? ((t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi")
+              : chartStyle === "bars"
+                ? ((t as Record<string, string>).chartTypeBars ?? "Barras")
+                : chartStyle === "line"
+                  ? ((t as Record<string, string>).chartTypeLine ?? "Linhas")
+                  : chartStyle === "linePoints"
+                    ? ((t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto")
+                    : candleBodyStyle === "hollow"
+                      ? ((t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias")
+                      : ((t as Record<string, string>).chartTypeCandles ?? "Candles");
+            return (
+              <>
+                <button
+                  type="button"
+                  id="chart-type-listbox"
+                  onClick={() => {
+                    setChartTypeOpen((o) => !o);
+                    setIntervalsOpen(false);
+                    setSettingsOpen(false);
+                    setColorsOpen(false);
+                  }}
+                  aria-label={(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
+                  aria-expanded={chartTypeOpen}
+                  aria-haspopup="dialog"
+                  title={chartTypeLabel}
+                  className={
+                    isHorizontal
+                      ? "w-10 h-10 flex items-center justify-center text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
+                      : "w-full flex items-center justify-center py-2 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
+                  }
+                >
+                  6
+                </button>
+                {chartTypeOpen && !isHorizontal && (
+                  <div
+                    className={`${popoverPositionClass} z-20 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2 flex flex-col`}
+                    onClick={(e) => e.stopPropagation()}
+                    role="dialog"
+                    aria-label={(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
+                  >
+                    <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
+                      {(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(false);
+                          onChartStyleChange("candles");
+                          onCandleBodyStyleChange("filled");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(false);
+                          onChartStyleChange("candles");
+                          onCandleBodyStyleChange("hollow");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(false);
+                          onChartStyleChange("bars");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeBars ?? "Barras"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(false);
+                          onChartStyleChange("line");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(false);
+                          onChartStyleChange("linePoints");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onHeikinAshiChange(true);
+                          onChartStyleChange("candles");
+                          onCandleBodyStyleChange("filled");
+                          setChartTypeOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                      >
+                        {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
       <div ref={settingsTriggerRef} className={isHorizontal ? "relative flex items-center" : undefined}>
@@ -907,7 +1028,7 @@ export function KlinesChartSidebar({
       )}
       {isHorizontal &&
         portalStyle &&
-        (intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen) &&
+        (chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen) &&
         typeof document !== "undefined" &&
         createPortal(
           <div
@@ -915,7 +1036,85 @@ export function KlinesChartSidebar({
             style={{ top: portalStyle.top, left: portalStyle.left }}
             onClick={(e) => e.stopPropagation()}
           >
-            {intervalsOpen && (
+            {chartTypeOpen && (
+              <>
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
+                  {(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}
+                </p>
+                <div className="grid grid-cols-1 gap-1 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("candles");
+                      onCandleBodyStyleChange?.("filled");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("candles");
+                      onCandleBodyStyleChange?.("hollow");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("bars");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeBars ?? "Barras"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("line");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("linePoints");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onHeikinAshiChange?.(true);
+                      onChartStyleChange?.("candles");
+                      onCandleBodyStyleChange?.("filled");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border transition-colors text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300 text-zinc-900" : "bg-white border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
+                  >
+                    {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
+                  </button>
+                </div>
+              </>
+            )}
+            {intervalsOpen && !chartTypeOpen && (
               <>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
                   {(t as Record<string, string>).intervalsPanelTitle ?? t.interval}
@@ -940,7 +1139,7 @@ export function KlinesChartSidebar({
                 <p className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-100">{t.tableNote}</p>
               </>
             )}
-            {settingsOpen && !intervalsOpen && (
+            {settingsOpen && !chartTypeOpen && !intervalsOpen && (
               <>
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={yAxisAbbreviated} onChange={(e) => setYAxisAbbreviated(e.target.checked)} className="rounded border-zinc-300" />
@@ -994,7 +1193,7 @@ export function KlinesChartSidebar({
                 )}
               </>
             )}
-            {colorsOpen && !intervalsOpen && !settingsOpen && (
+            {colorsOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && (
               <div className="min-w-[180px]" style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.candleColors}</div>
                 {CANDLE_COLOR_PRESETS.map((preset) => (
@@ -1061,7 +1260,7 @@ export function KlinesChartSidebar({
                 </div>
               </div>
             )}
-            {drawOpen && drawPanelSide === "left" && !intervalsOpen && !settingsOpen && !colorsOpen && !saveOpen && !loadOpen && (
+            {drawOpen && drawPanelSide === "left" && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !saveOpen && !loadOpen && (
               <>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
                   {t.drawTool}
@@ -1097,7 +1296,7 @@ export function KlinesChartSidebar({
                 </div>
               </>
             )}
-            {saveOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
+            {saveOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
               <>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
                 {(canSaveDefault ? [0, 1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6, 7]).map((slot) => (
@@ -1105,7 +1304,7 @@ export function KlinesChartSidebar({
                 ))}
               </>
             )}
-            {loadOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && !saveOpen && (
+            {loadOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && !saveOpen && (
               <>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
                 {savedLayouts.length === 0 ? (
