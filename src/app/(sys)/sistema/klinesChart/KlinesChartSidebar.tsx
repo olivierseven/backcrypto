@@ -39,8 +39,8 @@ export interface KlinesChartSidebarProps {
   onIntervalChange: (value: number) => void;
   heikinAshi?: boolean;
   onHeikinAshiChange?: (enabled: boolean) => void;
-  chartStyle?: "candles" | "bars" | "line" | "linePoints";
-  onChartStyleChange?: (style: "candles" | "bars" | "line" | "linePoints") => void;
+  chartStyle?: "candles" | "bars" | "line" | "linePoints" | "area";
+  onChartStyleChange?: (style: "candles" | "bars" | "line" | "linePoints" | "area") => void;
   candleBodyStyle?: "filled" | "hollow";
   onCandleBodyStyleChange?: (style: "filled" | "hollow") => void;
   // Settings
@@ -444,9 +444,11 @@ export function KlinesChartSidebar({
                   ? ((t as Record<string, string>).chartTypeLine ?? "Linhas")
                   : chartStyle === "linePoints"
                     ? ((t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto")
-                    : candleBodyStyle === "hollow"
-                      ? ((t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias")
-                      : ((t as Record<string, string>).chartTypeCandles ?? "Candles");
+                    : chartStyle === "area"
+                      ? ((t as Record<string, string>).chartTypeArea ?? "Área")
+                      : candleBodyStyle === "hollow"
+                        ? ((t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias")
+                        : ((t as Record<string, string>).chartTypeCandles ?? "Candles");
             return (
               <>
                 <button
@@ -1138,6 +1140,7 @@ export function KlinesChartSidebar({
                   <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeBars ?? "Barras"}</button>
                   <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLine ?? "Linhas"}</button>
                   <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}</button>
+                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeArea ?? "Área"}</button>
                   <button type="button" onClick={() => { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}</button>
                 </div>
               </>

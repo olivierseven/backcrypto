@@ -90,6 +90,76 @@ function HelpPopover({ content, className }: { content: string; className?: stri
   );
 }
 
+/** Combobox para escolher série/indicador: botão com label + dropdown (lista com scroll até 200px, largura ao texto). */
+function SeriesCombobox({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+}: {
+  value: string;
+  options: { key: string; label: string }[];
+  onChange: (key: string) => void;
+  ariaLabel?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selected = options.find((o) => o.key === value);
+  const label = selected?.label ?? value;
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+
+  return (
+    <div className="relative inline-block" ref={containerRef}>
+      <button
+        type="button"
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label={ariaLabel ?? "Series"}
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs border border-zinc-300 rounded px-1.5 py-1 bg-white text-left w-max min-w-[6rem] flex items-center justify-between gap-1"
+      >
+        <span>{label}</span>
+        <span className="text-zinc-500 shrink-0" aria-hidden>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-label={ariaLabel ?? "Series"}
+          className="absolute left-0 top-full mt-0.5 z-20 min-w-full w-max max-h-[200px] overflow-y-auto rounded border border-zinc-200 bg-white shadow-lg py-0.5"
+        >
+          {options.map((o) => {
+            const isSelected = o.key === value;
+            return (
+              <button
+                key={o.key}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(o.key);
+                  setOpen(false);
+                }}
+                className={`w-full text-left text-xs px-2 py-1.5 whitespace-nowrap hover:bg-zinc-100 ${isSelected ? "bg-zinc-100 font-medium" : ""}`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Padrão ANSI: apenas letras (a-z, A-Z), números, underscore e hífen. Sem espaços nem acentos. */
 function normalizeStrategyName(s: string): string {
   const withoutAccents = s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
@@ -170,6 +240,16 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     userIndicators.forEach((ind) => {
       const panel = getIndicatorPanel(ind);
       const num = panelToNum(panel);
+      // Bollinger: três colunas no listbox (banda superior, média, banda inferior)
+      if (ind.type === "Bollinger") {
+        const upperLabel = (tKlines as Record<string, string>).bollingerShowUpper ?? "Upper band";
+        const middleLabel = (tKlines as Record<string, string>).bollingerShowMiddle ?? "Middle (MA)";
+        const lowerLabel = (tKlines as Record<string, string>).bollingerShowLower ?? "Lower band";
+        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${upperLabel}` });
+        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${middleLabel}` });
+        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
+        return;
+      }
       opts.push({ key: `ind_${ind.id}`, label: `(${num}) ${getIndicatorLabel(ind, tKlines, userIndicators)}` });
       // Subindicadores (precisam existir no dropdown para usar em estratégias):
       // - MACD: Signal e Histogram
@@ -658,15 +738,12 @@ function OperandInput({
       </select>
       {isSeries ? (
         <>
-          <select
+          <SeriesCombobox
             value={operand.seriesKey}
-            onChange={(e) => onChange({ type: "series", seriesKey: e.target.value, offset })}
-            className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-1.5 py-1 max-w-[100px]"
-          >
-            {seriesOptions.map((o) => (
-              <option key={o.key} value={o.key}>{o.label}</option>
-            ))}
-          </select>
+            options={seriesOptions}
+            onChange={(key) => onChange({ type: "series", seriesKey: key, offset })}
+            ariaLabel={seriesLabel}
+          />
           <select
             value={offset}
             onChange={(e) => onChange({ type: "series", seriesKey: operand.seriesKey, offset: Number(e.target.value) })}
@@ -829,15 +906,11 @@ function SeriesOnlyInput({
   const op = operand.type === "series" ? operand : { type: "series" as const, seriesKey: "close" };
   return (
     <div className="flex gap-1 flex-wrap items-center">
-      <select
+      <SeriesCombobox
         value={op.seriesKey}
-        onChange={(e) => onChange({ type: "series", seriesKey: e.target.value })}
-        className="text-xs border border-zinc-300 rounded px-1.5 py-1 max-w-[100px]"
-      >
-        {seriesOptions.map((o) => (
-          <option key={o.key} value={o.key}>{o.label}</option>
-        ))}
-      </select>
+        options={seriesOptions}
+        onChange={(key) => onChange({ type: "series", seriesKey: key })}
+      />
     </div>
   );
 }

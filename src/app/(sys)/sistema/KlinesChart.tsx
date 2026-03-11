@@ -158,7 +158,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const [volumeOnPrice, setVolumeOnPrice] = useState(false);
   const [volumeOnPriceOpacity, setVolumeOnPriceOpacity] = useState(20); // 0–30%, default 20%
   const [chartSizePercent, setChartSizePercent] = useState(CHART_SIZE_PERCENT_DEFAULT); // desktop 16:9, 100–200%
-  const [chartStyle, setChartStyle] = useState<"candles" | "bars" | "line" | "linePoints">("candles");
+  const [chartStyle, setChartStyle] = useState<"candles" | "bars" | "line" | "linePoints" | "area">("candles");
   const [candleBodyStyle, setCandleBodyStyle] = useState<"filled" | "hollow">("filled");
   const [yPadOffset, setYPadOffset] = useState(0); // -3 a +3: margem extra no eixo Y para previsões
   /** Largura da tela: quando < 696px, área do plot reduz proporcional (40px e 56px fixos). */
@@ -510,7 +510,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; showCandleCountdown?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number; chartStyle?: "candles" | "bars" | "line" | "linePoints"; candleBodyStyle?: "filled" | "hollow" };
+      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; showCandleCountdown?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number; chartStyle?: "candles" | "bars" | "line" | "linePoints" | "area"; candleBodyStyle?: "filled" | "hollow" };
       if (typeof data.visibleCount === "number" && data.visibleCount >= VISIBLE_COUNT_MIN && data.visibleCount <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(data.visibleCount));
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
@@ -533,7 +533,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       if (typeof data.volumeOnPrice === "boolean") setVolumeOnPrice(data.volumeOnPrice);
       if (typeof data.volumeOnPriceOpacity === "number" && data.volumeOnPriceOpacity >= 0 && data.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(data.volumeOnPriceOpacity));
       if (typeof data.chartSizePercent === "number" && data.chartSizePercent >= CHART_SIZE_PERCENT_MIN && data.chartSizePercent <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(data.chartSizePercent));
-      if (data.chartStyle === "candles" || data.chartStyle === "bars" || data.chartStyle === "line" || data.chartStyle === "linePoints") setChartStyle(data.chartStyle);
+      if (data.chartStyle === "candles" || data.chartStyle === "bars" || data.chartStyle === "line" || data.chartStyle === "linePoints" || data.chartStyle === "area") setChartStyle(data.chartStyle);
       if (data.candleBodyStyle === "filled" || data.candleBodyStyle === "hollow") setCandleBodyStyle(data.candleBodyStyle);
     } catch {
       /* ignore */
@@ -803,6 +803,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
     if (typeof c.volumeOnPriceOpacity === "number" && c.volumeOnPriceOpacity >= 0 && c.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(c.volumeOnPriceOpacity));
     if (typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(c.chartSizePercent));
+    if (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") setChartStyle(c.chartStyle);
+    if (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") setCandleBodyStyle(c.candleBodyStyle);
     onLayoutConfigLoaded?.(c, slot);
   };
 

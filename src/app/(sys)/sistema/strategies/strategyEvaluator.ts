@@ -62,6 +62,9 @@ export function getSeriesValue(
       if (part === "sig") return ind.type === "MACD" ? 1 : null;
       if (part === "hist") return ind.type === "MACD" ? 2 : null;
       if (part === "d") return ind.type === "Stochastic" ? 1 : null;
+      if (part === "upper") return ind.type === "Bollinger" ? 0 : null;
+      if (part === "middle") return ind.type === "Bollinger" ? 1 : null;
+      if (part === "lower") return ind.type === "Bollinger" ? 2 : null;
       return null;
     })();
     if (extraOffset == null) return null;

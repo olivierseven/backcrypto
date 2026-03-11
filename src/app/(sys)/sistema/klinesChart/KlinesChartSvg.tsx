@@ -23,8 +23,8 @@ export interface KlinesChartSvgProps {
   chartH: number;
   gap: number;
   candleW: number;
-  /** "candles" = candle sticks; "bars" = OHLC bar; "line" = close line only; "linePoints" = close line with points. */
-  chartStyle?: "candles" | "bars" | "line" | "linePoints";
+  /** "candles" = candle sticks; "bars" = OHLC bar; "line" = close line only; "linePoints" = close line with points; "area" = line with area below filled (70% opacity). */
+  chartStyle?: "candles" | "bars" | "line" | "linePoints" | "area";
   /** When "hollow": candle de alta = vazio (só contorno), de baixa = preenchido. */
   candleBodyStyle?: "filled" | "hollow";
   y: (price: number) => number;
@@ -721,13 +721,20 @@ export function KlinesChartSvg({
             </g>
           );
         })}
-        {(chartStyle === "line" || chartStyle === "linePoints") ? (
+        {(chartStyle === "line" || chartStyle === "linePoints" || chartStyle === "area") ? (
           (() => {
             const linePoints = windowSlice.map((k, i) => ({ x: cx(i), y: y(parseNum(String(k[4] ?? ""))) }));
             const lineColor = candleColors.bull === "#f5f5f5" ? "#171717" : candleColors.bull;
             const d = linePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+            const bottomY = MARGIN_TOP + chartH;
+            const areaD = linePoints.length > 0
+              ? `${d} L ${linePoints[linePoints.length - 1].x} ${bottomY} L ${linePoints[0].x} ${bottomY} Z`
+              : "";
             return (
               <g key="close-line">
+                {chartStyle === "area" && areaD ? (
+                  <path d={areaD} fill={lineColor} fillOpacity={0.7} stroke="none" />
+                ) : null}
                 <path d={d} stroke={lineColor} strokeWidth={2} fill="none" />
                 {chartStyle === "linePoints" && linePoints.map((p, i) => (
                   <circle key={i} cx={p.x} cy={p.y} r={2.5} fill={lineColor} stroke={chartBgHex} strokeWidth={1} />
