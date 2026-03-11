@@ -120,8 +120,9 @@ export interface KlinesChartSidebarProps {
   loadOpen: boolean;
   setLoadOpen: (v: boolean | ((o: boolean) => boolean)) => void;
   savedLayouts: { slot: number; config: Record<string, unknown> }[];
+  /** Admin: pode salvar no slot 0 (layout default). */
+  canSaveDefault?: boolean;
   onSaveLayout: (slot: number) => void;
-  onLoadDefaultLayout: () => void;
   onLoadLayout: (layout: { slot: number; config: Record<string, unknown> }) => void;
   onFetchSavedLayouts: () => void;
 }
@@ -217,8 +218,8 @@ export function KlinesChartSidebar({
   loadOpen,
   setLoadOpen,
   savedLayouts,
+  canSaveDefault = false,
   onSaveLayout,
-  onLoadDefaultLayout,
   onLoadLayout,
   onFetchSavedLayouts,
 }: KlinesChartSidebarProps) {
@@ -785,14 +786,14 @@ export function KlinesChartSidebar({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-              {([1, 2, 3, 4, 5, 6, 7] as const).map((slot) => (
+              {(canSaveDefault ? [0, 1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6, 7]).map((slot) => (
                 <button
                   key={slot}
                   type="button"
                   onClick={() => onSaveLayout(slot)}
                   className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
                 >
-                  {t.layoutName.replace("{n}", String(slot))}
+                  {slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(slot))}
                 </button>
               ))}
             </div>
@@ -821,29 +822,19 @@ export function KlinesChartSidebar({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-              <button
-                type="button"
-                onClick={onLoadDefaultLayout}
-                className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 font-medium"
-              >
-                {t.defaultLayout}
-              </button>
               {savedLayouts.length === 0 ? (
-                <p className="px-2 py-1.5 text-sm text-zinc-500 border-t border-zinc-100 mt-1 pt-1">{t.noSavedLayouts}</p>
+                <p className="px-2 py-1.5 text-sm text-zinc-500">{t.noSavedLayouts}</p>
               ) : (
-                <>
-                  <div className="border-t border-zinc-100 mt-1 pt-1" />
-                  {savedLayouts.map((layout) => (
-                    <button
-                      key={layout.slot}
-                      type="button"
-                      onClick={() => onLoadLayout(layout)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
-                    >
-                      {t.layoutName.replace("{n}", String(layout.slot))}
-                    </button>
-                  ))}
-                </>
+                savedLayouts.map((layout) => (
+                  <button
+                    key={layout.slot}
+                    type="button"
+                    onClick={() => onLoadLayout(layout)}
+                    className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
+                  >
+                    {layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot))}
+                  </button>
+                ))
               )}
             </div>
           )}
@@ -1081,24 +1072,20 @@ export function KlinesChartSidebar({
             {saveOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
               <>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-                {([1, 2, 3, 4, 5, 6, 7] as const).map((slot) => (
-                  <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100">{t.layoutName.replace("{n}", String(slot))}</button>
+                {(canSaveDefault ? [0, 1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6, 7]).map((slot) => (
+                  <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100">{slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(slot))}</button>
                 ))}
               </>
             )}
             {loadOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && !saveOpen && (
               <>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-                <button type="button" onClick={onLoadDefaultLayout} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 font-medium">{t.defaultLayout}</button>
                 {savedLayouts.length === 0 ? (
-                  <p className="px-2 py-1.5 text-sm text-zinc-500 border-t border-zinc-100 mt-1 pt-1">{t.noSavedLayouts}</p>
+                  <p className="px-2 py-1.5 text-sm text-zinc-500">{t.noSavedLayouts}</p>
                 ) : (
-                  <>
-                    <div className="border-t border-zinc-100 mt-1 pt-1" />
-                    {savedLayouts.map((layout) => (
-                      <button key={layout.slot} type="button" onClick={() => onLoadLayout(layout)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100">{t.layoutName.replace("{n}", String(layout.slot))}</button>
-                    ))}
-                  </>
+                  savedLayouts.map((layout) => (
+                    <button key={layout.slot} type="button" onClick={() => onLoadLayout(layout)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100">{layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot))}</button>
+                  ))
                 )}
               </>
             )}

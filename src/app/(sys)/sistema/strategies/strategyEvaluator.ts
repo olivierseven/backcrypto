@@ -126,16 +126,15 @@ function evaluateCondition(
     const rightKey = condition.right.type === "series" ? condition.right.seriesKey : null;
     if (leftKey == null || rightKey == null) return false;
 
-    // Só é verdadeiro enquanto continuar acima/abaixo no "agora": t(0) e t(-1) precisam manter a relação.
-    const nowPrevLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, -1, userIndicators, getIndicatorColumnStart);
-    const nowPrevRight = getSeriesValue(extendedKlines, rowIndex, rightKey, -1, userIndicators, getIndicatorColumnStart);
+    // Exige que "agora" (t(0)) já esteja na relação correta (acima para crossover, abaixo para crossunder).
+    // Não exige que t(-1) já estivesse assim, senão o cruzamento no candle atual (índice 0) nunca dispara.
     const nowLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, 0, userIndicators, getIndicatorColumnStart);
     const nowRight = getSeriesValue(extendedKlines, rowIndex, rightKey, 0, userIndicators, getIndicatorColumnStart);
-    if (nowPrevLeft == null || nowPrevRight == null || nowLeft == null || nowRight == null) return false;
+    if (nowLeft == null || nowRight == null) return false;
     if (kind === "crossover") {
-      if (!(nowPrevLeft > nowPrevRight && nowLeft > nowRight)) return false;
+      if (!(nowLeft > nowRight)) return false;
     } else {
-      if (!(nowPrevLeft < nowPrevRight && nowLeft < nowRight)) return false;
+      if (!(nowLeft < nowRight)) return false;
     }
 
     for (let j = 0; j <= barsAfter; j++) {

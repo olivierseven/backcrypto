@@ -28,7 +28,7 @@ export default function SistemaDebugPanel() {
   const lang = useCryptoLang();
   const { lang: currentLang, setLang } = useCryptoLangContext();
   const t = getCryptoT(lang).sistema.debug;
-  const { showKlinesTable, setShowKlinesTable } = useSistemaDebug();
+  const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");
@@ -477,6 +477,32 @@ export default function SistemaDebugPanel() {
                 />
                 <span>{t.showKlinesTable}</span>
               </label>
+            </section>
+            <section>
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                Layout load (ao entrar na página)
+              </h4>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2">
+                <input
+                  type="checkbox"
+                  checked={layoutLoadDebugEnabled}
+                  onChange={(e) => setLayoutLoadDebugEnabled(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span>Registrar log (estado salvo no localStorage)</span>
+              </label>
+              <div className="flex justify-end mb-1">
+                <button
+                  type="button"
+                  onClick={clearLayoutLoadLog}
+                  className="text-xs text-zinc-500 hover:text-zinc-700"
+                >
+                  Limpar
+                </button>
+              </div>
+              <pre className="text-[10px] font-mono text-zinc-700 bg-zinc-100 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+                {layoutLoadLog.length === 0 ? "(vazio — ative o log e entre na página do gráfico)" : layoutLoadLog.join("\n")}
+              </pre>
             </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">

@@ -1,0 +1,30 @@
+/**
+ * Layout padrão usado quando não há default no banco (API falha ou slot 0 não configurado).
+ */
+export const DEFAULT_LAYOUT_FALLBACK: Record<string, unknown> = {
+  logScale: false,
+  strategies: [],
+  groupMinutes: 1440,
+  showMainAxis: true,
+  visibleCount: 100,
+  volumeOnPrice: false,
+  lineTableColor: 1,
+  userIndicators: [],
+  chartBackground: 1,
+  chartSizePercent: 100,
+  yAxisAbbreviated: false,
+  candleColorPreset: "greenRed",
+  showLastCloseLine: true,
+  showSecondaryAxis: false,
+  appliedStrategyIds: [],
+  footerYAxisBgColor: 7,
+  lastCloseLineColor: 3,
+  lastCloseTextColor: 3,
+  secondaryGridColor: 9,
+  backgroundTextColor: 1,
+  containerBackground: 6,
+  invisibleCandlesEnd: 3,
+  footerYAxisTextColor: 0,
+  volumeOnPriceOpacity: 20,
+  secondaryPanelHeightPercent: 30,
+};

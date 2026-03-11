@@ -17,7 +17,7 @@ enum Role {
   @@schema("backcrypto")
 }
 
-enum BioLanguage {
+enum AppLanguage {
   en
   pt
 
@@ -118,7 +118,7 @@ model User {
   notifyQuina      Boolean     @default(true)
   hideStatusBar    Boolean     @default(true)
   progress         Int         @default(0)
-  language         BioLanguage @default(en)
+  language         AppLanguage @default(en)
   timezoneOffset   Int         @default(0) // UTC offset in hours, -12 to +12
 
   accessRequests      AccessRequest[]
@@ -130,41 +130,20 @@ model User {
   verificationTokens  EmailVerificationToken[]
   walletCredits       WalletCredit[]
   notifications       UserNotification[]
-  simulationQueue     BioSimulationQueue[]
-  savedConfigs        BioSavedConfig[]
-  simulationState     BioSimulationState?
   chartLayouts        ChartLayout[]
 
   @@schema("backcrypto")
 }
 
-// Preferências de layout do gráfico de klines (slots 1–7; 0 = default/localStorage). Config em JSON para flexibilidade.
+// Preferências de layout do gráfico de klines. Slot 0 = layout default (só admin salva; todos carregam). Slots 1–7 = Layout 1 … 7 por usuário.
 model ChartLayout {
   userId    String   @map("user_id")
-  slot      Int // 1–7 (Layout 1 … Layout 7); 0 = default, não persistido
+  slot      Int // 0 = default (admin); 1–7 = Layout 1 … 7
   config    Json // { visibleCount, candleColorPreset, yAxisAbbreviated, ... }
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, slot])
-  @@schema("backcrypto")
-}
-
-model BioSavedConfig {
-  id               String   @id @default(cuid())
-  userId           String
-  name             String
-  private          Boolean  @default(true)
-  config           Json
-  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
-  likes            Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([name])
-  @@index([userId])
-  @@index([private])
   @@schema("backcrypto")
 }
 
@@ -331,51 +310,6 @@ model PagarMeOrder {
   @@index([userId, completedAt])
   @@index([completedAt])
   @@index([status])
-  @@schema("backcrypto")
-}
-
-enum BioQueueStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-
-  @@schema("backcrypto")
-}
-
-model BioSimulationQueue {
-  id        String         @id @default(cuid())
-  queueName String
-  userId    String
-  status    BioQueueStatus @default(PENDING)
-  payload   Json
-  result    Json?
-  createdAt DateTime       @default(now())
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([queueName, status])
-  @@index([userId, createdAt])
-  @@schema("backcrypto")
-}
-
-// Uma linha por usuário: último estado da simulação (genesis + inputs + mapa/origens). Sem histórico.
-model BioSimulationState {
-  userId           String   @unique
-  state            Json // snapshot: genesisResult, inputValues, origensAgendadas, mapaNumero, iteracao, etc.
-  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@schema("backcrypto")
-}
-
-model BioAppConfig {
-  key         String   @id
-  value       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([key])
   @@schema("backcrypto")
 }
 

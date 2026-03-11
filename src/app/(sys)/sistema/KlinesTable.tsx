@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
@@ -120,13 +121,15 @@ function dayKeyUtc(ms: number): string {
 export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
-  const { showKlinesTable } = useSistemaDebug();
+  const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout, strategyCreatedTick } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
+  /** Incrementa ao aplicar layout (carregar da API) para forçar gráfico a receber strategyCandleOverlays. */
+  const [layoutAppliedTick, setLayoutAppliedTick] = useState(0);
   /** Só true após restaurar do localStorage no cliente; evita fetch com 1M antes de aplicar o timeframe salvo. */
   const [timeframeRestored, setTimeframeRestored] = useState(false);
   useLayoutEffect(() => {
@@ -390,7 +393,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       map.set(strategy.id, arr);
     }
     return map;
-  }, [visibleStrategies, extendedKlines, userIndicators, getIndicatorColumnStart]);
+  }, [visibleStrategies, extendedKlines, userIndicators, getIndicatorColumnStart, layoutAppliedTick]);
 
   /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Paleta igual à das médias móveis. */
   const strategyCandleOverlays = useMemo(() => {
@@ -401,7 +404,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       color: s.color ?? palette[Math.min(2 + (idx % Math.max(1, palette.length - 2)), palette.length - 1)] ?? "#6366f1",
       results: strategyResults.get(s.id) ?? [],
     }));
-  }, [visibleStrategies, strategyResults]);
+  }, [visibleStrategies, strategyResults, layoutAppliedTick]);
 
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   const visibleIndicatorColumns = useMemo(() => {
@@ -720,6 +723,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           <KlinesChart
             klines={extendedKlines}
             groupMinutes={groupMinutes}
+            layoutAppliedTick={layoutAppliedTick}
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions}
             onIntervalChange={setGroupMinutes}
@@ -780,34 +784,64 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             strategyCandleOverlays={strategyCandleOverlays}
             layoutAutoSaveTick={strategyCreatedTick}
             getLayoutExtraConfig={() => ({ userIndicators, strategies, appliedStrategyIds })}
-            onLayoutConfigLoaded={(config) => {
+            onLayoutConfigLoaded={(config, slot) => {
+              addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "undefined"} keys=[${Object.keys(config).join(",")}]`);
               const v = config.groupMinutes;
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
               // Indicadores do layout (precisamos deles para validar referências das estratégias)
               const indicatorsFromLayout = (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) ? config.userIndicators : null;
-              if (indicatorsFromLayout) replaceUserIndicatorsFromLayout(indicatorsFromLayout);
+              if (indicatorsFromLayout) {
+                replaceUserIndicatorsFromLayout(indicatorsFromLayout);
+                flushSync(() => {});
+              }
 
               // Estratégias do layout (precisamos da lista para validar e aplicar os IDs)
               const strategiesFromLayoutRaw = (config.strategies !== undefined && Array.isArray(config.strategies)) ? config.strategies : null;
-              if (config.strategies !== undefined) replaceStrategiesFromLayout(config.strategies);
+              const appliedIds =
+                slot !== 0 && config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds)
+                  ? config.appliedStrategyIds.filter((x): x is string => typeof x === "string")
+                  : null;
+              const indicatorIds = new Set<string>(
+                (indicatorsFromLayout ?? userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
+              );
+              const strategiesList: Strategy[] = strategiesFromLayoutRaw
+                ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
+                : strategies;
+              const byId = new Map<string, Strategy>(strategiesList.map((s) => [s.id, s]));
+              const validApplied =
+                appliedIds != null
+                  ? appliedIds.filter((id) => {
+                      const st = byId.get(id);
+                      if (!st) return false;
+                      return validateStrategyReferences(st, indicatorIds).ok;
+                    })
+                  : null;
 
-              // Se o layout trouxer appliedStrategyIds, ele é a "fonte da verdade" — inclusive quando vier [].
-              // Antes de aplicar, validamos se as estratégias existem e se todas as referências a indicadores ainda existem.
-              if (config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds)) {
-                const appliedIds = config.appliedStrategyIds.filter((x): x is string => typeof x === "string");
-                const indicatorIds = new Set<string>(
-                  (indicatorsFromLayout ?? userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
-                );
-                const strategiesList: Strategy[] = strategiesFromLayoutRaw
-                  ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
-                  : strategies;
-                const byId = new Map<string, Strategy>(strategiesList.map((s) => [s.id, s]));
-                const validApplied = appliedIds.filter((id) => {
-                  const st = byId.get(id);
-                  if (!st) return false;
-                  return validateStrategyReferences(st, indicatorIds).ok;
-                });
-                replaceAppliedStrategyIdsFromLayout(validApplied);
+              const layoutGroupMinutes = typeof config.groupMinutes === "number" ? config.groupMinutes : groupMinutes;
+              if (config.strategies !== undefined) {
+                const raw = config.strategies as { intervalMinutes?: number; applyToAllSymbols?: boolean; symbol?: string }[];
+                const forContext = raw.map((s) => ({
+                  ...s,
+                  intervalMinutes: layoutGroupMinutes,
+                  applyToAllSymbols: true,
+                  symbol,
+                }));
+                replaceStrategiesFromLayout(forContext);
+              }
+              flushSync(() => {});
+
+              // Aplicar appliedIds no próximo tick: React já commitou indicadores e estratégias,
+              // extendedKlines tem as colunas; aí appliedIds → visibleStrategies → strategyResults → overlays.
+              if (validApplied != null) {
+                addLayoutLoadLog(`reaplicar appliedStrategyIds no próximo tick (setTimeout 0)`);
+                setTimeout(() => {
+                  replaceAppliedStrategyIdsFromLayout(validApplied);
+                  setLayoutAppliedTick((t) => t + 1);
+                  addLayoutLoadLog(`replaceAppliedStrategyIds slot=${slot} appliedIds=${appliedIds!.length} validApplied=${validApplied.length}`);
+                }, 0);
+              } else {
+                addLayoutLoadLog(`não replaceApplied: slot=${slot}`);
+                flushSync(() => setLayoutAppliedTick((t) => t + 1));
               }
             }}
           />

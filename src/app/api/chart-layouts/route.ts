@@ -1,15 +1,19 @@
-// GET: lista layouts salvos do usuário (slots 1–7 que existem). Cada item tem { slot, config }.
-// POST: salva layout em um slot (1–7). Body: { slot, config } — config é um objeto JSON com todas as preferências.
+// GET: lista layouts salvos do usuário (slots 0–7). Inclui defaultLayout (slot 0 do admin) para todos carregarem. canSaveDefault só para admin.
+// POST: salva layout em um slot (1–7; slot 0 só para admin). Body: { slot, config }.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
+import { Role } from "@/lib/prisma-bio-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+
+/** Admin: dono do slot 0 (layout default) — todo usuário carrega; só admin salva. */
+const ADMIN_USER_ID = "cmh2wwqx5002ktnngv7upschz";
 
 async function getUserId(): Promise<string | null> {
   const token = (await cookies()).get(COOKIE)?.value;
@@ -22,29 +26,47 @@ async function getUserId(): Promise<string | null> {
   }
 }
 
-const VALID_SLOTS = [1, 2, 3, 4, 5, 6, 7] as const;
+const USER_SLOTS = [1, 2, 3, 4, 5, 6, 7] as const;
 const CONFIG_MAX_BYTES = 32 * 1024; // 32KB para o JSON
 
 export async function GET() {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const rows = await cryptoPrisma.chartLayout.findMany({
-    where: { userId },
-    select: { slot: true, config: true },
-  });
+  const [user, rows, defaultRow] = await Promise.all([
+    cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+    cryptoPrisma.chartLayout.findMany({
+      where: { userId, slot: { in: [...USER_SLOTS] } },
+      select: { slot: true, config: true },
+    }),
+    cryptoPrisma.chartLayout.findUnique({
+      where: { userId_slot: { userId: ADMIN_USER_ID, slot: 0 } },
+      select: { config: true },
+    }),
+  ]);
 
   const layouts = rows.map((r) => ({
     slot: r.slot,
     config: r.config as Record<string, unknown>,
   }));
 
-  return NextResponse.json({ layouts });
+  const defaultLayout = defaultRow?.config != null && typeof defaultRow.config === "object" && !Array.isArray(defaultRow.config)
+    ? (defaultRow.config as Record<string, unknown>)
+    : null;
+
+  return NextResponse.json({
+    layouts,
+    defaultLayout,
+    canSaveDefault: user?.role === Role.admin,
+  });
 }
 
 export async function POST(req: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const user = await cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  const isAdmin = user?.role === Role.admin;
 
   let body: { slot?: number; config?: unknown } = {};
   try {
@@ -54,9 +76,19 @@ export async function POST(req: Request) {
   }
 
   const slot = typeof body.slot === "number" && Number.isInteger(body.slot) ? body.slot : undefined;
-  if (slot == null || !VALID_SLOTS.includes(slot as (typeof VALID_SLOTS)[number])) {
-    return NextResponse.json({ error: "invalid_slot", message: "Slot must be 1–7" }, { status: 400 });
+  if (slot == null) {
+    return NextResponse.json({ error: "invalid_slot", message: "Slot is required" }, { status: 400 });
   }
+  if (slot === 0) {
+    if (!isAdmin) return NextResponse.json({ error: "forbidden", message: "Only admin can save to default slot" }, { status: 403 });
+    // Admin salva no slot 0 do próprio userId (não no ADMIN_USER_ID) — na verdade o default é do admin, então admin deve salvar em userId = ADMIN_USER_ID, slot 0.
+    // Ou seja: quando o usuário logado é o admin, o POST slot 0 deve upsert (ADMIN_USER_ID, 0). Assim o “doninho” do slot 0 é sempre o admin.
+    // Decisão: quando admin faz POST slot 0, fazemos upsert em (ADMIN_USER_ID, 0).
+  } else if (!USER_SLOTS.includes(slot as (typeof USER_SLOTS)[number])) {
+    return NextResponse.json({ error: "invalid_slot", message: "Slot must be 0 (admin only) or 1–7" }, { status: 400 });
+  }
+
+  const targetUserId = slot === 0 && isAdmin ? ADMIN_USER_ID : userId;
 
   const config = body.config != null && typeof body.config === "object" && !Array.isArray(body.config)
     ? body.config
@@ -67,8 +99,8 @@ export async function POST(req: Request) {
   }
 
   await cryptoPrisma.chartLayout.upsert({
-    where: { userId_slot: { userId, slot } },
-    create: { userId, slot, config },
+    where: { userId_slot: { userId: targetUserId, slot } },
+    create: { userId: targetUserId, slot, config },
     update: { config },
   });
 

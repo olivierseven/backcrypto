@@ -168,18 +168,6 @@ exports.Prisma.ChartLayoutScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.BioSavedConfigScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  name: 'name',
-  private: 'private',
-  config: 'config',
-  mapDisplayByYear: 'mapDisplayByYear',
-  likes: 'likes',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.UserNotificationScalarFieldEnum = {
   idNotification: 'idNotification',
   senderType: 'senderType',
@@ -267,13 +255,6 @@ exports.Prisma.StripeCheckoutSessionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.SubscriptionCancellationScalarFieldEnum = {
-  id: 'id',
-  subscriptionId: 'subscriptionId',
-  userId: 'userId',
-  cancelledAt: 'cancelledAt'
-};
-
 exports.Prisma.PagarMeOrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -288,31 +269,6 @@ exports.Prisma.PagarMeOrderScalarFieldEnum = {
   expiresAt: 'expiresAt',
   completedAt: 'completedAt',
   createdAt: 'createdAt'
-};
-
-exports.Prisma.BioSimulationQueueScalarFieldEnum = {
-  id: 'id',
-  queueName: 'queueName',
-  userId: 'userId',
-  status: 'status',
-  payload: 'payload',
-  result: 'result',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.BioSimulationStateScalarFieldEnum = {
-  userId: 'userId',
-  state: 'state',
-  mapDisplayByYear: 'mapDisplayByYear',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.BioAppConfigScalarFieldEnum = {
-  key: 'key',
-  value: 'value',
-  description: 'description',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.BinanceKlineScalarFieldEnum = {
@@ -426,7 +382,7 @@ exports.UserLevel = exports.$Enums.UserLevel = {
   DIVINO: 'DIVINO'
 };
 
-exports.BioLanguage = exports.$Enums.BioLanguage = {
+exports.AppLanguage = exports.$Enums.AppLanguage = {
   en: 'en',
   pt: 'pt'
 };
@@ -462,16 +418,9 @@ exports.CheckoutStatus = exports.$Enums.CheckoutStatus = {
   OVER_LIMIT: 'OVER_LIMIT'
 };
 
-exports.BioQueueStatus = exports.$Enums.BioQueueStatus = {
-  PENDING: 'PENDING',
-  RUNNING: 'RUNNING',
-  COMPLETED: 'COMPLETED'
-};
-
 exports.Prisma.ModelName = {
   User: 'User',
   ChartLayout: 'ChartLayout',
-  BioSavedConfig: 'BioSavedConfig',
   UserNotification: 'UserNotification',
   AccessRequest: 'AccessRequest',
   EmailVerificationToken: 'EmailVerificationToken',
@@ -481,11 +430,7 @@ exports.Prisma.ModelName = {
   WalletCredit: 'WalletCredit',
   StripeEvent: 'StripeEvent',
   StripeCheckoutSession: 'StripeCheckoutSession',
-  SubscriptionCancellation: 'SubscriptionCancellation',
   PagarMeOrder: 'PagarMeOrder',
-  BioSimulationQueue: 'BioSimulationQueue',
-  BioSimulationState: 'BioSimulationState',
-  BioAppConfig: 'BioAppConfig',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
   BinanceKlineCache: 'BinanceKlineCache',

@@ -24,11 +24,6 @@ export type User = $Result.DefaultSelection<Prisma.$UserPayload>
  */
 export type ChartLayout = $Result.DefaultSelection<Prisma.$ChartLayoutPayload>
 /**
- * Model BioSavedConfig
- * 
- */
-export type BioSavedConfig = $Result.DefaultSelection<Prisma.$BioSavedConfigPayload>
-/**
  * Model UserNotification
  * 
  */
@@ -74,30 +69,10 @@ export type StripeEvent = $Result.DefaultSelection<Prisma.$StripeEventPayload>
  */
 export type StripeCheckoutSession = $Result.DefaultSelection<Prisma.$StripeCheckoutSessionPayload>
 /**
- * Model SubscriptionCancellation
- * 
- */
-export type SubscriptionCancellation = $Result.DefaultSelection<Prisma.$SubscriptionCancellationPayload>
-/**
  * Model PagarMeOrder
  * 
  */
 export type PagarMeOrder = $Result.DefaultSelection<Prisma.$PagarMeOrderPayload>
-/**
- * Model BioSimulationQueue
- * 
- */
-export type BioSimulationQueue = $Result.DefaultSelection<Prisma.$BioSimulationQueuePayload>
-/**
- * Model BioSimulationState
- * 
- */
-export type BioSimulationState = $Result.DefaultSelection<Prisma.$BioSimulationStatePayload>
-/**
- * Model BioAppConfig
- * 
- */
-export type BioAppConfig = $Result.DefaultSelection<Prisma.$BioAppConfigPayload>
 /**
  * Model BinanceKline
  * 
@@ -131,12 +106,12 @@ export namespace $Enums {
 export type Role = (typeof Role)[keyof typeof Role]
 
 
-export const BioLanguage: {
+export const AppLanguage: {
   en: 'en',
   pt: 'pt'
 };
 
-export type BioLanguage = (typeof BioLanguage)[keyof typeof BioLanguage]
+export type AppLanguage = (typeof AppLanguage)[keyof typeof AppLanguage]
 
 
 export const Tier: {
@@ -209,24 +184,15 @@ export const SenderType: {
 
 export type SenderType = (typeof SenderType)[keyof typeof SenderType]
 
-
-export const BioQueueStatus: {
-  PENDING: 'PENDING',
-  RUNNING: 'RUNNING',
-  COMPLETED: 'COMPLETED'
-};
-
-export type BioQueueStatus = (typeof BioQueueStatus)[keyof typeof BioQueueStatus]
-
 }
 
 export type Role = $Enums.Role
 
 export const Role: typeof $Enums.Role
 
-export type BioLanguage = $Enums.BioLanguage
+export type AppLanguage = $Enums.AppLanguage
 
-export const BioLanguage: typeof $Enums.BioLanguage
+export const AppLanguage: typeof $Enums.AppLanguage
 
 export type Tier = $Enums.Tier
 
@@ -251,10 +217,6 @@ export const CheckoutStatus: typeof $Enums.CheckoutStatus
 export type SenderType = $Enums.SenderType
 
 export const SenderType: typeof $Enums.SenderType
-
-export type BioQueueStatus = $Enums.BioQueueStatus
-
-export const BioQueueStatus: typeof $Enums.BioQueueStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -395,16 +357,6 @@ export class PrismaClient<
   get chartLayout(): Prisma.ChartLayoutDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.bioSavedConfig`: Exposes CRUD operations for the **BioSavedConfig** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more BioSavedConfigs
-    * const bioSavedConfigs = await prisma.bioSavedConfig.findMany()
-    * ```
-    */
-  get bioSavedConfig(): Prisma.BioSavedConfigDelegate<ExtArgs, ClientOptions>;
-
-  /**
    * `prisma.userNotification`: Exposes CRUD operations for the **UserNotification** model.
     * Example usage:
     * ```ts
@@ -495,16 +447,6 @@ export class PrismaClient<
   get stripeCheckoutSession(): Prisma.StripeCheckoutSessionDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.subscriptionCancellation`: Exposes CRUD operations for the **SubscriptionCancellation** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more SubscriptionCancellations
-    * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany()
-    * ```
-    */
-  get subscriptionCancellation(): Prisma.SubscriptionCancellationDelegate<ExtArgs, ClientOptions>;
-
-  /**
    * `prisma.pagarMeOrder`: Exposes CRUD operations for the **PagarMeOrder** model.
     * Example usage:
     * ```ts
@@ -513,36 +455,6 @@ export class PrismaClient<
     * ```
     */
   get pagarMeOrder(): Prisma.PagarMeOrderDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.bioSimulationQueue`: Exposes CRUD operations for the **BioSimulationQueue** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more BioSimulationQueues
-    * const bioSimulationQueues = await prisma.bioSimulationQueue.findMany()
-    * ```
-    */
-  get bioSimulationQueue(): Prisma.BioSimulationQueueDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.bioSimulationState`: Exposes CRUD operations for the **BioSimulationState** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more BioSimulationStates
-    * const bioSimulationStates = await prisma.bioSimulationState.findMany()
-    * ```
-    */
-  get bioSimulationState(): Prisma.BioSimulationStateDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.bioAppConfig`: Exposes CRUD operations for the **BioAppConfig** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more BioAppConfigs
-    * const bioAppConfigs = await prisma.bioAppConfig.findMany()
-    * ```
-    */
-  get bioAppConfig(): Prisma.BioAppConfigDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.binanceKline`: Exposes CRUD operations for the **BinanceKline** model.
@@ -1026,7 +938,6 @@ export namespace Prisma {
   export const ModelName: {
     User: 'User',
     ChartLayout: 'ChartLayout',
-    BioSavedConfig: 'BioSavedConfig',
     UserNotification: 'UserNotification',
     AccessRequest: 'AccessRequest',
     EmailVerificationToken: 'EmailVerificationToken',
@@ -1036,11 +947,7 @@ export namespace Prisma {
     WalletCredit: 'WalletCredit',
     StripeEvent: 'StripeEvent',
     StripeCheckoutSession: 'StripeCheckoutSession',
-    SubscriptionCancellation: 'SubscriptionCancellation',
     PagarMeOrder: 'PagarMeOrder',
-    BioSimulationQueue: 'BioSimulationQueue',
-    BioSimulationState: 'BioSimulationState',
-    BioAppConfig: 'BioAppConfig',
     BinanceKline: 'BinanceKline',
     BinanceKlineFast: 'BinanceKlineFast',
     BinanceKlineCache: 'BinanceKlineCache',
@@ -1063,7 +970,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "bioSavedConfig" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "subscriptionCancellation" | "pagarMeOrder" | "bioSimulationQueue" | "bioSimulationState" | "bioAppConfig" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
+      modelProps: "user" | "chartLayout" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1212,80 +1119,6 @@ export namespace Prisma {
           count: {
             args: Prisma.ChartLayoutCountArgs<ExtArgs>
             result: $Utils.Optional<ChartLayoutCountAggregateOutputType> | number
-          }
-        }
-      }
-      BioSavedConfig: {
-        payload: Prisma.$BioSavedConfigPayload<ExtArgs>
-        fields: Prisma.BioSavedConfigFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.BioSavedConfigFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.BioSavedConfigFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          findFirst: {
-            args: Prisma.BioSavedConfigFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.BioSavedConfigFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          findMany: {
-            args: Prisma.BioSavedConfigFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>[]
-          }
-          create: {
-            args: Prisma.BioSavedConfigCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          createMany: {
-            args: Prisma.BioSavedConfigCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.BioSavedConfigCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>[]
-          }
-          delete: {
-            args: Prisma.BioSavedConfigDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          update: {
-            args: Prisma.BioSavedConfigUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          deleteMany: {
-            args: Prisma.BioSavedConfigDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.BioSavedConfigUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.BioSavedConfigUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>[]
-          }
-          upsert: {
-            args: Prisma.BioSavedConfigUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSavedConfigPayload>
-          }
-          aggregate: {
-            args: Prisma.BioSavedConfigAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateBioSavedConfig>
-          }
-          groupBy: {
-            args: Prisma.BioSavedConfigGroupByArgs<ExtArgs>
-            result: $Utils.Optional<BioSavedConfigGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.BioSavedConfigCountArgs<ExtArgs>
-            result: $Utils.Optional<BioSavedConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -1955,80 +1788,6 @@ export namespace Prisma {
           }
         }
       }
-      SubscriptionCancellation: {
-        payload: Prisma.$SubscriptionCancellationPayload<ExtArgs>
-        fields: Prisma.SubscriptionCancellationFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.SubscriptionCancellationFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          findFirst: {
-            args: Prisma.SubscriptionCancellationFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          findMany: {
-            args: Prisma.SubscriptionCancellationFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
-          }
-          create: {
-            args: Prisma.SubscriptionCancellationCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          createMany: {
-            args: Prisma.SubscriptionCancellationCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
-          }
-          delete: {
-            args: Prisma.SubscriptionCancellationDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          update: {
-            args: Prisma.SubscriptionCancellationUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          deleteMany: {
-            args: Prisma.SubscriptionCancellationDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.SubscriptionCancellationUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>[]
-          }
-          upsert: {
-            args: Prisma.SubscriptionCancellationUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SubscriptionCancellationPayload>
-          }
-          aggregate: {
-            args: Prisma.SubscriptionCancellationAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateSubscriptionCancellation>
-          }
-          groupBy: {
-            args: Prisma.SubscriptionCancellationGroupByArgs<ExtArgs>
-            result: $Utils.Optional<SubscriptionCancellationGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.SubscriptionCancellationCountArgs<ExtArgs>
-            result: $Utils.Optional<SubscriptionCancellationCountAggregateOutputType> | number
-          }
-        }
-      }
       PagarMeOrder: {
         payload: Prisma.$PagarMeOrderPayload<ExtArgs>
         fields: Prisma.PagarMeOrderFieldRefs
@@ -2100,228 +1859,6 @@ export namespace Prisma {
           count: {
             args: Prisma.PagarMeOrderCountArgs<ExtArgs>
             result: $Utils.Optional<PagarMeOrderCountAggregateOutputType> | number
-          }
-        }
-      }
-      BioSimulationQueue: {
-        payload: Prisma.$BioSimulationQueuePayload<ExtArgs>
-        fields: Prisma.BioSimulationQueueFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.BioSimulationQueueFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.BioSimulationQueueFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          findFirst: {
-            args: Prisma.BioSimulationQueueFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.BioSimulationQueueFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          findMany: {
-            args: Prisma.BioSimulationQueueFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>[]
-          }
-          create: {
-            args: Prisma.BioSimulationQueueCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          createMany: {
-            args: Prisma.BioSimulationQueueCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.BioSimulationQueueCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>[]
-          }
-          delete: {
-            args: Prisma.BioSimulationQueueDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          update: {
-            args: Prisma.BioSimulationQueueUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          deleteMany: {
-            args: Prisma.BioSimulationQueueDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.BioSimulationQueueUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.BioSimulationQueueUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>[]
-          }
-          upsert: {
-            args: Prisma.BioSimulationQueueUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationQueuePayload>
-          }
-          aggregate: {
-            args: Prisma.BioSimulationQueueAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateBioSimulationQueue>
-          }
-          groupBy: {
-            args: Prisma.BioSimulationQueueGroupByArgs<ExtArgs>
-            result: $Utils.Optional<BioSimulationQueueGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.BioSimulationQueueCountArgs<ExtArgs>
-            result: $Utils.Optional<BioSimulationQueueCountAggregateOutputType> | number
-          }
-        }
-      }
-      BioSimulationState: {
-        payload: Prisma.$BioSimulationStatePayload<ExtArgs>
-        fields: Prisma.BioSimulationStateFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.BioSimulationStateFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.BioSimulationStateFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          findFirst: {
-            args: Prisma.BioSimulationStateFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.BioSimulationStateFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          findMany: {
-            args: Prisma.BioSimulationStateFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>[]
-          }
-          create: {
-            args: Prisma.BioSimulationStateCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          createMany: {
-            args: Prisma.BioSimulationStateCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.BioSimulationStateCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>[]
-          }
-          delete: {
-            args: Prisma.BioSimulationStateDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          update: {
-            args: Prisma.BioSimulationStateUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          deleteMany: {
-            args: Prisma.BioSimulationStateDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.BioSimulationStateUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.BioSimulationStateUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>[]
-          }
-          upsert: {
-            args: Prisma.BioSimulationStateUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioSimulationStatePayload>
-          }
-          aggregate: {
-            args: Prisma.BioSimulationStateAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateBioSimulationState>
-          }
-          groupBy: {
-            args: Prisma.BioSimulationStateGroupByArgs<ExtArgs>
-            result: $Utils.Optional<BioSimulationStateGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.BioSimulationStateCountArgs<ExtArgs>
-            result: $Utils.Optional<BioSimulationStateCountAggregateOutputType> | number
-          }
-        }
-      }
-      BioAppConfig: {
-        payload: Prisma.$BioAppConfigPayload<ExtArgs>
-        fields: Prisma.BioAppConfigFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.BioAppConfigFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.BioAppConfigFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          findFirst: {
-            args: Prisma.BioAppConfigFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.BioAppConfigFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          findMany: {
-            args: Prisma.BioAppConfigFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>[]
-          }
-          create: {
-            args: Prisma.BioAppConfigCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          createMany: {
-            args: Prisma.BioAppConfigCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.BioAppConfigCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>[]
-          }
-          delete: {
-            args: Prisma.BioAppConfigDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          update: {
-            args: Prisma.BioAppConfigUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          deleteMany: {
-            args: Prisma.BioAppConfigDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.BioAppConfigUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.BioAppConfigUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>[]
-          }
-          upsert: {
-            args: Prisma.BioAppConfigUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$BioAppConfigPayload>
-          }
-          aggregate: {
-            args: Prisma.BioAppConfigAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateBioAppConfig>
-          }
-          groupBy: {
-            args: Prisma.BioAppConfigGroupByArgs<ExtArgs>
-            result: $Utils.Optional<BioAppConfigGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.BioAppConfigCountArgs<ExtArgs>
-            result: $Utils.Optional<BioAppConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -2719,7 +2256,6 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     user?: UserOmit
     chartLayout?: ChartLayoutOmit
-    bioSavedConfig?: BioSavedConfigOmit
     userNotification?: UserNotificationOmit
     accessRequest?: AccessRequestOmit
     emailVerificationToken?: EmailVerificationTokenOmit
@@ -2729,11 +2265,7 @@ export namespace Prisma {
     walletCredit?: WalletCreditOmit
     stripeEvent?: StripeEventOmit
     stripeCheckoutSession?: StripeCheckoutSessionOmit
-    subscriptionCancellation?: SubscriptionCancellationOmit
     pagarMeOrder?: PagarMeOrderOmit
-    bioSimulationQueue?: BioSimulationQueueOmit
-    bioSimulationState?: BioSimulationStateOmit
-    bioAppConfig?: BioAppConfigOmit
     binanceKline?: BinanceKlineOmit
     binanceKlineFast?: BinanceKlineFastOmit
     binanceKlineCache?: BinanceKlineCacheOmit
@@ -2826,8 +2358,6 @@ export namespace Prisma {
     verificationTokens: number
     walletCredits: number
     notifications: number
-    simulationQueue: number
-    savedConfigs: number
     chartLayouts: number
   }
 
@@ -2840,8 +2370,6 @@ export namespace Prisma {
     verificationTokens?: boolean | UserCountOutputTypeCountVerificationTokensArgs
     walletCredits?: boolean | UserCountOutputTypeCountWalletCreditsArgs
     notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
-    simulationQueue?: boolean | UserCountOutputTypeCountSimulationQueueArgs
-    savedConfigs?: boolean | UserCountOutputTypeCountSavedConfigsArgs
     chartLayouts?: boolean | UserCountOutputTypeCountChartLayoutsArgs
   }
 
@@ -2910,20 +2438,6 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserNotificationWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountSimulationQueueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioSimulationQueueWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountSavedConfigsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioSavedConfigWhereInput
   }
 
   /**
@@ -3041,7 +2555,7 @@ export namespace Prisma {
     notifyQuina: boolean | null
     hideStatusBar: boolean | null
     progress: number | null
-    language: $Enums.BioLanguage | null
+    language: $Enums.AppLanguage | null
     timezoneOffset: number | null
   }
 
@@ -3081,7 +2595,7 @@ export namespace Prisma {
     notifyQuina: boolean | null
     hideStatusBar: boolean | null
     progress: number | null
-    language: $Enums.BioLanguage | null
+    language: $Enums.AppLanguage | null
     timezoneOffset: number | null
   }
 
@@ -3394,7 +2908,7 @@ export namespace Prisma {
     notifyQuina: boolean
     hideStatusBar: boolean
     progress: number
-    language: $Enums.BioLanguage
+    language: $Enums.AppLanguage
     timezoneOffset: number
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
@@ -3464,9 +2978,6 @@ export namespace Prisma {
     verificationTokens?: boolean | User$verificationTokensArgs<ExtArgs>
     walletCredits?: boolean | User$walletCreditsArgs<ExtArgs>
     notifications?: boolean | User$notificationsArgs<ExtArgs>
-    simulationQueue?: boolean | User$simulationQueueArgs<ExtArgs>
-    savedConfigs?: boolean | User$savedConfigsArgs<ExtArgs>
-    simulationState?: boolean | User$simulationStateArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -3602,9 +3113,6 @@ export namespace Prisma {
     verificationTokens?: boolean | User$verificationTokensArgs<ExtArgs>
     walletCredits?: boolean | User$walletCreditsArgs<ExtArgs>
     notifications?: boolean | User$notificationsArgs<ExtArgs>
-    simulationQueue?: boolean | User$simulationQueueArgs<ExtArgs>
-    savedConfigs?: boolean | User$savedConfigsArgs<ExtArgs>
-    simulationState?: boolean | User$simulationStateArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -3623,9 +3131,6 @@ export namespace Prisma {
       verificationTokens: Prisma.$EmailVerificationTokenPayload<ExtArgs>[]
       walletCredits: Prisma.$WalletCreditPayload<ExtArgs>[]
       notifications: Prisma.$UserNotificationPayload<ExtArgs>[]
-      simulationQueue: Prisma.$BioSimulationQueuePayload<ExtArgs>[]
-      savedConfigs: Prisma.$BioSavedConfigPayload<ExtArgs>[]
-      simulationState: Prisma.$BioSimulationStatePayload<ExtArgs> | null
       chartLayouts: Prisma.$ChartLayoutPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -3664,7 +3169,7 @@ export namespace Prisma {
       notifyQuina: boolean
       hideStatusBar: boolean
       progress: number
-      language: $Enums.BioLanguage
+      language: $Enums.AppLanguage
       timezoneOffset: number
     }, ExtArgs["result"]["user"]>
     composites: {}
@@ -4069,9 +3574,6 @@ export namespace Prisma {
     verificationTokens<T extends User$verificationTokensArgs<ExtArgs> = {}>(args?: Subset<T, User$verificationTokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmailVerificationTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     walletCredits<T extends User$walletCreditsArgs<ExtArgs> = {}>(args?: Subset<T, User$walletCreditsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WalletCreditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    simulationQueue<T extends User$simulationQueueArgs<ExtArgs> = {}>(args?: Subset<T, User$simulationQueueArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    savedConfigs<T extends User$savedConfigsArgs<ExtArgs> = {}>(args?: Subset<T, User$savedConfigsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    simulationState<T extends User$simulationStateArgs<ExtArgs> = {}>(args?: Subset<T, User$simulationStateArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     chartLayouts<T extends User$chartLayoutsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartLayoutsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartLayoutPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4137,7 +3639,7 @@ export namespace Prisma {
     readonly notifyQuina: FieldRef<"User", 'Boolean'>
     readonly hideStatusBar: FieldRef<"User", 'Boolean'>
     readonly progress: FieldRef<"User", 'Int'>
-    readonly language: FieldRef<"User", 'BioLanguage'>
+    readonly language: FieldRef<"User", 'AppLanguage'>
     readonly timezoneOffset: FieldRef<"User", 'Int'>
   }
     
@@ -4735,73 +4237,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: UserNotificationScalarFieldEnum | UserNotificationScalarFieldEnum[]
-  }
-
-  /**
-   * User.simulationQueue
-   */
-  export type User$simulationQueueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    where?: BioSimulationQueueWhereInput
-    orderBy?: BioSimulationQueueOrderByWithRelationInput | BioSimulationQueueOrderByWithRelationInput[]
-    cursor?: BioSimulationQueueWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: BioSimulationQueueScalarFieldEnum | BioSimulationQueueScalarFieldEnum[]
-  }
-
-  /**
-   * User.savedConfigs
-   */
-  export type User$savedConfigsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    where?: BioSavedConfigWhereInput
-    orderBy?: BioSavedConfigOrderByWithRelationInput | BioSavedConfigOrderByWithRelationInput[]
-    cursor?: BioSavedConfigWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: BioSavedConfigScalarFieldEnum | BioSavedConfigScalarFieldEnum[]
-  }
-
-  /**
-   * User.simulationState
-   */
-  export type User$simulationStateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    where?: BioSimulationStateWhereInput
   }
 
   /**
@@ -5919,1142 +5354,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ChartLayoutInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model BioSavedConfig
-   */
-
-  export type AggregateBioSavedConfig = {
-    _count: BioSavedConfigCountAggregateOutputType | null
-    _avg: BioSavedConfigAvgAggregateOutputType | null
-    _sum: BioSavedConfigSumAggregateOutputType | null
-    _min: BioSavedConfigMinAggregateOutputType | null
-    _max: BioSavedConfigMaxAggregateOutputType | null
-  }
-
-  export type BioSavedConfigAvgAggregateOutputType = {
-    likes: number | null
-  }
-
-  export type BioSavedConfigSumAggregateOutputType = {
-    likes: number | null
-  }
-
-  export type BioSavedConfigMinAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    name: string | null
-    private: boolean | null
-    likes: number | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type BioSavedConfigMaxAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    name: string | null
-    private: boolean | null
-    likes: number | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type BioSavedConfigCountAggregateOutputType = {
-    id: number
-    userId: number
-    name: number
-    private: number
-    config: number
-    mapDisplayByYear: number
-    likes: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type BioSavedConfigAvgAggregateInputType = {
-    likes?: true
-  }
-
-  export type BioSavedConfigSumAggregateInputType = {
-    likes?: true
-  }
-
-  export type BioSavedConfigMinAggregateInputType = {
-    id?: true
-    userId?: true
-    name?: true
-    private?: true
-    likes?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type BioSavedConfigMaxAggregateInputType = {
-    id?: true
-    userId?: true
-    name?: true
-    private?: true
-    likes?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type BioSavedConfigCountAggregateInputType = {
-    id?: true
-    userId?: true
-    name?: true
-    private?: true
-    config?: true
-    mapDisplayByYear?: true
-    likes?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type BioSavedConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSavedConfig to aggregate.
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSavedConfigs to fetch.
-     */
-    orderBy?: BioSavedConfigOrderByWithRelationInput | BioSavedConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: BioSavedConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSavedConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSavedConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned BioSavedConfigs
-    **/
-    _count?: true | BioSavedConfigCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: BioSavedConfigAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: BioSavedConfigSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: BioSavedConfigMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: BioSavedConfigMaxAggregateInputType
-  }
-
-  export type GetBioSavedConfigAggregateType<T extends BioSavedConfigAggregateArgs> = {
-        [P in keyof T & keyof AggregateBioSavedConfig]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateBioSavedConfig[P]>
-      : GetScalarType<T[P], AggregateBioSavedConfig[P]>
-  }
-
-
-
-
-  export type BioSavedConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioSavedConfigWhereInput
-    orderBy?: BioSavedConfigOrderByWithAggregationInput | BioSavedConfigOrderByWithAggregationInput[]
-    by: BioSavedConfigScalarFieldEnum[] | BioSavedConfigScalarFieldEnum
-    having?: BioSavedConfigScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: BioSavedConfigCountAggregateInputType | true
-    _avg?: BioSavedConfigAvgAggregateInputType
-    _sum?: BioSavedConfigSumAggregateInputType
-    _min?: BioSavedConfigMinAggregateInputType
-    _max?: BioSavedConfigMaxAggregateInputType
-  }
-
-  export type BioSavedConfigGroupByOutputType = {
-    id: string
-    userId: string
-    name: string
-    private: boolean
-    config: JsonValue
-    mapDisplayByYear: JsonValue | null
-    likes: number
-    createdAt: Date
-    updatedAt: Date
-    _count: BioSavedConfigCountAggregateOutputType | null
-    _avg: BioSavedConfigAvgAggregateOutputType | null
-    _sum: BioSavedConfigSumAggregateOutputType | null
-    _min: BioSavedConfigMinAggregateOutputType | null
-    _max: BioSavedConfigMaxAggregateOutputType | null
-  }
-
-  type GetBioSavedConfigGroupByPayload<T extends BioSavedConfigGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<BioSavedConfigGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof BioSavedConfigGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], BioSavedConfigGroupByOutputType[P]>
-            : GetScalarType<T[P], BioSavedConfigGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type BioSavedConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    name?: boolean
-    private?: boolean
-    config?: boolean
-    mapDisplayByYear?: boolean
-    likes?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSavedConfig"]>
-
-  export type BioSavedConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    name?: boolean
-    private?: boolean
-    config?: boolean
-    mapDisplayByYear?: boolean
-    likes?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSavedConfig"]>
-
-  export type BioSavedConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    name?: boolean
-    private?: boolean
-    config?: boolean
-    mapDisplayByYear?: boolean
-    likes?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSavedConfig"]>
-
-  export type BioSavedConfigSelectScalar = {
-    id?: boolean
-    userId?: boolean
-    name?: boolean
-    private?: boolean
-    config?: boolean
-    mapDisplayByYear?: boolean
-    likes?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type BioSavedConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "name" | "private" | "config" | "mapDisplayByYear" | "likes" | "createdAt" | "updatedAt", ExtArgs["result"]["bioSavedConfig"]>
-  export type BioSavedConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSavedConfigIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSavedConfigIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $BioSavedConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "BioSavedConfig"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      userId: string
-      name: string
-      private: boolean
-      config: Prisma.JsonValue
-      mapDisplayByYear: Prisma.JsonValue | null
-      likes: number
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["bioSavedConfig"]>
-    composites: {}
-  }
-
-  type BioSavedConfigGetPayload<S extends boolean | null | undefined | BioSavedConfigDefaultArgs> = $Result.GetResult<Prisma.$BioSavedConfigPayload, S>
-
-  type BioSavedConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<BioSavedConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: BioSavedConfigCountAggregateInputType | true
-    }
-
-  export interface BioSavedConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BioSavedConfig'], meta: { name: 'BioSavedConfig' } }
-    /**
-     * Find zero or one BioSavedConfig that matches the filter.
-     * @param {BioSavedConfigFindUniqueArgs} args - Arguments to find a BioSavedConfig
-     * @example
-     * // Get one BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends BioSavedConfigFindUniqueArgs>(args: SelectSubset<T, BioSavedConfigFindUniqueArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one BioSavedConfig that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {BioSavedConfigFindUniqueOrThrowArgs} args - Arguments to find a BioSavedConfig
-     * @example
-     * // Get one BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends BioSavedConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, BioSavedConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSavedConfig that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigFindFirstArgs} args - Arguments to find a BioSavedConfig
-     * @example
-     * // Get one BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends BioSavedConfigFindFirstArgs>(args?: SelectSubset<T, BioSavedConfigFindFirstArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSavedConfig that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigFindFirstOrThrowArgs} args - Arguments to find a BioSavedConfig
-     * @example
-     * // Get one BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends BioSavedConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, BioSavedConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more BioSavedConfigs that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all BioSavedConfigs
-     * const bioSavedConfigs = await prisma.bioSavedConfig.findMany()
-     * 
-     * // Get first 10 BioSavedConfigs
-     * const bioSavedConfigs = await prisma.bioSavedConfig.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const bioSavedConfigWithIdOnly = await prisma.bioSavedConfig.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends BioSavedConfigFindManyArgs>(args?: SelectSubset<T, BioSavedConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a BioSavedConfig.
-     * @param {BioSavedConfigCreateArgs} args - Arguments to create a BioSavedConfig.
-     * @example
-     * // Create one BioSavedConfig
-     * const BioSavedConfig = await prisma.bioSavedConfig.create({
-     *   data: {
-     *     // ... data to create a BioSavedConfig
-     *   }
-     * })
-     * 
-     */
-    create<T extends BioSavedConfigCreateArgs>(args: SelectSubset<T, BioSavedConfigCreateArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many BioSavedConfigs.
-     * @param {BioSavedConfigCreateManyArgs} args - Arguments to create many BioSavedConfigs.
-     * @example
-     * // Create many BioSavedConfigs
-     * const bioSavedConfig = await prisma.bioSavedConfig.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends BioSavedConfigCreateManyArgs>(args?: SelectSubset<T, BioSavedConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many BioSavedConfigs and returns the data saved in the database.
-     * @param {BioSavedConfigCreateManyAndReturnArgs} args - Arguments to create many BioSavedConfigs.
-     * @example
-     * // Create many BioSavedConfigs
-     * const bioSavedConfig = await prisma.bioSavedConfig.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many BioSavedConfigs and only return the `id`
-     * const bioSavedConfigWithIdOnly = await prisma.bioSavedConfig.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends BioSavedConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, BioSavedConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a BioSavedConfig.
-     * @param {BioSavedConfigDeleteArgs} args - Arguments to delete one BioSavedConfig.
-     * @example
-     * // Delete one BioSavedConfig
-     * const BioSavedConfig = await prisma.bioSavedConfig.delete({
-     *   where: {
-     *     // ... filter to delete one BioSavedConfig
-     *   }
-     * })
-     * 
-     */
-    delete<T extends BioSavedConfigDeleteArgs>(args: SelectSubset<T, BioSavedConfigDeleteArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one BioSavedConfig.
-     * @param {BioSavedConfigUpdateArgs} args - Arguments to update one BioSavedConfig.
-     * @example
-     * // Update one BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends BioSavedConfigUpdateArgs>(args: SelectSubset<T, BioSavedConfigUpdateArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more BioSavedConfigs.
-     * @param {BioSavedConfigDeleteManyArgs} args - Arguments to filter BioSavedConfigs to delete.
-     * @example
-     * // Delete a few BioSavedConfigs
-     * const { count } = await prisma.bioSavedConfig.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends BioSavedConfigDeleteManyArgs>(args?: SelectSubset<T, BioSavedConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSavedConfigs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many BioSavedConfigs
-     * const bioSavedConfig = await prisma.bioSavedConfig.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends BioSavedConfigUpdateManyArgs>(args: SelectSubset<T, BioSavedConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSavedConfigs and returns the data updated in the database.
-     * @param {BioSavedConfigUpdateManyAndReturnArgs} args - Arguments to update many BioSavedConfigs.
-     * @example
-     * // Update many BioSavedConfigs
-     * const bioSavedConfig = await prisma.bioSavedConfig.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more BioSavedConfigs and only return the `id`
-     * const bioSavedConfigWithIdOnly = await prisma.bioSavedConfig.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends BioSavedConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, BioSavedConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one BioSavedConfig.
-     * @param {BioSavedConfigUpsertArgs} args - Arguments to update or create a BioSavedConfig.
-     * @example
-     * // Update or create a BioSavedConfig
-     * const bioSavedConfig = await prisma.bioSavedConfig.upsert({
-     *   create: {
-     *     // ... data to create a BioSavedConfig
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the BioSavedConfig we want to update
-     *   }
-     * })
-     */
-    upsert<T extends BioSavedConfigUpsertArgs>(args: SelectSubset<T, BioSavedConfigUpsertArgs<ExtArgs>>): Prisma__BioSavedConfigClient<$Result.GetResult<Prisma.$BioSavedConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of BioSavedConfigs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigCountArgs} args - Arguments to filter BioSavedConfigs to count.
-     * @example
-     * // Count the number of BioSavedConfigs
-     * const count = await prisma.bioSavedConfig.count({
-     *   where: {
-     *     // ... the filter for the BioSavedConfigs we want to count
-     *   }
-     * })
-    **/
-    count<T extends BioSavedConfigCountArgs>(
-      args?: Subset<T, BioSavedConfigCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], BioSavedConfigCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a BioSavedConfig.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends BioSavedConfigAggregateArgs>(args: Subset<T, BioSavedConfigAggregateArgs>): Prisma.PrismaPromise<GetBioSavedConfigAggregateType<T>>
-
-    /**
-     * Group by BioSavedConfig.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSavedConfigGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends BioSavedConfigGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: BioSavedConfigGroupByArgs['orderBy'] }
-        : { orderBy?: BioSavedConfigGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, BioSavedConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBioSavedConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the BioSavedConfig model
-   */
-  readonly fields: BioSavedConfigFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for BioSavedConfig.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__BioSavedConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the BioSavedConfig model
-   */
-  interface BioSavedConfigFieldRefs {
-    readonly id: FieldRef<"BioSavedConfig", 'String'>
-    readonly userId: FieldRef<"BioSavedConfig", 'String'>
-    readonly name: FieldRef<"BioSavedConfig", 'String'>
-    readonly private: FieldRef<"BioSavedConfig", 'Boolean'>
-    readonly config: FieldRef<"BioSavedConfig", 'Json'>
-    readonly mapDisplayByYear: FieldRef<"BioSavedConfig", 'Json'>
-    readonly likes: FieldRef<"BioSavedConfig", 'Int'>
-    readonly createdAt: FieldRef<"BioSavedConfig", 'DateTime'>
-    readonly updatedAt: FieldRef<"BioSavedConfig", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * BioSavedConfig findUnique
-   */
-  export type BioSavedConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSavedConfig to fetch.
-     */
-    where: BioSavedConfigWhereUniqueInput
-  }
-
-  /**
-   * BioSavedConfig findUniqueOrThrow
-   */
-  export type BioSavedConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSavedConfig to fetch.
-     */
-    where: BioSavedConfigWhereUniqueInput
-  }
-
-  /**
-   * BioSavedConfig findFirst
-   */
-  export type BioSavedConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSavedConfig to fetch.
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSavedConfigs to fetch.
-     */
-    orderBy?: BioSavedConfigOrderByWithRelationInput | BioSavedConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSavedConfigs.
-     */
-    cursor?: BioSavedConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSavedConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSavedConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSavedConfigs.
-     */
-    distinct?: BioSavedConfigScalarFieldEnum | BioSavedConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioSavedConfig findFirstOrThrow
-   */
-  export type BioSavedConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSavedConfig to fetch.
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSavedConfigs to fetch.
-     */
-    orderBy?: BioSavedConfigOrderByWithRelationInput | BioSavedConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSavedConfigs.
-     */
-    cursor?: BioSavedConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSavedConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSavedConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSavedConfigs.
-     */
-    distinct?: BioSavedConfigScalarFieldEnum | BioSavedConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioSavedConfig findMany
-   */
-  export type BioSavedConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSavedConfigs to fetch.
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSavedConfigs to fetch.
-     */
-    orderBy?: BioSavedConfigOrderByWithRelationInput | BioSavedConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing BioSavedConfigs.
-     */
-    cursor?: BioSavedConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSavedConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSavedConfigs.
-     */
-    skip?: number
-    distinct?: BioSavedConfigScalarFieldEnum | BioSavedConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioSavedConfig create
-   */
-  export type BioSavedConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * The data needed to create a BioSavedConfig.
-     */
-    data: XOR<BioSavedConfigCreateInput, BioSavedConfigUncheckedCreateInput>
-  }
-
-  /**
-   * BioSavedConfig createMany
-   */
-  export type BioSavedConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many BioSavedConfigs.
-     */
-    data: BioSavedConfigCreateManyInput | BioSavedConfigCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * BioSavedConfig createManyAndReturn
-   */
-  export type BioSavedConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * The data used to create many BioSavedConfigs.
-     */
-    data: BioSavedConfigCreateManyInput | BioSavedConfigCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSavedConfig update
-   */
-  export type BioSavedConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * The data needed to update a BioSavedConfig.
-     */
-    data: XOR<BioSavedConfigUpdateInput, BioSavedConfigUncheckedUpdateInput>
-    /**
-     * Choose, which BioSavedConfig to update.
-     */
-    where: BioSavedConfigWhereUniqueInput
-  }
-
-  /**
-   * BioSavedConfig updateMany
-   */
-  export type BioSavedConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update BioSavedConfigs.
-     */
-    data: XOR<BioSavedConfigUpdateManyMutationInput, BioSavedConfigUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSavedConfigs to update
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * Limit how many BioSavedConfigs to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSavedConfig updateManyAndReturn
-   */
-  export type BioSavedConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * The data used to update BioSavedConfigs.
-     */
-    data: XOR<BioSavedConfigUpdateManyMutationInput, BioSavedConfigUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSavedConfigs to update
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * Limit how many BioSavedConfigs to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSavedConfig upsert
-   */
-  export type BioSavedConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * The filter to search for the BioSavedConfig to update in case it exists.
-     */
-    where: BioSavedConfigWhereUniqueInput
-    /**
-     * In case the BioSavedConfig found by the `where` argument doesn't exist, create a new BioSavedConfig with this data.
-     */
-    create: XOR<BioSavedConfigCreateInput, BioSavedConfigUncheckedCreateInput>
-    /**
-     * In case the BioSavedConfig was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<BioSavedConfigUpdateInput, BioSavedConfigUncheckedUpdateInput>
-  }
-
-  /**
-   * BioSavedConfig delete
-   */
-  export type BioSavedConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
-    /**
-     * Filter which BioSavedConfig to delete.
-     */
-    where: BioSavedConfigWhereUniqueInput
-  }
-
-  /**
-   * BioSavedConfig deleteMany
-   */
-  export type BioSavedConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSavedConfigs to delete
-     */
-    where?: BioSavedConfigWhereInput
-    /**
-     * Limit how many BioSavedConfigs to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSavedConfig without action
-   */
-  export type BioSavedConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSavedConfig
-     */
-    select?: BioSavedConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSavedConfig
-     */
-    omit?: BioSavedConfigOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSavedConfigInclude<ExtArgs> | null
   }
 
 
@@ -16918,988 +15217,6 @@ export namespace Prisma {
 
 
   /**
-   * Model SubscriptionCancellation
-   */
-
-  export type AggregateSubscriptionCancellation = {
-    _count: SubscriptionCancellationCountAggregateOutputType | null
-    _min: SubscriptionCancellationMinAggregateOutputType | null
-    _max: SubscriptionCancellationMaxAggregateOutputType | null
-  }
-
-  export type SubscriptionCancellationMinAggregateOutputType = {
-    id: string | null
-    subscriptionId: string | null
-    userId: string | null
-    cancelledAt: Date | null
-  }
-
-  export type SubscriptionCancellationMaxAggregateOutputType = {
-    id: string | null
-    subscriptionId: string | null
-    userId: string | null
-    cancelledAt: Date | null
-  }
-
-  export type SubscriptionCancellationCountAggregateOutputType = {
-    id: number
-    subscriptionId: number
-    userId: number
-    cancelledAt: number
-    _all: number
-  }
-
-
-  export type SubscriptionCancellationMinAggregateInputType = {
-    id?: true
-    subscriptionId?: true
-    userId?: true
-    cancelledAt?: true
-  }
-
-  export type SubscriptionCancellationMaxAggregateInputType = {
-    id?: true
-    subscriptionId?: true
-    userId?: true
-    cancelledAt?: true
-  }
-
-  export type SubscriptionCancellationCountAggregateInputType = {
-    id?: true
-    subscriptionId?: true
-    userId?: true
-    cancelledAt?: true
-    _all?: true
-  }
-
-  export type SubscriptionCancellationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which SubscriptionCancellation to aggregate.
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of SubscriptionCancellations to fetch.
-     */
-    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: SubscriptionCancellationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` SubscriptionCancellations from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` SubscriptionCancellations.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned SubscriptionCancellations
-    **/
-    _count?: true | SubscriptionCancellationCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: SubscriptionCancellationMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: SubscriptionCancellationMaxAggregateInputType
-  }
-
-  export type GetSubscriptionCancellationAggregateType<T extends SubscriptionCancellationAggregateArgs> = {
-        [P in keyof T & keyof AggregateSubscriptionCancellation]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateSubscriptionCancellation[P]>
-      : GetScalarType<T[P], AggregateSubscriptionCancellation[P]>
-  }
-
-
-
-
-  export type SubscriptionCancellationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: SubscriptionCancellationWhereInput
-    orderBy?: SubscriptionCancellationOrderByWithAggregationInput | SubscriptionCancellationOrderByWithAggregationInput[]
-    by: SubscriptionCancellationScalarFieldEnum[] | SubscriptionCancellationScalarFieldEnum
-    having?: SubscriptionCancellationScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: SubscriptionCancellationCountAggregateInputType | true
-    _min?: SubscriptionCancellationMinAggregateInputType
-    _max?: SubscriptionCancellationMaxAggregateInputType
-  }
-
-  export type SubscriptionCancellationGroupByOutputType = {
-    id: string
-    subscriptionId: string
-    userId: string
-    cancelledAt: Date
-    _count: SubscriptionCancellationCountAggregateOutputType | null
-    _min: SubscriptionCancellationMinAggregateOutputType | null
-    _max: SubscriptionCancellationMaxAggregateOutputType | null
-  }
-
-  type GetSubscriptionCancellationGroupByPayload<T extends SubscriptionCancellationGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<SubscriptionCancellationGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof SubscriptionCancellationGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], SubscriptionCancellationGroupByOutputType[P]>
-            : GetScalarType<T[P], SubscriptionCancellationGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type SubscriptionCancellationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    subscriptionId?: boolean
-    userId?: boolean
-    cancelledAt?: boolean
-  }, ExtArgs["result"]["subscriptionCancellation"]>
-
-  export type SubscriptionCancellationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    subscriptionId?: boolean
-    userId?: boolean
-    cancelledAt?: boolean
-  }, ExtArgs["result"]["subscriptionCancellation"]>
-
-  export type SubscriptionCancellationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    subscriptionId?: boolean
-    userId?: boolean
-    cancelledAt?: boolean
-  }, ExtArgs["result"]["subscriptionCancellation"]>
-
-  export type SubscriptionCancellationSelectScalar = {
-    id?: boolean
-    subscriptionId?: boolean
-    userId?: boolean
-    cancelledAt?: boolean
-  }
-
-  export type SubscriptionCancellationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "subscriptionId" | "userId" | "cancelledAt", ExtArgs["result"]["subscriptionCancellation"]>
-
-  export type $SubscriptionCancellationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "SubscriptionCancellation"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      subscriptionId: string
-      userId: string
-      cancelledAt: Date
-    }, ExtArgs["result"]["subscriptionCancellation"]>
-    composites: {}
-  }
-
-  type SubscriptionCancellationGetPayload<S extends boolean | null | undefined | SubscriptionCancellationDefaultArgs> = $Result.GetResult<Prisma.$SubscriptionCancellationPayload, S>
-
-  type SubscriptionCancellationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<SubscriptionCancellationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: SubscriptionCancellationCountAggregateInputType | true
-    }
-
-  export interface SubscriptionCancellationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SubscriptionCancellation'], meta: { name: 'SubscriptionCancellation' } }
-    /**
-     * Find zero or one SubscriptionCancellation that matches the filter.
-     * @param {SubscriptionCancellationFindUniqueArgs} args - Arguments to find a SubscriptionCancellation
-     * @example
-     * // Get one SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends SubscriptionCancellationFindUniqueArgs>(args: SelectSubset<T, SubscriptionCancellationFindUniqueArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one SubscriptionCancellation that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {SubscriptionCancellationFindUniqueOrThrowArgs} args - Arguments to find a SubscriptionCancellation
-     * @example
-     * // Get one SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends SubscriptionCancellationFindUniqueOrThrowArgs>(args: SelectSubset<T, SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first SubscriptionCancellation that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationFindFirstArgs} args - Arguments to find a SubscriptionCancellation
-     * @example
-     * // Get one SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends SubscriptionCancellationFindFirstArgs>(args?: SelectSubset<T, SubscriptionCancellationFindFirstArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first SubscriptionCancellation that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationFindFirstOrThrowArgs} args - Arguments to find a SubscriptionCancellation
-     * @example
-     * // Get one SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends SubscriptionCancellationFindFirstOrThrowArgs>(args?: SelectSubset<T, SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more SubscriptionCancellations that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all SubscriptionCancellations
-     * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany()
-     * 
-     * // Get first 10 SubscriptionCancellations
-     * const subscriptionCancellations = await prisma.subscriptionCancellation.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends SubscriptionCancellationFindManyArgs>(args?: SelectSubset<T, SubscriptionCancellationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a SubscriptionCancellation.
-     * @param {SubscriptionCancellationCreateArgs} args - Arguments to create a SubscriptionCancellation.
-     * @example
-     * // Create one SubscriptionCancellation
-     * const SubscriptionCancellation = await prisma.subscriptionCancellation.create({
-     *   data: {
-     *     // ... data to create a SubscriptionCancellation
-     *   }
-     * })
-     * 
-     */
-    create<T extends SubscriptionCancellationCreateArgs>(args: SelectSubset<T, SubscriptionCancellationCreateArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many SubscriptionCancellations.
-     * @param {SubscriptionCancellationCreateManyArgs} args - Arguments to create many SubscriptionCancellations.
-     * @example
-     * // Create many SubscriptionCancellations
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends SubscriptionCancellationCreateManyArgs>(args?: SelectSubset<T, SubscriptionCancellationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many SubscriptionCancellations and returns the data saved in the database.
-     * @param {SubscriptionCancellationCreateManyAndReturnArgs} args - Arguments to create many SubscriptionCancellations.
-     * @example
-     * // Create many SubscriptionCancellations
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many SubscriptionCancellations and only return the `id`
-     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends SubscriptionCancellationCreateManyAndReturnArgs>(args?: SelectSubset<T, SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a SubscriptionCancellation.
-     * @param {SubscriptionCancellationDeleteArgs} args - Arguments to delete one SubscriptionCancellation.
-     * @example
-     * // Delete one SubscriptionCancellation
-     * const SubscriptionCancellation = await prisma.subscriptionCancellation.delete({
-     *   where: {
-     *     // ... filter to delete one SubscriptionCancellation
-     *   }
-     * })
-     * 
-     */
-    delete<T extends SubscriptionCancellationDeleteArgs>(args: SelectSubset<T, SubscriptionCancellationDeleteArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one SubscriptionCancellation.
-     * @param {SubscriptionCancellationUpdateArgs} args - Arguments to update one SubscriptionCancellation.
-     * @example
-     * // Update one SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends SubscriptionCancellationUpdateArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more SubscriptionCancellations.
-     * @param {SubscriptionCancellationDeleteManyArgs} args - Arguments to filter SubscriptionCancellations to delete.
-     * @example
-     * // Delete a few SubscriptionCancellations
-     * const { count } = await prisma.subscriptionCancellation.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends SubscriptionCancellationDeleteManyArgs>(args?: SelectSubset<T, SubscriptionCancellationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more SubscriptionCancellations.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many SubscriptionCancellations
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends SubscriptionCancellationUpdateManyArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more SubscriptionCancellations and returns the data updated in the database.
-     * @param {SubscriptionCancellationUpdateManyAndReturnArgs} args - Arguments to update many SubscriptionCancellations.
-     * @example
-     * // Update many SubscriptionCancellations
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more SubscriptionCancellations and only return the `id`
-     * const subscriptionCancellationWithIdOnly = await prisma.subscriptionCancellation.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends SubscriptionCancellationUpdateManyAndReturnArgs>(args: SelectSubset<T, SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one SubscriptionCancellation.
-     * @param {SubscriptionCancellationUpsertArgs} args - Arguments to update or create a SubscriptionCancellation.
-     * @example
-     * // Update or create a SubscriptionCancellation
-     * const subscriptionCancellation = await prisma.subscriptionCancellation.upsert({
-     *   create: {
-     *     // ... data to create a SubscriptionCancellation
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the SubscriptionCancellation we want to update
-     *   }
-     * })
-     */
-    upsert<T extends SubscriptionCancellationUpsertArgs>(args: SelectSubset<T, SubscriptionCancellationUpsertArgs<ExtArgs>>): Prisma__SubscriptionCancellationClient<$Result.GetResult<Prisma.$SubscriptionCancellationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of SubscriptionCancellations.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationCountArgs} args - Arguments to filter SubscriptionCancellations to count.
-     * @example
-     * // Count the number of SubscriptionCancellations
-     * const count = await prisma.subscriptionCancellation.count({
-     *   where: {
-     *     // ... the filter for the SubscriptionCancellations we want to count
-     *   }
-     * })
-    **/
-    count<T extends SubscriptionCancellationCountArgs>(
-      args?: Subset<T, SubscriptionCancellationCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], SubscriptionCancellationCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a SubscriptionCancellation.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends SubscriptionCancellationAggregateArgs>(args: Subset<T, SubscriptionCancellationAggregateArgs>): Prisma.PrismaPromise<GetSubscriptionCancellationAggregateType<T>>
-
-    /**
-     * Group by SubscriptionCancellation.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SubscriptionCancellationGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends SubscriptionCancellationGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: SubscriptionCancellationGroupByArgs['orderBy'] }
-        : { orderBy?: SubscriptionCancellationGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, SubscriptionCancellationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSubscriptionCancellationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the SubscriptionCancellation model
-   */
-  readonly fields: SubscriptionCancellationFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for SubscriptionCancellation.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__SubscriptionCancellationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the SubscriptionCancellation model
-   */
-  interface SubscriptionCancellationFieldRefs {
-    readonly id: FieldRef<"SubscriptionCancellation", 'String'>
-    readonly subscriptionId: FieldRef<"SubscriptionCancellation", 'String'>
-    readonly userId: FieldRef<"SubscriptionCancellation", 'String'>
-    readonly cancelledAt: FieldRef<"SubscriptionCancellation", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * SubscriptionCancellation findUnique
-   */
-  export type SubscriptionCancellationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter, which SubscriptionCancellation to fetch.
-     */
-    where: SubscriptionCancellationWhereUniqueInput
-  }
-
-  /**
-   * SubscriptionCancellation findUniqueOrThrow
-   */
-  export type SubscriptionCancellationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter, which SubscriptionCancellation to fetch.
-     */
-    where: SubscriptionCancellationWhereUniqueInput
-  }
-
-  /**
-   * SubscriptionCancellation findFirst
-   */
-  export type SubscriptionCancellationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter, which SubscriptionCancellation to fetch.
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of SubscriptionCancellations to fetch.
-     */
-    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for SubscriptionCancellations.
-     */
-    cursor?: SubscriptionCancellationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` SubscriptionCancellations from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` SubscriptionCancellations.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of SubscriptionCancellations.
-     */
-    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
-  }
-
-  /**
-   * SubscriptionCancellation findFirstOrThrow
-   */
-  export type SubscriptionCancellationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter, which SubscriptionCancellation to fetch.
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of SubscriptionCancellations to fetch.
-     */
-    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for SubscriptionCancellations.
-     */
-    cursor?: SubscriptionCancellationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` SubscriptionCancellations from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` SubscriptionCancellations.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of SubscriptionCancellations.
-     */
-    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
-  }
-
-  /**
-   * SubscriptionCancellation findMany
-   */
-  export type SubscriptionCancellationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter, which SubscriptionCancellations to fetch.
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of SubscriptionCancellations to fetch.
-     */
-    orderBy?: SubscriptionCancellationOrderByWithRelationInput | SubscriptionCancellationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing SubscriptionCancellations.
-     */
-    cursor?: SubscriptionCancellationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` SubscriptionCancellations from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` SubscriptionCancellations.
-     */
-    skip?: number
-    distinct?: SubscriptionCancellationScalarFieldEnum | SubscriptionCancellationScalarFieldEnum[]
-  }
-
-  /**
-   * SubscriptionCancellation create
-   */
-  export type SubscriptionCancellationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * The data needed to create a SubscriptionCancellation.
-     */
-    data: XOR<SubscriptionCancellationCreateInput, SubscriptionCancellationUncheckedCreateInput>
-  }
-
-  /**
-   * SubscriptionCancellation createMany
-   */
-  export type SubscriptionCancellationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many SubscriptionCancellations.
-     */
-    data: SubscriptionCancellationCreateManyInput | SubscriptionCancellationCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * SubscriptionCancellation createManyAndReturn
-   */
-  export type SubscriptionCancellationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * The data used to create many SubscriptionCancellations.
-     */
-    data: SubscriptionCancellationCreateManyInput | SubscriptionCancellationCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * SubscriptionCancellation update
-   */
-  export type SubscriptionCancellationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * The data needed to update a SubscriptionCancellation.
-     */
-    data: XOR<SubscriptionCancellationUpdateInput, SubscriptionCancellationUncheckedUpdateInput>
-    /**
-     * Choose, which SubscriptionCancellation to update.
-     */
-    where: SubscriptionCancellationWhereUniqueInput
-  }
-
-  /**
-   * SubscriptionCancellation updateMany
-   */
-  export type SubscriptionCancellationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update SubscriptionCancellations.
-     */
-    data: XOR<SubscriptionCancellationUpdateManyMutationInput, SubscriptionCancellationUncheckedUpdateManyInput>
-    /**
-     * Filter which SubscriptionCancellations to update
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * Limit how many SubscriptionCancellations to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * SubscriptionCancellation updateManyAndReturn
-   */
-  export type SubscriptionCancellationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * The data used to update SubscriptionCancellations.
-     */
-    data: XOR<SubscriptionCancellationUpdateManyMutationInput, SubscriptionCancellationUncheckedUpdateManyInput>
-    /**
-     * Filter which SubscriptionCancellations to update
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * Limit how many SubscriptionCancellations to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * SubscriptionCancellation upsert
-   */
-  export type SubscriptionCancellationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * The filter to search for the SubscriptionCancellation to update in case it exists.
-     */
-    where: SubscriptionCancellationWhereUniqueInput
-    /**
-     * In case the SubscriptionCancellation found by the `where` argument doesn't exist, create a new SubscriptionCancellation with this data.
-     */
-    create: XOR<SubscriptionCancellationCreateInput, SubscriptionCancellationUncheckedCreateInput>
-    /**
-     * In case the SubscriptionCancellation was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<SubscriptionCancellationUpdateInput, SubscriptionCancellationUncheckedUpdateInput>
-  }
-
-  /**
-   * SubscriptionCancellation delete
-   */
-  export type SubscriptionCancellationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-    /**
-     * Filter which SubscriptionCancellation to delete.
-     */
-    where: SubscriptionCancellationWhereUniqueInput
-  }
-
-  /**
-   * SubscriptionCancellation deleteMany
-   */
-  export type SubscriptionCancellationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which SubscriptionCancellations to delete
-     */
-    where?: SubscriptionCancellationWhereInput
-    /**
-     * Limit how many SubscriptionCancellations to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * SubscriptionCancellation without action
-   */
-  export type SubscriptionCancellationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the SubscriptionCancellation
-     */
-    select?: SubscriptionCancellationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the SubscriptionCancellation
-     */
-    omit?: SubscriptionCancellationOmit<ExtArgs> | null
-  }
-
-
-  /**
    * Model PagarMeOrder
    */
 
@@ -19096,3114 +16413,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PagarMeOrderInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model BioSimulationQueue
-   */
-
-  export type AggregateBioSimulationQueue = {
-    _count: BioSimulationQueueCountAggregateOutputType | null
-    _min: BioSimulationQueueMinAggregateOutputType | null
-    _max: BioSimulationQueueMaxAggregateOutputType | null
-  }
-
-  export type BioSimulationQueueMinAggregateOutputType = {
-    id: string | null
-    queueName: string | null
-    userId: string | null
-    status: $Enums.BioQueueStatus | null
-    createdAt: Date | null
-  }
-
-  export type BioSimulationQueueMaxAggregateOutputType = {
-    id: string | null
-    queueName: string | null
-    userId: string | null
-    status: $Enums.BioQueueStatus | null
-    createdAt: Date | null
-  }
-
-  export type BioSimulationQueueCountAggregateOutputType = {
-    id: number
-    queueName: number
-    userId: number
-    status: number
-    payload: number
-    result: number
-    createdAt: number
-    _all: number
-  }
-
-
-  export type BioSimulationQueueMinAggregateInputType = {
-    id?: true
-    queueName?: true
-    userId?: true
-    status?: true
-    createdAt?: true
-  }
-
-  export type BioSimulationQueueMaxAggregateInputType = {
-    id?: true
-    queueName?: true
-    userId?: true
-    status?: true
-    createdAt?: true
-  }
-
-  export type BioSimulationQueueCountAggregateInputType = {
-    id?: true
-    queueName?: true
-    userId?: true
-    status?: true
-    payload?: true
-    result?: true
-    createdAt?: true
-    _all?: true
-  }
-
-  export type BioSimulationQueueAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSimulationQueue to aggregate.
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationQueues to fetch.
-     */
-    orderBy?: BioSimulationQueueOrderByWithRelationInput | BioSimulationQueueOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: BioSimulationQueueWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationQueues from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationQueues.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned BioSimulationQueues
-    **/
-    _count?: true | BioSimulationQueueCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: BioSimulationQueueMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: BioSimulationQueueMaxAggregateInputType
-  }
-
-  export type GetBioSimulationQueueAggregateType<T extends BioSimulationQueueAggregateArgs> = {
-        [P in keyof T & keyof AggregateBioSimulationQueue]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateBioSimulationQueue[P]>
-      : GetScalarType<T[P], AggregateBioSimulationQueue[P]>
-  }
-
-
-
-
-  export type BioSimulationQueueGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioSimulationQueueWhereInput
-    orderBy?: BioSimulationQueueOrderByWithAggregationInput | BioSimulationQueueOrderByWithAggregationInput[]
-    by: BioSimulationQueueScalarFieldEnum[] | BioSimulationQueueScalarFieldEnum
-    having?: BioSimulationQueueScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: BioSimulationQueueCountAggregateInputType | true
-    _min?: BioSimulationQueueMinAggregateInputType
-    _max?: BioSimulationQueueMaxAggregateInputType
-  }
-
-  export type BioSimulationQueueGroupByOutputType = {
-    id: string
-    queueName: string
-    userId: string
-    status: $Enums.BioQueueStatus
-    payload: JsonValue
-    result: JsonValue | null
-    createdAt: Date
-    _count: BioSimulationQueueCountAggregateOutputType | null
-    _min: BioSimulationQueueMinAggregateOutputType | null
-    _max: BioSimulationQueueMaxAggregateOutputType | null
-  }
-
-  type GetBioSimulationQueueGroupByPayload<T extends BioSimulationQueueGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<BioSimulationQueueGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof BioSimulationQueueGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], BioSimulationQueueGroupByOutputType[P]>
-            : GetScalarType<T[P], BioSimulationQueueGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type BioSimulationQueueSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    queueName?: boolean
-    userId?: boolean
-    status?: boolean
-    payload?: boolean
-    result?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationQueue"]>
-
-  export type BioSimulationQueueSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    queueName?: boolean
-    userId?: boolean
-    status?: boolean
-    payload?: boolean
-    result?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationQueue"]>
-
-  export type BioSimulationQueueSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    queueName?: boolean
-    userId?: boolean
-    status?: boolean
-    payload?: boolean
-    result?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationQueue"]>
-
-  export type BioSimulationQueueSelectScalar = {
-    id?: boolean
-    queueName?: boolean
-    userId?: boolean
-    status?: boolean
-    payload?: boolean
-    result?: boolean
-    createdAt?: boolean
-  }
-
-  export type BioSimulationQueueOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "queueName" | "userId" | "status" | "payload" | "result" | "createdAt", ExtArgs["result"]["bioSimulationQueue"]>
-  export type BioSimulationQueueInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSimulationQueueIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSimulationQueueIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $BioSimulationQueuePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "BioSimulationQueue"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      queueName: string
-      userId: string
-      status: $Enums.BioQueueStatus
-      payload: Prisma.JsonValue
-      result: Prisma.JsonValue | null
-      createdAt: Date
-    }, ExtArgs["result"]["bioSimulationQueue"]>
-    composites: {}
-  }
-
-  type BioSimulationQueueGetPayload<S extends boolean | null | undefined | BioSimulationQueueDefaultArgs> = $Result.GetResult<Prisma.$BioSimulationQueuePayload, S>
-
-  type BioSimulationQueueCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<BioSimulationQueueFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: BioSimulationQueueCountAggregateInputType | true
-    }
-
-  export interface BioSimulationQueueDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BioSimulationQueue'], meta: { name: 'BioSimulationQueue' } }
-    /**
-     * Find zero or one BioSimulationQueue that matches the filter.
-     * @param {BioSimulationQueueFindUniqueArgs} args - Arguments to find a BioSimulationQueue
-     * @example
-     * // Get one BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends BioSimulationQueueFindUniqueArgs>(args: SelectSubset<T, BioSimulationQueueFindUniqueArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one BioSimulationQueue that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {BioSimulationQueueFindUniqueOrThrowArgs} args - Arguments to find a BioSimulationQueue
-     * @example
-     * // Get one BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends BioSimulationQueueFindUniqueOrThrowArgs>(args: SelectSubset<T, BioSimulationQueueFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSimulationQueue that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueFindFirstArgs} args - Arguments to find a BioSimulationQueue
-     * @example
-     * // Get one BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends BioSimulationQueueFindFirstArgs>(args?: SelectSubset<T, BioSimulationQueueFindFirstArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSimulationQueue that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueFindFirstOrThrowArgs} args - Arguments to find a BioSimulationQueue
-     * @example
-     * // Get one BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends BioSimulationQueueFindFirstOrThrowArgs>(args?: SelectSubset<T, BioSimulationQueueFindFirstOrThrowArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more BioSimulationQueues that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all BioSimulationQueues
-     * const bioSimulationQueues = await prisma.bioSimulationQueue.findMany()
-     * 
-     * // Get first 10 BioSimulationQueues
-     * const bioSimulationQueues = await prisma.bioSimulationQueue.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const bioSimulationQueueWithIdOnly = await prisma.bioSimulationQueue.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends BioSimulationQueueFindManyArgs>(args?: SelectSubset<T, BioSimulationQueueFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a BioSimulationQueue.
-     * @param {BioSimulationQueueCreateArgs} args - Arguments to create a BioSimulationQueue.
-     * @example
-     * // Create one BioSimulationQueue
-     * const BioSimulationQueue = await prisma.bioSimulationQueue.create({
-     *   data: {
-     *     // ... data to create a BioSimulationQueue
-     *   }
-     * })
-     * 
-     */
-    create<T extends BioSimulationQueueCreateArgs>(args: SelectSubset<T, BioSimulationQueueCreateArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many BioSimulationQueues.
-     * @param {BioSimulationQueueCreateManyArgs} args - Arguments to create many BioSimulationQueues.
-     * @example
-     * // Create many BioSimulationQueues
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends BioSimulationQueueCreateManyArgs>(args?: SelectSubset<T, BioSimulationQueueCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many BioSimulationQueues and returns the data saved in the database.
-     * @param {BioSimulationQueueCreateManyAndReturnArgs} args - Arguments to create many BioSimulationQueues.
-     * @example
-     * // Create many BioSimulationQueues
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many BioSimulationQueues and only return the `id`
-     * const bioSimulationQueueWithIdOnly = await prisma.bioSimulationQueue.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends BioSimulationQueueCreateManyAndReturnArgs>(args?: SelectSubset<T, BioSimulationQueueCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a BioSimulationQueue.
-     * @param {BioSimulationQueueDeleteArgs} args - Arguments to delete one BioSimulationQueue.
-     * @example
-     * // Delete one BioSimulationQueue
-     * const BioSimulationQueue = await prisma.bioSimulationQueue.delete({
-     *   where: {
-     *     // ... filter to delete one BioSimulationQueue
-     *   }
-     * })
-     * 
-     */
-    delete<T extends BioSimulationQueueDeleteArgs>(args: SelectSubset<T, BioSimulationQueueDeleteArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one BioSimulationQueue.
-     * @param {BioSimulationQueueUpdateArgs} args - Arguments to update one BioSimulationQueue.
-     * @example
-     * // Update one BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends BioSimulationQueueUpdateArgs>(args: SelectSubset<T, BioSimulationQueueUpdateArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more BioSimulationQueues.
-     * @param {BioSimulationQueueDeleteManyArgs} args - Arguments to filter BioSimulationQueues to delete.
-     * @example
-     * // Delete a few BioSimulationQueues
-     * const { count } = await prisma.bioSimulationQueue.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends BioSimulationQueueDeleteManyArgs>(args?: SelectSubset<T, BioSimulationQueueDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSimulationQueues.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many BioSimulationQueues
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends BioSimulationQueueUpdateManyArgs>(args: SelectSubset<T, BioSimulationQueueUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSimulationQueues and returns the data updated in the database.
-     * @param {BioSimulationQueueUpdateManyAndReturnArgs} args - Arguments to update many BioSimulationQueues.
-     * @example
-     * // Update many BioSimulationQueues
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more BioSimulationQueues and only return the `id`
-     * const bioSimulationQueueWithIdOnly = await prisma.bioSimulationQueue.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends BioSimulationQueueUpdateManyAndReturnArgs>(args: SelectSubset<T, BioSimulationQueueUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one BioSimulationQueue.
-     * @param {BioSimulationQueueUpsertArgs} args - Arguments to update or create a BioSimulationQueue.
-     * @example
-     * // Update or create a BioSimulationQueue
-     * const bioSimulationQueue = await prisma.bioSimulationQueue.upsert({
-     *   create: {
-     *     // ... data to create a BioSimulationQueue
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the BioSimulationQueue we want to update
-     *   }
-     * })
-     */
-    upsert<T extends BioSimulationQueueUpsertArgs>(args: SelectSubset<T, BioSimulationQueueUpsertArgs<ExtArgs>>): Prisma__BioSimulationQueueClient<$Result.GetResult<Prisma.$BioSimulationQueuePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of BioSimulationQueues.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueCountArgs} args - Arguments to filter BioSimulationQueues to count.
-     * @example
-     * // Count the number of BioSimulationQueues
-     * const count = await prisma.bioSimulationQueue.count({
-     *   where: {
-     *     // ... the filter for the BioSimulationQueues we want to count
-     *   }
-     * })
-    **/
-    count<T extends BioSimulationQueueCountArgs>(
-      args?: Subset<T, BioSimulationQueueCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], BioSimulationQueueCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a BioSimulationQueue.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends BioSimulationQueueAggregateArgs>(args: Subset<T, BioSimulationQueueAggregateArgs>): Prisma.PrismaPromise<GetBioSimulationQueueAggregateType<T>>
-
-    /**
-     * Group by BioSimulationQueue.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationQueueGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends BioSimulationQueueGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: BioSimulationQueueGroupByArgs['orderBy'] }
-        : { orderBy?: BioSimulationQueueGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, BioSimulationQueueGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBioSimulationQueueGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the BioSimulationQueue model
-   */
-  readonly fields: BioSimulationQueueFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for BioSimulationQueue.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__BioSimulationQueueClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the BioSimulationQueue model
-   */
-  interface BioSimulationQueueFieldRefs {
-    readonly id: FieldRef<"BioSimulationQueue", 'String'>
-    readonly queueName: FieldRef<"BioSimulationQueue", 'String'>
-    readonly userId: FieldRef<"BioSimulationQueue", 'String'>
-    readonly status: FieldRef<"BioSimulationQueue", 'BioQueueStatus'>
-    readonly payload: FieldRef<"BioSimulationQueue", 'Json'>
-    readonly result: FieldRef<"BioSimulationQueue", 'Json'>
-    readonly createdAt: FieldRef<"BioSimulationQueue", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * BioSimulationQueue findUnique
-   */
-  export type BioSimulationQueueFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationQueue to fetch.
-     */
-    where: BioSimulationQueueWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationQueue findUniqueOrThrow
-   */
-  export type BioSimulationQueueFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationQueue to fetch.
-     */
-    where: BioSimulationQueueWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationQueue findFirst
-   */
-  export type BioSimulationQueueFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationQueue to fetch.
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationQueues to fetch.
-     */
-    orderBy?: BioSimulationQueueOrderByWithRelationInput | BioSimulationQueueOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSimulationQueues.
-     */
-    cursor?: BioSimulationQueueWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationQueues from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationQueues.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSimulationQueues.
-     */
-    distinct?: BioSimulationQueueScalarFieldEnum | BioSimulationQueueScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationQueue findFirstOrThrow
-   */
-  export type BioSimulationQueueFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationQueue to fetch.
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationQueues to fetch.
-     */
-    orderBy?: BioSimulationQueueOrderByWithRelationInput | BioSimulationQueueOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSimulationQueues.
-     */
-    cursor?: BioSimulationQueueWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationQueues from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationQueues.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSimulationQueues.
-     */
-    distinct?: BioSimulationQueueScalarFieldEnum | BioSimulationQueueScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationQueue findMany
-   */
-  export type BioSimulationQueueFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationQueues to fetch.
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationQueues to fetch.
-     */
-    orderBy?: BioSimulationQueueOrderByWithRelationInput | BioSimulationQueueOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing BioSimulationQueues.
-     */
-    cursor?: BioSimulationQueueWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationQueues from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationQueues.
-     */
-    skip?: number
-    distinct?: BioSimulationQueueScalarFieldEnum | BioSimulationQueueScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationQueue create
-   */
-  export type BioSimulationQueueCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * The data needed to create a BioSimulationQueue.
-     */
-    data: XOR<BioSimulationQueueCreateInput, BioSimulationQueueUncheckedCreateInput>
-  }
-
-  /**
-   * BioSimulationQueue createMany
-   */
-  export type BioSimulationQueueCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many BioSimulationQueues.
-     */
-    data: BioSimulationQueueCreateManyInput | BioSimulationQueueCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * BioSimulationQueue createManyAndReturn
-   */
-  export type BioSimulationQueueCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * The data used to create many BioSimulationQueues.
-     */
-    data: BioSimulationQueueCreateManyInput | BioSimulationQueueCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSimulationQueue update
-   */
-  export type BioSimulationQueueUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * The data needed to update a BioSimulationQueue.
-     */
-    data: XOR<BioSimulationQueueUpdateInput, BioSimulationQueueUncheckedUpdateInput>
-    /**
-     * Choose, which BioSimulationQueue to update.
-     */
-    where: BioSimulationQueueWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationQueue updateMany
-   */
-  export type BioSimulationQueueUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update BioSimulationQueues.
-     */
-    data: XOR<BioSimulationQueueUpdateManyMutationInput, BioSimulationQueueUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSimulationQueues to update
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * Limit how many BioSimulationQueues to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSimulationQueue updateManyAndReturn
-   */
-  export type BioSimulationQueueUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * The data used to update BioSimulationQueues.
-     */
-    data: XOR<BioSimulationQueueUpdateManyMutationInput, BioSimulationQueueUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSimulationQueues to update
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * Limit how many BioSimulationQueues to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSimulationQueue upsert
-   */
-  export type BioSimulationQueueUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * The filter to search for the BioSimulationQueue to update in case it exists.
-     */
-    where: BioSimulationQueueWhereUniqueInput
-    /**
-     * In case the BioSimulationQueue found by the `where` argument doesn't exist, create a new BioSimulationQueue with this data.
-     */
-    create: XOR<BioSimulationQueueCreateInput, BioSimulationQueueUncheckedCreateInput>
-    /**
-     * In case the BioSimulationQueue was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<BioSimulationQueueUpdateInput, BioSimulationQueueUncheckedUpdateInput>
-  }
-
-  /**
-   * BioSimulationQueue delete
-   */
-  export type BioSimulationQueueDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-    /**
-     * Filter which BioSimulationQueue to delete.
-     */
-    where: BioSimulationQueueWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationQueue deleteMany
-   */
-  export type BioSimulationQueueDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSimulationQueues to delete
-     */
-    where?: BioSimulationQueueWhereInput
-    /**
-     * Limit how many BioSimulationQueues to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSimulationQueue without action
-   */
-  export type BioSimulationQueueDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationQueue
-     */
-    select?: BioSimulationQueueSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationQueue
-     */
-    omit?: BioSimulationQueueOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationQueueInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model BioSimulationState
-   */
-
-  export type AggregateBioSimulationState = {
-    _count: BioSimulationStateCountAggregateOutputType | null
-    _min: BioSimulationStateMinAggregateOutputType | null
-    _max: BioSimulationStateMaxAggregateOutputType | null
-  }
-
-  export type BioSimulationStateMinAggregateOutputType = {
-    userId: string | null
-    updatedAt: Date | null
-  }
-
-  export type BioSimulationStateMaxAggregateOutputType = {
-    userId: string | null
-    updatedAt: Date | null
-  }
-
-  export type BioSimulationStateCountAggregateOutputType = {
-    userId: number
-    state: number
-    mapDisplayByYear: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type BioSimulationStateMinAggregateInputType = {
-    userId?: true
-    updatedAt?: true
-  }
-
-  export type BioSimulationStateMaxAggregateInputType = {
-    userId?: true
-    updatedAt?: true
-  }
-
-  export type BioSimulationStateCountAggregateInputType = {
-    userId?: true
-    state?: true
-    mapDisplayByYear?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type BioSimulationStateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSimulationState to aggregate.
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationStates to fetch.
-     */
-    orderBy?: BioSimulationStateOrderByWithRelationInput | BioSimulationStateOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: BioSimulationStateWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationStates from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationStates.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned BioSimulationStates
-    **/
-    _count?: true | BioSimulationStateCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: BioSimulationStateMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: BioSimulationStateMaxAggregateInputType
-  }
-
-  export type GetBioSimulationStateAggregateType<T extends BioSimulationStateAggregateArgs> = {
-        [P in keyof T & keyof AggregateBioSimulationState]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateBioSimulationState[P]>
-      : GetScalarType<T[P], AggregateBioSimulationState[P]>
-  }
-
-
-
-
-  export type BioSimulationStateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioSimulationStateWhereInput
-    orderBy?: BioSimulationStateOrderByWithAggregationInput | BioSimulationStateOrderByWithAggregationInput[]
-    by: BioSimulationStateScalarFieldEnum[] | BioSimulationStateScalarFieldEnum
-    having?: BioSimulationStateScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: BioSimulationStateCountAggregateInputType | true
-    _min?: BioSimulationStateMinAggregateInputType
-    _max?: BioSimulationStateMaxAggregateInputType
-  }
-
-  export type BioSimulationStateGroupByOutputType = {
-    userId: string
-    state: JsonValue
-    mapDisplayByYear: JsonValue | null
-    updatedAt: Date
-    _count: BioSimulationStateCountAggregateOutputType | null
-    _min: BioSimulationStateMinAggregateOutputType | null
-    _max: BioSimulationStateMaxAggregateOutputType | null
-  }
-
-  type GetBioSimulationStateGroupByPayload<T extends BioSimulationStateGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<BioSimulationStateGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof BioSimulationStateGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], BioSimulationStateGroupByOutputType[P]>
-            : GetScalarType<T[P], BioSimulationStateGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type BioSimulationStateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
-    state?: boolean
-    mapDisplayByYear?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationState"]>
-
-  export type BioSimulationStateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
-    state?: boolean
-    mapDisplayByYear?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationState"]>
-
-  export type BioSimulationStateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
-    state?: boolean
-    mapDisplayByYear?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["bioSimulationState"]>
-
-  export type BioSimulationStateSelectScalar = {
-    userId?: boolean
-    state?: boolean
-    mapDisplayByYear?: boolean
-    updatedAt?: boolean
-  }
-
-  export type BioSimulationStateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "state" | "mapDisplayByYear" | "updatedAt", ExtArgs["result"]["bioSimulationState"]>
-  export type BioSimulationStateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSimulationStateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type BioSimulationStateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $BioSimulationStatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "BioSimulationState"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      userId: string
-      state: Prisma.JsonValue
-      mapDisplayByYear: Prisma.JsonValue | null
-      updatedAt: Date
-    }, ExtArgs["result"]["bioSimulationState"]>
-    composites: {}
-  }
-
-  type BioSimulationStateGetPayload<S extends boolean | null | undefined | BioSimulationStateDefaultArgs> = $Result.GetResult<Prisma.$BioSimulationStatePayload, S>
-
-  type BioSimulationStateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<BioSimulationStateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: BioSimulationStateCountAggregateInputType | true
-    }
-
-  export interface BioSimulationStateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BioSimulationState'], meta: { name: 'BioSimulationState' } }
-    /**
-     * Find zero or one BioSimulationState that matches the filter.
-     * @param {BioSimulationStateFindUniqueArgs} args - Arguments to find a BioSimulationState
-     * @example
-     * // Get one BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends BioSimulationStateFindUniqueArgs>(args: SelectSubset<T, BioSimulationStateFindUniqueArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one BioSimulationState that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {BioSimulationStateFindUniqueOrThrowArgs} args - Arguments to find a BioSimulationState
-     * @example
-     * // Get one BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends BioSimulationStateFindUniqueOrThrowArgs>(args: SelectSubset<T, BioSimulationStateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSimulationState that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateFindFirstArgs} args - Arguments to find a BioSimulationState
-     * @example
-     * // Get one BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends BioSimulationStateFindFirstArgs>(args?: SelectSubset<T, BioSimulationStateFindFirstArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioSimulationState that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateFindFirstOrThrowArgs} args - Arguments to find a BioSimulationState
-     * @example
-     * // Get one BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends BioSimulationStateFindFirstOrThrowArgs>(args?: SelectSubset<T, BioSimulationStateFindFirstOrThrowArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more BioSimulationStates that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all BioSimulationStates
-     * const bioSimulationStates = await prisma.bioSimulationState.findMany()
-     * 
-     * // Get first 10 BioSimulationStates
-     * const bioSimulationStates = await prisma.bioSimulationState.findMany({ take: 10 })
-     * 
-     * // Only select the `userId`
-     * const bioSimulationStateWithUserIdOnly = await prisma.bioSimulationState.findMany({ select: { userId: true } })
-     * 
-     */
-    findMany<T extends BioSimulationStateFindManyArgs>(args?: SelectSubset<T, BioSimulationStateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a BioSimulationState.
-     * @param {BioSimulationStateCreateArgs} args - Arguments to create a BioSimulationState.
-     * @example
-     * // Create one BioSimulationState
-     * const BioSimulationState = await prisma.bioSimulationState.create({
-     *   data: {
-     *     // ... data to create a BioSimulationState
-     *   }
-     * })
-     * 
-     */
-    create<T extends BioSimulationStateCreateArgs>(args: SelectSubset<T, BioSimulationStateCreateArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many BioSimulationStates.
-     * @param {BioSimulationStateCreateManyArgs} args - Arguments to create many BioSimulationStates.
-     * @example
-     * // Create many BioSimulationStates
-     * const bioSimulationState = await prisma.bioSimulationState.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends BioSimulationStateCreateManyArgs>(args?: SelectSubset<T, BioSimulationStateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many BioSimulationStates and returns the data saved in the database.
-     * @param {BioSimulationStateCreateManyAndReturnArgs} args - Arguments to create many BioSimulationStates.
-     * @example
-     * // Create many BioSimulationStates
-     * const bioSimulationState = await prisma.bioSimulationState.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many BioSimulationStates and only return the `userId`
-     * const bioSimulationStateWithUserIdOnly = await prisma.bioSimulationState.createManyAndReturn({
-     *   select: { userId: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends BioSimulationStateCreateManyAndReturnArgs>(args?: SelectSubset<T, BioSimulationStateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a BioSimulationState.
-     * @param {BioSimulationStateDeleteArgs} args - Arguments to delete one BioSimulationState.
-     * @example
-     * // Delete one BioSimulationState
-     * const BioSimulationState = await prisma.bioSimulationState.delete({
-     *   where: {
-     *     // ... filter to delete one BioSimulationState
-     *   }
-     * })
-     * 
-     */
-    delete<T extends BioSimulationStateDeleteArgs>(args: SelectSubset<T, BioSimulationStateDeleteArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one BioSimulationState.
-     * @param {BioSimulationStateUpdateArgs} args - Arguments to update one BioSimulationState.
-     * @example
-     * // Update one BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends BioSimulationStateUpdateArgs>(args: SelectSubset<T, BioSimulationStateUpdateArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more BioSimulationStates.
-     * @param {BioSimulationStateDeleteManyArgs} args - Arguments to filter BioSimulationStates to delete.
-     * @example
-     * // Delete a few BioSimulationStates
-     * const { count } = await prisma.bioSimulationState.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends BioSimulationStateDeleteManyArgs>(args?: SelectSubset<T, BioSimulationStateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSimulationStates.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many BioSimulationStates
-     * const bioSimulationState = await prisma.bioSimulationState.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends BioSimulationStateUpdateManyArgs>(args: SelectSubset<T, BioSimulationStateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioSimulationStates and returns the data updated in the database.
-     * @param {BioSimulationStateUpdateManyAndReturnArgs} args - Arguments to update many BioSimulationStates.
-     * @example
-     * // Update many BioSimulationStates
-     * const bioSimulationState = await prisma.bioSimulationState.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more BioSimulationStates and only return the `userId`
-     * const bioSimulationStateWithUserIdOnly = await prisma.bioSimulationState.updateManyAndReturn({
-     *   select: { userId: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends BioSimulationStateUpdateManyAndReturnArgs>(args: SelectSubset<T, BioSimulationStateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one BioSimulationState.
-     * @param {BioSimulationStateUpsertArgs} args - Arguments to update or create a BioSimulationState.
-     * @example
-     * // Update or create a BioSimulationState
-     * const bioSimulationState = await prisma.bioSimulationState.upsert({
-     *   create: {
-     *     // ... data to create a BioSimulationState
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the BioSimulationState we want to update
-     *   }
-     * })
-     */
-    upsert<T extends BioSimulationStateUpsertArgs>(args: SelectSubset<T, BioSimulationStateUpsertArgs<ExtArgs>>): Prisma__BioSimulationStateClient<$Result.GetResult<Prisma.$BioSimulationStatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of BioSimulationStates.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateCountArgs} args - Arguments to filter BioSimulationStates to count.
-     * @example
-     * // Count the number of BioSimulationStates
-     * const count = await prisma.bioSimulationState.count({
-     *   where: {
-     *     // ... the filter for the BioSimulationStates we want to count
-     *   }
-     * })
-    **/
-    count<T extends BioSimulationStateCountArgs>(
-      args?: Subset<T, BioSimulationStateCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], BioSimulationStateCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a BioSimulationState.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends BioSimulationStateAggregateArgs>(args: Subset<T, BioSimulationStateAggregateArgs>): Prisma.PrismaPromise<GetBioSimulationStateAggregateType<T>>
-
-    /**
-     * Group by BioSimulationState.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioSimulationStateGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends BioSimulationStateGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: BioSimulationStateGroupByArgs['orderBy'] }
-        : { orderBy?: BioSimulationStateGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, BioSimulationStateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBioSimulationStateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the BioSimulationState model
-   */
-  readonly fields: BioSimulationStateFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for BioSimulationState.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__BioSimulationStateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the BioSimulationState model
-   */
-  interface BioSimulationStateFieldRefs {
-    readonly userId: FieldRef<"BioSimulationState", 'String'>
-    readonly state: FieldRef<"BioSimulationState", 'Json'>
-    readonly mapDisplayByYear: FieldRef<"BioSimulationState", 'Json'>
-    readonly updatedAt: FieldRef<"BioSimulationState", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * BioSimulationState findUnique
-   */
-  export type BioSimulationStateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationState to fetch.
-     */
-    where: BioSimulationStateWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationState findUniqueOrThrow
-   */
-  export type BioSimulationStateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationState to fetch.
-     */
-    where: BioSimulationStateWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationState findFirst
-   */
-  export type BioSimulationStateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationState to fetch.
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationStates to fetch.
-     */
-    orderBy?: BioSimulationStateOrderByWithRelationInput | BioSimulationStateOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSimulationStates.
-     */
-    cursor?: BioSimulationStateWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationStates from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationStates.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSimulationStates.
-     */
-    distinct?: BioSimulationStateScalarFieldEnum | BioSimulationStateScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationState findFirstOrThrow
-   */
-  export type BioSimulationStateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationState to fetch.
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationStates to fetch.
-     */
-    orderBy?: BioSimulationStateOrderByWithRelationInput | BioSimulationStateOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioSimulationStates.
-     */
-    cursor?: BioSimulationStateWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationStates from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationStates.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioSimulationStates.
-     */
-    distinct?: BioSimulationStateScalarFieldEnum | BioSimulationStateScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationState findMany
-   */
-  export type BioSimulationStateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter, which BioSimulationStates to fetch.
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioSimulationStates to fetch.
-     */
-    orderBy?: BioSimulationStateOrderByWithRelationInput | BioSimulationStateOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing BioSimulationStates.
-     */
-    cursor?: BioSimulationStateWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioSimulationStates from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioSimulationStates.
-     */
-    skip?: number
-    distinct?: BioSimulationStateScalarFieldEnum | BioSimulationStateScalarFieldEnum[]
-  }
-
-  /**
-   * BioSimulationState create
-   */
-  export type BioSimulationStateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * The data needed to create a BioSimulationState.
-     */
-    data: XOR<BioSimulationStateCreateInput, BioSimulationStateUncheckedCreateInput>
-  }
-
-  /**
-   * BioSimulationState createMany
-   */
-  export type BioSimulationStateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many BioSimulationStates.
-     */
-    data: BioSimulationStateCreateManyInput | BioSimulationStateCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * BioSimulationState createManyAndReturn
-   */
-  export type BioSimulationStateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * The data used to create many BioSimulationStates.
-     */
-    data: BioSimulationStateCreateManyInput | BioSimulationStateCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSimulationState update
-   */
-  export type BioSimulationStateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * The data needed to update a BioSimulationState.
-     */
-    data: XOR<BioSimulationStateUpdateInput, BioSimulationStateUncheckedUpdateInput>
-    /**
-     * Choose, which BioSimulationState to update.
-     */
-    where: BioSimulationStateWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationState updateMany
-   */
-  export type BioSimulationStateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update BioSimulationStates.
-     */
-    data: XOR<BioSimulationStateUpdateManyMutationInput, BioSimulationStateUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSimulationStates to update
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * Limit how many BioSimulationStates to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSimulationState updateManyAndReturn
-   */
-  export type BioSimulationStateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * The data used to update BioSimulationStates.
-     */
-    data: XOR<BioSimulationStateUpdateManyMutationInput, BioSimulationStateUncheckedUpdateManyInput>
-    /**
-     * Filter which BioSimulationStates to update
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * Limit how many BioSimulationStates to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * BioSimulationState upsert
-   */
-  export type BioSimulationStateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * The filter to search for the BioSimulationState to update in case it exists.
-     */
-    where: BioSimulationStateWhereUniqueInput
-    /**
-     * In case the BioSimulationState found by the `where` argument doesn't exist, create a new BioSimulationState with this data.
-     */
-    create: XOR<BioSimulationStateCreateInput, BioSimulationStateUncheckedCreateInput>
-    /**
-     * In case the BioSimulationState was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<BioSimulationStateUpdateInput, BioSimulationStateUncheckedUpdateInput>
-  }
-
-  /**
-   * BioSimulationState delete
-   */
-  export type BioSimulationStateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-    /**
-     * Filter which BioSimulationState to delete.
-     */
-    where: BioSimulationStateWhereUniqueInput
-  }
-
-  /**
-   * BioSimulationState deleteMany
-   */
-  export type BioSimulationStateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioSimulationStates to delete
-     */
-    where?: BioSimulationStateWhereInput
-    /**
-     * Limit how many BioSimulationStates to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioSimulationState without action
-   */
-  export type BioSimulationStateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioSimulationState
-     */
-    select?: BioSimulationStateSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioSimulationState
-     */
-    omit?: BioSimulationStateOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: BioSimulationStateInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model BioAppConfig
-   */
-
-  export type AggregateBioAppConfig = {
-    _count: BioAppConfigCountAggregateOutputType | null
-    _min: BioAppConfigMinAggregateOutputType | null
-    _max: BioAppConfigMaxAggregateOutputType | null
-  }
-
-  export type BioAppConfigMinAggregateOutputType = {
-    key: string | null
-    value: string | null
-    description: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type BioAppConfigMaxAggregateOutputType = {
-    key: string | null
-    value: string | null
-    description: string | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type BioAppConfigCountAggregateOutputType = {
-    key: number
-    value: number
-    description: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type BioAppConfigMinAggregateInputType = {
-    key?: true
-    value?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type BioAppConfigMaxAggregateInputType = {
-    key?: true
-    value?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type BioAppConfigCountAggregateInputType = {
-    key?: true
-    value?: true
-    description?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type BioAppConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioAppConfig to aggregate.
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioAppConfigs to fetch.
-     */
-    orderBy?: BioAppConfigOrderByWithRelationInput | BioAppConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: BioAppConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioAppConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioAppConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned BioAppConfigs
-    **/
-    _count?: true | BioAppConfigCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: BioAppConfigMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: BioAppConfigMaxAggregateInputType
-  }
-
-  export type GetBioAppConfigAggregateType<T extends BioAppConfigAggregateArgs> = {
-        [P in keyof T & keyof AggregateBioAppConfig]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateBioAppConfig[P]>
-      : GetScalarType<T[P], AggregateBioAppConfig[P]>
-  }
-
-
-
-
-  export type BioAppConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: BioAppConfigWhereInput
-    orderBy?: BioAppConfigOrderByWithAggregationInput | BioAppConfigOrderByWithAggregationInput[]
-    by: BioAppConfigScalarFieldEnum[] | BioAppConfigScalarFieldEnum
-    having?: BioAppConfigScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: BioAppConfigCountAggregateInputType | true
-    _min?: BioAppConfigMinAggregateInputType
-    _max?: BioAppConfigMaxAggregateInputType
-  }
-
-  export type BioAppConfigGroupByOutputType = {
-    key: string
-    value: string
-    description: string | null
-    createdAt: Date
-    updatedAt: Date
-    _count: BioAppConfigCountAggregateOutputType | null
-    _min: BioAppConfigMinAggregateOutputType | null
-    _max: BioAppConfigMaxAggregateOutputType | null
-  }
-
-  type GetBioAppConfigGroupByPayload<T extends BioAppConfigGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<BioAppConfigGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof BioAppConfigGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], BioAppConfigGroupByOutputType[P]>
-            : GetScalarType<T[P], BioAppConfigGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type BioAppConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    key?: boolean
-    value?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["bioAppConfig"]>
-
-  export type BioAppConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    key?: boolean
-    value?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["bioAppConfig"]>
-
-  export type BioAppConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    key?: boolean
-    value?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["bioAppConfig"]>
-
-  export type BioAppConfigSelectScalar = {
-    key?: boolean
-    value?: boolean
-    description?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type BioAppConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "value" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["bioAppConfig"]>
-
-  export type $BioAppConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "BioAppConfig"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      key: string
-      value: string
-      description: string | null
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["bioAppConfig"]>
-    composites: {}
-  }
-
-  type BioAppConfigGetPayload<S extends boolean | null | undefined | BioAppConfigDefaultArgs> = $Result.GetResult<Prisma.$BioAppConfigPayload, S>
-
-  type BioAppConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<BioAppConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: BioAppConfigCountAggregateInputType | true
-    }
-
-  export interface BioAppConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BioAppConfig'], meta: { name: 'BioAppConfig' } }
-    /**
-     * Find zero or one BioAppConfig that matches the filter.
-     * @param {BioAppConfigFindUniqueArgs} args - Arguments to find a BioAppConfig
-     * @example
-     * // Get one BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends BioAppConfigFindUniqueArgs>(args: SelectSubset<T, BioAppConfigFindUniqueArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one BioAppConfig that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {BioAppConfigFindUniqueOrThrowArgs} args - Arguments to find a BioAppConfig
-     * @example
-     * // Get one BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends BioAppConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, BioAppConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioAppConfig that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigFindFirstArgs} args - Arguments to find a BioAppConfig
-     * @example
-     * // Get one BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends BioAppConfigFindFirstArgs>(args?: SelectSubset<T, BioAppConfigFindFirstArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first BioAppConfig that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigFindFirstOrThrowArgs} args - Arguments to find a BioAppConfig
-     * @example
-     * // Get one BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends BioAppConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, BioAppConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more BioAppConfigs that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all BioAppConfigs
-     * const bioAppConfigs = await prisma.bioAppConfig.findMany()
-     * 
-     * // Get first 10 BioAppConfigs
-     * const bioAppConfigs = await prisma.bioAppConfig.findMany({ take: 10 })
-     * 
-     * // Only select the `key`
-     * const bioAppConfigWithKeyOnly = await prisma.bioAppConfig.findMany({ select: { key: true } })
-     * 
-     */
-    findMany<T extends BioAppConfigFindManyArgs>(args?: SelectSubset<T, BioAppConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a BioAppConfig.
-     * @param {BioAppConfigCreateArgs} args - Arguments to create a BioAppConfig.
-     * @example
-     * // Create one BioAppConfig
-     * const BioAppConfig = await prisma.bioAppConfig.create({
-     *   data: {
-     *     // ... data to create a BioAppConfig
-     *   }
-     * })
-     * 
-     */
-    create<T extends BioAppConfigCreateArgs>(args: SelectSubset<T, BioAppConfigCreateArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many BioAppConfigs.
-     * @param {BioAppConfigCreateManyArgs} args - Arguments to create many BioAppConfigs.
-     * @example
-     * // Create many BioAppConfigs
-     * const bioAppConfig = await prisma.bioAppConfig.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends BioAppConfigCreateManyArgs>(args?: SelectSubset<T, BioAppConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many BioAppConfigs and returns the data saved in the database.
-     * @param {BioAppConfigCreateManyAndReturnArgs} args - Arguments to create many BioAppConfigs.
-     * @example
-     * // Create many BioAppConfigs
-     * const bioAppConfig = await prisma.bioAppConfig.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many BioAppConfigs and only return the `key`
-     * const bioAppConfigWithKeyOnly = await prisma.bioAppConfig.createManyAndReturn({
-     *   select: { key: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends BioAppConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, BioAppConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a BioAppConfig.
-     * @param {BioAppConfigDeleteArgs} args - Arguments to delete one BioAppConfig.
-     * @example
-     * // Delete one BioAppConfig
-     * const BioAppConfig = await prisma.bioAppConfig.delete({
-     *   where: {
-     *     // ... filter to delete one BioAppConfig
-     *   }
-     * })
-     * 
-     */
-    delete<T extends BioAppConfigDeleteArgs>(args: SelectSubset<T, BioAppConfigDeleteArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one BioAppConfig.
-     * @param {BioAppConfigUpdateArgs} args - Arguments to update one BioAppConfig.
-     * @example
-     * // Update one BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends BioAppConfigUpdateArgs>(args: SelectSubset<T, BioAppConfigUpdateArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more BioAppConfigs.
-     * @param {BioAppConfigDeleteManyArgs} args - Arguments to filter BioAppConfigs to delete.
-     * @example
-     * // Delete a few BioAppConfigs
-     * const { count } = await prisma.bioAppConfig.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends BioAppConfigDeleteManyArgs>(args?: SelectSubset<T, BioAppConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioAppConfigs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many BioAppConfigs
-     * const bioAppConfig = await prisma.bioAppConfig.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends BioAppConfigUpdateManyArgs>(args: SelectSubset<T, BioAppConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more BioAppConfigs and returns the data updated in the database.
-     * @param {BioAppConfigUpdateManyAndReturnArgs} args - Arguments to update many BioAppConfigs.
-     * @example
-     * // Update many BioAppConfigs
-     * const bioAppConfig = await prisma.bioAppConfig.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more BioAppConfigs and only return the `key`
-     * const bioAppConfigWithKeyOnly = await prisma.bioAppConfig.updateManyAndReturn({
-     *   select: { key: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends BioAppConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, BioAppConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one BioAppConfig.
-     * @param {BioAppConfigUpsertArgs} args - Arguments to update or create a BioAppConfig.
-     * @example
-     * // Update or create a BioAppConfig
-     * const bioAppConfig = await prisma.bioAppConfig.upsert({
-     *   create: {
-     *     // ... data to create a BioAppConfig
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the BioAppConfig we want to update
-     *   }
-     * })
-     */
-    upsert<T extends BioAppConfigUpsertArgs>(args: SelectSubset<T, BioAppConfigUpsertArgs<ExtArgs>>): Prisma__BioAppConfigClient<$Result.GetResult<Prisma.$BioAppConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of BioAppConfigs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigCountArgs} args - Arguments to filter BioAppConfigs to count.
-     * @example
-     * // Count the number of BioAppConfigs
-     * const count = await prisma.bioAppConfig.count({
-     *   where: {
-     *     // ... the filter for the BioAppConfigs we want to count
-     *   }
-     * })
-    **/
-    count<T extends BioAppConfigCountArgs>(
-      args?: Subset<T, BioAppConfigCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], BioAppConfigCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a BioAppConfig.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends BioAppConfigAggregateArgs>(args: Subset<T, BioAppConfigAggregateArgs>): Prisma.PrismaPromise<GetBioAppConfigAggregateType<T>>
-
-    /**
-     * Group by BioAppConfig.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {BioAppConfigGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends BioAppConfigGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: BioAppConfigGroupByArgs['orderBy'] }
-        : { orderBy?: BioAppConfigGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, BioAppConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBioAppConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the BioAppConfig model
-   */
-  readonly fields: BioAppConfigFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for BioAppConfig.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__BioAppConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the BioAppConfig model
-   */
-  interface BioAppConfigFieldRefs {
-    readonly key: FieldRef<"BioAppConfig", 'String'>
-    readonly value: FieldRef<"BioAppConfig", 'String'>
-    readonly description: FieldRef<"BioAppConfig", 'String'>
-    readonly createdAt: FieldRef<"BioAppConfig", 'DateTime'>
-    readonly updatedAt: FieldRef<"BioAppConfig", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * BioAppConfig findUnique
-   */
-  export type BioAppConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter, which BioAppConfig to fetch.
-     */
-    where: BioAppConfigWhereUniqueInput
-  }
-
-  /**
-   * BioAppConfig findUniqueOrThrow
-   */
-  export type BioAppConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter, which BioAppConfig to fetch.
-     */
-    where: BioAppConfigWhereUniqueInput
-  }
-
-  /**
-   * BioAppConfig findFirst
-   */
-  export type BioAppConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter, which BioAppConfig to fetch.
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioAppConfigs to fetch.
-     */
-    orderBy?: BioAppConfigOrderByWithRelationInput | BioAppConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioAppConfigs.
-     */
-    cursor?: BioAppConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioAppConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioAppConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioAppConfigs.
-     */
-    distinct?: BioAppConfigScalarFieldEnum | BioAppConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioAppConfig findFirstOrThrow
-   */
-  export type BioAppConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter, which BioAppConfig to fetch.
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioAppConfigs to fetch.
-     */
-    orderBy?: BioAppConfigOrderByWithRelationInput | BioAppConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for BioAppConfigs.
-     */
-    cursor?: BioAppConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioAppConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioAppConfigs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of BioAppConfigs.
-     */
-    distinct?: BioAppConfigScalarFieldEnum | BioAppConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioAppConfig findMany
-   */
-  export type BioAppConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter, which BioAppConfigs to fetch.
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of BioAppConfigs to fetch.
-     */
-    orderBy?: BioAppConfigOrderByWithRelationInput | BioAppConfigOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing BioAppConfigs.
-     */
-    cursor?: BioAppConfigWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` BioAppConfigs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` BioAppConfigs.
-     */
-    skip?: number
-    distinct?: BioAppConfigScalarFieldEnum | BioAppConfigScalarFieldEnum[]
-  }
-
-  /**
-   * BioAppConfig create
-   */
-  export type BioAppConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * The data needed to create a BioAppConfig.
-     */
-    data: XOR<BioAppConfigCreateInput, BioAppConfigUncheckedCreateInput>
-  }
-
-  /**
-   * BioAppConfig createMany
-   */
-  export type BioAppConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many BioAppConfigs.
-     */
-    data: BioAppConfigCreateManyInput | BioAppConfigCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * BioAppConfig createManyAndReturn
-   */
-  export type BioAppConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * The data used to create many BioAppConfigs.
-     */
-    data: BioAppConfigCreateManyInput | BioAppConfigCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * BioAppConfig update
-   */
-  export type BioAppConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * The data needed to update a BioAppConfig.
-     */
-    data: XOR<BioAppConfigUpdateInput, BioAppConfigUncheckedUpdateInput>
-    /**
-     * Choose, which BioAppConfig to update.
-     */
-    where: BioAppConfigWhereUniqueInput
-  }
-
-  /**
-   * BioAppConfig updateMany
-   */
-  export type BioAppConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update BioAppConfigs.
-     */
-    data: XOR<BioAppConfigUpdateManyMutationInput, BioAppConfigUncheckedUpdateManyInput>
-    /**
-     * Filter which BioAppConfigs to update
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * Limit how many BioAppConfigs to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioAppConfig updateManyAndReturn
-   */
-  export type BioAppConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * The data used to update BioAppConfigs.
-     */
-    data: XOR<BioAppConfigUpdateManyMutationInput, BioAppConfigUncheckedUpdateManyInput>
-    /**
-     * Filter which BioAppConfigs to update
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * Limit how many BioAppConfigs to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioAppConfig upsert
-   */
-  export type BioAppConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * The filter to search for the BioAppConfig to update in case it exists.
-     */
-    where: BioAppConfigWhereUniqueInput
-    /**
-     * In case the BioAppConfig found by the `where` argument doesn't exist, create a new BioAppConfig with this data.
-     */
-    create: XOR<BioAppConfigCreateInput, BioAppConfigUncheckedCreateInput>
-    /**
-     * In case the BioAppConfig was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<BioAppConfigUpdateInput, BioAppConfigUncheckedUpdateInput>
-  }
-
-  /**
-   * BioAppConfig delete
-   */
-  export type BioAppConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
-    /**
-     * Filter which BioAppConfig to delete.
-     */
-    where: BioAppConfigWhereUniqueInput
-  }
-
-  /**
-   * BioAppConfig deleteMany
-   */
-  export type BioAppConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which BioAppConfigs to delete
-     */
-    where?: BioAppConfigWhereInput
-    /**
-     * Limit how many BioAppConfigs to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * BioAppConfig without action
-   */
-  export type BioAppConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the BioAppConfig
-     */
-    select?: BioAppConfigSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the BioAppConfig
-     */
-    omit?: BioAppConfigOmit<ExtArgs> | null
   }
 
 
@@ -26813,21 +21022,6 @@ export namespace Prisma {
   export type ChartLayoutScalarFieldEnum = (typeof ChartLayoutScalarFieldEnum)[keyof typeof ChartLayoutScalarFieldEnum]
 
 
-  export const BioSavedConfigScalarFieldEnum: {
-    id: 'id',
-    userId: 'userId',
-    name: 'name',
-    private: 'private',
-    config: 'config',
-    mapDisplayByYear: 'mapDisplayByYear',
-    likes: 'likes',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type BioSavedConfigScalarFieldEnum = (typeof BioSavedConfigScalarFieldEnum)[keyof typeof BioSavedConfigScalarFieldEnum]
-
-
   export const UserNotificationScalarFieldEnum: {
     idNotification: 'idNotification',
     senderType: 'senderType',
@@ -26942,16 +21136,6 @@ export namespace Prisma {
   export type StripeCheckoutSessionScalarFieldEnum = (typeof StripeCheckoutSessionScalarFieldEnum)[keyof typeof StripeCheckoutSessionScalarFieldEnum]
 
 
-  export const SubscriptionCancellationScalarFieldEnum: {
-    id: 'id',
-    subscriptionId: 'subscriptionId',
-    userId: 'userId',
-    cancelledAt: 'cancelledAt'
-  };
-
-  export type SubscriptionCancellationScalarFieldEnum = (typeof SubscriptionCancellationScalarFieldEnum)[keyof typeof SubscriptionCancellationScalarFieldEnum]
-
-
   export const PagarMeOrderScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -26969,40 +21153,6 @@ export namespace Prisma {
   };
 
   export type PagarMeOrderScalarFieldEnum = (typeof PagarMeOrderScalarFieldEnum)[keyof typeof PagarMeOrderScalarFieldEnum]
-
-
-  export const BioSimulationQueueScalarFieldEnum: {
-    id: 'id',
-    queueName: 'queueName',
-    userId: 'userId',
-    status: 'status',
-    payload: 'payload',
-    result: 'result',
-    createdAt: 'createdAt'
-  };
-
-  export type BioSimulationQueueScalarFieldEnum = (typeof BioSimulationQueueScalarFieldEnum)[keyof typeof BioSimulationQueueScalarFieldEnum]
-
-
-  export const BioSimulationStateScalarFieldEnum: {
-    userId: 'userId',
-    state: 'state',
-    mapDisplayByYear: 'mapDisplayByYear',
-    updatedAt: 'updatedAt'
-  };
-
-  export type BioSimulationStateScalarFieldEnum = (typeof BioSimulationStateScalarFieldEnum)[keyof typeof BioSimulationStateScalarFieldEnum]
-
-
-  export const BioAppConfigScalarFieldEnum: {
-    key: 'key',
-    value: 'value',
-    description: 'description',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type BioAppConfigScalarFieldEnum = (typeof BioAppConfigScalarFieldEnum)[keyof typeof BioAppConfigScalarFieldEnum]
 
 
   export const BinanceKlineScalarFieldEnum: {
@@ -27231,16 +21381,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'BioLanguage'
+   * Reference to a field of type 'AppLanguage'
    */
-  export type EnumBioLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BioLanguage'>
+  export type EnumAppLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AppLanguage'>
     
 
 
   /**
-   * Reference to a field of type 'BioLanguage[]'
+   * Reference to a field of type 'AppLanguage[]'
    */
-  export type ListEnumBioLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BioLanguage[]'>
+  export type ListEnumAppLanguageFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AppLanguage[]'>
     
 
 
@@ -27315,20 +21465,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'BioQueueStatus'
-   */
-  export type EnumBioQueueStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BioQueueStatus'>
-    
-
-
-  /**
-   * Reference to a field of type 'BioQueueStatus[]'
-   */
-  export type ListEnumBioQueueStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BioQueueStatus[]'>
-    
-
-
-  /**
    * Reference to a field of type 'BigInt'
    */
   export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
@@ -27398,7 +21534,7 @@ export namespace Prisma {
     notifyQuina?: BoolFilter<"User"> | boolean
     hideStatusBar?: BoolFilter<"User"> | boolean
     progress?: IntFilter<"User"> | number
-    language?: EnumBioLanguageFilter<"User"> | $Enums.BioLanguage
+    language?: EnumAppLanguageFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntFilter<"User"> | number
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
@@ -27409,9 +21545,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenListRelationFilter
     walletCredits?: WalletCreditListRelationFilter
     notifications?: UserNotificationListRelationFilter
-    simulationQueue?: BioSimulationQueueListRelationFilter
-    savedConfigs?: BioSavedConfigListRelationFilter
-    simulationState?: XOR<BioSimulationStateNullableScalarRelationFilter, BioSimulationStateWhereInput> | null
     chartLayouts?: ChartLayoutListRelationFilter
   }
 
@@ -27462,9 +21595,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenOrderByRelationAggregateInput
     walletCredits?: WalletCreditOrderByRelationAggregateInput
     notifications?: UserNotificationOrderByRelationAggregateInput
-    simulationQueue?: BioSimulationQueueOrderByRelationAggregateInput
-    savedConfigs?: BioSavedConfigOrderByRelationAggregateInput
-    simulationState?: BioSimulationStateOrderByWithRelationInput
     chartLayouts?: ChartLayoutOrderByRelationAggregateInput
   }
 
@@ -27507,7 +21637,7 @@ export namespace Prisma {
     notifyQuina?: BoolFilter<"User"> | boolean
     hideStatusBar?: BoolFilter<"User"> | boolean
     progress?: IntFilter<"User"> | number
-    language?: EnumBioLanguageFilter<"User"> | $Enums.BioLanguage
+    language?: EnumAppLanguageFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntFilter<"User"> | number
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
@@ -27518,9 +21648,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenListRelationFilter
     walletCredits?: WalletCreditListRelationFilter
     notifications?: UserNotificationListRelationFilter
-    simulationQueue?: BioSimulationQueueListRelationFilter
-    savedConfigs?: BioSavedConfigListRelationFilter
-    simulationState?: XOR<BioSimulationStateNullableScalarRelationFilter, BioSimulationStateWhereInput> | null
     chartLayouts?: ChartLayoutListRelationFilter
   }, "id" | "emailSearchHash" | "nickname">
 
@@ -27608,7 +21735,7 @@ export namespace Prisma {
     notifyQuina?: BoolWithAggregatesFilter<"User"> | boolean
     hideStatusBar?: BoolWithAggregatesFilter<"User"> | boolean
     progress?: IntWithAggregatesFilter<"User"> | number
-    language?: EnumBioLanguageWithAggregatesFilter<"User"> | $Enums.BioLanguage
+    language?: EnumAppLanguageWithAggregatesFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntWithAggregatesFilter<"User"> | number
   }
 
@@ -27663,83 +21790,6 @@ export namespace Prisma {
     slot?: IntWithAggregatesFilter<"ChartLayout"> | number
     config?: JsonWithAggregatesFilter<"ChartLayout">
     updatedAt?: DateTimeWithAggregatesFilter<"ChartLayout"> | Date | string
-  }
-
-  export type BioSavedConfigWhereInput = {
-    AND?: BioSavedConfigWhereInput | BioSavedConfigWhereInput[]
-    OR?: BioSavedConfigWhereInput[]
-    NOT?: BioSavedConfigWhereInput | BioSavedConfigWhereInput[]
-    id?: StringFilter<"BioSavedConfig"> | string
-    userId?: StringFilter<"BioSavedConfig"> | string
-    name?: StringFilter<"BioSavedConfig"> | string
-    private?: BoolFilter<"BioSavedConfig"> | boolean
-    config?: JsonFilter<"BioSavedConfig">
-    mapDisplayByYear?: JsonNullableFilter<"BioSavedConfig">
-    likes?: IntFilter<"BioSavedConfig"> | number
-    createdAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-    updatedAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type BioSavedConfigOrderByWithRelationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    name?: SortOrder
-    private?: SortOrder
-    config?: SortOrder
-    mapDisplayByYear?: SortOrderInput | SortOrder
-    likes?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type BioSavedConfigWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    name?: string
-    AND?: BioSavedConfigWhereInput | BioSavedConfigWhereInput[]
-    OR?: BioSavedConfigWhereInput[]
-    NOT?: BioSavedConfigWhereInput | BioSavedConfigWhereInput[]
-    userId?: StringFilter<"BioSavedConfig"> | string
-    private?: BoolFilter<"BioSavedConfig"> | boolean
-    config?: JsonFilter<"BioSavedConfig">
-    mapDisplayByYear?: JsonNullableFilter<"BioSavedConfig">
-    likes?: IntFilter<"BioSavedConfig"> | number
-    createdAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-    updatedAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id" | "name">
-
-  export type BioSavedConfigOrderByWithAggregationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    name?: SortOrder
-    private?: SortOrder
-    config?: SortOrder
-    mapDisplayByYear?: SortOrderInput | SortOrder
-    likes?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: BioSavedConfigCountOrderByAggregateInput
-    _avg?: BioSavedConfigAvgOrderByAggregateInput
-    _max?: BioSavedConfigMaxOrderByAggregateInput
-    _min?: BioSavedConfigMinOrderByAggregateInput
-    _sum?: BioSavedConfigSumOrderByAggregateInput
-  }
-
-  export type BioSavedConfigScalarWhereWithAggregatesInput = {
-    AND?: BioSavedConfigScalarWhereWithAggregatesInput | BioSavedConfigScalarWhereWithAggregatesInput[]
-    OR?: BioSavedConfigScalarWhereWithAggregatesInput[]
-    NOT?: BioSavedConfigScalarWhereWithAggregatesInput | BioSavedConfigScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"BioSavedConfig"> | string
-    userId?: StringWithAggregatesFilter<"BioSavedConfig"> | string
-    name?: StringWithAggregatesFilter<"BioSavedConfig"> | string
-    private?: BoolWithAggregatesFilter<"BioSavedConfig"> | boolean
-    config?: JsonWithAggregatesFilter<"BioSavedConfig">
-    mapDisplayByYear?: JsonNullableWithAggregatesFilter<"BioSavedConfig">
-    likes?: IntWithAggregatesFilter<"BioSavedConfig"> | number
-    createdAt?: DateTimeWithAggregatesFilter<"BioSavedConfig"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"BioSavedConfig"> | Date | string
   }
 
   export type UserNotificationWhereInput = {
@@ -28330,53 +22380,6 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"StripeCheckoutSession"> | Date | string
   }
 
-  export type SubscriptionCancellationWhereInput = {
-    AND?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
-    OR?: SubscriptionCancellationWhereInput[]
-    NOT?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
-    id?: StringFilter<"SubscriptionCancellation"> | string
-    subscriptionId?: StringFilter<"SubscriptionCancellation"> | string
-    userId?: StringFilter<"SubscriptionCancellation"> | string
-    cancelledAt?: DateTimeFilter<"SubscriptionCancellation"> | Date | string
-  }
-
-  export type SubscriptionCancellationOrderByWithRelationInput = {
-    id?: SortOrder
-    subscriptionId?: SortOrder
-    userId?: SortOrder
-    cancelledAt?: SortOrder
-  }
-
-  export type SubscriptionCancellationWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    subscriptionId?: string
-    AND?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
-    OR?: SubscriptionCancellationWhereInput[]
-    NOT?: SubscriptionCancellationWhereInput | SubscriptionCancellationWhereInput[]
-    userId?: StringFilter<"SubscriptionCancellation"> | string
-    cancelledAt?: DateTimeFilter<"SubscriptionCancellation"> | Date | string
-  }, "id" | "subscriptionId">
-
-  export type SubscriptionCancellationOrderByWithAggregationInput = {
-    id?: SortOrder
-    subscriptionId?: SortOrder
-    userId?: SortOrder
-    cancelledAt?: SortOrder
-    _count?: SubscriptionCancellationCountOrderByAggregateInput
-    _max?: SubscriptionCancellationMaxOrderByAggregateInput
-    _min?: SubscriptionCancellationMinOrderByAggregateInput
-  }
-
-  export type SubscriptionCancellationScalarWhereWithAggregatesInput = {
-    AND?: SubscriptionCancellationScalarWhereWithAggregatesInput | SubscriptionCancellationScalarWhereWithAggregatesInput[]
-    OR?: SubscriptionCancellationScalarWhereWithAggregatesInput[]
-    NOT?: SubscriptionCancellationScalarWhereWithAggregatesInput | SubscriptionCancellationScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
-    subscriptionId?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
-    userId?: StringWithAggregatesFilter<"SubscriptionCancellation"> | string
-    cancelledAt?: DateTimeWithAggregatesFilter<"SubscriptionCancellation"> | Date | string
-  }
-
   export type PagarMeOrderWhereInput = {
     AND?: PagarMeOrderWhereInput | PagarMeOrderWhereInput[]
     OR?: PagarMeOrderWhereInput[]
@@ -28472,173 +22475,6 @@ export namespace Prisma {
     expiresAt?: DateTimeNullableWithAggregatesFilter<"PagarMeOrder"> | Date | string | null
     completedAt?: DateTimeNullableWithAggregatesFilter<"PagarMeOrder"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PagarMeOrder"> | Date | string
-  }
-
-  export type BioSimulationQueueWhereInput = {
-    AND?: BioSimulationQueueWhereInput | BioSimulationQueueWhereInput[]
-    OR?: BioSimulationQueueWhereInput[]
-    NOT?: BioSimulationQueueWhereInput | BioSimulationQueueWhereInput[]
-    id?: StringFilter<"BioSimulationQueue"> | string
-    queueName?: StringFilter<"BioSimulationQueue"> | string
-    userId?: StringFilter<"BioSimulationQueue"> | string
-    status?: EnumBioQueueStatusFilter<"BioSimulationQueue"> | $Enums.BioQueueStatus
-    payload?: JsonFilter<"BioSimulationQueue">
-    result?: JsonNullableFilter<"BioSimulationQueue">
-    createdAt?: DateTimeFilter<"BioSimulationQueue"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type BioSimulationQueueOrderByWithRelationInput = {
-    id?: SortOrder
-    queueName?: SortOrder
-    userId?: SortOrder
-    status?: SortOrder
-    payload?: SortOrder
-    result?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type BioSimulationQueueWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    AND?: BioSimulationQueueWhereInput | BioSimulationQueueWhereInput[]
-    OR?: BioSimulationQueueWhereInput[]
-    NOT?: BioSimulationQueueWhereInput | BioSimulationQueueWhereInput[]
-    queueName?: StringFilter<"BioSimulationQueue"> | string
-    userId?: StringFilter<"BioSimulationQueue"> | string
-    status?: EnumBioQueueStatusFilter<"BioSimulationQueue"> | $Enums.BioQueueStatus
-    payload?: JsonFilter<"BioSimulationQueue">
-    result?: JsonNullableFilter<"BioSimulationQueue">
-    createdAt?: DateTimeFilter<"BioSimulationQueue"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id">
-
-  export type BioSimulationQueueOrderByWithAggregationInput = {
-    id?: SortOrder
-    queueName?: SortOrder
-    userId?: SortOrder
-    status?: SortOrder
-    payload?: SortOrder
-    result?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    _count?: BioSimulationQueueCountOrderByAggregateInput
-    _max?: BioSimulationQueueMaxOrderByAggregateInput
-    _min?: BioSimulationQueueMinOrderByAggregateInput
-  }
-
-  export type BioSimulationQueueScalarWhereWithAggregatesInput = {
-    AND?: BioSimulationQueueScalarWhereWithAggregatesInput | BioSimulationQueueScalarWhereWithAggregatesInput[]
-    OR?: BioSimulationQueueScalarWhereWithAggregatesInput[]
-    NOT?: BioSimulationQueueScalarWhereWithAggregatesInput | BioSimulationQueueScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"BioSimulationQueue"> | string
-    queueName?: StringWithAggregatesFilter<"BioSimulationQueue"> | string
-    userId?: StringWithAggregatesFilter<"BioSimulationQueue"> | string
-    status?: EnumBioQueueStatusWithAggregatesFilter<"BioSimulationQueue"> | $Enums.BioQueueStatus
-    payload?: JsonWithAggregatesFilter<"BioSimulationQueue">
-    result?: JsonNullableWithAggregatesFilter<"BioSimulationQueue">
-    createdAt?: DateTimeWithAggregatesFilter<"BioSimulationQueue"> | Date | string
-  }
-
-  export type BioSimulationStateWhereInput = {
-    AND?: BioSimulationStateWhereInput | BioSimulationStateWhereInput[]
-    OR?: BioSimulationStateWhereInput[]
-    NOT?: BioSimulationStateWhereInput | BioSimulationStateWhereInput[]
-    userId?: StringFilter<"BioSimulationState"> | string
-    state?: JsonFilter<"BioSimulationState">
-    mapDisplayByYear?: JsonNullableFilter<"BioSimulationState">
-    updatedAt?: DateTimeFilter<"BioSimulationState"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type BioSimulationStateOrderByWithRelationInput = {
-    userId?: SortOrder
-    state?: SortOrder
-    mapDisplayByYear?: SortOrderInput | SortOrder
-    updatedAt?: SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type BioSimulationStateWhereUniqueInput = Prisma.AtLeast<{
-    userId?: string
-    AND?: BioSimulationStateWhereInput | BioSimulationStateWhereInput[]
-    OR?: BioSimulationStateWhereInput[]
-    NOT?: BioSimulationStateWhereInput | BioSimulationStateWhereInput[]
-    state?: JsonFilter<"BioSimulationState">
-    mapDisplayByYear?: JsonNullableFilter<"BioSimulationState">
-    updatedAt?: DateTimeFilter<"BioSimulationState"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "userId">
-
-  export type BioSimulationStateOrderByWithAggregationInput = {
-    userId?: SortOrder
-    state?: SortOrder
-    mapDisplayByYear?: SortOrderInput | SortOrder
-    updatedAt?: SortOrder
-    _count?: BioSimulationStateCountOrderByAggregateInput
-    _max?: BioSimulationStateMaxOrderByAggregateInput
-    _min?: BioSimulationStateMinOrderByAggregateInput
-  }
-
-  export type BioSimulationStateScalarWhereWithAggregatesInput = {
-    AND?: BioSimulationStateScalarWhereWithAggregatesInput | BioSimulationStateScalarWhereWithAggregatesInput[]
-    OR?: BioSimulationStateScalarWhereWithAggregatesInput[]
-    NOT?: BioSimulationStateScalarWhereWithAggregatesInput | BioSimulationStateScalarWhereWithAggregatesInput[]
-    userId?: StringWithAggregatesFilter<"BioSimulationState"> | string
-    state?: JsonWithAggregatesFilter<"BioSimulationState">
-    mapDisplayByYear?: JsonNullableWithAggregatesFilter<"BioSimulationState">
-    updatedAt?: DateTimeWithAggregatesFilter<"BioSimulationState"> | Date | string
-  }
-
-  export type BioAppConfigWhereInput = {
-    AND?: BioAppConfigWhereInput | BioAppConfigWhereInput[]
-    OR?: BioAppConfigWhereInput[]
-    NOT?: BioAppConfigWhereInput | BioAppConfigWhereInput[]
-    key?: StringFilter<"BioAppConfig"> | string
-    value?: StringFilter<"BioAppConfig"> | string
-    description?: StringNullableFilter<"BioAppConfig"> | string | null
-    createdAt?: DateTimeFilter<"BioAppConfig"> | Date | string
-    updatedAt?: DateTimeFilter<"BioAppConfig"> | Date | string
-  }
-
-  export type BioAppConfigOrderByWithRelationInput = {
-    key?: SortOrder
-    value?: SortOrder
-    description?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioAppConfigWhereUniqueInput = Prisma.AtLeast<{
-    key?: string
-    AND?: BioAppConfigWhereInput | BioAppConfigWhereInput[]
-    OR?: BioAppConfigWhereInput[]
-    NOT?: BioAppConfigWhereInput | BioAppConfigWhereInput[]
-    value?: StringFilter<"BioAppConfig"> | string
-    description?: StringNullableFilter<"BioAppConfig"> | string | null
-    createdAt?: DateTimeFilter<"BioAppConfig"> | Date | string
-    updatedAt?: DateTimeFilter<"BioAppConfig"> | Date | string
-  }, "key">
-
-  export type BioAppConfigOrderByWithAggregationInput = {
-    key?: SortOrder
-    value?: SortOrder
-    description?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: BioAppConfigCountOrderByAggregateInput
-    _max?: BioAppConfigMaxOrderByAggregateInput
-    _min?: BioAppConfigMinOrderByAggregateInput
-  }
-
-  export type BioAppConfigScalarWhereWithAggregatesInput = {
-    AND?: BioAppConfigScalarWhereWithAggregatesInput | BioAppConfigScalarWhereWithAggregatesInput[]
-    OR?: BioAppConfigScalarWhereWithAggregatesInput[]
-    NOT?: BioAppConfigScalarWhereWithAggregatesInput | BioAppConfigScalarWhereWithAggregatesInput[]
-    key?: StringWithAggregatesFilter<"BioAppConfig"> | string
-    value?: StringWithAggregatesFilter<"BioAppConfig"> | string
-    description?: StringNullableWithAggregatesFilter<"BioAppConfig"> | string | null
-    createdAt?: DateTimeWithAggregatesFilter<"BioAppConfig"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"BioAppConfig"> | Date | string
   }
 
   export type BinanceKlineWhereInput = {
@@ -29012,7 +22848,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -29023,9 +22859,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -29065,7 +22898,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -29076,9 +22909,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -29118,7 +22948,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -29129,9 +22959,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -29171,7 +22998,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -29182,9 +23009,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -29224,7 +23048,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
   }
 
@@ -29264,7 +23088,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
   }
 
@@ -29304,7 +23128,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
   }
 
@@ -29353,89 +23177,6 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigCreateInput = {
-    id?: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutSavedConfigsInput
-  }
-
-  export type BioSavedConfigUncheckedCreateInput = {
-    id?: string
-    userId: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioSavedConfigUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutSavedConfigsNestedInput
-  }
-
-  export type BioSavedConfigUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigCreateManyInput = {
-    id?: string
-    userId: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioSavedConfigUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30046,55 +23787,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type SubscriptionCancellationCreateInput = {
-    id?: string
-    subscriptionId: string
-    userId: string
-    cancelledAt?: Date | string
-  }
-
-  export type SubscriptionCancellationUncheckedCreateInput = {
-    id?: string
-    subscriptionId: string
-    userId: string
-    cancelledAt?: Date | string
-  }
-
-  export type SubscriptionCancellationUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    subscriptionId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SubscriptionCancellationUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    subscriptionId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SubscriptionCancellationCreateManyInput = {
-    id?: string
-    subscriptionId: string
-    userId: string
-    cancelledAt?: Date | string
-  }
-
-  export type SubscriptionCancellationUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    subscriptionId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SubscriptionCancellationUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    subscriptionId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    cancelledAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type PagarMeOrderCreateInput = {
     id: string
     status?: $Enums.CheckoutStatus
@@ -30204,179 +23896,6 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueCreateInput = {
-    id?: string
-    queueName: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-    user: UserCreateNestedOneWithoutSimulationQueueInput
-  }
-
-  export type BioSimulationQueueUncheckedCreateInput = {
-    id?: string
-    queueName: string
-    userId: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-  }
-
-  export type BioSimulationQueueUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutSimulationQueueNestedInput
-  }
-
-  export type BioSimulationQueueUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueCreateManyInput = {
-    id?: string
-    queueName: string
-    userId: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-  }
-
-  export type BioSimulationQueueUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationStateCreateInput = {
-    state: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutSimulationStateInput
-  }
-
-  export type BioSimulationStateUncheckedCreateInput = {
-    userId: string
-    state: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: Date | string
-  }
-
-  export type BioSimulationStateUpdateInput = {
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutSimulationStateNestedInput
-  }
-
-  export type BioSimulationStateUncheckedUpdateInput = {
-    userId?: StringFieldUpdateOperationsInput | string
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationStateCreateManyInput = {
-    userId: string
-    state: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: Date | string
-  }
-
-  export type BioSimulationStateUpdateManyMutationInput = {
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationStateUncheckedUpdateManyInput = {
-    userId?: StringFieldUpdateOperationsInput | string
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioAppConfigCreateInput = {
-    key: string
-    value: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioAppConfigUncheckedCreateInput = {
-    key: string
-    value: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioAppConfigUpdateInput = {
-    key?: StringFieldUpdateOperationsInput | string
-    value?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioAppConfigUncheckedUpdateInput = {
-    key?: StringFieldUpdateOperationsInput | string
-    value?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioAppConfigCreateManyInput = {
-    key: string
-    value: string
-    description?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioAppConfigUpdateManyMutationInput = {
-    key?: StringFieldUpdateOperationsInput | string
-    value?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioAppConfigUncheckedUpdateManyInput = {
-    key?: StringFieldUpdateOperationsInput | string
-    value?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BinanceKlineCreateInput = {
@@ -30875,11 +24394,11 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type EnumBioLanguageFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioLanguage | EnumBioLanguageFieldRefInput<$PrismaModel>
-    in?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioLanguageFilter<$PrismaModel> | $Enums.BioLanguage
+  export type EnumAppLanguageFilter<$PrismaModel = never> = {
+    equals?: $Enums.AppLanguage | EnumAppLanguageFieldRefInput<$PrismaModel>
+    in?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    not?: NestedEnumAppLanguageFilter<$PrismaModel> | $Enums.AppLanguage
   }
 
   export type AccessRequestListRelationFilter = {
@@ -30935,23 +24454,6 @@ export namespace Prisma {
     none?: UserNotificationWhereInput
   }
 
-  export type BioSimulationQueueListRelationFilter = {
-    every?: BioSimulationQueueWhereInput
-    some?: BioSimulationQueueWhereInput
-    none?: BioSimulationQueueWhereInput
-  }
-
-  export type BioSavedConfigListRelationFilter = {
-    every?: BioSavedConfigWhereInput
-    some?: BioSavedConfigWhereInput
-    none?: BioSavedConfigWhereInput
-  }
-
-  export type BioSimulationStateNullableScalarRelationFilter = {
-    is?: BioSimulationStateWhereInput | null
-    isNot?: BioSimulationStateWhereInput | null
-  }
-
   export type ChartLayoutListRelationFilter = {
     every?: ChartLayoutWhereInput
     some?: ChartLayoutWhereInput
@@ -30992,14 +24494,6 @@ export namespace Prisma {
   }
 
   export type UserNotificationOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type BioSimulationQueueOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type BioSavedConfigOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -31301,14 +24795,14 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
-  export type EnumBioLanguageWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioLanguage | EnumBioLanguageFieldRefInput<$PrismaModel>
-    in?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioLanguageWithAggregatesFilter<$PrismaModel> | $Enums.BioLanguage
+  export type EnumAppLanguageWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AppLanguage | EnumAppLanguageFieldRefInput<$PrismaModel>
+    in?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    not?: NestedEnumAppLanguageWithAggregatesFilter<$PrismaModel> | $Enums.AppLanguage
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumBioLanguageFilter<$PrismaModel>
-    _max?: NestedEnumBioLanguageFilter<$PrismaModel>
+    _min?: NestedEnumAppLanguageFilter<$PrismaModel>
+    _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -31395,95 +24889,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedJsonFilter<$PrismaModel>
     _max?: NestedJsonFilter<$PrismaModel>
-  }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-
-  export type BioSavedConfigCountOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    name?: SortOrder
-    private?: SortOrder
-    config?: SortOrder
-    mapDisplayByYear?: SortOrder
-    likes?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioSavedConfigAvgOrderByAggregateInput = {
-    likes?: SortOrder
-  }
-
-  export type BioSavedConfigMaxOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    name?: SortOrder
-    private?: SortOrder
-    likes?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioSavedConfigMinOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    name?: SortOrder
-    private?: SortOrder
-    likes?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioSavedConfigSumOrderByAggregateInput = {
-    likes?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type EnumSenderTypeFilter<$PrismaModel = never> = {
@@ -31656,6 +25061,29 @@ export namespace Prisma {
     notIn?: $Enums.TxSource[] | ListEnumTxSourceFieldRefInput<$PrismaModel>
     not?: NestedEnumTxSourceFilter<$PrismaModel> | $Enums.TxSource
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type UserCoinWalletScalarRelationFilter = {
     is?: UserCoinWalletWhereInput
@@ -31732,6 +25160,32 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTxSourceFilter<$PrismaModel>
     _max?: NestedEnumTxSourceFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type CoinLedgerEntryScalarRelationFilter = {
@@ -31867,27 +25321,6 @@ export namespace Prisma {
     _max?: NestedEnumCheckoutStatusFilter<$PrismaModel>
   }
 
-  export type SubscriptionCancellationCountOrderByAggregateInput = {
-    id?: SortOrder
-    subscriptionId?: SortOrder
-    userId?: SortOrder
-    cancelledAt?: SortOrder
-  }
-
-  export type SubscriptionCancellationMaxOrderByAggregateInput = {
-    id?: SortOrder
-    subscriptionId?: SortOrder
-    userId?: SortOrder
-    cancelledAt?: SortOrder
-  }
-
-  export type SubscriptionCancellationMinOrderByAggregateInput = {
-    id?: SortOrder
-    subscriptionId?: SortOrder
-    userId?: SortOrder
-    cancelledAt?: SortOrder
-  }
-
   export type PagarMeOrderCountOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
@@ -31944,90 +25377,6 @@ export namespace Prisma {
   export type PagarMeOrderSumOrderByAggregateInput = {
     amountTotalCents?: SortOrder
     coinsToCredit?: SortOrder
-  }
-
-  export type EnumBioQueueStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioQueueStatus | EnumBioQueueStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioQueueStatusFilter<$PrismaModel> | $Enums.BioQueueStatus
-  }
-
-  export type BioSimulationQueueCountOrderByAggregateInput = {
-    id?: SortOrder
-    queueName?: SortOrder
-    userId?: SortOrder
-    status?: SortOrder
-    payload?: SortOrder
-    result?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type BioSimulationQueueMaxOrderByAggregateInput = {
-    id?: SortOrder
-    queueName?: SortOrder
-    userId?: SortOrder
-    status?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type BioSimulationQueueMinOrderByAggregateInput = {
-    id?: SortOrder
-    queueName?: SortOrder
-    userId?: SortOrder
-    status?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type EnumBioQueueStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioQueueStatus | EnumBioQueueStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioQueueStatusWithAggregatesFilter<$PrismaModel> | $Enums.BioQueueStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumBioQueueStatusFilter<$PrismaModel>
-    _max?: NestedEnumBioQueueStatusFilter<$PrismaModel>
-  }
-
-  export type BioSimulationStateCountOrderByAggregateInput = {
-    userId?: SortOrder
-    state?: SortOrder
-    mapDisplayByYear?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioSimulationStateMaxOrderByAggregateInput = {
-    userId?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioSimulationStateMinOrderByAggregateInput = {
-    userId?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioAppConfigCountOrderByAggregateInput = {
-    key?: SortOrder
-    value?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioAppConfigMaxOrderByAggregateInput = {
-    key?: SortOrder
-    value?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type BioAppConfigMinOrderByAggregateInput = {
-    key?: SortOrder
-    value?: SortOrder
-    description?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
   export type BigIntFilter<$PrismaModel = never> = {
@@ -32403,26 +25752,6 @@ export namespace Prisma {
     connect?: UserNotificationWhereUniqueInput | UserNotificationWhereUniqueInput[]
   }
 
-  export type BioSimulationQueueCreateNestedManyWithoutUserInput = {
-    create?: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput> | BioSimulationQueueCreateWithoutUserInput[] | BioSimulationQueueUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSimulationQueueCreateOrConnectWithoutUserInput | BioSimulationQueueCreateOrConnectWithoutUserInput[]
-    createMany?: BioSimulationQueueCreateManyUserInputEnvelope
-    connect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-  }
-
-  export type BioSavedConfigCreateNestedManyWithoutUserInput = {
-    create?: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput> | BioSavedConfigCreateWithoutUserInput[] | BioSavedConfigUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSavedConfigCreateOrConnectWithoutUserInput | BioSavedConfigCreateOrConnectWithoutUserInput[]
-    createMany?: BioSavedConfigCreateManyUserInputEnvelope
-    connect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-  }
-
-  export type BioSimulationStateCreateNestedOneWithoutUserInput = {
-    create?: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-    connectOrCreate?: BioSimulationStateCreateOrConnectWithoutUserInput
-    connect?: BioSimulationStateWhereUniqueInput
-  }
-
   export type ChartLayoutCreateNestedManyWithoutUserInput = {
     create?: XOR<ChartLayoutCreateWithoutUserInput, ChartLayoutUncheckedCreateWithoutUserInput> | ChartLayoutCreateWithoutUserInput[] | ChartLayoutUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ChartLayoutCreateOrConnectWithoutUserInput | ChartLayoutCreateOrConnectWithoutUserInput[]
@@ -32492,26 +25821,6 @@ export namespace Prisma {
     connect?: UserNotificationWhereUniqueInput | UserNotificationWhereUniqueInput[]
   }
 
-  export type BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput> | BioSimulationQueueCreateWithoutUserInput[] | BioSimulationQueueUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSimulationQueueCreateOrConnectWithoutUserInput | BioSimulationQueueCreateOrConnectWithoutUserInput[]
-    createMany?: BioSimulationQueueCreateManyUserInputEnvelope
-    connect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-  }
-
-  export type BioSavedConfigUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput> | BioSavedConfigCreateWithoutUserInput[] | BioSavedConfigUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSavedConfigCreateOrConnectWithoutUserInput | BioSavedConfigCreateOrConnectWithoutUserInput[]
-    createMany?: BioSavedConfigCreateManyUserInputEnvelope
-    connect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-  }
-
-  export type BioSimulationStateUncheckedCreateNestedOneWithoutUserInput = {
-    create?: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-    connectOrCreate?: BioSimulationStateCreateOrConnectWithoutUserInput
-    connect?: BioSimulationStateWhereUniqueInput
-  }
-
   export type ChartLayoutUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<ChartLayoutCreateWithoutUserInput, ChartLayoutUncheckedCreateWithoutUserInput> | ChartLayoutCreateWithoutUserInput[] | ChartLayoutUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ChartLayoutCreateOrConnectWithoutUserInput | ChartLayoutCreateOrConnectWithoutUserInput[]
@@ -32575,8 +25884,8 @@ export namespace Prisma {
     set?: boolean
   }
 
-  export type EnumBioLanguageFieldUpdateOperationsInput = {
-    set?: $Enums.BioLanguage
+  export type EnumAppLanguageFieldUpdateOperationsInput = {
+    set?: $Enums.AppLanguage
   }
 
   export type AccessRequestUpdateManyWithoutUserNestedInput = {
@@ -32699,44 +26008,6 @@ export namespace Prisma {
     update?: UserNotificationUpdateWithWhereUniqueWithoutUserInput | UserNotificationUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: UserNotificationUpdateManyWithWhereWithoutUserInput | UserNotificationUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: UserNotificationScalarWhereInput | UserNotificationScalarWhereInput[]
-  }
-
-  export type BioSimulationQueueUpdateManyWithoutUserNestedInput = {
-    create?: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput> | BioSimulationQueueCreateWithoutUserInput[] | BioSimulationQueueUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSimulationQueueCreateOrConnectWithoutUserInput | BioSimulationQueueCreateOrConnectWithoutUserInput[]
-    upsert?: BioSimulationQueueUpsertWithWhereUniqueWithoutUserInput | BioSimulationQueueUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: BioSimulationQueueCreateManyUserInputEnvelope
-    set?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    disconnect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    delete?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    connect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    update?: BioSimulationQueueUpdateWithWhereUniqueWithoutUserInput | BioSimulationQueueUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: BioSimulationQueueUpdateManyWithWhereWithoutUserInput | BioSimulationQueueUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: BioSimulationQueueScalarWhereInput | BioSimulationQueueScalarWhereInput[]
-  }
-
-  export type BioSavedConfigUpdateManyWithoutUserNestedInput = {
-    create?: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput> | BioSavedConfigCreateWithoutUserInput[] | BioSavedConfigUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSavedConfigCreateOrConnectWithoutUserInput | BioSavedConfigCreateOrConnectWithoutUserInput[]
-    upsert?: BioSavedConfigUpsertWithWhereUniqueWithoutUserInput | BioSavedConfigUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: BioSavedConfigCreateManyUserInputEnvelope
-    set?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    disconnect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    delete?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    connect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    update?: BioSavedConfigUpdateWithWhereUniqueWithoutUserInput | BioSavedConfigUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: BioSavedConfigUpdateManyWithWhereWithoutUserInput | BioSavedConfigUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: BioSavedConfigScalarWhereInput | BioSavedConfigScalarWhereInput[]
-  }
-
-  export type BioSimulationStateUpdateOneWithoutUserNestedInput = {
-    create?: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-    connectOrCreate?: BioSimulationStateCreateOrConnectWithoutUserInput
-    upsert?: BioSimulationStateUpsertWithoutUserInput
-    disconnect?: BioSimulationStateWhereInput | boolean
-    delete?: BioSimulationStateWhereInput | boolean
-    connect?: BioSimulationStateWhereUniqueInput
-    update?: XOR<XOR<BioSimulationStateUpdateToOneWithWhereWithoutUserInput, BioSimulationStateUpdateWithoutUserInput>, BioSimulationStateUncheckedUpdateWithoutUserInput>
   }
 
   export type ChartLayoutUpdateManyWithoutUserNestedInput = {
@@ -32875,44 +26146,6 @@ export namespace Prisma {
     deleteMany?: UserNotificationScalarWhereInput | UserNotificationScalarWhereInput[]
   }
 
-  export type BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput> | BioSimulationQueueCreateWithoutUserInput[] | BioSimulationQueueUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSimulationQueueCreateOrConnectWithoutUserInput | BioSimulationQueueCreateOrConnectWithoutUserInput[]
-    upsert?: BioSimulationQueueUpsertWithWhereUniqueWithoutUserInput | BioSimulationQueueUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: BioSimulationQueueCreateManyUserInputEnvelope
-    set?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    disconnect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    delete?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    connect?: BioSimulationQueueWhereUniqueInput | BioSimulationQueueWhereUniqueInput[]
-    update?: BioSimulationQueueUpdateWithWhereUniqueWithoutUserInput | BioSimulationQueueUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: BioSimulationQueueUpdateManyWithWhereWithoutUserInput | BioSimulationQueueUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: BioSimulationQueueScalarWhereInput | BioSimulationQueueScalarWhereInput[]
-  }
-
-  export type BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput> | BioSavedConfigCreateWithoutUserInput[] | BioSavedConfigUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: BioSavedConfigCreateOrConnectWithoutUserInput | BioSavedConfigCreateOrConnectWithoutUserInput[]
-    upsert?: BioSavedConfigUpsertWithWhereUniqueWithoutUserInput | BioSavedConfigUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: BioSavedConfigCreateManyUserInputEnvelope
-    set?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    disconnect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    delete?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    connect?: BioSavedConfigWhereUniqueInput | BioSavedConfigWhereUniqueInput[]
-    update?: BioSavedConfigUpdateWithWhereUniqueWithoutUserInput | BioSavedConfigUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: BioSavedConfigUpdateManyWithWhereWithoutUserInput | BioSavedConfigUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: BioSavedConfigScalarWhereInput | BioSavedConfigScalarWhereInput[]
-  }
-
-  export type BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput = {
-    create?: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-    connectOrCreate?: BioSimulationStateCreateOrConnectWithoutUserInput
-    upsert?: BioSimulationStateUpsertWithoutUserInput
-    disconnect?: BioSimulationStateWhereInput | boolean
-    delete?: BioSimulationStateWhereInput | boolean
-    connect?: BioSimulationStateWhereUniqueInput
-    update?: XOR<XOR<BioSimulationStateUpdateToOneWithWhereWithoutUserInput, BioSimulationStateUpdateWithoutUserInput>, BioSimulationStateUncheckedUpdateWithoutUserInput>
-  }
-
   export type ChartLayoutUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<ChartLayoutCreateWithoutUserInput, ChartLayoutUncheckedCreateWithoutUserInput> | ChartLayoutCreateWithoutUserInput[] | ChartLayoutUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ChartLayoutCreateOrConnectWithoutUserInput | ChartLayoutCreateOrConnectWithoutUserInput[]
@@ -32939,20 +26172,6 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutChartLayoutsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutChartLayoutsInput, UserUpdateWithoutChartLayoutsInput>, UserUncheckedUpdateWithoutChartLayoutsInput>
-  }
-
-  export type UserCreateNestedOneWithoutSavedConfigsInput = {
-    create?: XOR<UserCreateWithoutSavedConfigsInput, UserUncheckedCreateWithoutSavedConfigsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSavedConfigsInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type UserUpdateOneRequiredWithoutSavedConfigsNestedInput = {
-    create?: XOR<UserCreateWithoutSavedConfigsInput, UserUncheckedCreateWithoutSavedConfigsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSavedConfigsInput
-    upsert?: UserUpsertWithoutSavedConfigsInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSavedConfigsInput, UserUpdateWithoutSavedConfigsInput>, UserUncheckedUpdateWithoutSavedConfigsInput>
   }
 
   export type UserCreateNestedOneWithoutNotificationsInput = {
@@ -33199,38 +26418,6 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPagarMeOrdersInput, UserUpdateWithoutPagarMeOrdersInput>, UserUncheckedUpdateWithoutPagarMeOrdersInput>
   }
 
-  export type UserCreateNestedOneWithoutSimulationQueueInput = {
-    create?: XOR<UserCreateWithoutSimulationQueueInput, UserUncheckedCreateWithoutSimulationQueueInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSimulationQueueInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type EnumBioQueueStatusFieldUpdateOperationsInput = {
-    set?: $Enums.BioQueueStatus
-  }
-
-  export type UserUpdateOneRequiredWithoutSimulationQueueNestedInput = {
-    create?: XOR<UserCreateWithoutSimulationQueueInput, UserUncheckedCreateWithoutSimulationQueueInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSimulationQueueInput
-    upsert?: UserUpsertWithoutSimulationQueueInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSimulationQueueInput, UserUpdateWithoutSimulationQueueInput>, UserUncheckedUpdateWithoutSimulationQueueInput>
-  }
-
-  export type UserCreateNestedOneWithoutSimulationStateInput = {
-    create?: XOR<UserCreateWithoutSimulationStateInput, UserUncheckedCreateWithoutSimulationStateInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSimulationStateInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type UserUpdateOneRequiredWithoutSimulationStateNestedInput = {
-    create?: XOR<UserCreateWithoutSimulationStateInput, UserUncheckedCreateWithoutSimulationStateInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSimulationStateInput
-    upsert?: UserUpsertWithoutSimulationStateInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSimulationStateInput, UserUpdateWithoutSimulationStateInput>, UserUncheckedUpdateWithoutSimulationStateInput>
-  }
-
   export type BigIntFieldUpdateOperationsInput = {
     set?: bigint | number
     increment?: bigint | number
@@ -33348,11 +26535,11 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type NestedEnumBioLanguageFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioLanguage | EnumBioLanguageFieldRefInput<$PrismaModel>
-    in?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioLanguageFilter<$PrismaModel> | $Enums.BioLanguage
+  export type NestedEnumAppLanguageFilter<$PrismaModel = never> = {
+    equals?: $Enums.AppLanguage | EnumAppLanguageFieldRefInput<$PrismaModel>
+    in?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    not?: NestedEnumAppLanguageFilter<$PrismaModel> | $Enums.AppLanguage
   }
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -33525,14 +26712,14 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
-  export type NestedEnumBioLanguageWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioLanguage | EnumBioLanguageFieldRefInput<$PrismaModel>
-    in?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioLanguage[] | ListEnumBioLanguageFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioLanguageWithAggregatesFilter<$PrismaModel> | $Enums.BioLanguage
+  export type NestedEnumAppLanguageWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AppLanguage | EnumAppLanguageFieldRefInput<$PrismaModel>
+    in?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
+    not?: NestedEnumAppLanguageWithAggregatesFilter<$PrismaModel> | $Enums.AppLanguage
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumBioLanguageFilter<$PrismaModel>
-    _max?: NestedEnumBioLanguageFilter<$PrismaModel>
+    _min?: NestedEnumAppLanguageFilter<$PrismaModel>
+    _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -33542,29 +26729,6 @@ export namespace Prisma {
     | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
 
   export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
     equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
     path?: string[]
     mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
@@ -33631,6 +26795,29 @@ export namespace Prisma {
     _min?: NestedEnumTxSourceFilter<$PrismaModel>
     _max?: NestedEnumTxSourceFilter<$PrismaModel>
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedEnumCheckoutStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.CheckoutStatus | EnumCheckoutStatusFieldRefInput<$PrismaModel>
@@ -33647,23 +26834,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCheckoutStatusFilter<$PrismaModel>
     _max?: NestedEnumCheckoutStatusFilter<$PrismaModel>
-  }
-
-  export type NestedEnumBioQueueStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioQueueStatus | EnumBioQueueStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioQueueStatusFilter<$PrismaModel> | $Enums.BioQueueStatus
-  }
-
-  export type NestedEnumBioQueueStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.BioQueueStatus | EnumBioQueueStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.BioQueueStatus[] | ListEnumBioQueueStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumBioQueueStatusWithAggregatesFilter<$PrismaModel> | $Enums.BioQueueStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumBioQueueStatusFilter<$PrismaModel>
-    _max?: NestedEnumBioQueueStatusFilter<$PrismaModel>
   }
 
   export type NestedBigIntFilter<$PrismaModel = never> = {
@@ -33954,83 +27124,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type BioSimulationQueueCreateWithoutUserInput = {
-    id?: string
-    queueName: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-  }
-
-  export type BioSimulationQueueUncheckedCreateWithoutUserInput = {
-    id?: string
-    queueName: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-  }
-
-  export type BioSimulationQueueCreateOrConnectWithoutUserInput = {
-    where: BioSimulationQueueWhereUniqueInput
-    create: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput>
-  }
-
-  export type BioSimulationQueueCreateManyUserInputEnvelope = {
-    data: BioSimulationQueueCreateManyUserInput | BioSimulationQueueCreateManyUserInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type BioSavedConfigCreateWithoutUserInput = {
-    id?: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioSavedConfigUncheckedCreateWithoutUserInput = {
-    id?: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type BioSavedConfigCreateOrConnectWithoutUserInput = {
-    where: BioSavedConfigWhereUniqueInput
-    create: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput>
-  }
-
-  export type BioSavedConfigCreateManyUserInputEnvelope = {
-    data: BioSavedConfigCreateManyUserInput | BioSavedConfigCreateManyUserInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type BioSimulationStateCreateWithoutUserInput = {
-    state: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: Date | string
-  }
-
-  export type BioSimulationStateUncheckedCreateWithoutUserInput = {
-    state: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: Date | string
-  }
-
-  export type BioSimulationStateCreateOrConnectWithoutUserInput = {
-    where: BioSimulationStateWhereUniqueInput
-    create: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-  }
-
   export type ChartLayoutCreateWithoutUserInput = {
     slot: number
     config: JsonNullValueInput | InputJsonValue
@@ -34319,89 +27412,6 @@ export namespace Prisma {
     expiredDate?: DateTimeFilter<"UserNotification"> | Date | string
   }
 
-  export type BioSimulationQueueUpsertWithWhereUniqueWithoutUserInput = {
-    where: BioSimulationQueueWhereUniqueInput
-    update: XOR<BioSimulationQueueUpdateWithoutUserInput, BioSimulationQueueUncheckedUpdateWithoutUserInput>
-    create: XOR<BioSimulationQueueCreateWithoutUserInput, BioSimulationQueueUncheckedCreateWithoutUserInput>
-  }
-
-  export type BioSimulationQueueUpdateWithWhereUniqueWithoutUserInput = {
-    where: BioSimulationQueueWhereUniqueInput
-    data: XOR<BioSimulationQueueUpdateWithoutUserInput, BioSimulationQueueUncheckedUpdateWithoutUserInput>
-  }
-
-  export type BioSimulationQueueUpdateManyWithWhereWithoutUserInput = {
-    where: BioSimulationQueueScalarWhereInput
-    data: XOR<BioSimulationQueueUpdateManyMutationInput, BioSimulationQueueUncheckedUpdateManyWithoutUserInput>
-  }
-
-  export type BioSimulationQueueScalarWhereInput = {
-    AND?: BioSimulationQueueScalarWhereInput | BioSimulationQueueScalarWhereInput[]
-    OR?: BioSimulationQueueScalarWhereInput[]
-    NOT?: BioSimulationQueueScalarWhereInput | BioSimulationQueueScalarWhereInput[]
-    id?: StringFilter<"BioSimulationQueue"> | string
-    queueName?: StringFilter<"BioSimulationQueue"> | string
-    userId?: StringFilter<"BioSimulationQueue"> | string
-    status?: EnumBioQueueStatusFilter<"BioSimulationQueue"> | $Enums.BioQueueStatus
-    payload?: JsonFilter<"BioSimulationQueue">
-    result?: JsonNullableFilter<"BioSimulationQueue">
-    createdAt?: DateTimeFilter<"BioSimulationQueue"> | Date | string
-  }
-
-  export type BioSavedConfigUpsertWithWhereUniqueWithoutUserInput = {
-    where: BioSavedConfigWhereUniqueInput
-    update: XOR<BioSavedConfigUpdateWithoutUserInput, BioSavedConfigUncheckedUpdateWithoutUserInput>
-    create: XOR<BioSavedConfigCreateWithoutUserInput, BioSavedConfigUncheckedCreateWithoutUserInput>
-  }
-
-  export type BioSavedConfigUpdateWithWhereUniqueWithoutUserInput = {
-    where: BioSavedConfigWhereUniqueInput
-    data: XOR<BioSavedConfigUpdateWithoutUserInput, BioSavedConfigUncheckedUpdateWithoutUserInput>
-  }
-
-  export type BioSavedConfigUpdateManyWithWhereWithoutUserInput = {
-    where: BioSavedConfigScalarWhereInput
-    data: XOR<BioSavedConfigUpdateManyMutationInput, BioSavedConfigUncheckedUpdateManyWithoutUserInput>
-  }
-
-  export type BioSavedConfigScalarWhereInput = {
-    AND?: BioSavedConfigScalarWhereInput | BioSavedConfigScalarWhereInput[]
-    OR?: BioSavedConfigScalarWhereInput[]
-    NOT?: BioSavedConfigScalarWhereInput | BioSavedConfigScalarWhereInput[]
-    id?: StringFilter<"BioSavedConfig"> | string
-    userId?: StringFilter<"BioSavedConfig"> | string
-    name?: StringFilter<"BioSavedConfig"> | string
-    private?: BoolFilter<"BioSavedConfig"> | boolean
-    config?: JsonFilter<"BioSavedConfig">
-    mapDisplayByYear?: JsonNullableFilter<"BioSavedConfig">
-    likes?: IntFilter<"BioSavedConfig"> | number
-    createdAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-    updatedAt?: DateTimeFilter<"BioSavedConfig"> | Date | string
-  }
-
-  export type BioSimulationStateUpsertWithoutUserInput = {
-    update: XOR<BioSimulationStateUpdateWithoutUserInput, BioSimulationStateUncheckedUpdateWithoutUserInput>
-    create: XOR<BioSimulationStateCreateWithoutUserInput, BioSimulationStateUncheckedCreateWithoutUserInput>
-    where?: BioSimulationStateWhereInput
-  }
-
-  export type BioSimulationStateUpdateToOneWithWhereWithoutUserInput = {
-    where?: BioSimulationStateWhereInput
-    data: XOR<BioSimulationStateUpdateWithoutUserInput, BioSimulationStateUncheckedUpdateWithoutUserInput>
-  }
-
-  export type BioSimulationStateUpdateWithoutUserInput = {
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationStateUncheckedUpdateWithoutUserInput = {
-    state?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type ChartLayoutUpsertWithWhereUniqueWithoutUserInput = {
     where: ChartLayoutWhereUniqueInput
     update: XOR<ChartLayoutUpdateWithoutUserInput, ChartLayoutUncheckedUpdateWithoutUserInput>
@@ -34464,7 +27474,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -34475,9 +27485,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartLayoutsInput = {
@@ -34516,7 +27523,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -34527,9 +27534,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartLayoutsInput = {
@@ -34584,7 +27588,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -34595,9 +27599,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartLayoutsInput = {
@@ -34636,7 +27637,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -34647,233 +27648,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
-  }
-
-  export type UserCreateWithoutSavedConfigsInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
-    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutSavedConfigsInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
-    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutSavedConfigsInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutSavedConfigsInput, UserUncheckedCreateWithoutSavedConfigsInput>
-  }
-
-  export type UserUpsertWithoutSavedConfigsInput = {
-    update: XOR<UserUpdateWithoutSavedConfigsInput, UserUncheckedUpdateWithoutSavedConfigsInput>
-    create: XOR<UserCreateWithoutSavedConfigsInput, UserUncheckedCreateWithoutSavedConfigsInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutSavedConfigsInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutSavedConfigsInput, UserUncheckedUpdateWithoutSavedConfigsInput>
-  }
-
-  export type UserUpdateWithoutSavedConfigsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutSavedConfigsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -34912,7 +27686,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -34922,9 +27696,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -34964,7 +27735,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -34974,9 +27745,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -35032,7 +27800,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -35042,9 +27810,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -35084,7 +27849,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -35094,9 +27859,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -35136,7 +27898,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -35146,9 +27908,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -35188,7 +27947,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -35198,9 +27957,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -35256,7 +28012,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -35266,9 +28022,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -35308,7 +28061,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -35318,9 +28071,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -35360,7 +28110,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -35370,9 +28120,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -35412,7 +28159,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -35422,9 +28169,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -35480,7 +28224,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -35490,9 +28234,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -35532,7 +28273,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -35542,9 +28283,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -35584,7 +28322,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -35594,9 +28332,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -35636,7 +28371,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -35646,9 +28381,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -35704,7 +28436,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -35714,9 +28446,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -35756,7 +28485,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -35766,9 +28495,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -35842,7 +28568,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -35852,9 +28578,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -35894,7 +28617,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -35904,9 +28627,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -35978,7 +28698,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -35988,9 +28708,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -36030,7 +28747,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -36040,9 +28757,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -36082,7 +28796,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -36092,9 +28806,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -36134,7 +28845,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -36144,9 +28855,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -36248,7 +28956,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -36258,9 +28966,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -36300,7 +29005,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -36310,9 +29015,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -36439,7 +29141,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -36449,9 +29151,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -36491,7 +29190,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -36501,9 +29200,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -36594,7 +29290,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -36604,9 +29300,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -36646,7 +29339,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -36656,9 +29349,6 @@ export namespace Prisma {
     passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -36698,7 +29388,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -36708,9 +29398,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -36750,7 +29437,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -36760,9 +29447,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -36818,7 +29502,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -36828,9 +29512,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -36870,7 +29551,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -36880,9 +29561,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -36922,7 +29600,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
@@ -36932,9 +29610,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
   }
 
@@ -36974,7 +29649,7 @@ export namespace Prisma {
     notifyQuina?: boolean
     hideStatusBar?: boolean
     progress?: number
-    language?: $Enums.BioLanguage
+    language?: $Enums.AppLanguage
     timezoneOffset?: number
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
@@ -36984,9 +29659,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -37042,7 +29714,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
@@ -37052,9 +29724,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
   }
 
@@ -37094,7 +29763,7 @@ export namespace Prisma {
     notifyQuina?: BoolFieldUpdateOperationsInput | boolean
     hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
     progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
@@ -37104,457 +29773,6 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserCreateWithoutSimulationQueueInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateCreateNestedOneWithoutUserInput
-    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutSimulationQueueInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    simulationState?: BioSimulationStateUncheckedCreateNestedOneWithoutUserInput
-    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutSimulationQueueInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutSimulationQueueInput, UserUncheckedCreateWithoutSimulationQueueInput>
-  }
-
-  export type UserUpsertWithoutSimulationQueueInput = {
-    update: XOR<UserUpdateWithoutSimulationQueueInput, UserUncheckedUpdateWithoutSimulationQueueInput>
-    create: XOR<UserCreateWithoutSimulationQueueInput, UserUncheckedCreateWithoutSimulationQueueInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutSimulationQueueInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutSimulationQueueInput, UserUncheckedUpdateWithoutSimulationQueueInput>
-  }
-
-  export type UserUpdateWithoutSimulationQueueInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUpdateOneWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutSimulationQueueInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
-    simulationState?: BioSimulationStateUncheckedUpdateOneWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserCreateWithoutSimulationStateInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigCreateNestedManyWithoutUserInput
-    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutSimulationStateInput = {
-    id?: string
-    emailEnc: string
-    emailIv: string
-    emailTag: string
-    emailSearchHash: string
-    emailVerifiedAt?: Date | string | null
-    name?: string | null
-    passwordHash: string
-    specialCodeHash?: string | null
-    specialExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    role?: $Enums.Role
-    tier?: $Enums.Tier
-    nickname?: string | null
-    nicknameChanges?: number
-    avatarId?: number
-    avatarBorder?: string
-    avatarSkinTone?: number | null
-    avatarColorTone?: number | null
-    sevenPoints?: number
-    ganhoSimulado?: Decimal | DecimalJsLike | number | string
-    userLevel?: $Enums.UserLevel
-    position?: number | null
-    tmp?: boolean
-    isDeleted?: boolean
-    dataExclusao?: Date | string | null
-    dataExpiracao?: Date | string | null
-    pushToken?: string | null
-    pushTokenUpdated?: Date | string | null
-    notifyMegaSena?: boolean
-    notifyLotofacil?: boolean
-    notifyQuina?: boolean
-    hideStatusBar?: boolean
-    progress?: number
-    language?: $Enums.BioLanguage
-    timezoneOffset?: number
-    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
-    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
-    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
-    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
-    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
-    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
-    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
-    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
-    simulationQueue?: BioSimulationQueueUncheckedCreateNestedManyWithoutUserInput
-    savedConfigs?: BioSavedConfigUncheckedCreateNestedManyWithoutUserInput
-    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutSimulationStateInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutSimulationStateInput, UserUncheckedCreateWithoutSimulationStateInput>
-  }
-
-  export type UserUpsertWithoutSimulationStateInput = {
-    update: XOR<UserUpdateWithoutSimulationStateInput, UserUncheckedUpdateWithoutSimulationStateInput>
-    create: XOR<UserCreateWithoutSimulationStateInput, UserUncheckedCreateWithoutSimulationStateInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutSimulationStateInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutSimulationStateInput, UserUncheckedUpdateWithoutSimulationStateInput>
-  }
-
-  export type UserUpdateWithoutSimulationStateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUpdateManyWithoutUserNestedInput
-    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutSimulationStateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    emailEnc?: StringFieldUpdateOperationsInput | string
-    emailIv?: StringFieldUpdateOperationsInput | string
-    emailTag?: StringFieldUpdateOperationsInput | string
-    emailSearchHash?: StringFieldUpdateOperationsInput | string
-    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
-    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
-    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
-    nickname?: NullableStringFieldUpdateOperationsInput | string | null
-    nicknameChanges?: IntFieldUpdateOperationsInput | number
-    avatarId?: IntFieldUpdateOperationsInput | number
-    avatarBorder?: StringFieldUpdateOperationsInput | string
-    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
-    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
-    sevenPoints?: IntFieldUpdateOperationsInput | number
-    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
-    position?: NullableIntFieldUpdateOperationsInput | number | null
-    tmp?: BoolFieldUpdateOperationsInput | boolean
-    isDeleted?: BoolFieldUpdateOperationsInput | boolean
-    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
-    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
-    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
-    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
-    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
-    progress?: IntFieldUpdateOperationsInput | number
-    language?: EnumBioLanguageFieldUpdateOperationsInput | $Enums.BioLanguage
-    timezoneOffset?: IntFieldUpdateOperationsInput | number
-    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
-    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
-    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
-    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
-    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
-    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
-    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
-    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
-    simulationQueue?: BioSimulationQueueUncheckedUpdateManyWithoutUserNestedInput
-    savedConfigs?: BioSavedConfigUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -37635,26 +29853,6 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     expiredDate: Date | string
-  }
-
-  export type BioSimulationQueueCreateManyUserInput = {
-    id?: string
-    queueName: string
-    status?: $Enums.BioQueueStatus
-    payload: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-  }
-
-  export type BioSavedConfigCreateManyUserInput = {
-    id?: string
-    name: string
-    private?: boolean
-    config: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
   }
 
   export type ChartLayoutCreateManyUserInput = {
@@ -37900,66 +30098,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiredDate?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSimulationQueueUncheckedUpdateManyWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    queueName?: StringFieldUpdateOperationsInput | string
-    status?: EnumBioQueueStatusFieldUpdateOperationsInput | $Enums.BioQueueStatus
-    payload?: JsonNullValueInput | InputJsonValue
-    result?: NullableJsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type BioSavedConfigUncheckedUpdateManyWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    private?: BoolFieldUpdateOperationsInput | boolean
-    config?: JsonNullValueInput | InputJsonValue
-    mapDisplayByYear?: NullableJsonNullValueInput | InputJsonValue
-    likes?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ChartLayoutUpdateWithoutUserInput = {

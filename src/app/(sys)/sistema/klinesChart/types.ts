@@ -105,11 +105,14 @@ export type KlinesChartProps = {
   onIntervalChange?: (value: number) => void;
   width: number;
   indicatorLines?: ChartIndicatorLine[];
-  onLayoutConfigLoaded?: (config: Record<string, unknown>) => void;
+  /** slot 0 = layout padrão (não sobrescreve appliedStrategyIds); 1–7 = layout do usuário. */
+  onLayoutConfigLoaded?: (config: Record<string, unknown>, slot?: number) => void;
   /** Chamado ao salvar o layout; o retorno é mesclado ao config (ex.: userIndicators, prefs do painel). */
   getLayoutExtraConfig?: () => Record<string, unknown>;
   /** Quando muda, salva automaticamente o layout do slot atual (se houver). */
   layoutAutoSaveTick?: number;
+  /** Incrementado ao aplicar layout no carregamento; força o gráfico a re-renderizar com strategyCandleOverlays atualizados. */
+  layoutAppliedTick?: number;
   maxChartHeight?: number;
   /** Chamado quando as dimensões do gráfico mudam (ex.: tamanho 125%). Permite ao container se ajustar sem scroll horizontal. sizePercent = 100 | 125 para cálculo estável. */
   onChartDimensionsChange?: (width: number, height: number, sizePercent: number) => void;
