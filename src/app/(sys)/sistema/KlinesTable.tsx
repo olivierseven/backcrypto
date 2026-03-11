@@ -266,6 +266,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [error, setError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  /** Timestamp da última mensagem recebida do WebSocket (miniTicker); usado na bolinha de status. */
+  const [lastWsActivityAt, setLastWsActivityAt] = useState<number | null>(null);
+  /** Tick para re-render da bolinha de status (atualiza a cada 15s). */
+  const [, setStatusTick] = useState(0);
   /** Fuso do utilizador (API aplica a openTime/closeTime); usado para contar fechamento do candle em UTC. */
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
@@ -726,6 +730,12 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     return () => clearInterval(interval);
   }, [symbol]);
 
+  // Atualizar bolinha de status a cada 15s (idade da última atualização)
+  useEffect(() => {
+    const t = setInterval(() => setStatusTick((n) => n + 1), 15000);
+    return () => clearInterval(t);
+  }, []);
+
   // Preço spot em tempo real (miniTicker) direto da Binance via WebSocket — usado no header
   useEffect(() => {
     const sym = symbol.trim();
@@ -745,6 +755,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         ws = new WebSocket(url);
         ws.onmessage = (ev) => {
           if (!alive) return;
+          setLastWsActivityAt(Date.now());
           try {
             const msg = JSON.parse(String(ev.data)) as { c?: string };
             const price = typeof msg?.c === "string" ? msg.c : null;
@@ -776,8 +787,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       }
     };
 
-    // ao trocar símbolo, limpa o preço anterior para evitar mostrar BTC quando mudou para ETH (até chegar 1.º evento)
+    // ao trocar símbolo, limpa o preço anterior e o status WS até chegar 1.º evento
     setSpotWsPrice(null);
+    setLastWsActivityAt(null);
     connect();
     return () => {
       alive = false;
@@ -1097,9 +1109,34 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             }}
           />
           {lastUpdate && (
-            <div className="w-full text-center mt-1 pb-0.5">
-              <span className="text-[10px] text-zinc-500">
+            <div className="w-full flex items-center mt-1 pb-0.5 px-0.5 pr-3">
+              <span className="flex-1" aria-hidden />
+              <span className="text-[10px] text-zinc-500 text-center shrink-0">
                 {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
+              </span>
+              <span className="flex-1 flex justify-end shrink-0 pr-1">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  title={
+                    (() => {
+                      const statusAt = lastWsActivityAt ?? lastUpdate.getTime();
+                      const ageMs = Date.now() - statusAt;
+                      if (ageMs < 60000) return t.statusOnline ?? "Atualizado há menos de 1 min";
+                      if (ageMs < 300000) return t.statusDelayed ?? "Atraso entre 1 e 5 min";
+                      return t.statusStale ?? "Atraso acima de 5 min";
+                    })()
+                  }
+                  aria-hidden
+                  style={{
+                    backgroundColor: (() => {
+                      const statusAt = lastWsActivityAt ?? lastUpdate.getTime();
+                      const ageMs = Date.now() - statusAt;
+                      if (ageMs < 60000) return "#22c55e";
+                      if (ageMs < 300000) return "#f97316";
+                      return "#ef4444";
+                    })(),
+                  }}
+                />
               </span>
             </div>
           )}
