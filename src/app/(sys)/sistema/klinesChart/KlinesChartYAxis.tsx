@@ -3,8 +3,19 @@
 /**
  * Eixo Y (USDT) à direita do gráfico: ticks, último fechamento, valores dos indicadores, marcador do crosshair.
  */
+import { useState, useEffect } from "react";
 import { Y_AXIS_WIDTH } from "../KlinesChartConstants";
 import type { ChartIndicatorLine } from "./types";
+
+const MS_24H = 24 * 60 * 60 * 1000;
+
+function formatCountdown(remainingMs: number): string {
+  const totalSec = Math.max(0, Math.floor(remainingMs / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
 
 export interface KlinesChartYAxisProps {
   chartHeight: number;
@@ -34,6 +45,12 @@ export interface KlinesChartYAxisProps {
   lastCloseY: number;
   lastClose: number;
   lastCloseTextHex: string;
+  /** Momento de fechamento do candle atual (openTime + interval), em ms. Se &lt; 24h para fechar, mostra contagem regressiva abaixo do fechamento. */
+  currentCandleCloseTimeMs: number | null;
+  /** Exibir contagem regressiva do candle no eixo Y (default true). Só aplica quando groupMinutes ≤ 1440 (≤1D). */
+  showCandleCountdown?: boolean;
+  /** Intervalo do gráfico em minutos; contagem regressiva só para ≤ 1440 (1D). */
+  groupMinutes?: number;
   indicatorLines: ChartIndicatorLine[];
   klines: unknown[][];
   n: number;
@@ -81,6 +98,9 @@ export function KlinesChartYAxis({
   lastCloseY,
   lastClose,
   lastCloseTextHex,
+  currentCandleCloseTimeMs,
+  showCandleCountdown = true,
+  groupMinutes,
   indicatorLines,
   klines,
   n,
@@ -103,6 +123,29 @@ export function KlinesChartYAxis({
   const boxWidth = yAxisAbbreviated ? 44 : 56;
   const boxX = Y_AXIS_WIDTH - boxWidth - 2; // 60 - 44 - 2 = 14 (abbrev) ou 60 - 56 - 2 = 2 (long)
   const textX = 4;
+
+  const [countdown, setCountdown] = useState<string | null>(null);
+  useEffect(() => {
+    if (currentCandleCloseTimeMs == null || (groupMinutes != null && groupMinutes > 1440)) {
+      setCountdown(null);
+      return;
+    }
+    const tick = () => {
+      const remaining = currentCandleCloseTimeMs - Date.now();
+      if (remaining <= 0) {
+        setCountdown(null);
+        return;
+      }
+      if (remaining < MS_24H) {
+        setCountdown(formatCountdown(remaining));
+      } else {
+        setCountdown(null);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [currentCandleCloseTimeMs, groupMinutes]);
 
   return (
     <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
@@ -335,7 +378,7 @@ export function KlinesChartYAxis({
               x={boxX}
               y={lastCloseY - 7}
               width={boxWidth}
-              height={14}
+              height={showCandleCountdown && countdown != null ? 28 : 14}
               fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
               stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
               strokeWidth={1}
@@ -344,6 +387,11 @@ export function KlinesChartYAxis({
             <text x={textX} y={lastCloseY + 4} textAnchor="start" className="font-semibold" style={{ fontSize }} fill={lastCloseTextHex}>
               {formatYAxis(lastClose)}
             </text>
+            {showCandleCountdown && countdown != null && (
+              <text x={textX} y={lastCloseY + 15} textAnchor="start" className="font-mono" style={{ fontSize }} fill={lastCloseTextHex}>
+                {countdown}
+              </text>
+            )}
           </g>
         )}
       </svg>

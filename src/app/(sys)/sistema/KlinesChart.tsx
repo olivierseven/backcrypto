@@ -101,7 +101,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange }: KlinesChartProps) {
   const pathname = usePathname();
   const { addLayoutLoadLog } = useSistemaDebug();
   const lang = useCryptoLang();
@@ -135,6 +135,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const [showMainAxis, setShowMainAxis] = useState(true);
   const [showSecondaryAxis, setShowSecondaryAxis] = useState(true);
   const [showLastCloseLine, setShowLastCloseLine] = useState(true);
+  const [showCandleCountdown, setShowCandleCountdown] = useState(true);
   const [invisibleCandlesEnd, setInvisibleCandlesEnd] = useState(INVISIBLE_CANDLES_END);
   const [secondaryPanelHeightPercent, setSecondaryPanelHeightPercent] = useState(SECONDARY_PANEL_HEIGHT_DEFAULT);
   const [candleColorPreset, setCandleColorPreset] = useState<CandleColorPresetId>(DEFAULT_CANDLE_PRESET);
@@ -502,7 +503,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number; chartStyle?: "candles" | "bars" | "line" | "linePoints"; candleBodyStyle?: "filled" | "hollow" };
+      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; showCandleCountdown?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number; chartStyle?: "candles" | "bars" | "line" | "linePoints"; candleBodyStyle?: "filled" | "hollow" };
       if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
@@ -518,6 +519,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       if (typeof data.showMainAxis === "boolean") setShowMainAxis(data.showMainAxis);
       if (typeof data.showSecondaryAxis === "boolean") setShowSecondaryAxis(data.showSecondaryAxis);
       if (typeof data.showLastCloseLine === "boolean") setShowLastCloseLine(data.showLastCloseLine);
+      if (typeof data.showCandleCountdown === "boolean") setShowCandleCountdown(data.showCandleCountdown);
       if (typeof data.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseLineColor)) setLastCloseLineColor(data.lastCloseLineColor as LineGridId);
       if (typeof data.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseTextColor)) setLastCloseTextColor(data.lastCloseTextColor as LineGridId);
       if (typeof data.secondaryPanelHeightPercent === "number" && data.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && data.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(data.secondaryPanelHeightPercent));
@@ -537,12 +539,12 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       if (typeof window === "undefined") return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle]);
 
   // Toda vez que entrar na página do gráfico: carregar layout do banco e reaplicar (incluindo estratégias aplicadas).
   const lastLayoutApplyAtRef = useRef<number>(0);
@@ -710,7 +712,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
     const extra = getLayoutExtraConfig?.() ?? {};
     const config = { ...baseConfig, ...extra };
     const res = await fetch(`${API_BASE}/chart-layouts`, {
@@ -750,7 +752,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
       if (!Number.isInteger(slot)) return;
       // Nunca auto-salvar no layout padrão (slot 0) se o usuário não for admin
       if (slot === 0 && !canSaveDefault) return;
-      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
+      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, groupMinutes };
       const extra = getLayoutExtraConfig?.() ?? {};
       const config = { ...baseConfig, ...extra };
       await fetch(`${API_BASE}/chart-layouts`, {
@@ -761,7 +763,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     } catch {
       /* ignore */
     }
-  }, [canSaveDefault, backgroundTextColor, candleColorPreset, chartBackground, chartSizePercent, containerBackground, footerYAxisBgColor, footerYAxisTextColor, getLayoutExtraConfig, groupMinutes, invisibleCandlesEnd, lastCloseLineColor, lastCloseTextColor, lineTableColor, logScale, secondaryGridColor, secondaryPanelHeightPercent, showLastCloseLine, showMainAxis, showSecondaryAxis, volumeOnPrice, volumeOnPriceOpacity, visibleCount, yAxisAbbreviated]);
+  }, [canSaveDefault, backgroundTextColor, candleColorPreset, chartBackground, chartSizePercent, containerBackground, footerYAxisBgColor, footerYAxisTextColor, getLayoutExtraConfig, groupMinutes, invisibleCandlesEnd, lastCloseLineColor, lastCloseTextColor, lineTableColor, logScale, secondaryGridColor, secondaryPanelHeightPercent, showCandleCountdown, showLastCloseLine, showMainAxis, showSecondaryAxis, volumeOnPrice, volumeOnPriceOpacity, visibleCount, yAxisAbbreviated]);
 
   useEffect(() => {
     if (!layoutAutoSaveTick) return;
@@ -786,6 +788,7 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     if (typeof c.showMainAxis === "boolean") setShowMainAxis(c.showMainAxis);
     if (typeof c.showSecondaryAxis === "boolean") setShowSecondaryAxis(c.showSecondaryAxis);
     if (typeof c.showLastCloseLine === "boolean") setShowLastCloseLine(c.showLastCloseLine);
+    if (typeof c.showCandleCountdown === "boolean") setShowCandleCountdown(c.showCandleCountdown);
     if (typeof c.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseLineColor)) setLastCloseLineColor(c.lastCloseLineColor as LineGridId);
     if (typeof c.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseTextColor)) setLastCloseTextColor(c.lastCloseTextColor as LineGridId);
     if (typeof c.invisibleCandlesEnd === "number" && c.invisibleCandlesEnd >= 0 && c.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(c.invisibleCandlesEnd);
@@ -1264,6 +1267,13 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const lastCloseInVisibleRange =
     lastClose >= yMin && lastClose <= yMax;
   const showLastClose = lastClose > 0 && lastCloseInVisibleRange;
+  const rawOpenTime = n > 0 ? klines[0][0] : null;
+  const openTimeMs = rawOpenTime != null ? (typeof rawOpenTime === "number" ? rawOpenTime : Number(rawOpenTime)) : null;
+  const offsetMs = timezoneOffset * 60 * 60 * 1000;
+  const validCloseTimeMs =
+    openTimeMs != null && Number.isFinite(openTimeMs)
+      ? (openTimeMs - offsetMs) + groupMinutes * 60 * 1000
+      : null;
 
   const totalChartWidth = displayPlotWidth + Y_AXIS_WIDTH;
   chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };
@@ -1334,6 +1344,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             setShowSecondaryAxis={setShowSecondaryAxis}
             showLastCloseLine={showLastCloseLine}
             setShowLastCloseLine={setShowLastCloseLine}
+            showCandleCountdown={showCandleCountdown}
+            setShowCandleCountdown={setShowCandleCountdown}
             invisibleCandlesEnd={invisibleCandlesEnd}
             setInvisibleCandlesEnd={setInvisibleCandlesEnd}
             secondaryPanelHeightPercent={secondaryPanelHeightPercent}
@@ -1889,6 +1901,9 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
                 lastCloseY={lastCloseY}
                 lastClose={lastClose}
                 lastCloseTextHex={lastCloseTextHex}
+                currentCandleCloseTimeMs={validCloseTimeMs}
+                showCandleCountdown={showCandleCountdown}
+                groupMinutes={groupMinutes}
                 indicatorLines={indicatorLines}
                 klines={klines}
                 n={n}

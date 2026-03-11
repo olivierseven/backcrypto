@@ -15,6 +15,7 @@ export const DEFAULT_LAYOUT_FALLBACK: Record<string, unknown> = {
   yAxisAbbreviated: false,
   candleColorPreset: "greenRed",
   showLastCloseLine: true,
+  showCandleCountdown: true,
   showSecondaryAxis: false,
   appliedStrategyIds: [],
   footerYAxisBgColor: 7,

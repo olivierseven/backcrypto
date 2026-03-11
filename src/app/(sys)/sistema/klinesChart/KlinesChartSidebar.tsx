@@ -58,6 +58,8 @@ export interface KlinesChartSidebarProps {
   setShowSecondaryAxis: (v: boolean) => void;
   showLastCloseLine: boolean;
   setShowLastCloseLine: (v: boolean) => void;
+  showCandleCountdown: boolean;
+  setShowCandleCountdown: (v: boolean) => void;
   invisibleCandlesEnd: number;
   setInvisibleCandlesEnd: (v: number | ((v: number) => number)) => void;
   secondaryPanelHeightPercent: number;
@@ -185,6 +187,8 @@ export function KlinesChartSidebar({
   setShowSecondaryAxis,
   showLastCloseLine,
   setShowLastCloseLine,
+  showCandleCountdown,
+  setShowCandleCountdown,
   invisibleCandlesEnd,
   setInvisibleCandlesEnd,
   secondaryPanelHeightPercent,
@@ -551,6 +555,15 @@ export function KlinesChartSidebar({
               className="rounded border-zinc-300"
             />
             <span>{t.lastCloseLine}</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+            <input
+              type="checkbox"
+              checked={showCandleCountdown}
+              onChange={(e) => setShowCandleCountdown(e.target.checked)}
+              className="rounded border-zinc-300"
+            />
+            <span>{(t as Record<string, string>).showCandleCountdown ?? "Candle countdown"}</span>
           </label>
           <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
             <span className="shrink-0">{t.invisibleCandlesEnd}</span>
@@ -1161,6 +1174,10 @@ export function KlinesChartSidebar({
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={showLastCloseLine} onChange={(e) => setShowLastCloseLine(e.target.checked)} className="rounded border-zinc-300" />
                   <span>{t.lastCloseLine}</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+                  <input type="checkbox" checked={showCandleCountdown} onChange={(e) => setShowCandleCountdown(e.target.checked)} className="rounded border-zinc-300" />
+                  <span>{(t as Record<string, string>).showCandleCountdown ?? "Candle countdown"}</span>
                 </label>
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                   <span className="shrink-0">{t.invisibleCandlesEnd}</span>

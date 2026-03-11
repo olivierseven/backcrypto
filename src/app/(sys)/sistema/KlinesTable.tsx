@@ -138,29 +138,28 @@ export function getVapCacheConfig(groupMinutes: number): { param: string; maxCan
   return map[groupMinutes] ?? { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 };
 }
 
-/** Formata o equivalente em tempo: "N velas de X = Y dias/horas/minutos". lang opcional para en. */
+/** Formata o equivalente em tempo: apenas "Y dias/horas/minutos" (ex.: "12.5 dias"). lang opcional para en. */
 export function formatVapTimeSpan(candles: number, paramLabel: string, paramMinutes: number, lang?: "pt" | "en"): string {
   const totalMinutes = candles * paramMinutes;
   const isEn = lang === "en";
-  const velasDe = isEn ? "candles of" : "velas de";
   if (totalMinutes >= 43200) {
     const n = Math.round((totalMinutes / 43200) * 10) / 10;
     const unit = isEn ? (n === 1 ? "month" : "months") : (n === 1 ? "mês" : "meses");
-    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+    return `${n} ${unit}`;
   }
   if (totalMinutes >= 1440) {
     const n = Math.round((totalMinutes / 1440) * 10) / 10;
     const unit = isEn ? (n === 1 ? "day" : "days") : (n === 1 ? "dia" : "dias");
-    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+    return `${n} ${unit}`;
   }
   if (totalMinutes >= 60) {
     const n = Math.round((totalMinutes / 60) * 10) / 10;
     const unit = isEn ? (n === 1 ? "hour" : "hours") : (n === 1 ? "hora" : "horas");
-    return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+    return `${n} ${unit}`;
   }
   const n = Math.round(totalMinutes);
   const unit = isEn ? (n === 1 ? "minute" : "minutes") : (n === 1 ? "minuto" : "minutos");
-  return `${candles} ${velasDe} ${paramLabel} = ${n} ${unit}`;
+  return `${n} ${unit}`;
 }
 
 function getStoredVolumeAtPrice(): { enabled: boolean; buckets: number; percent: number; opacity: number; widthPercent: number; side: "left" | "right"; colorAbove: string; colorBelow: string } {
@@ -267,6 +266,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [error, setError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  /** Fuso do utilizador (API aplica a openTime/closeTime); usado para contar fechamento do candle em UTC. */
+  const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
@@ -652,6 +653,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
       setKlines(list);
       setNeedsRefresh(refreshFlag);
+      if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
+        setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
+      }
       // Última atualização sempre da BinanceKlineFast (1m), vinda da API (lastUpdateUtc)
       const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
       setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
@@ -917,6 +921,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           <KlinesChart
             klines={extendedKlines}
             groupMinutes={groupMinutes}
+            timezoneOffset={timezoneOffset}
             layoutAppliedTick={layoutAppliedTick}
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions}

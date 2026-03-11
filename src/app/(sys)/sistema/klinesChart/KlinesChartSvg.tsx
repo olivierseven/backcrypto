@@ -792,7 +792,7 @@ export function KlinesChartSvg({
           const colorBelow = volumeAtPriceColorBelow ?? "#dc2626";
           const mid = Math.floor(volumeAtPriceData.buckets.length / 2);
           return (
-            <g key="volume-at-price" pointerEvents="none">
+            <g key="volume-at-price" pointerEvents="none" clipPath={`url(#${plotClipId})`}>
               {volumeAtPriceData.buckets.map((b, i) => {
                 const yTop = y(b.priceHigh);
                 const yBottom = y(b.priceLow);

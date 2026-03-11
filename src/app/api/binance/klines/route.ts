@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
       const list = Array.isArray(rows) ? rows : [];
       let data = list.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json({ klines: data, lastUpdateUtc });
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
     if (useCache) {
@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
       if (!hasCache) {
-        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
       }
 
       // Dia atual (UTC): sempre agregar a partir de BinanceKlineFast (1m), independente do timeframe.
@@ -261,7 +261,7 @@ export async function GET(request: NextRequest) {
       const combined = [...todayList, ...cacheList].slice(0, limit);
       let data = combined.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json({ klines: data, lastUpdateUtc });
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
     // Intervalos acima de 1d (3d, 1w, 1M): cache 1d + dia atual em 1d, depois reagrupa. Sem cache: 1d a partir de BinanceKline (1h).
@@ -280,7 +280,7 @@ export async function GET(request: NextRequest) {
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
       if (!hasCache1d) {
-        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
       }
 
       const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
@@ -359,11 +359,11 @@ export async function GET(request: NextRequest) {
       const list = Array.isArray(rows) ? rows : [];
       let data = list.map(rowToKline);
       data = applyTimezoneOffset(data, timezoneOffset);
-      return NextResponse.json({ klines: data, lastUpdateUtc });
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
     // Sem cache: não usar tabelas de origem; pedir refresh no front.
-    return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc });
+    return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
   } catch (e) {
     console.error("[api/binance/klines]", e);
     return NextResponse.json(

@@ -99,6 +99,8 @@ export interface StrategyCandleOverlay {
 export type KlinesChartProps = {
   klines: Kline[];
   groupMinutes: number;
+  /** Fuso do utilizador (horas, -12..12) aplicado pela API a openTime; usado para contar fechamento em UTC. */
+  timezoneOffset?: number;
   intervalLabel?: string;
   /** Opções de tempo (ex.: 1m, 5m, 4h) para o seletor na sidebar. */
   intervalOptions?: IntervalOption[];
@@ -134,7 +136,7 @@ export type KlinesChartProps = {
   /** Percentual (20–100%) do máximo de velas do cache para o VAP; passo 1%. */
   volumeAtPricePercent?: number;
   onVolumeAtPricePercentChange?: (v: number) => void;
-  /** Texto ex.: "180 velas de 2h = 15 dias" para exibir ao lado do controle. */
+  /** Texto ex.: "15 dias" para exibir ao lado do controle (equivalente em tempo do VAP). */
   vapTimeSpanLabel?: string;
   volumeAtPriceOpacity?: number;
   /** Escala da largura das barras: 30–100% da largura máxima (120px). */
