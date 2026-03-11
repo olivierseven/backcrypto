@@ -127,7 +127,8 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
   const segmentOptionsRef = useRef<HTMLDivElement>(null);
   /** Padrões iniciais para novos desenhos (persistidos no localStorage). */
   const [drawDefaults, setDrawDefaults] = useState<DrawDefaults>(BUILTIN_DRAW_DEFAULTS);
-  const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown> }[]>([]);
+  const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown>; name?: string }[]>([]);
+  const [savedLayoutsError, setSavedLayoutsError] = useState<string | null>(null);
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
   const [logScale, setLogScale] = useState(false);
@@ -685,17 +686,27 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
 
   const [canSaveDefault, setCanSaveDefault] = useState(false);
 
-  const fetchSavedLayouts = async () => {
-    const res = await fetch(`${API_BASE}/chart-layouts`);
-    if (!res.ok) return;
+  const fetchSavedLayouts = useCallback(async () => {
+    setSavedLayoutsError(null);
+    const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include" });
+    if (!res.ok) {
+      setSavedLayoutsError(t.loadError);
+      return;
+    }
     const data = await res.json();
-    const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown> }[]) : [];
-    const defaultLayout = data.defaultLayout != null && typeof data.defaultLayout === "object" && !Array.isArray(data.defaultLayout)
-      ? ({ slot: 0, config: data.defaultLayout as Record<string, unknown> })
-      : null;
+    const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown>; name?: string }[]) : [];
+    const def = data.defaultLayout;
+    const defaultLayout =
+      def != null && typeof def === "object" && !Array.isArray(def) && def.config != null
+        ? { slot: 0, config: def.config as Record<string, unknown>, name: def.name as string | undefined }
+        : null;
     setCanSaveDefault(Boolean(data.canSaveDefault));
     setSavedLayouts(defaultLayout ? [defaultLayout, ...layouts] : layouts);
-  };
+  }, [t.loadError]);
+
+  useEffect(() => {
+    fetchSavedLayouts();
+  }, [fetchSavedLayouts]);
 
   const handleSaveLayout = async (slot: number) => {
     setSaveOpen(false);
@@ -710,6 +721,24 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
     if (res.ok) {
       setSaveLoadMsg(t.savedSuccess);
       setTimeout(() => setSaveLoadMsg(null), 2000);
+      fetchSavedLayouts();
+    }
+  };
+
+  const handleRenameLayout = async (
+    layout: { slot: number; config: Record<string, unknown>; name?: string },
+    newName: string
+  ) => {
+    const name = newName.trim().slice(0, 24);
+    const res = await fetch(`${API_BASE}/chart-layouts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slot: layout.slot, config: layout.config, name: name || "" }),
+    });
+    if (res.ok) {
+      setSaveLoadMsg(t.savedSuccess);
+      setTimeout(() => setSaveLoadMsg(null), 2000);
+      fetchSavedLayouts();
     }
   };
 
@@ -1388,9 +1417,11 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, inter
             loadOpen={loadOpen}
             setLoadOpen={setLoadOpen}
             savedLayouts={savedLayouts}
+            savedLayoutsError={savedLayoutsError}
             canSaveDefault={canSaveDefault}
             onSaveLayout={handleSaveLayout}
             onLoadLayout={handleLoadLayout}
+            onRenameLayout={handleRenameLayout}
             onFetchSavedLayouts={fetchSavedLayouts}
           />
         </div>

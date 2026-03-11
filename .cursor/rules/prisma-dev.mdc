@@ -1,0 +1,11 @@
+---
+description: Em dev não criar migrações Prisma; fornecer apenas os comandos SQL
+alwaysApply: true
+---
+
+# Prisma / banco em dev
+
+- **Não criar** pastas ou arquivos em `prisma/migrations/` por enquanto.
+- Projeto ainda em desenvolvimento, sem produção.
+- Quando o schema Prisma mudar, **apenas informar os comandos SQL** para o desenvolvedor rodar no banco (ex.: `ALTER TABLE ...`).
+- Não rodar `prisma migrate dev` nem `prisma migrate deploy` para criar novas migrações.

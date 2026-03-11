@@ -4305,12 +4305,14 @@ export namespace Prisma {
   export type ChartLayoutMinAggregateOutputType = {
     userId: string | null
     slot: number | null
+    name: string | null
     updatedAt: Date | null
   }
 
   export type ChartLayoutMaxAggregateOutputType = {
     userId: string | null
     slot: number | null
+    name: string | null
     updatedAt: Date | null
   }
 
@@ -4318,6 +4320,7 @@ export namespace Prisma {
     userId: number
     slot: number
     config: number
+    name: number
     updatedAt: number
     _all: number
   }
@@ -4334,12 +4337,14 @@ export namespace Prisma {
   export type ChartLayoutMinAggregateInputType = {
     userId?: true
     slot?: true
+    name?: true
     updatedAt?: true
   }
 
   export type ChartLayoutMaxAggregateInputType = {
     userId?: true
     slot?: true
+    name?: true
     updatedAt?: true
   }
 
@@ -4347,6 +4352,7 @@ export namespace Prisma {
     userId?: true
     slot?: true
     config?: true
+    name?: true
     updatedAt?: true
     _all?: true
   }
@@ -4441,6 +4447,7 @@ export namespace Prisma {
     userId: string
     slot: number
     config: JsonValue
+    name: string | null
     updatedAt: Date
     _count: ChartLayoutCountAggregateOutputType | null
     _avg: ChartLayoutAvgAggregateOutputType | null
@@ -4467,6 +4474,7 @@ export namespace Prisma {
     userId?: boolean
     slot?: boolean
     config?: boolean
+    name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chartLayout"]>
@@ -4475,6 +4483,7 @@ export namespace Prisma {
     userId?: boolean
     slot?: boolean
     config?: boolean
+    name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chartLayout"]>
@@ -4483,6 +4492,7 @@ export namespace Prisma {
     userId?: boolean
     slot?: boolean
     config?: boolean
+    name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["chartLayout"]>
@@ -4491,10 +4501,11 @@ export namespace Prisma {
     userId?: boolean
     slot?: boolean
     config?: boolean
+    name?: boolean
     updatedAt?: boolean
   }
 
-  export type ChartLayoutOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "config" | "updatedAt", ExtArgs["result"]["chartLayout"]>
+  export type ChartLayoutOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "config" | "name" | "updatedAt", ExtArgs["result"]["chartLayout"]>
   export type ChartLayoutInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -4514,6 +4525,7 @@ export namespace Prisma {
       userId: string
       slot: number
       config: Prisma.JsonValue
+      name: string | null
       updatedAt: Date
     }, ExtArgs["result"]["chartLayout"]>
     composites: {}
@@ -4942,6 +4954,7 @@ export namespace Prisma {
     readonly userId: FieldRef<"ChartLayout", 'String'>
     readonly slot: FieldRef<"ChartLayout", 'Int'>
     readonly config: FieldRef<"ChartLayout", 'Json'>
+    readonly name: FieldRef<"ChartLayout", 'String'>
     readonly updatedAt: FieldRef<"ChartLayout", 'DateTime'>
   }
     
@@ -21016,6 +21029,7 @@ export namespace Prisma {
     userId: 'userId',
     slot: 'slot',
     config: 'config',
+    name: 'name',
     updatedAt: 'updatedAt'
   };
 
@@ -21746,6 +21760,7 @@ export namespace Prisma {
     userId?: StringFilter<"ChartLayout"> | string
     slot?: IntFilter<"ChartLayout"> | number
     config?: JsonFilter<"ChartLayout">
+    name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }
@@ -21754,6 +21769,7 @@ export namespace Prisma {
     userId?: SortOrder
     slot?: SortOrder
     config?: SortOrder
+    name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
   }
@@ -21766,6 +21782,7 @@ export namespace Prisma {
     userId?: StringFilter<"ChartLayout"> | string
     slot?: IntFilter<"ChartLayout"> | number
     config?: JsonFilter<"ChartLayout">
+    name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
   }, "userId_slot">
@@ -21774,6 +21791,7 @@ export namespace Prisma {
     userId?: SortOrder
     slot?: SortOrder
     config?: SortOrder
+    name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     _count?: ChartLayoutCountOrderByAggregateInput
     _avg?: ChartLayoutAvgOrderByAggregateInput
@@ -21789,6 +21807,7 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"ChartLayout"> | string
     slot?: IntWithAggregatesFilter<"ChartLayout"> | number
     config?: JsonWithAggregatesFilter<"ChartLayout">
+    name?: StringNullableWithAggregatesFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeWithAggregatesFilter<"ChartLayout"> | Date | string
   }
 
@@ -23135,6 +23154,7 @@ export namespace Prisma {
   export type ChartLayoutCreateInput = {
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutChartLayoutsInput
   }
@@ -23143,12 +23163,14 @@ export namespace Prisma {
     userId: string
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
   }
 
   export type ChartLayoutUpdateInput = {
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutChartLayoutsNestedInput
   }
@@ -23157,6 +23179,7 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -23164,12 +23187,14 @@ export namespace Prisma {
     userId: string
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
   }
 
   export type ChartLayoutUpdateManyMutationInput = {
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -23177,6 +23202,7 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24842,6 +24868,7 @@ export namespace Prisma {
     userId?: SortOrder
     slot?: SortOrder
     config?: SortOrder
+    name?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -24852,12 +24879,14 @@ export namespace Prisma {
   export type ChartLayoutMaxOrderByAggregateInput = {
     userId?: SortOrder
     slot?: SortOrder
+    name?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ChartLayoutMinOrderByAggregateInput = {
     userId?: SortOrder
     slot?: SortOrder
+    name?: SortOrder
     updatedAt?: SortOrder
   }
 
@@ -27127,12 +27156,14 @@ export namespace Prisma {
   export type ChartLayoutCreateWithoutUserInput = {
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
   }
 
   export type ChartLayoutUncheckedCreateWithoutUserInput = {
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
   }
 
@@ -27435,6 +27466,7 @@ export namespace Prisma {
     userId?: StringFilter<"ChartLayout"> | string
     slot?: IntFilter<"ChartLayout"> | number
     config?: JsonFilter<"ChartLayout">
+    name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
   }
 
@@ -29858,6 +29890,7 @@ export namespace Prisma {
   export type ChartLayoutCreateManyUserInput = {
     slot: number
     config: JsonNullValueInput | InputJsonValue
+    name?: string | null
     updatedAt?: Date | string
   }
 
@@ -30103,18 +30136,21 @@ export namespace Prisma {
   export type ChartLayoutUpdateWithoutUserInput = {
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ChartLayoutUncheckedUpdateWithoutUserInput = {
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ChartLayoutUncheckedUpdateManyWithoutUserInput = {
     slot?: IntFieldUpdateOperationsInput | number
     config?: JsonNullValueInput | InputJsonValue
+    name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

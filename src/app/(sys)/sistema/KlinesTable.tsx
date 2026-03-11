@@ -1008,11 +1008,32 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
             layoutAutoSaveTick={strategyCreatedTick}
-            getLayoutExtraConfig={() => ({ userIndicators, strategies, appliedStrategyIds })}
+            getLayoutExtraConfig={() => ({
+              userIndicators,
+              strategies,
+              appliedStrategyIds,
+              volumeAtPriceEnabled,
+              volumeAtPriceBuckets,
+              volumeAtPricePercent,
+              volumeAtPriceOpacity,
+              volumeAtPriceWidthPercent,
+              volumeAtPriceSide,
+              volumeAtPriceColorAbove,
+              volumeAtPriceColorBelow,
+            })}
             onLayoutConfigLoaded={(config, slot) => {
               addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "undefined"} keys=[${Object.keys(config).join(",")}]`);
               const v = config.groupMinutes;
               if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
+              // Volume no preço (por layout). Se o layout não tiver a chave, desliga VAP (ex.: default antigo sem essas chaves).
+              setVolumeAtPriceEnabled(config.volumeAtPriceEnabled === true);
+              if (typeof config.volumeAtPriceBuckets === "number") setVolumeAtPriceBuckets(clampEvenBuckets(config.volumeAtPriceBuckets));
+              if (typeof config.volumeAtPricePercent === "number" && config.volumeAtPricePercent >= VOLUME_AT_PRICE_PERCENT_MIN && config.volumeAtPricePercent <= VOLUME_AT_PRICE_PERCENT_MAX) setVolumeAtPricePercent(Math.round(config.volumeAtPricePercent));
+              if (typeof config.volumeAtPriceOpacity === "number" && config.volumeAtPriceOpacity >= VOLUME_AT_PRICE_OPACITY_MIN && config.volumeAtPriceOpacity <= VOLUME_AT_PRICE_OPACITY_MAX) setVolumeAtPriceOpacity(config.volumeAtPriceOpacity);
+              if (typeof config.volumeAtPriceWidthPercent === "number" && config.volumeAtPriceWidthPercent >= VOLUME_AT_PRICE_WIDTH_PERCENT_MIN && config.volumeAtPriceWidthPercent <= VOLUME_AT_PRICE_WIDTH_PERCENT_MAX) setVolumeAtPriceWidthPercent(config.volumeAtPriceWidthPercent);
+              if (config.volumeAtPriceSide === "left" || config.volumeAtPriceSide === "right") setVolumeAtPriceSide(config.volumeAtPriceSide);
+              if (typeof config.volumeAtPriceColorAbove === "string" && /^#[0-9A-Fa-f]{6}$/.test(config.volumeAtPriceColorAbove)) setVolumeAtPriceColorAbove(config.volumeAtPriceColorAbove);
+              if (typeof config.volumeAtPriceColorBelow === "string" && /^#[0-9A-Fa-f]{6}$/.test(config.volumeAtPriceColorBelow)) setVolumeAtPriceColorBelow(config.volumeAtPriceColorBelow);
               // Indicadores do layout (precisamos deles para validar referências das estratégias)
               const indicatorsFromLayout = (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) ? config.userIndicators : null;
               if (indicatorsFromLayout) {

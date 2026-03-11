@@ -37,21 +37,22 @@ export async function GET() {
     cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
     cryptoPrisma.chartLayout.findMany({
       where: { userId, slot: { in: [...USER_SLOTS] } },
-      select: { slot: true, config: true },
+      select: { slot: true, config: true, name: true },
     }),
     cryptoPrisma.chartLayout.findUnique({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot: 0 } },
-      select: { config: true },
+      select: { config: true, name: true },
     }),
   ]);
 
   const layouts = rows.map((r) => ({
     slot: r.slot,
     config: r.config as Record<string, unknown>,
+    name: r.name ?? undefined,
   }));
 
   const defaultLayout = defaultRow?.config != null && typeof defaultRow.config === "object" && !Array.isArray(defaultRow.config)
-    ? (defaultRow.config as Record<string, unknown>)
+    ? { config: defaultRow.config as Record<string, unknown>, name: defaultRow.name ?? undefined }
     : null;
 
   return NextResponse.json({
@@ -68,12 +69,18 @@ export async function POST(req: Request) {
   const user = await cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } });
   const isAdmin = user?.role === Role.admin;
 
-  let body: { slot?: number; config?: unknown } = {};
+  const NAME_MAX_LEN = 24;
+  let body: { slot?: number; config?: unknown; name?: string } = {};
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
+
+  const name =
+    body.name !== undefined
+      ? (typeof body.name === "string" ? body.name.trim().slice(0, NAME_MAX_LEN) || null : null)
+      : undefined;
 
   const slot = typeof body.slot === "number" && Number.isInteger(body.slot) ? body.slot : undefined;
   if (slot == null) {
@@ -100,8 +107,8 @@ export async function POST(req: Request) {
 
   await cryptoPrisma.chartLayout.upsert({
     where: { userId_slot: { userId: targetUserId, slot } },
-    create: { userId: targetUserId, slot, config },
-    update: { config },
+    create: { userId: targetUserId, slot, config, name: name ?? null },
+    update: name !== undefined ? { config, name } : { config },
   });
 
   return NextResponse.json({ ok: true, slot });

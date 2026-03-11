@@ -165,6 +165,7 @@ exports.Prisma.ChartLayoutScalarFieldEnum = {
   userId: 'userId',
   slot: 'slot',
   config: 'config',
+  name: 'name',
   updatedAt: 'updatedAt'
 };
 
