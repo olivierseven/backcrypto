@@ -34,8 +34,10 @@ export const CHART_SIZE_PERCENT_MIN = 100;
 export const CHART_SIZE_PERCENT_MAX = 200;
 export const CHART_SIZE_PERCENT_DEFAULT = 100;
 export const CHART_SIZE_PERCENT_STEP = 25;
-export const VISIBLE_OPTIONS = [30, 50, 100, 150] as const;
+export const VISIBLE_OPTIONS = [30, 50, 100, 150, 200] as const;
 export type VisibleCount = (typeof VISIBLE_OPTIONS)[number];
+export const VISIBLE_COUNT_MIN = 7;
+export const VISIBLE_COUNT_MAX = 200;
 export const DEFAULT_VISIBLE: VisibleCount = 50;
 export const INVISIBLE_CANDLES_END = 3;
 

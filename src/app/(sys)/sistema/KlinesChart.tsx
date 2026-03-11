@@ -27,6 +27,8 @@ import {
   INDICATOR_STRIP_HEIGHT,
   CHART_TOP_PADDING,
   VISIBLE_OPTIONS,
+  VISIBLE_COUNT_MIN,
+  VISIBLE_COUNT_MAX,
   DEFAULT_VISIBLE,
   INVISIBLE_CANDLES_END,
   SIDEBAR_WIDTH,
@@ -43,7 +45,6 @@ import {
   KLINE_DRAW_VISIBLE_KEY,
   KLINE_DRAW_DEFAULTS_KEY,
   MS_PER_DAY,
-  type VisibleCount,
 } from "./KlinesChartConstants";
 import {
   parseNum,
@@ -106,7 +107,13 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const { addLayoutLoadLog } = useSistemaDebug();
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
-  const [visibleCount, setVisibleCount] = useState<VisibleCount>(DEFAULT_VISIBLE);
+  const [visibleCount, setVisibleCountState] = useState<number>(DEFAULT_VISIBLE);
+  const setVisibleCount = useCallback((v: number | ((prev: number) => number)) => {
+    setVisibleCountState((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      return Math.max(VISIBLE_COUNT_MIN, Math.min(VISIBLE_COUNT_MAX, Math.round(next)));
+    });
+  }, []);
   const [startIndex, setStartIndex] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
@@ -504,7 +511,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
       if (!raw) return;
       const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; showCandleCountdown?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; secondaryPanelHeightPercent?: number; volumeOnPrice?: boolean; volumeOnPriceOpacity?: number; chartSizePercent?: number; chartStyle?: "candles" | "bars" | "line" | "linePoints"; candleBodyStyle?: "filled" | "hollow" };
-      if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
+      if (typeof data.visibleCount === "number" && data.visibleCount >= VISIBLE_COUNT_MIN && data.visibleCount <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(data.visibleCount));
       if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
       if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
       if (typeof data.yAxisAbbreviated === "boolean") setYAxisAbbreviated(data.yAxisAbbreviated);
@@ -771,7 +778,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   }, [layoutAutoSaveTick, autoSaveCurrentLayoutIfAny]);
 
   const applyLayoutConfig = (c: Record<string, unknown>, slot?: number) => {
-    if (typeof c.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(c.visibleCount)) setVisibleCount(c.visibleCount as VisibleCount);
+    if (typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(c.visibleCount));
     if (typeof c.candleColorPreset === "string") {
       const id = (c.candleColorPreset === "redGreen" ? "greenRed" : c.candleColorPreset === "whiteBlack" ? "blackWhite" : c.candleColorPreset) as CandleColorPresetId;
       if (CANDLE_COLOR_PRESETS.some((p) => p.id === id)) setCandleColorPreset(id);
@@ -809,10 +816,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
   };
 
-  // Garantir que startIndex fica dentro dos dados ao mudar visibleCount ou n
+  // Ao mudar visibleCount (+/-, listbox) ou n: sempre mostrar os últimos candles
   useEffect(() => {
-    const maxStart = Math.max(0, n - visibleCount);
-    setStartIndex((prev) => Math.min(prev, maxStart));
+    setStartIndex(Math.max(0, n - visibleCount));
   }, [n, visibleCount]);
 
   // Ao carregar/atualizar dados, ir para o fim (mais recente)
