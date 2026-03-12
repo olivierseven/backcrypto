@@ -43,6 +43,8 @@ export const INVISIBLE_CANDLES_END = 3;
 
 export const SIDEBAR_WIDTH = 40;
 export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
+/** Preferência do usuário: quantidade de candles, tipo de gráfico, exibir/ocultar desenhos (e magnético em KLINE_DRAW_MAGNETIC_KEY). Carregar do localStorage tem preferência sobre o layout. */
+export const KLINE_LOCAL_PREFS_KEY = "backcrypto-klines-local-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
 export const KLINE_GROUP_MINUTES_KEY = "backcrypto-klines-group-minutes";
 export const KLINE_SYMBOL_KEY = "backcrypto-klines-symbol";

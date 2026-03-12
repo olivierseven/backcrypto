@@ -107,8 +107,8 @@ export type KlinesChartProps = {
   onIntervalChange?: (value: number) => void;
   width: number;
   indicatorLines?: ChartIndicatorLine[];
-  /** slot 0 = layout padrão (não sobrescreve appliedStrategyIds); 1–7 = layout do usuário. */
-  onLayoutConfigLoaded?: (config: Record<string, unknown>, slot?: number) => void;
+  /** slot 0 = layout padrão (não sobrescreve appliedStrategyIds); 1–7 = layout do usuário. source='user-load' = usuário clicou em Carregar; nesse caso o layout tem prioridade sobre localStorage. */
+  onLayoutConfigLoaded?: (config: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => void;
   /** Chamado ao salvar o layout; o retorno é mesclado ao config (ex.: userIndicators, prefs do painel). */
   getLayoutExtraConfig?: () => Record<string, unknown>;
   /** Quando muda, salva automaticamente o layout do slot atual (se houver). */
@@ -153,6 +153,8 @@ export type KlinesChartProps = {
   onVolumeAtPriceColorBelowChange?: (v: string) => void;
   /** Preço ao vivo do último fechamento (ex.: WebSocket). Quando definido, a linha e o label de "último fechamento" usam este valor em vez de klines[0][4], evitando mostrar preço do par anterior após troca de símbolo. */
   liveLastClose?: number | string | null;
+  /** Chamado quando o layout em uso muda (nome ou slot), para exibir no container (ex.: canto esquerdo da última atualização). */
+  onCurrentLayoutLabelChange?: (label: string) => void;
 }
 
 /** Dados para desenho do volume no preço: intervalos simétricos no eixo Y com volume acumulado por faixa de fechamento. */

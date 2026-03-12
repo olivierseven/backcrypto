@@ -9,7 +9,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { KLINE_STRATEGIES_KEY, KLINE_STRATEGIES_APPLIED_KEY } from "../KlinesChartConstants";
 import type { Strategy } from "./strategiesTypes";
 import { legacyToRoot } from "./strategiesTypes";
 
@@ -20,6 +19,8 @@ interface StrategiesContextValue {
   removeStrategy: (id: string) => void;
   /** Incrementa quando uma estratégia nova é criada (para autosave do layout atual). */
   strategyCreatedTick: number;
+  /** Incrementa ao aplicar ou desaplicar estratégia (para autosave do layout e persistir appliedStrategyIds). */
+  appliedStrategyIdsTick: number;
   /** IDs das estratégias que têm coluna na tabela (aplicadas). */
   appliedStrategyIds: string[];
   applyStrategy: (id: string) => void;
@@ -33,55 +34,20 @@ interface StrategiesContextValue {
 
 const StrategiesContext = createContext<StrategiesContextValue | null>(null);
 
+/** Estratégias e aplicadas vêm só do layout (banco). Não usar localStorage. */
 function loadStrategies(): Strategy[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KLINE_STRATEGIES_KEY);
-    if (!raw) return [];
-    const data = JSON.parse(raw);
-    if (!Array.isArray(data)) return [];
-    return data.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }));
-  } catch {
-    return [];
-  }
-}
-
-function saveStrategies(list: Strategy[]) {
-  try {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(KLINE_STRATEGIES_KEY, JSON.stringify(list));
-    }
-  } catch {
-    /* ignore */
-  }
+  return [];
 }
 
 function loadAppliedStrategyIds(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KLINE_STRATEGIES_APPLIED_KEY);
-    if (!raw) return [];
-    const data = JSON.parse(raw);
-    return Array.isArray(data) ? data.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveAppliedStrategyIds(ids: string[]) {
-  try {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(KLINE_STRATEGIES_APPLIED_KEY, JSON.stringify(ids));
-    }
-  } catch {
-    /* ignore */
-  }
+  return [];
 }
 
 export function StrategiesProvider({ children }: { children: ReactNode }) {
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [appliedStrategyIds, setAppliedStrategyIds] = useState<string[]>([]);
   const [strategyCreatedTick, setStrategyCreatedTick] = useState(0);
+  const [appliedStrategyIdsTick, setAppliedStrategyIdsTick] = useState(0);
 
   useEffect(() => {
     setStrategies(loadStrategies());
@@ -89,50 +55,28 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addStrategy = useCallback((s: Strategy) => {
-    setStrategies((prev) => {
-      const next = [...prev, s];
-      saveStrategies(next);
-      return next;
-    });
+    setStrategies((prev) => [...prev, s]);
     setStrategyCreatedTick((x) => x + 1);
   }, []);
 
   const updateStrategy = useCallback((id: string, patch: Partial<Strategy>) => {
-    setStrategies((prev) => {
-      const next = prev.map((s) => (s.id === id ? { ...s, ...patch } : s));
-      saveStrategies(next);
-      return next;
-    });
+    setStrategies((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    setStrategyCreatedTick((x) => x + 1);
   }, []);
 
   const removeStrategy = useCallback((id: string) => {
-    setStrategies((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      saveStrategies(next);
-      return next;
-    });
-    setAppliedStrategyIds((prev) => {
-      const next = prev.filter((x) => x !== id);
-      saveAppliedStrategyIds(next);
-      return next;
-    });
+    setStrategies((prev) => prev.filter((s) => s.id !== id));
+    setAppliedStrategyIds((prev) => prev.filter((x) => x !== id));
   }, []);
 
   const applyStrategy = useCallback((id: string) => {
-    setAppliedStrategyIds((prev) => {
-      if (prev.includes(id)) return prev;
-      const next = [...prev, id];
-      saveAppliedStrategyIds(next);
-      return next;
-    });
+    setAppliedStrategyIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setAppliedStrategyIdsTick((t) => t + 1);
   }, []);
 
   const unapplyStrategy = useCallback((id: string) => {
-    setAppliedStrategyIds((prev) => {
-      const next = prev.filter((x) => x !== id);
-      saveAppliedStrategyIds(next);
-      return next;
-    });
+    setAppliedStrategyIds((prev) => prev.filter((x) => x !== id));
+    setAppliedStrategyIdsTick((t) => t + 1);
   }, []);
 
   const isApplied = useCallback(
@@ -144,14 +88,12 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
     if (!Array.isArray(raw)) return;
     const list = raw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }));
     setStrategies(list);
-    saveStrategies(list);
   }, []);
 
   const replaceAppliedStrategyIdsFromLayout = useCallback((raw: unknown) => {
     if (!Array.isArray(raw)) return;
     const ids = raw.filter((x): x is string => typeof x === "string");
     setAppliedStrategyIds(ids);
-    saveAppliedStrategyIds(ids);
   }, []);
 
   const value = useMemo(
@@ -161,6 +103,7 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       updateStrategy,
       removeStrategy,
       strategyCreatedTick,
+      appliedStrategyIdsTick,
       appliedStrategyIds,
       applyStrategy,
       unapplyStrategy,
@@ -168,7 +111,7 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       replaceStrategiesFromLayout,
       replaceAppliedStrategyIdsFromLayout,
     }),
-    [strategies, addStrategy, updateStrategy, removeStrategy, strategyCreatedTick, appliedStrategyIds, applyStrategy, unapplyStrategy, isApplied, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout]
+    [strategies, addStrategy, updateStrategy, removeStrategy, strategyCreatedTick, appliedStrategyIdsTick, appliedStrategyIds, applyStrategy, unapplyStrategy, isApplied, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout]
   );
 
   return (
@@ -187,6 +130,7 @@ export function useStrategies(): StrategiesContextValue {
       updateStrategy: () => {},
       removeStrategy: () => {},
       strategyCreatedTick: 0,
+      appliedStrategyIdsTick: 0,
       appliedStrategyIds: [],
       applyStrategy: () => {},
       unapplyStrategy: () => {},

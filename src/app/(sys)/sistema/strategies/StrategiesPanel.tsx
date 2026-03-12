@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
@@ -27,6 +27,7 @@ import {
   countConditionLeaves,
   createEmptyGroup,
   createEmptyCondition,
+  createCombinedCondition,
   createEmptyNot,
   normalizeOffset,
   normalizeBarsAfter,
@@ -212,12 +213,29 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const t = getCryptoT(lang).sistema.strategies as Record<string, string>;
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
-  const { strategies, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
+  const { strategies, appliedStrategyIds, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
+  /** Quando alguma estratégia combinada está aplicada, as normais ficam bloqueadas (sem editar/aplicar/excluir). */
+  const hasCombinedApplied = useMemo(
+    () => appliedStrategyIds.some((id) => strategies.find((s) => s.id === id)?.isCombined),
+    [strategies, appliedStrategyIds]
+  );
   const [validationModal, setValidationModal] = useState<{ title: string; lines: string[] } | null>(null);
+  const [deleteConfirmStrategy, setDeleteConfirmStrategy] = useState<{ id: string; name: string } | null>(null);
   const [addOpen, setAddOpen] = useState(initialView === "add");
   const [editingStrategyId, setEditingStrategyId] = useState<string | null>(null);
   const [addName, setAddName] = useState("");
-  const [addRoot, setAddRoot] = useState<StrategyGroupNode>(() => createEmptyGroup("AND"));
+  const [addRootStrategies, setAddRootStrategies] = useState<StrategyGroupNode>(() => createEmptyGroup("AND"));
+  const [addRootCombined, setAddRootCombined] = useState<StrategyGroupNode>(() => createEmptyGroup("AND"));
+  /** Modo do formulário de criar: "current" = indicadores + OHLC; "combined" = só estratégias criadas. */
+  const [addStrategyMode, setAddStrategyMode] = useState<"current" | "combined">("current");
+  const addRoot = addStrategyMode === "combined" ? addRootCombined : addRootStrategies;
+  const setAddRoot = useCallback(
+    (r: StrategyGroupNode) => {
+      if (addStrategyMode === "combined") setAddRootCombined(r);
+      else setAddRootStrategies(r);
+    },
+    [addStrategyMode]
+  );
   const [addApplyToAllSymbols, setAddApplyToAllSymbols] = useState(false);
   /** Cor do candle quando a condição é verdadeira (mesma paleta das médias móveis). */
   const [addColor, setAddColor] = useState<string>(() => INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
@@ -235,6 +253,13 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   );
   /** Lista efetiva conforme o alternador: só do símbolo ou todas. */
   const listStrategies = showOnlyCurrentSymbol ? visibleStrategies : strategies;
+
+  /** Estratégias normais e combinadas em ordem alfabética, para exibir com divisor. */
+  const { listNormals, listCombined } = useMemo(() => {
+    const normals = listStrategies.filter((s) => !s.isCombined).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    const combined = listStrategies.filter((s) => s.isCombined).sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    return { listNormals: normals, listCombined: combined };
+  }, [listStrategies]);
 
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
@@ -286,6 +311,26 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     return opts;
   }, [userIndicators, tKlines]);
 
+  /** No modo combinado: lista só colunas de estratégias criadas (estratégia e valor na visualização = comparação com constante). */
+  /** No modo combinado só aparecem estratégias normais (não combinadas), para montar "está verdadeira/falsa". */
+  const seriesOptionsCombined = useMemo(() => {
+    return listStrategies
+      .filter((s) => !s.isCombined)
+      .map((s) => ({ key: `strat_${s.id}`, label: s.name }));
+  }, [listStrategies]);
+
+  const seriesOptionsForForm = addStrategyMode === "combined" ? seriesOptionsCombined : seriesOptions;
+
+  const canUseCombinedMode = visibleStrategies.length >= 2;
+
+  useEffect(() => {
+    if (addStrategyMode === "combined" && !canUseCombinedMode) setAddStrategyMode("current");
+  }, [addStrategyMode, canUseCombinedMode]);
+
+  useEffect(() => {
+    if (addStrategyMode === "combined" && !editingStrategyId) setAddApplyToAllSymbols(false);
+  }, [addStrategyMode, editingStrategyId]);
+
   const totalConditions = countConditionLeaves(addRoot);
   const canAddMore = totalConditions < STRATEGY_MAX_CONDITIONS;
 
@@ -300,13 +345,24 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       return;
     }
     if (addRoot.children.length === 0) return;
+    const isCombined = addStrategyMode === "combined";
+    const applyToAll = addApplyToAllSymbols;
+    const strategySymbol = applyToAll ? undefined : (symbol || undefined);
+    if (!applyToAll && !strategySymbol) {
+      setValidationModal({
+        title: t.validationErrorTitle ?? "Validation error",
+        lines: [(t as Record<string, string>).strategyCombinedNeedSymbol ?? "Marque 'qualquer símbolo' ou selecione um par no gráfico."],
+      });
+      return;
+    }
     if (editingStrategyId) {
       updateStrategy(editingStrategyId, {
         name,
         root: addRoot,
-        applyToAllSymbols: addApplyToAllSymbols,
-        symbol: addApplyToAllSymbols ? undefined : symbol,
+        applyToAllSymbols: applyToAll,
+        symbol: strategySymbol,
         color: addColor,
+        isCombined,
       });
       setEditingStrategyId(null);
     } else {
@@ -315,14 +371,16 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         name,
         root: addRoot,
         intervalMinutes: chartIntervalMinutes,
-        applyToAllSymbols: addApplyToAllSymbols,
-        symbol: addApplyToAllSymbols ? undefined : symbol,
+        applyToAllSymbols: applyToAll,
+        symbol: strategySymbol,
         color: addColor,
+        isCombined,
       };
       addStrategy(strategy);
     }
     setAddName("");
-    setAddRoot(createEmptyGroup("AND"));
+    setAddRootStrategies(createEmptyGroup("AND"));
+    setAddRootCombined(createEmptyGroup("AND"));
     setAddApplyToAllSymbols(false);
     setAddColor(INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
     setAddColorOpen(false);
@@ -331,7 +389,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   const openEdit = (s: Strategy) => {
     setAddName(s.name);
-    setAddRoot(JSON.parse(JSON.stringify(s.root)) as StrategyGroupNode);
+    const mode: "current" | "combined" = s.isCombined ? "combined" : "current";
+    setAddStrategyMode(mode);
+    const rootCopy = JSON.parse(JSON.stringify(s.root)) as StrategyGroupNode;
+    setAddRootStrategies(mode === "current" ? rootCopy : createEmptyGroup("AND"));
+    setAddRootCombined(mode === "combined" ? rootCopy : createEmptyGroup("AND"));
     setAddApplyToAllSymbols(s.applyToAllSymbols ?? false);
     setAddColor(s.color ?? INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
     setEditingStrategyId(s.id);
@@ -376,6 +438,40 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
           </div>
         </div>
       )}
+      {deleteConfirmStrategy && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={(t as Record<string, string>).strategyDeleteConfirmTitle ?? "Excluir estratégia"}>
+          <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-zinc-900">{(t as Record<string, string>).strategyDeleteConfirmTitle ?? "Excluir estratégia"}</h3>
+              <button type="button" onClick={() => setDeleteConfirmStrategy(null)} className="p-1 rounded hover:bg-zinc-200 text-zinc-600" aria-label={t.close ?? "Close"}>
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="px-4 py-3 text-sm text-zinc-700">
+              <p>{(t as Record<string, string>).strategyDeleteConfirmMessage?.replace("{name}", deleteConfirmStrategy.name) ?? `Excluir a estratégia "${deleteConfirmStrategy.name}"? Esta ação não pode ser desfeita.`}</p>
+            </div>
+            <div className="px-4 py-3 border-t border-zinc-200 bg-white flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmStrategy(null)}
+                className="crypto-btn rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium px-4 py-2"
+              >
+                {t.cancel ?? "Cancelar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeStrategy(deleteConfirmStrategy.id);
+                  setDeleteConfirmStrategy(null);
+                }}
+                className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2"
+              >
+                {(t as Record<string, string>).strategyConfirmDelete ?? "Excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50">
         <h2 className="text-sm font-semibold text-zinc-800">{t.panelTitle}</h2>
         {onClose && (
@@ -414,11 +510,106 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         )}
         {!addOpen ? (
           <>
-            {listStrategies.length === 0 ? (
+            {listNormals.length === 0 && listCombined.length === 0 ? (
               <p className="text-sm text-zinc-500">{t.noStrategies}</p>
             ) : (
               <ul className="space-y-2">
-                {listStrategies.map((s) => {
+                {listNormals.map((s) => {
+                  const applied = isApplied(s.id);
+                  const blocked = hasCombinedApplied && !s.isCombined;
+                  const onApply = () => {
+                    if (blocked) return;
+                    const indicatorIds = new Set(userIndicators.map((i) => i.id));
+                    const result = validateStrategyReferences(s, indicatorIds);
+                    if (!result.ok) {
+                      const lines = result.missingIds.map((id) =>
+                        (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).")
+                          .replace("{id}", id)
+                      );
+                      setValidationModal({
+                        title: t.validationErrorTitle ?? "Validation error",
+                        lines,
+                      });
+                      return;
+                    }
+                    applyStrategy(s.id);
+                  };
+                  const blockTitle = (t as Record<string, string>).strategyBlockedByCombined ?? "Desative a estratégia combinada para editar, aplicar ou excluir.";
+                  return (
+                    <li
+                      key={s.id}
+                      className={`flex flex-col gap-2 p-2 rounded-md border border-zinc-200 sm:flex-row sm:items-center sm:justify-between ${blocked ? "bg-zinc-100/80 opacity-70" : "bg-zinc-50"}`}
+                      title={blocked ? blockTitle : undefined}
+                    >
+                      <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-sm font-medium text-zinc-800 break-words">{s.name}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-700 shrink-0">
+                            {intervalMinutesToLabel(s.intervalMinutes)}
+                          </span>
+                          {blocked && (
+                            <span className="text-xs text-amber-700 shrink-0" title={blockTitle}>
+                              🔒
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          {s.isCombined && <span className="text-violet-600">{(t as Record<string, string>).strategyTagCombined ?? "Combinada"} · </span>}
+                          {s.isCombined ? (s.applyToAllSymbols ? t.anySymbol : (s.symbol ?? "")) : (s.applyToAllSymbols ? t.anySymbol : (s.symbol ?? ""))}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => !blocked && openEdit(s)}
+                          disabled={blocked}
+                          className="text-xs px-2 py-1 rounded border border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100 disabled:opacity-70 disabled:cursor-not-allowed"
+                          title={blocked ? blockTitle : t.editStrategy}
+                        >
+                          {t.editStrategy}
+                        </button>
+                        {applied ? (
+                          <button
+                            type="button"
+                            onClick={() => !blocked && unapplyStrategy(s.id)}
+                            disabled={blocked}
+                            className="text-xs px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-70 disabled:cursor-not-allowed"
+                          >
+                            {t.removeFromTable}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={onApply}
+                            disabled={blocked}
+                            className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                          >
+                            {t.applyStrategy}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => !blocked && setDeleteConfirmStrategy({ id: s.id, name: s.name })}
+                          disabled={blocked}
+                          className="p-1 rounded text-zinc-500 hover:text-red-600 hover:bg-zinc-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                          aria-label={t.delete}
+                          title={blocked ? blockTitle : t.delete}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+                {listNormals.length > 0 && listCombined.length > 0 && (
+                  <li key="divider-combined" className="py-2" aria-hidden>
+                    <hr className="border-zinc-300" />
+                    <span className="text-xs font-medium text-zinc-500 mt-2 block">
+                      {(t as Record<string, string>).strategySectionCombined ?? "Combinadas"}
+                    </span>
+                  </li>
+                )}
+                {listCombined.map((s) => {
                   const applied = isApplied(s.id);
                   const onApply = () => {
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
@@ -439,17 +630,19 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   return (
                     <li
                       key={s.id}
-                      className="flex flex-col gap-2 p-2 rounded-md bg-zinc-50 border border-zinc-200 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-2 p-2 rounded-md border border-violet-200 bg-violet-50/30 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
-                        <span className="text-sm font-medium text-zinc-800 break-words">{s.name}</span>
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-700 shrink-0">
-                          {intervalMinutesToLabel(s.intervalMinutes)}
-                        </span>
-                        <HelpPopover content={t.strategyInterval} />
-                        <span className="text-xs text-zinc-500 shrink-0">
-                          {s.applyToAllSymbols ? `· ${t.anySymbol}` : `· ${s.symbol ?? ""}`}
-                        </span>
+                      <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-sm font-medium text-zinc-800 break-words">{s.name}</span>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-700 shrink-0">
+                            {intervalMinutesToLabel(s.intervalMinutes)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          <span className="text-violet-600">{(t as Record<string, string>).strategyTagCombined ?? "Combinada"} · </span>
+                          {s.applyToAllSymbols ? t.anySymbol : (s.symbol ?? "")}
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-1 shrink-0">
                         <button
@@ -464,7 +657,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                           <button
                             type="button"
                             onClick={() => unapplyStrategy(s.id)}
-                            className="text-xs px-2 py-1 rounded border border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100"
+                            className="text-xs px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600"
                           >
                             {t.removeFromTable}
                           </button>
@@ -479,7 +672,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                         )}
                         <button
                           type="button"
-                          onClick={() => removeStrategy(s.id)}
+                          onClick={() => setDeleteConfirmStrategy({ id: s.id, name: s.name })}
                           className="p-1 rounded text-zinc-500 hover:text-red-600 hover:bg-zinc-200"
                           aria-label={t.delete}
                         >
@@ -503,6 +696,35 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               {t.strategyInterval}: <strong>{chartIntervalLabel}</strong>
               <HelpPopover content={t.strategyInterval} />
             </p>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-zinc-600 flex items-center gap-1">
+                {(t as Record<string, string>).strategyCreateModeLabel ?? "Modo"}
+                <HelpPopover content={(t as Record<string, string>).strategyModeHint ?? ""} />
+              </span>
+              <div className="flex rounded-md border border-zinc-300 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setAddStrategyMode("current")}
+                  className={`text-xs px-2.5 py-1.5 flex-1 ${addStrategyMode === "current" ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+                >
+                  {(t as Record<string, string>).strategyModeCurrent ?? "Estratégias"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => canUseCombinedMode && setAddStrategyMode("combined")}
+                  disabled={!canUseCombinedMode}
+                  title={!canUseCombinedMode ? ((t as Record<string, string>).needTwoStrategiesForCombined ?? "") : undefined}
+                  className={`text-xs px-2.5 py-1.5 flex-1 border-l border-zinc-300 ${addStrategyMode === "combined" ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"} ${!canUseCombinedMode ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {(t as Record<string, string>).strategyModeCombined ?? "Combinado"}
+                </button>
+              </div>
+              {!canUseCombinedMode && (
+                <p className="text-xs text-zinc-500">
+                  {(t as Record<string, string>).needTwoStrategiesForCombined ?? "Crie pelo menos 2 estratégias neste símbolo para usar o modo combinado."}
+                </p>
+              )}
+            </div>
             <div>
               <label className="block text-xs font-medium text-zinc-600 mb-1">{t.strategyName}</label>
               <input
@@ -569,10 +791,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 node={addRoot}
                 root={addRoot}
                 setRoot={setAddRoot}
-                seriesOptions={seriesOptions}
+                seriesOptions={seriesOptionsForForm}
                 t={t}
                 canAddMore={canAddMore}
                 depth={0}
+                combinedMode={addStrategyMode === "combined"}
               />
             </div>
             <div className="flex gap-2 pt-2">
@@ -612,6 +835,7 @@ function GroupEditor({
   canAddMore,
   depth,
   onRemoveGroup,
+  combinedMode = false,
 }: {
   node: StrategyGroupNode;
   root: StrategyGroupNode;
@@ -621,6 +845,7 @@ function GroupEditor({
   canAddMore: boolean;
   depth: number;
   onRemoveGroup?: () => void;
+  combinedMode?: boolean;
 }) {
   const updateThisGroup = (updater: (g: StrategyGroupNode) => StrategyGroupNode) => {
     if (node.id === root.id) setRoot(updater(node));
@@ -628,11 +853,15 @@ function GroupEditor({
   };
   const addCondition = () => {
     if (!canAddMore) return;
-    updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyCondition()] }));
+    const newChild = combinedMode ? createCombinedCondition(seriesOptions[0]?.key ?? "") : createEmptyCondition();
+    updateThisGroup((g) => ({ ...g, children: [...g.children, newChild] }));
   };
   const addNot = () => {
     if (!canAddMore) return;
-    updateThisGroup((g) => ({ ...g, children: [...g.children, createEmptyNot()] }));
+    const notChild = combinedMode
+      ? { type: "not" as const, id: `not_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, child: createCombinedCondition(seriesOptions[0]?.key ?? "") }
+      : createEmptyNot();
+    updateThisGroup((g) => ({ ...g, children: [...g.children, notChild] }));
   };
   const addGroup = () => {
     if (!canAddMore) return;
@@ -675,6 +904,7 @@ function GroupEditor({
               t={t}
               onUpdate={(patch) => updateChild(child.id, (n) => (n.type === "condition" ? { ...n, ...patch } : n))}
               onRemove={node.children.length > 1 ? () => removeChild(child.id) : undefined}
+              combinedMode={combinedMode}
             />
           ) : child.type === "not" ? (
             <div className="rounded border border-amber-200 bg-amber-50/50 p-2">
@@ -687,6 +917,7 @@ function GroupEditor({
                     t={t}
                     onUpdate={(patch) => updateChild(child.child.id, (n) => (n.type === "condition" ? { ...n, ...patch } : n))}
                     onRemove={() => removeChild(child.id)}
+                    combinedMode={combinedMode}
                   />
                 ) : child.child.type === "group" ? (
                   <GroupEditor
@@ -697,6 +928,7 @@ function GroupEditor({
                     t={t}
                     canAddMore={canAddMore}
                     depth={depth + 1}
+                    combinedMode={combinedMode}
                   />
                 ) : null}
               </div>
@@ -715,6 +947,7 @@ function GroupEditor({
               canAddMore={canAddMore}
               depth={depth + 1}
               onRemoveGroup={node.children.length > 1 ? () => removeChild(child.id) : undefined}
+              combinedMode={combinedMode}
             />
           )}
         </div>
@@ -746,6 +979,8 @@ function OperandInput({
   seriesLabel,
   constantLabel,
   offsetLabel,
+  hideOffset = false,
+  seriesOnly = false,
 }: {
   operand: StrategyOperand;
   onChange: (o: StrategyOperand) => void;
@@ -753,9 +988,28 @@ function OperandInput({
   seriesLabel: string;
   constantLabel: string;
   offsetLabel: string;
+  hideOffset?: boolean;
+  /** Modo combinado: só estratégia (sem constante nem select série/valor). */
+  seriesOnly?: boolean;
 }) {
   const isSeries = operand.type === "series";
-  const offset = isSeries ? normalizeOffset(operand.offset) : 0;
+  const offset = hideOffset ? 0 : (isSeries ? normalizeOffset(operand.offset) : 0);
+  const effectiveKey = isSeries ? operand.seriesKey : (seriesOptions[0]?.key ?? "close");
+
+  if (seriesOnly) {
+    return (
+      <div className="flex gap-1 flex-wrap items-center">
+        <span className="text-xs text-zinc-600 shrink-0">{seriesLabel}:</span>
+        <SeriesCombobox
+          value={effectiveKey}
+          options={seriesOptions}
+          onChange={(key) => onChange({ type: "series", seriesKey: key, offset: 0 })}
+          ariaLabel={seriesLabel}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex gap-1 flex-wrap items-center">
       <select
@@ -774,20 +1028,24 @@ function OperandInput({
           <SeriesCombobox
             value={operand.seriesKey}
             options={seriesOptions}
-            onChange={(key) => onChange({ type: "series", seriesKey: key, offset })}
+            onChange={(key) => onChange({ type: "series", seriesKey: key, offset: hideOffset ? 0 : offset })}
             ariaLabel={seriesLabel}
           />
-          <select
-            value={offset}
-            onChange={(e) => onChange({ type: "series", seriesKey: operand.seriesKey, offset: Number(e.target.value) })}
-            className="text-xs border border-zinc-300 rounded px-1 py-1 w-14"
-            aria-label={offsetLabel}
-          >
-            {Array.from({ length: STRATEGY_OFFSET_MAX - STRATEGY_OFFSET_MIN + 1 }, (_, i) => STRATEGY_OFFSET_MAX - i).map((v) => (
-              <option key={v} value={v}>{v === 0 ? "0" : v}</option>
-            ))}
-          </select>
-          <HelpPopover content={offsetLabel} />
+          {!hideOffset && (
+            <>
+              <select
+                value={offset}
+                onChange={(e) => onChange({ type: "series", seriesKey: operand.seriesKey, offset: Number(e.target.value) })}
+                className="text-xs border border-zinc-300 rounded px-1 py-1 w-14"
+                aria-label={offsetLabel}
+              >
+                {Array.from({ length: STRATEGY_OFFSET_MAX - STRATEGY_OFFSET_MIN + 1 }, (_, i) => STRATEGY_OFFSET_MAX - i).map((v) => (
+                  <option key={v} value={v}>{v === 0 ? "0" : v}</option>
+                ))}
+              </select>
+              <HelpPopover content={offsetLabel} />
+            </>
+          )}
         </>
       ) : (
         <input
@@ -812,14 +1070,17 @@ function ConditionRow({
   t,
   onUpdate,
   onRemove,
+  combinedMode = false,
 }: {
   condition: StrategyConditionNode;
   seriesOptions: { key: string; label: string }[];
   t: Record<string, string>;
   onUpdate: (patch: Partial<StrategyConditionNode>) => void;
   onRemove?: () => void;
+  combinedMode?: boolean;
 }) {
   const kind: StrategyConditionKind = condition.kind ?? "compare";
+  const effectiveKind = combinedMode ? "compare" as const : kind;
   const setKind = (k: StrategyConditionKind) => {
     if (k === "crossover" || k === "crossunder") {
       const left = condition.left?.type === "series" ? condition.left : { type: "series" as const, seriesKey: "close", offset: 0 };
@@ -830,29 +1091,85 @@ function ConditionRow({
     }
   };
   const barsAfter = normalizeBarsAfter(condition.barsAfter);
+  const seriesLabel = combinedMode ? ((t as Record<string, string>).strategyLabel ?? "Estratégia") : t.series;
+
+  const firstStrategyKey = combinedMode ? (seriesOptions[0]?.key ?? "") : (seriesOptions[0]?.key ?? "close");
+  const isValidSeriesKey = (key: string) => seriesOptions.some((o) => o.key === key);
+
+  useEffect(() => {
+    if (!combinedMode) return;
+    if (kind === "crossover" || kind === "crossunder") {
+      onUpdate({
+        kind: "compare",
+        barsAfter: undefined,
+        left: { type: "series" as const, seriesKey: firstStrategyKey, offset: 0 },
+        operator: "=",
+        right: { type: "constant" as const, value: 1 },
+      });
+      return;
+    }
+    if (kind === "compare") {
+      const patches: Partial<StrategyConditionNode> = {};
+      const leftKey = condition.left?.type === "series" && isValidSeriesKey(condition.left.seriesKey) ? condition.left.seriesKey : firstStrategyKey;
+      if (condition.left?.type !== "series" || condition.left.seriesKey !== leftKey || condition.left.offset !== 0) {
+        patches.left = { type: "series" as const, seriesKey: leftKey, offset: 0 };
+      }
+      const rightVal = condition.right?.type === "constant" && (condition.right.value === 0 || condition.right.value === 1) ? condition.right.value : 1;
+      if (condition.operator !== "=" || condition.right?.type !== "constant" || condition.right.value !== rightVal) {
+        patches.operator = "=";
+        patches.right = { type: "constant" as const, value: rightVal };
+      }
+      if (Object.keys(patches).length > 0) onUpdate(patches);
+    }
+  }, [combinedMode, kind, firstStrategyKey, condition.left?.type, condition.left?.type === "series" ? condition.left.seriesKey : null, condition.operator, condition.right?.type, condition.right?.type === "constant" ? condition.right.value : null]);
 
   return (
     <div className="p-2 rounded border border-zinc-200 bg-white text-xs">
       <div className="flex flex-wrap items-center gap-1.5">
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as StrategyConditionKind)}
-          className="text-xs border border-zinc-300 rounded px-1.5 py-1 bg-zinc-50 font-medium"
-        >
-          <option value="compare">{t.kindCompare}</option>
-          <option value="crossover">{t.kindCrossover}</option>
-          <option value="crossunder">{t.kindCrossunder}</option>
-        </select>
-        <HelpPopover content={t.conditionKind} />
-        {kind === "compare" && (
+        {!combinedMode && (
+          <>
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value as StrategyConditionKind)}
+              className="text-xs border border-zinc-300 rounded px-1.5 py-1 bg-zinc-50 font-medium"
+            >
+              <option value="compare">{t.kindCompare}</option>
+              <option value="crossover">{t.kindCrossover}</option>
+              <option value="crossunder">{t.kindCrossunder}</option>
+            </select>
+            <HelpPopover content={t.conditionKind} />
+          </>
+        )}
+        {effectiveKind === "compare" && combinedMode && (
+          <>
+            <span className="text-xs text-zinc-600 shrink-0">{seriesLabel}:</span>
+            <SeriesCombobox
+              value={condition.left?.type === "series" ? condition.left.seriesKey : firstStrategyKey}
+              options={seriesOptions}
+              onChange={(key) => onUpdate({ left: { type: "series", seriesKey: key, offset: 0 }, operator: "=", right: { type: "constant", value: condition.right?.type === "constant" ? condition.right.value : 1 } })}
+              ariaLabel={seriesLabel}
+            />
+            <select
+              value={condition.right?.type === "constant" && (condition.right.value === 0 || condition.right.value === 1) ? String(condition.right.value) : "1"}
+              onChange={(e) => onUpdate({ right: { type: "constant", value: e.target.value === "1" ? 1 : 0 } })}
+              className="text-xs border border-zinc-300 rounded px-1.5 py-1 bg-white"
+            >
+              <option value="1">{(t as Record<string, string>).strategyIsTrue ?? "está verdadeira"}</option>
+              <option value="0">{(t as Record<string, string>).strategyIsFalse ?? "está falsa"}</option>
+            </select>
+          </>
+        )}
+        {effectiveKind === "compare" && !combinedMode && (
           <>
             <OperandInput
-              operand={condition.left}
-              onChange={(left) => onUpdate({ left })}
+              operand={condition.left?.type === "series" ? { ...condition.left, offset: condition.left.offset } : { type: "series" as const, seriesKey: "close", offset: 0 }}
+              onChange={(left) => onUpdate({ left: left?.type === "series" ? { ...left, offset: left.offset ?? 0 } : left })}
               seriesOptions={seriesOptions}
-              seriesLabel={t.series}
+              seriesLabel={seriesLabel}
               constantLabel={t.constant}
               offsetLabel={t.operandOffset}
+              hideOffset={false}
+              seriesOnly={false}
             />
             <select
               value={condition.operator}
@@ -864,16 +1181,18 @@ function ConditionRow({
               ))}
             </select>
             <OperandInput
-              operand={condition.right}
+              operand={condition.right?.type === "series" ? { ...condition.right, offset: condition.right.offset } : condition.right?.type === "constant" ? condition.right : { type: "constant" as const, value: 0 }}
               onChange={(right) => onUpdate({ right })}
               seriesOptions={seriesOptions}
-              seriesLabel={t.series}
+              seriesLabel={seriesLabel}
               constantLabel={t.constant}
               offsetLabel={t.operandOffset}
+              hideOffset={false}
+              seriesOnly={false}
             />
           </>
         )}
-        {(kind === "crossover" || kind === "crossunder") && (
+        {!combinedMode && (kind === "crossover" || kind === "crossunder") && (
           <>
             <div className="w-full flex flex-col gap-1 pt-1">
               <div className="flex items-center gap-1 text-[10px] text-zinc-600">

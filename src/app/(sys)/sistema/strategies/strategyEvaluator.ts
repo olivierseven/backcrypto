@@ -35,12 +35,20 @@ export function getSeriesValue(
   seriesKey: string,
   offset: number,
   userIndicators: UserIndicatorConfig[],
-  getIndicatorColumnStart: (indicatorIndex: number) => number
+  getIndicatorColumnStart: (indicatorIndex: number) => number,
+  strategyResultsById?: Map<string, boolean[]>
 ): number | null {
   const off = normalizeOffset(offset);
   const row = rowIndex - off;
   if (row < 0 || row >= extendedKlines.length) return null;
   const k = extendedKlines[row];
+
+  if (seriesKey.startsWith("strat_") && strategyResultsById) {
+    const id = seriesKey.slice(6);
+    const results = strategyResultsById.get(id);
+    if (!results || row >= results.length) return null;
+    return results[row] ? 1 : 0;
+  }
 
   const baseCol = getBaseColumnIndex(seriesKey);
   if (baseCol != null) {
@@ -82,7 +90,8 @@ function getOperandValue(
   extendedKlines: KlineRow[],
   rowIndex: number,
   userIndicators: UserIndicatorConfig[],
-  getIndicatorColumnStart: (indicatorIndex: number) => number
+  getIndicatorColumnStart: (indicatorIndex: number) => number,
+  strategyResultsById?: Map<string, boolean[]>
 ): number | null {
   if (operand.type === "constant") return operand.value;
   return getSeriesValue(
@@ -91,7 +100,8 @@ function getOperandValue(
     operand.seriesKey,
     operand.offset ?? 0,
     userIndicators,
-    getIndicatorColumnStart
+    getIndicatorColumnStart,
+    strategyResultsById
   );
 }
 
@@ -112,13 +122,14 @@ function evaluateCondition(
   extendedKlines: KlineRow[],
   rowIndex: number,
   userIndicators: UserIndicatorConfig[],
-  getIndicatorColumnStart: (indicatorIndex: number) => number
+  getIndicatorColumnStart: (indicatorIndex: number) => number,
+  strategyResultsById?: Map<string, boolean[]>
 ): boolean {
   const kind = condition.kind ?? "compare";
 
   if (kind === "compare") {
-    const leftVal = getOperandValue(condition.left, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart);
-    const rightVal = getOperandValue(condition.right, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart);
+    const leftVal = getOperandValue(condition.left, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
+    const rightVal = getOperandValue(condition.right, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
     if (leftVal == null || rightVal == null) return false;
     return applyOperator(leftVal, condition.operator, rightVal);
   }
@@ -131,8 +142,8 @@ function evaluateCondition(
 
     // Exige que "agora" (t(0)) já esteja na relação correta (acima para crossover, abaixo para crossunder).
     // Não exige que t(-1) já estivesse assim, senão o cruzamento no candle atual (índice 0) nunca dispara.
-    const nowLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, 0, userIndicators, getIndicatorColumnStart);
-    const nowRight = getSeriesValue(extendedKlines, rowIndex, rightKey, 0, userIndicators, getIndicatorColumnStart);
+    const nowLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+    const nowRight = getSeriesValue(extendedKlines, rowIndex, rightKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
     if (nowLeft == null || nowRight == null) return false;
     if (kind === "crossover") {
       if (!(nowLeft > nowRight)) return false;
@@ -145,10 +156,10 @@ function evaluateCondition(
       const prevRow = crossRow + 1;
       if (prevRow >= extendedKlines.length) continue;
 
-      const leftPrev = getSeriesValue(extendedKlines, crossRow, leftKey, -1, userIndicators, getIndicatorColumnStart);
-      const rightPrev = getSeriesValue(extendedKlines, crossRow, rightKey, -1, userIndicators, getIndicatorColumnStart);
-      const leftCur = getSeriesValue(extendedKlines, crossRow, leftKey, 0, userIndicators, getIndicatorColumnStart);
-      const rightCur = getSeriesValue(extendedKlines, crossRow, rightKey, 0, userIndicators, getIndicatorColumnStart);
+      const leftPrev = getSeriesValue(extendedKlines, crossRow, leftKey, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const rightPrev = getSeriesValue(extendedKlines, crossRow, rightKey, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const leftCur = getSeriesValue(extendedKlines, crossRow, leftKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const rightCur = getSeriesValue(extendedKlines, crossRow, rightKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
 
       if (leftPrev == null || rightPrev == null || leftCur == null || rightCur == null) continue;
 
@@ -168,18 +179,19 @@ export function evaluateNode(
   extendedKlines: KlineRow[],
   rowIndex: number,
   userIndicators: UserIndicatorConfig[],
-  getIndicatorColumnStart: (indicatorIndex: number) => number
+  getIndicatorColumnStart: (indicatorIndex: number) => number,
+  strategyResultsById?: Map<string, boolean[]>
 ): boolean {
   if (node.type === "condition") {
-    return evaluateCondition(node, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart);
+    return evaluateCondition(node, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
   }
   if (node.type === "not") {
-    return !evaluateNode((node as StrategyNotNode).child, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart);
+    return !evaluateNode((node as StrategyNotNode).child, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
   }
   const group = node as StrategyGroupNode;
   const combine = group.combineWith === "OR";
   for (const child of group.children) {
-    const v = evaluateNode(child, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart);
+    const v = evaluateNode(child, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
     if (combine && v) return true;
     if (!combine && !v) return false;
   }

@@ -11,7 +11,7 @@ import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
-import { legacyToRoot, strategiesForContext, validateStrategyReferences, type Strategy } from "./strategies/strategiesTypes";
+import { legacyToRoot, strategiesForContext, validateStrategyReferences, collectSeriesKeys, type Strategy } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
 import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY, KLINE_VOLUME_AT_PRICE_KEY } from "./KlinesChartConstants";
 
@@ -67,8 +67,8 @@ const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] =
   { value: 43200, label: "1M", param: "1M" },
 ];
 
-/** Timeframe padrão para novo usuário (primeira visita): BTCUSDT + 1M. */
-const DEFAULT_GROUP_MINUTES_FIRST_LOAD = 43200; // 1M (1 mês)
+/** Timeframe padrão quando não definido no localStorage: 1 dia. */
+const DEFAULT_GROUP_MINUTES_FIRST_LOAD = 1440; // 1D (1 dia)
 
 /** Opções de intervalo: admin vê também 1m. */
 function getIntervalOptions(isAdmin: boolean): { value: number; label: string; param: string }[] {
@@ -247,8 +247,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
-  const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
-  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout, strategyCreatedTick } = useStrategies();
+  const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout, layoutSaveTick } = useKlinesIndicators();
+  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout, strategyCreatedTick, appliedStrategyIdsTick } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
   /** Incrementa ao aplicar layout (carregar da API) para forçar gráfico a receber strategyCandleOverlays. */
@@ -286,6 +286,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
   const [chartRequestedWidth, setChartRequestedWidth] = useState<number | null>(null);
   const [chartReportedSizePercent, setChartReportedSizePercent] = useState(100);
+  const [currentLayoutLabel, setCurrentLayoutLabel] = useState<string | null>(null);
   const [heikinAshiEnabled, setHeikinAshiEnabled] = useState(false);
   useLayoutEffect(() => {
     setHeikinAshiEnabled(getStoredHeikinAshi());
@@ -573,24 +574,48 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     [strategies, groupMinutes, symbol, appliedStrategyIds]
   );
 
-  /** Por estratégia: array de boolean por índice de linha (linha 0 = mais recente). */
+  /** Ids de estratégias referenciadas por strat_<id> em estratégias combinadas aplicadas (precisam ser avaliadas antes). */
+  const referencedByCombinedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of visibleStrategies.filter((s) => s.isCombined)) {
+      for (const key of collectSeriesKeys(s.root)) {
+        if (key.startsWith("strat_")) ids.add(key.slice(6));
+      }
+    }
+    return ids;
+  }, [visibleStrategies]);
+
+  /** Ordem para avaliação: normais (aplicadas ou referenciadas por combinada) primeiro, depois combinadas, para strat_<id> ter resultado no map. */
+  const visibleStrategiesEvaluationOrder = useMemo(() => {
+    const context = strategiesForContext(strategies, groupMinutes, symbol);
+    const appliedSet = new Set(appliedStrategyIds);
+    const nonCombined = context.filter(
+      (s) => !s.isCombined && (appliedSet.has(s.id) || referencedByCombinedIds.has(s.id))
+    );
+    const combined = context.filter((s) => s.isCombined && appliedSet.has(s.id));
+    return [...nonCombined, ...combined];
+  }, [strategies, groupMinutes, symbol, appliedStrategyIds, referencedByCombinedIds]);
+
+  /** Por estratégia: array de boolean por índice de linha (linha 0 = mais recente). Ordem: normais primeiro, depois combinadas (strat_<id> usa resultados já calculados). */
   const strategyResults = useMemo(() => {
     const map = new Map<string, boolean[]>();
     if (extendedKlines.length === 0) return map;
-    for (const strategy of visibleStrategies) {
+    for (const strategy of visibleStrategiesEvaluationOrder) {
       const arr: boolean[] = [];
       for (let i = 0; i < extendedKlines.length; i++) {
-        arr.push(evaluateNode(strategy.root, extendedKlines, i, userIndicators, getIndicatorColumnStart));
+        arr.push(evaluateNode(strategy.root, extendedKlines, i, userIndicators, getIndicatorColumnStart, map));
       }
       map.set(strategy.id, arr);
     }
     return map;
-  }, [visibleStrategies, extendedKlines, userIndicators, getIndicatorColumnStart, layoutAppliedTick]);
+  }, [visibleStrategiesEvaluationOrder, extendedKlines, userIndicators, getIndicatorColumnStart, layoutAppliedTick]);
 
-  /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Paleta igual à das médias móveis. */
+  /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Se houver alguma estratégia combinada aplicada, só as combinadas têm efeito (as normais ficam desabilitadas). */
   const strategyCandleOverlays = useMemo(() => {
     const palette = INDICATOR_COLOR_PALETTE;
-    return visibleStrategies.map((s, idx) => ({
+    const hasAnyCombinedApplied = visibleStrategies.some((s) => s.isCombined);
+    const strategiesForOverlay = hasAnyCombinedApplied ? visibleStrategies.filter((s) => s.isCombined) : visibleStrategies;
+    return strategiesForOverlay.map((s, idx) => ({
       id: s.id,
       name: s.name,
       color: s.color ?? palette[Math.min(2 + (idx % Math.max(1, palette.length - 2)), palette.length - 1)] ?? "#6366f1",
@@ -991,6 +1016,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           <KlinesChart
             klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
+            onCurrentLayoutLabelChange={setCurrentLayoutLabel}
             groupMinutes={groupMinutes}
             timezoneOffset={timezoneOffset}
             layoutAppliedTick={layoutAppliedTick}
@@ -1083,7 +1109,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
-            layoutAutoSaveTick={strategyCreatedTick}
+            layoutAutoSaveTick={Math.max(strategyCreatedTick, layoutSaveTick ?? 0, appliedStrategyIdsTick ?? 0)}
             getLayoutExtraConfig={() => ({
               userIndicators,
               strategies,
@@ -1097,10 +1123,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               volumeAtPriceColorAbove,
               volumeAtPriceColorBelow,
             })}
-            onLayoutConfigLoaded={(config, slot) => {
-              addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "undefined"} keys=[${Object.keys(config).join(",")}]`);
-              const v = config.groupMinutes;
-              if (typeof v === "number" && intervalOptions.some((o) => o.value === v)) setGroupMinutes(v);
+            onLayoutConfigLoaded={(config, slot, source) => {
+              addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "undefined"} source=${source ?? "undefined"} keys=[${Object.keys(config).join(",")}]`);
+              // Timeframe e símbolo ficam só no localStorage; não aplicamos do layout.
               // Volume no preço (por layout). Se o layout não tiver a chave, desliga VAP (ex.: default antigo sem essas chaves).
               setVolumeAtPriceEnabled(config.volumeAtPriceEnabled === true);
               if (typeof config.volumeAtPriceBuckets === "number") setVolumeAtPriceBuckets(clampEvenBuckets(config.volumeAtPriceBuckets));
@@ -1145,8 +1170,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 const forContext = raw.map((s) => ({
                   ...s,
                   intervalMinutes: layoutGroupMinutes,
-                  applyToAllSymbols: true,
-                  symbol,
+                  applyToAllSymbols: s.applyToAllSymbols ?? true,
+                  symbol: s.symbol ?? symbol,
                 }));
                 replaceStrategiesFromLayout(forContext);
               }
@@ -1169,7 +1194,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
           />
           {lastUpdate && (
             <div className="w-full flex items-center mt-1 pb-0.5 px-0.5 pr-3">
-              <span className="flex-1" aria-hidden />
+              <span className="flex-1 text-[10px] text-zinc-500 truncate text-left min-w-0" title={currentLayoutLabel ?? undefined}>
+                {currentLayoutLabel ?? ""}
+              </span>
               <span className="text-[10px] text-zinc-500 text-center shrink-0">
                 {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
               </span>

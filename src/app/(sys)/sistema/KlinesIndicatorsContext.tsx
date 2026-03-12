@@ -8,7 +8,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { KLINE_USER_INDICATORS_KEY, KLINE_PREFS_KEY } from "./KlinesChartConstants";
 
 export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume";
 
@@ -177,107 +176,13 @@ export function getFieldIndex(
   return 4; // fallback close
 }
 
+/** Indicadores vêm só do layout (banco). Não usar localStorage. */
 function loadFromStorage(): UserIndicatorConfig[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(KLINE_USER_INDICATORS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (p): p is UserIndicatorConfig => {
-        if (p == null || typeof p !== "object") return false;
-        const u = p as UserIndicatorConfig;
-        return (
-          typeof u.id === "string" &&
-          (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger" || u.type === "Volume") &&
-          typeof u.period === "number" &&
-          typeof u.fieldKey === "string" &&
-          typeof u.color === "string" &&
-          Array.isArray(u.intervals)
-        );
-      }
-    ).map((u) => ({
-      ...u,
-      fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.type === "Volume" ? "volume" : u.fieldKey),
-      panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
-        ? u.panel
-        : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" ? "panel2" : "main")),
-      sarStart: u.type === "SAR" ? (typeof u.sarStart === "number" ? Math.max(0.001, Math.min(1, u.sarStart)) : 0.02) : undefined,
-      sarIncrement: u.type === "SAR" ? (typeof u.sarIncrement === "number" ? Math.max(0.001, Math.min(1, u.sarIncrement)) : 0.02) : undefined,
-      sarMax: u.type === "SAR" ? (typeof u.sarMax === "number" ? Math.max(0.02, Math.min(1, u.sarMax)) : 0.2) : undefined,
-      sarPointSize: u.type === "SAR" ? (u.sarPointSize === "thin" || u.sarPointSize === "normal" ? u.sarPointSize : "normal") : undefined,
-      lineWidth: u.lineWidth === "thin" || u.lineWidth === "normal" ? u.lineWidth : "normal",
-      lineStyle: u.lineStyle === "solid" || u.lineStyle === "dotted" || u.lineStyle === "dashed" ? u.lineStyle : "solid",
-      rsiFixedScale: u.type === "RSI" ? (u.rsiFixedScale === false ? false : true) : undefined,
-      rsiCenterLine: u.type === "RSI" ? (u.rsiCenterLine === true) : undefined,
-      rsiCenterLineColor: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineColor ?? "#71717a") : undefined,
-      rsiCenterLineWidth: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineWidth === "thin" || u.rsiCenterLineWidth === "normal" ? u.rsiCenterLineWidth : "normal") : undefined,
-      rsiCenterLineStyle: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineStyle === "solid" || u.rsiCenterLineStyle === "dotted" || u.rsiCenterLineStyle === "dashed" ? u.rsiCenterLineStyle : "dotted") : undefined,
-      rsiLimits: u.type === "RSI" ? (u.rsiLimits === true) : undefined,
-      rsiLimitUpper: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitUpper))) : 90) : undefined,
-      rsiLimitLower: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitLower))) : 10) : undefined,
-      rsiLimitColor: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitColor ?? "#dc2626") : undefined,
-      rsiLimitLineWidth: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineWidth === "thin" || u.rsiLimitLineWidth === "normal" ? u.rsiLimitLineWidth : "normal") : undefined,
-      rsiLimitLineStyle: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineStyle === "solid" || u.rsiLimitLineStyle === "dotted" || u.rsiLimitLineStyle === "dashed" ? u.rsiLimitLineStyle : "dotted") : undefined,
-      macdFastMaType: u.type === "MACD" ? (u.macdFastMaType === "SMA" || u.macdFastMaType === "EMA" || u.macdFastMaType === "WMA" ? u.macdFastMaType : "EMA") : undefined,
-      macdFastPeriod: u.type === "MACD" ? (typeof u.macdFastPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdFastPeriod))) : 12) : undefined,
-      macdSlowMaType: u.type === "MACD" ? (u.macdSlowMaType === "SMA" || u.macdSlowMaType === "EMA" || u.macdSlowMaType === "WMA" ? u.macdSlowMaType : "EMA") : undefined,
-      macdSlowPeriod: u.type === "MACD" ? (typeof u.macdSlowPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSlowPeriod))) : 26) : undefined,
-      macdSignalLine: u.type === "MACD" ? (u.macdSignalLine === true) : undefined,
-      macdSignalMaType: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalMaType === "SMA" || u.macdSignalMaType === "EMA" || u.macdSignalMaType === "WMA" ? u.macdSignalMaType : "EMA") : undefined,
-      macdSignalPeriod: u.type === "MACD" && u.macdSignalLine ? (typeof u.macdSignalPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSignalPeriod))) : 9) : undefined,
-      macdSignalColor: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalColor ?? "#ea580c") : undefined,
-      macdSignalLineWidth: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalLineWidth === "thin" || u.macdSignalLineWidth === "normal" ? u.macdSignalLineWidth : "normal") : undefined,
-      macdSignalLineStyle: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalLineStyle === "solid" || u.macdSignalLineStyle === "dotted" || u.macdSignalLineStyle === "dashed" ? u.macdSignalLineStyle : "dashed") : undefined,
-      macdHistogram: u.type === "MACD" && u.macdSignalLine ? (u.macdHistogram === true) : undefined,
-      macdHistogramColorAbove: u.type === "MACD" && u.macdSignalLine && u.macdHistogram ? (u.macdHistogramColorAbove ?? "#059669") : undefined,
-      macdHistogramColorBelow: u.type === "MACD" && u.macdSignalLine && u.macdHistogram ? (u.macdHistogramColorBelow ?? "#dc2626") : undefined,
-      stochLimits: u.type === "Stochastic" ? (u.stochLimits === true) : undefined,
-      stochLimitUpper: u.type === "Stochastic" && u.stochLimits ? (typeof u.stochLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.stochLimitUpper))) : 80) : undefined,
-      stochLimitLower: u.type === "Stochastic" && u.stochLimits ? (typeof u.stochLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.stochLimitLower))) : 20) : undefined,
-      stochLimitColor: u.type === "Stochastic" && u.stochLimits ? (u.stochLimitColor ?? "#dc2626") : undefined,
-      stochLimitLineWidth: u.type === "Stochastic" && u.stochLimits ? (u.stochLimitLineWidth === "thin" || u.stochLimitLineWidth === "normal" ? u.stochLimitLineWidth : "normal") : undefined,
-      stochLimitLineStyle: u.type === "Stochastic" && u.stochLimits ? (u.stochLimitLineStyle === "solid" || u.stochLimitLineStyle === "dotted" || u.stochLimitLineStyle === "dashed" ? u.stochLimitLineStyle : "dotted") : undefined,
-      stochDLine: u.type === "Stochastic" ? (u.stochDLine === true) : undefined,
-      stochDMaType: u.type === "Stochastic" && u.stochDLine ? (u.stochDMaType === "SMA" || u.stochDMaType === "EMA" || u.stochDMaType === "WMA" ? u.stochDMaType : "SMA") : undefined,
-      stochDPeriod: u.type === "Stochastic" && u.stochDLine ? (typeof u.stochDPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.stochDPeriod))) : 3) : undefined,
-      stochDColor: u.type === "Stochastic" && u.stochDLine ? (u.stochDColor ?? "#ea580c") : undefined,
-      stochDLineWidth: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineWidth === "thin" || u.stochDLineWidth === "normal" ? u.stochDLineWidth : "normal") : undefined,
-      stochDLineStyle: u.type === "Stochastic" && u.stochDLine ? (u.stochDLineStyle === "solid" || u.stochDLineStyle === "dotted" || u.stochDLineStyle === "dashed" ? u.stochDLineStyle : "dashed") : undefined,
-      williamsRLimits: u.type === "WilliamsR" ? (u.williamsRLimits === true) : undefined,
-      williamsRLimitUpper: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitUpper === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitUpper))) : -20) : undefined,
-      williamsRLimitLower: u.type === "WilliamsR" && u.williamsRLimits ? (typeof u.williamsRLimitLower === "number" ? Math.max(-100, Math.min(0, Math.round(u.williamsRLimitLower))) : -80) : undefined,
-      williamsRLimitColor: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitColor ?? "#dc2626") : undefined,
-      williamsRLimitLineWidth: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineWidth === "thin" || u.williamsRLimitLineWidth === "normal" ? u.williamsRLimitLineWidth : "normal") : undefined,
-      williamsRLimitLineStyle: u.type === "WilliamsR" && u.williamsRLimits ? (u.williamsRLimitLineStyle === "solid" || u.williamsRLimitLineStyle === "dotted" || u.williamsRLimitLineStyle === "dashed" ? u.williamsRLimitLineStyle : "dotted") : undefined,
-      bollingerMaType: u.type === "Bollinger" ? (u.bollingerMaType === "SMA" || u.bollingerMaType === "EMA" || u.bollingerMaType === "WMA" ? u.bollingerMaType : "SMA") : undefined,
-      bollingerZ: u.type === "Bollinger" ? (typeof u.bollingerZ === "number" ? Math.max(0, Math.min(3, u.bollingerZ)) : 2) : undefined,
-      bollingerShowUpper: u.type === "Bollinger" ? (u.bollingerShowUpper !== false) : undefined,
-      bollingerShowLower: u.type === "Bollinger" ? (u.bollingerShowLower !== false) : undefined,
-      bollingerShowMiddle: u.type === "Bollinger" ? (u.bollingerShowMiddle === true) : undefined,
-      bollingerBandOpacity: u.type === "Bollinger" ? (typeof u.bollingerBandOpacity === "number" ? Math.max(0, Math.min(0.3, u.bollingerBandOpacity)) : 0.2) : undefined,
-      bollingerLimitsColor: u.type === "Bollinger" ? (u.bollingerLimitsColor ?? "#6366f1") : undefined,
-      bollingerLimitsLineStyle: u.type === "Bollinger" ? (u.bollingerLimitsLineStyle === "solid" || u.bollingerLimitsLineStyle === "dotted" || u.bollingerLimitsLineStyle === "dashed" ? u.bollingerLimitsLineStyle : "solid") : undefined,
-      bollingerLimitsLineWidth: u.type === "Bollinger" ? (u.bollingerLimitsLineWidth === "thin" || u.bollingerLimitsLineWidth === "normal" ? u.bollingerLimitsLineWidth : "normal") : undefined,
-      bollingerMiddleColor: u.type === "Bollinger" ? (u.bollingerMiddleColor ?? "#a855f7") : undefined,
-      bollingerMiddleLineStyle: u.type === "Bollinger" ? (u.bollingerMiddleLineStyle === "solid" || u.bollingerMiddleLineStyle === "dotted" || u.bollingerMiddleLineStyle === "dashed" ? u.bollingerMiddleLineStyle : "dashed") : undefined,
-      bollingerMiddleLineWidth: u.type === "Bollinger" ? (u.bollingerMiddleLineWidth === "thin" || u.bollingerMiddleLineWidth === "normal" ? u.bollingerMiddleLineWidth : "normal") : undefined,
-      volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
-      volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
-      volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
-    }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
-function saveToStorage(list: UserIndicatorConfig[]) {
-  try {
-    localStorage.setItem(KLINE_USER_INDICATORS_KEY, JSON.stringify(list));
-  } catch {
-    /* ignore */
-  }
+function saveToStorage(_list: UserIndicatorConfig[]) {
+  /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
 /** Normaliza uma lista vinda do layout (ou localStorage) para UserIndicatorConfig[]. */
@@ -384,6 +289,7 @@ interface ContextValue {
   updateIndicatorIntervals: (id: string, intervals: number[]) => void;
   /** Restaura a lista de indicadores a partir de um layout (ex.: ao carregar layout salvo). */
   replaceUserIndicatorsFromLayout: (raw: unknown) => void;
+  layoutSaveTick: number;
 }
 
 const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
@@ -391,46 +297,31 @@ const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
 export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) {
   const [userIndicators, setUserIndicators] = useState<UserIndicatorConfig[]>(loadFromStorage);
   const [currentGroupMinutes, setCurrentGroupMinutes] = useState<number | null>(null);
+  const [layoutSaveTick, setLayoutSaveTick] = useState(0);
 
   const addIndicator = useCallback((config: Omit<UserIndicatorConfig, "id">) => {
     const id = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    setUserIndicators((prev) => {
-      const next = [...prev, { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false }];
-      saveToStorage(next);
-      return next;
-    });
+    setUserIndicators((prev) => [...prev, { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false }]);
+    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const removeIndicator = useCallback((id: string) => {
-    setUserIndicators((prev) => {
-      const next = prev.filter((u) => u.id !== id);
-      saveToStorage(next);
-      return next;
-    });
+    setUserIndicators((prev) => prev.filter((u) => u.id !== id));
+    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const updateIndicator = useCallback((id: string, updates: Partial<UserIndicatorEditable>) => {
-    setUserIndicators((prev) => {
-      const next = prev.map((u) =>
-        u.id === id ? { ...u, ...updates } : u
-      );
-      saveToStorage(next);
-      return next;
-    });
+    setUserIndicators((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
+    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const updateIndicatorIntervals = useCallback((id: string, intervals: number[]) => {
-    setUserIndicators((prev) => {
-      const next = prev.map((u) => (u.id === id ? { ...u, intervals } : u));
-      saveToStorage(next);
-      return next;
-    });
+    setUserIndicators((prev) => prev.map((u) => (u.id === id ? { ...u, intervals } : u)));
+    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const replaceUserIndicatorsFromLayout = useCallback((raw: unknown) => {
-    const list = normalizeIndicatorListFromLayout(raw);
-    setUserIndicators(list);
-    saveToStorage(list);
+    setUserIndicators(normalizeIndicatorListFromLayout(raw));
   }, []);
 
   const value = useMemo<ContextValue>(
@@ -443,8 +334,9 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
       updateIndicator,
       updateIndicatorIntervals,
       replaceUserIndicatorsFromLayout,
+      layoutSaveTick,
     }),
-    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout]
+    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout, layoutSaveTick]
   );
 
   return (

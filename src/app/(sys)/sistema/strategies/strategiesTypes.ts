@@ -61,6 +61,8 @@ export interface Strategy {
   symbol?: string;
   /** Cor do candle quando a condição é verdadeira (hex). Usa a mesma paleta das médias móveis. */
   color?: string;
+  /** Se true, a estratégia foi criada no modo combinado (condições sobre outras estratégias). */
+  isCombined?: boolean;
 }
 
 /** Formato legado (antes de intervalMinutes/applyToAllSymbols): migração. */
@@ -136,6 +138,18 @@ export function createEmptyCondition(): StrategyConditionNode {
   };
 }
 
+/** Modo combinado: condição "estratégia está verdadeira" (strat_key = 1). Use createCombinedCondition(seriesOptions[0]?.key ?? ""). */
+export function createCombinedCondition(stratKey: string): StrategyConditionNode {
+  return {
+    type: "condition",
+    id: `cond_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    kind: "compare",
+    left: { type: "series", seriesKey: stratKey.startsWith("strat_") ? stratKey : `strat_${stratKey}`, offset: 0 },
+    operator: "=",
+    right: { type: "constant", value: 1 },
+  };
+}
+
 /** Cria condição CROSSOVER (duas séries; barsAfter 0..7). */
 export function createEmptyCrossoverCondition(): StrategyConditionNode {
   return {
@@ -165,9 +179,10 @@ export function legacyToRoot(s: StrategyLegacy | Strategy): Strategy {
     return {
       ...str,
       intervalMinutes: str.intervalMinutes ?? 5,
-      applyToAllSymbols: str.applyToAllSymbols ?? true,
+      applyToAllSymbols: str.applyToAllSymbols ?? (str.isCombined ? false : true),
       symbol: str.symbol,
       color: str.color,
+      isCombined: str.isCombined,
     };
   }
   const leg = s as StrategyLegacy;
@@ -236,21 +251,21 @@ export function replaceInNode(
   return node;
 }
 
-/** Retorna estratégias que se aplicam ao intervalo e símbolo atuais (para uso na tabela/gráfico). */
+/** Retorna estratégias que se aplicam ao intervalo e símbolo atuais (para uso na tabela/gráfico). Estratégias combinadas só valem para o símbolo em que foram criadas (nunca "qualquer símbolo"). */
 export function strategiesForContext(
   strategies: Strategy[],
   groupMinutes: number,
   symbol: string
 ): Strategy[] {
-  return strategies.filter(
-    (s) =>
-      s.intervalMinutes === groupMinutes &&
-      (s.applyToAllSymbols || (s.symbol != null && s.symbol === symbol))
-  );
+  return strategies.filter((s) => {
+    if (s.intervalMinutes !== groupMinutes) return false;
+    if (s.isCombined) return s.applyToAllSymbols || (s.symbol != null && s.symbol === symbol);
+    return s.applyToAllSymbols || (s.symbol != null && s.symbol === symbol);
+  });
 }
 
-/** Coleta todas as seriesKey usadas na árvore (ex.: "close", "ind_xyz"). */
-function collectSeriesKeys(node: StrategyNode): string[] {
+/** Coleta todas as seriesKey usadas na árvore (ex.: "close", "ind_xyz", "strat_<id>"). */
+export function collectSeriesKeys(node: StrategyNode): string[] {
   const keys: string[] = [];
   if (node.type === "condition") {
     if (node.left?.type === "series") keys.push(node.left.seriesKey);

@@ -11,7 +11,7 @@ import { KLINE_DRAW_MAGNETIC_KEY } from "./KlinesChartConstants";
 export type DrawTool = "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
 
 function getInitialDrawMagnetic(): boolean {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") return false;
   try {
     const v = window.localStorage.getItem(KLINE_DRAW_MAGNETIC_KEY);
     if (v === "false") return false;
@@ -19,7 +19,7 @@ function getInitialDrawMagnetic(): boolean {
   } catch {
     /* ignore */
   }
-  return true;
+  return false;
 }
 
 export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement | null>) {
