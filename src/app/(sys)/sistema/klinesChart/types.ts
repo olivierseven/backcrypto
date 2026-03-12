@@ -151,6 +151,8 @@ export type KlinesChartProps = {
   onVolumeAtPriceSideChange?: (v: "left" | "right") => void;
   onVolumeAtPriceColorAboveChange?: (v: string) => void;
   onVolumeAtPriceColorBelowChange?: (v: string) => void;
+  /** Preço ao vivo do último fechamento (ex.: WebSocket). Quando definido, a linha e o label de "último fechamento" usam este valor em vez de klines[0][4], evitando mostrar preço do par anterior após troca de símbolo. */
+  liveLastClose?: number | string | null;
 }
 
 /** Dados para desenho do volume no preço: intervalos simétricos no eixo Y com volume acumulado por faixa de fechamento. */

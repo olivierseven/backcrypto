@@ -277,6 +277,10 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
   const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
   const lastSpotPersistAtRef = useRef(0);
+  const priceDebugLastRef = useRef<string>("");
+  const symbolRef = useRef(symbol);
+  const lastKlinesFetchSymbolRef = useRef<string | null>(null);
+  symbolRef.current = symbol;
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
@@ -339,6 +343,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         setSpotWsLow(null);
         return;
       }
+      if (lastKlinesFetchSymbolRef.current !== symbol) return;
       const parsed = JSON.parse(raw) as { high?: number; low?: number } | null;
       const high = parsed && typeof parsed.high === "number" && Number.isFinite(parsed.high) ? parsed.high : null;
       const low = parsed && typeof parsed.low === "number" && Number.isFinite(parsed.low) ? parsed.low : null;
@@ -348,7 +353,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       setSpotWsHigh(null);
       setSpotWsLow(null);
     }
-  }, [spotExtremesStorageKey]);
+  }, [spotExtremesStorageKey, symbol]);
 
   // Atualiza extremos com base no spot (enquanto o socket estiver mandando preços)
   useEffect(() => {
@@ -359,10 +364,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     setSpotWsLow((prev) => (prev == null ? p : Math.min(prev, p)));
   }, [spotWsPrice]);
 
-  // Persiste extremos no localStorage (throttle simples para não gravar demais)
+  // Persiste extremos no localStorage (throttle simples para não gravar demais). Só grava se os klines forem do símbolo atual (evita gravar ETH em chave de BTC).
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
+      if (lastKlinesFetchSymbolRef.current !== symbol) return;
       if (spotWsHigh == null && spotWsLow == null) return;
       const now = Date.now();
       if (now - lastSpotPersistAtRef.current < 1000) return; // no máx. 1x/seg
@@ -374,7 +380,35 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     } catch {
       // ignore
     }
-  }, [spotWsHigh, spotWsLow, spotExtremesStorageKey]);
+  }, [spotWsHigh, spotWsLow, spotExtremesStorageKey, symbol]);
+
+  // A cada fetch (ex.: a cada 1 min), sobrescreve máx/mín no localStorage com os dados reais da API para o candle atual (klines[0]) e, no 1m, para o candle fechado (klines[1]). Recupera valores corretos e evita manter máx/mín de outro símbolo.
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined" || klines.length === 0) return;
+      if (lastKlinesFetchSymbolRef.current !== symbol) return;
+      const first = klines[0] as (string | number)[];
+      const openTime0 = first[0];
+      const high0 = Number(first[2]);
+      const low0 = Number(first[3]);
+      if (openTime0 != null && Number.isFinite(high0) && Number.isFinite(low0)) {
+        const key0 = `backcrypto:spot_extremes:${symbol}:${groupMinutes}:${openTime0}`;
+        window.localStorage.setItem(key0, JSON.stringify({ high: high0, low: low0 }));
+      }
+      if (groupMinutes === 1 && klines.length >= 2) {
+        const closed = klines[1] as (string | number)[];
+        const openTime1 = closed[0];
+        const high1 = Number(closed[2]);
+        const low1 = Number(closed[3]);
+        if (openTime1 != null && Number.isFinite(high1) && Number.isFinite(low1)) {
+          const key1 = `backcrypto:spot_extremes:${symbol}:1:${openTime1}`;
+          window.localStorage.setItem(key1, JSON.stringify({ high: high1, low: low1 }));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [groupMinutes, symbol, klines]);
 
   const klinesWithSpot = useMemo((): Kline[] => {
     if (spotWsPrice == null || klines.length === 0) return klines;
@@ -383,17 +417,18 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const first = klines[0] as (string | number)[];
     const out = [...klines] as unknown as (string | number)[][];
     const next0 = [...first] as (string | number)[];
-    // OHLC: [1]=open [2]=high [3]=low [4]=close
+    // OHLC: [1]=open [2]=high [3]=low [4]=close. Só usa spotWsHigh/spotWsLow se os klines forem do símbolo atual (evita mínima do ETH no candle de BTC).
     const baseHigh = Number(next0[2]);
     const baseLow = Number(next0[3]);
     next0[4] = spotWsPrice;
-    const hi = spotWsHigh != null ? spotWsHigh : (Number.isFinite(baseHigh) ? Math.max(baseHigh, p) : p);
-    const lo = spotWsLow != null ? spotWsLow : (Number.isFinite(baseLow) ? Math.min(baseLow, p) : p);
+    const useWsExtremes = lastKlinesFetchSymbolRef.current === symbol;
+    const hi = useWsExtremes && spotWsHigh != null ? spotWsHigh : (Number.isFinite(baseHigh) ? Math.max(baseHigh, p) : p);
+    const lo = useWsExtremes && spotWsLow != null ? spotWsLow : (Number.isFinite(baseLow) ? Math.min(baseLow, p) : p);
     next0[2] = String(hi);
     next0[3] = String(lo);
     out[0] = next0;
     return out as unknown as Kline[];
-  }, [klines, spotWsPrice, spotWsHigh, spotWsLow]);
+  }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol]);
 
   const heikinAshiKlines = useMemo(() => computeHeikinAshi(klinesWithSpot), [klinesWithSpot]);
   const baseForIndicators = heikinAshiEnabled ? heikinAshiKlines : klinesWithSpot;
@@ -641,12 +676,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   }, [klines.length, chartWidth, groupMinutes]);
 
   const fetchKlines = async () => {
+    const requestedSymbol = symbolRef.current;
     try {
       setError(null);
       setNeedsRefresh(false);
       const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
       const res = await fetch(
-        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(symbol)}&interval=${intervalParam}&limit=1000`
+        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -654,8 +690,19 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       }
       const body = await res.json();
       const list = Array.isArray(body) ? body : (body.klines ?? []);
-      const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
+      if (symbolRef.current !== requestedSymbol) return;
+      lastKlinesFetchSymbolRef.current = requestedSymbol;
       setKlines(list);
+      if (list.length > 0) {
+        const row0 = list[0] as (string | number)[];
+        const h = Number(row0[2]);
+        const l = Number(row0[3]);
+        if (Number.isFinite(h) && Number.isFinite(l)) {
+          setSpotWsHigh(h);
+          setSpotWsLow(l);
+        }
+      }
+      const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
       setNeedsRefresh(refreshFlag);
       if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
         setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
@@ -689,6 +736,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   useEffect(() => {
     if (!timeframeRestored) return;
     setLoading(true);
+    setKlines([]);
+    setSpot({ currentClose: null, prevDayClose: null });
+    setSpotWsPrice(null);
+    setSpotWsHigh(null);
+    setSpotWsLow(null);
     fetchKlines();
     const interval = setInterval(fetchKlines, REFRESH_MS);
     return () => clearInterval(interval);
@@ -871,7 +923,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
     });
-  }, [spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData]);
+    const klines0Close = extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null;
+    const debugLine = `symbol=${symbol} card=${current ?? "null"} spotWs=${spotWsPrice ?? "null"} spotREST=${spot.currentClose ?? "null"} klines0Close=${klines0Close ?? "null"}`;
+    if (debugLine !== priceDebugLastRef.current) {
+      priceDebugLastRef.current = debugLine;
+      addLayoutLoadLog(`price ${debugLine}`);
+    }
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, addLayoutLoadLog]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));
@@ -932,6 +990,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       >
           <KlinesChart
             klines={extendedKlines}
+            liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
             groupMinutes={groupMinutes}
             timezoneOffset={timezoneOffset}
             layoutAppliedTick={layoutAppliedTick}

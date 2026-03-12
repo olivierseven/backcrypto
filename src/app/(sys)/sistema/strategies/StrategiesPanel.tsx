@@ -134,26 +134,28 @@ function SeriesCombobox({
         <div
           role="listbox"
           aria-label={ariaLabel ?? "Series"}
-          className="absolute left-0 top-full mt-0.5 z-20 min-w-full w-max max-h-[200px] overflow-y-auto rounded border border-zinc-200 bg-white shadow-lg py-0.5"
+          className="absolute left-0 top-full mt-0.5 z-20 min-w-full w-max max-h-[200px] overflow-y-scroll rounded border border-zinc-200 bg-white shadow-lg py-0.5 series-combobox-listbox"
         >
-          {options.map((o) => {
-            const isSelected = o.key === value;
-            return (
-              <button
-                key={o.key}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  onChange(o.key);
-                  setOpen(false);
-                }}
-                className={`w-full text-left text-xs px-2 py-1.5 whitespace-nowrap hover:bg-zinc-100 ${isSelected ? "bg-zinc-100 font-medium" : ""}`}
-              >
-                {o.label}
-              </button>
-            );
-          })}
+          <div className="series-combobox-listbox-inner">
+            {options.map((o) => {
+              const isSelected = o.key === value;
+              return (
+                <button
+                  key={o.key}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    onChange(o.key);
+                    setOpen(false);
+                  }}
+                  className={`w-full text-left text-xs px-2 py-1.5 whitespace-nowrap hover:bg-zinc-100 ${isSelected ? "bg-zinc-100 font-medium" : ""}`}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -220,9 +222,19 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   /** Cor do candle quando a condição é verdadeira (mesma paleta das médias móveis). */
   const [addColor, setAddColor] = useState<string>(() => INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
   const [addColorOpen, setAddColorOpen] = useState(false);
+  /** true = só do símbolo atual (ou "qualquer símbolo"); false = todas as estratégias. */
+  const [showOnlyCurrentSymbol, setShowOnlyCurrentSymbol] = useState(true);
 
   const chartIntervalMinutes = currentGroupMinutes ?? 5;
   const chartIntervalLabel = intervalMinutesToLabel(chartIntervalMinutes);
+
+  /** Estratégias a exibir: do símbolo atual ou aplicáveis a qualquer símbolo. */
+  const visibleStrategies = useMemo(
+    () => strategies.filter((s) => s.applyToAllSymbols === true || s.symbol === symbol),
+    [strategies, symbol]
+  );
+  /** Lista efetiva conforme o alternador: só do símbolo ou todas. */
+  const listStrategies = showOnlyCurrentSymbol ? visibleStrategies : strategies;
 
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
@@ -374,18 +386,39 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       </div>
       <div className="panel-scroll flex-1 min-h-0 overflow-auto p-3 space-y-4">
         {!addOpen && (
-          <p className="text-xs text-zinc-500 flex items-center gap-1 flex-wrap">
-            {t.chartInterval}: <strong>{chartIntervalLabel}</strong>
-            <HelpPopover content={t.strategyInterval} />
-          </p>
+          <>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-zinc-600">{t.strategiesFilterLabel ?? "Mostrar:"}</span>
+              <div className="flex rounded-md border border-zinc-300 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowOnlyCurrentSymbol(true)}
+                  className={`text-xs px-2.5 py-1 ${showOnlyCurrentSymbol ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+                >
+                  {symbol || (t.strategiesFilterSymbol ?? "Só do símbolo")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOnlyCurrentSymbol(false)}
+                  className={`text-xs px-2.5 py-1 border-l border-zinc-300 ${!showOnlyCurrentSymbol ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+                >
+                  {t.strategiesFilterAll ?? "Todas"}
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-zinc-500 flex items-center gap-1 flex-wrap">
+              {t.chartInterval}: <strong>{chartIntervalLabel}</strong>
+              <HelpPopover content={t.strategyInterval} />
+            </p>
+          </>
         )}
         {!addOpen ? (
           <>
-            {strategies.length === 0 ? (
+            {listStrategies.length === 0 ? (
               <p className="text-sm text-zinc-500">{t.noStrategies}</p>
             ) : (
               <ul className="space-y-2">
-                {strategies.map((s) => {
+                {listStrategies.map((s) => {
                   const applied = isApplied(s.id);
                   const onApply = () => {
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
@@ -406,10 +439,10 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   return (
                     <li
                       key={s.id}
-                      className="flex items-center justify-between gap-2 p-2 rounded-md bg-zinc-50 border border-zinc-200"
+                      className="flex flex-col gap-2 p-2 rounded-md bg-zinc-50 border border-zinc-200 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5">
-                        <span className="text-sm font-medium text-zinc-800 truncate">{s.name}</span>
+                        <span className="text-sm font-medium text-zinc-800 break-words">{s.name}</span>
                         <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-200 text-zinc-700 shrink-0">
                           {intervalMinutesToLabel(s.intervalMinutes)}
                         </span>
@@ -418,7 +451,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                           {s.applyToAllSymbols ? `· ${t.anySymbol}` : `· ${s.symbol ?? ""}`}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex flex-wrap items-center gap-1 shrink-0">
                         <button
                           type="button"
                           onClick={() => openEdit(s)}

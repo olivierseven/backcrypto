@@ -482,15 +482,21 @@ export default function SistemaDebugPanel() {
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 Layout load (ao entrar na página)
               </h4>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2">
-                <input
-                  type="checkbox"
-                  checked={layoutLoadDebugEnabled}
-                  onChange={(e) => setLayoutLoadDebugEnabled(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={layoutLoadDebugEnabled}
+                onClick={() => setLayoutLoadDebugEnabled(!layoutLoadDebugEnabled)}
+                className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2 text-left w-full py-1 rounded hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
+              >
+                <span
+                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${layoutLoadDebugEnabled ? "bg-violet-600 border-violet-600 text-white" : "border-zinc-300 bg-white"}`}
+                  aria-hidden
+                >
+                  {layoutLoadDebugEnabled ? "✓" : ""}
+                </span>
                 <span>Registrar log (estado salvo no localStorage)</span>
-              </label>
+              </button>
               <div className="flex justify-end mb-1">
                 <button
                   type="button"

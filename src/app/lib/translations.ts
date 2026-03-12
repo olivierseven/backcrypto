@@ -965,6 +965,9 @@ export const cryptoTranslations = {
       strategies: {
         panelTitle: "Strategies",
         close: "Close",
+        strategiesFilterLabel: "Show:",
+        strategiesFilterSymbol: "Current symbol only",
+        strategiesFilterAll: "All",
         addStrategy: "Add strategy",
         noStrategies: "No strategies. Add one to combine conditions (e.g. RSI > 70, Close > SMA).",
         delete: "Delete",
@@ -1974,6 +1977,9 @@ export const cryptoTranslations = {
       strategies: {
         panelTitle: "Estratégias",
         close: "Fechar",
+        strategiesFilterLabel: "Mostrar:",
+        strategiesFilterSymbol: "Só do símbolo",
+        strategiesFilterAll: "Todas",
         addStrategy: "Adicionar estratégia",
         noStrategies: "Nenhuma estratégia. Adicione uma para combinar condições (ex.: RSI > 70, Fech. > SMA).",
         delete: "Excluir",
