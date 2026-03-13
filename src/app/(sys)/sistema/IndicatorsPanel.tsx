@@ -411,15 +411,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
   const toggleInterval = useCallback((id: string, groupMinutes: number) => {
     const ind = userIndicators.find((u) => u.id === id);
     if (!ind) return;
-    const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : [...ind.intervals];
+    const isNone = ind.intervals.length === 1 && ind.intervals[0] === 0;
+    const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : isNone ? [] : [...ind.intervals];
     const idx = current.indexOf(groupMinutes);
-    const next = idx >= 0 ? (current.filter((v) => v !== groupMinutes).length === 0 ? [] : current.filter((v) => v !== groupMinutes)) : [...current, groupMinutes].sort((a, b) => a - b);
+    let next = idx >= 0 ? current.filter((v) => v !== groupMinutes) : [...current, groupMinutes].sort((a, b) => a - b);
+    if (next.length === 0) next = [0];
     updateIndicatorIntervalsWithStrategyReset(id, next);
   }, [userIndicators, updateIndicatorIntervalsWithStrategyReset]);
 
   const setAllIntervals = useCallback((id: string) => updateIndicatorIntervalsWithStrategyReset(id, []), [updateIndicatorIntervalsWithStrategyReset]);
 
   const isIntervalChecked = useCallback((ind: UserIndicatorConfig, value: number) => {
+    if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
     if (ind.intervals.length === 0) return true;
     return ind.intervals.includes(value);
   }, []);
@@ -523,11 +526,12 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     })();
     const fastP = ind?.type === "MACD" ? (Number(editForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
-    updateIndicatorWithStrategyReset(editingId, {
+    const updates = {
       period: ind?.type === "MACD" ? fastP : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "Volume" ? "volume" : editForm.fieldKey,
       color: editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" ? "main" : editForm.panel,
+      intervals: editForm.intervals ?? [],
       showLastValueOnYAxis: editForm.showLastValueOnYAxis,
       ...(ind?.type === "Volume" ? {
         volumeInUsdt: editForm.volumeInUsdt === true,
@@ -594,11 +598,13 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
         bollingerMiddleLineStyle: editForm.lineStyle,
         bollingerMiddleLineWidth: editForm.lineWidth,
       } : {}),
-    });
-    updateIndicatorIntervalsWithStrategyReset(editingId, editForm.intervals ?? []);
+    };
+    updateIndicatorWithStrategyReset(editingId, updates);
+    const nextIndicators = userIndicators.map((u) => (u.id === editingId ? { ...u, ...updates } : u));
+    chartLayoutSave?.saveLayoutNow("indicators", nextIndicators);
     setEditingId(null);
     setEditForm(null);
-  }, [editingId, editForm, userIndicators, updateIndicatorWithStrategyReset, updateIndicatorIntervalsWithStrategyReset]);
+  }, [editingId, editForm, userIndicators, updateIndicatorWithStrategyReset, chartLayoutSave]);
 
   const cancelEdit = useCallback(() => {
     setEditingId(null);
@@ -692,13 +698,28 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
           {initialView === "list" && userIndicators.length === 0 && (
             <p className="text-sm text-zinc-500 py-2">{(t as Record<string, string>).noIndicatorsYet ?? "Nenhum indicador salvo. Use \"Adicionar indicador\" no menu para criar."}</p>
           )}
-          {initialView === "list" && userIndicators.length > 0 && (
-            <div className="space-y-2">
-              {userIndicators.map((ind) => (
-                <IndicatorsPanelIndicatorCard key={ind.id} ind={ind} />
-              ))}
-            </div>
-          )}
+          {initialView === "list" && userIndicators.length > 0 && (() => {
+            const indicatorsForCurrentTimeframe = currentGroupMinutes != null
+              ? userIndicators.filter((ind) => {
+                  if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+                  return ind.intervals.length === 0 || ind.intervals.includes(currentGroupMinutes);
+                })
+              : userIndicators.filter((ind) => !(ind.intervals.length === 1 && ind.intervals[0] === 0));
+            if (indicatorsForCurrentTimeframe.length === 0) {
+              return (
+                <p className="text-sm text-zinc-500 py-2">
+                  {(t as Record<string, string>).noIndicatorsForTimeframe ?? "Nenhum indicador para este timeframe. Altere \"Mostrar em\" ao editar um indicador para incluir este período ou \"Todos os tempos\"."}
+                </p>
+              );
+            }
+            return (
+              <div className="space-y-2">
+                {indicatorsForCurrentTimeframe.map((ind) => (
+                  <IndicatorsPanelIndicatorCard key={ind.id} ind={ind} />
+                ))}
+              </div>
+            );
+          })()}
         </IndicatorsPanelContext.Provider>
       </div>
       {deleteConfirmIndicator && (
@@ -724,9 +745,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
               <button
                 type="button"
                 onClick={() => {
-                  removeIndicatorWithStrategyReset(deleteConfirmIndicator.id);
+                  const idToRemove = deleteConfirmIndicator.id;
+                  removeIndicatorWithStrategyReset(idToRemove);
                   setDeleteConfirmIndicator(null);
-                  setTimeout(() => chartLayoutSave?.saveLayoutNow("indicators"), 50);
+                  const nextIndicators = userIndicators.filter((u) => u.id !== idToRemove);
+                  chartLayoutSave?.saveLayoutNow("indicators", nextIndicators);
                 }}
                 className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2"
               >

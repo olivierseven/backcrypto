@@ -876,8 +876,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
   };
 
-  /** Persiste no servidor só quando o usuário aciona manualmente (ex.: "Salvar" ao lado de Volume). Não há auto-save. */
-  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies") => {
+  /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = para "indicators" array, para "strategies" { strategies, appliedStrategyIds }. */
+  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies", payload?: unknown) => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
       if (!raw || raw === "default") return;
@@ -885,8 +885,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
 
       if (part) {
+        const indicatorsPayload = part === "indicators" && Array.isArray(payload) ? payload : null;
+        const strategiesPayload = part === "strategies" && payload != null && typeof payload === "object" && "strategies" in payload && "appliedStrategyIds" in payload ? (payload as { strategies: unknown[]; appliedStrategyIds: string[] }) : null;
         const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
-        const body = part === "layout" ? { slot, layout: layoutCol } : part === "indicators" ? { slot, indicators: indicatorsCol } : { slot, strategies: strategiesCol };
+        const body = part === "layout" ? { slot, layout: layoutCol } : part === "indicators" ? { slot, indicators: indicatorsPayload ?? indicatorsCol } : { slot, strategies: strategiesPayload ?? strategiesCol };
         await fetch(`${API_BASE}/chart-layouts`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -918,7 +920,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   useEffect(() => {
     if (!chartLayoutSave) return;
-    chartLayoutSave.registerSaveLayout((part) => saveLayoutToServerIfSlotRef.current?.(part));
+    chartLayoutSave.registerSaveLayout((part, payload) => saveLayoutToServerIfSlotRef.current?.(part, payload));
     return () => chartLayoutSave.registerSaveLayout(null);
   }, [chartLayoutSave]);
 

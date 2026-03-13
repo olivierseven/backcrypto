@@ -52,9 +52,9 @@ export interface UserIndicatorConfig {
   rsiCenterLineStyle?: IndicatorLineStyle;
   /** Só para RSI: exibir limites superior e inferior. */
   rsiLimits?: boolean;
-  /** Só para RSI: limite superior % (default 90). */
+  /** Só para RSI: limite superior % (default 70). */
   rsiLimitUpper?: number;
-  /** Só para RSI: limite inferior % (default 10). */
+  /** Só para RSI: limite inferior % (default 30). */
   rsiLimitLower?: number;
   /** Só para RSI: cor das linhas de limite (default vermelho). */
   rsiLimitColor?: string;
@@ -196,14 +196,19 @@ function safePeriod(v: unknown): number | null {
   return null;
 }
 
+/** Sentinel: intervals = [0] significa "nenhum período" (desmarcar todos). [] = "Todos os tempos". */
+export const INTERVALS_NONE = 0;
+
+/** Returns valid intervals array. [] = "Todos os tempos"; [0] = nenhum período; [1, 120, ...] = só esses. */
 function safeIntervals(v: unknown): number[] | null {
   if (!Array.isArray(v)) return null;
+  if (v.length === 1 && (v[0] === 0 || v[0] === "0")) return [INTERVALS_NONE];
   const out: number[] = [];
   for (const x of v) {
     const n = typeof x === "number" ? (Number.isFinite(x) ? Math.round(x) : null) : (typeof x === "string" ? (Number.isFinite(Number(x)) ? Math.round(Number(x)) : null) : null);
     if (n != null && n >= 1) out.push(n);
   }
-  return out.length ? out : null;
+  return out;
 }
 
 /** Normaliza uma lista vinda do layout (ou localStorage) para UserIndicatorConfig[]. */
@@ -222,12 +227,12 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
         period != null &&
         typeof u.fieldKey === "string" &&
         typeof u.color === "string" &&
-        intervals != null
+        (Array.isArray(intervals) || intervals === null)
       );
     }
   ).map((u) => {
     const period = safePeriod(u.period) ?? 14;
-    const intervals = safeIntervals(u.intervals) ?? [];
+    const intervals = safeIntervals(u.intervals) ?? []; // [] = "Todos os tempos" (layout antigo sem intervals)
     return {
     ...u,
     period,
@@ -248,8 +253,8 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     rsiCenterLineWidth: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineWidth === "thin" || u.rsiCenterLineWidth === "normal" ? u.rsiCenterLineWidth : "normal") : undefined,
     rsiCenterLineStyle: u.type === "RSI" && u.rsiCenterLine ? (u.rsiCenterLineStyle === "solid" || u.rsiCenterLineStyle === "dotted" || u.rsiCenterLineStyle === "dashed" ? u.rsiCenterLineStyle : "dotted") : undefined,
     rsiLimits: u.type === "RSI" ? (u.rsiLimits === true) : undefined,
-    rsiLimitUpper: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitUpper))) : 90) : undefined,
-    rsiLimitLower: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitLower))) : 10) : undefined,
+    rsiLimitUpper: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitUpper))) : 70) : undefined,
+    rsiLimitLower: u.type === "RSI" && u.rsiLimits ? (typeof u.rsiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.rsiLimitLower))) : 30) : undefined,
     rsiLimitColor: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitColor ?? "#dc2626") : undefined,
     rsiLimitLineWidth: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineWidth === "thin" || u.rsiLimitLineWidth === "normal" ? u.rsiLimitLineWidth : "normal") : undefined,
     rsiLimitLineStyle: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineStyle === "solid" || u.rsiLimitLineStyle === "dotted" || u.rsiLimitLineStyle === "dashed" ? u.rsiLimitLineStyle : "dotted") : undefined,
@@ -307,7 +312,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis"
+  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis"
 >;
 
 interface ContextValue {

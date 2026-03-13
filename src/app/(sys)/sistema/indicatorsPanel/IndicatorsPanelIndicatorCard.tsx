@@ -69,7 +69,9 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
         {t.showOn}:{" "}
         {ind.intervals.length === 0
           ? t.allIntervals
-          : ind.intervals.map((v) => INTERVAL_OPTIONS.find((o) => o.value === v)?.label ?? v).join(", ")}
+          : ind.intervals.length === 1 && ind.intervals[0] === 0
+            ? (t as Record<string, string>).noIntervals ?? "Nenhum"
+            : ind.intervals.map((v) => INTERVAL_OPTIONS.find((o) => o.value === v)?.label ?? v).join(", ")}
       </div>
       {editingId === ind.id && editForm && (
         <div className="pt-2 mt-2 border-t border-zinc-200 space-y-2">
@@ -83,13 +85,20 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
           </label>
           <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
-          <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="block text-[10px] text-zinc-600 hover:underline">
-            {t.allIntervals}
-          </button>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+              {t.allIntervals}
+            </button>
+            <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [0] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+              {(t as Record<string, string>).noIntervals ?? "Nenhum"}
+            </button>
+          </div>
           <div className="flex flex-wrap gap-1">
             {INTERVAL_OPTIONS.map((opt) => {
               const formIntervals = editForm.intervals ?? [];
-              const checked = formIntervals.length === 0 || formIntervals.includes(opt.value);
+              const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
+              const isAll = formIntervals.length === 0;
+              const checked = isAll || (!isNone && formIntervals.includes(opt.value));
               return (
                 <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
                   <input
@@ -98,9 +107,12 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                     onChange={() => {
                       setEditForm((f) => {
                         if (!f) return f;
-                        const current = (f.intervals?.length ?? 0) === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : [...(f.intervals ?? [])];
+                        const fi = f.intervals ?? [];
+                        const fIsNone = fi.length === 1 && fi[0] === 0;
+                        const fIsAll = fi.length === 0;
+                        const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
                         const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
-                        return { ...f, intervals: next.length === INTERVAL_OPTIONS.length ? [] : next };
+                        return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
                       });
                     }}
                     className="rounded border-zinc-300"
@@ -661,17 +673,17 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).rsiLimitUpperLabel ?? "Superior %"}</span>
                     <div className="flex items-center gap-0.5">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitUpper: Math.max(0, Math.min(100, (f.rsiLimitUpper ?? 90) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitUpper: Math.max(0, Math.min(100, (f.rsiLimitUpper ?? 70) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
                       <span className="w-8 text-center text-xs tabular-nums">{editForm.rsiLimitUpper}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitUpper: Math.max(0, Math.min(100, (f.rsiLimitUpper ?? 90) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitUpper: Math.max(0, Math.min(100, (f.rsiLimitUpper ?? 70) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).rsiLimitLowerLabel ?? "Inferior %"}</span>
                     <div className="flex items-center gap-0.5">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitLower: Math.max(0, Math.min(100, (f.rsiLimitLower ?? 10) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitLower: Math.max(0, Math.min(100, (f.rsiLimitLower ?? 30) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
                       <span className="w-8 text-center text-xs tabular-nums">{editForm.rsiLimitLower}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitLower: Math.max(0, Math.min(100, (f.rsiLimitLower ?? 10) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, rsiLimitLower: Math.max(0, Math.min(100, (f.rsiLimitLower ?? 30) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

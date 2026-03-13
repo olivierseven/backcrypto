@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { useChartSymbol } from "../ChartSymbolContext";
@@ -9,7 +10,6 @@ import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
-import { API_BASE } from "@/app/constants";
 import { KLINE_LAST_LAYOUT_KEY } from "../KlinesChartConstants";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
@@ -246,13 +246,12 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const [addColorOpen, setAddColorOpen] = useState(false);
   /** true = só do símbolo atual (ou "qualquer símbolo"); false = todas as estratégias. */
   const [showOnlyCurrentSymbol, setShowOnlyCurrentSymbol] = useState(true);
-  const [showLayoutSavedFeedback, setShowLayoutSavedFeedback] = useState(false);
-  const layoutSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const chartIntervalMinutes = currentGroupMinutes ?? 5;
   const chartIntervalLabel = intervalMinutesToLabel(chartIntervalMinutes);
 
-  const handleSaveToLayout = useCallback(async () => {
+  /** Persiste no banco apenas appliedStrategyIds (ativação/inativação por estratégia). */
+  const saveActivationToServer = useCallback(async (nextAppliedIds: string[]) => {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
     if (!raw || raw === "default") return;
     const slot = Number(raw);
@@ -262,23 +261,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ slot, appliedStrategyIds }),
+        body: JSON.stringify({ slot, appliedStrategyIds: nextAppliedIds }),
       });
     } catch {
       /* ignore */
     }
-    if (layoutSavedTimeoutRef.current) clearTimeout(layoutSavedTimeoutRef.current);
-    setShowLayoutSavedFeedback(true);
-    layoutSavedTimeoutRef.current = setTimeout(() => {
-      setShowLayoutSavedFeedback(false);
-      layoutSavedTimeoutRef.current = null;
-    }, 2000);
-  }, [appliedStrategyIds]);
-
-  useEffect(() => {
-    return () => {
-      if (layoutSavedTimeoutRef.current) clearTimeout(layoutSavedTimeoutRef.current);
-    };
   }, []);
 
   /** Estratégias a exibir: do símbolo atual ou aplicáveis a qualquer símbolo. */
@@ -391,14 +378,10 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       return;
     }
     if (editingStrategyId) {
-      updateStrategy(editingStrategyId, {
-        name,
-        root: addRoot,
-        applyToAllSymbols: applyToAll,
-        symbol: strategySymbol,
-        color: addColor,
-        isCombined,
-      });
+      const updates = { name, root: addRoot, applyToAllSymbols: applyToAll, symbol: strategySymbol, color: addColor, isCombined };
+      updateStrategy(editingStrategyId, updates);
+      const nextStrategies = strategies.map((s) => (s.id === editingStrategyId ? { ...s, ...updates } : s));
+      chartLayoutSave?.saveLayoutNow("strategies", { strategies: nextStrategies, appliedStrategyIds });
       setEditingStrategyId(null);
     } else {
       const strategy: Strategy = {
@@ -412,6 +395,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         isCombined,
       };
       addStrategy(strategy);
+      chartLayoutSave?.saveLayoutNow("strategies", { strategies: [...strategies, strategy], appliedStrategyIds });
     }
     setAddName("");
     setAddRootStrategies(createEmptyGroup("AND"));
@@ -496,9 +480,12 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               <button
                 type="button"
                 onClick={() => {
-                  removeStrategy(deleteConfirmStrategy.id);
+                  const idToRemove = deleteConfirmStrategy.id;
+                  removeStrategy(idToRemove);
                   setDeleteConfirmStrategy(null);
-                  setTimeout(() => chartLayoutSave?.saveLayoutNow("strategies"), 50);
+                  const nextStrategies = strategies.filter((s) => s.id !== idToRemove);
+                  const nextAppliedIds = appliedStrategyIds.filter((id) => id !== idToRemove);
+                  chartLayoutSave?.saveLayoutNow("strategies", { strategies: nextStrategies, appliedStrategyIds: nextAppliedIds });
                 }}
                 className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2"
               >
@@ -520,7 +507,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         {!addOpen && (
           <>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-zinc-600">{t.strategiesFilterLabel ?? "Mostrar:"}</span>
               <div className="flex rounded-md border border-zinc-300 overflow-hidden">
                 <button
                   type="button"
@@ -537,30 +523,10 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   {t.strategiesFilterAll ?? "Todas"}
                 </button>
               </div>
-            </div>
-            <p className="text-xs text-zinc-500 flex items-center gap-1 flex-wrap">
-              {t.chartInterval}: <strong>{chartIntervalLabel}</strong>
-              <HelpPopover content={t.strategyInterval} />
-            </p>
-            <div className="flex items-center gap-3 flex-wrap rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
-              <span className="text-sm text-zinc-700">
-                {(t as Record<string, string>).saveToLayout ?? "Salvar no layout atual"}
+              <span className="text-xs text-zinc-500 flex items-center gap-1">
+                {t.chartInterval}: <strong>{chartIntervalLabel}</strong>
+                <HelpPopover content={t.strategyInterval} />
               </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleSaveToLayout}
-                  className="px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
-                  title={(t as Record<string, string>).saveToLayout ?? "Salvar no layout atual"}
-                >
-                  {t.save ?? "Salvar"}
-                </button>
-                {showLayoutSavedFeedback && (
-                  <span className="text-sm text-emerald-600 font-medium" aria-live="polite">
-                    {(t as Record<string, string>).saved ?? "Salvo"}
-                  </span>
-                )}
-              </div>
             </div>
           </>
         )}
@@ -574,7 +540,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   const applied = isApplied(s.id);
                   const blocked = hasCombinedApplied && !s.isCombined;
                   const onApply = () => {
-                    if (blocked) return;
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
                     const strategyIds = new Set(appliedStrategyIds);
                     const result = validateStrategyReferences(s, indicatorIds, strategyIds);
@@ -590,6 +555,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                       return;
                     }
                     applyStrategy(s.id);
+                    saveActivationToServer([...appliedStrategyIds, s.id]);
+                  };
+                  const onUnapply = () => {
+                    unapplyStrategy(s.id);
+                    saveActivationToServer(appliedStrategyIds.filter((id) => id !== s.id));
                   };
                   const blockTitle = (t as Record<string, string>).strategyBlockedByCombined ?? "Desative a estratégia combinada para editar, aplicar ou excluir.";
                   return (
@@ -628,7 +598,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                         {applied ? (
                           <button
                             type="button"
-                            onClick={() => !blocked && unapplyStrategy(s.id)}
+                            onClick={() => !blocked && onUnapply()}
                             disabled={blocked}
                             className="text-xs px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-70 disabled:cursor-not-allowed"
                           >
@@ -637,7 +607,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                         ) : (
                           <button
                             type="button"
-                            onClick={onApply}
+                            onClick={() => !blocked && onApply()}
                             disabled={blocked}
                             className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed"
                           >
@@ -682,6 +652,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                       return;
                     }
                     applyStrategy(s.id);
+                    saveActivationToServer([...appliedStrategyIds, s.id]);
+                  };
+                  const onUnapply = () => {
+                    unapplyStrategy(s.id);
+                    saveActivationToServer(appliedStrategyIds.filter((id) => id !== s.id));
                   };
                   return (
                     <li
@@ -712,7 +687,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                         {applied ? (
                           <button
                             type="button"
-                            onClick={() => unapplyStrategy(s.id)}
+                            onClick={onUnapply}
                             className="text-xs px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600"
                           >
                             {t.removeFromTable}

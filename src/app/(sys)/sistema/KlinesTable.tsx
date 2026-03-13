@@ -435,9 +435,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
 
   const visibleUserIndicators = useMemo(
     () =>
-      userIndicators.filter(
-        (ind) => ind.intervals.length === 0 || ind.intervals.includes(groupMinutes)
-      ),
+      userIndicators.filter((ind) => {
+        if (ind.intervals.length === 0) return true;
+        if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+        return ind.intervals.includes(groupMinutes);
+      }),
     [userIndicators, groupMinutes]
   );
 
@@ -627,6 +629,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
     const list: { ind: (typeof userIndicators)[0]; columnIndex: number; isSignal: boolean; isHistogram: boolean }[] = [];
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
+      if (ind.intervals.length === 1 && ind.intervals[0] === 0) continue;
       if (ind.intervals.length > 0 && !ind.intervals.includes(groupMinutes)) continue;
       if (ind.type === "Volume") {
         list.push({ ind, columnIndex: ind.volumeInUsdt ? 7 : 5, isSignal: false, isHistogram: false });
