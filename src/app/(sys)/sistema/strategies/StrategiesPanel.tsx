@@ -8,6 +8,9 @@ import { useChartSymbol } from "../ChartSymbolContext";
 import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
+import { useChartLayoutSave } from "../ChartLayoutSaveContext";
+import { API_BASE } from "@/app/constants";
+import { KLINE_LAST_LAYOUT_KEY } from "../KlinesChartConstants";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
   type Strategy,
@@ -214,6 +217,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
   const { strategies, appliedStrategyIds, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
+  const chartLayoutSave = useChartLayoutSave();
   /** Quando alguma estratégia combinada está aplicada, as normais ficam bloqueadas (sem editar/aplicar/excluir). */
   const hasCombinedApplied = useMemo(
     () => appliedStrategyIds.some((id) => strategies.find((s) => s.id === id)?.isCombined),
@@ -242,9 +246,40 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const [addColorOpen, setAddColorOpen] = useState(false);
   /** true = só do símbolo atual (ou "qualquer símbolo"); false = todas as estratégias. */
   const [showOnlyCurrentSymbol, setShowOnlyCurrentSymbol] = useState(true);
+  const [showLayoutSavedFeedback, setShowLayoutSavedFeedback] = useState(false);
+  const layoutSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const chartIntervalMinutes = currentGroupMinutes ?? 5;
   const chartIntervalLabel = intervalMinutesToLabel(chartIntervalMinutes);
+
+  const handleSaveToLayout = useCallback(async () => {
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+    if (!raw || raw === "default") return;
+    const slot = Number(raw);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
+    try {
+      await fetch(`${API_BASE}/chart-layouts`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot, appliedStrategyIds }),
+      });
+    } catch {
+      /* ignore */
+    }
+    if (layoutSavedTimeoutRef.current) clearTimeout(layoutSavedTimeoutRef.current);
+    setShowLayoutSavedFeedback(true);
+    layoutSavedTimeoutRef.current = setTimeout(() => {
+      setShowLayoutSavedFeedback(false);
+      layoutSavedTimeoutRef.current = null;
+    }, 2000);
+  }, [appliedStrategyIds]);
+
+  useEffect(() => {
+    return () => {
+      if (layoutSavedTimeoutRef.current) clearTimeout(layoutSavedTimeoutRef.current);
+    };
+  }, []);
 
   /** Estratégias a exibir: do símbolo atual ou aplicáveis a qualquer símbolo. */
   const visibleStrategies = useMemo(
@@ -463,6 +498,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 onClick={() => {
                   removeStrategy(deleteConfirmStrategy.id);
                   setDeleteConfirmStrategy(null);
+                  setTimeout(() => chartLayoutSave?.saveLayoutNow("strategies"), 50);
                 }}
                 className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2"
               >
@@ -506,6 +542,26 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               {t.chartInterval}: <strong>{chartIntervalLabel}</strong>
               <HelpPopover content={t.strategyInterval} />
             </p>
+            <div className="flex items-center gap-3 flex-wrap rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+              <span className="text-sm text-zinc-700">
+                {(t as Record<string, string>).saveToLayout ?? "Salvar no layout atual"}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveToLayout}
+                  className="px-3 py-1.5 rounded-md border border-zinc-800 bg-zinc-900 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+                  title={(t as Record<string, string>).saveToLayout ?? "Salvar no layout atual"}
+                >
+                  {t.save ?? "Salvar"}
+                </button>
+                {showLayoutSavedFeedback && (
+                  <span className="text-sm text-emerald-600 font-medium" aria-live="polite">
+                    {(t as Record<string, string>).saved ?? "Salvo"}
+                  </span>
+                )}
+              </div>
+            </div>
           </>
         )}
         {!addOpen ? (
@@ -520,7 +576,8 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   const onApply = () => {
                     if (blocked) return;
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
-                    const result = validateStrategyReferences(s, indicatorIds);
+                    const strategyIds = new Set(appliedStrategyIds);
+                    const result = validateStrategyReferences(s, indicatorIds, strategyIds);
                     if (!result.ok) {
                       const lines = result.missingIds.map((id) =>
                         (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).")
@@ -613,12 +670,11 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   const applied = isApplied(s.id);
                   const onApply = () => {
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
-                    const result = validateStrategyReferences(s, indicatorIds);
+                    const strategyIds = new Set(appliedStrategyIds);
+                    const result = validateStrategyReferences(s, indicatorIds, strategyIds);
                     if (!result.ok) {
-                      const lines = result.missingIds.map((id) =>
-                        (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).")
-                          .replace("{id}", id)
-                      );
+                      const msgTpl = (t as Record<string, string>).strategyApplyErrorMissingColumn ?? (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).");
+                      const lines = result.missingIds.map((id) => msgTpl.replace("{id}", id));
                       setValidationModal({
                         title: t.validationErrorTitle ?? "Validation error",
                         lines,

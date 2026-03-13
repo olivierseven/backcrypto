@@ -88,6 +88,7 @@ import { KlinesChartSvg } from "./klinesChart/KlinesChartSvg";
 import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
 import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
+import { useChartLayoutSave } from "./ChartLayoutSaveContext";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
@@ -103,9 +104,9 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAutoSaveTick, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onCurrentLayoutLabelChange }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onCurrentLayoutLabelChange, isAdmin = false }: KlinesChartProps) {
   const pathname = usePathname();
-  const { addLayoutLoadLog } = useSistemaDebug();
+  const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const [visibleCount, setVisibleCountState] = useState<number>(DEFAULT_VISIBLE);
@@ -140,6 +141,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
   const [saveSuccessModalOpen, setSaveSuccessModalOpen] = useState(false);
   const [savedLayoutName, setSavedLayoutName] = useState<string | null>(null);
+  const [saveConfirmSlot, setSaveConfirmSlot] = useState<number | null>(null);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
   const [logScale, setLogScale] = useState(false);
   const [showMainAxis, setShowMainAxis] = useState(true);
@@ -585,7 +587,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       let isSlot1to7 = false;
       let useDelay = false;
       try {
-        const res = await fetch(`${API_BASE}/chart-layouts`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store" });
         if (cancelled) {
           addLayoutLoadLog("cancelled (ignorar, não aplicar layout)");
           done();
@@ -628,7 +630,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             : null;
           if (defaultConfig) {
             addLayoutLoadLog("aplicando layout default do banco");
-            applyLayoutConfig(defaultConfig, 0);
+            applyLayoutConfig(defaultConfig, 0, "api");
             markApplied();
           } else {
             addLayoutLoadLog("default/0: sem defaultLayout no banco, não aplica");
@@ -645,7 +647,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 ? (layout.config as Record<string, unknown>).appliedStrategyIds as string[]
                 : [];
               addLayoutLoadLog(`aplicando slot ${slotNum}, appliedStrategyIds(${applied.length})=[${applied.slice(0, 5).join(",")}${applied.length > 5 ? "…" : ""}]`);
-              applyLayoutConfig(layout.config, layout.slot);
+              applyLayoutConfig(layout.config, layout.slot, "api");
               markApplied();
               onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
               try {
@@ -718,42 +720,129 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const fetchSavedLayouts = useCallback(async () => {
     setSavedLayoutsError(null);
-    const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store" });
-    if (!res.ok) {
+    try {
+      const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store" });
+      if (!res.ok) {
+        setSavedLayoutsError(t.loadError);
+        return;
+      }
+      const data = await res.json();
+      const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown>; name?: string }[]) : [];
+      const def = data.defaultLayout;
+      const defaultLayout =
+        def != null && typeof def === "object" && !Array.isArray(def) && def.config != null
+          ? { slot: 0, config: def.config as Record<string, unknown>, name: def.name as string | undefined }
+          : null;
+      setCanSaveDefault(Boolean(data.canSaveDefault));
+      setSavedLayouts(defaultLayout ? [defaultLayout, ...layouts] : layouts);
+    } catch {
       setSavedLayoutsError(t.loadError);
-      return;
     }
-    const data = await res.json();
-    const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown>; name?: string }[]) : [];
-    const def = data.defaultLayout;
-    const defaultLayout =
-      def != null && typeof def === "object" && !Array.isArray(def) && def.config != null
-        ? { slot: 0, config: def.config as Record<string, unknown>, name: def.name as string | undefined }
-        : null;
-    setCanSaveDefault(Boolean(data.canSaveDefault));
-    setSavedLayouts(defaultLayout ? [defaultLayout, ...layouts] : layouts);
   }, [t.loadError]);
 
   useEffect(() => {
     fetchSavedLayouts();
   }, [fetchSavedLayouts]);
 
-  const handleSaveLayout = async (slot: number) => {
-    setSaveOpen(false);
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent };
+  useEffect(() => {
+    if (loadOpen) fetchSavedLayouts();
+  }, [loadOpen, fetchSavedLayouts]);
+
+  const getCurrentLayoutConfigRef = useRef<() => Record<string, unknown>>(() => ({}));
+  getCurrentLayoutConfigRef.current = () => {
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
     const extra = getLayoutExtraConfig?.() ?? {};
-    const config = { ...baseConfig, ...extra };
+    return { ...baseConfig, ...extra };
+  };
+  useEffect(() => {
+    const handler = () => {
+      window.dispatchEvent(new CustomEvent("chart-layout-config", { detail: getCurrentLayoutConfigRef.current() }));
+    };
+    window.addEventListener("chart-layout-get-config", handler);
+    return () => window.removeEventListener("chart-layout-get-config", handler);
+  }, []);
+
+  /** Monta as 3 colunas a partir do estado atual (chart + extra do KlinesTable). */
+  const buildLayoutColumns = useCallback(() => {
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
+    const extra = getLayoutExtraConfig?.() ?? {} as Record<string, unknown>;
+    const layout = {
+      ...baseConfig,
+      volumeAtPriceEnabled: extra.volumeAtPriceEnabled,
+      volumeAtPriceBuckets: extra.volumeAtPriceBuckets,
+      volumeAtPricePercent: extra.volumeAtPricePercent,
+      volumeAtPriceOpacity: extra.volumeAtPriceOpacity,
+      volumeAtPriceWidthPercent: extra.volumeAtPriceWidthPercent,
+      volumeAtPriceSide: extra.volumeAtPriceSide,
+      volumeAtPriceColorAbove: extra.volumeAtPriceColorAbove,
+      volumeAtPriceColorBelow: extra.volumeAtPriceColorBelow,
+    };
+    const indicators = Array.isArray(extra.userIndicators) ? extra.userIndicators : [];
+    const strategiesPayload = {
+      strategies: Array.isArray(extra.strategies) ? extra.strategies : [],
+      appliedStrategyIds: Array.isArray(extra.appliedStrategyIds) ? extra.appliedStrategyIds : [],
+    };
+    return { layout, indicators, strategies: strategiesPayload };
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle, getLayoutExtraConfig]);
+
+  /** Chaves do eixo Y (para debug save/load). */
+  const LAYOUT_Y_AXIS_KEYS = ["footerYAxisBgColor", "backgroundTextColor", "footerYAxisTextColor"] as const;
+
+  const performSaveLayout = async (slot: number) => {
+    setSavedLayoutsError(null);
+    if (slot === 0) {
+      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
+      const extra = getLayoutExtraConfig?.() ?? {};
+      const config: Record<string, unknown> = { ...baseConfig, ...extra, strategies: [], userIndicators: [], appliedStrategyIds: [] };
+      const res = await fetch(`${API_BASE}/chart-models`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot: 0, config, name: "" }),
+      });
+      if (res.ok) {
+        setSavedLayoutName(t.defaultLayout);
+        setSaveSuccessModalOpen(true);
+        await fetchSavedLayouts();
+      }
+      return;
+    }
+    const { layout, indicators, strategies } = buildLayoutColumns();
+    if (layoutSaveLoadDebugEnabled) {
+      const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout[k], [`${k}_typeof`]: typeof layout[k] }), {} as Record<string, unknown>);
+      const msg = `[layout save] slot=${slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
+      addLayoutLoadLog(msg);
+      if (typeof console !== "undefined") console.log(msg);
+    }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slot, config }),
+      credentials: "include",
+      body: JSON.stringify({ slot, layout, indicators, strategies }),
     });
-    if (res.ok) {
-      const label = slot === 0 ? t.defaultLayout : (savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot)));
-      setSavedLayoutName(label);
-      setSaveSuccessModalOpen(true);
-      fetchSavedLayouts();
+    if (!res.ok) {
+      setSavedLayoutsError((t as Record<string, string>).saveError ?? t.loadError);
+      return;
     }
+    const label = savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot));
+    setSavedLayoutName(label);
+    setSaveSuccessModalOpen(true);
+    await fetchSavedLayouts();
+  };
+
+  const getLayoutLabelBySlot = (slot: number) =>
+    slot === 0 ? t.defaultLayout : (savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot)));
+
+  const handleSaveLayout = (slot: number) => {
+    setSaveOpen(false);
+    setSaveConfirmSlot(slot);
+  };
+
+  const handleConfirmSaveLayout = async () => {
+    const slot = saveConfirmSlot;
+    if (slot == null) return;
+    setSaveConfirmSlot(null);
+    await performSaveLayout(slot);
   };
 
   const handleRenameLayout = async (
@@ -761,74 +850,125 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     newName: string
   ) => {
     const name = newName.trim().slice(0, 24);
+    if (layout.slot === 0) {
+      const res = await fetch(`${API_BASE}/chart-models`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot: 0, config: layout.config, name: name || "" }),
+      });
+      if (res.ok) {
+        setSavedLayoutName(name || layout.name?.trim() || t.defaultLayout);
+        setSaveSuccessModalOpen(true);
+        fetchSavedLayouts();
+      }
+      return;
+    }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ slot: layout.slot, config: layout.config, name: name || "" }),
     });
     if (res.ok) {
-      setSavedLayoutName(name || layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot))));
+      setSavedLayoutName(name || layout.name?.trim() || t.layoutName.replace("{n}", String(layout.slot)));
       setSaveSuccessModalOpen(true);
-      fetchSavedLayouts();
+      await fetchSavedLayouts();
     }
   };
 
-  const autoSaveCurrentLayoutIfAny = useCallback(async () => {
+  /** Persiste no servidor só quando o usuário aciona manualmente (ex.: "Salvar" ao lado de Volume). Não há auto-save. */
+  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies") => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
       if (!raw || raw === "default") return;
       const slot = Number(raw);
-      if (!Number.isInteger(slot)) return;
-      // Save só em slots 1–7; nunca no default (slot 0)
-      if (slot < 1 || slot > 7) return;
-      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent };
-      const extra = getLayoutExtraConfig?.() ?? {};
-      const config = { ...baseConfig, ...extra };
-      await fetch(`${API_BASE}/chart-layouts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot, config }),
-      }).catch(() => {});
+      if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
+
+      if (part) {
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
+        const body = part === "layout" ? { slot, layout: layoutCol } : part === "indicators" ? { slot, indicators: indicatorsCol } : { slot, strategies: strategiesCol };
+        await fetch(`${API_BASE}/chart-layouts`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(body),
+        }).catch(() => {});
+      } else {
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
+        await fetch(`${API_BASE}/chart-layouts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slot, layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol }),
+        }).catch(() => {});
+      }
     } catch {
       /* ignore */
     }
-  }, [backgroundTextColor, candleColorPreset, chartBackground, chartSizePercent, containerBackground, footerYAxisBgColor, footerYAxisTextColor, getLayoutExtraConfig, invisibleCandlesEnd, lastCloseLineColor, lastCloseTextColor, lineTableColor, logScale, secondaryGridColor, secondaryPanelHeightPercent, showCandleCountdown, showLastCloseLine, showMainAxis, showSecondaryAxis, volumeOnPrice, volumeOnPriceOpacity, visibleCount, yAxisAbbreviated]);
+  }, [buildLayoutColumns]);
+
+  const saveLayoutToServerIfSlotRef = useRef(saveLayoutToServerIfSlot);
+  saveLayoutToServerIfSlotRef.current = saveLayoutToServerIfSlot;
+
+  const chartLayoutSave = useChartLayoutSave();
+  /** Save manual: ao clicar em "Salvar" ao lado de Volume/Volume no preço; persiste só a coluna layout. */
+  const saveVolumePrefsToLayout = useCallback(() => {
+    chartLayoutSave?.saveLayoutNow("layout");
+  }, [chartLayoutSave]);
 
   useEffect(() => {
-    if (!layoutAutoSaveTick) return;
-    const id = setTimeout(() => {
-      autoSaveCurrentLayoutIfAny();
-    }, 0);
-    return () => clearTimeout(id);
-  }, [layoutAutoSaveTick, autoSaveCurrentLayoutIfAny]);
+    if (!chartLayoutSave) return;
+    chartLayoutSave.registerSaveLayout((part) => saveLayoutToServerIfSlotRef.current?.(part));
+    return () => chartLayoutSave.registerSaveLayout(null);
+  }, [chartLayoutSave]);
+
+  const onLayoutConfigLoadedRef = useRef(onLayoutConfigLoaded);
+  onLayoutConfigLoadedRef.current = onLayoutConfigLoaded;
 
   const applyLayoutConfig = (c: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => {
-    if (typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(c.visibleCount));
+    const num = (v: unknown): number | null => (typeof v === "number" && !Number.isNaN(v) ? v : typeof v === "string" ? (Number(v) as number) : null);
+    const visibleCountVal = num(c.visibleCount);
+    if (visibleCountVal != null && visibleCountVal >= VISIBLE_COUNT_MIN && visibleCountVal <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(visibleCountVal));
     if (typeof c.candleColorPreset === "string") {
       const id = (c.candleColorPreset === "redGreen" ? "greenRed" : c.candleColorPreset === "whiteBlack" ? "blackWhite" : c.candleColorPreset) as CandleColorPresetId;
       if (CANDLE_COLOR_PRESETS.some((p) => p.id === id)) setCandleColorPreset(id);
     }
     if (typeof c.yAxisAbbreviated === "boolean") setYAxisAbbreviated(c.yAxisAbbreviated);
     if (typeof c.logScale === "boolean") setLogScale(c.logScale);
-    if (typeof c.containerBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.containerBackground)) setContainerBackground(c.containerBackground as BackgroundId);
-    if (typeof c.chartBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.chartBackground)) setChartBackground(c.chartBackground as BackgroundId);
-    if (typeof c.footerYAxisBgColor === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.footerYAxisBgColor)) setFooterYAxisBgColor(c.footerYAxisBgColor as BackgroundId);
-    if (typeof c.backgroundTextColor === "number" && TEXT_PALETTE.some((b) => b.id === c.backgroundTextColor)) setBackgroundTextColor(c.backgroundTextColor as TextColorId);
-    if (typeof c.footerYAxisTextColor === "number" && TEXT_PALETTE.some((b) => b.id === c.footerYAxisTextColor)) setFooterYAxisTextColor(c.footerYAxisTextColor as TextColorId);
-    if (typeof c.lineTableColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lineTableColor)) setLineTableColor(c.lineTableColor as LineGridId);
-    if (typeof c.secondaryGridColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.secondaryGridColor)) setSecondaryGridColor(c.secondaryGridColor as LineGridId);
+    const containerBg = num(c.containerBackground);
+    if (containerBg != null && BACKGROUND_PALETTE.some((b) => b.id === containerBg)) setContainerBackground(containerBg as BackgroundId);
+    const chartBg = num(c.chartBackground);
+    if (chartBg != null && BACKGROUND_PALETTE.some((b) => b.id === chartBg)) setChartBackground(chartBg as BackgroundId);
+    const footerYAxisBg = num(c.footerYAxisBgColor);
+    if (footerYAxisBg != null && BACKGROUND_PALETTE.some((b) => b.id === footerYAxisBg)) setFooterYAxisBgColor(footerYAxisBg as BackgroundId);
+    const backgroundText = num(c.backgroundTextColor);
+    if (backgroundText != null && TEXT_PALETTE.some((b) => b.id === backgroundText)) setBackgroundTextColor(backgroundText as TextColorId);
+    const footerYAxisText = num(c.footerYAxisTextColor);
+    if (footerYAxisText != null && TEXT_PALETTE.some((b) => b.id === footerYAxisText)) setFooterYAxisTextColor(footerYAxisText as TextColorId);
+    const lineTable = num(c.lineTableColor);
+    if (lineTable != null && LINE_GRID_PALETTE.some((b) => b.id === lineTable)) setLineTableColor(lineTable as LineGridId);
+    const secondaryGrid = num(c.secondaryGridColor);
+    if (secondaryGrid != null && LINE_GRID_PALETTE.some((b) => b.id === secondaryGrid)) setSecondaryGridColor(secondaryGrid as LineGridId);
     if (typeof c.showMainAxis === "boolean") setShowMainAxis(c.showMainAxis);
     if (typeof c.showSecondaryAxis === "boolean") setShowSecondaryAxis(c.showSecondaryAxis);
     if (typeof c.showLastCloseLine === "boolean") setShowLastCloseLine(c.showLastCloseLine);
     if (typeof c.showCandleCountdown === "boolean") setShowCandleCountdown(c.showCandleCountdown);
-    if (typeof c.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseLineColor)) setLastCloseLineColor(c.lastCloseLineColor as LineGridId);
-    if (typeof c.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseTextColor)) setLastCloseTextColor(c.lastCloseTextColor as LineGridId);
-    if (typeof c.invisibleCandlesEnd === "number" && c.invisibleCandlesEnd >= 0 && c.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(c.invisibleCandlesEnd);
-    if (typeof c.secondaryPanelHeightPercent === "number" && c.secondaryPanelHeightPercent >= SECONDARY_PANEL_HEIGHT_MIN && c.secondaryPanelHeightPercent <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(c.secondaryPanelHeightPercent));
+    const lastCloseLine = num(c.lastCloseLineColor);
+    if (lastCloseLine != null && LINE_GRID_PALETTE.some((b) => b.id === lastCloseLine)) setLastCloseLineColor(lastCloseLine as LineGridId);
+    const lastCloseText = num(c.lastCloseTextColor);
+    if (lastCloseText != null && LINE_GRID_PALETTE.some((b) => b.id === lastCloseText)) setLastCloseTextColor(lastCloseText as LineGridId);
+    const invisibleEnd = num(c.invisibleCandlesEnd);
+    if (invisibleEnd != null && invisibleEnd >= 0 && invisibleEnd <= 30) setInvisibleCandlesEnd(invisibleEnd);
+    const secondaryPanelH = num(c.secondaryPanelHeightPercent);
+    if (secondaryPanelH != null && secondaryPanelH >= SECONDARY_PANEL_HEIGHT_MIN && secondaryPanelH <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(secondaryPanelH));
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
-    if (typeof c.volumeOnPriceOpacity === "number" && c.volumeOnPriceOpacity >= 0 && c.volumeOnPriceOpacity <= 30) setVolumeOnPriceOpacity(Math.round(c.volumeOnPriceOpacity));
-    if (typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(c.chartSizePercent));
-    onLayoutConfigLoaded?.(c, slot, source);
+    const volOpacity = num(c.volumeOnPriceOpacity);
+    if (volOpacity != null && volOpacity >= 0 && volOpacity <= 30) setVolumeOnPriceOpacity(Math.round(volOpacity));
+    const chartSize = num(c.chartSizePercent);
+    if (chartSize != null && chartSize >= CHART_SIZE_PERCENT_MIN && chartSize <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(chartSize));
+    if (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") setChartStyle(c.chartStyle);
+    if (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") setCandleBodyStyle(c.candleBodyStyle);
+    onLayoutConfigLoadedRef.current?.(c, slot, source);
   };
 
   const getLayoutLabel = (layout: { slot: number; name?: string }) =>
@@ -836,6 +976,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
     setLoadOpen(false);
+    if (layoutSaveLoadDebugEnabled) {
+      const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout.config[k], [`${k}_typeof`]: typeof layout.config[k] }), {} as Record<string, unknown>);
+      const msg = `[layout load] slot=${layout.slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
+      addLayoutLoadLog(msg);
+      if (typeof console !== "undefined") console.log(msg);
+    }
     applyLayoutConfig(layout.config, layout.slot, "user-load");
     onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
     try {
@@ -1432,6 +1578,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             onVolumeAtPriceSideChange={onVolumeAtPriceSideChange}
             onVolumeAtPriceColorAboveChange={onVolumeAtPriceColorAboveChange}
             onVolumeAtPriceColorBelowChange={onVolumeAtPriceColorBelowChange}
+            onSaveVolumePrefsToLayout={saveVolumePrefsToLayout}
             chartWidth={width}
             chartSizePercent={chartSizePercent}
             setChartSizePercent={setChartSizePercent}
@@ -1469,6 +1616,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             savedLayouts={savedLayouts}
             savedLayoutsError={savedLayoutsError}
             canSaveDefault={canSaveDefault}
+            canRenameChartModels={isAdmin}
             onSaveLayout={handleSaveLayout}
             onLoadLayout={handleLoadLayout}
             onRenameLayout={handleRenameLayout}
@@ -2038,6 +2186,37 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     className="crypto-btn rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2"
                   >
                     {t.renameLayoutOk}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {saveConfirmSlot !== null && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={t.saveLayout}>
+              <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-amber-50 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-amber-800">{t.saveLayout} &quot;{getLayoutLabelBySlot(saveConfirmSlot)}&quot;</h3>
+                  <button type="button" onClick={() => setSaveConfirmSlot(null)} className="p-1 rounded hover:bg-amber-100 text-amber-700" aria-label={t.close}>
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
+                <div className="px-4 py-3 text-sm text-zinc-600">
+                  {(t as Record<string, string>).saveLayoutConfirmMessage ?? (t as Record<string, string>).saveDefaultConfirmMessage ?? ""}
+                </div>
+                <div className="px-4 py-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSaveConfirmSlot(null)}
+                    className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium px-4 py-2"
+                  >
+                    {t.renameLayoutCancel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmSaveLayout}
+                    className="crypto-btn rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2"
+                  >
+                    {(t as Record<string, string>).saveLayoutConfirmConfirm ?? (t as Record<string, string>).saveDefaultConfirmConfirm ?? t.renameLayoutOk}
                   </button>
                 </div>
               </div>

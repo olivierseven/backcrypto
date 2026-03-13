@@ -109,6 +109,8 @@ export interface KlinesChartSidebarProps {
   onVolumeAtPriceSideChange?: (v: "left" | "right") => void;
   onVolumeAtPriceColorAboveChange?: (v: string) => void;
   onVolumeAtPriceColorBelowChange?: (v: string) => void;
+  /** Chamado ao clicar em "Salvar" ao lado de Volume ou Volume no preço; persiste as prefs no layout (o gráfico já reflete as alterações em tempo real). */
+  onSaveVolumePrefsToLayout?: () => void;
   chartWidth: number;
   chartSizePercent: number;
   setChartSizePercent: (v: number | ((v: number) => number)) => void;
@@ -149,6 +151,8 @@ export interface KlinesChartSidebarProps {
   savedLayoutsError?: string | null;
   /** Admin: pode salvar no slot 0 (layout default). */
   canSaveDefault?: boolean;
+  /** Admin: pode renomear ChartModels (slot 0) na seção Carregar. */
+  canRenameChartModels?: boolean;
   onSaveLayout: (slot: number) => void;
   onLoadLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }) => void;
   onRenameLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }, newName: string) => void;
@@ -236,6 +240,7 @@ export function KlinesChartSidebar({
   onVolumeAtPriceSideChange,
   onVolumeAtPriceColorAboveChange,
   onVolumeAtPriceColorBelowChange,
+  onSaveVolumePrefsToLayout,
   chartWidth,
   chartSizePercent,
   setChartSizePercent,
@@ -273,6 +278,7 @@ export function KlinesChartSidebar({
   savedLayouts,
   savedLayoutsError = null,
   canSaveDefault = false,
+  canRenameChartModels = false,
   onSaveLayout,
   onLoadLayout,
   onRenameLayout,
@@ -302,6 +308,23 @@ export function KlinesChartSidebar({
   const [vapColorBelowOpen, setVapColorBelowOpen] = useState(false);
   const [editingLayoutSlot, setEditingLayoutSlot] = useState<number | null>(null);
   const [renameInputValue, setRenameInputValue] = useState("");
+  const [showVolumePrefsSaved, setShowVolumePrefsSaved] = useState(false);
+  const volumePrefsSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Chamado ao clicar em "Salvar" ao lado de Volume ou Volume no preço: persiste as prefs atuais no layout (aplicação no gráfico já é imediata). */
+  const handleSaveVolumePrefsToLayout = () => {
+    onSaveVolumePrefsToLayout?.();
+    if (volumePrefsSavedTimeoutRef.current) clearTimeout(volumePrefsSavedTimeoutRef.current);
+    setShowVolumePrefsSaved(true);
+    volumePrefsSavedTimeoutRef.current = setTimeout(() => {
+      setShowVolumePrefsSaved(false);
+      volumePrefsSavedTimeoutRef.current = null;
+    }, 2000);
+  };
+  useLayoutEffect(() => {
+    return () => {
+      if (volumePrefsSavedTimeoutRef.current) clearTimeout(volumePrefsSavedTimeoutRef.current);
+    };
+  }, []);
   const getLayoutLabel = (layout: { slot: number; name?: string }) =>
     layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot)));
   useLayoutEffect(() => {
@@ -656,6 +679,16 @@ export function KlinesChartSidebar({
               </div>
             </div>
           )}
+          {onSaveVolumePrefsToLayout != null && (
+            <div className="px-2 py-1 flex items-center gap-2">
+              <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">
+                {(t as Record<string, string>).save ?? "Salvar"}
+              </button>
+              {showVolumePrefsSaved && (
+                <span className="text-sm text-zinc-600" aria-live="polite">{(t as Record<string, string>).saved ?? "Salvo"}</span>
+              )}
+            </div>
+          )}
           {onVolumeAtPriceEnabledChange != null && (
             <>
               <div className="border-t border-zinc-100 pt-2 mt-2" />
@@ -751,6 +784,16 @@ export function KlinesChartSidebar({
                       </div>
                     )}
                   </div>
+                  {onSaveVolumePrefsToLayout != null && (
+                    <div className="px-2 py-1 flex items-center gap-2">
+                      <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">
+                        {(t as Record<string, string>).save ?? "Salvar"}
+                      </button>
+                      {showVolumePrefsSaved && (
+                        <span className="text-sm text-zinc-600" aria-live="polite">{(t as Record<string, string>).saved ?? "Salvo"}</span>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </>
@@ -1037,11 +1080,11 @@ export function KlinesChartSidebar({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-              {(canSaveDefault ? [0, 1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6, 7]).map((slot) => {
+              {[1, 2, 3, 4, 5, 6, 7].map((slot) => {
                 const layout = savedLayouts.find((l) => l.slot === slot);
                 return (
                   <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate">
-                    {layout ? getLayoutLabel(layout) : slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(slot))}
+                    {layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot))}
                   </button>
                 );
               })}
@@ -1212,6 +1255,14 @@ export function KlinesChartSidebar({
                     </div>
                   </div>
                 )}
+                {onSaveVolumePrefsToLayout != null && (
+                  <div className="px-2 py-1 flex items-center gap-2">
+                    <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">{(t as Record<string, string>).save ?? "Salvar"}</button>
+                    {showVolumePrefsSaved && (
+                      <span className="text-sm text-zinc-600" aria-live="polite">{(t as Record<string, string>).saved ?? "Salvo"}</span>
+                    )}
+                  </div>
+                )}
                 {onVolumeAtPriceEnabledChange != null && (
                   <>
                     <div className="border-t border-zinc-100 pt-2 mt-2" />
@@ -1293,6 +1344,14 @@ export function KlinesChartSidebar({
                             </div>
                           )}
                         </div>
+                        {onSaveVolumePrefsToLayout != null && (
+                          <div className="px-2 py-1 flex items-center gap-2">
+                            <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">{(t as Record<string, string>).save ?? "Salvar"}</button>
+                            {showVolumePrefsSaved && (
+                              <span className="text-sm text-zinc-600" aria-live="polite">{(t as Record<string, string>).saved ?? "Salvo"}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </>
@@ -1385,11 +1444,11 @@ export function KlinesChartSidebar({
             {saveOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
               <>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-                {(canSaveDefault ? [0, 1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6, 7]).map((slot) => {
+                {[1, 2, 3, 4, 5, 6, 7].map((slot) => {
                   const layout = savedLayouts.find((l) => l.slot === slot);
                   return (
                     <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate" title={layout ? getLayoutLabel(layout) : undefined}>
-                      {layout ? getLayoutLabel(layout) : slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(slot))}
+                      {layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot))}
                     </button>
                   );
                 })}
@@ -1403,30 +1462,57 @@ export function KlinesChartSidebar({
                 ) : savedLayouts.length === 0 ? (
                   <p className="px-2 py-1.5 text-sm text-zinc-500">{t.noSavedLayouts}</p>
                 ) : (
-                  savedLayouts.map((layout) => (
-                    <div key={layout.slot} className="flex items-center gap-1 px-1 py-0.5">
-                      {editingLayoutSlot === layout.slot ? (
+                  <>
+                    {(() => {
+                      const chartModelLayouts = savedLayouts.filter((l) => l.slot === 0);
+                      const userLayouts = savedLayouts.filter((l) => l.slot >= 1);
+                      const canRename = (layout: { slot: number }) =>
+                        layout.slot >= 1 || canRenameChartModels;
+                      const renderLayoutRow = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => (
+                        <div key={layout.slot} className="flex items-center gap-1 px-1 py-0.5">
+                          {editingLayoutSlot === layout.slot ? (
+                            <>
+                              <input
+                                type="text"
+                                maxLength={24}
+                                value={renameInputValue}
+                                onChange={(e) => setRenameInputValue(e.target.value)}
+                                placeholder={t.layoutNamePlaceholder}
+                                className="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-200 rounded"
+                                autoFocus
+                              />
+                              <button type="button" onClick={() => { const v = renameInputValue.trim().slice(0, 24); onRenameLayout(layout, v); setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutOk}</button>
+                              <button type="button" onClick={() => { setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutCancel}</button>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" onClick={() => onLoadLayout(layout)} className="flex-1 min-w-0 text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate">{getLayoutLabel(layout)}</button>
+                              {canRename(layout) && (
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} className="shrink-0 p-1 rounded hover:bg-zinc-100" aria-label={t.renameLayout}>✏️</button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                      return (
                         <>
-                          <input
-                            type="text"
-                            maxLength={24}
-                            value={renameInputValue}
-                            onChange={(e) => setRenameInputValue(e.target.value)}
-                            placeholder={t.layoutNamePlaceholder}
-                            className="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-200 rounded"
-                            autoFocus
-                          />
-                          <button type="button" onClick={() => { const v = renameInputValue.trim().slice(0, 24); onRenameLayout(layout, v); setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutOk}</button>
-                          <button type="button" onClick={() => { setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutCancel}</button>
+                          {chartModelLayouts.length > 0 && (
+                            <>
+                              <div className="text-[10px] font-medium text-zinc-400 px-2 pt-1 pb-0.5">{(t as Record<string, string>).chartModelsSection ?? "Chart Models"}</div>
+                              {chartModelLayouts.map(renderLayoutRow)}
+                              <div className="border-t border-zinc-100 my-1.5" />
+                            </>
+                          )}
+                          {userLayouts.length > 0 && (
+                            <>
+                              <div className="text-[10px] font-medium text-zinc-400 px-2 pt-0.5 pb-0.5">{(t as Record<string, string>).myLayoutsSection ?? "My layouts"}</div>
+                              {userLayouts.map(renderLayoutRow)}
+                            </>
+                          )}
                         </>
-                      ) : (
-                        <>
-                          <button type="button" onClick={() => onLoadLayout(layout)} className="flex-1 min-w-0 text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate">{getLayoutLabel(layout)}</button>
-                          <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} className="shrink-0 p-1 rounded hover:bg-zinc-100" aria-label={t.renameLayout}>✏️</button>
-                        </>
-                      )}
-                    </div>
-                  ))
+                      );
+                    })()}
+                  </>
                 )}
               </>
             )}

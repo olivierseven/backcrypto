@@ -164,7 +164,19 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.ChartLayoutScalarFieldEnum = {
   userId: 'userId',
   slot: 'slot',
-  config: 'config',
+  layout: 'layout',
+  indicators: 'indicators',
+  strategies: 'strategies',
+  name: 'name',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ChartModelScalarFieldEnum = {
+  userId: 'userId',
+  slot: 'slot',
+  layout: 'layout',
+  indicators: 'indicators',
+  strategies: 'strategies',
   name: 'name',
   updatedAt: 'updatedAt'
 };
@@ -332,12 +344,12 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -422,6 +434,7 @@ exports.CheckoutStatus = exports.$Enums.CheckoutStatus = {
 exports.Prisma.ModelName = {
   User: 'User',
   ChartLayout: 'ChartLayout',
+  ChartModel: 'ChartModel',
   UserNotification: 'UserNotification',
   AccessRequest: 'AccessRequest',
   EmailVerificationToken: 'EmailVerificationToken',

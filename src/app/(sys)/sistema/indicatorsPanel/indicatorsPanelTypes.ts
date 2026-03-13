@@ -170,6 +170,8 @@ export interface EditFormState {
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
+  showLastValueOnYAxis: boolean;
+  intervals: number[];
 }
 
 export interface IndicatorsPanelContextValue {

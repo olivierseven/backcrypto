@@ -247,8 +247,8 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
-  const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout, layoutSaveTick } = useKlinesIndicators();
-  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout, strategyCreatedTick, appliedStrategyIdsTick } = useStrategies();
+  const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
+  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
   /** Incrementa ao aplicar layout (carregar da API) para forçar gráfico a receber strategyCandleOverlays. */
@@ -277,7 +277,6 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
   const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
   const lastSpotPersistAtRef = useRef(0);
-  const priceDebugLastRef = useRef<string>("");
   const symbolRef = useRef(symbol);
   const lastKlinesFetchSymbolRef = useRef<string | null>(null);
   symbolRef.current = symbol;
@@ -948,13 +947,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
     });
-    const klines0Close = extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null;
-    const debugLine = `symbol=${symbol} card=${current ?? "null"} spotWs=${spotWsPrice ?? "null"} spotREST=${spot.currentClose ?? "null"} klines0Close=${klines0Close ?? "null"}`;
-    if (debugLine !== priceDebugLastRef.current) {
-      priceDebugLastRef.current = debugLine;
-      addLayoutLoadLog(`price ${debugLine}`);
-    }
-  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, addLayoutLoadLog]);
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));
@@ -1014,6 +1007,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
         }}
       >
           <KlinesChart
+            isAdmin={isAdmin}
             klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
             onCurrentLayoutLabelChange={setCurrentLayoutLabel}
@@ -1109,7 +1103,6 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
-            layoutAutoSaveTick={Math.max(strategyCreatedTick, layoutSaveTick ?? 0, appliedStrategyIdsTick ?? 0)}
             getLayoutExtraConfig={() => ({
               userIndicators,
               strategies,
@@ -1124,7 +1117,9 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               volumeAtPriceColorBelow,
             })}
             onLayoutConfigLoaded={(config, slot, source) => {
-              addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "undefined"} source=${source ?? "undefined"} keys=[${Object.keys(config).join(",")}]`);
+              const uiRaw = config.userIndicators;
+              const uiInfo = uiRaw === undefined ? "missing" : Array.isArray(uiRaw) ? `array(${uiRaw.length})` : `typeof=${typeof uiRaw}`;
+              addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "?"} source=${source ?? "?"} userIndicators=${uiInfo} keys=[${Object.keys(config).join(",")}]`);
               // Timeframe e símbolo ficam só no localStorage; não aplicamos do layout.
               // Volume no preço (por layout). Se o layout não tiver a chave, desliga VAP (ex.: default antigo sem essas chaves).
               setVolumeAtPriceEnabled(config.volumeAtPriceEnabled === true);
@@ -1136,10 +1131,20 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
               if (typeof config.volumeAtPriceColorAbove === "string" && /^#[0-9A-Fa-f]{6}$/.test(config.volumeAtPriceColorAbove)) setVolumeAtPriceColorAbove(config.volumeAtPriceColorAbove);
               if (typeof config.volumeAtPriceColorBelow === "string" && /^#[0-9A-Fa-f]{6}$/.test(config.volumeAtPriceColorBelow)) setVolumeAtPriceColorBelow(config.volumeAtPriceColorBelow);
               // Indicadores do layout (precisamos deles para validar referências das estratégias)
-              const indicatorsFromLayout = (config.userIndicators !== undefined && Array.isArray(config.userIndicators)) ? config.userIndicators : null;
-              if (indicatorsFromLayout) {
+              let indicatorsFromLayout: unknown = config.userIndicators;
+              if (typeof indicatorsFromLayout === "string") {
+                try {
+                  indicatorsFromLayout = JSON.parse(indicatorsFromLayout) as unknown;
+                } catch {
+                  indicatorsFromLayout = null;
+                }
+              }
+              if (indicatorsFromLayout !== undefined && indicatorsFromLayout !== null && Array.isArray(indicatorsFromLayout)) {
+                addLayoutLoadLog(`replaceUserIndicatorsFromLayout(${indicatorsFromLayout.length} items)`);
                 replaceUserIndicatorsFromLayout(indicatorsFromLayout);
                 flushSync(() => {});
+              } else {
+                addLayoutLoadLog(`layout sem userIndicators válido (array): skip replace`);
               }
 
               // Estratégias do layout (precisamos da lista para validar e aplicar os IDs)
@@ -1155,12 +1160,13 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                 ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
                 : strategies;
               const byId = new Map<string, Strategy>(strategiesList.map((s) => [s.id, s]));
+              const appliedIdsSet = appliedIds != null ? new Set(appliedIds) : new Set<string>();
               const validApplied =
                 appliedIds != null
                   ? appliedIds.filter((id) => {
                       const st = byId.get(id);
                       if (!st) return false;
-                      return validateStrategyReferences(st, indicatorIds).ok;
+                      return validateStrategyReferences(st, indicatorIds, appliedIdsSet).ok;
                     })
                   : null;
 

@@ -185,24 +185,53 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
+const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "RSI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Volume"] as const;
+
+function safePeriod(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
+  if (typeof v === "string") {
+    const n = Number(v);
+    if (Number.isFinite(n)) return Math.max(1, Math.round(n));
+  }
+  return null;
+}
+
+function safeIntervals(v: unknown): number[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: number[] = [];
+  for (const x of v) {
+    const n = typeof x === "number" ? (Number.isFinite(x) ? Math.round(x) : null) : (typeof x === "string" ? (Number.isFinite(Number(x)) ? Math.round(Number(x)) : null) : null);
+    if (n != null && n >= 1) out.push(n);
+  }
+  return out.length ? out : null;
+}
+
 /** Normaliza uma lista vinda do layout (ou localStorage) para UserIndicatorConfig[]. */
 export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicatorConfig[] {
   if (!Array.isArray(parsed)) return [];
   return parsed.filter(
-    (p): p is UserIndicatorConfig => {
+    (p): p is Record<string, unknown> & { id: string; type: string; fieldKey: string; color: string } => {
       if (p == null || typeof p !== "object") return false;
-      const u = p as UserIndicatorConfig;
+      const u = p as Record<string, unknown>;
+      const type = u.type;
+      const period = safePeriod(u.period);
+      const intervals = safeIntervals(u.intervals);
       return (
         typeof u.id === "string" &&
-        (u.type === "SMA" || u.type === "EMA" || u.type === "WMA" || u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "SAR" || u.type === "ATR" || u.type === "VWAP" || u.type === "Bollinger" || u.type === "Volume") &&
-        typeof u.period === "number" &&
+        VALID_INDICATOR_TYPES.includes(type as (typeof VALID_INDICATOR_TYPES)[number]) &&
+        period != null &&
         typeof u.fieldKey === "string" &&
         typeof u.color === "string" &&
-        Array.isArray(u.intervals)
+        intervals != null
       );
     }
-  ).map((u) => ({
+  ).map((u) => {
+    const period = safePeriod(u.period) ?? 14;
+    const intervals = safeIntervals(u.intervals) ?? [];
+    return {
     ...u,
+    period,
+    intervals,
     fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" ? "close" : u.type === "Volume" ? "volume" : u.fieldKey),
     panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
       ? u.panel
@@ -270,7 +299,9 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
     volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
     volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
-  }));
+    showLastValueOnYAxis: u.showLastValueOnYAxis !== false,
+  };
+  });
 }
 
 /** Campos editáveis de um indicador (sem id). */
@@ -289,7 +320,6 @@ interface ContextValue {
   updateIndicatorIntervals: (id: string, intervals: number[]) => void;
   /** Restaura a lista de indicadores a partir de um layout (ex.: ao carregar layout salvo). */
   replaceUserIndicatorsFromLayout: (raw: unknown) => void;
-  layoutSaveTick: number;
 }
 
 const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
@@ -297,31 +327,31 @@ const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
 export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) {
   const [userIndicators, setUserIndicators] = useState<UserIndicatorConfig[]>(loadFromStorage);
   const [currentGroupMinutes, setCurrentGroupMinutes] = useState<number | null>(null);
-  const [layoutSaveTick, setLayoutSaveTick] = useState(0);
 
   const addIndicator = useCallback((config: Omit<UserIndicatorConfig, "id">) => {
     const id = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setUserIndicators((prev) => [...prev, { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false }]);
-    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const removeIndicator = useCallback((id: string) => {
     setUserIndicators((prev) => prev.filter((u) => u.id !== id));
-    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const updateIndicator = useCallback((id: string, updates: Partial<UserIndicatorEditable>) => {
     setUserIndicators((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
-    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const updateIndicatorIntervals = useCallback((id: string, intervals: number[]) => {
     setUserIndicators((prev) => prev.map((u) => (u.id === id ? { ...u, intervals } : u)));
-    setLayoutSaveTick((x) => x + 1);
   }, []);
 
   const replaceUserIndicatorsFromLayout = useCallback((raw: unknown) => {
-    setUserIndicators(normalizeIndicatorListFromLayout(raw));
+    const normalized = normalizeIndicatorListFromLayout(raw);
+    if (typeof process !== "undefined" && process.env.NODE_ENV === "development") {
+      const inLen = Array.isArray(raw) ? raw.length : 0;
+      console.log("[layout] replaceUserIndicatorsFromLayout: raw length=", inLen, "→ normalized length=", normalized.length, normalized.length < inLen ? "(alguns filtrados)" : "");
+    }
+    setUserIndicators(normalized);
   }, []);
 
   const value = useMemo<ContextValue>(
@@ -334,9 +364,8 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
       updateIndicator,
       updateIndicatorIntervals,
       replaceUserIndicatorsFromLayout,
-      layoutSaveTick,
     }),
-    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout, layoutSaveTick]
+    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout]
   );
 
   return (

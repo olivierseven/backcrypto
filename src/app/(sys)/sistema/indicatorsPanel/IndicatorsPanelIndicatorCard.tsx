@@ -28,11 +28,6 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     startEdit,
     saveEdit,
     cancelEdit,
-    expandedId,
-    setExpandedId,
-    toggleInterval,
-    setAllIntervals,
-    isIntervalChecked,
     removeIndicator,
     getIndicatorLabel,
     updateIndicator,
@@ -67,50 +62,54 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           {t.removeIndicator}
         </button>
       </div>
-      <label className="flex items-center gap-2 cursor-pointer text-[10px] text-zinc-600">
-        <input
-          type="checkbox"
-          checked={ind.showLastValueOnYAxis !== false}
-          onChange={() => updateIndicator(ind.id, { showLastValueOnYAxis: ind.showLastValueOnYAxis === false })}
-          className="rounded border-zinc-300"
-        />
-        <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
-      </label>
+      <div className="text-[10px] text-zinc-600">
+        {(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}: {ind.showLastValueOnYAxis !== false ? (t as Record<string, string>).yes ?? "Sim" : (t as Record<string, string>).no ?? "Não"}
+      </div>
       <div className="text-[10px] text-zinc-500">
         {t.showOn}:{" "}
         {ind.intervals.length === 0
           ? t.allIntervals
           : ind.intervals.map((v) => INTERVAL_OPTIONS.find((o) => o.value === v)?.label ?? v).join(", ")}
       </div>
-      <button
-        type="button"
-        onClick={() => setExpandedId(expandedId === ind.id ? null : ind.id)}
-        className="text-[10px] text-zinc-600 hover:underline"
-      >
-        {expandedId === ind.id ? (t as Record<string, string>).changeTimeframesHide : (t as Record<string, string>).changeTimeframesShow}
-      </button>
-      {expandedId === ind.id && (
-        <div className="pt-1.5 space-y-1">
-          <button type="button" onClick={() => setAllIntervals(ind.id)} className="block text-[10px] text-zinc-600 hover:underline">
+      {editingId === ind.id && editForm && (
+        <div className="pt-2 mt-2 border-t border-zinc-200 space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer text-[10px] text-zinc-600">
+            <input
+              type="checkbox"
+              checked={editForm.showLastValueOnYAxis !== false}
+              onChange={(e) => setEditForm((f) => (f ? { ...f, showLastValueOnYAxis: e.target.checked } : f))}
+              className="rounded border-zinc-300"
+            />
+            <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
+          </label>
+          <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
+          <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="block text-[10px] text-zinc-600 hover:underline">
             {t.allIntervals}
           </button>
           <div className="flex flex-wrap gap-1">
-            {INTERVAL_OPTIONS.map((opt) => (
-              <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
-                <input
-                  type="checkbox"
-                  checked={isIntervalChecked(ind, opt.value)}
-                  onChange={() => toggleInterval(ind.id, opt.value)}
-                  className="rounded border-zinc-300"
-                />
-                {opt.label}
-              </label>
-            ))}
+            {INTERVAL_OPTIONS.map((opt) => {
+              const formIntervals = editForm.intervals ?? [];
+              const checked = formIntervals.length === 0 || formIntervals.includes(opt.value);
+              return (
+                <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => {
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const current = (f.intervals?.length ?? 0) === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : [...(f.intervals ?? [])];
+                        const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
+                        return { ...f, intervals: next.length === INTERVAL_OPTIONS.length ? [] : next };
+                      });
+                    }}
+                    className="rounded border-zinc-300"
+                  />
+                  {opt.label}
+                </label>
+              );
+            })}
           </div>
-        </div>
-      )}
-      {editingId === ind.id && editForm && (
-        <div className="pt-2 mt-2 border-t border-zinc-200 space-y-2">
           {ind.type === "MACD" ? (
             <>
               <div className="flex items-center gap-2">

@@ -56,12 +56,10 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
 
   const addStrategy = useCallback((s: Strategy) => {
     setStrategies((prev) => [...prev, s]);
-    setStrategyCreatedTick((x) => x + 1);
   }, []);
 
   const updateStrategy = useCallback((id: string, patch: Partial<Strategy>) => {
     setStrategies((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-    setStrategyCreatedTick((x) => x + 1);
   }, []);
 
   const removeStrategy = useCallback((id: string) => {

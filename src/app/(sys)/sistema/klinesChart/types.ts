@@ -111,8 +111,6 @@ export type KlinesChartProps = {
   onLayoutConfigLoaded?: (config: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => void;
   /** Chamado ao salvar o layout; o retorno é mesclado ao config (ex.: userIndicators, prefs do painel). */
   getLayoutExtraConfig?: () => Record<string, unknown>;
-  /** Quando muda, salva automaticamente o layout do slot atual (se houver). */
-  layoutAutoSaveTick?: number;
   /** Incrementado ao aplicar layout no carregamento; força o gráfico a re-renderizar com strategyCandleOverlays atualizados. */
   layoutAppliedTick?: number;
   maxChartHeight?: number;
@@ -155,6 +153,8 @@ export type KlinesChartProps = {
   liveLastClose?: number | string | null;
   /** Chamado quando o layout em uso muda (nome ou slot), para exibir no container (ex.: canto esquerdo da última atualização). */
   onCurrentLayoutLabelChange?: (label: string) => void;
+  /** Admin: pode renomear modelos ChartModels (slot 0) na seção Carregar. */
+  isAdmin?: boolean;
 }
 
 /** Dados para desenho do volume no preço: intervalos simétricos no eixo Y com volume acumulado por faixa de fechamento. */

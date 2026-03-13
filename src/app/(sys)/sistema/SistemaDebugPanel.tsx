@@ -28,7 +28,7 @@ export default function SistemaDebugPanel() {
   const lang = useCryptoLang();
   const { lang: currentLang, setLang } = useCryptoLangContext();
   const t = getCryptoT(lang).sistema.debug;
-  const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
+  const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState("BTCUSDT");
@@ -44,6 +44,13 @@ export default function SistemaDebugPanel() {
   const [registerGapsLoading, setRegisterGapsLoading] = useState<string | null>(null);
   const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "1h" | null>(null);
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
+  const [chartModels, setChartModels] = useState<{ slot: number; name?: string }[]>([]);
+  const [chartModelsLoading, setChartModelsLoading] = useState(false);
+  const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
+  const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
+  const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
+  const [debugTab, setDebugTab] = useState<"main" | "inspect">("main");
+  const [layoutLogCopied, setLayoutLogCopied] = useState(false);
 
   function formatTime(ms: number): string {
     const d = new Date(ms);
@@ -68,6 +75,60 @@ export default function SistemaDebugPanel() {
 
   /** WebSocket Binance spot no debug — desativado após testes. Alterar para true para reativar. */
   const DEBUG_BINANCE_SPOT_WS_ENABLED = false;
+
+  useEffect(() => {
+    if (!open) return;
+    setChartModelsLoading(true);
+    fetch(`${API_BASE}/chart-models`, { credentials: "include", cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("forbidden"))))
+      .then((data: { models?: { slot: number; name?: string }[] }) => {
+        const list = Array.isArray(data.models) ? data.models : [];
+        setChartModels(list);
+        if (list.length > 0 && selectedChartModelSlot === null) setSelectedChartModelSlot(list[0].slot);
+      })
+      .catch(() => setChartModels([]))
+      .finally(() => setChartModelsLoading(false));
+  }, [open]);
+
+  async function saveCurrentLayoutToChartModel() {
+    const slot = selectedChartModelSlot;
+    if (slot == null) {
+      setSaveChartModelMessage("Selecione um modelo.");
+      return;
+    }
+    setSaveChartModelMessage(null);
+    setSaveChartModelLoading(true);
+    try {
+      const config = await new Promise<Record<string, unknown>>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("timeout")), 5000);
+        const handler = (e: Event) => {
+          clearTimeout(timeout);
+          window.removeEventListener("chart-layout-config", handler);
+          resolve((e as CustomEvent).detail ?? {});
+        };
+        window.addEventListener("chart-layout-config", handler);
+        window.dispatchEvent(new Event("chart-layout-get-config"));
+      });
+      const res = await fetch(`${API_BASE}/chart-models`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot, config }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSaveChartModelMessage((data && typeof data.error === "string" ? data.error : data.message) ?? "Erro ao salvar.");
+        return;
+      }
+      setSaveChartModelMessage("Modelo atualizado.");
+      const list = await fetch(`${API_BASE}/chart-models`, { credentials: "include", cache: "no-store" }).then((r) => r.json()).then((d: { models?: { slot: number; name?: string }[] }) => Array.isArray(d.models) ? d.models : []);
+      setChartModels(list);
+    } catch (e) {
+      setSaveChartModelMessage(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setSaveChartModelLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -434,7 +495,25 @@ export default function SistemaDebugPanel() {
               ×
             </button>
           </div>
+          <div className="flex border-b border-zinc-200 bg-zinc-50/80">
+            <button
+              type="button"
+              onClick={() => setDebugTab("main")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "main" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabMain ?? "Geral"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("inspect")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "inspect" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabInspect ?? "Inspecionar"}
+            </button>
+          </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
+            {debugTab === "main" && (
+              <>
             <section>
               <p className="text-sm text-zinc-700">
                 {t.activeIndicators}: <strong>{userIndicators.length}</strong>
@@ -468,47 +547,42 @@ export default function SistemaDebugPanel() {
               </div>
             </section>
             <section>
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showKlinesTable}
-                  onChange={(e) => setShowKlinesTable(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.showKlinesTable}</span>
-              </label>
-            </section>
-            <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
-                Layout load (ao entrar na página)
+                Chart Models (ChartModels)
               </h4>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={layoutLoadDebugEnabled}
-                onClick={() => setLayoutLoadDebugEnabled(!layoutLoadDebugEnabled)}
-                className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2 text-left w-full py-1 rounded hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
-              >
-                <span
-                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${layoutLoadDebugEnabled ? "bg-violet-600 border-violet-600 text-white" : "border-zinc-300 bg-white"}`}
-                  aria-hidden
-                >
-                  {layoutLoadDebugEnabled ? "✓" : ""}
-                </span>
-                <span>Registrar log (estado salvo no localStorage)</span>
-              </button>
-              <div className="flex justify-end mb-1">
-                <button
-                  type="button"
-                  onClick={clearLayoutLoadLog}
-                  className="text-xs text-zinc-500 hover:text-zinc-700"
-                >
-                  Limpar
-                </button>
-              </div>
-              <pre className="text-[10px] font-mono text-zinc-700 bg-zinc-100 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
-                {layoutLoadLog.length === 0 ? "(vazio — ative o log e entre na página do gráfico)" : layoutLoadLog.join("\n")}
-              </pre>
+              <p className="text-xs text-zinc-500 mb-2">
+                Atualiza um modelo com o estado atual do gráfico na página Sistema. O modelo Default (slot 0) é o que todos carregam.
+              </p>
+              {chartModelsLoading ? (
+                <p className="text-sm text-zinc-500">Carregando…</p>
+              ) : (
+                <>
+                  <label className="block text-[10px] text-zinc-500 mb-1">Modelo</label>
+                  <select
+                    value={selectedChartModelSlot ?? ""}
+                    onChange={(e) => setSelectedChartModelSlot(e.target.value === "" ? null : Number(e.target.value))}
+                    className="w-full text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white mb-2"
+                  >
+                    {chartModels.length === 0 && <option value="">Nenhum modelo</option>}
+                    {chartModels.map((m) => (
+                      <option key={m.slot} value={m.slot}>
+                        {m.slot === 0 ? "Default" : `Slot ${m.slot}`} — {m.name?.trim() || "(sem nome)"}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={saveChartModelLoading || chartModels.length === 0}
+                    onClick={saveCurrentLayoutToChartModel}
+                    className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {saveChartModelLoading ? "Salvando…" : "Salvar no modelo"}
+                  </button>
+                  {saveChartModelMessage && (
+                    <p className="text-xs mt-2 text-zinc-600">{saveChartModelMessage}</p>
+                  )}
+                </>
+              )}
             </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
@@ -621,6 +695,87 @@ export default function SistemaDebugPanel() {
                 <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
               )}
             </section>
+              </>
+            )}
+            {debugTab === "inspect" && (
+              <>
+            <section>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={showKlinesTable}
+                  onChange={(e) => setShowKlinesTable(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span>{t.showKlinesTable}</span>
+              </label>
+            </section>
+            <section>
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                Layout load (ao entrar na página)
+              </h4>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={layoutLoadDebugEnabled}
+                onClick={() => setLayoutLoadDebugEnabled(!layoutLoadDebugEnabled)}
+                className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2 text-left w-full py-1 rounded hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
+              >
+                <span
+                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${layoutLoadDebugEnabled ? "bg-violet-600 border-violet-600 text-white" : "border-zinc-300 bg-white"}`}
+                  aria-hidden
+                >
+                  {layoutLoadDebugEnabled ? "✓" : ""}
+                </span>
+                <span>Registrar log (estado salvo no localStorage)</span>
+              </button>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={layoutSaveLoadDebugEnabled}
+                onClick={() => setLayoutSaveLoadDebugEnabled(!layoutSaveLoadDebugEnabled)}
+                className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2 text-left w-full py-1 rounded hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
+              >
+                <span
+                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${layoutSaveLoadDebugEnabled ? "bg-violet-600 border-violet-600 text-white" : "border-zinc-300 bg-white"}`}
+                  aria-hidden
+                >
+                  {layoutSaveLoadDebugEnabled ? "✓" : ""}
+                </span>
+                <span>Debug save/load (cor eixo Y)</span>
+              </button>
+              <div className="flex justify-end gap-2 mb-1">
+                <button
+                  type="button"
+                  onClick={clearLayoutLoadLog}
+                  className="text-xs text-zinc-500 hover:text-zinc-700"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const text = layoutLoadLog.length === 0 ? "" : layoutLoadLog.join("\n");
+                    try {
+                      await navigator.clipboard.writeText(text);
+                      setLayoutLogCopied(true);
+                      setTimeout(() => setLayoutLogCopied(false), 2000);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-700"
+                >
+                  {(t as Record<string, string>).copyLog ?? "Copiar"}
+                  {layoutLogCopied ? ` — ${(t as Record<string, string>).copyLogDone ?? "Copiado!"}` : ""}
+                </button>
+              </div>
+              <pre className="text-[10px] font-mono text-zinc-700 bg-zinc-100 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+                {layoutLoadLog.length === 0 ? "(vazio — ative o log e entre na página do gráfico)" : layoutLoadLog.join("\n")}
+              </pre>
+            </section>
+              </>
+            )}
           </div>
         </div>
       )}

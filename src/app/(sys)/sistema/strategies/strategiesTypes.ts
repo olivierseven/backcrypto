@@ -281,22 +281,28 @@ export function collectSeriesKeys(node: StrategyNode): string[] {
 }
 
 /**
- * Valida se todos os indicadores referenciados na estratégia existem.
+ * Valida se todos os indicadores e estratégias referenciados na estratégia existem (coluna disponível).
  * indicatorIds = Set dos id dos indicadores atuais (ex.: userIndicators.map(i => i.id)).
+ * strategyIds = Set dos id das estratégias que têm coluna (ex.: appliedStrategyIds); usado para estratégias combinadas (refs "strat_<id>").
  * Retorna { ok: true } ou { ok: false, missingIds: string[] }.
  */
 export function validateStrategyReferences(
   strategy: Strategy,
-  indicatorIds: Set<string>
+  indicatorIds: Set<string>,
+  strategyIds?: Set<string>
 ): { ok: true } | { ok: false; missingIds: string[] } {
   const keys = collectSeriesKeys(strategy.root);
   const missingIds: string[] = [];
+  const stratIds = strategyIds ?? new Set<string>();
   for (const key of keys) {
     if (key.startsWith("ind_")) {
       // Suporta sub-séries como "ind_<id>:sig", "ind_<id>:hist", "ind_<id>:d"
       const raw = key.slice(4);
       const id = raw.split(":")[0] ?? "";
       if (id && !indicatorIds.has(id)) missingIds.push(id);
+    } else if (key.startsWith("strat_")) {
+      const id = key.slice(6) ?? "";
+      if (id && !stratIds.has(id)) missingIds.push(id);
     }
   }
   if (missingIds.length > 0) return { ok: false, missingIds };

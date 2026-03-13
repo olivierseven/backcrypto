@@ -20,6 +20,7 @@ import IndicatorsPanel from "./IndicatorsPanel";
 import DrawingsPanel from "./DrawingsPanel";
 import { StrategiesProvider } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
+import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -413,6 +414,7 @@ export default function SistemaLayoutClient({
           <SistemaDebugProvider>
             <ChartHeaderProvider>
               <ChartSymbolProvider>
+                <ChartLayoutSaveProvider>
                 <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
                   <SistemaHeader
                     menuOpen={menuOpen}
@@ -471,6 +473,7 @@ export default function SistemaLayoutClient({
                   )}
                 </div>
                 {isAdmin && <SistemaDebugPanel />}
+                </ChartLayoutSaveProvider>
               </ChartSymbolProvider>
             </ChartHeaderProvider>
           </SistemaDebugProvider>

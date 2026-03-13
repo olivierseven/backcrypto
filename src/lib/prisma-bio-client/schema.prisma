@@ -131,20 +131,40 @@ model User {
   walletCredits       WalletCredit[]
   notifications       UserNotification[]
   chartLayouts        ChartLayout[]
+  chartModels         ChartModel[]
 
   @@schema("backcrypto")
 }
 
-// Preferências de layout do gráfico de klines. Slot 0 = layout default (só admin salva; todos carregam). Slots 1–7 = Layout 1 … 7 por usuário.
+// Layouts do usuário (slots 1–7 apenas). Slot 0 não existe aqui; fica em ChartModels.
+// Fonte da verdade: layout, indicators, strategies. (Coluna config foi removida do banco.)
 model ChartLayout {
-  userId    String   @map("user_id")
-  slot      Int // 0 = default (admin); 1–7 = Layout 1 … 7
-  config    Json // { visibleCount, candleColorPreset, yAxisAbbreviated, ... }
-  name      String?  @db.VarChar(24) // Nome customizado (máx. 24 caracteres)
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  slot       Int // 1–7 (Layout 1 … 7 por usuário)
+  layout     Json? // config do gráfico (visibleCount, cores, VAP, etc.)
+  indicators Json? // array userIndicators
+  strategies Json? // { strategies: Strategy[], appliedStrategyIds: string[] }
+  name       String?  @db.VarChar(24) // Nome customizado (máx. 24 caracteres)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, slot])
+  @@schema("backcrypto")
+}
+
+// Modelos de layout (ex.: Default, modelos personalizados). Mesmo esquema de 3 colunas que ChartLayout. (Coluna config foi removida do banco.)
+model ChartModel {
+  userId     String   @map("user_id")
+  slot       Int
+  layout     Json? // config do gráfico
+  indicators Json? // array userIndicators
+  strategies Json? // { strategies, appliedStrategyIds }
+  name       String?  @db.VarChar(24)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, slot])
+  @@map("ChartModels")
   @@schema("backcrypto")
 }
 

@@ -11,6 +11,7 @@ import {
   type IndicatorLineStyle,
 } from "./KlinesIndicatorsContext";
 import { useStrategies } from "./strategies/StrategiesContext";
+import { useChartLayoutSave } from "./ChartLayoutSaveContext";
 import {
   INDICATOR_COLOR_PALETTE,
   INTERVAL_OPTIONS,
@@ -123,6 +124,12 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
   const t = getCryptoT(lang).sistema.klines;
   const { userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
   const { appliedStrategyIds, replaceAppliedStrategyIdsFromLayout } = useStrategies();
+  const chartLayoutSave = useChartLayoutSave();
+  const [deleteConfirmIndicator, setDeleteConfirmIndicator] = useState<{ id: string; label: string } | null>(null);
+  const requestRemoveIndicator = useCallback((id: string) => {
+    const ind = userIndicators.find((i) => i.id === id);
+    setDeleteConfirmIndicator({ id, label: ind ? getIndicatorLabel(ind, t, userIndicators) : id });
+  }, [userIndicators, t]);
   const addFormRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (initialView === "add" && addFormRef.current) {
@@ -502,6 +509,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : false,
       volumeColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : "#10b981",
       volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
+      showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
+      intervals: [...(ind.intervals || [])],
     });
   }, []);
 
@@ -519,6 +528,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       fieldKey: ind?.type === "OBV" || ind?.type === "Volume" ? "volume" : editForm.fieldKey,
       color: editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" ? "main" : editForm.panel,
+      showLastValueOnYAxis: editForm.showLastValueOnYAxis,
       ...(ind?.type === "Volume" ? {
         volumeInUsdt: editForm.volumeInUsdt === true,
         volumeColorAbove: editForm.volumeColorAbove ?? "#10b981",
@@ -585,9 +595,10 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
         bollingerMiddleLineWidth: editForm.lineWidth,
       } : {}),
     });
+    updateIndicatorIntervalsWithStrategyReset(editingId, editForm.intervals ?? []);
     setEditingId(null);
     setEditForm(null);
-  }, [editingId, editForm, userIndicators, updateIndicatorWithStrategyReset]);
+  }, [editingId, editForm, userIndicators, updateIndicatorWithStrategyReset, updateIndicatorIntervalsWithStrategyReset]);
 
   const cancelEdit = useCallback(() => {
     setEditingId(null);
@@ -624,7 +635,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       toggleInterval,
       setAllIntervals,
       isIntervalChecked,
-      removeIndicator: removeIndicatorWithStrategyReset,
+      removeIndicator: requestRemoveIndicator,
       updateIndicator: updateIndicatorWithStrategyReset,
       getIndicatorLabel: getIndicatorLabel as IndicatorsPanelContextValue["getIndicatorLabel"],
     }),
@@ -648,7 +659,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       toggleInterval,
       setAllIntervals,
       isIntervalChecked,
-      removeIndicatorWithStrategyReset,
+      requestRemoveIndicator,
       updateIndicatorWithStrategyReset,
     ]
   );
@@ -690,6 +701,41 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
           )}
         </IndicatorsPanelContext.Provider>
       </div>
+      {deleteConfirmIndicator && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={(t as Record<string, string>).indicatorDeleteConfirmTitle ?? "Remover indicador"}>
+          <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-zinc-900">{(t as Record<string, string>).indicatorDeleteConfirmTitle ?? "Remover indicador"}</h3>
+              <button type="button" onClick={() => setDeleteConfirmIndicator(null)} className="p-1 rounded hover:bg-zinc-200 text-zinc-600" aria-label={t.close ?? "Close"}>
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+            <div className="px-4 py-3 text-sm text-zinc-700">
+              <p>{(t as Record<string, string>).indicatorDeleteConfirmMessage?.replace("{name}", deleteConfirmIndicator.label) ?? `Remover o indicador "${deleteConfirmIndicator.label}"? Esta ação não pode ser desfeita.`}</p>
+            </div>
+            <div className="px-4 py-3 border-t border-zinc-200 bg-white flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmIndicator(null)}
+                className="crypto-btn rounded-lg border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 font-medium px-4 py-2"
+              >
+                {t.cancel ?? "Cancelar"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  removeIndicatorWithStrategyReset(deleteConfirmIndicator.id);
+                  setDeleteConfirmIndicator(null);
+                  setTimeout(() => chartLayoutSave?.saveLayoutNow("indicators"), 50);
+                }}
+                className="crypto-btn rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2"
+              >
+                {(t as Record<string, string>).indicatorConfirmDelete ?? "Remover"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

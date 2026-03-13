@@ -12,7 +12,7 @@ Estes dados **não** são enviados ao salvar layout e **não** são aplicados ao
 |------------------|--------------|-------------------------|
 | `backcrypto-klines-symbol` | Moeda (ex.: BTCUSDT, ETHUSDT) | BTCUSDT |
 | `backcrypto-klines-group-minutes` | Timeframe (ex.: 1440 = 1D, 240 = 4h) | 1440 (1 dia) |
-| `backcrypto-klines-local-prefs` | `visibleCount`, `chartStyle`, `drawingsVisible` (quantidade de candles, tipo de gráfico, olho exibir/ocultar desenhos) | 1D, velas, visible true |
+| `backcrypto-klines-local-prefs` | `visibleCount`, `chartStyle`, `drawingsVisible` (persistidos após layout aplicado; tipo de gráfico e olho também vêm do layout ao carregar) | 1D, velas, visible true |
 | `backcrypto-klines-draw-magnetic` | Magnético (snap aos OHLC nos desenhos) | `false` (desativado) |
 | `backcrypto-klines-last-layout` | Qual slot de layout está ativo (0 = default, 1–7 = Layout 1…7) | usado só para decidir qual layout buscar na API |
 | `backcrypto-klines-draw-segments` | Segmentos de desenho por intervalo (por `groupMinutes`) | — |
@@ -32,8 +32,9 @@ Persistido na tabela `ChartLayout` (Prisma), por usuário e slot. Não há espel
 
 | O que | Descrição |
 |-------|-----------|
-| **Layout por slot (1–7 e 0)** | Um registro por `(userId, slot)`. Slot 0 = layout default (admin); slots 1–7 = layouts do usuário. |
-| **Campo `config`** | JSON com: `visibleCount`, `invisibleCandlesEnd`, presets de cores (candle, fundo, eixos, linhas), `yAxisAbbreviated`, `logScale`, opções de eixo (main/secondary, last close, countdown), `secondaryPanelHeightPercent`, `volumeOnPrice`, `volumeOnPriceOpacity`, `chartSizePercent`, `userIndicators`, `strategies`, `appliedStrategyIds`, `volumeAtPriceEnabled`, `volumeAtPriceBuckets`, `volumeAtPricePercent`, `volumeAtPriceOpacity`, `volumeAtPriceWidthPercent`, `volumeAtPriceSide`, `volumeAtPriceColorAbove`, `volumeAtPriceColorBelow`. **Não** inclui: timeframe, símbolo, estilo de gráfico (chartStyle/candleBodyStyle), olho visible, magnético. |
+| **Layout por slot (1–7)** | Um registro por `(userId, slot)` em **ChartLayout**. Slot 0 não existe em ChartLayout. |
+| **Layout default (slot 0)** | Fica na tabela **ChartModels** (não em ChartLayout): modelo com `(userId: admin, slot: 0)`. Carregado como "Default" para todos. |
+| **Campo `config`** | JSON com: `visibleCount`, `invisibleCandlesEnd`, presets de cores (candle, fundo, eixos, linhas), `yAxisAbbreviated`, `logScale`, opções de eixo (main/secondary, last close, countdown), `secondaryPanelHeightPercent`, `volumeOnPrice`, `volumeOnPriceOpacity`, `chartSizePercent`, `chartStyle`, `candleBodyStyle`, `userIndicators`, `strategies`, `appliedStrategyIds`, `volumeAtPriceEnabled`, `volumeAtPriceBuckets`, etc. **Não** inclui: timeframe, símbolo, olho visible, magnético. |
 | **Campo `name`** | Nome opcional do layout (máx. 24 caracteres). |
 
 Ou seja: **indicadores, estratégias, cores e opções do gráfico** (exceto as listadas em “Somente localStorage”) vêm do layout no banco quando se carrega um slot 1–7 **ou o default (slot 0)**. O layout default é carregado **somente do banco** (não do localStorage), para evitar que prefs antigas no storage interfiram.
@@ -46,13 +47,14 @@ Dados que existem nos dois: preferência no navegador e, quando há layout salvo
 
 | Conceito | localStorage | Banco |
 |----------|--------------|--------|
-| **Quantidade de candles (`visibleCount`)** | Em `backcrypto-klines-local-prefs` (após layout aplicado). | Incluído no `config` ao salvar um layout (slot 1–7 ou 0). Ao carregar layout (incluindo default), esse valor é aplicado a partir do banco. |
+| **Quantidade de candles (`visibleCount`)** | Em `backcrypto-klines-local-prefs` (após layout aplicado). | Incluído ao salvar: slot 1–7 em ChartLayout; slot 0 (default) em ChartModels. Ao carregar layout (incluindo default), esse valor é aplicado a partir do banco. |
 | **Prefs gerais do gráfico (default e slots 1–7)** | Não usadas para **carregar** layout: default e slots vêm só do banco. `backcrypto-klines-prefs` deixou de ser lido no init. | Layout default e slots 1–7 são carregados **somente da API**; o localStorage não interfere no carregamento. |
-| **Volume no preço (VAP)** | `backcrypto-klines-volume-at-price`: enabled, buckets, percent, opacity, side, cores. | Incluído no `config` do layout ao salvar. Ao carregar um layout, o config do banco aplica essas opções; a tabela também persiste no localStorage. |
+| **Volume (gráfico)** | Exibir volume no painel do gráfico (`volumeOnPrice`) e opacidade. | Incluído no `config` ao salvar. **Auto-save:** apenas o check (ativar/desativar) dispara salvamento automático do layout atual (slot 1–7); opacidade só é gravada ao clicar em Salvar layout. |
+| **Volume no preço (VAP)** | `backcrypto-klines-volume-at-price`: enabled, buckets, percent, opacity, side, cores. | Incluído no `config` ao salvar. Ao carregar um layout, o config do banco aplica essas opções. **Auto-save:** apenas o check (ativar/desativar) e a quantidade de intervalos (buckets) disparam salvamento automático do layout atual (slot 1–7); demais prefs (percent, opacidade, lado, cores) só são gravadas ao clicar em Salvar layout. |
 
 Resumo prático:
 
-- **Timeframe, símbolo, estilo de gráfico, olho visible e magnético:** só localStorage; nunca salvos no layout nem aplicados a partir do layout.
+- **Timeframe, símbolo, olho visible e magnético:** só localStorage; nunca salvos no layout nem aplicados a partir do layout. **Estilo de gráfico (chartStyle/candleBodyStyle):** salvo e aplicado por layout (cada layout pode ser velas, barras, linha, etc.).
 - **Indicadores, estratégias, cores, eixos, visibleCount, VAP, etc.:** no banco, dentro do `config` do layout; no cliente, ao carregar um layout (default ou 1–7), esses valores vêm **só da API**. O layout default não é mais inicializado a partir do localStorage.
 
 ---
