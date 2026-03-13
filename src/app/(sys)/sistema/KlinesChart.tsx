@@ -89,6 +89,7 @@ import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
 import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
 import { useChartLayoutSave } from "./ChartLayoutSaveContext";
+import { getSessionTabId } from "./sessionTabId";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
@@ -602,7 +603,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       let isSlot1to7 = false;
       let useDelay = false;
       try {
-        const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store" });
+        const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store", headers: { "X-Tab-Id": getSessionTabId() } });
         if (cancelled) {
           addLayoutLoadLog("cancelled (ignorar, não aplicar layout)");
           done();
@@ -736,7 +737,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const fetchSavedLayouts = useCallback(async () => {
     setSavedLayoutsError(null);
     try {
-      const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store" });
+      const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store", headers: { "X-Tab-Id": getSessionTabId() } });
       if (!res.ok) {
         setSavedLayoutsError(t.loadError);
         return;
@@ -831,7 +832,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
       credentials: "include",
       body: JSON.stringify({ slot, layout, indicators, strategies }),
     });
@@ -885,7 +886,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+      credentials: "include",
       body: JSON.stringify({ slot: layout.slot, config: layout.config, name: name || "" }),
     });
     if (res.ok) {
@@ -910,7 +912,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         const body = part === "layout" ? { slot, layout: layoutCol } : part === "indicators" ? { slot, indicators: indicatorsPayload ?? indicatorsCol } : { slot, strategies: strategiesPayload ?? strategiesCol };
         await fetch(`${API_BASE}/chart-layouts`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
           body: JSON.stringify(body),
         }).catch(() => {});
@@ -918,7 +920,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
         await fetch(`${API_BASE}/chart-layouts`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
           body: JSON.stringify({ slot, layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol }),
         }).catch(() => {});
@@ -997,7 +999,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
     setLoadOpen(false);
-    if (isFreeUser) {
+    // Free user pode carregar modelo default (slot 0); só bloquear slots 1–7
+    if (isFreeUser && layout.slot >= 1) {
       setShowUpgradeModal(true);
       return;
     }

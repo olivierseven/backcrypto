@@ -22,6 +22,7 @@ import { StrategiesProvider, useStrategies } from "./strategies/StrategiesContex
 import StrategiesPanel from "./strategies/StrategiesPanel";
 import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
 import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import SingleTabGuard from "./SingleTabGuard";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -309,11 +310,13 @@ export default function SistemaLayoutClient({
   lang = "en",
   hideStatusBar = true,
   isAdmin = false,
+  isFreeUser = false,
 }: {
   children: React.ReactNode;
   lang?: CryptoLang;
   hideStatusBar?: boolean;
   isAdmin?: boolean;
+  isFreeUser?: boolean;
 }) {
   const { hideStatusBar: prefHide } = useAppBarSafe();
   const topBarGapClass = prefHide !== true ? "crypto-status-bar-reserve" : "";
@@ -414,9 +417,10 @@ export default function SistemaLayoutClient({
 
   return (
     <CryptoLangProvider lang={lang}>
-      <KlinesIndicatorsProvider>
-        <StrategiesProvider>
-          <SistemaLayoutInner
+      <SingleTabGuard>
+        <KlinesIndicatorsProvider>
+          <StrategiesProvider>
+            <SistemaLayoutInner
             menuOpen={menuOpen}
             onMenuToggle={handleMenuToggle}
             onMyIndicatorsClick={openMyIndicators}
@@ -438,11 +442,13 @@ export default function SistemaLayoutClient({
             stripInnerRef={stripInnerRef}
             topBarGapClass={topBarGapClass}
             isAdmin={isAdmin}
+            isFreeUser={isFreeUser}
           >
             {children}
           </SistemaLayoutInner>
-        </StrategiesProvider>
-      </KlinesIndicatorsProvider>
+          </StrategiesProvider>
+        </KlinesIndicatorsProvider>
+      </SingleTabGuard>
     </CryptoLangProvider>
   );
 }
@@ -469,6 +475,7 @@ function SistemaLayoutInner({
   stripInnerRef,
   topBarGapClass,
   isAdmin,
+  isFreeUser,
   children,
 }: {
   menuOpen: boolean;
@@ -492,6 +499,7 @@ function SistemaLayoutInner({
   stripInnerRef: React.RefObject<HTMLDivElement | null>;
   topBarGapClass: string;
   isAdmin: boolean;
+  isFreeUser: boolean;
   children: React.ReactNode;
 }) {
   const { strategies } = useStrategies();
@@ -538,7 +546,7 @@ function SistemaLayoutInner({
                     aria-hidden
                     onClick={() => setIndicatorsPanelOpen(false)}
                   />
-                  <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} />
+                  <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} isFreeUser={isFreeUser} />
                 </>
               )}
               {strategiesPanelOpen && (

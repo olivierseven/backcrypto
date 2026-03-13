@@ -7,6 +7,7 @@ import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Role } from "@/lib/prisma-bio-client";
 import { mergeColumnsToConfig, splitConfigToColumns } from "@/lib/chart-layout-columns";
+import { claimOrRejectSession, getTabIdFromRequest } from "@/lib/session-tab-claim";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,9 +32,13 @@ async function getUserId(): Promise<string | null> {
 const USER_SLOTS = [1, 2, 3, 4, 5, 6, 7] as const;
 const CONFIG_MAX_BYTES = 32 * 1024; // 32KB por JSON
 
-export async function GET() {
+export async function GET(request: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const tabId = getTabIdFromRequest(request);
+  const sessionReject = await claimOrRejectSession(request, userId, tabId);
+  if (sessionReject) return sessionReject;
 
   const [user, rows, defaultModel] = await Promise.all([
     cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
@@ -70,6 +75,10 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const tabId = getTabIdFromRequest(req);
+  const sessionReject = await claimOrRejectSession(req, userId, tabId);
+  if (sessionReject) return sessionReject;
 
   const NAME_MAX_LEN = 24;
   let body: {
@@ -182,6 +191,10 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const tabId = getTabIdFromRequest(req);
+  const sessionReject = await claimOrRejectSession(req, userId, tabId);
+  if (sessionReject) return sessionReject;
 
   let body: {
     slot?: number;

@@ -120,6 +120,10 @@ model User {
   progress             Int                      @default(0)
   language             AppLanguage              @default(en)
   timezoneOffset       Int                      @default(0) // UTC offset in hours, -12 to +12
+  activeTabId          String?                  @map("active_tab_id")   // Uma aba ativa por usuário (controle via banco)
+  activeTabUpdatedAt   DateTime?                @map("active_tab_updated_at")
+  previousTabId        String?                  @map("previous_tab_id")   // Aba que acabou de ser substituída (bloqueada por ~60s)
+  previousTabUpdatedAt DateTime?                @map("previous_tab_updated_at")
 
   accessRequests       AccessRequest[]
   coinLedger           CoinLedgerEntry[]
