@@ -2,14 +2,29 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ASSET_PREFIX } from "@/app/constants";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import BioLandingHeader from "@/app/BioLandingHeader";
 import BioLandingFooter from "@/app/BioLandingFooter";
 
-const STATS_KEYS = ["stats1", "stats2", "stats3", "stats4", "stats5"] as const;
-const PANEL_KEYS = [0, 1, 2, 3, 4, 5, 6] as const;
-const MGMT_KEYS = ["mgmt1", "mgmt2", "mgmt3", "mgmt4"] as const;
+const FEAT_KEYS = [1, 2, 3, 4, 5, 6, 7] as const;
+const FUTURE_KEYS = [1, 2, 3, 4, 5] as const;
+const FEAT_EMOJIS: Record<number, string> = {
+  1: "📊",
+  2: "🔗",
+  3: "📈",
+  4: "📉",
+  5: "📊",
+  6: "📅",
+  7: "⚙️",
+};
+const FUTURE_EMOJIS: Record<number, string> = {
+  1: "🪙",
+  2: "⏱️",
+  3: "📊",
+  4: "🎨",
+  5: "🔌",
+};
+
 function getInitialLang(): CryptoLang {
   if (typeof document === "undefined") return "pt";
   const m = document.cookie.match(/sevencoins-lang=([^;]+)/);
@@ -31,100 +46,50 @@ export default function BioFuncionalidadePage() {
       <div className="flex-1 w-full flex justify-center min-w-0">
         <div className="w-full max-w-3xl flex flex-col flex-1 min-w-0 px-4 sm:px-6">
           <main className="flex-1 flex flex-col py-10 pb-12">
-            {/* Hero */}
-            <section className="text-center mb-10">
-              <div className="mb-6 flex justify-center">
-                <img
-                  src={`${ASSET_PREFIX}/icon.png`}
-                  alt="Crypto"
-                  width={64}
-                  height={64}
-                  className="h-16 w-16 object-contain"
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">{t.title}</h1>
-              <p className="text-zinc-600 leading-relaxed max-w-xl mx-auto">{t.intro}</p>
-            </section>
-
-            {/* Card em destaque: Gráficos de análise (novidade) — em primeiro */}
-            <section className="mb-8">
-              <div className="rounded-2xl border border-zinc-200 bg-white/95 p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <h2 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-                    <span role="img" aria-hidden>📈</span>
-                    {t.chartsTitle}
-                  </h2>
-                  <span className="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                    {t.chartsNew}
-                  </span>
-                </div>
-                <p className="text-sm text-zinc-600 leading-relaxed">{t.chartsDesc}</p>
-              </div>
-            </section>
-
-            <div className="rounded-2xl border border-zinc-200 bg-white/95 p-6 sm:p-8 shadow-sm space-y-8">
-              {/* Título principal + etiqueta v1.00 */}
+            {/* Card: Principais Funcionalidades */}
+            <div className="rounded-2xl border border-zinc-200 bg-white/95 p-6 sm:p-8 shadow-sm space-y-8 mb-8">
               <div className="flex items-start justify-between gap-2 flex-wrap">
-                <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-wide flex items-center gap-2">
-                  <span role="img" aria-hidden>🔬</span>
+                <h2 className="text-lg font-bold text-zinc-900 uppercase tracking-wide">
                   {t.mainTitle}
                 </h2>
                 <span className="shrink-0 text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                  {t.mainCardBadge}
+                  {(t as { mainCardBadge?: string }).mainCardBadge}
                 </span>
               </div>
 
-              {/* Estatísticas no mapa */}
-              <section>
-                <h3 className="text-base font-semibold text-zinc-800 mb-2 flex items-center gap-2">
-                  <span role="img" aria-hidden>📊</span>
-                  {t.statsTitle}
-                </h3>
-                <ul className="list-disc list-inside text-sm text-zinc-700 space-y-1">
-                  {STATS_KEYS.map((key) => (
-                    <li key={key}>{t[key]}</li>
-                  ))}
-                </ul>
-              </section>
-
-              {/* Painéis de configuração */}
-              <section>
-                <h3 className="text-base font-semibold text-zinc-800 mb-3 flex items-center gap-2">
-                  <span role="img" aria-hidden>⚙️</span>
-                  {t.panelsTitle}
-                </h3>
-                <div className="space-y-4">
-                  {PANEL_KEYS.map((n) => (
-                    <div key={n} className="border-l-2 border-zinc-300 pl-4">
-                      <h4 className="text-sm font-semibold text-zinc-800 mb-0.5">
-                        {t[`panel${n}Title` as keyof typeof t]}
-                      </h4>
-                      <p className="text-sm text-zinc-600 leading-relaxed">
-                        {t[`panel${n}Desc` as keyof typeof t]}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Gerenciamento e educação */}
-              <section>
-                <h3 className="text-base font-semibold text-zinc-800 mb-2 flex items-center gap-2">
-                  <span role="img" aria-hidden>📁</span>
-                  {t.managementTitle}
-                </h3>
-                <ul className="list-disc list-inside text-sm text-zinc-700 space-y-1">
-                  {MGMT_KEYS.map((key) => (
-                    <li key={key}>{t[key]}</li>
-                  ))}
-                </ul>
-              </section>
-
+              {FEAT_KEYS.map((n) => (
+                <section key={n}>
+                  <h3 className="text-base font-semibold text-zinc-800 mb-2 flex items-center gap-2">
+                    <span role="img" aria-hidden>{FEAT_EMOJIS[n]}</span>
+                    {t[`feat${n}Title` as keyof typeof t]}
+                  </h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line">
+                    {t[`feat${n}Desc` as keyof typeof t]}
+                  </p>
+                </section>
+              ))}
             </div>
 
-            {/* Botão voltar ao início */}
+            {/* Card: Funcionalidades Planejadas */}
+            <section>
+              <div className="rounded-2xl border border-zinc-200 bg-white/95 p-6 sm:p-8 shadow-sm space-y-6">
+                <h2 className="text-lg font-bold text-zinc-700 uppercase tracking-wide">
+                  {(t as Record<string, string>).futureTitle}
+                </h2>
+                {FUTURE_KEYS.map((n) => (
+                  <div key={n}>
+                    <h3 className="text-base font-semibold text-zinc-800 mb-1.5 flex items-center gap-2">
+                      <span role="img" aria-hidden>{FUTURE_EMOJIS[n]}</span>
+                      {(t as Record<string, string>)[`future${n}Title`]}
+                    </h3>
+                    <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-line pl-7">
+                      {(t as Record<string, string>)[`future${n}Desc`]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
             <section className="mt-10 flex justify-center">
               <Link
                 href="/"

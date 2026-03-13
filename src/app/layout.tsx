@@ -10,14 +10,14 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br"
 
 const ROOT_META = {
   pt: {
-    title: "Crypto | Simulador de Estratégias para Criptomoedas",
+    title: "Crypto Strategy | Simulador de Estratégias para Criptomoedas",
     description:
       "Simulador avançado de estratégias para criptomoedas com modelagem estatística aplicada a dados históricos. Teste indicadores técnicos, MACD, RSI e compare com Buy & Hold.",
     keywords:
       "backtest criptomoedas, simulador estratégias, MACD, RSI, médias móveis, Bitcoin, SevenCoins, análise técnica",
   },
   en: {
-    title: "Crypto | Crypto Strategy Simulator",
+    title: "Crypto Strategy | Strategy Simulator",
     description:
       "Advanced crypto strategy simulator with statistical modeling applied to historical data. Test technical indicators, MACD, RSI and compare with Buy & Hold.",
     keywords:
@@ -39,10 +39,10 @@ const SHARED_META: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Crypto",
+    title: "Crypto Strategy",
   },
   openGraph: {
-    siteName: "Crypto",
+    siteName: "Crypto Strategy",
     type: "website",
     images: [{ url: `${BASE_PATH}/icon.png` }],
   },
@@ -104,7 +104,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "Crypto",
+              name: "Crypto Strategy",
               applicationCategory: "EducationalApplication",
               operatingSystem: "Web",
               description: ROOT_META[lang].description,
