@@ -349,6 +349,10 @@ export function KlinesChartSvg({
           <clipPath id={plotClipId}>
             <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} />
           </clipPath>
+          {hasPanel2 && <clipPath id={`${plotClipId}-panel2`}><rect x={MARGIN_LEFT} y={panelTop("panel2")} width={chartW} height={panelHeight("panel2")} /></clipPath>}
+          {hasPanel3 && <clipPath id={`${plotClipId}-panel3`}><rect x={MARGIN_LEFT} y={panelTop("panel3")} width={chartW} height={panelHeight("panel3")} /></clipPath>}
+          {hasPanel4 && <clipPath id={`${plotClipId}-panel4`}><rect x={MARGIN_LEFT} y={panelTop("panel4")} width={chartW} height={panelHeight("panel4")} /></clipPath>}
+          {hasPanel5 && <clipPath id={`${plotClipId}-panel5`}><rect x={MARGIN_LEFT} y={panelTop("panel5")} width={chartW} height={panelHeight("panel5")} /></clipPath>}
         </defs>
         {showSecondaryAxis && (
           <>
@@ -491,6 +495,7 @@ export function KlinesChartSvg({
                   ))}
                 </>
               )}
+              <g clipPath={`url(#${(`${plotClipId}-${panelId}`).replace(/:/g, "\\:")})`}>
               {panelLines.map((ind, indIdx) => {
                 const col = ind.columnIndex;
                 if (ind.type === "Bollinger") {
@@ -718,6 +723,7 @@ export function KlinesChartSvg({
                   </g>
                 );
               })}
+              </g>
             </g>
           );
         })}
@@ -825,6 +831,7 @@ export function KlinesChartSvg({
             </g>
           );
         })()}
+        <g clipPath={`url(#${plotClipId.replace(/:/g, "\\:")})`}>
         {indicatorLines.filter((ind) => getPanel(ind) === "main").map((ind, indIdx) => {
           const col = ind.columnIndex;
           if (ind.type === "Bollinger") {
@@ -939,6 +946,7 @@ export function KlinesChartSvg({
             />
           );
         })}
+        </g>
         {volumeOnPrice && (() => {
           const volTop = MARGIN_TOP + (chartH * 2) / 3;
           const volH = chartH / 3;

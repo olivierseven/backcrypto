@@ -10,7 +10,7 @@ import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
-import { KLINE_LAST_LAYOUT_KEY } from "../KlinesChartConstants";
+import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_STRATEGIES } from "../KlinesChartConstants";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
   type Strategy,
@@ -218,11 +218,25 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const { symbol } = useChartSymbol();
   const { strategies, appliedStrategyIds, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
   const chartLayoutSave = useChartLayoutSave();
-  /** Quando alguma estratégia combinada está aplicada, as normais ficam bloqueadas (sem editar/aplicar/excluir). */
-  const hasCombinedApplied = useMemo(
-    () => appliedStrategyIds.some((id) => strategies.find((s) => s.id === id)?.isCombined),
+  /** Estratégias combinadas atualmente aplicadas. */
+  const appliedCombinedStrategies = useMemo(
+    () => strategies.filter((s) => s.isCombined && appliedStrategyIds.includes(s.id)),
     [strategies, appliedStrategyIds]
   );
+  /** Verifica se uma combinada "cobre" o símbolo S (aplicável a esse símbolo). */
+  const combinedCoversSymbol = useCallback((c: Strategy, sym: string | null) => c.applyToAllSymbols || c.symbol === sym, []);
+  /** IDs das estratégias normais bloqueadas: só as do mesmo símbolo que alguma combinada aplicada (ou do símbolo atual se combinada for "qualquer símbolo"). */
+  const blockedNormalIds = useMemo(() => {
+    const set = new Set<string>();
+    strategies
+      .filter((s) => !s.isCombined)
+      .forEach((norm) => {
+        const symbolOfNorm = norm.applyToAllSymbols ? symbol : (norm.symbol ?? symbol);
+        const blocked = appliedCombinedStrategies.some((c) => combinedCoversSymbol(c, symbolOfNorm));
+        if (blocked) set.add(norm.id);
+      });
+    return set;
+  }, [strategies, appliedCombinedStrategies, symbol, combinedCoversSymbol]);
   const [validationModal, setValidationModal] = useState<{ title: string; lines: string[] } | null>(null);
   const [deleteConfirmStrategy, setDeleteConfirmStrategy] = useState<{ id: string; name: string } | null>(null);
   const [addOpen, setAddOpen] = useState(initialView === "add");
@@ -345,6 +359,10 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   const canUseCombinedMode = visibleStrategies.length >= 2;
 
+  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const isDefaultModel = rawLayout === "default" || rawLayout === "0";
+  const defaultModelMaxStrategiesReached = isDefaultModel && strategies.length >= DEFAULT_MODEL_MAX_STRATEGIES;
+
   useEffect(() => {
     if (addStrategyMode === "combined" && !canUseCombinedMode) setAddStrategyMode("current");
   }, [addStrategyMode, canUseCombinedMode]);
@@ -367,6 +385,13 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       return;
     }
     if (addRoot.children.length === 0) return;
+    if (!editingStrategyId && defaultModelMaxStrategiesReached) {
+      setValidationModal({
+        title: t.validationErrorTitle ?? "Validation error",
+        lines: [(t as Record<string, string>).defaultModelMaxStrategies ?? "Only one strategy allowed on default model. Save to a layout (1–7) to add more."],
+      });
+      return;
+    }
     const isCombined = addStrategyMode === "combined";
     const applyToAll = addApplyToAllSymbols;
     const strategySymbol = applyToAll ? undefined : (symbol || undefined);
@@ -538,7 +563,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               <ul className="space-y-2">
                 {listNormals.map((s) => {
                   const applied = isApplied(s.id);
-                  const blocked = hasCombinedApplied && !s.isCombined;
+                  const blocked = blockedNormalIds.has(s.id);
                   const onApply = () => {
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
                     const strategyIds = new Set(appliedStrategyIds);
@@ -640,7 +665,8 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   const applied = isApplied(s.id);
                   const onApply = () => {
                     const indicatorIds = new Set(userIndicators.map((i) => i.id));
-                    const strategyIds = new Set(appliedStrategyIds);
+                    // Combinada referencia outras estratégias por strat_<id>: basta existirem (o gráfico as avalia como dependência).
+                    const strategyIds = new Set(strategies.map((x) => x.id));
                     const result = validateStrategyReferences(s, indicatorIds, strategyIds);
                     if (!result.ok) {
                       const msgTpl = (t as Record<string, string>).strategyApplyErrorMissingColumn ?? (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).");
@@ -827,13 +853,20 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 canAddMore={canAddMore}
                 depth={0}
                 combinedMode={addStrategyMode === "combined"}
+                disableCrossoverCrossunder={isDefaultModel}
               />
             </div>
+            {!editingStrategyId && defaultModelMaxStrategiesReached && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+                {(t as Record<string, string>).defaultModelMaxStrategies ?? "Only one strategy on default model. Save to a layout (1–7) to add more."}
+              </p>
+            )}
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
                 onClick={handleSaveStrategy}
-                className="flex-1 text-sm font-medium px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+                disabled={!editingStrategyId && defaultModelMaxStrategiesReached}
+                className={`flex-1 text-sm font-medium px-3 py-2 rounded-md ${!editingStrategyId && defaultModelMaxStrategiesReached ? "bg-zinc-400 cursor-not-allowed text-white" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
               >
                 {t.save}
               </button>
@@ -867,6 +900,7 @@ function GroupEditor({
   depth,
   onRemoveGroup,
   combinedMode = false,
+  disableCrossoverCrossunder = false,
 }: {
   node: StrategyGroupNode;
   root: StrategyGroupNode;
@@ -877,6 +911,7 @@ function GroupEditor({
   depth: number;
   onRemoveGroup?: () => void;
   combinedMode?: boolean;
+  disableCrossoverCrossunder?: boolean;
 }) {
   const updateThisGroup = (updater: (g: StrategyGroupNode) => StrategyGroupNode) => {
     if (node.id === root.id) setRoot(updater(node));
@@ -936,6 +971,7 @@ function GroupEditor({
               onUpdate={(patch) => updateChild(child.id, (n) => (n.type === "condition" ? { ...n, ...patch } : n))}
               onRemove={node.children.length > 1 ? () => removeChild(child.id) : undefined}
               combinedMode={combinedMode}
+              disableCrossoverCrossunder={disableCrossoverCrossunder}
             />
           ) : child.type === "not" ? (
             <div className="rounded border border-amber-200 bg-amber-50/50 p-2">
@@ -949,6 +985,7 @@ function GroupEditor({
                     onUpdate={(patch) => updateChild(child.child.id, (n) => (n.type === "condition" ? { ...n, ...patch } : n))}
                     onRemove={() => removeChild(child.id)}
                     combinedMode={combinedMode}
+                    disableCrossoverCrossunder={disableCrossoverCrossunder}
                   />
                 ) : child.child.type === "group" ? (
                   <GroupEditor
@@ -960,6 +997,7 @@ function GroupEditor({
                     canAddMore={canAddMore}
                     depth={depth + 1}
                     combinedMode={combinedMode}
+                    disableCrossoverCrossunder={disableCrossoverCrossunder}
                   />
                 ) : null}
               </div>
@@ -979,6 +1017,7 @@ function GroupEditor({
               depth={depth + 1}
               onRemoveGroup={node.children.length > 1 ? () => removeChild(child.id) : undefined}
               combinedMode={combinedMode}
+              disableCrossoverCrossunder={disableCrossoverCrossunder}
             />
           )}
         </div>
@@ -1012,6 +1051,7 @@ function OperandInput({
   offsetLabel,
   hideOffset = false,
   seriesOnly = false,
+  disableNegativeOffsets = false,
 }: {
   operand: StrategyOperand;
   onChange: (o: StrategyOperand) => void;
@@ -1022,6 +1062,8 @@ function OperandInput({
   hideOffset?: boolean;
   /** Modo combinado: só estratégia (sem constante nem select série/valor). */
   seriesOnly?: boolean;
+  /** Quando true, desabilita opções de offset -1 a -7 (modelo default). */
+  disableNegativeOffsets?: boolean;
 }) {
   const isSeries = operand.type === "series";
   const offset = hideOffset ? 0 : (isSeries ? normalizeOffset(operand.offset) : 0);
@@ -1070,9 +1112,13 @@ function OperandInput({
                 className="text-xs border border-zinc-300 rounded px-1 py-1 w-14"
                 aria-label={offsetLabel}
               >
-                {Array.from({ length: STRATEGY_OFFSET_MAX - STRATEGY_OFFSET_MIN + 1 }, (_, i) => STRATEGY_OFFSET_MAX - i).map((v) => (
-                  <option key={v} value={v}>{v === 0 ? "0" : v}</option>
-                ))}
+                {Array.from({ length: STRATEGY_OFFSET_MAX - STRATEGY_OFFSET_MIN + 1 }, (_, i) => STRATEGY_OFFSET_MAX - i).map((v) => {
+                  const isDisabled = disableNegativeOffsets && v < 0;
+                  const label = v === 0 ? "0" : String(v);
+                  return (
+                    <option key={v} value={v} disabled={isDisabled}>{isDisabled ? "🔒 " : ""}{label}</option>
+                  );
+                })}
               </select>
               <HelpPopover content={offsetLabel} />
             </>
@@ -1102,6 +1148,7 @@ function ConditionRow({
   onUpdate,
   onRemove,
   combinedMode = false,
+  disableCrossoverCrossunder = false,
 }: {
   condition: StrategyConditionNode;
   seriesOptions: { key: string; label: string }[];
@@ -1109,6 +1156,7 @@ function ConditionRow({
   onUpdate: (patch: Partial<StrategyConditionNode>) => void;
   onRemove?: () => void;
   combinedMode?: boolean;
+  disableCrossoverCrossunder?: boolean;
 }) {
   const kind: StrategyConditionKind = condition.kind ?? "compare";
   const effectiveKind = combinedMode ? "compare" as const : kind;
@@ -1155,7 +1203,7 @@ function ConditionRow({
   }, [combinedMode, kind, firstStrategyKey, condition.left?.type, condition.left?.type === "series" ? condition.left.seriesKey : null, condition.operator, condition.right?.type, condition.right?.type === "constant" ? condition.right.value : null]);
 
   return (
-    <div className="p-2 rounded border border-zinc-200 bg-white text-xs">
+    <div className={`p-2 rounded border border-zinc-200 bg-white text-xs ${disableCrossoverCrossunder ? "strategies-default-model" : ""}`}>
       <div className="flex flex-wrap items-center gap-1.5">
         {!combinedMode && (
           <>
@@ -1165,8 +1213,8 @@ function ConditionRow({
               className="text-xs border border-zinc-300 rounded px-1.5 py-1 bg-zinc-50 font-medium"
             >
               <option value="compare">{t.kindCompare}</option>
-              <option value="crossover">{t.kindCrossover}</option>
-              <option value="crossunder">{t.kindCrossunder}</option>
+              <option value="crossover" disabled={disableCrossoverCrossunder}>{disableCrossoverCrossunder ? "🔒 " : ""}{t.kindCrossover}</option>
+              <option value="crossunder" disabled={disableCrossoverCrossunder}>{disableCrossoverCrossunder ? "🔒 " : ""}{t.kindCrossunder}</option>
             </select>
             <HelpPopover content={t.conditionKind} />
           </>
@@ -1201,15 +1249,19 @@ function ConditionRow({
               offsetLabel={t.operandOffset}
               hideOffset={false}
               seriesOnly={false}
+              disableNegativeOffsets={disableCrossoverCrossunder}
             />
             <select
               value={condition.operator}
               onChange={(e) => onUpdate({ operator: e.target.value as StrategyOperator })}
               className="text-xs border border-zinc-300 rounded px-1 py-1 w-12"
             >
-              {STRATEGY_OPERATORS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+              {STRATEGY_OPERATORS.map((o) => {
+                const isDisabled = disableCrossoverCrossunder && o.value !== ">";
+                return (
+                  <option key={o.value} value={o.value} disabled={isDisabled}>{isDisabled ? "🔒 " : ""}{o.label}</option>
+                );
+              })}
             </select>
             <OperandInput
               operand={condition.right?.type === "series" ? { ...condition.right, offset: condition.right.offset } : condition.right?.type === "constant" ? condition.right : { type: "constant" as const, value: 0 }}
@@ -1220,6 +1272,7 @@ function ConditionRow({
               offsetLabel={t.operandOffset}
               hideOffset={false}
               seriesOnly={false}
+              disableNegativeOffsets={disableCrossoverCrossunder}
             />
           </>
         )}

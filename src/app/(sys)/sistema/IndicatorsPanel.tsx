@@ -21,6 +21,7 @@ import {
   isMovingAverageType,
   useIndicatorsPanelFields,
 } from "./indicatorsPanel/index";
+import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_INDICATORS } from "./KlinesChartConstants";
 import { IndicatorsPanelContext } from "./indicatorsPanel/IndicatorsPanelContext";
 import { IndicatorsPanelAddForm } from "./indicatorsPanel/IndicatorsPanelAddForm";
 import { IndicatorsPanelIndicatorCard } from "./indicatorsPanel/IndicatorsPanelIndicatorCard";
@@ -277,6 +278,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 > 0) ||
     (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 > 0) ||
     (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 > 0);
+  const isDefaultModel =
+    typeof window !== "undefined" &&
+    (() => {
+      const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+      return raw === "default" || raw === "0";
+    })();
+  const defaultModelMaxIndicatorsReached = isDefaultModel && userIndicators.length >= DEFAULT_MODEL_MAX_INDICATORS;
+
   const mainPanelFull = indicatorCountByPanel.main >= MAIN_MAX_INDICATORS;
   const chosenPanelFull =
     (addForm.chartOption === "main" && mainPanelFull) ||
@@ -285,11 +294,13 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS) ||
     (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS);
   const addButtonDisabled =
+    defaultModelMaxIndicatorsReached ||
     (addForm.indicatorType === "Volume" && (!hasEmptyPanelForVolume || chosenPanelUsedForVolume)) ||
     (isSecondaryType && addForm.indicatorType !== "Volume" && !hasFreePanelForSecondary) ||
     (!isSecondaryType && chosenPanelFull);
 
   const handleAdd = useCallback(() => {
+    if (defaultModelMaxIndicatorsReached) return;
     const n = Number(addForm.periodText);
     const periodNum = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : Math.max(1, Math.min(500, addForm.period));
     const fastP = addForm.indicatorType === "MACD" ? (Number(addForm.macdFastPeriodText) || 12) : periodNum;
@@ -386,7 +397,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       } : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
-  }, [addForm, panelsWithSecondary, currentGroupMinutes, addIndicator]);
+  }, [addForm, panelsWithSecondary, currentGroupMinutes, addIndicator, defaultModelMaxIndicatorsReached]);
 
   const deactivateAllStrategies = useCallback(() => {
     if (appliedStrategyIds.length === 0) return;
@@ -629,6 +640,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       INDICATOR_COLOR_PALETTE,
       INTERVAL_OPTIONS,
       addButtonDisabled,
+      defaultModelMaxIndicatorsReached,
       handleAdd,
       editingId,
       editForm,
@@ -658,6 +670,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       indicatorCountByPanel,
       isMA,
       addButtonDisabled,
+      defaultModelMaxIndicatorsReached,
       handleAdd,
       editingId,
       editForm,

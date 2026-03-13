@@ -6,7 +6,7 @@
 import { useState, useRef, useLayoutEffect, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { ASSET_PREFIX } from "@/app/constants";
-import { SIDEBAR_WIDTH } from "../KlinesChartConstants";
+import { KLINE_LAST_LAYOUT_KEY, SIDEBAR_WIDTH } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
   DEFAULT_CANDLE_PRESET,
@@ -157,6 +157,9 @@ export interface KlinesChartSidebarProps {
   onLoadLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }) => void;
   onRenameLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }, newName: string) => void;
   onFetchSavedLayouts: () => void;
+  /** Usuário free: ao clicar em Salvar/Carregar chama este callback (modal de upgrade) em vez de abrir o painel. */
+  isFreeUser?: boolean;
+  onUpgradeRequest?: () => void;
 }
 
 export function KlinesChartSidebar({
@@ -283,6 +286,8 @@ export function KlinesChartSidebar({
   onLoadLayout,
   onRenameLayout,
   onFetchSavedLayouts,
+  isFreeUser = false,
+  onUpgradeRequest,
 }: KlinesChartSidebarProps) {
   const candlePresetLabel = (id: string) => {
     const map: Record<string, string> = {
@@ -334,6 +339,8 @@ export function KlinesChartSidebar({
     }
   }, [settingsOpen]);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
+  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const isDefaultModel = rawLayout === "default" || rawLayout === "0";
   const isHorizontal = orientation === "horizontal";
   const intervalTriggerRef = useRef<HTMLDivElement>(null);
   const chartTypeTriggerRef = useRef<HTMLDivElement>(null);
@@ -1179,12 +1186,12 @@ export function KlinesChartSidebar({
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}</p>
                 <div className="grid grid-cols-1 gap-1 mb-2">
                   <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeCandles ?? "Candles"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeBars ?? "Barras"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLine ?? "Linhas"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeArea ?? "Área"}</button>
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeBars ?? "Barras"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeLine ?? "Linhas"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeArea ?? "Área"}</button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}</button>
                 </div>
               </>
             )}
@@ -1446,9 +1453,17 @@ export function KlinesChartSidebar({
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
                 {[1, 2, 3, 4, 5, 6, 7].map((slot) => {
                   const layout = savedLayouts.find((l) => l.slot === slot);
+                  const locked = isFreeUser;
+                  const label = layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot));
                   return (
-                    <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate" title={layout ? getLayoutLabel(layout) : undefined}>
-                      {layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot))}
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => { if (locked) onUpgradeRequest?.(); else onSaveLayout(slot); }}
+                      className={`w-full text-left px-2 py-1.5 rounded text-sm truncate flex items-center gap-1.5 ${locked ? "opacity-60 cursor-not-allowed" : "hover:bg-zinc-100"}`}
+                      title={locked ? ((t as Record<string, string>).upgradePlanModalTitle ?? undefined) : (layout ? getLayoutLabel(layout) : undefined)}
+                    >
+                      {locked ? "🔒 " : ""}{label}
                     </button>
                   );
                 })}
@@ -1468,32 +1483,42 @@ export function KlinesChartSidebar({
                       const userLayouts = savedLayouts.filter((l) => l.slot >= 1);
                       const canRename = (layout: { slot: number }) =>
                         layout.slot >= 1 || canRenameChartModels;
-                      const renderLayoutRow = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => (
-                        <div key={layout.slot} className="flex items-center gap-1 px-1 py-0.5">
-                          {editingLayoutSlot === layout.slot ? (
-                            <>
-                              <input
-                                type="text"
-                                maxLength={24}
-                                value={renameInputValue}
-                                onChange={(e) => setRenameInputValue(e.target.value)}
-                                placeholder={t.layoutNamePlaceholder}
-                                className="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-200 rounded"
-                                autoFocus
-                              />
-                              <button type="button" onClick={() => { const v = renameInputValue.trim().slice(0, 24); onRenameLayout(layout, v); setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutOk}</button>
-                              <button type="button" onClick={() => { setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutCancel}</button>
-                            </>
-                          ) : (
-                            <>
-                              <button type="button" onClick={() => onLoadLayout(layout)} className="flex-1 min-w-0 text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate">{getLayoutLabel(layout)}</button>
-                              {canRename(layout) && (
-                                <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} className="shrink-0 p-1 rounded hover:bg-zinc-100" aria-label={t.renameLayout}>✏️</button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      );
+                      const renderLayoutRow = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
+                        const loadLocked = isFreeUser && layout.slot >= 1;
+                        return (
+                          <div key={layout.slot} className="flex items-center gap-1 px-1 py-0.5">
+                            {editingLayoutSlot === layout.slot ? (
+                              <>
+                                <input
+                                  type="text"
+                                  maxLength={24}
+                                  value={renameInputValue}
+                                  onChange={(e) => setRenameInputValue(e.target.value)}
+                                  placeholder={t.layoutNamePlaceholder}
+                                  className="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-200 rounded"
+                                  autoFocus
+                                />
+                                <button type="button" onClick={() => { const v = renameInputValue.trim().slice(0, 24); onRenameLayout(layout, v); setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutOk}</button>
+                                <button type="button" onClick={() => { setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutCancel}</button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => { if (loadLocked) onUpgradeRequest?.(); else onLoadLayout(layout); }}
+                                  className={`flex-1 min-w-0 text-left px-2 py-1.5 rounded text-sm truncate flex items-center gap-1.5 ${loadLocked ? "opacity-60 cursor-not-allowed" : "hover:bg-zinc-100"}`}
+                                  title={loadLocked ? ((t as Record<string, string>).upgradePlanModalTitle ?? undefined) : undefined}
+                                >
+                                  {loadLocked ? "🔒 " : ""}{getLayoutLabel(layout)}
+                                </button>
+                                {canRename(layout) && !loadLocked && (
+                                  <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} className="shrink-0 p-1 rounded hover:bg-zinc-100" aria-label={t.renameLayout}>✏️</button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
+                      };
                       return (
                         <>
                           {chartModelLayouts.length > 0 && (

@@ -191,6 +191,8 @@ export interface IndicatorsPanelContextValue {
   INDICATOR_COLOR_PALETTE: readonly string[];
   INTERVAL_OPTIONS: { value: number; label: string }[];
   addButtonDisabled: boolean;
+  /** true quando o layout ativo é modelo default e já há DEFAULT_MODEL_MAX_INDICATORS indicadores. */
+  defaultModelMaxIndicatorsReached?: boolean;
   handleAdd: () => void;
   editingId: string | null;
   editForm: EditFormState | null;

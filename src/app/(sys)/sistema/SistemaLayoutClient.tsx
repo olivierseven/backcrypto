@@ -18,9 +18,10 @@ import { ChartHeaderProvider } from "./ChartHeaderContext";
 import { ChartSymbolProvider, useChartSymbol } from "./ChartSymbolContext";
 import IndicatorsPanel from "./IndicatorsPanel";
 import DrawingsPanel from "./DrawingsPanel";
-import { StrategiesProvider } from "./strategies/StrategiesContext";
+import { StrategiesProvider, useStrategies } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
 import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
+import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -95,6 +96,7 @@ function SistemaHeader({
   onMyStrategiesClick,
   onAddStrategyClick,
   onDrawingsClick,
+  addStrategyDisabled = false,
 }: {
   menuOpen: boolean;
   onMenuToggle: (open: boolean) => void;
@@ -103,6 +105,7 @@ function SistemaHeader({
   onMyStrategiesClick: () => void;
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
+  addStrategyDisabled?: boolean;
 }) {
   const pathname = usePathname();
   const isContaPage = pathname === "/conta" || pathname?.endsWith("/conta") === true;
@@ -236,8 +239,10 @@ function SistemaHeader({
             </button>
             <button
               type="button"
-              onClick={onAddStrategyClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              onClick={addStrategyDisabled ? undefined : onAddStrategyClick}
+              disabled={addStrategyDisabled}
+              className={`w-full text-left px-4 py-2 text-sm font-medium ${addStrategyDisabled ? "text-zinc-400 cursor-not-allowed" : "text-zinc-700 hover:bg-zinc-100"}`}
+              title={addStrategyDisabled ? ((t as Record<string, string>).defaultModelMaxStrategies ?? "") : undefined}
             >
               {(t as Record<string, string>).menuAddStrategy ?? "Create strategy"}
             </button>
@@ -411,74 +416,156 @@ export default function SistemaLayoutClient({
     <CryptoLangProvider lang={lang}>
       <KlinesIndicatorsProvider>
         <StrategiesProvider>
-          <SistemaDebugProvider>
-            <ChartHeaderProvider>
-              <ChartSymbolProvider>
-                <ChartLayoutSaveProvider>
-                <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
-                  <SistemaHeader
-                    menuOpen={menuOpen}
-                    onMenuToggle={handleMenuToggle}
-                    onMyIndicatorsClick={openMyIndicators}
-                    onAddIndicatorClick={openAddIndicator}
-                    onMyStrategiesClick={openMyStrategies}
-                    onAddStrategyClick={openAddStrategy}
-                    onDrawingsClick={openDrawings}
-                  />
-                  <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
-                    <div ref={scrollContainerRef} className="flex-1 min-h-0 min-w-0 overflow-auto">
-                      {isSistemaChartPage && <SistemaHeaderCard />}
-                      {children}
-                    </div>
-                    {isSistemaChartPage && (
-                      <div
-                        ref={stripScrollRef}
-                        className="absolute right-0 top-0 bottom-0 w-[60px] z-10 overflow-y-auto overflow-x-hidden touch-pan-y"
-                        style={{ touchAction: "pan-y" }}
-                        aria-hidden
-                      >
-                        <div ref={stripInnerRef} className="w-px min-h-full" style={{ height: 0 }} />
-                      </div>
-                    )}
-                  </div>
-                  {indicatorsPanelOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-[39]"
-                        aria-hidden
-                        onClick={() => setIndicatorsPanelOpen(false)}
-                      />
-                      <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} />
-                    </>
-                  )}
-                  {strategiesPanelOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-[39]"
-                        aria-hidden
-                        onClick={() => setStrategiesPanelOpen(false)}
-                      />
-                      <StrategiesPanel initialView={strategiesPanelInitialView} onClose={() => setStrategiesPanelOpen(false)} />
-                    </>
-                  )}
-                  {drawingsPanelOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-[39]"
-                        aria-hidden
-                        onClick={() => setDrawingsPanelOpen(false)}
-                      />
-                      <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
-                    </>
-                  )}
-                </div>
-                {isAdmin && <SistemaDebugPanel />}
-                </ChartLayoutSaveProvider>
-              </ChartSymbolProvider>
-            </ChartHeaderProvider>
-          </SistemaDebugProvider>
+          <SistemaLayoutInner
+            menuOpen={menuOpen}
+            onMenuToggle={handleMenuToggle}
+            onMyIndicatorsClick={openMyIndicators}
+            onAddIndicatorClick={openAddIndicator}
+            onMyStrategiesClick={openMyStrategies}
+            onAddStrategyClick={openAddStrategy}
+            onDrawingsClick={openDrawings}
+            indicatorsPanelOpen={indicatorsPanelOpen}
+            setIndicatorsPanelOpen={setIndicatorsPanelOpen}
+            strategiesPanelOpen={strategiesPanelOpen}
+            setStrategiesPanelOpen={setStrategiesPanelOpen}
+            drawingsPanelOpen={drawingsPanelOpen}
+            setDrawingsPanelOpen={setDrawingsPanelOpen}
+            indicatorsPanelInitialView={indicatorsPanelInitialView}
+            strategiesPanelInitialView={strategiesPanelInitialView}
+            isSistemaChartPage={isSistemaChartPage}
+            scrollContainerRef={scrollContainerRef}
+            stripScrollRef={stripScrollRef}
+            stripInnerRef={stripInnerRef}
+            topBarGapClass={topBarGapClass}
+            isAdmin={isAdmin}
+          >
+            {children}
+          </SistemaLayoutInner>
         </StrategiesProvider>
       </KlinesIndicatorsProvider>
     </CryptoLangProvider>
+  );
+}
+
+function SistemaLayoutInner({
+  menuOpen,
+  onMenuToggle,
+  onMyIndicatorsClick,
+  onAddIndicatorClick,
+  onMyStrategiesClick,
+  onAddStrategyClick,
+  onDrawingsClick,
+  indicatorsPanelOpen,
+  setIndicatorsPanelOpen,
+  strategiesPanelOpen,
+  setStrategiesPanelOpen,
+  drawingsPanelOpen,
+  setDrawingsPanelOpen,
+  indicatorsPanelInitialView,
+  strategiesPanelInitialView,
+  isSistemaChartPage,
+  scrollContainerRef,
+  stripScrollRef,
+  stripInnerRef,
+  topBarGapClass,
+  isAdmin,
+  children,
+}: {
+  menuOpen: boolean;
+  onMenuToggle: (open: boolean) => void;
+  onMyIndicatorsClick: () => void;
+  onAddIndicatorClick: () => void;
+  onMyStrategiesClick: () => void;
+  onAddStrategyClick: () => void;
+  onDrawingsClick: () => void;
+  indicatorsPanelOpen: boolean;
+  setIndicatorsPanelOpen: (v: boolean) => void;
+  strategiesPanelOpen: boolean;
+  setStrategiesPanelOpen: (v: boolean) => void;
+  drawingsPanelOpen: boolean;
+  setDrawingsPanelOpen: (v: boolean) => void;
+  indicatorsPanelInitialView: "list" | "add";
+  strategiesPanelInitialView: "list" | "add";
+  isSistemaChartPage: boolean;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  stripScrollRef: React.RefObject<HTMLDivElement | null>;
+  stripInnerRef: React.RefObject<HTMLDivElement | null>;
+  topBarGapClass: string;
+  isAdmin: boolean;
+  children: React.ReactNode;
+}) {
+  const { strategies } = useStrategies();
+  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const isDefaultModel = rawLayout === "default" || rawLayout === "0";
+  const addStrategyDisabled = isDefaultModel && strategies.length >= 1;
+
+  return (
+    <SistemaDebugProvider>
+      <ChartHeaderProvider>
+        <ChartSymbolProvider>
+          <ChartLayoutSaveProvider>
+            <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
+              <SistemaHeader
+                menuOpen={menuOpen}
+                onMenuToggle={onMenuToggle}
+                onMyIndicatorsClick={onMyIndicatorsClick}
+                onAddIndicatorClick={onAddIndicatorClick}
+                onMyStrategiesClick={onMyStrategiesClick}
+                onAddStrategyClick={onAddStrategyClick}
+                onDrawingsClick={onDrawingsClick}
+                addStrategyDisabled={addStrategyDisabled}
+              />
+              <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+                <div ref={scrollContainerRef} className="flex-1 min-h-0 min-w-0 overflow-auto">
+                  {isSistemaChartPage && <SistemaHeaderCard />}
+                  {children}
+                </div>
+                {isSistemaChartPage && (
+                  <div
+                    ref={stripScrollRef}
+                    className="absolute right-0 top-0 bottom-0 w-[60px] z-10 overflow-y-auto overflow-x-hidden touch-pan-y"
+                    style={{ touchAction: "pan-y" }}
+                    aria-hidden
+                  >
+                    <div ref={stripInnerRef} className="w-px min-h-full" style={{ height: 0 }} />
+                  </div>
+                )}
+              </div>
+              {indicatorsPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[39]"
+                    aria-hidden
+                    onClick={() => setIndicatorsPanelOpen(false)}
+                  />
+                  <IndicatorsPanel initialView={indicatorsPanelInitialView} onClose={() => setIndicatorsPanelOpen(false)} />
+                </>
+              )}
+              {strategiesPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[39]"
+                    aria-hidden
+                    onClick={() => setStrategiesPanelOpen(false)}
+                  />
+                  <StrategiesPanel initialView={strategiesPanelInitialView} onClose={() => setStrategiesPanelOpen(false)} />
+                </>
+              )}
+              {drawingsPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[39]"
+                    aria-hidden
+                    onClick={() => setDrawingsPanelOpen(false)}
+                  />
+                  <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
+                </>
+              )}
+            </div>
+            {isAdmin && <SistemaDebugPanel />}
+          </ChartLayoutSaveProvider>
+        </ChartSymbolProvider>
+      </ChartHeaderProvider>
+    </SistemaDebugProvider>
   );
 }

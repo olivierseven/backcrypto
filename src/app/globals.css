@@ -740,3 +740,8 @@
   direction: ltr;
   text-align: left;
 }
+
+/* Estratégias: opacidade nos options desabilitados (modelo default — crossover/crossunder, offset -1..-7, operadores < <= <> >= =) */
+.strategies-default-model select option:disabled {
+  opacity: 0.5;
+}

@@ -32,12 +32,12 @@ Persistido na tabela `ChartLayout` (Prisma), por usuário e slot. Não há espel
 
 | O que | Descrição |
 |-------|-----------|
-| **Layout por slot (1–7)** | Um registro por `(userId, slot)` em **ChartLayout**. Slot 0 não existe em ChartLayout. |
-| **Layout default (slot 0)** | Fica na tabela **ChartModels** (não em ChartLayout): modelo com `(userId: admin, slot: 0)`. Carregado como "Default" para todos. |
+| **Layout por slot (1–7)** | Um registro por `(userId, slot)` em **ChartLayout**. Layouts pessoais do usuário. |
+| **Modelos default** | Qualquer modelo na tabela **ChartModel** (layoutModels), independente do slot. Não ficam em ChartLayout. Ex.: slot 0 costuma ser o "Default" carregado para todos; outros slots em ChartModel também são modelos (templates). |
 | **Campo `config`** | JSON com: `visibleCount`, `invisibleCandlesEnd`, presets de cores (candle, fundo, eixos, linhas), `yAxisAbbreviated`, `logScale`, opções de eixo (main/secondary, last close, countdown), `secondaryPanelHeightPercent`, `volumeOnPrice`, `volumeOnPriceOpacity`, `chartSizePercent`, `chartStyle`, `candleBodyStyle`, `userIndicators`, `strategies`, `appliedStrategyIds`, `volumeAtPriceEnabled`, `volumeAtPriceBuckets`, etc. **Não** inclui: timeframe, símbolo, olho visible, magnético. |
 | **Campo `name`** | Nome opcional do layout (máx. 24 caracteres). |
 
-Ou seja: **indicadores, estratégias, cores e opções do gráfico** (exceto as listadas em “Somente localStorage”) vêm do layout no banco quando se carrega um slot 1–7 **ou o default (slot 0)**. O layout default é carregado **somente do banco** (não do localStorage), para evitar que prefs antigas no storage interfiram.
+Ou seja: **indicadores, estratégias, cores e opções do gráfico** (exceto as listadas em “Somente localStorage”) vêm do layout no banco quando se carrega um layout 1–7 (ChartLayout) **ou um modelo** (ChartModel, layoutModels). Modelos são carregados **somente do banco** (não do localStorage).
 
 ---
 
@@ -47,8 +47,8 @@ Dados que existem nos dois: preferência no navegador e, quando há layout salvo
 
 | Conceito | localStorage | Banco |
 |----------|--------------|--------|
-| **Quantidade de candles (`visibleCount`)** | Em `backcrypto-klines-local-prefs` (após layout aplicado). | Incluído ao salvar: slot 1–7 em ChartLayout; slot 0 (default) em ChartModels. Ao carregar layout (incluindo default), esse valor é aplicado a partir do banco. |
-| **Prefs gerais do gráfico (default e slots 1–7)** | Não usadas para **carregar** layout: default e slots vêm só do banco. `backcrypto-klines-prefs` deixou de ser lido no init. | Layout default e slots 1–7 são carregados **somente da API**; o localStorage não interfere no carregamento. |
+| **Quantidade de candles (`visibleCount`)** | Em `backcrypto-klines-local-prefs` (após layout aplicado). | Incluído ao salvar: slots 1–7 em ChartLayout; modelos em ChartModel. Ao carregar layout ou modelo, o valor vem do banco. |
+| **Prefs gerais do gráfico** | Não usadas para **carregar** layout: layouts e modelos vêm só do banco. `backcrypto-klines-prefs` deixou de ser lido no init. | ChartLayout (1–7) e ChartModel (modelos default) são carregados **somente da API**; o localStorage não interfere no carregamento. |
 | **Volume (gráfico)** | Exibir volume no painel do gráfico (`volumeOnPrice`) e opacidade. | Incluído no `config` ao salvar. **Auto-save:** apenas o check (ativar/desativar) dispara salvamento automático do layout atual (slot 1–7); opacidade só é gravada ao clicar em Salvar layout. |
 | **Volume no preço (VAP)** | `backcrypto-klines-volume-at-price`: enabled, buckets, percent, opacity, side, cores. | Incluído no `config` ao salvar. Ao carregar um layout, o config do banco aplica essas opções. **Auto-save:** apenas o check (ativar/desativar) e a quantidade de intervalos (buckets) disparam salvamento automático do layout atual (slot 1–7); demais prefs (percent, opacidade, lado, cores) só são gravadas ao clicar em Salvar layout. |
 

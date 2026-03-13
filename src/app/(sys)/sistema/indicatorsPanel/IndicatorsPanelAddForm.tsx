@@ -22,6 +22,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     SECONDARY_MAX_INDICATORS,
     INDICATOR_COLOR_PALETTE,
     addButtonDisabled,
+    defaultModelMaxIndicatorsReached,
     handleAdd,
   } = useIndicatorsPanelContext();
 
@@ -1071,6 +1072,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             </select>
           </div>
         </>
+      )}
+      {defaultModelMaxIndicatorsReached && (
+        <p className="text-xs text-amber-700 mb-1.5" role="status">
+          {(t as Record<string, string>).defaultModelMaxIndicators}
+        </p>
       )}
       <button
         type="button"

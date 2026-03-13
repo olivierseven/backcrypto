@@ -155,6 +155,8 @@ export type KlinesChartProps = {
   onCurrentLayoutLabelChange?: (label: string) => void;
   /** Admin: pode renomear modelos ChartModels (slot 0) na seção Carregar. */
   isAdmin?: boolean;
+  /** Usuário free: só layout default; não pode salvar/carregar layouts; modal de upgrade ao tentar. */
+  isFreeUser?: boolean;
 }
 
 /** Dados para desenho do volume no preço: intervalos simétricos no eixo Y com volume acumulado por faixa de fechamento. */

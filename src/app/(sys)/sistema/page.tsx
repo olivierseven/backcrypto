@@ -35,14 +35,15 @@ export default async function BackcryptoSistemaPage() {
 
   const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true },
+    select: { id: true, role: true, tier: true },
   });
   if (!user) redirect(loginUrl);
   const isAdmin = user.role === "admin";
+  const isFreeUser = user.tier === "free";
 
   return (
     <div className="flex-1 min-h-0 w-full">
-      <KlinesTable isAdmin={isAdmin} />
+      <KlinesTable isAdmin={isAdmin} isFreeUser={isFreeUser} />
     </div>
   );
 }

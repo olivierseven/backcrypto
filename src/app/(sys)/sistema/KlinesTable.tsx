@@ -241,7 +241,7 @@ function dayKeyUtc(ms: number): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
-export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) {
+export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { isAdmin?: boolean; isFreeUser?: boolean }) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
@@ -1011,6 +1011,7 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
       >
           <KlinesChart
             isAdmin={isAdmin}
+            isFreeUser={isFreeUser}
             klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
             onCurrentLayoutLabelChange={setCurrentLayoutLabel}
@@ -1169,7 +1170,11 @@ export default function KlinesTable({ isAdmin = false }: { isAdmin?: boolean }) 
                   ? appliedIds.filter((id) => {
                       const st = byId.get(id);
                       if (!st) return false;
-                      return validateStrategyReferences(st, indicatorIds, appliedIdsSet).ok;
+                      // Combinada: referenciadas só precisam existir no layout (o gráfico as avalia como dependência).
+                      const strategyIdsForValidation = st.isCombined
+                        ? new Set(strategiesList.map((s) => s.id))
+                        : appliedIdsSet;
+                      return validateStrategyReferences(st, indicatorIds, strategyIdsForValidation).ok;
                     })
                   : null;
 

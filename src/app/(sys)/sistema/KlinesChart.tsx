@@ -6,7 +6,7 @@
  */
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { API_BASE, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
+import { API_BASE, APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
@@ -104,7 +104,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onCurrentLayoutLabelChange, isAdmin = false }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
   const pathname = usePathname();
   const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
   const lang = useCryptoLang();
@@ -142,6 +142,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const [saveSuccessModalOpen, setSaveSuccessModalOpen] = useState(false);
   const [savedLayoutName, setSavedLayoutName] = useState<string | null>(null);
   const [saveConfirmSlot, setSaveConfirmSlot] = useState<number | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
   const [logScale, setLogScale] = useState(false);
   const [showMainAxis, setShowMainAxis] = useState(true);
@@ -561,6 +562,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     lastLayoutApplyAtRef.current = 0;
   }, [symbolProp]);
 
+  // Usuário free: sempre layout default; forçar localStorage e não usar slot 1–7.
+  useEffect(() => {
+    if (!isFreeUser || typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    if (raw !== "default" && raw !== "0") {
+      window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, "default");
+      setShowUpgradeModal(true);
+    }
+  }, [isFreeUser]);
+
   useEffect(() => {
     if (pathname !== SISTEMA_PATH) return;
     // Só aplicar layout depois do carregamento dos indicadores (klines/gráfico com dados).
@@ -580,8 +591,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const done = () => {
       if (!cancelled) setLayoutApplied(true);
     };
-    const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
-    addLayoutLoadLog(`KLINE_LAST_LAYOUT_KEY raw="${raw ?? "null"}"`);
+    let raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+    if (isFreeUser) {
+      raw = "default";
+      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, "default");
+    }
+    addLayoutLoadLog(`KLINE_LAST_LAYOUT_KEY raw="${raw ?? "null"}"${isFreeUser ? " (free→default)" : ""}`);
     const timeoutId = setTimeout(done, 2000);
     (async () => {
       let isSlot1to7 = false;
@@ -835,6 +850,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const handleSaveLayout = (slot: number) => {
     setSaveOpen(false);
+    if (isFreeUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setSaveConfirmSlot(slot);
   };
 
@@ -978,6 +997,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
     setLoadOpen(false);
+    if (isFreeUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (layoutSaveLoadDebugEnabled) {
       const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout.config[k], [`${k}_typeof`]: typeof layout.config[k] }), {} as Record<string, unknown>);
       const msg = `[layout load] slot=${layout.slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
@@ -1489,6 +1512,18 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     );
   }
 
+  // Na página do sistema: esconder o gráfico até o layout do banco ser aplicado (evita flash com estado inicial errado)
+  if (pathname === SISTEMA_PATH && !layoutApplied) {
+    return (
+      <div
+        className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit animate-pulse"
+        style={{ minWidth: totalChartWidth, minHeight: chartHeight, backgroundColor: "#e4e4e7" }}
+        aria-busy="true"
+        aria-label={t.loading.replace("{interval}", intervalLabel ?? "")}
+      />
+    );
+  }
+
   const hasIndicatorStrip = indicatorLines.length > 0;
 
   return (
@@ -1623,6 +1658,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             onLoadLayout={handleLoadLayout}
             onRenameLayout={handleRenameLayout}
             onFetchSavedLayouts={fetchSavedLayouts}
+            isFreeUser={isFreeUser}
+            onUpgradeRequest={() => setShowUpgradeModal(true)}
           />
         </div>
         <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
@@ -2167,6 +2204,29 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               />
             </div>
           </div>
+          {showUpgradeModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={(t as Record<string, string>).upgradePlanModalTitle ?? "Atualize seu plano"}>
+              <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-violet-50 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-violet-800">{(t as Record<string, string>).upgradePlanModalTitle ?? "Atualize seu plano"}</h3>
+                  <button type="button" onClick={() => setShowUpgradeModal(false)} className="p-1 rounded hover:bg-violet-100 text-violet-700" aria-label={t.close}>
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
+                <div className="px-4 py-3 text-sm text-zinc-600">
+                  {(t as Record<string, string>).upgradePlanModalMessage ?? "Salvar e carregar layouts estão disponíveis em planos pagos. Atualize para acessar essas funcionalidades."}
+                </div>
+                <div className="px-4 py-3 flex justify-end gap-2">
+                  <button type="button" onClick={() => setShowUpgradeModal(false)} className="crypto-btn rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-50 px-4 py-2 font-medium">
+                    {t.cancel}
+                  </button>
+                  <a href={`${APP_CRYPTO_ROUTE_PREFIX}/plans`} className="crypto-btn rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2">
+                    {(t as Record<string, string>).upgradePlanCta ?? "Ver planos"}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
           {saveSuccessModalOpen && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={t.savedSuccess}>
               <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">

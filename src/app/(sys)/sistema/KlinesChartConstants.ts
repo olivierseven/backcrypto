@@ -46,6 +46,10 @@ export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
 /** Preferência do usuário: quantidade de candles, tipo de gráfico, exibir/ocultar desenhos (e magnético em KLINE_DRAW_MAGNETIC_KEY). Carregar do localStorage tem preferência sobre o layout. */
 export const KLINE_LOCAL_PREFS_KEY = "backcrypto-klines-local-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
+/** Máximo de indicadores permitidos quando o layout ativo é um modelo default (ChartModel). */
+export const DEFAULT_MODEL_MAX_INDICATORS = 2;
+/** No modelo default só é permitida uma estratégia. */
+export const DEFAULT_MODEL_MAX_STRATEGIES = 1;
 export const KLINE_GROUP_MINUTES_KEY = "backcrypto-klines-group-minutes";
 export const KLINE_SYMBOL_KEY = "backcrypto-klines-symbol";
 export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";

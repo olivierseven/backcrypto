@@ -173,7 +173,7 @@ export default function BioLoginForm({
             >
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Crypto"
+                alt="Crypto Strategy"
                 width={80}
                 height={80}
                 className="protected-logo h-20 w-20 object-contain"
@@ -205,7 +205,7 @@ export default function BioLoginForm({
           </div>
           <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Crypto
+              Crypto Strategy
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
           </header>
