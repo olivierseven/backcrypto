@@ -332,6 +332,16 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
         return;
       }
+      // Donchian: três colunas (canal superior, meio, canal inferior)
+      if (ind.type === "Donchian") {
+        const upperLabel = (tKlines as Record<string, string>).donchianShowUpper ?? "Upper channel";
+        const middleLabel = (tKlines as Record<string, string>).donchianShowMiddle ?? "Middle line";
+        const lowerLabel = (tKlines as Record<string, string>).donchianShowLower ?? "Lower channel";
+        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${upperLabel}` });
+        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${middleLabel}` });
+        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
+        return;
+      }
       // ADX: só as 3 colunas (+DI, -DI, ADX), sem opção genérica
       if (ind.type === "ADX") {
         const adxLabel = getIndicatorLabel(ind, tKlines, userIndicators);

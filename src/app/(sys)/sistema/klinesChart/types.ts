@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Volume" | "CCI";
+  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Donchian" | "Volume" | "CCI";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   adxPlusDiColor?: string;
@@ -103,6 +103,17 @@ export interface ChartIndicatorLine {
   bollingerMiddleColor?: string;
   bollingerMiddleLineStyle?: "solid" | "dotted" | "dashed";
   bollingerMiddleLineWidth?: "thin" | "normal";
+  /** Só para Donchian Channels: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
+  donchianShowUpper?: boolean;
+  donchianShowLower?: boolean;
+  donchianShowMiddle?: boolean;
+  donchianBandOpacity?: number;
+  donchianLimitsColor?: string;
+  donchianLimitsLineStyle?: "solid" | "dotted" | "dashed";
+  donchianLimitsLineWidth?: "thin" | "normal";
+  donchianMiddleColor?: string;
+  donchianMiddleLineStyle?: "solid" | "dotted" | "dashed";
+  donchianMiddleLineWidth?: "thin" | "normal";
   /** Só para CCI: escala fixa no eixo Y (ex.: -100 a 100). */
   cciFixedScale?: boolean;
   /** Só para CCI: limites superior/inferior (ex. 100 / -100). */

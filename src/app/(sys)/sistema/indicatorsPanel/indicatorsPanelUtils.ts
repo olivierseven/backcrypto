@@ -61,6 +61,9 @@ export function getIndicatorLabel(
     const z = ind.bollingerZ ?? 2;
     return `Bollinger(${ind.period}) Z=${z} ${fieldLabel}`;
   }
+  if (ind.type === "Donchian") {
+    return `Donchian(${ind.period})`;
+  }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? (typeof (t as Record<string, string>).volumeUsdtLabel === "string" ? (t as Record<string, string>).volumeUsdtLabel : "Volume (USDT)") : (typeof (t as Record<string, string>).volumeLabel === "string" ? (t as Record<string, string>).volumeLabel : "Volume");
   }
@@ -125,6 +128,9 @@ export function getIndicatorLabelShort(
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
     return `BB(${ind.period}) Z=${z} ${letter}`;
+  }
+  if (ind.type === "Donchian") {
+    return `DC(${ind.period})`;
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;

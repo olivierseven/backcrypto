@@ -1367,9 +1367,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   for (const ind of indicatorLines) {
     if (getPanel(ind) !== "main") continue;
     const col = ind.columnIndex;
+    const cols = (ind.type === "Bollinger" || ind.type === "Donchian") ? [col, col + 1, col + 2] : [col];
     for (let i = 0; i < windowSlice.length; i++) {
-      const v = windowSlice[i][col];
-      if (v != null && typeof v === "number" && Number.isFinite(v)) priceExtents.push(v);
+      for (const c of cols) {
+        const v = windowSlice[i][c];
+        if (v != null && typeof v === "number" && Number.isFinite(v)) priceExtents.push(v);
+      }
     }
   }
   const minPrice = priceExtents.length > 0 ? Math.min(...priceExtents) : Math.min(...lows);

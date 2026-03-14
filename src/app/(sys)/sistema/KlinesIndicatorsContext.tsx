@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume" | "ADX" | "CCI";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Donchian" | "Volume" | "ADX" | "CCI";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
 export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4" | "panel5";
@@ -147,6 +147,22 @@ export interface UserIndicatorConfig {
   /** Só para Bollinger: estilo de traço da média. */
   bollingerMiddleLineStyle?: IndicatorLineStyle;
   bollingerMiddleLineWidth?: IndicatorLineWidth;
+  /** Só para Donchian Channels: exibir canal superior (default true). */
+  donchianShowUpper?: boolean;
+  /** Só para Donchian Channels: exibir canal inferior (default true). */
+  donchianShowLower?: boolean;
+  /** Só para Donchian Channels: exibir linha do meio (default false). */
+  donchianShowMiddle?: boolean;
+  /** Só para Donchian: opacidade da faixa entre canais e meio (0–0.3, default 0.2). */
+  donchianBandOpacity?: number;
+  /** Só para Donchian: cor dos canais superior/inferior. */
+  donchianLimitsColor?: string;
+  donchianLimitsLineStyle?: IndicatorLineStyle;
+  donchianLimitsLineWidth?: IndicatorLineWidth;
+  /** Só para Donchian: cor da linha do meio. */
+  donchianMiddleColor?: string;
+  donchianMiddleLineStyle?: IndicatorLineStyle;
+  donchianMiddleLineWidth?: IndicatorLineWidth;
   /** Só para Volume: exibir volume em USDT (quote); default false = volume em base. */
   volumeInUsdt?: boolean;
   /** Só para Volume: cor das barras quando o candle fecha positivo (close >= open). */
@@ -256,7 +272,7 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
-const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "RSI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Volume", "ADX", "CCI"] as const;
+const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "RSI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Donchian", "Volume", "ADX", "CCI"] as const;
 
 function safePeriod(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
@@ -372,6 +388,16 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     bollingerMiddleColor: u.type === "Bollinger" ? (u.bollingerMiddleColor ?? "#a855f7") : undefined,
     bollingerMiddleLineStyle: u.type === "Bollinger" ? (u.bollingerMiddleLineStyle === "solid" || u.bollingerMiddleLineStyle === "dotted" || u.bollingerMiddleLineStyle === "dashed" ? u.bollingerMiddleLineStyle : "dashed") : undefined,
     bollingerMiddleLineWidth: u.type === "Bollinger" ? (u.bollingerMiddleLineWidth === "thin" || u.bollingerMiddleLineWidth === "normal" ? u.bollingerMiddleLineWidth : "normal") : undefined,
+    donchianShowUpper: u.type === "Donchian" ? (u.donchianShowUpper !== false) : undefined,
+    donchianShowLower: u.type === "Donchian" ? (u.donchianShowLower !== false) : undefined,
+    donchianShowMiddle: u.type === "Donchian" ? (u.donchianShowMiddle === true) : undefined,
+    donchianBandOpacity: u.type === "Donchian" ? (typeof u.donchianBandOpacity === "number" ? Math.max(0, Math.min(0.3, u.donchianBandOpacity)) : 0.2) : undefined,
+    donchianLimitsColor: u.type === "Donchian" ? (u.donchianLimitsColor ?? "#6366f1") : undefined,
+    donchianLimitsLineStyle: u.type === "Donchian" ? (u.donchianLimitsLineStyle === "solid" || u.donchianLimitsLineStyle === "dotted" || u.donchianLimitsLineStyle === "dashed" ? u.donchianLimitsLineStyle : "solid") : undefined,
+    donchianLimitsLineWidth: u.type === "Donchian" ? (u.donchianLimitsLineWidth === "thin" || u.donchianLimitsLineWidth === "normal" ? u.donchianLimitsLineWidth : "normal") : undefined,
+    donchianMiddleColor: u.type === "Donchian" ? (u.donchianMiddleColor ?? "#a855f7") : undefined,
+    donchianMiddleLineStyle: u.type === "Donchian" ? (u.donchianMiddleLineStyle === "solid" || u.donchianMiddleLineStyle === "dotted" || u.donchianMiddleLineStyle === "dashed" ? u.donchianMiddleLineStyle : "dashed") : undefined,
+    donchianMiddleLineWidth: u.type === "Donchian" ? (u.donchianMiddleLineWidth === "thin" || u.donchianMiddleLineWidth === "normal" ? u.donchianMiddleLineWidth : "normal") : undefined,
     volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
     volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
     volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
@@ -409,7 +435,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow"
+  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow"
 >;
 
 interface ContextValue {

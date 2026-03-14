@@ -575,6 +575,79 @@ export function KlinesChartSvg({
                     </g>
                   );
                 }
+                if (ind.type === "Donchian") {
+                  const upperPts: { i: number; val: number }[] = [];
+                  const middlePts: { i: number; val: number }[] = [];
+                  const lowerPts: { i: number; val: number }[] = [];
+                  for (let i = 0; i < windowSlice.length; i++) {
+                    const u = windowSlice[i][col];
+                    const m = windowSlice[i][col + 1];
+                    const l = windowSlice[i][col + 2];
+                    if (u != null && typeof u === "number" && Number.isFinite(u)) upperPts.push({ i, val: u });
+                    if (m != null && typeof m === "number" && Number.isFinite(m)) middlePts.push({ i, val: m });
+                    if (l != null && typeof l === "number" && Number.isFinite(l)) lowerPts.push({ i, val: l });
+                  }
+                  const bandColor = ind.donchianLimitsColor ?? "#6366f1";
+                  const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
+                  const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
+                  const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "2 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
+                  const middleColor = ind.color ?? "#6366f1";
+                  const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
+                  const upperD = toPathPanel(upperPts);
+                  const middleD = toPathPanel(middlePts);
+                  const lowerD = toPathPanel(lowerPts);
+                  const upperToMiddlePoly = upperPts.length >= 2 && middlePts.length >= 2
+                    ? (() => {
+                        const uMap = new Map(upperPts.map((p) => [p.i, p.val]));
+                        const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                        const indices = [...new Set([...uMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                        let d = "";
+                        for (const i of indices) {
+                          const u = uMap.get(i);
+                          const m = mMap.get(i);
+                          if (u != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${yPanel(u)}`;
+                        }
+                        for (let j = indices.length - 1; j >= 0; j--) {
+                          const i = indices[j]!;
+                          const m = mMap.get(i);
+                          const u = uMap.get(i);
+                          if (m != null && u != null) d += ` L ${cx(i)} ${yPanel(m)}`;
+                        }
+                        return d ? `${d} Z` : "";
+                      })()
+                    : "";
+                  const lowerToMiddlePoly = lowerPts.length >= 2 && middlePts.length >= 2
+                    ? (() => {
+                        const lMap = new Map(lowerPts.map((p) => [p.i, p.val]));
+                        const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                        const indices = [...new Set([...lMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                        let d = "";
+                        for (const i of indices) {
+                          const l = lMap.get(i);
+                          const m = mMap.get(i);
+                          if (l != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${yPanel(l)}`;
+                        }
+                        for (let j = indices.length - 1; j >= 0; j--) {
+                          const i = indices[j]!;
+                          const m = mMap.get(i);
+                          const l = lMap.get(i);
+                          if (m != null && l != null) d += ` L ${cx(i)} ${yPanel(m)}`;
+                        }
+                        return d ? `${d} Z` : "";
+                      })()
+                    : "";
+                  return (
+                    <g key={indIdx}>
+                      {upperToMiddlePoly && <path d={upperToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                      {lowerToMiddlePoly && <path d={lowerToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                      {ind.donchianShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {ind.donchianShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {ind.donchianShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
+                    </g>
+                  );
+                }
                 if (ind.type === "Volume") {
                   const barW = Math.max(1, gap * 0.6);
                   const colorAbove = ind.histogramColorAbove ?? "#10b981";
@@ -938,6 +1011,79 @@ export function KlinesChartSvg({
                 {ind.bollingerShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
                 {ind.bollingerShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
                 {ind.bollingerShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
+              </g>
+            );
+          }
+          if (ind.type === "Donchian") {
+            const upperPts: { i: number; val: number }[] = [];
+            const middlePts: { i: number; val: number }[] = [];
+            const lowerPts: { i: number; val: number }[] = [];
+            for (let i = 0; i < windowSlice.length; i++) {
+              const u = windowSlice[i][col];
+              const m = windowSlice[i][col + 1];
+              const l = windowSlice[i][col + 2];
+              if (u != null && typeof u === "number" && Number.isFinite(u)) upperPts.push({ i, val: u });
+              if (m != null && typeof m === "number" && Number.isFinite(m)) middlePts.push({ i, val: m });
+              if (l != null && typeof l === "number" && Number.isFinite(l)) lowerPts.push({ i, val: l });
+            }
+            const bandColor = ind.donchianLimitsColor ?? "#6366f1";
+            const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
+            const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
+            const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "2 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
+            const middleColor = ind.color ?? "#6366f1";
+            const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+            const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
+            const upperD = toPath(upperPts);
+            const middleD = toPath(middlePts);
+            const lowerD = toPath(lowerPts);
+            const upperToMiddlePoly = upperPts.length >= 2 && middlePts.length >= 2
+              ? (() => {
+                  const uMap = new Map(upperPts.map((p) => [p.i, p.val]));
+                  const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                  const indices = [...new Set([...uMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                  let d = "";
+                  for (const i of indices) {
+                    const u = uMap.get(i);
+                    const m = mMap.get(i);
+                    if (u != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${y(u)}`;
+                  }
+                  for (let j = indices.length - 1; j >= 0; j--) {
+                    const i = indices[j]!;
+                    const m = mMap.get(i);
+                    const u = uMap.get(i);
+                    if (m != null && u != null) d += ` L ${cx(i)} ${y(m)}`;
+                  }
+                  return d ? `${d} Z` : "";
+                })()
+              : "";
+            const lowerToMiddlePoly = lowerPts.length >= 2 && middlePts.length >= 2
+              ? (() => {
+                  const lMap = new Map(lowerPts.map((p) => [p.i, p.val]));
+                  const mMap = new Map(middlePts.map((p) => [p.i, p.val]));
+                  const indices = [...new Set([...lMap.keys(), ...mMap.keys()])].sort((a, b) => a - b);
+                  let d = "";
+                  for (const i of indices) {
+                    const l = lMap.get(i);
+                    const m = mMap.get(i);
+                    if (l != null && m != null) d += `${d ? " L" : "M"} ${cx(i)} ${y(l)}`;
+                  }
+                  for (let j = indices.length - 1; j >= 0; j--) {
+                    const i = indices[j]!;
+                    const m = mMap.get(i);
+                    const l = lMap.get(i);
+                    if (m != null && l != null) d += ` L ${cx(i)} ${y(m)}`;
+                  }
+                  return d ? `${d} Z` : "";
+                })()
+              : "";
+            return (
+              <g key={indIdx}>
+                {upperToMiddlePoly && <path d={upperToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                {lowerToMiddlePoly && <path d={lowerToMiddlePoly} fill={bandColor} fillOpacity={bandOpacity} stroke="none" />}
+                {ind.donchianShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                {ind.donchianShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
+                {ind.donchianShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
               </g>
             );
           }

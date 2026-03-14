@@ -140,6 +140,17 @@ const INITIAL_ADD_FORM: AddFormState = {
   cciAsHistogram: false,
   cciHistogramColorAbove: "#059669",
   cciHistogramColorBelow: "#dc2626",
+  donchianShowUpper: true,
+  donchianShowLower: true,
+  donchianShowMiddle: false,
+  donchianBandOpacity: 0.2,
+  donchianBandOpacityText: "20",
+  donchianLimitsColor: "#6366f1",
+  donchianLimitsLineStyle: "solid",
+  donchianLimitsLineWidth: "normal",
+  donchianMiddleColor: "#a855f7",
+  donchianMiddleLineStyle: "dashed",
+  donchianMiddleLineWidth: "normal",
 };
 
 interface IndicatorsPanelProps {
@@ -251,6 +262,17 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     cciAsHistogram: boolean;
     cciHistogramColorAbove: string;
     cciHistogramColorBelow: string;
+    donchianShowUpper: boolean;
+    donchianShowLower: boolean;
+    donchianShowMiddle: boolean;
+    donchianBandOpacity: number;
+    donchianBandOpacityText: string;
+    donchianLimitsColor: string;
+    donchianLimitsLineStyle: IndicatorLineStyle;
+    donchianLimitsLineWidth: IndicatorLineWidth;
+    donchianMiddleColor: string;
+    donchianMiddleLineStyle: IndicatorLineStyle;
+    donchianMiddleLineWidth: IndicatorLineWidth;
     sarStart: number;
     sarStartText: string;
     sarIncrement: number;
@@ -472,6 +494,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciHistogramColorAbove: addForm.cciHistogramColorAbove,
         cciHistogramColorBelow: addForm.cciHistogramColorBelow,
       } : {}),
+      ...(addForm.indicatorType === "Donchian" ? {
+        donchianShowUpper: addForm.donchianShowUpper,
+        donchianShowLower: addForm.donchianShowLower,
+        donchianShowMiddle: addForm.donchianShowMiddle,
+        donchianBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(addForm.donchianBandOpacityText) || 20) / 100)),
+        donchianLimitsColor: addForm.donchianLimitsColor,
+        donchianLimitsLineStyle: addForm.donchianLimitsLineStyle,
+        donchianLimitsLineWidth: addForm.donchianLimitsLineWidth,
+        donchianMiddleColor: addForm.donchianMiddleColor,
+        donchianMiddleLineStyle: addForm.donchianMiddleLineStyle,
+        donchianMiddleLineWidth: addForm.donchianMiddleLineWidth,
+      } : {}),
       ...(addForm.indicatorType === "SAR" ? {
         sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
         sarIncrement: parseSar(addForm.sarIncrementText, 0.02, 0.001, 1),
@@ -613,6 +647,17 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       cciAsHistogram: ind.type === "CCI" ? (ind.cciAsHistogram === true) : false,
       cciHistogramColorAbove: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : "#059669",
       cciHistogramColorBelow: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : "#dc2626",
+      donchianShowUpper: ind.type === "Donchian" ? (ind.donchianShowUpper !== false) : true,
+      donchianShowLower: ind.type === "Donchian" ? (ind.donchianShowLower !== false) : true,
+      donchianShowMiddle: ind.type === "Donchian" ? (ind.donchianShowMiddle === true) : false,
+      donchianBandOpacity: ind.type === "Donchian" ? (typeof ind.donchianBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.donchianBandOpacity)) : 0.2) : 0.2,
+      donchianBandOpacityText: String(Math.round((ind.type === "Donchian" ? (typeof ind.donchianBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.donchianBandOpacity)) : 0.2) : 0.2) * 100)),
+      donchianLimitsColor: ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : "#6366f1",
+      donchianLimitsLineStyle: (ind.type === "Donchian" && (ind.donchianLimitsLineStyle === "solid" || ind.donchianLimitsLineStyle === "dotted" || ind.donchianLimitsLineStyle === "dashed") ? ind.donchianLimitsLineStyle : "solid") as IndicatorLineStyle,
+      donchianLimitsLineWidth: (ind.type === "Donchian" && (ind.donchianLimitsLineWidth === "thin" || ind.donchianLimitsLineWidth === "normal") ? ind.donchianLimitsLineWidth : "normal") as IndicatorLineWidth,
+      donchianMiddleColor: ind.type === "Donchian" ? (ind.donchianMiddleColor ?? "#a855f7") : "#a855f7",
+      donchianMiddleLineStyle: (ind.type === "Donchian" && (ind.donchianMiddleLineStyle === "solid" || ind.donchianMiddleLineStyle === "dotted" || ind.donchianMiddleLineStyle === "dashed") ? ind.donchianMiddleLineStyle : "dashed") as IndicatorLineStyle,
+      donchianMiddleLineWidth: (ind.type === "Donchian" && (ind.donchianMiddleLineWidth === "thin" || ind.donchianMiddleLineWidth === "normal") ? ind.donchianMiddleLineWidth : "normal") as IndicatorLineWidth,
       sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
       sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
       sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
@@ -733,6 +778,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciAsHistogram: editForm.cciAsHistogram,
         cciHistogramColorAbove: editForm.cciHistogramColorAbove,
         cciHistogramColorBelow: editForm.cciHistogramColorBelow,
+      } : {}),
+      ...(ind?.type === "Donchian" ? {
+        donchianShowUpper: editForm.donchianShowUpper,
+        donchianShowLower: editForm.donchianShowLower,
+        donchianShowMiddle: editForm.donchianShowMiddle,
+        donchianBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(editForm.donchianBandOpacityText) || 20) / 100)),
+        donchianLimitsColor: editForm.donchianLimitsColor,
+        donchianLimitsLineStyle: editForm.donchianLimitsLineStyle,
+        donchianLimitsLineWidth: editForm.donchianLimitsLineWidth,
+        donchianMiddleColor: editForm.donchianMiddleColor,
+        donchianMiddleLineStyle: editForm.donchianMiddleLineStyle,
+        donchianMiddleLineWidth: editForm.donchianMiddleLineWidth,
       } : {}),
       ...(ind?.type === "SAR" ? {
         sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),

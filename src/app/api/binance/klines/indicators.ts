@@ -125,6 +125,103 @@ export function computeWmaColumn(
 }
 
 /**
+ * WMA aplicada a um array de valores (valores[0] = mais recente).
+ * Mesmo esquema de pesos: peso period no índice 0, period-1 no 1, ..., 1 no period-1.
+ */
+function computeWmaFromValues(
+  values: (number | null)[],
+  period: number
+): (number | null)[] {
+  const n = values.length;
+  const denom = (period * (period + 1)) / 2;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    let totalWeight = 0;
+    for (let k = 0; k < period && i + k < n; k++) {
+      const v = values[i + k];
+      if (v != null && Number.isFinite(v)) {
+        const w = period - k;
+        sum += w * v;
+        totalWeight += w;
+      }
+    }
+    if (totalWeight > 0 && totalWeight === denom) {
+      out.push(sum / denom);
+    } else if (totalWeight > 0) {
+      out.push(sum / totalWeight);
+    } else {
+      out.push(null);
+    }
+  }
+  return out;
+}
+
+/**
+ * Hull Moving Average: HMA(n) = WMA(√n) de [2×WMA(n/2) − WMA(n)].
+ * Períodos fracionários são arredondados (n/2 e √n pelo menos 1).
+ */
+export function computeHmaColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const periodUse = Math.max(1, Math.min(500, period));
+  const halfPeriod = Math.max(1, Math.round(periodUse / 2));
+  const wmaPeriod = Math.max(1, Math.round(Math.sqrt(periodUse)));
+  const wma1 = computeWmaColumn(data, valueIndex, halfPeriod);
+  const wma2 = computeWmaColumn(data, valueIndex, periodUse);
+  const n = data.length;
+  const raw: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = wma1[i];
+    const b = wma2[i];
+    if (a != null && b != null && Number.isFinite(a) && Number.isFinite(b)) {
+      raw.push(2 * a - b);
+    } else {
+      raw.push(null);
+    }
+  }
+  return computeWmaFromValues(raw, wmaPeriod);
+}
+
+/** Índice da coluna volume no array kline. */
+const VOLUME_INDEX = 5;
+
+/**
+ * VWMA (Volume Weighted Moving Average): soma(preço × volume) / soma(volume) na janela [i, i+period).
+ * Preço = coluna valueIndex (ex.: close); volume = coluna 5.
+ */
+export function computeVwmaColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const periodUse = Math.max(1, Math.min(500, period));
+  const n = data.length;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const end = Math.min(i + periodUse, n);
+    let sumPv = 0;
+    let sumV = 0;
+    for (let j = i; j < end; j++) {
+      const rawP = data[j]?.[valueIndex];
+      const rawV = data[j]?.[VOLUME_INDEX];
+      if (rawP != null && rawV != null) {
+        const p = Number(rawP);
+        const v = Number(rawV);
+        if (Number.isFinite(p) && Number.isFinite(v) && v >= 0) {
+          sumPv += p * v;
+          sumV += v;
+        }
+      }
+    }
+    out.push(sumV > 0 ? sumPv / sumV : null);
+  }
+  return out;
+}
+
+/**
  * Desvio padrão (populacional) da janela [i, i+period) em dados DESC.
  * DP = sqrt( média dos (x - média)² ).
  */
@@ -203,6 +300,53 @@ export function computeBollingerBands(
     } else {
       upper.push(null);
       lower.push(null);
+    }
+  }
+  return { upper, middle, lower };
+}
+
+/** Índices das colunas high e low no array kline. */
+const HIGH_INDEX = 2;
+const LOW_INDEX = 3;
+
+/**
+ * Donchian Channels: canal superior = máximo dos máximos (high) no período;
+ * canal inferior = mínimo dos mínimos (low) no período; linha do meio = (superior + inferior) / 2.
+ * Retorna três colunas: upper, middle, lower (mesmo tamanho que data).
+ */
+export function computeDonchianChannels(
+  data: (string | number)[][],
+  period: number
+): { upper: (number | null)[]; middle: (number | null)[]; lower: (number | null)[] } {
+  const periodUse = Math.max(1, Math.min(500, period));
+  const n = data.length;
+  const upper: (number | null)[] = [];
+  const lower: (number | null)[] = [];
+  const middle: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const end = Math.min(i + periodUse, n);
+    let maxH: number | null = null;
+    let minL: number | null = null;
+    for (let j = i; j < end; j++) {
+      const hRaw = data[j]?.[HIGH_INDEX];
+      const lRaw = data[j]?.[LOW_INDEX];
+      if (hRaw != null) {
+        const h = Number(hRaw);
+        if (Number.isFinite(h)) maxH = maxH == null ? h : Math.max(maxH, h);
+      }
+      if (lRaw != null) {
+        const l = Number(lRaw);
+        if (Number.isFinite(l)) minL = minL == null ? l : Math.min(minL, l);
+      }
+    }
+    if (maxH != null && minL != null) {
+      upper.push(maxH);
+      lower.push(minL);
+      middle.push((maxH + minL) / 2);
+    } else {
+      upper.push(null);
+      lower.push(null);
+      middle.push(null);
     }
   }
   return { upper, middle, lower };

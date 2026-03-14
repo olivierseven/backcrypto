@@ -39,7 +39,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     ? (indicatorCountByPanel.panel2 === 0 ? "panel2" : "panel2")
     : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2");
   const chartOptionValue: string =
-    form.indicatorType === "SAR" || form.indicatorType === "VWAP"
+    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
       ? "main"
       : form.indicatorType === "Volume"
         ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
@@ -256,6 +256,47 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           bollingerMiddleLineWidth: "normal",
         };
       }
+      if (newType === "Donchian") {
+        return {
+          ...prev,
+          indicatorType: "Donchian",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+          donchianShowUpper: true,
+          donchianShowLower: true,
+          donchianShowMiddle: false,
+          donchianBandOpacity: 0.2,
+          donchianBandOpacityText: "20",
+          donchianLimitsColor: "#6366f1",
+          donchianLimitsLineStyle: "solid",
+          donchianLimitsLineWidth: "normal",
+          donchianMiddleColor: "#a855f7",
+          donchianMiddleLineStyle: "dashed",
+          donchianMiddleLineWidth: "normal",
+        };
+      }
+      if (newType === "HMA") {
+        return {
+          ...prev,
+          indicatorType: "HMA",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+        };
+      }
+      if (newType === "VWMA") {
+        return {
+          ...prev,
+          indicatorType: "VWMA",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+        };
+      }
       if (newType === "Volume") {
         const emptyPanel: IndicatorPanel = indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2";
         return {
@@ -287,6 +328,8 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="SMA">SMA</option>
           <option value="EMA">EMA</option>
           <option value="WMA">WMA</option>
+          <option value="HMA">{(t as Record<string, string>).hmaLabel ?? "HMA"}</option>
+          <option value="VWMA">{(t as Record<string, string>).vwmaLabel ?? "VWMA"}</option>
           <option value="RSI">RSI</option>
           <option value="MACD">MACD</option>
           <option value="Stochastic">Stochastic</option>
@@ -298,13 +341,14 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
+          <option value="Donchian">{(t as Record<string, string>).donchianLabel ?? "Donchian Channels"}</option>
           <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
         </select>
       </div>
 
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" ? (
+        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" ? (
           <span className="text-sm text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
         ) : (
           <select
@@ -812,6 +856,66 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
               <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
             </select>
+          </div>
+        </>
+      )}
+
+      {form.indicatorType === "Donchian" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).period ?? "Período"}</span>
+            <div className="flex-1 min-w-0 flex items-center gap-1">
+              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.donchianShowUpper} onChange={(e) => setForm((p) => ({ ...p, donchianShowUpper: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).donchianShowUpper ?? "Canal superior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.donchianShowLower} onChange={(e) => setForm((p) => ({ ...p, donchianShowLower: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).donchianShowLower ?? "Canal inferior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.donchianShowMiddle} onChange={(e) => setForm((p) => ({ ...p, donchianShowMiddle: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).donchianShowMiddle ?? "Linha do meio"}
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianBandOpacity ?? "Opacidade faixa"}</span>
+            <input type="text" inputMode="numeric" value={form.donchianBandOpacityText} onChange={(e) => setForm((p) => ({ ...p, donchianBandOpacityText: e.target.value }))} onBlur={() => { const n = parseInt(form.donchianBandOpacityText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 20; setForm((p) => ({ ...p, donchianBandOpacity: v / 100, donchianBandOpacityText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianLimitsColor ?? "Cor canais"}</span>
+            <div className="flex flex-wrap gap-1">
+              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, donchianLimitsColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.donchianLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+            <select value={form.donchianLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, donchianLimitsLineWidth: e.target.value as typeof form.donchianLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+            </select>
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+            <select value={form.donchianLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, donchianLimitsLineStyle: e.target.value as typeof form.donchianLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}</span>
+            <div className="flex flex-wrap gap-1">
+              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, donchianMiddleColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.donchianMiddleColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+              ))}
+            </div>
           </div>
         </>
       )}

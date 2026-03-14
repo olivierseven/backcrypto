@@ -116,6 +116,17 @@ export interface AddFormState {
   cciAsHistogram: boolean;
   cciHistogramColorAbove: string;
   cciHistogramColorBelow: string;
+  donchianShowUpper: boolean;
+  donchianShowLower: boolean;
+  donchianShowMiddle: boolean;
+  donchianBandOpacity: number;
+  donchianBandOpacityText: string;
+  donchianLimitsColor: string;
+  donchianLimitsLineStyle: IndicatorLineStyle;
+  donchianLimitsLineWidth: IndicatorLineWidth;
+  donchianMiddleColor: string;
+  donchianMiddleLineStyle: IndicatorLineStyle;
+  donchianMiddleLineWidth: IndicatorLineWidth;
 }
 
 export interface EditFormState {
@@ -222,6 +233,17 @@ export interface EditFormState {
   cciAsHistogram: boolean;
   cciHistogramColorAbove: string;
   cciHistogramColorBelow: string;
+  donchianShowUpper: boolean;
+  donchianShowLower: boolean;
+  donchianShowMiddle: boolean;
+  donchianBandOpacity: number;
+  donchianBandOpacityText: string;
+  donchianLimitsColor: string;
+  donchianLimitsLineStyle: IndicatorLineStyle;
+  donchianLimitsLineWidth: IndicatorLineWidth;
+  donchianMiddleColor: string;
+  donchianMiddleLineStyle: IndicatorLineStyle;
+  donchianMiddleLineWidth: IndicatorLineWidth;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }
