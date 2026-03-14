@@ -123,6 +123,35 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               );
             })}
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
+            {ind.type === "SAR" || ind.type === "VWAP" ? (
+              <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
+            ) : (
+              <select
+                value={editForm.panel}
+                onChange={(e) => setEditForm((f) => (f ? { ...f, panel: e.target.value as IndicatorPanel } : f))}
+                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+              >
+                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? (
+                  <>
+                    {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                    {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                    {panelsFreeForSecondaryEdit.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                    {panelsFreeForSecondaryEdit.panel5 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                  </>
+                ) : (
+                  <>
+                    <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS && editForm.panel !== "main"}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                    <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel2"}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
+                    <option value="panel3" disabled={(indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel3") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                    <option value="panel4" disabled={(indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel4") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                    <option value="panel5" disabled={(indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel5") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
+                  </>
+                )}
+              </select>
+            )}
+          </div>
           {ind.type === "MACD" ? (
             <>
               <div className="flex items-center gap-2">
@@ -232,20 +261,20 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           ) : ind.type === "Bollinger" ? (
             <>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.period}</span>
-                <div className="flex-1 flex items-center gap-1">
-                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.max(1, f.period - 1), periodText: String(Math.max(1, f.period - 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">−</button>
-                  <input type="text" inputMode="numeric" value={editForm.periodText} onChange={(e) => setEditForm((f) => (f ? { ...f, periodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setEditForm((f) => (f ? { ...f, period: v, periodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
-                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
                 <select value={editForm.fieldKey} onChange={(e) => setEditForm((f) => (f ? { ...f, fieldKey: e.target.value as IndicatorFieldKey } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
                   {visibleForEdit.map((opt) => (
                     <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
                   ))}
                 </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.period}</span>
+                <div className="flex-1 flex items-center gap-1">
+                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.max(1, f.period - 1), periodText: String(Math.max(1, f.period - 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">−</button>
+                  <input type="text" inputMode="numeric" value={editForm.periodText} onChange={(e) => setEditForm((f) => (f ? { ...f, periodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setEditForm((f) => (f ? { ...f, period: v, periodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
+                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).bollingerMaType ?? "Média móvel"}</span>
@@ -384,70 +413,6 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={editForm.stochLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, stochLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
-                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).stochLimitsLabel ?? "Limites 0–100"}</span>
-              </label>
-              {editForm.stochLimits && (
-                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitUpper: Math.max(0, Math.min(100, f.stochLimitUpper - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
-                      <span className="w-8 text-center text-xs tabular-nums">{editForm.stochLimitUpper}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitUpper: Math.max(0, Math.min(100, f.stochLimitUpper + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitLower: Math.max(0, Math.min(100, f.stochLimitLower - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
-                      <span className="w-8 text-center text-xs tabular-nums">{editForm.stochLimitLower}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitLower: Math.max(0, Math.min(100, f.stochLimitLower + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
-                    <div className="flex flex-wrap gap-1">
-                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={editForm.stochDLine} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDLine: e.target.checked } : f))} className="rounded border-zinc-300" />
-                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).stochDLineLabel ?? "Linha %D"}</span>
-              </label>
-              {editForm.stochDLine && (
-                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo MM"}</span>
-                    <select value={editForm.stochDMaType} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
-                      <option value="SMA">SMA</option>
-                      <option value="EMA">EMA</option>
-                      <option value="WMA">WMA</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
-                    <div className="flex-1 flex items-center gap-1">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDPeriod: Math.max(1, f.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, f.stochDPeriod - 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">−</button>
-                      <input type="text" inputMode="numeric" value={editForm.stochDPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setEditForm((f) => (f ? { ...f, stochDPeriod: v, stochDPeriodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDPeriod: Math.min(500, f.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, f.stochDPeriod + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
-                    <div className="flex flex-wrap gap-1">
-                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           ) : ind.type === "WilliamsR" ? (
             <>
@@ -459,41 +424,28 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
                 </div>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={editForm.williamsRLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, williamsRLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
-                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).williamsRLimitsLabel ?? "Limites -100 a 0"}</span>
-              </label>
-              {editForm.williamsRLimits && (
-                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitUpper: Math.max(-100, Math.min(0, f.williamsRLimitUpper - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
-                      <span className="w-8 text-center text-xs tabular-nums">{editForm.williamsRLimitUpper}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitUpper: Math.max(-100, Math.min(0, f.williamsRLimitUpper + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitLower: Math.max(-100, Math.min(0, f.williamsRLimitLower - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
-                      <span className="w-8 text-center text-xs tabular-nums">{editForm.williamsRLimitLower}</span>
-                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitLower: Math.max(-100, Math.min(0, f.williamsRLimitLower + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
-                    <div className="flex flex-wrap gap-1">
-                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           ) : ind.type === "OBV" ? null : (
           <>
+          {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
+              <select
+                value={editFieldValue}
+                onChange={(e) => {
+                  const newKey = e.target.value as IndicatorFieldKey;
+                  setEditForm((f) => (f ? { ...f, fieldKey: newKey } : f));
+                }}
+                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+              >
+                {visibleForEdit.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {ind.type !== "VWAP" && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.period}</span>
@@ -532,25 +484,6 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   +
                 </button>
               </div>
-            </div>
-          )}
-          {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
-              <select
-                value={editFieldValue}
-                onChange={(e) => {
-                  const newKey = e.target.value as IndicatorFieldKey;
-                  setEditForm((f) => (f ? { ...f, fieldKey: newKey } : f));
-                }}
-                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
-              >
-                {visibleForEdit.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
             </div>
           )}
           </>
@@ -837,6 +770,110 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
                 </select>
               </div>
+            </>
+          )}
+          {ind.type === "Stochastic" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.stochLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, stochLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).stochLimitsLabel ?? "Limites 0–100"}</span>
+              </label>
+              {editForm.stochLimits && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitUpper: Math.max(0, Math.min(100, f.stochLimitUpper - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.stochLimitUpper}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitUpper: Math.max(0, Math.min(100, f.stochLimitUpper + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitLower: Math.max(0, Math.min(100, f.stochLimitLower - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.stochLimitLower}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitLower: Math.max(0, Math.min(100, f.stochLimitLower + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.stochDLine} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDLine: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).stochDLineLabel ?? "Linha %D"}</span>
+              </label>
+              {editForm.stochDLine && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo MM"}</span>
+                    <select value={editForm.stochDMaType} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="SMA">SMA</option>
+                      <option value="EMA">EMA</option>
+                      <option value="WMA">WMA</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
+                    <div className="flex-1 flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDPeriod: Math.max(1, f.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, f.stochDPeriod - 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">−</button>
+                      <input type="text" inputMode="numeric" value={editForm.stochDPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setEditForm((f) => (f ? { ...f, stochDPeriod: v, stochDPeriodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDPeriod: Math.min(500, f.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, f.stochDPeriod + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, stochDColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {ind.type === "WilliamsR" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.williamsRLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, williamsRLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).williamsRLimitsLabel ?? "Limites -100 a 0"}</span>
+              </label>
+              {editForm.williamsRLimits && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitUpper: Math.max(-100, Math.min(0, f.williamsRLimitUpper - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.williamsRLimitUpper}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitUpper: Math.max(-100, Math.min(0, f.williamsRLimitUpper + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitLower: Math.max(-100, Math.min(0, f.williamsRLimitLower - 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.williamsRLimitLower}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitLower: Math.max(-100, Math.min(0, f.williamsRLimitLower + 1)) } : f))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600 text-sm">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, williamsRLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
           <div className="flex gap-2 pt-1">

@@ -257,6 +257,31 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
+        <select
+          value={form.indicatorType}
+          onChange={(e) => setType(e.target.value as UserIndicatorType)}
+          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+          aria-label={t.indicatorType}
+        >
+          <option value="SMA">SMA</option>
+          <option value="EMA">EMA</option>
+          <option value="WMA">WMA</option>
+          <option value="RSI">RSI</option>
+          <option value="MACD">MACD</option>
+          <option value="Stochastic">Stochastic</option>
+          <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
+          <option value="OBV">OBV</option>
+          <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
+          <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
+          <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
+          <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
+          <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
+          <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
         {form.indicatorType === "SAR" || form.indicatorType === "VWAP" ? (
           <span className="text-sm text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
@@ -299,6 +324,75 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </select>
         )}
       </div>
+
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
+        <select
+          value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
+          onChange={(e) => {
+            const newKey = e.target.value as IndicatorFieldKey;
+            setForm((prev) => ({ ...prev, fieldKey: newKey }));
+          }}
+          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+          aria-label={t.field}
+        >
+          {fieldOptionsVisibleForAdd.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      )}
+
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => {
+              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1)));
+              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+            aria-label="-"
+          >
+            −
+          </button>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={form.periodText}
+            onFocus={(e) => {
+              const el = e.currentTarget;
+              queueMicrotask(() => el?.select());
+            }}
+            onChange={(e) => setForm((prev) => ({ ...prev, periodText: e.target.value.replace(/[^\d]/g, "") }))}
+            onBlur={() => {
+              const n = Number(form.periodText);
+              const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7;
+              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+            }}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            aria-label={t.period}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1)));
+              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+            }}
+            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+            aria-label="+"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      )}
 
       {form.indicatorType === "RSI" && (
         <label className="flex items-center gap-2 cursor-pointer">
@@ -435,192 +529,6 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           )}
         </>
       )}
-
-      {form.indicatorType === "Stochastic" && (
-        <>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.stochLimits}
-              onChange={(e) => setForm((prev) => ({ ...prev, stochLimits: e.target.checked }))}
-              className="rounded border-zinc-300"
-            />
-            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochLimitsLabel ?? "Limites superior e inferior (0–100)"}</span>
-          </label>
-          {form.stochLimits && (
-            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
-                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
-                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.stochLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.stochLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
-              </div>
-            </div>
-          )}
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.stochDLine} onChange={(e) => setForm((prev) => ({ ...prev, stochDLine: e.target.checked }))} className="rounded border-zinc-300" />
-            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochDLineLabel ?? "Linha %D (média móvel da %K)"}</span>
-          </label>
-          {form.stochDLine && (
-            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo da MM"}</span>
-                <select value={form.stochDMaType} onChange={(e) => setForm((prev) => ({ ...prev, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="SMA">SMA</option>
-                  <option value="EMA">EMA</option>
-                  <option value="WMA">WMA</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
-                <div className="flex-1 min-w-0 flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.max(1, prev.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, prev.stochDPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-                  <input type="text" inputMode="numeric" value={form.stochDPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setForm((prev) => ({ ...prev, stochDPeriod: v, stochDPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.min(500, prev.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, prev.stochDPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochDColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.stochDLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.stochDLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {form.indicatorType === "WilliamsR" && (
-        <>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.williamsRLimits}
-              onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimits: e.target.checked }))}
-              className="rounded border-zinc-300"
-            />
-            <span className="text-xs text-zinc-700">{(t as Record<string, string>).williamsRLimitsLabel ?? "Limites (-100 a 0: ex. -80 / -20)"}</span>
-          </label>
-          {form.williamsRLimits && (
-            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
-                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
-                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.williamsRLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.williamsRLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
-        <select
-          value={form.indicatorType}
-          onChange={(e) => setType(e.target.value as UserIndicatorType)}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.indicatorType}
-        >
-          <option value="SMA">SMA</option>
-          <option value="EMA">EMA</option>
-          <option value="WMA">WMA</option>
-          <option value="RSI">RSI</option>
-          <option value="MACD">MACD</option>
-          <option value="Stochastic">Stochastic</option>
-          <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
-          <option value="OBV">OBV</option>
-          <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
-          <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
-          <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
-          <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
-          <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
-          <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
-        </select>
-      </div>
 
       {form.indicatorType === "Volume" && (
         <>
@@ -984,75 +892,6 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
-        <div className="flex-1 min-w-0 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => {
-              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1)));
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-            aria-label="-"
-          >
-            −
-          </button>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={form.periodText}
-            onFocus={(e) => {
-              const el = e.currentTarget;
-              queueMicrotask(() => el?.select());
-            }}
-            onChange={(e) => setForm((prev) => ({ ...prev, periodText: e.target.value.replace(/[^\d]/g, "") }))}
-            onBlur={() => {
-              const n = Number(form.periodText);
-              const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7;
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
-            aria-label={t.period}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1)));
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-            aria-label="+"
-          >
-            +
-          </button>
-        </div>
-      </div>
-      )}
-
-      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
-        <select
-          value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
-          onChange={(e) => {
-            const newKey = e.target.value as IndicatorFieldKey;
-            setForm((prev) => ({ ...prev, fieldKey: newKey }));
-          }}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.field}
-        >
-          {fieldOptionsVisibleForAdd.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      )}
-
       <div className="flex items-center gap-2 relative">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
         <button
@@ -1117,6 +956,168 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
         </>
       )}
+
+      {form.indicatorType === "Stochastic" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.stochLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, stochLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochLimitsLabel ?? "Limites superior e inferior (0–100)"}</span>
+          </label>
+          {form.stochLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.stochLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.stochLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.stochDLine} onChange={(e) => setForm((prev) => ({ ...prev, stochDLine: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).stochDLineLabel ?? "Linha %D (média móvel da %K)"}</span>
+          </label>
+          {form.stochDLine && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo da MM"}</span>
+                <select value={form.stochDMaType} onChange={(e) => setForm((prev) => ({ ...prev, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="SMA">SMA</option>
+                  <option value="EMA">EMA</option>
+                  <option value="WMA">WMA</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
+                <div className="flex-1 min-w-0 flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.max(1, prev.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, prev.stochDPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+                  <input type="text" inputMode="numeric" value={form.stochDPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setForm((prev) => ({ ...prev, stochDPeriod: v, stochDPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.min(500, prev.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, prev.stochDPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochDColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.stochDLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.stochDLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {form.indicatorType === "WilliamsR" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.williamsRLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).williamsRLimitsLabel ?? "Limites (-100 a 0: ex. -80 / -20)"}</span>
+          </label>
+          {form.williamsRLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <select value={form.williamsRLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <select value={form.williamsRLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       {defaultModelMaxIndicatorsReached && (
         <p className="text-xs text-amber-700 mb-1.5" role="status">
           {(t as Record<string, string>).defaultModelMaxIndicators}
