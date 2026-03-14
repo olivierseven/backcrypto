@@ -47,7 +47,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX"
+        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI"
           ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
             ? form.chartOption
             : hasFreePanelForSecondary
@@ -201,6 +201,26 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           adxLimitLineStyle: "dotted",
         };
       }
+      if (newType === "CCI") {
+        return {
+          ...prev,
+          indicatorType: "CCI",
+          period: 20,
+          periodText: "20",
+          fieldKey: "HLC3",
+          chartOption: freePanel,
+          cciFixedScale: false,
+          cciLimits: true,
+          cciLimitUpper: 100,
+          cciLimitLower: -100,
+          cciLimitColor: "#dc2626",
+          cciLimitLineWidth: "normal",
+          cciLimitLineStyle: "dotted",
+          cciAsHistogram: false,
+          cciHistogramColorAbove: "#059669",
+          cciHistogramColorBelow: "#dc2626",
+        };
+      }
       if (newType === "VWAP") {
         return {
           ...prev,
@@ -275,6 +295,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
           <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
           <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
+          <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
           <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
@@ -302,7 +323,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
               </>
-            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX") ? (
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI") ? (
               <>
                 {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                 {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -416,6 +437,92 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           />
           <span className="text-xs text-zinc-700">{(t as Record<string, string>).adxFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
         </label>
+      )}
+
+      {form.indicatorType === "CCI" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.cciAsHistogram}
+              onChange={(e) => setForm((prev) => ({ ...prev, cciAsHistogram: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).cciAsHistogramLabel ?? "Exibir como histograma"}</span>
+          </label>
+          {form.cciAsHistogram && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciHistogramColorAbove: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciHistogramColorBelow: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.cciLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, cciLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).cciLimitsLabel ?? "Limites superior e inferior (-100 a 100)"}</span>
+          </label>
+          {form.cciLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cciLimitUpperLabel ?? "Superior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.cciLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cciLimitLowerLabel ?? "Inferior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.cciLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <select value={form.cciLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, cciLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <select value={form.cciLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, cciLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {form.indicatorType === "RSI" && (

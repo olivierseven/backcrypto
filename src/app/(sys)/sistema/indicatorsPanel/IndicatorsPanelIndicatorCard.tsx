@@ -44,7 +44,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   const firstForEdit = (visibleForEdit[0]?.value ?? (ind.type === "WilliamsR" ? "close" : firstEnabledFieldValue)) as IndicatorFieldKey;
   const editFieldValue = (visibleForEdit.some((o) => o.value === editForm?.fieldKey) ? editForm!.fieldKey : firstForEdit) as string;
 
-  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
+  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? "panel2" : "main");
   const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : null;
   const [bollingerLimitsColorOpen, setBollingerLimitsColorOpen] = useState(false);
 
@@ -133,7 +133,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 onChange={(e) => setEditForm((f) => (f ? { ...f, panel: e.target.value as IndicatorPanel } : f))}
                 className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
               >
-                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? (
+                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
                   <>
                     {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                     {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -512,7 +512,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 onChange={(e) => setEditForm((f) => (f ? { ...f, panel: e.target.value as IndicatorPanel } : f))}
                 className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
               >
-                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? (
+                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
                   <>
                     {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                     {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -744,6 +744,81 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
                     <select value={editForm.adxLimitLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, adxLimitLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {ind.type === "CCI" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.cciAsHistogram} onChange={(e) => setEditForm((f) => (f ? { ...f, cciAsHistogram: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).cciAsHistogramLabel ?? "Exibir como histograma"}</span>
+              </label>
+              {editForm.cciAsHistogram && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciHistogramColorAbove: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.cciHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciHistogramColorBelow: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.cciHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.cciLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, cciLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).cciLimitsLabel ?? "Limites -100 a 100"}</span>
+              </label>
+              {editForm.cciLimits && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).cciLimitUpperLabel ?? "Superior"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciLimitUpper: Math.max(-500, Math.min(500, (f.cciLimitUpper ?? 100) - 10)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.cciLimitUpper}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciLimitUpper: Math.max(-500, Math.min(500, (f.cciLimitUpper ?? 100) + 10)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).cciLimitLowerLabel ?? "Inferior"}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciLimitLower: Math.max(-500, Math.min(500, (f.cciLimitLower ?? -100) - 10)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.cciLimitLower}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciLimitLower: Math.max(-500, Math.min(500, (f.cciLimitLower ?? -100) + 10)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, cciLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.cciLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                    <select value={editForm.cciLimitLineWidth} onChange={(e) => setEditForm((f) => (f ? { ...f, cciLimitLineWidth: e.target.value as IndicatorLineWidth } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal}</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                    <select value={editForm.cciLimitLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, cciLimitLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
                       <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
                       <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
                       <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>

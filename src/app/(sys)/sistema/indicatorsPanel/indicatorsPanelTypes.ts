@@ -106,6 +106,16 @@ export interface AddFormState {
   adxLimitColor: string;
   adxLimitLineWidth: IndicatorLineWidth;
   adxLimitLineStyle: IndicatorLineStyle;
+  cciFixedScale: boolean;
+  cciLimits: boolean;
+  cciLimitUpper: number;
+  cciLimitLower: number;
+  cciLimitColor: string;
+  cciLimitLineWidth: IndicatorLineWidth;
+  cciLimitLineStyle: IndicatorLineStyle;
+  cciAsHistogram: boolean;
+  cciHistogramColorAbove: string;
+  cciHistogramColorBelow: string;
 }
 
 export interface EditFormState {
@@ -202,6 +212,16 @@ export interface EditFormState {
   adxLimitColor: string;
   adxLimitLineWidth: IndicatorLineWidth;
   adxLimitLineStyle: IndicatorLineStyle;
+  cciFixedScale: boolean;
+  cciLimits: boolean;
+  cciLimitUpper: number;
+  cciLimitLower: number;
+  cciLimitColor: string;
+  cciLimitLineWidth: IndicatorLineWidth;
+  cciLimitLineStyle: IndicatorLineStyle;
+  cciAsHistogram: boolean;
+  cciHistogramColorAbove: string;
+  cciHistogramColorBelow: string;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

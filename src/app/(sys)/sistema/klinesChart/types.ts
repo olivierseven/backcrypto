@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Volume";
+  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Volume" | "CCI";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   adxPlusDiColor?: string;
@@ -103,6 +103,19 @@ export interface ChartIndicatorLine {
   bollingerMiddleColor?: string;
   bollingerMiddleLineStyle?: "solid" | "dotted" | "dashed";
   bollingerMiddleLineWidth?: "thin" | "normal";
+  /** Só para CCI: escala fixa no eixo Y (ex.: -100 a 100). */
+  cciFixedScale?: boolean;
+  /** Só para CCI: limites superior/inferior (ex. 100 / -100). */
+  cciLimits?: boolean;
+  cciLimitUpper?: number;
+  cciLimitLower?: number;
+  cciLimitColor?: string;
+  cciLimitLineWidth?: "thin" | "normal";
+  cciLimitLineStyle?: "solid" | "dotted" | "dashed";
+  /** CCI como histograma: barras acima/abaixo de zero. */
+  cciAsHistogram?: boolean;
+  cciHistogramColorAbove?: string;
+  cciHistogramColorBelow?: string;
 }
 
 export type IntervalOption = { value: number; label: string; param: string };

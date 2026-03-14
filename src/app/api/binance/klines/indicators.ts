@@ -791,3 +791,59 @@ export function computeAdxColumns(
 
   return { plusDi, minusDi, adx };
 }
+
+/**
+ * CCI (Commodity Channel Index).
+ * TP = Typical Price (usa valueIndex: close ou HLC3). SMA(TP, period), Mean Deviation = média de |TP - SMA(TP)| na janela.
+ * CCI = (TP - SMA(TP)) / (0.015 * Mean Deviation). Valores típicos entre -200 e +200; limites comuns -100 e 100.
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeCciColumn(
+  data: (string | number)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = [];
+  const periodUse = Math.max(1, Math.min(500, period));
+  if (n < periodUse) return new Array(n).fill(null);
+
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  for (let i = 0; i < n; i++) {
+    const end = Math.min(i + periodUse, n);
+    let sumTp = 0;
+    let count = 0;
+    const tps: number[] = [];
+    for (let j = i; j < end; j++) {
+      const tp = getNum(data[j], valueIndex);
+      if (tp == null) continue;
+      sumTp += tp;
+      count++;
+      tps.push(tp);
+    }
+    if (count < periodUse) {
+      out.push(null);
+      continue;
+    }
+    const smaTp = sumTp / count;
+    let sumDev = 0;
+    for (let k = 0; k < tps.length; k++) {
+      sumDev += Math.abs(tps[k]! - smaTp);
+    }
+    const meanDev = sumDev / count;
+    const tpCurrent = getNum(data[i], valueIndex);
+    if (tpCurrent == null || meanDev === 0) {
+      out.push(null);
+      continue;
+    }
+    const cci = (tpCurrent - smaTp) / (0.015 * meanDev);
+    out.push(Number.isFinite(cci) ? cci : null);
+  }
+  return out;
+}

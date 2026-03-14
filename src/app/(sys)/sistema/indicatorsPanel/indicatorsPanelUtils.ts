@@ -67,6 +67,9 @@ export function getIndicatorLabel(
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;
   }
+  if (ind.type === "CCI") {
+    return `CCI(${ind.period}) ${fieldLabel}`;
+  }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
 
@@ -125,6 +128,9 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;
+  }
+  if (ind.type === "CCI") {
+    return `CCI(${ind.period}) ${letter}`;
   }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? "Vol USDT" : "Vol";

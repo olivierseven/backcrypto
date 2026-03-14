@@ -1330,6 +1330,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       min = Math.min(min, -100);
       max = Math.max(max, 0);
     }
+    if (lines.some((ind) => ind.type === "CCI")) {
+      min = Math.min(min, -100);
+      max = Math.max(max, 100);
+    }
     if (min !== 0 || max !== 100) {
       const range = max - min || 1;
       const pad = range * 0.05;
