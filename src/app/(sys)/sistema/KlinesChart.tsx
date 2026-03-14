@@ -14,6 +14,7 @@ import {
   ASPECT_BREAKPOINT,
   MIN_CHART_HEIGHT,
   PAD_Y,
+  Y_PAD_OFFSET_MIN,
   Y_PAD_OFFSET_MAX,
   BODY_WIDTH_RATIO,
   Y_AXIS_WIDTH,
@@ -538,12 +539,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean };
+      const data = JSON.parse(raw) as { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean; chartSizePercent?: number; yPadOffset?: number };
       const vc = typeof data.visibleCount === "number" && data.visibleCount >= VISIBLE_COUNT_MIN && data.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(data.visibleCount) : null;
       if (vc != null) setVisibleCount(vc);
       if (data.chartStyle === "candles" || data.chartStyle === "bars" || data.chartStyle === "line" || data.chartStyle === "linePoints" || data.chartStyle === "area") setChartStyle(data.chartStyle);
       if (data.candleBodyStyle === "filled" || data.candleBodyStyle === "hollow") setCandleBodyStyle(data.candleBodyStyle);
       if (typeof data.drawingsVisible === "boolean") setDrawingsVisible(data.drawingsVisible);
+      const csp = typeof data.chartSizePercent === "number" && data.chartSizePercent >= CHART_SIZE_PERCENT_MIN && data.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(data.chartSizePercent) : null;
+      if (csp != null) setChartSizePercent(csp);
+      const ypo = typeof data.yPadOffset === "number" && data.yPadOffset >= Y_PAD_OFFSET_MIN && data.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(data.yPadOffset) : null;
+      if (ypo != null) setYPadOffset(ypo);
     } catch {
       /* ignore */
     }
@@ -564,12 +569,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       if (Number.isInteger(slotNum) && slotNum >= 1 && slotNum <= 7) return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle]);
 
   // Persistir prefs locais ao alterar; pular a 1ª execução para não sobrescrever antes do restore do init.
   const localPrefsWriteSkippedRef = useRef(false);
@@ -580,11 +585,63 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       return;
     }
     try {
-      window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify({ visibleCount, chartStyle, candleBodyStyle, drawingsVisible }));
+      window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify({ visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset }));
     } catch {
       /* ignore */
     }
-  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible]);
+  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset]);
+
+  // Persistir others no servidor em tempo real (slot 1–7: PATCH; slot 0 e admin: POST chart-models). Debounce 500ms.
+  const othersInstantPushSkippedRef = useRef(false);
+  const othersPushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!othersInstantPushSkippedRef.current) {
+      othersInstantPushSkippedRef.current = true;
+      return;
+    }
+    if (isFreeUser) return;
+
+    const payload = {
+      visibleCount,
+      chartStyle,
+      candleBodyStyle,
+      drawingsVisible,
+      chartSizePercent,
+      yPadOffset,
+    };
+
+    if (othersPushTimeoutRef.current) clearTimeout(othersPushTimeoutRef.current);
+    othersPushTimeoutRef.current = setTimeout(() => {
+      othersPushTimeoutRef.current = null;
+      if (Date.now() - layoutAppliedAtRef.current < 2000) return;
+      const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+      const slot = raw === "default" || raw === "0" || raw == null ? 0 : Math.min(7, Math.max(1, Number(raw) || 0));
+
+      if (slot >= 1 && slot <= 7) {
+        fetch(`${API_BASE}/chart-layouts`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+          credentials: "include",
+          body: JSON.stringify({ slot, others: payload }),
+        }).catch(() => {});
+      } else if (slot === 0 && isAdmin) {
+        fetch(`${API_BASE}/chart-models`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slot: 0, others: payload }),
+        }).catch(() => {});
+      }
+    }, 500);
+
+    return () => {
+      if (othersPushTimeoutRef.current) {
+        clearTimeout(othersPushTimeoutRef.current);
+        othersPushTimeoutRef.current = null;
+      }
+    };
+  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset, isAdmin, isFreeUser]);
 
   // Toda vez que entrar na página do gráfico ou trocar símbolo: carregar layout do banco e reaplicar (incluindo estratégias e indicadores).
   const lastLayoutApplyAtRef = useRef<number>(0);
@@ -688,10 +745,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 const cs = (defaultConfig.chartStyle === "candles" || defaultConfig.chartStyle === "bars" || defaultConfig.chartStyle === "line" || defaultConfig.chartStyle === "linePoints" || defaultConfig.chartStyle === "area") ? defaultConfig.chartStyle as string : undefined;
                 const cbs = (defaultConfig.candleBodyStyle === "filled" || defaultConfig.candleBodyStyle === "hollow") ? defaultConfig.candleBodyStyle as string : undefined;
                 const dv = typeof defaultConfig.drawingsVisible === "boolean" ? defaultConfig.drawingsVisible : undefined;
+                const csp = typeof defaultConfig.chartSizePercent === "number" && defaultConfig.chartSizePercent >= CHART_SIZE_PERCENT_MIN && defaultConfig.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(defaultConfig.chartSizePercent)) : undefined;
+                const ypo = typeof defaultConfig.yPadOffset === "number" && defaultConfig.yPadOffset >= Y_PAD_OFFSET_MIN && defaultConfig.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(defaultConfig.yPadOffset)) : undefined;
                 if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
                 if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
                 if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
                 if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+                if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
                 window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
               }
             } catch {
@@ -724,10 +785,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                   const cs = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as string : undefined;
                   const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
                   const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+                  const csp = typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(c.chartSizePercent)) : undefined;
+                  const ypo = typeof c.yPadOffset === "number" && c.yPadOffset >= Y_PAD_OFFSET_MIN && c.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(c.yPadOffset)) : undefined;
                   if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
                   if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
                   if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
                   if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                  if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+                  if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
                   window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
                   window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, String(slotNum));
                 }
@@ -831,7 +896,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const getCurrentLayoutConfigRef = useRef<() => Record<string, unknown>>(() => ({}));
   getCurrentLayoutConfigRef.current = () => {
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
     const extra = getLayoutExtraConfig?.() ?? {};
     return { ...baseConfig, ...extra };
   };
@@ -845,7 +910,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   /** Monta as 3 colunas a partir do estado atual (chart + extra do KlinesTable). Desenhos ficam só no localStorage, não vão no layout do servidor. */
   const buildLayoutColumns = useCallback(() => {
-    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
     const extra = getLayoutExtraConfig?.() ?? {} as Record<string, unknown>;
     const layout = {
       ...baseConfig,
@@ -864,7 +929,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       appliedStrategyIds: Array.isArray(extra.appliedStrategyIds) ? extra.appliedStrategyIds : [],
     };
     return { layout, indicators, strategies: strategiesPayload };
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle, getLayoutExtraConfig]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle, getLayoutExtraConfig]);
 
   /** Chaves do eixo Y (para debug save/load). */
   const LAYOUT_Y_AXIS_KEYS = ["footerYAxisBgColor", "backgroundTextColor", "footerYAxisTextColor"] as const;
@@ -872,7 +937,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const performSaveLayout = async (slot: number) => {
     setSavedLayoutsError(null);
     if (slot === 0) {
-      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
+      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
       const extra = getLayoutExtraConfig?.() ?? {};
       const config: Record<string, unknown> = { ...baseConfig, ...extra, strategies: [], userIndicators: [], appliedStrategyIds: [] };
       const res = await fetch(`${API_BASE}/chart-models`, {
@@ -1013,10 +1078,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const onLayoutConfigLoadedRef = useRef(onLayoutConfigLoaded);
   onLayoutConfigLoadedRef.current = onLayoutConfigLoaded;
 
+  const layoutAppliedAtRef = useRef(0);
   const applyLayoutConfig = (c: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => {
+    layoutAppliedAtRef.current = Date.now();
     const num = (v: unknown): number | null => (typeof v === "number" && !Number.isNaN(v) ? v : typeof v === "string" ? (Number(v) as number) : null);
     // Preferir localStorage para prefs locais: se já existir valor salvo, não sobrescrever com o do layout.
-    let localPrefs: { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean } = {};
+    let localPrefs: { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean; chartSizePercent?: number; yPadOffset?: number } = {};
     try {
       if (typeof window !== "undefined") {
         const raw = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
@@ -1065,8 +1132,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
     const volOpacity = num(c.volumeOnPriceOpacity);
     if (volOpacity != null && volOpacity >= 0 && volOpacity <= 30) setVolumeOnPriceOpacity(Math.round(volOpacity));
-    const chartSize = num(c.chartSizePercent);
-    if (chartSize != null && chartSize >= CHART_SIZE_PERCENT_MIN && chartSize <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(chartSize));
+    const chartSizeVal = num(c.chartSizePercent);
+    const useChartSize = localPrefs.chartSizePercent != null && localPrefs.chartSizePercent >= CHART_SIZE_PERCENT_MIN && localPrefs.chartSizePercent <= CHART_SIZE_PERCENT_MAX
+      ? Math.round(localPrefs.chartSizePercent)
+      : (chartSizeVal != null && chartSizeVal >= CHART_SIZE_PERCENT_MIN && chartSizeVal <= CHART_SIZE_PERCENT_MAX ? Math.round(chartSizeVal) : null);
+    if (useChartSize != null) setChartSizePercent(useChartSize);
+    const yPadVal = num(c.yPadOffset);
+    const useYPad = localPrefs.yPadOffset != null && localPrefs.yPadOffset >= Y_PAD_OFFSET_MIN && localPrefs.yPadOffset <= Y_PAD_OFFSET_MAX
+      ? Math.round(localPrefs.yPadOffset)
+      : (yPadVal != null && yPadVal >= Y_PAD_OFFSET_MIN && yPadVal <= Y_PAD_OFFSET_MAX ? Math.round(yPadVal) : null);
+    if (useYPad != null) setYPadOffset(useYPad);
     const chartStyleVal = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as "candles" | "bars" | "line" | "linePoints" | "area" : null;
     const useChartStyle = (localPrefs.chartStyle === "candles" || localPrefs.chartStyle === "bars" || localPrefs.chartStyle === "line" || localPrefs.chartStyle === "linePoints" || localPrefs.chartStyle === "area") ? localPrefs.chartStyle as "candles" | "bars" | "line" | "linePoints" | "area" : chartStyleVal;
     if (useChartStyle != null) setChartStyle(useChartStyle);
@@ -1105,10 +1180,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         const cs = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as string : undefined;
         const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
         const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+        const csp = typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(c.chartSizePercent)) : undefined;
+        const ypo = typeof c.yPadOffset === "number" && c.yPadOffset >= Y_PAD_OFFSET_MIN && c.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(c.yPadOffset)) : undefined;
         if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
         if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
         if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
         if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+        if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+        if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
         window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
         window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, layout.slot === 0 ? "default" : String(layout.slot));
       }

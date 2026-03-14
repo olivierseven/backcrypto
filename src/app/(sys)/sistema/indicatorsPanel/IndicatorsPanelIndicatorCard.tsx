@@ -377,7 +377,11 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).donchianBandOpacity ?? "Opacidade"}</span>
-                <input type="text" inputMode="numeric" value={editForm.donchianBandOpacityText} onChange={(e) => setEditForm((f) => (f ? { ...f, donchianBandOpacityText: e.target.value } : f))} onBlur={() => { const n = parseInt(editForm.donchianBandOpacityText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 20; setEditForm((f) => (f ? { ...f, donchianBandOpacity: v / 100, donchianBandOpacityText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
+                <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+                  <button type="button" onClick={() => { const cur = editForm.donchianBandOpacity ?? 0.2; const v = Math.max(0, cur - 0.05); setEditForm((f) => (f ? { ...f, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) } : f)); }} disabled={(editForm.donchianBandOpacity ?? 0.2) <= 0} className="w-8 h-8 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 text-sm">−</button>
+                  <span className="w-8 text-center text-xs font-mono text-zinc-800 tabular-nums">{Math.round((editForm.donchianBandOpacity ?? 0.2) * 100)}%</span>
+                  <button type="button" onClick={() => { const cur = editForm.donchianBandOpacity ?? 0.2; const v = Math.min(0.3, cur + 0.05); setEditForm((f) => (f ? { ...f, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) } : f)); }} disabled={(editForm.donchianBandOpacity ?? 0.2) >= 0.3} className="w-8 h-8 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 text-sm">+</button>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).donchianLimitsColor ?? "Cor canais"}</span>
@@ -476,7 +480,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             </>
           ) : ind.type === "OBV" ? null : (
           <>
-          {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && (
+          {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && ind.type !== "Donchian" && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
               <select

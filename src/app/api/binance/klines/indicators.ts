@@ -186,7 +186,7 @@ export function computeHmaColumn(
 }
 
 /** Índice da coluna volume no array kline. */
-const VOLUME_INDEX = 5;
+export const VOLUME_INDEX = 5;
 
 /**
  * VWMA (Volume Weighted Moving Average): soma(preço × volume) / soma(volume) na janela [i, i+period).
@@ -516,9 +516,6 @@ export function computeWilliamsRColumn(
   return out;
 }
 
-/** Índice da coluna volume no array kline. */
-export const VOLUME_INDEX = 5;
-
 /**
  * OBV (On-Balance Volume): volume acumulado com sinal dado pela variação do close.
  * Se close atual > close anterior: OBV += volume; se close < anterior: OBV -= volume; senão mantém.
@@ -674,10 +671,6 @@ export function computeVwapColumn(data: (string | number)[][]): (number | null)[
   }
   return out;
 }
-
-/** Índices high, low, close no array kline. */
-const HIGH_INDEX = 2;
-const LOW_INDEX = 3;
 
 /**
  * Parabolic SAR (Stop and Reverse) — Wilder (1978).

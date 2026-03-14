@@ -390,7 +390,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         )}
       </div>
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
         <select
@@ -886,7 +886,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianBandOpacity ?? "Opacidade faixa"}</span>
-            <input type="text" inputMode="numeric" value={form.donchianBandOpacityText} onChange={(e) => setForm((p) => ({ ...p, donchianBandOpacityText: e.target.value }))} onBlur={() => { const n = parseInt(form.donchianBandOpacityText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 20; setForm((p) => ({ ...p, donchianBandOpacity: v / 100, donchianBandOpacityText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+            <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
+              <button type="button" onClick={() => { const v = Math.max(0, (form.donchianBandOpacity ?? 0.2) - 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) <= 0} className="w-9 h-9 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+              <span className="w-10 text-center text-sm font-mono text-zinc-800 tabular-nums" aria-live="polite">{Math.round((form.donchianBandOpacity ?? 0.2) * 100)}%</span>
+              <button type="button" onClick={() => { const v = Math.min(0.3, (form.donchianBandOpacity ?? 0.2) + 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) >= 0.3} className="w-9 h-9 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianLimitsColor ?? "Cor canais"}</span>

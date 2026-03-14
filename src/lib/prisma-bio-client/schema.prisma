@@ -148,6 +148,7 @@ model ChartLayout {
   layout     Json? // config do gráfico (visibleCount, cores, VAP, etc.)
   indicators Json? // array userIndicators
   strategies Json? // { strategies: Strategy[], appliedStrategyIds: string[] }
+  others     Json? // configs rápidas: visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset (não inclui draw-segments)
   name       String?  @db.VarChar(24) // Nome customizado (máx. 24 caracteres)
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -163,6 +164,7 @@ model ChartModel {
   layout     Json? // config do gráfico
   indicators Json? // array userIndicators
   strategies Json? // { strategies, appliedStrategyIds }
+  others     Json? // configs rápidas: visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset (não inclui draw-segments)
   name       String?  @db.VarChar(24)
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -12,6 +12,7 @@ export const DEFAULT_LAYOUT_FALLBACK: Record<string, unknown> = {
   userIndicators: [],
   chartBackground: 1,
   chartSizePercent: 100,
+  yPadOffset: 0,
   yAxisAbbreviated: false,
   candleColorPreset: "greenRed",
   showLastCloseLine: true,

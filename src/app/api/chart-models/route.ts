@@ -37,13 +37,13 @@ export async function GET() {
 
   const rows = await cryptoPrisma.chartModel.findMany({
     where: { userId: ADMIN_USER_ID },
-    select: { slot: true, name: true, layout: true, indicators: true, strategies: true },
+    select: { slot: true, name: true, layout: true, indicators: true, strategies: true, others: true },
     orderBy: { slot: "asc" },
   });
 
   const models = rows.map((r) => ({
     slot: r.slot,
-    config: mergeColumnsToConfig(r.layout, r.indicators, r.strategies),
+    config: mergeColumnsToConfig(r.layout, r.indicators, r.strategies, r.others ?? undefined),
     name: r.name ?? undefined,
   }));
 
@@ -64,6 +64,7 @@ export async function POST(req: Request) {
     layout?: unknown;
     indicators?: unknown;
     strategies?: unknown;
+    others?: unknown;
   } = {};
   try {
     body = await req.json();
@@ -85,7 +86,8 @@ export async function POST(req: Request) {
     const config = body.config as Record<string, unknown>;
     const configStr = JSON.stringify(config);
     if (configStr.length > CONFIG_MAX_BYTES) return NextResponse.json({ error: "config_too_large" }, { status: 400 });
-    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = splitConfigToColumns(config);
+    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, others: othersCol } = splitConfigToColumns(config);
+    const othersVal = Object.keys(othersCol).length > 0 ? othersCol : null;
     await cryptoPrisma.chartModel.upsert({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
       create: {
@@ -94,35 +96,40 @@ export async function POST(req: Request) {
         layout: layoutCol,
         indicators: indicatorsCol,
         strategies: strategiesCol,
+        others: othersVal,
         name: name ?? null,
       },
       update: {
         layout: layoutCol,
         indicators: indicatorsCol,
         strategies: strategiesCol,
+        others: othersVal,
         ...(name !== undefined && { name }),
       },
     });
     return NextResponse.json({ ok: true, slot });
   }
 
-  if (body.layout !== undefined || body.indicators !== undefined || body.strategies !== undefined) {
+  if (body.layout !== undefined || body.indicators !== undefined || body.strategies !== undefined || body.others !== undefined) {
     const existing = await cryptoPrisma.chartModel.findUnique({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
-      select: { layout: true, indicators: true, strategies: true },
+      select: { layout: true, indicators: true, strategies: true, others: true },
     });
     const layout = body.layout !== undefined ? body.layout : (existing?.layout ?? null);
     const indicators = body.indicators !== undefined ? body.indicators : (existing?.indicators ?? null);
     const strategies = body.strategies !== undefined ? body.strategies : (existing?.strategies ?? null);
+    const others = body.others !== undefined ? body.others : (existing?.others ?? null);
     for (const [label, val] of [
       ["layout", layout],
       ["indicators", indicators],
       ["strategies", strategies],
+      ["others", others],
     ] as const) {
       if (JSON.stringify(val).length > CONFIG_MAX_BYTES) {
         return NextResponse.json({ error: "config_too_large", message: `${label} exceeds max size` }, { status: 400 });
       }
     }
+    const othersVal = others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as object) : null;
     await cryptoPrisma.chartModel.upsert({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
       create: {
@@ -131,17 +138,19 @@ export async function POST(req: Request) {
         layout: layout ?? undefined,
         indicators: indicators ?? undefined,
         strategies: strategies ?? undefined,
+        others: othersVal,
         name: name ?? null,
       },
       update: {
         ...(body.layout !== undefined && { layout }),
         ...(body.indicators !== undefined && { indicators }),
         ...(body.strategies !== undefined && { strategies }),
+        ...(body.others !== undefined && { others: othersVal }),
         ...(name !== undefined && { name }),
       },
     });
     return NextResponse.json({ ok: true, slot });
   }
 
-  return NextResponse.json({ error: "invalid_body", message: "Send config or at least one of layout, indicators, strategies" }, { status: 400 });
+  return NextResponse.json({ error: "invalid_body", message: "Send config or at least one of layout, indicators, strategies, others" }, { status: 400 });
 }

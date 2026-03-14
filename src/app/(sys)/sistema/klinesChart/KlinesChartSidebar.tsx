@@ -688,7 +688,7 @@ export function KlinesChartSidebar({
               </div>
             </div>
           )}
-          {onSaveVolumePrefsToLayout != null && (
+          {volumeOnPrice && onSaveVolumePrefsToLayout != null && (
             <div className="px-2 py-1 flex items-center gap-2">
               <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">
                 {(t as Record<string, string>).save ?? "Salvar"}
@@ -1267,7 +1267,7 @@ export function KlinesChartSidebar({
                     </div>
                   </div>
                 )}
-                {onSaveVolumePrefsToLayout != null && (
+                {volumeOnPrice && onSaveVolumePrefsToLayout != null && (
                   <div className="px-2 py-1 flex items-center gap-2">
                     <button type="button" onClick={handleSaveVolumePrefsToLayout} className="px-2 py-1 rounded border border-zinc-800 bg-zinc-900 text-sm text-white hover:bg-zinc-800">{(t as Record<string, string>).save ?? "Salvar"}</button>
                     {showVolumePrefsSaved && (

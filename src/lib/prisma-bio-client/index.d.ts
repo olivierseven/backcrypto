@@ -4502,6 +4502,7 @@ export namespace Prisma {
     layout: number
     indicators: number
     strategies: number
+    others: number
     name: number
     updatedAt: number
     _all: number
@@ -4536,6 +4537,7 @@ export namespace Prisma {
     layout?: true
     indicators?: true
     strategies?: true
+    others?: true
     name?: true
     updatedAt?: true
     _all?: true
@@ -4633,6 +4635,7 @@ export namespace Prisma {
     layout: JsonValue | null
     indicators: JsonValue | null
     strategies: JsonValue | null
+    others: JsonValue | null
     name: string | null
     updatedAt: Date
     _count: ChartLayoutCountAggregateOutputType | null
@@ -4662,6 +4665,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4673,6 +4677,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4684,6 +4689,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -4695,11 +4701,12 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
   }
 
-  export type ChartLayoutOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "layout" | "indicators" | "strategies" | "name" | "updatedAt", ExtArgs["result"]["chartLayout"]>
+  export type ChartLayoutOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "layout" | "indicators" | "strategies" | "others" | "name" | "updatedAt", ExtArgs["result"]["chartLayout"]>
   export type ChartLayoutInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -4721,6 +4728,7 @@ export namespace Prisma {
       layout: Prisma.JsonValue | null
       indicators: Prisma.JsonValue | null
       strategies: Prisma.JsonValue | null
+      others: Prisma.JsonValue | null
       name: string | null
       updatedAt: Date
     }, ExtArgs["result"]["chartLayout"]>
@@ -5152,6 +5160,7 @@ export namespace Prisma {
     readonly layout: FieldRef<"ChartLayout", 'Json'>
     readonly indicators: FieldRef<"ChartLayout", 'Json'>
     readonly strategies: FieldRef<"ChartLayout", 'Json'>
+    readonly others: FieldRef<"ChartLayout", 'Json'>
     readonly name: FieldRef<"ChartLayout", 'String'>
     readonly updatedAt: FieldRef<"ChartLayout", 'DateTime'>
   }
@@ -5608,6 +5617,7 @@ export namespace Prisma {
     layout: number
     indicators: number
     strategies: number
+    others: number
     name: number
     updatedAt: number
     _all: number
@@ -5642,6 +5652,7 @@ export namespace Prisma {
     layout?: true
     indicators?: true
     strategies?: true
+    others?: true
     name?: true
     updatedAt?: true
     _all?: true
@@ -5739,6 +5750,7 @@ export namespace Prisma {
     layout: JsonValue | null
     indicators: JsonValue | null
     strategies: JsonValue | null
+    others: JsonValue | null
     name: string | null
     updatedAt: Date
     _count: ChartModelCountAggregateOutputType | null
@@ -5768,6 +5780,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5779,6 +5792,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5790,6 +5804,7 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -5801,11 +5816,12 @@ export namespace Prisma {
     layout?: boolean
     indicators?: boolean
     strategies?: boolean
+    others?: boolean
     name?: boolean
     updatedAt?: boolean
   }
 
-  export type ChartModelOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "layout" | "indicators" | "strategies" | "name" | "updatedAt", ExtArgs["result"]["chartModel"]>
+  export type ChartModelOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "slot" | "layout" | "indicators" | "strategies" | "others" | "name" | "updatedAt", ExtArgs["result"]["chartModel"]>
   export type ChartModelInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -5827,6 +5843,7 @@ export namespace Prisma {
       layout: Prisma.JsonValue | null
       indicators: Prisma.JsonValue | null
       strategies: Prisma.JsonValue | null
+      others: Prisma.JsonValue | null
       name: string | null
       updatedAt: Date
     }, ExtArgs["result"]["chartModel"]>
@@ -6258,6 +6275,7 @@ export namespace Prisma {
     readonly layout: FieldRef<"ChartModel", 'Json'>
     readonly indicators: FieldRef<"ChartModel", 'Json'>
     readonly strategies: FieldRef<"ChartModel", 'Json'>
+    readonly others: FieldRef<"ChartModel", 'Json'>
     readonly name: FieldRef<"ChartModel", 'String'>
     readonly updatedAt: FieldRef<"ChartModel", 'DateTime'>
   }
@@ -22339,6 +22357,7 @@ export namespace Prisma {
     layout: 'layout',
     indicators: 'indicators',
     strategies: 'strategies',
+    others: 'others',
     name: 'name',
     updatedAt: 'updatedAt'
   };
@@ -22352,6 +22371,7 @@ export namespace Prisma {
     layout: 'layout',
     indicators: 'indicators',
     strategies: 'strategies',
+    others: 'others',
     name: 'name',
     updatedAt: 'updatedAt'
   };
@@ -23108,6 +23128,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartLayout">
     indicators?: JsonNullableFilter<"ChartLayout">
     strategies?: JsonNullableFilter<"ChartLayout">
+    others?: JsonNullableFilter<"ChartLayout">
     name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -23119,6 +23140,7 @@ export namespace Prisma {
     layout?: SortOrderInput | SortOrder
     indicators?: SortOrderInput | SortOrder
     strategies?: SortOrderInput | SortOrder
+    others?: SortOrderInput | SortOrder
     name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -23134,6 +23156,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartLayout">
     indicators?: JsonNullableFilter<"ChartLayout">
     strategies?: JsonNullableFilter<"ChartLayout">
+    others?: JsonNullableFilter<"ChartLayout">
     name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -23145,6 +23168,7 @@ export namespace Prisma {
     layout?: SortOrderInput | SortOrder
     indicators?: SortOrderInput | SortOrder
     strategies?: SortOrderInput | SortOrder
+    others?: SortOrderInput | SortOrder
     name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     _count?: ChartLayoutCountOrderByAggregateInput
@@ -23163,6 +23187,7 @@ export namespace Prisma {
     layout?: JsonNullableWithAggregatesFilter<"ChartLayout">
     indicators?: JsonNullableWithAggregatesFilter<"ChartLayout">
     strategies?: JsonNullableWithAggregatesFilter<"ChartLayout">
+    others?: JsonNullableWithAggregatesFilter<"ChartLayout">
     name?: StringNullableWithAggregatesFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeWithAggregatesFilter<"ChartLayout"> | Date | string
   }
@@ -23176,6 +23201,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartModel">
     indicators?: JsonNullableFilter<"ChartModel">
     strategies?: JsonNullableFilter<"ChartModel">
+    others?: JsonNullableFilter<"ChartModel">
     name?: StringNullableFilter<"ChartModel"> | string | null
     updatedAt?: DateTimeFilter<"ChartModel"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -23187,6 +23213,7 @@ export namespace Prisma {
     layout?: SortOrderInput | SortOrder
     indicators?: SortOrderInput | SortOrder
     strategies?: SortOrderInput | SortOrder
+    others?: SortOrderInput | SortOrder
     name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -23202,6 +23229,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartModel">
     indicators?: JsonNullableFilter<"ChartModel">
     strategies?: JsonNullableFilter<"ChartModel">
+    others?: JsonNullableFilter<"ChartModel">
     name?: StringNullableFilter<"ChartModel"> | string | null
     updatedAt?: DateTimeFilter<"ChartModel"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -23213,6 +23241,7 @@ export namespace Prisma {
     layout?: SortOrderInput | SortOrder
     indicators?: SortOrderInput | SortOrder
     strategies?: SortOrderInput | SortOrder
+    others?: SortOrderInput | SortOrder
     name?: SortOrderInput | SortOrder
     updatedAt?: SortOrder
     _count?: ChartModelCountOrderByAggregateInput
@@ -23231,6 +23260,7 @@ export namespace Prisma {
     layout?: JsonNullableWithAggregatesFilter<"ChartModel">
     indicators?: JsonNullableWithAggregatesFilter<"ChartModel">
     strategies?: JsonNullableWithAggregatesFilter<"ChartModel">
+    others?: JsonNullableWithAggregatesFilter<"ChartModel">
     name?: StringNullableWithAggregatesFilter<"ChartModel"> | string | null
     updatedAt?: DateTimeWithAggregatesFilter<"ChartModel"> | Date | string
   }
@@ -24612,6 +24642,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutChartLayoutsInput
@@ -24623,6 +24654,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -24632,6 +24664,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutChartLayoutsNestedInput
@@ -24643,6 +24676,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24653,6 +24687,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -24662,6 +24697,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24672,6 +24708,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24681,6 +24718,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutChartModelsInput
@@ -24692,6 +24730,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -24701,6 +24740,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutChartModelsNestedInput
@@ -24712,6 +24752,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24722,6 +24763,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -24731,6 +24773,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -24741,6 +24784,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -26431,6 +26475,7 @@ export namespace Prisma {
     layout?: SortOrder
     indicators?: SortOrder
     strategies?: SortOrder
+    others?: SortOrder
     name?: SortOrder
     updatedAt?: SortOrder
   }
@@ -26494,6 +26539,7 @@ export namespace Prisma {
     layout?: SortOrder
     indicators?: SortOrder
     strategies?: SortOrder
+    others?: SortOrder
     name?: SortOrder
     updatedAt?: SortOrder
   }
@@ -28814,6 +28860,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -28823,6 +28870,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -28842,6 +28890,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -28851,6 +28900,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -29156,6 +29206,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartLayout">
     indicators?: JsonNullableFilter<"ChartLayout">
     strategies?: JsonNullableFilter<"ChartLayout">
+    others?: JsonNullableFilter<"ChartLayout">
     name?: StringNullableFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeFilter<"ChartLayout"> | Date | string
   }
@@ -29185,6 +29236,7 @@ export namespace Prisma {
     layout?: JsonNullableFilter<"ChartModel">
     indicators?: JsonNullableFilter<"ChartModel">
     strategies?: JsonNullableFilter<"ChartModel">
+    others?: JsonNullableFilter<"ChartModel">
     name?: StringNullableFilter<"ChartModel"> | string | null
     updatedAt?: DateTimeFilter<"ChartModel"> | Date | string
   }
@@ -32043,6 +32095,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -32052,6 +32105,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
   }
@@ -32300,6 +32354,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32309,6 +32364,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32318,6 +32374,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32327,6 +32384,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32336,6 +32394,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -32345,6 +32404,7 @@ export namespace Prisma {
     layout?: NullableJsonNullValueInput | InputJsonValue
     indicators?: NullableJsonNullValueInput | InputJsonValue
     strategies?: NullableJsonNullValueInput | InputJsonValue
+    others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
