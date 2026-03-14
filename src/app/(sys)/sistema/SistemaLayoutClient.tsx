@@ -256,13 +256,6 @@ function SistemaHeader({
             >
               {(t as Record<string, string>).menuDrawings ?? "Drawings"}
             </button>
-            <Link
-              href="/conta"
-              onClick={() => onMenuToggle(false)}
-              className="block w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuConta ?? "Conta"}
-            </Link>
             <a
               href={`${API_BASE}/auth/logout`}
               onClick={() => onMenuToggle(false)}
