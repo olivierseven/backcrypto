@@ -305,12 +305,19 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
   const seriesOptions = useMemo(() => {
+    const tStrat = getCryptoT(lang).sistema.strategies as Record<string, string>;
+    const fnShort = tStrat.seriesFunctionsShort ?? "F";
     const opts: { key: string; label: string }[] = [
       { key: "open", label: `(1) ${tKlines.fieldOpen ?? "Open"}` },
       { key: "high", label: `(1) ${tKlines.fieldHigh ?? "High"}` },
       { key: "low", label: `(1) ${tKlines.fieldLow ?? "Low"}` },
       { key: "close", label: `(1) ${tKlines.fieldClose ?? "Close"}` },
       { key: "volume", label: `(1) ${tKlines.volUsdt ?? tKlines.volumeBtc ?? "Volume"}` },
+      // Funções calculadas a partir de OHLC (sem coluna na tabela)
+      { key: "HL2", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHL2 ?? "HL2"}` },
+      { key: "HLC3", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHLC3 ?? "HLC3"}` },
+      { key: "OHLC4", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldOHLC4 ?? "OHLC4"}` },
+      { key: "HLCC4", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHLCC4 ?? "HLCC4"}` },
     ];
     userIndicators.forEach((ind) => {
       const panel = getIndicatorPanel(ind);
@@ -347,7 +354,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       }
     });
     return opts;
-  }, [userIndicators, tKlines]);
+  }, [lang, userIndicators, tKlines]);
 
   /** No modo combinado: lista só colunas de estratégias criadas (estratégia e valor na visualização = comparação com constante). */
   /** No modo combinado só aparecem estratégias normais (não combinadas), para montar "está verdadeira/falsa". */

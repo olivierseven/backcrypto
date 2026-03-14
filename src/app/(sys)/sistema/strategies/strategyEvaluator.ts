@@ -58,6 +58,28 @@ export function getSeriesValue(
     return Number.isFinite(n) ? n : null;
   }
 
+  // Funções calculadas a partir de OHLC (sem coluna na tabela)
+  const o = k[1] != null ? Number(k[1]) : NaN;
+  const h = k[2] != null ? Number(k[2]) : NaN;
+  const l = k[3] != null ? Number(k[3]) : NaN;
+  const c = k[4] != null ? Number(k[4]) : NaN;
+  if (seriesKey === "HL2") {
+    if (!Number.isFinite(h) || !Number.isFinite(l)) return null;
+    return (h + l) / 2;
+  }
+  if (seriesKey === "HLC3") {
+    if (!Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(c)) return null;
+    return (h + l + c) / 3;
+  }
+  if (seriesKey === "OHLC4") {
+    if (!Number.isFinite(o) || !Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(c)) return null;
+    return (o + h + l + c) / 4;
+  }
+  if (seriesKey === "HLCC4") {
+    if (!Number.isFinite(h) || !Number.isFinite(l) || !Number.isFinite(c)) return null;
+    return (h + l + c + c) / 4;
+  }
+
   if (seriesKey.startsWith("ind_")) {
     const raw = seriesKey.slice(4);
     const [id, part] = raw.split(":");

@@ -329,7 +329,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       const n = parseFloat(s);
       return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : def;
     };
-    addIndicator({
+    const newInd = addIndicator({
       type: addForm.indicatorType,
       period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
       fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
@@ -403,7 +403,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       } : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
-  }, [addForm, panelsWithSecondary, panelsFreeForSecondary, indicatorCountByPanel, isFreeUser, currentGroupMinutes, addIndicator, defaultModelMaxIndicatorsReached]);
+    if (newInd) chartLayoutSave?.saveLayoutNow("indicators", [...userIndicators, newInd]);
+  }, [addForm, panelsWithSecondary, panelsFreeForSecondary, indicatorCountByPanel, isFreeUser, currentGroupMinutes, addIndicator, defaultModelMaxIndicatorsReached, chartLayoutSave, userIndicators]);
 
   const deactivateAllStrategies = useCallback(() => {
     if (appliedStrategyIds.length === 0) return;

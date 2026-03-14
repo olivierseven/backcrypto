@@ -14,6 +14,10 @@ export function getFieldLabel(
   if (fieldKey === "low") return k.fieldLow ?? "Low";
   if (fieldKey === "close") return k.fieldClose ?? "Close";
   if (fieldKey === "volume") return k.fieldVol ?? "Vol";
+  if (fieldKey === "HL2") return k.fieldHL2 ?? "HL2";
+  if (fieldKey === "HLC3") return k.fieldHLC3 ?? "HLC3";
+  if (fieldKey === "OHLC4") return k.fieldOHLC4 ?? "OHLC4";
+  if (fieldKey === "HLCC4") return k.fieldHLCC4 ?? "HLCC4";
   if (fieldKey.startsWith("user_")) {
     const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
     if (u) return `${u.type}(${u.period}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
@@ -73,6 +77,10 @@ export function getFieldShortLetter(
   if (fieldKey === "low") return "L";
   if (fieldKey === "close") return "C";
   if (fieldKey === "volume") return "V";
+  if (fieldKey === "HL2") return "2";
+  if (fieldKey === "HLC3") return "3";
+  if (fieldKey === "OHLC4") return "4";
+  if (fieldKey === "HLCC4") return "C"; // (H+L+2*C)/4
   if (fieldKey.startsWith("user_")) {
     const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
     if (u) return getFieldShortLetter(u.fieldKey, userIndicators);

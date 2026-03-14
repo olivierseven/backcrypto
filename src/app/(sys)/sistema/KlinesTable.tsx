@@ -6,7 +6,7 @@ import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
-import { useKlinesIndicators, getFieldIndex } from "./KlinesIndicatorsContext";
+import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
 import { useChartSymbol } from "./ChartSymbolContext";
@@ -452,11 +452,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
       if (ind.type === "Volume") continue;
-      const valueIndex = getFieldIndex(ind.fieldKey, userIndicators);
+      const { data: dataForInd, valueIndex } = getDataAndValueIndexForIndicator(data, ind.fieldKey, userIndicators);
       const period = Math.max(1, Math.min(500, ind.period));
       if (ind.type === "MACD") {
         const col = computeMacdColumn(
-          data,
+          dataForInd,
           valueIndex,
           ind.macdFastMaType ?? "EMA",
           ind.macdFastPeriod ?? 12,
@@ -469,10 +469,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           const signalPeriod = Math.max(1, Math.min(500, ind.macdSignalPeriod ?? 9));
           const signalCol =
             (ind.macdSignalMaType ?? "EMA") === "EMA"
-              ? computeEmaColumn(data, macdColIndex, signalPeriod)
+              ? computeEmaColumn(out, macdColIndex, signalPeriod)
               : (ind.macdSignalMaType ?? "EMA") === "WMA"
-                ? computeWmaColumn(data, macdColIndex, signalPeriod)
-                : computeSmaColumn(data, macdColIndex, signalPeriod);
+                ? computeWmaColumn(out, macdColIndex, signalPeriod)
+                : computeSmaColumn(out, macdColIndex, signalPeriod);
           for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
           if (ind.macdHistogram) {
             const signalColIndex = out[0].length - 1;
@@ -487,22 +487,22 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           }
         }
       } else if (ind.type === "Stochastic") {
-        const kCol = computeStochasticKColumn(data, period, valueIndex);
+        const kCol = computeStochasticKColumn(dataForInd, period, valueIndex);
         for (let i = 0; i < out.length; i++) out[i].push(kCol[i] ?? null);
         if (ind.stochDLine) {
           const kColIndex = out[0].length - 1;
           const dPeriod = Math.max(1, Math.min(500, ind.stochDPeriod ?? 3));
           const dCol =
             (ind.stochDMaType ?? "SMA") === "EMA"
-              ? computeEmaColumn(data, kColIndex, dPeriod)
+              ? computeEmaColumn(out, kColIndex, dPeriod)
               : (ind.stochDMaType ?? "SMA") === "WMA"
-                ? computeWmaColumn(data, kColIndex, dPeriod)
-                : computeSmaColumn(data, kColIndex, dPeriod);
+                ? computeWmaColumn(out, kColIndex, dPeriod)
+                : computeSmaColumn(out, kColIndex, dPeriod);
           for (let i = 0; i < out.length; i++) out[i].push(dCol[i] ?? null);
         }
       } else if (ind.type === "WilliamsR") {
         const wrValueIndex = (valueIndex === 1 || valueIndex === 4) ? valueIndex : 4;
-        const wrCol = computeWilliamsRColumn(data, period, wrValueIndex);
+        const wrCol = computeWilliamsRColumn(dataForInd, period, wrValueIndex);
         for (let i = 0; i < out.length; i++) out[i].push(wrCol[i] ?? null);
       } else if (ind.type === "OBV") {
         const col = computeObvColumn(data);
@@ -521,7 +521,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else if (ind.type === "Bollinger") {
         const z = typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2;
-        const { upper, middle, lower } = computeBollingerBands(data, valueIndex, period, ind.bollingerMaType ?? "SMA", z);
+        const { upper, middle, lower } = computeBollingerBands(dataForInd, valueIndex, period, ind.bollingerMaType ?? "SMA", z);
         for (let i = 0; i < out.length; i++) {
           out[i].push(upper[i] ?? null);
           out[i].push(middle[i] ?? null);
@@ -530,12 +530,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       } else {
         const col =
           ind.type === "EMA"
-            ? computeEmaColumn(data, valueIndex, period)
+            ? computeEmaColumn(dataForInd, valueIndex, period)
             : ind.type === "WMA"
-              ? computeWmaColumn(data, valueIndex, period)
+              ? computeWmaColumn(dataForInd, valueIndex, period)
               : ind.type === "RSI"
-                ? computeRsiColumn(data, valueIndex, period)
-                : computeSmaColumn(data, valueIndex, period);
+                ? computeRsiColumn(dataForInd, valueIndex, period)
+                : computeSmaColumn(dataForInd, valueIndex, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       }
     }
@@ -649,13 +649,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setCurrentGroupMinutes(groupMinutes);
   }, [groupMinutes, setCurrentGroupMinutes]);
 
-  useEffect(() => {
+  const handleIntervalChange = useCallback((value: number) => {
+    setGroupMinutes(value);
     try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(groupMinutes));
+      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(value));
     } catch {
       /* ignore */
     }
-  }, [groupMinutes]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1020,7 +1021,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             layoutAppliedTick={layoutAppliedTick}
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions}
-            onIntervalChange={setGroupMinutes}
+            onIntervalChange={handleIntervalChange}
             width={chartWidthToUse}
             onChartDimensionsChange={onChartDimensionsChange}
             maxChartHeight={undefined}

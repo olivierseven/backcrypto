@@ -17,13 +17,17 @@ export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4" | "panel5";
 export type IndicatorLineWidth = "thin" | "normal";
 export type IndicatorLineStyle = "solid" | "dotted" | "dashed";
 
-/** Campo base ou coluna calculada (usuário) para o indicador. */
+/** Campo base, preço derivado (HL2/HLC3/OHLC4) ou coluna calculada (usuário) para o indicador. */
 export type IndicatorFieldKey =
   | "open"
   | "high"
   | "low"
   | "close"
   | "volume"
+  | "HL2"    // (high+low)/2
+  | "HLC3"   // (high+low+close)/3
+  | "OHLC4"  // (open+high+low+close)/4
+  | "HLCC4"  // (high+low+close+close)/4 = (high+low+2*close)/4
   | `user_${string}`; // id de indicador usuário
 
 export interface UserIndicatorConfig {
@@ -162,6 +166,7 @@ const FIELD_KEY_TO_INDEX: Record<string, number> = {
 /**
  * Retorna o índice da coluna no array kline para um fieldKey.
  * Para user_<id>, usa a lista de userIndicators para obter o índice (12 + posição).
+ * HL2, HLC3, OHLC4 não têm coluna na tabela; use getDataAndValueIndexForIndicator para o cálculo.
  */
 export function getFieldIndex(
   fieldKey: IndicatorFieldKey,
@@ -174,6 +179,34 @@ export function getFieldIndex(
     if (idx >= 0) return 12 + idx;
   }
   return 4; // fallback close
+}
+
+const DERIVED_FIELD_KEYS = ["HL2", "HLC3", "OHLC4", "HLCC4"] as const;
+function getDerivedValue(row: (string | number)[], key: (typeof DERIVED_FIELD_KEYS)[number]): number {
+  const o = Number(row[1]);
+  const h = Number(row[2]);
+  const l = Number(row[3]);
+  const c = Number(row[4]);
+  if (key === "HL2") return (h + l) / 2;
+  if (key === "HLC3") return (h + l + c) / 3;
+  if (key === "OHLC4") return (o + h + l + c) / 4;
+  return (h + l + c + c) / 4; // HLCC4 = (high+low+2*close)/4
+}
+
+/**
+ * Para uso no cálculo do indicador: retorna data e valueIndex.
+ * Se fieldKey for HL2, HLC3 ou OHLC4, acrescenta uma coluna virtual (não na tabela) com o preço derivado.
+ */
+export function getDataAndValueIndexForIndicator(
+  data: (string | number)[][],
+  fieldKey: IndicatorFieldKey,
+  userIndicators: UserIndicatorConfig[]
+): { data: (string | number)[][]; valueIndex: number } {
+  if (fieldKey === "HL2" || fieldKey === "HLC3" || fieldKey === "OHLC4" || fieldKey === "HLCC4") {
+    const dataWithDerived = data.map((row) => [...row, getDerivedValue(row, fieldKey)]);
+    return { data: dataWithDerived, valueIndex: dataWithDerived[0].length - 1 };
+  }
+  return { data, valueIndex: getFieldIndex(fieldKey, userIndicators) };
 }
 
 /** Indicadores vêm só do layout (banco). Não usar localStorage. */
@@ -319,7 +352,7 @@ interface ContextValue {
   userIndicators: UserIndicatorConfig[];
   currentGroupMinutes: number | null;
   setCurrentGroupMinutes: (v: number | null) => void;
-  addIndicator: (config: Omit<UserIndicatorConfig, "id">) => void;
+  addIndicator: (config: Omit<UserIndicatorConfig, "id">) => UserIndicatorConfig;
   removeIndicator: (id: string) => void;
   updateIndicator: (id: string, updates: Partial<UserIndicatorEditable>) => void;
   updateIndicatorIntervals: (id: string, intervals: number[]) => void;
@@ -335,7 +368,9 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
 
   const addIndicator = useCallback((config: Omit<UserIndicatorConfig, "id">) => {
     const id = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    setUserIndicators((prev) => [...prev, { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false }]);
+    const newInd: UserIndicatorConfig = { ...config, id, showLastValueOnYAxis: config.showLastValueOnYAxis !== false };
+    setUserIndicators((prev) => [...prev, newInd]);
+    return newInd;
   }, []);
 
   const removeIndicator = useCallback((id: string) => {

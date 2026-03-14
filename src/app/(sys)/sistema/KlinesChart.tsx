@@ -533,23 +533,32 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   // Layout default e slots 1–7 vêm somente do banco; não inicializar do localStorage para não interferir.
   // (Antes o default era aplicado de KLINE_PREFS_KEY; agora o default é aplicado no effect do layout via API defaultLayout.)
 
-  // Inicializar estilo de gráfico e olho visible do localStorage (só esses; quantidade de candles vem do layout ou de KLINE_PREFS_KEY).
+  // Inicializar quantidade de candles, tipo de gráfico e olho visible do localStorage (última situação do usuário).
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { chartStyle?: string; drawingsVisible?: boolean };
+      const data = JSON.parse(raw) as { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean };
+      const vc = typeof data.visibleCount === "number" && data.visibleCount >= VISIBLE_COUNT_MIN && data.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(data.visibleCount) : null;
+      if (vc != null) setVisibleCount(vc);
       if (data.chartStyle === "candles" || data.chartStyle === "bars" || data.chartStyle === "line" || data.chartStyle === "linePoints" || data.chartStyle === "area") setChartStyle(data.chartStyle);
+      if (data.candleBodyStyle === "filled" || data.candleBodyStyle === "hollow") setCandleBodyStyle(data.candleBodyStyle);
       if (typeof data.drawingsVisible === "boolean") setDrawingsVisible(data.drawingsVisible);
     } catch {
       /* ignore */
     }
   }, []);
 
+  const prefsWriteSkippedRef = useRef(false);
   // Persistir prefs no localStorage só quando o layout ativo for default (slot 0); em slot 1–7 o estado vem do layout no banco.
+  // Ignorar a primeira execução para não sobrescrever com valores default antes do restore do localStorage.
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
+      if (!prefsWriteSkippedRef.current) {
+        prefsWriteSkippedRef.current = true;
+        return;
+      }
       const layoutRaw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
       const slotNum = layoutRaw != null && layoutRaw !== "default" && layoutRaw !== "0" ? Number(layoutRaw) : 0;
       if (Number.isInteger(slotNum) && slotNum >= 1 && slotNum <= 7) return;
@@ -562,15 +571,20 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
   }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle]);
 
-  // Persistir prefs com preferência localStorage só após o layout ter sido aplicado (evita sobrescrever com 50 no mount).
+  // Persistir prefs locais ao alterar; pular a 1ª execução para não sobrescrever antes do restore do init.
+  const localPrefsWriteSkippedRef = useRef(false);
   useEffect(() => {
-    if (!layoutApplied || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
+    if (!localPrefsWriteSkippedRef.current) {
+      localPrefsWriteSkippedRef.current = true;
+      return;
+    }
     try {
-      window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify({ visibleCount, chartStyle, drawingsVisible }));
+      window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify({ visibleCount, chartStyle, candleBodyStyle, drawingsVisible }));
     } catch {
       /* ignore */
     }
-  }, [layoutApplied, visibleCount, chartStyle, drawingsVisible]);
+  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible]);
 
   // Toda vez que entrar na página do gráfico ou trocar símbolo: carregar layout do banco e reaplicar (incluindo estratégias e indicadores).
   const lastLayoutApplyAtRef = useRef<number>(0);
@@ -665,6 +679,24 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           if (defaultConfig) {
             addLayoutLoadLog("aplicando layout default do banco");
             applyLayoutConfig(defaultConfig, 0, "api");
+            // Criar no localStorage apenas as prefs que ainda não existirem (não sobrescrever).
+            try {
+              if (typeof window !== "undefined") {
+                const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+                const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+                const vc = typeof defaultConfig.visibleCount === "number" && defaultConfig.visibleCount >= VISIBLE_COUNT_MIN && defaultConfig.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(defaultConfig.visibleCount)) : undefined;
+                const cs = (defaultConfig.chartStyle === "candles" || defaultConfig.chartStyle === "bars" || defaultConfig.chartStyle === "line" || defaultConfig.chartStyle === "linePoints" || defaultConfig.chartStyle === "area") ? defaultConfig.chartStyle as string : undefined;
+                const cbs = (defaultConfig.candleBodyStyle === "filled" || defaultConfig.candleBodyStyle === "hollow") ? defaultConfig.candleBodyStyle as string : undefined;
+                const dv = typeof defaultConfig.drawingsVisible === "boolean" ? defaultConfig.drawingsVisible : undefined;
+                if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+                if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+                if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+                if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+              }
+            } catch {
+              /* ignore */
+            }
             markApplied();
           } else {
             addLayoutLoadLog("default/0: sem defaultLayout no banco, não aplica");
@@ -682,13 +714,28 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 : [];
               addLayoutLoadLog(`aplicando slot ${slotNum}, appliedStrategyIds(${applied.length})=[${applied.slice(0, 5).join(",")}${applied.length > 5 ? "…" : ""}]`);
               applyLayoutConfig(layout.config, layout.slot, "api");
-              markApplied();
-              onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
+              // Criar no localStorage apenas as prefs que ainda não existirem (não sobrescrever).
               try {
-                if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, String(slotNum));
+                if (typeof window !== "undefined") {
+                  const c = layout.config as Record<string, unknown>;
+                  const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+                  const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+                  const vc = typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(c.visibleCount)) : undefined;
+                  const cs = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as string : undefined;
+                  const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
+                  const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+                  if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+                  if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+                  if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+                  if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                  window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+                  window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, String(slotNum));
+                }
               } catch {
                 /* ignore */
               }
+              markApplied();
+              onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
             } else {
               addLayoutLoadLog(`slot ${slotNum} não encontrado em layouts, não aplica`);
               onCurrentLayoutLabelChange?.(t.defaultLayout);
@@ -968,8 +1015,21 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   const applyLayoutConfig = (c: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => {
     const num = (v: unknown): number | null => (typeof v === "number" && !Number.isNaN(v) ? v : typeof v === "string" ? (Number(v) as number) : null);
+    // Preferir localStorage para prefs locais: se já existir valor salvo, não sobrescrever com o do layout.
+    let localPrefs: { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean } = {};
+    try {
+      if (typeof window !== "undefined") {
+        const raw = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+        if (raw) localPrefs = JSON.parse(raw) as typeof localPrefs;
+      }
+    } catch {
+      /* ignore */
+    }
     const visibleCountVal = num(c.visibleCount);
-    if (visibleCountVal != null && visibleCountVal >= VISIBLE_COUNT_MIN && visibleCountVal <= VISIBLE_COUNT_MAX) setVisibleCount(Math.round(visibleCountVal));
+    const useVisibleCount = localPrefs.visibleCount != null && localPrefs.visibleCount >= VISIBLE_COUNT_MIN && localPrefs.visibleCount <= VISIBLE_COUNT_MAX
+      ? Math.round(localPrefs.visibleCount)
+      : (visibleCountVal != null && visibleCountVal >= VISIBLE_COUNT_MIN && visibleCountVal <= VISIBLE_COUNT_MAX ? Math.round(visibleCountVal) : null);
+    if (useVisibleCount != null) setVisibleCount(useVisibleCount);
     if (typeof c.candleColorPreset === "string") {
       const id = (c.candleColorPreset === "redGreen" ? "greenRed" : c.candleColorPreset === "whiteBlack" ? "blackWhite" : c.candleColorPreset) as CandleColorPresetId;
       if (CANDLE_COLOR_PRESETS.some((p) => p.id === id)) setCandleColorPreset(id);
@@ -1007,8 +1067,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (volOpacity != null && volOpacity >= 0 && volOpacity <= 30) setVolumeOnPriceOpacity(Math.round(volOpacity));
     const chartSize = num(c.chartSizePercent);
     if (chartSize != null && chartSize >= CHART_SIZE_PERCENT_MIN && chartSize <= CHART_SIZE_PERCENT_MAX) setChartSizePercent(Math.round(chartSize));
-    if (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") setChartStyle(c.chartStyle);
-    if (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") setCandleBodyStyle(c.candleBodyStyle);
+    const chartStyleVal = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as "candles" | "bars" | "line" | "linePoints" | "area" : null;
+    const useChartStyle = (localPrefs.chartStyle === "candles" || localPrefs.chartStyle === "bars" || localPrefs.chartStyle === "line" || localPrefs.chartStyle === "linePoints" || localPrefs.chartStyle === "area") ? localPrefs.chartStyle as "candles" | "bars" | "line" | "linePoints" | "area" : chartStyleVal;
+    if (useChartStyle != null) setChartStyle(useChartStyle);
+    const candleBodyVal = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as "filled" | "hollow" : null;
+    const useCandleBody = (localPrefs.candleBodyStyle === "filled" || localPrefs.candleBodyStyle === "hollow") ? localPrefs.candleBodyStyle as "filled" | "hollow" : candleBodyVal;
+    if (useCandleBody != null) setCandleBodyStyle(useCandleBody);
+    if (typeof localPrefs.drawingsVisible === "boolean") setDrawingsVisible(localPrefs.drawingsVisible);
+    else if (typeof c.drawingsVisible === "boolean") setDrawingsVisible(c.drawingsVisible);
     onLayoutConfigLoadedRef.current?.(c, slot, source);
   };
 
@@ -1031,7 +1097,21 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     applyLayoutConfig(layout.config, layout.slot, "user-load");
     onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
     try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, layout.slot === 0 ? "default" : String(layout.slot));
+      if (typeof window !== "undefined") {
+        const c = layout.config;
+        const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+        const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+        const vc = typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(c.visibleCount)) : undefined;
+        const cs = (c.chartStyle === "candles" || c.chartStyle === "bars" || c.chartStyle === "line" || c.chartStyle === "linePoints" || c.chartStyle === "area") ? c.chartStyle as string : undefined;
+        const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
+        const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+        if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+        if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+        if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+        if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+        window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+        window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, layout.slot === 0 ? "default" : String(layout.slot));
+      }
     } catch {
       /* ignore */
     }

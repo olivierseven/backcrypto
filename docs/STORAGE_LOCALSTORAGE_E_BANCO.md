@@ -12,7 +12,7 @@ Estes dados **não** são enviados ao salvar layout e **não** são aplicados ao
 |------------------|--------------|-------------------------|
 | `backcrypto-klines-symbol` | Moeda (ex.: BTCUSDT, ETHUSDT) | BTCUSDT |
 | `backcrypto-klines-group-minutes` | Timeframe (ex.: 1440 = 1D, 240 = 4h) | 1440 (1 dia) |
-| `backcrypto-klines-local-prefs` | `visibleCount`, `chartStyle`, `drawingsVisible` (persistidos após layout aplicado; tipo de gráfico e olho também vêm do layout ao carregar) | 1D, velas, visible true |
+| `backcrypto-klines-local-prefs` | `visibleCount`, `chartStyle`, `candleBodyStyle`, `drawingsVisible` (número de candles, tipo de gráfico, candles vazias/preenchidas, olho dos desenhos). Persistidos quando o usuário altera ou após layout aplicado; no init são restaurados do localStorage. | — |
 | `backcrypto-klines-draw-magnetic` | Magnético (snap aos OHLC nos desenhos) | `false` (desativado) |
 | `backcrypto-klines-last-layout` | Qual slot de layout está ativo (0 = default, 1–7 = Layout 1…7) | usado só para decidir qual layout buscar na API |
 | `backcrypto-klines-draw-segments` | Segmentos de desenho por intervalo (por `groupMinutes`) | — |
@@ -54,8 +54,22 @@ Dados que existem nos dois: preferência no navegador e, quando há layout salvo
 
 Resumo prático:
 
-- **Timeframe, símbolo, olho visible e magnético:** só localStorage; nunca salvos no layout nem aplicados a partir do layout. **Estilo de gráfico (chartStyle/candleBodyStyle):** salvo e aplicado por layout (cada layout pode ser velas, barras, linha, etc.).
-- **Indicadores, estratégias, cores, eixos, visibleCount, VAP, etc.:** no banco, dentro do `config` do layout; no cliente, ao carregar um layout (default ou 1–7), esses valores vêm **só da API**. O layout default não é mais inicializado a partir do localStorage.
+- **Timeframe, símbolo, olho visible e magnético:** só localStorage; nunca salvos no layout nem aplicados a partir do layout. Persistem quando o usuário troca (ex.: escolhe outro intervalo) e são restaurados do localStorage na abertura.
+- **Estilo de gráfico (chartStyle/candleBodyStyle), número de candles (visibleCount), drawingsVisible:** persistidos no localStorage em `backcrypto-klines-local-prefs`; ao **carregar** um layout (default ou 1–7), o layout **não substitui** o que já está no localStorage para essas chaves — só **cria** a chave no localStorage **se ainda não existir**. Ou seja: se o usuário já tem valor salvo localmente, ele é mantido; se não tiver, o valor do layout carregado é gravado.
+- **Indicadores, estratégias, cores, eixos, VAP, etc.:** no banco, dentro do `config` do layout; ao carregar um layout (default ou 1–7), esses valores vêm **só da API** e aplicam-se normalmente.
+
+---
+
+## Ao carregar um layout: prefs que só “criam” no localStorage
+
+Ao carregar um layout (modelo default ou slot 1–7, pela API ou pelo modal “Carregar”), estas variáveis do layout **não substituem** o que já está no localStorage. Só são gravadas em `backcrypto-klines-local-prefs` **se a chave ainda não existir**:
+
+- `visibleCount` (número de candles)
+- `chartStyle` (candles, barras, linha, etc.)
+- `candleBodyStyle` (filled / hollow)
+- `drawingsVisible` (exibir/ocultar desenhos)
+
+Ou seja: valor já existente no localStorage é preservado; valor do layout é usado apenas para preencher chaves que ainda não existem. As demais prefs do layout (indicadores, estratégias, cores, eixos, VAP, etc.) aplicam-se normalmente a partir do `config` do layout.
 
 ---
 
@@ -64,7 +78,7 @@ Resumo prático:
 | Chave | Conteúdo |
 |-------|----------|
 | `backcrypto-klines-prefs` | Não é mais lido no carregamento; layout default vem só do banco. (Chave pode existir de sessões antigas.) |
-| `backcrypto-klines-local-prefs` | visibleCount, chartStyle, drawingsVisible (persistidos após layout aplicado; usados para init de estilo/olho). |
+| `backcrypto-klines-local-prefs` | visibleCount, chartStyle, candleBodyStyle, drawingsVisible. Usados no init; persistidos ao alterar ou após layout aplicado. Ao carregar um layout, o valor do layout só é gravado aqui **se a chave ainda não existir** (não sobrescreve). |
 | `backcrypto-klines-last-layout` | Último slot selecionado: `"default"` / `"0"` ou `"1"` … `"7"`. |
 | `backcrypto-klines-group-minutes` | Intervalo em minutos (ex.: 1440, 240). |
 | `backcrypto-klines-symbol` | Símbolo (ex.: BTCUSDT). |
