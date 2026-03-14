@@ -2657,6 +2657,10 @@ export namespace Prisma {
     progress: number | null
     language: $Enums.AppLanguage | null
     timezoneOffset: number | null
+    activeTabId: string | null
+    activeTabUpdatedAt: Date | null
+    previousTabId: string | null
+    previousTabUpdatedAt: Date | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -2697,6 +2701,10 @@ export namespace Prisma {
     progress: number | null
     language: $Enums.AppLanguage | null
     timezoneOffset: number | null
+    activeTabId: string | null
+    activeTabUpdatedAt: Date | null
+    previousTabId: string | null
+    previousTabUpdatedAt: Date | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -2737,6 +2745,10 @@ export namespace Prisma {
     progress: number
     language: number
     timezoneOffset: number
+    activeTabId: number
+    activeTabUpdatedAt: number
+    previousTabId: number
+    previousTabUpdatedAt: number
     _all: number
   }
 
@@ -2803,6 +2815,10 @@ export namespace Prisma {
     progress?: true
     language?: true
     timezoneOffset?: true
+    activeTabId?: true
+    activeTabUpdatedAt?: true
+    previousTabId?: true
+    previousTabUpdatedAt?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -2843,6 +2859,10 @@ export namespace Prisma {
     progress?: true
     language?: true
     timezoneOffset?: true
+    activeTabId?: true
+    activeTabUpdatedAt?: true
+    previousTabId?: true
+    previousTabUpdatedAt?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -2883,6 +2903,10 @@ export namespace Prisma {
     progress?: true
     language?: true
     timezoneOffset?: true
+    activeTabId?: true
+    activeTabUpdatedAt?: true
+    previousTabId?: true
+    previousTabUpdatedAt?: true
     _all?: true
   }
 
@@ -3010,6 +3034,10 @@ export namespace Prisma {
     progress: number
     language: $Enums.AppLanguage
     timezoneOffset: number
+    activeTabId: string | null
+    activeTabUpdatedAt: Date | null
+    previousTabId: string | null
+    previousTabUpdatedAt: Date | null
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -3069,6 +3097,10 @@ export namespace Prisma {
     progress?: boolean
     language?: boolean
     timezoneOffset?: boolean
+    activeTabId?: boolean
+    activeTabUpdatedAt?: boolean
+    previousTabId?: boolean
+    previousTabUpdatedAt?: boolean
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
     coinWallet?: boolean | User$coinWalletArgs<ExtArgs>
@@ -3121,6 +3153,10 @@ export namespace Prisma {
     progress?: boolean
     language?: boolean
     timezoneOffset?: boolean
+    activeTabId?: boolean
+    activeTabUpdatedAt?: boolean
+    previousTabId?: boolean
+    previousTabUpdatedAt?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -3161,6 +3197,10 @@ export namespace Prisma {
     progress?: boolean
     language?: boolean
     timezoneOffset?: boolean
+    activeTabId?: boolean
+    activeTabUpdatedAt?: boolean
+    previousTabId?: boolean
+    previousTabUpdatedAt?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -3201,9 +3241,13 @@ export namespace Prisma {
     progress?: boolean
     language?: boolean
     timezoneOffset?: boolean
+    activeTabId?: boolean
+    activeTabUpdatedAt?: boolean
+    previousTabId?: boolean
+    previousTabUpdatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language" | "timezoneOffset", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language" | "timezoneOffset" | "activeTabId" | "activeTabUpdatedAt" | "previousTabId" | "previousTabUpdatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
@@ -3274,6 +3318,10 @@ export namespace Prisma {
       progress: number
       language: $Enums.AppLanguage
       timezoneOffset: number
+      activeTabId: string | null
+      activeTabUpdatedAt: Date | null
+      previousTabId: string | null
+      previousTabUpdatedAt: Date | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -3745,6 +3793,10 @@ export namespace Prisma {
     readonly progress: FieldRef<"User", 'Int'>
     readonly language: FieldRef<"User", 'AppLanguage'>
     readonly timezoneOffset: FieldRef<"User", 'Int'>
+    readonly activeTabId: FieldRef<"User", 'String'>
+    readonly activeTabUpdatedAt: FieldRef<"User", 'DateTime'>
+    readonly previousTabId: FieldRef<"User", 'String'>
+    readonly previousTabUpdatedAt: FieldRef<"User", 'DateTime'>
   }
     
 
@@ -22271,7 +22323,11 @@ export namespace Prisma {
     hideStatusBar: 'hideStatusBar',
     progress: 'progress',
     language: 'language',
-    timezoneOffset: 'timezoneOffset'
+    timezoneOffset: 'timezoneOffset',
+    activeTabId: 'activeTabId',
+    activeTabUpdatedAt: 'activeTabUpdatedAt',
+    previousTabId: 'previousTabId',
+    previousTabUpdatedAt: 'previousTabUpdatedAt'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -22817,6 +22873,10 @@ export namespace Prisma {
     progress?: IntFilter<"User"> | number
     language?: EnumAppLanguageFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntFilter<"User"> | number
+    activeTabId?: StringNullableFilter<"User"> | string | null
+    activeTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    previousTabId?: StringNullableFilter<"User"> | string | null
+    previousTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -22868,6 +22928,10 @@ export namespace Prisma {
     progress?: SortOrder
     language?: SortOrder
     timezoneOffset?: SortOrder
+    activeTabId?: SortOrderInput | SortOrder
+    activeTabUpdatedAt?: SortOrderInput | SortOrder
+    previousTabId?: SortOrderInput | SortOrder
+    previousTabUpdatedAt?: SortOrderInput | SortOrder
     accessRequests?: AccessRequestOrderByRelationAggregateInput
     coinLedger?: CoinLedgerEntryOrderByRelationAggregateInput
     coinWallet?: UserCoinWalletOrderByWithRelationInput
@@ -22922,6 +22986,10 @@ export namespace Prisma {
     progress?: IntFilter<"User"> | number
     language?: EnumAppLanguageFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntFilter<"User"> | number
+    activeTabId?: StringNullableFilter<"User"> | string | null
+    activeTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    previousTabId?: StringNullableFilter<"User"> | string | null
+    previousTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -22973,6 +23041,10 @@ export namespace Prisma {
     progress?: SortOrder
     language?: SortOrder
     timezoneOffset?: SortOrder
+    activeTabId?: SortOrderInput | SortOrder
+    activeTabUpdatedAt?: SortOrderInput | SortOrder
+    previousTabId?: SortOrderInput | SortOrder
+    previousTabUpdatedAt?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -23021,6 +23093,10 @@ export namespace Prisma {
     progress?: IntWithAggregatesFilter<"User"> | number
     language?: EnumAppLanguageWithAggregatesFilter<"User"> | $Enums.AppLanguage
     timezoneOffset?: IntWithAggregatesFilter<"User"> | number
+    activeTabId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    activeTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    previousTabId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    previousTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   }
 
   export type ChartLayoutWhereInput = {
@@ -24217,6 +24293,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -24268,6 +24348,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -24319,6 +24403,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -24370,6 +24458,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -24421,6 +24513,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -24461,6 +24557,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -24501,6 +24601,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ChartLayoutCreateInput = {
@@ -26010,6 +26114,10 @@ export namespace Prisma {
     progress?: SortOrder
     language?: SortOrder
     timezoneOffset?: SortOrder
+    activeTabId?: SortOrder
+    activeTabUpdatedAt?: SortOrder
+    previousTabId?: SortOrder
+    previousTabUpdatedAt?: SortOrder
   }
 
   export type UserAvgOrderByAggregateInput = {
@@ -26062,6 +26170,10 @@ export namespace Prisma {
     progress?: SortOrder
     language?: SortOrder
     timezoneOffset?: SortOrder
+    activeTabId?: SortOrder
+    activeTabUpdatedAt?: SortOrder
+    previousTabId?: SortOrder
+    previousTabUpdatedAt?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -26102,6 +26214,10 @@ export namespace Prisma {
     progress?: SortOrder
     language?: SortOrder
     timezoneOffset?: SortOrder
+    activeTabId?: SortOrder
+    activeTabUpdatedAt?: SortOrder
+    previousTabId?: SortOrder
+    previousTabUpdatedAt?: SortOrder
   }
 
   export type UserSumOrderByAggregateInput = {
@@ -29111,6 +29227,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -29161,6 +29281,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -29227,6 +29351,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -29277,6 +29405,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -29327,6 +29459,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -29377,6 +29513,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -29443,6 +29583,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -29493,6 +29637,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -29543,6 +29691,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -29593,6 +29745,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -29659,6 +29815,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -29709,6 +29869,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -29759,6 +29923,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -29809,6 +29977,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -29875,6 +30047,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -29925,6 +30101,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -29975,6 +30155,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -30025,6 +30209,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -30091,6 +30279,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -30141,6 +30333,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -30191,6 +30387,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -30241,6 +30441,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -30307,6 +30511,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -30357,6 +30565,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -30441,6 +30653,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -30491,6 +30707,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -30573,6 +30793,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -30623,6 +30847,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -30673,6 +30901,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -30723,6 +30955,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -30835,6 +31071,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -30885,6 +31125,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -31022,6 +31266,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -31072,6 +31320,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -31173,6 +31425,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -31223,6 +31479,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -31273,6 +31533,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -31323,6 +31587,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -31389,6 +31657,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -31439,6 +31711,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -31489,6 +31765,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -31539,6 +31819,10 @@ export namespace Prisma {
     progress?: number
     language?: $Enums.AppLanguage
     timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -31605,6 +31889,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -31655,6 +31943,10 @@ export namespace Prisma {
     progress?: IntFieldUpdateOperationsInput | number
     language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
     timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput

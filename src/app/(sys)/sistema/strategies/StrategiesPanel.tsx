@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { useChartSymbol } from "../ChartSymbolContext";
 import { useKlinesIndicators } from "../KlinesIndicatorsContext";
@@ -214,6 +215,7 @@ interface StrategiesPanelProps {
 export default function StrategiesPanel({ onClose, initialView = "list" }: StrategiesPanelProps) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.strategies as Record<string, string>;
+  const { hideStatusBar } = useAppBarSafe();
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
   const { strategies, appliedStrategyIds, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
@@ -446,7 +448,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   return (
     <div
-      className="fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px]"
+      className={`fixed inset-y-0 left-0 z-[1301] flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px] ${hideStatusBar === false ? "crypto-status-bar-reserve" : ""}`}
       role="dialog"
       aria-label={t.panelTitle}
     >

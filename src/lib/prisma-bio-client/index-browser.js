@@ -158,7 +158,11 @@ exports.Prisma.UserScalarFieldEnum = {
   hideStatusBar: 'hideStatusBar',
   progress: 'progress',
   language: 'language',
-  timezoneOffset: 'timezoneOffset'
+  timezoneOffset: 'timezoneOffset',
+  activeTabId: 'activeTabId',
+  activeTabUpdatedAt: 'activeTabUpdatedAt',
+  previousTabId: 'previousTabId',
+  previousTabUpdatedAt: 'previousTabUpdatedAt'
 };
 
 exports.Prisma.ChartLayoutScalarFieldEnum = {

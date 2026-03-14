@@ -19,7 +19,7 @@ export interface KlinesChartSegmentOptionsProps {
   selectedSegmentIndex: number | null;
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   setSelectedSegmentIndex: (i: number | null) => void;
-  persistDrawDefault: (type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
+  persistDrawDefault: (type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   pixelToData: (x: number, y: number) => { index: number; price: number };
   t: Record<string, string>;
@@ -65,7 +65,9 @@ export function KlinesChartSegmentOptions({
       ? (tAs.freeRetracementColor ?? "Retração livre")
       : drawSegments[selectedSegmentIndex]?.type === "channel"
         ? tAs.channelMiddleColor ?? "Linha do meio"
-        : drawSegments[selectedSegmentIndex]?.type === "rectangle"
+        : drawSegments[selectedSegmentIndex]?.type === "stopGain"
+          ? tAs.stopGainTool ?? "Stop/Gain"
+          : drawSegments[selectedSegmentIndex]?.type === "rectangle"
           ? tAs.rectangleColor ?? t.segmentColor
           : drawSegments[selectedSegmentIndex]?.type === "horizontalLine"
             ? tAs.horizontalLineColor ?? t.segmentColor
@@ -176,7 +178,7 @@ export function KlinesChartSegmentOptions({
                       aria-selected={isSelected}
                       aria-label={colorLabel}
                       onClick={() => {
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
                         setDrawSegments((prev) => {
                           const next = [...prev];
                           const seg = next[selectedSegmentIndex];
@@ -583,6 +585,142 @@ export function KlinesChartSegmentOptions({
             </label>
           </>
         )}
+        {drawSegments[selectedSegmentIndex]?.type === "stopGain" && (() => {
+          const seg = drawSegments[selectedSegmentIndex] as DrawSegment & { stopGainRatioUp?: number; stopGainRatioDown?: number; stopGainFillOpacity?: number; stopGainShowPercent?: boolean; stopGainShowValuesOnYAxis?: boolean; stopGainStrokeWidth?: "thin" | "medium" };
+          const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+          const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+          const opacity = Math.max(0.1, Math.min(0.7, seg.stopGainFillOpacity ?? 0.5));
+          const clampRatio = (v: number) => Math.max(1, Math.min(10, Math.round(v * 100) / 100));
+          const clampOpacity = (v: number) => Math.max(0.1, Math.min(0.7, Math.round(v * 100) / 100));
+          return (
+            <>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="stopgain-stroke-width-listbox">{tAs.stopGainStrokeWidth ?? t.fibStrokeWidth}</label>
+                <select
+                  id="stopgain-stroke-width-listbox"
+                  value={seg.stopGainStrokeWidth ?? "medium"}
+                  onChange={(e) => {
+                    const v = e.target.value as "thin" | "medium";
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainStrokeWidth: v };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainStrokeWidth: v });
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                  aria-label={tAs.stopGainStrokeWidth ?? t.fibStrokeWidth}
+                >
+                  <option value="thin">{t.strokeThin ?? "Fino"}</option>
+                  <option value="medium">{t.strokeMedium ?? "Médio"}</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={seg.stopGainShowPercent === true}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainShowPercent: checked };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainShowPercent: checked });
+                  }}
+                  className="rounded border-zinc-300"
+                />
+                <span>{t.showPercent ?? "Mostrar %"}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={seg.stopGainShowValuesOnYAxis === true}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainShowValuesOnYAxis: checked };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainShowValuesOnYAxis: checked });
+                  }}
+                  className="rounded border-zinc-300"
+                />
+                <span>{tAs.stopGainShowValuesOnYAxis ?? "Valores no eixo Y"}</span>
+              </label>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="stopgain-ratio-up">{tAs.stopGainRatioUp ?? "Proporção ganho (acima)"}</label>
+                <input
+                  id="stopgain-ratio-up"
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={0.01}
+                  value={ru}
+                  onChange={(e) => {
+                    const v = clampRatio(Number(e.target.value));
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainRatioUp: v };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainRatioUp: v });
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="stopgain-ratio-down">{tAs.stopGainRatioDown ?? "Proporção perda (abaixo)"}</label>
+                <input
+                  id="stopgain-ratio-down"
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={0.01}
+                  value={rd}
+                  onChange={(e) => {
+                    const v = clampRatio(Number(e.target.value));
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainRatioDown: v };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainRatioDown: v });
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="stopgain-fill-opacity">{tAs.stopGainFillOpacity ?? "Opacidade preenchimento (10–70%)"}</label>
+                <input
+                  id="stopgain-fill-opacity"
+                  type="number"
+                  min={0.1}
+                  max={0.7}
+                  step={0.01}
+                  value={opacity}
+                  onChange={(e) => {
+                    const v = clampOpacity(Number(e.target.value));
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const s = next[selectedSegmentIndex];
+                      if (s) next[selectedSegmentIndex] = { ...s, stopGainFillOpacity: v };
+                      return next;
+                    });
+                    persistDrawDefault("stopGain", { stopGainFillOpacity: v });
+                  }}
+                  className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                />
+              </div>
+            </>
+          );
+        })()}
         {drawSegments[selectedSegmentIndex]?.type === "rectangle" && (
           <>
             <div>

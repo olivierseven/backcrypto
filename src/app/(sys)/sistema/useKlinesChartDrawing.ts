@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
 import { KLINE_DRAW_MAGNETIC_KEY } from "./KlinesChartConstants";
 
-export type DrawTool = "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+export type DrawTool = "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
 
 function getInitialDrawMagnetic(): boolean {
   if (typeof window === "undefined") return false;
@@ -33,12 +33,13 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPendingFreeRetraceSecond, setDrawPendingFreeRetraceSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingLineSecond, setDrawPendingLineSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingChannelSecond, setDrawPendingChannelSecond] = useState<{ index: number; price: number } | null>(null);
+  const [drawPendingStopGainSecond, setDrawPendingStopGainSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingHorizontalSecond, setDrawPendingHorizontalSecond] = useState<{ index: number; price: number } | null>(null);
   const [drawPendingArrow, setDrawPendingArrow] = useState<{ index1: number; price1: number; angleRad: number } | null>(null);
   const [drawPendingText, setDrawPendingText] = useState<{ index1: number; price1: number } | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>(null);
+  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>(null);
 
   const drawRef = useRef<HTMLDivElement>(null);
   const drawConversionRef = useRef<DrawConversionParams | null>(null);
@@ -151,6 +152,63 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
           if (s.type !== "channel") return prev;
           const midPrice = (s.price1 + s.price2) / 2;
           s.channelOffset = Math.round((price - midPrice) * 10000) / 10000;
+        } else if (drawDragging.point === "stopGainMid") {
+          if (s.type !== "stopGain") return prev;
+          const midPrice = s.price1;
+          s.stopGainOpenAmount = Math.round(Math.max(0, 2 * Math.abs(price - midPrice)) * 10000) / 10000;
+        } else if (drawDragging.point === "stopGainMove") {
+          if (s.type !== "stopGain") return prev;
+          const span = s.index2 - s.index1;
+          const halfSpan = span / 2;
+          const newIndex1 = Math.max(0, Math.min(c.maxDrawIndex - span, Math.round(idx - halfSpan)));
+          s.index1 = newIndex1;
+          s.index2 = newIndex1 + span;
+          s.price1 = price;
+          s.price2 = price;
+        } else if (drawDragging.point === "stopGainGainLine") {
+          if (s.type !== "stopGain") return prev;
+          const midPrice = s.price1;
+          const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
+          const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
+          const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
+          const stopOffset = openAmount * (rd / (ru + rd));
+          let gainOffsetNew = Math.max(0, price - midPrice);
+          if (stopOffset > 0) {
+            const maxGainForRatio10 = (10 * stopOffset) / rd;
+            if (gainOffsetNew > maxGainForRatio10) gainOffsetNew = maxGainForRatio10;
+          }
+          if (stopOffset <= 0) {
+            s.stopGainOpenAmount = Math.round(gainOffsetNew * 10000) / 10000;
+            s.stopGainRatioUp = 10;
+            s.stopGainRatioDown = 1;
+          } else {
+            const openAmountNew = gainOffsetNew + stopOffset;
+            const ruNew = Math.max(1, Math.min(10, Math.round((rd * gainOffsetNew) / stopOffset * 100) / 100));
+            s.stopGainOpenAmount = Math.round(openAmountNew * 10000) / 10000;
+            s.stopGainRatioUp = ruNew;
+          }
+        } else if (drawDragging.point === "stopGainStopLine") {
+          if (s.type !== "stopGain") return prev;
+          const midPrice = s.price1;
+          const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
+          const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
+          const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
+          const gainOffset = openAmount * (ru / (ru + rd));
+          let stopOffsetNew = Math.max(0, midPrice - price);
+          if (gainOffset > 0) {
+            const maxStopForRatio10 = (10 * gainOffset) / ru;
+            if (stopOffsetNew > maxStopForRatio10) stopOffsetNew = maxStopForRatio10;
+          }
+          if (gainOffset <= 0) {
+            s.stopGainOpenAmount = Math.round(stopOffsetNew * 10000) / 10000;
+            s.stopGainRatioUp = 1;
+            s.stopGainRatioDown = 10;
+          } else {
+            const openAmountNew = gainOffset + stopOffsetNew;
+            const rdNew = Math.max(1, Math.min(10, Math.round((ru * stopOffsetNew) / gainOffset * 100) / 100));
+            s.stopGainOpenAmount = Math.round(openAmountNew * 10000) / 10000;
+            s.stopGainRatioDown = rdNew;
+          }
         } else if (drawDragging.point === "channelExtension") {
           if (s.type !== "channel") return prev;
           const ext = Math.max(0, idx - s.index2);
@@ -187,12 +245,17 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
           s.price2 = price;
         } else if (drawDragging.point === 0) {
           s.index1 = idx;
-          if (s.type !== "horizontalLine" && s.type !== "verticalLine") s.price1 = price;
+          if (s.type !== "horizontalLine" && s.type !== "verticalLine" && s.type !== "stopGain") s.price1 = price;
           if (s.type === "verticalLine") s.index2 = idx;
+          if (s.type === "stopGain") {
+            s.price1 = price;
+            s.price2 = price;
+          }
         } else {
           s.index2 = idx;
-          if (s.type !== "horizontalLine") s.price2 = price;
+          if (s.type !== "horizontalLine" && s.type !== "stopGain") s.price2 = price;
           if (s.type === "verticalLine") s.index1 = idx;
+          if (s.type === "stopGain") s.price2 = s.price1;
         }
         next[segIdx] = s;
         return next;
@@ -231,6 +294,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -246,6 +310,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -261,6 +326,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -276,6 +342,23 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
+    setDrawPendingHorizontalSecond(null);
+    setDrawPendingArrow(null);
+    setDrawPendingText(null);
+  }, []);
+
+  const selectStopGainTool = useCallback(() => {
+    setDrawTool("stopGain");
+    setDrawMode(true);
+    setSelectedSegmentIndex(null);
+    setDrawPending(null);
+    setDrawPendingRectSecond(null);
+    setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
+    setDrawPendingLineSecond(null);
+    setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -291,6 +374,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -306,6 +390,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -321,6 +406,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -336,6 +422,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -351,6 +438,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -365,6 +453,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -380,6 +469,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -393,6 +483,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingFreeRetraceSecond(null);
     setDrawPendingLineSecond(null);
     setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
     setDrawPendingHorizontalSecond(null);
     setDrawPendingArrow(null);
     setDrawPendingText(null);
@@ -425,6 +516,8 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawPendingLineSecond,
     drawPendingChannelSecond,
     setDrawPendingChannelSecond,
+    drawPendingStopGainSecond,
+    setDrawPendingStopGainSecond,
     drawPendingHorizontalSecond,
     setDrawPendingHorizontalSecond,
     drawPendingArrow,
@@ -444,6 +537,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     selectFibonacciTool,
     selectFreeRetracementTool,
     selectChannelTool,
+    selectStopGainTool,
     selectHorizontalLineTool,
     selectVerticalLineTool,
     selectArrowTool,

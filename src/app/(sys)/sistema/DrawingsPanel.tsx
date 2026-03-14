@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { KLINE_DRAW_SEGMENTS_KEY } from "./KlinesChartConstants";
@@ -23,6 +24,7 @@ function formatIntervalLabel(m: number) {
 export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines as Record<string, string>;
+  const { hideStatusBar } = useAppBarSafe();
   const { currentGroupMinutes } = useKlinesIndicators();
   const [savedDrawingsList, setSavedDrawingsList] = useState<DrawSegment[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -58,7 +60,9 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
             ? "freeRetracement"
             : type === "channel"
             ? "channelTool"
-            : type === "rectangle"
+            : type === "stopGain"
+              ? "stopGainTool"
+              : type === "rectangle"
               ? "rectangleTool"
               : type === "horizontalLine"
                 ? "horizontalLine"
@@ -106,7 +110,7 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
 
   return (
     <div
-      className="fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px]"
+      className={`fixed inset-y-0 left-0 z-[1301] flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px] ${hideStatusBar === false ? "crypto-status-bar-reserve" : ""}`}
       role="dialog"
       aria-label={t.menuDrawings ?? "Drawings"}
     >

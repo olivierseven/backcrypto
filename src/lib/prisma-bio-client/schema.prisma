@@ -83,43 +83,47 @@ enum CheckoutStatus {
 }
 
 model User {
-  id               String      @id @default(cuid())
-  emailEnc         String
-  emailIv          String
-  emailTag         String
-  emailSearchHash  String      @unique
-  emailVerifiedAt  DateTime?
-  name             String?
-  passwordHash     String
-  specialCodeHash  String?
-  specialExpiresAt DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  role             Role        @default(user)
-  tier             Tier        @default(free)
-  nickname         String?     @unique
-  nicknameChanges  Int         @default(0)
-  avatarId         Int         @default(1)
-  avatarBorder     String      @default("white")
-  avatarSkinTone   Int?
-  avatarColorTone  Int?
-  sevenPoints      Int         @default(0)
-  ganhoSimulado    Decimal     @default(0) @db.Decimal(65, 30)
-  userLevel        UserLevel   @default(RECRUTA)
-  position         Int?
-  tmp              Boolean     @default(false)
-  isDeleted        Boolean     @default(false)
-  dataExclusao     DateTime?
-  dataExpiracao    DateTime?
-  pushToken        String?
-  pushTokenUpdated DateTime?
-  notifyMegaSena   Boolean     @default(true)
-  notifyLotofacil  Boolean     @default(true)
-  notifyQuina      Boolean     @default(true)
-  hideStatusBar    Boolean     @default(true)
-  progress         Int         @default(0)
-  language         AppLanguage @default(en)
-  timezoneOffset   Int         @default(0) // UTC offset in hours, -12 to +12
+  id                   String      @id @default(cuid())
+  emailEnc             String
+  emailIv              String
+  emailTag             String
+  emailSearchHash      String      @unique
+  emailVerifiedAt      DateTime?
+  name                 String?
+  passwordHash         String
+  specialCodeHash      String?
+  specialExpiresAt     DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  role                 Role        @default(user)
+  tier                 Tier        @default(free)
+  nickname             String?     @unique
+  nicknameChanges      Int         @default(0)
+  avatarId             Int         @default(1)
+  avatarBorder         String      @default("white")
+  avatarSkinTone       Int?
+  avatarColorTone      Int?
+  sevenPoints          Int         @default(0)
+  ganhoSimulado        Decimal     @default(0) @db.Decimal(65, 30)
+  userLevel            UserLevel   @default(RECRUTA)
+  position             Int?
+  tmp                  Boolean     @default(false)
+  isDeleted            Boolean     @default(false)
+  dataExclusao         DateTime?
+  dataExpiracao        DateTime?
+  pushToken            String?
+  pushTokenUpdated     DateTime?
+  notifyMegaSena       Boolean     @default(true)
+  notifyLotofacil      Boolean     @default(true)
+  notifyQuina          Boolean     @default(true)
+  hideStatusBar        Boolean     @default(true)
+  progress             Int         @default(0)
+  language             AppLanguage @default(en)
+  timezoneOffset       Int         @default(0) // UTC offset in hours, -12 to +12
+  activeTabId          String?     @map("active_tab_id") // Uma aba ativa por usuário (controle via banco)
+  activeTabUpdatedAt   DateTime?   @map("active_tab_updated_at")
+  previousTabId        String?     @map("previous_tab_id") // Aba que acabou de ser substituída (bloqueada por ~60s)
+  previousTabUpdatedAt DateTime?   @map("previous_tab_updated_at")
 
   accessRequests      AccessRequest[]
   coinLedger          CoinLedgerEntry[]

@@ -7,7 +7,7 @@
  */
 import { DEFAULT_SEGMENT_COLOR, getTextSegmentBox, type DrawSegment, type TextSize } from "../KlinesChartDrawing";
 
-export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove";
+export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove";
 
 export interface DrawSegmentHandlesProps {
   segment: DrawSegment;
@@ -35,11 +35,13 @@ export function DrawSegmentHandles({
   const isFib = seg.type === "fibonacci";
   const isFreeRetracement = seg.type === "freeRetracement";
   const isChannel = seg.type === "channel";
+  const isStopGain = seg.type === "stopGain";
   const isHorizontalLine = seg.type === "horizontalLine";
   const isVerticalLine = seg.type === "verticalLine";
   const isArrow = seg.type === "arrow";
   const isText = seg.type === "text";
   const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
+  const stopGainMidPos = isStopGain ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
   const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
   const fibLevel1Pct = isFib ? Math.round(Math.max(0, Math.min(50, seg.fibLevelPct1 ?? 33.33)) * 10000) / 10000 : 0;
@@ -131,6 +133,42 @@ export function DrawSegmentHandles({
           </>
         );
       })()}
+      {isStopGain && (() => {
+        const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+        const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+        const openAmount = Math.max(0, seg.stopGainOpenAmount ?? 0);
+        const midPrice = seg.price1;
+        const gainOffset = openAmount * (ru / (ru + rd));
+        const stopOffset = openAmount * (rd / (ru + rd));
+        const priceTop = midPrice + gainOffset;
+        const priceBottom = midPrice - stopOffset;
+        const pa = segmentToPixel(seg.index1, midPrice);
+        const pb = segmentToPixel(seg.index2, midPrice);
+        const paUp = segmentToPixel(seg.index1, priceTop);
+        const pbUp = segmentToPixel(seg.index2, priceTop);
+        const paDn = segmentToPixel(seg.index1, priceBottom);
+        const pbDn = segmentToPixel(seg.index2, priceBottom);
+        const xMin = Math.min(pa.x, pb.x);
+        const xMax = Math.max(pa.x, pb.x);
+        const yMin = Math.min(paUp.y, pbUp.y, paDn.y, pbDn.y);
+        const yMax = Math.max(paUp.y, pbUp.y, paDn.y, pbDn.y);
+        const padding = 4;
+        return (
+          <rect
+            x={xMin - padding}
+            y={yMin - padding}
+            width={xMax - xMin + 2 * padding}
+            height={yMax - yMin + 2 * padding}
+            fill="transparent"
+            stroke="none"
+            style={{ cursor: "grab" }}
+            aria-label={(t as Record<string, string>).stopGainMove ?? "Arrastar para mover"}
+            onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainMove" }); }}
+            onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainMove" }); }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        );
+      })()}
       {!isVerticalLine && !isArrow && !isText && (
         <>
           <circle
@@ -159,6 +197,61 @@ export function DrawSegmentHandles({
           {!isChannel && <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />}
         </>
       )}
+      {isStopGain && (() => {
+        const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+        const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+        const openAmount = Math.max(0, seg.stopGainOpenAmount ?? 0);
+        const midPrice = seg.price1;
+        const gainOffset = openAmount * (ru / (ru + rd));
+        const stopOffset = openAmount * (rd / (ru + rd));
+        const priceTop = midPrice + gainOffset;
+        const priceBottom = midPrice - stopOffset;
+        const gainLineStart = segmentToPixel(seg.index1, priceTop);
+        const stopLineStart = segmentToPixel(seg.index1, priceBottom);
+        return (
+          <>
+            <circle
+              cx={stopGainMidPos.x}
+              cy={stopGainMidPos.y}
+              r={5}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "ns-resize" }}
+              aria-label={(t as Record<string, string>).stopGainMidDrag ?? "Arrastar para abrir ganho/perda"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainMid" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainMid" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={stopGainMidPos.x} cy={stopGainMidPos.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+            <circle
+              cx={gainLineStart.x}
+              cy={gainLineStart.y}
+              r={5}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "ns-resize" }}
+              aria-label={(t as Record<string, string>).stopGainGainLineDrag ?? "Arrastar para ajustar proporção ganho"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainGainLine" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainGainLine" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={gainLineStart.x} cy={gainLineStart.y} r={3} fill="#059669" stroke="#059669" strokeWidth={1} pointerEvents="none" />
+            <circle
+              cx={stopLineStart.x}
+              cy={stopLineStart.y}
+              r={5}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "ns-resize" }}
+              aria-label={(t as Record<string, string>).stopGainStopLineDrag ?? "Arrastar para ajustar proporção perda"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainStopLine" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "stopGainStopLine" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={stopLineStart.x} cy={stopLineStart.y} r={3} fill="#dc2626" stroke="#dc2626" strokeWidth={1} pointerEvents="none" />
+          </>
+        );
+      })()}
       {isChannel && (
         <>
           <circle

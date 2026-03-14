@@ -98,6 +98,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33, fibShow1618: false, fibShowValuesOnYAxis: false },
   freeRetracement: { color: SEGMENT_COLOR_PALETTE[0], freeRetracementLevelPct1: 25, freeRetracementLevelPct: 75, freeRetracementLevelPctExt: 100, freeRetracementShowValuesOnYAxis: false, freeRetracementExtensionIndices: 0, fibStrokeWidth: "medium", showPercent: true, showValues: false },
   channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
+  stopGain: { stopGainRatioUp: 1, stopGainRatioDown: 1, stopGainFillOpacity: 0.5, stopGainShowPercent: false, stopGainShowValuesOnYAxis: false, stopGainStrokeWidth: "medium" },
   rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false },
   horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid" },
   verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid" },
@@ -217,6 +218,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const chartSvgRef = useRef<SVGSVGElement>(null);
   const chartDimensionsRef = useRef<{ w: number; h: number; sizePercent?: number }>({ w: 0, h: 0 });
   const candleAreaRef = useRef({ left: MARGIN_LEFT, top: MARGIN_TOP, width: 0, height: 0 });
+  /** Evitar gravar segmentos/visibilidade do intervalo anterior na chave do novo ao trocar timeframe (race entre load e persist). */
+  const lastPersistedDrawKeyRef = useRef<string>("");
+  const lastPersistedVisibleKeyRef = useRef<string>("");
 
   const drawing = useKlinesChartDrawing(chartSvgRef);
   const {
@@ -240,6 +244,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     setDrawPendingLineSecond,
     drawPendingChannelSecond,
     setDrawPendingChannelSecond,
+    drawPendingStopGainSecond,
+    setDrawPendingStopGainSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     setDrawDragging,
@@ -252,6 +258,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     selectFibonacciTool,
     selectFreeRetracementTool,
     selectChannelTool,
+    selectStopGainTool,
     selectHorizontalLineTool,
     selectVerticalLineTool,
     selectArrowTool,
@@ -314,7 +321,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => cancelAnimationFrame(id);
   }, [groupMinutes]);
 
-  // Carregar segmentos e visibilidade de desenho do localStorage ao mudar o intervalo
+  // Chave de storage por timeframe (símbolo + intervalo) para desenhos e visibilidade
+  const drawStorageKey = (symbolProp ? `${String(symbolProp)}|${groupMinutes}` : String(groupMinutes));
+
+  // Carregar segmentos e visibilidade de desenho do localStorage ao mudar o timeframe (símbolo ou intervalo)
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY) : null;
@@ -324,8 +334,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         setDrawPending(null);
       } else {
         const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-        const key = String(groupMinutes);
-        const loaded = Array.isArray(data[key]) ? data[key] : [];
+        const loaded = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : (Array.isArray(data[String(groupMinutes)]) ? data[String(groupMinutes)] : []);
         setDrawSegments(loaded);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
@@ -334,8 +343,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       if (visibleRaw) {
         try {
           const visibleData = JSON.parse(visibleRaw) as Record<string, boolean>;
-          const key = String(groupMinutes);
-          if (typeof visibleData[key] === "boolean") setDrawingsVisible(visibleData[key]);
+          if (typeof visibleData[drawStorageKey] === "boolean") setDrawingsVisible(visibleData[drawStorageKey]);
+          else if (typeof visibleData[String(groupMinutes)] === "boolean") setDrawingsVisible(visibleData[String(groupMinutes)]);
         } catch {
           /* ignore */
         }
@@ -346,8 +355,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       setDrawPending(null);
     }
     setSegmentsApplied(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
-  }, [groupMinutes]);
+  }, [groupMinutes, symbolProp, drawStorageKey]);
 
   // Ouvir evento de limpeza de cache de desenhos (ex.: menu mobile "Limpar todo o cache")
   useEffect(() => {
@@ -368,8 +376,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           return;
         }
         const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-        const key = String(groupMinutes);
-        const loaded = Array.isArray(data[key]) ? data[key] : [];
+        const loaded = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
         setDrawSegments(loaded);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
@@ -381,7 +388,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     };
     window.addEventListener("backcrypto-drawings-updated", handler);
     return () => window.removeEventListener("backcrypto-drawings-updated", handler);
-  }, [groupMinutes]);
+  }, [groupMinutes, symbolProp, drawStorageKey]);
 
   // Editar desenho a partir do menu Desenhos: fecha o painel, seleciona o objeto e leva o gráfico até o candle do primeiro ponto
   useEffect(() => {
@@ -416,6 +423,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
         freeRetracement: { ...BUILTIN_DRAW_DEFAULTS.freeRetracement, ...parsed.freeRetracement },
         channel: { ...BUILTIN_DRAW_DEFAULTS.channel, ...parsed.channel },
+        stopGain: { ...BUILTIN_DRAW_DEFAULTS.stopGain, ...parsed.stopGain },
         rectangle: { ...BUILTIN_DRAW_DEFAULTS.rectangle, ...parsed.rectangle },
         horizontalLine: { ...BUILTIN_DRAW_DEFAULTS.horizontalLine, ...parsed.horizontalLine },
         verticalLine: { ...BUILTIN_DRAW_DEFAULTS.verticalLine, ...parsed.verticalLine },
@@ -428,13 +436,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
         fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
         freeRetracement: type === "freeRetracement" ? { ...prev.freeRetracement, ...partial } : prev.freeRetracement,
         channel: type === "channel" ? { ...prev.channel, ...partial } : prev.channel,
+        stopGain: type === "stopGain" ? { ...prev.stopGain, ...partial } : prev.stopGain,
         rectangle: type === "rectangle" ? { ...prev.rectangle, ...partial } : prev.rectangle,
         horizontalLine: type === "horizontalLine" ? { ...prev.horizontalLine, ...partial } : prev.horizontalLine,
         verticalLine: type === "verticalLine" ? { ...prev.verticalLine, ...partial } : prev.verticalLine,
@@ -482,32 +491,41 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     [drawPendingText, drawDefaults.text, setDrawSegments, setDrawPendingText, setSelectedSegmentIndex, selectSelectTool, setDrawOpen, setSegmentToolboxCollapsed]
   );
 
-  // Persistir visibilidade dos desenhos (por intervalo)
+  // Persistir visibilidade dos desenhos (por timeframe: símbolo + intervalo). Não gravar ao trocar timeframe (estado ainda é o anterior).
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (drawStorageKey !== lastPersistedVisibleKeyRef.current) {
+      lastPersistedVisibleKeyRef.current = drawStorageKey;
+      return;
+    }
     try {
-      if (typeof window === "undefined") return;
       const raw = window.localStorage.getItem(KLINE_DRAW_VISIBLE_KEY);
       const data: Record<string, boolean> = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-      data[String(groupMinutes)] = drawingsVisible;
+      data[drawStorageKey] = drawingsVisible;
       window.localStorage.setItem(KLINE_DRAW_VISIBLE_KEY, JSON.stringify(data));
     } catch {
       /* ignore */
     }
-  }, [groupMinutes, drawingsVisible]);
+  }, [drawStorageKey, drawingsVisible]);
 
-  // Persistir segmentos no localStorage (por intervalo; em outros intervalos não são exibidos)
+  // Persistir segmentos só no localStorage ao criar/editar (não dispara save de layout no servidor).
+  // Só grava depois do carregamento inicial (segmentsApplied), senão sobrescreve o localStorage com [] no primeiro render.
+  // Chave por timeframe (símbolo + intervalo). Ao trocar timeframe, não gravar nesta rodada (drawSegments ainda é do intervalo anterior).
   useEffect(() => {
+    if (!segmentsApplied || typeof window === "undefined") return;
+    if (drawStorageKey !== lastPersistedDrawKeyRef.current) {
+      lastPersistedDrawKeyRef.current = drawStorageKey;
+      return;
+    }
     try {
-      if (typeof window === "undefined") return;
       const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
       const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
-      const key = String(groupMinutes);
-      data[key] = drawSegments;
+      data[drawStorageKey] = drawSegments;
       window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
     } catch {
       /* ignore */
     }
-  }, [groupMinutes, drawSegments]);
+  }, [drawStorageKey, drawSegments, segmentsApplied]);
 
   const formatYAxis = yAxisAbbreviated ? formatUsdt : formatUsdtTwoDecimals;
   const candleColors = CANDLE_COLOR_PRESETS.find((p) => p.id === candleColorPreset) ?? CANDLE_COLOR_PRESETS[0];
@@ -778,7 +796,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => window.removeEventListener("chart-layout-get-config", handler);
   }, []);
 
-  /** Monta as 3 colunas a partir do estado atual (chart + extra do KlinesTable). */
+  /** Monta as 3 colunas a partir do estado atual (chart + extra do KlinesTable). Desenhos ficam só no localStorage, não vão no layout do servidor. */
   const buildLayoutColumns = useCallback(() => {
     const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, chartStyle, candleBodyStyle };
     const extra = getLayoutExtraConfig?.() ?? {} as Record<string, unknown>;
@@ -1640,6 +1658,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             selectFibonacciTool={selectFibonacciTool}
             selectFreeRetracementTool={selectFreeRetracementTool}
             selectChannelTool={selectChannelTool}
+            selectStopGainTool={selectStopGainTool}
             selectRectangleTool={selectRectangleTool}
             selectVerticalLineTool={selectVerticalLineTool}
             selectTextTool={selectTextTool}
@@ -1665,7 +1684,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             onUpgradeRequest={() => setShowUpgradeModal(true)}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -1787,6 +1806,15 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                       aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
                     >
                       <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectStopGainTool}
+                      title={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "stopGain" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/stopgain.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
                     </button>
                     <button
                       type="button"
@@ -1971,6 +1999,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               setDrawPendingLineSecond={setDrawPendingLineSecond}
               drawPendingChannelSecond={drawPendingChannelSecond}
               setDrawPendingChannelSecond={setDrawPendingChannelSecond}
+              drawPendingStopGainSecond={drawPendingStopGainSecond}
+              setDrawPendingStopGainSecond={setDrawPendingStopGainSecond}
               drawPendingHorizontalSecond={drawPendingHorizontalSecond}
               setDrawPendingHorizontalSecond={setDrawPendingHorizontalSecond}
               drawPendingArrow={drawPendingArrow}
@@ -2199,6 +2229,22 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                             { price: s.price2 + range * k3, color: c },
                             { price: s.price1, color: c },
                             { price: s.price2 + range * kExt, color: c },
+                          ];
+                        }),
+                      ...drawSegments
+                        .filter((s): s is DrawSegment & { type: "stopGain" } => s.type === "stopGain" && s.stopGainShowValuesOnYAxis === true)
+                        .flatMap((s) => {
+                          const midPrice = s.price1;
+                          const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
+                          const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
+                          const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
+                          const gainOffset = openAmount * (ru / (ru + rd));
+                          const stopOffset = openAmount * (rd / (ru + rd));
+                          const midColor = s.color ?? DEFAULT_SEGMENT_COLOR;
+                          return [
+                            { price: midPrice - stopOffset, color: "#dc2626" },
+                            { price: midPrice, color: midColor },
+                            { price: midPrice + gainOffset, color: "#059669" },
                           ];
                         }),
                     ]

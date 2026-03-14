@@ -185,6 +185,8 @@ export interface IndicatorsPanelContextValue {
   panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
   panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
   indicatorCountByPanel: { main: number; panel2: number; panel3: number; panel4: number; panel5: number };
+  /** Modo free: painéis 3, 4 e 5 não podem ser selecionados. */
+  isFreeUser?: boolean;
   MAIN_MAX_INDICATORS: number;
   SECONDARY_MAX_INDICATORS: number;
   isMovingAverageType: (type: string) => boolean;

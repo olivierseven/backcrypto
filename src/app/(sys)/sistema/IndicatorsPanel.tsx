@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { getCryptoT } from "@/app/lib/translations";
 import {
   useKlinesIndicators,
@@ -118,11 +119,14 @@ const INITIAL_ADD_FORM: AddFormState = {
 interface IndicatorsPanelProps {
   initialView?: "list" | "add";
   onClose?: () => void;
+  /** Modo free: bloqueia seleção dos painéis 3, 4 e 5. */
+  isFreeUser?: boolean;
 }
 
-export default function IndicatorsPanel({ initialView = "list", onClose }: IndicatorsPanelProps) {
+export default function IndicatorsPanel({ initialView = "list", onClose, isFreeUser = false }: IndicatorsPanelProps) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
+  const { hideStatusBar } = useAppBarSafe();
   const { userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals } = useKlinesIndicators();
   const { appliedStrategyIds, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const chartLayoutSave = useChartLayoutSave();
@@ -232,22 +236,22 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
 
   const panelsFreeForSecondary = useMemo(() => ({
     panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS,
-    panel3: indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS,
-    panel4: indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS,
-    panel5: indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS,
-  }), [indicatorCountByPanel]);
+    panel3: !isFreeUser && indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS,
+    panel4: !isFreeUser && indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS,
+    panel5: !isFreeUser && indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS,
+  }), [indicatorCountByPanel, isFreeUser]);
 
   const panelsFreeForSecondaryEdit = useMemo(() => {
-    if (!editingId) return { panel2: true, panel3: true, panel4: true, panel5: true };
+    if (!editingId) return { panel2: true, panel3: !isFreeUser, panel4: !isFreeUser, panel5: !isFreeUser };
     const editing = userIndicators.find((i) => i.id === editingId);
     const editingPanel = editing ? getPanel(editing) : null;
     return {
       panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS || editingPanel === "panel2",
-      panel3: indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS || editingPanel === "panel3",
-      panel4: indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS || editingPanel === "panel4",
-      panel5: indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS || editingPanel === "panel5",
+      panel3: (!isFreeUser && (indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS || editingPanel === "panel3")),
+      panel4: (!isFreeUser && (indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS || editingPanel === "panel4")),
+      panel5: (!isFreeUser && (indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS || editingPanel === "panel5")),
     };
-  }, [userIndicators, editingId, indicatorCountByPanel]);
+  }, [userIndicators, editingId, indicatorCountByPanel, isFreeUser]);
 
   const setFieldKey = useCallback((v: import("./KlinesIndicatorsContext").IndicatorFieldKey) => {
     setAddForm((prev) => ({ ...prev, fieldKey: v }));
@@ -309,9 +313,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
     const effectivePanel: IndicatorPanel = addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP"
       ? "main"
       : addForm.indicatorType === "Volume"
-      ? (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
-        ? addForm.chartOption
-        : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2")
+      ? isFreeUser
+        ? "panel2"
+        : (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
+          ? addForm.chartOption
+          : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2")
       : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR"
       ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (addForm.chartOption === "panel5" && panelsFreeForSecondary.panel5)
         ? addForm.chartOption
@@ -397,7 +403,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       } : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
-  }, [addForm, panelsWithSecondary, currentGroupMinutes, addIndicator, defaultModelMaxIndicatorsReached]);
+  }, [addForm, panelsWithSecondary, panelsFreeForSecondary, indicatorCountByPanel, isFreeUser, currentGroupMinutes, addIndicator, defaultModelMaxIndicatorsReached]);
 
   const deactivateAllStrategies = useCallback(() => {
     if (appliedStrategyIds.length === 0) return;
@@ -634,6 +640,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       panelsFreeForSecondary,
       panelsFreeForSecondaryEdit,
       indicatorCountByPanel,
+      isFreeUser,
       MAIN_MAX_INDICATORS,
       SECONDARY_MAX_INDICATORS,
       isMovingAverageType: isMA,
@@ -668,6 +675,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
       panelsFreeForSecondary,
       panelsFreeForSecondaryEdit,
       indicatorCountByPanel,
+      isFreeUser,
       isMA,
       addButtonDisabled,
       defaultModelMaxIndicatorsReached,
@@ -685,7 +693,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose }: Indic
 
   return (
     <div
-      className="fixed inset-y-0 left-0 z-40 flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px]"
+      className={`fixed inset-y-0 left-0 z-[1301] flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px] ${hideStatusBar === false ? "crypto-status-bar-reserve" : ""}`}
       role="dialog"
       aria-label={t.indicatorsPanelTitle}
     >

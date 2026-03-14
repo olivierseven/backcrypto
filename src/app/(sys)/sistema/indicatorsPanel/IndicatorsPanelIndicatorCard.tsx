@@ -17,6 +17,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     panelsWithSecondary,
     panelsFreeForSecondaryEdit,
     indicatorCountByPanel,
+    isFreeUser,
     MAIN_MAX_INDICATORS,
     SECONDARY_MAX_INDICATORS,
     isMovingAverageType,
@@ -589,9 +590,9 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <>
                     <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS && editForm.panel !== "main"}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
                     <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel2"}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-                    <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel3"}>{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-                    <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel4"}>{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
-                    <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel5"}>{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
+                    <option value="panel3" disabled={(indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel3") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                    <option value="panel4" disabled={(indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel4") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                    <option value="panel5" disabled={(indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS && editForm.panel !== "panel5") || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
                   </>
                 )}
               </select>

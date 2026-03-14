@@ -98,6 +98,7 @@ function SistemaHeader({
   onAddStrategyClick,
   onDrawingsClick,
   addStrategyDisabled = false,
+  topBarGapClass = "",
 }: {
   menuOpen: boolean;
   onMenuToggle: (open: boolean) => void;
@@ -107,6 +108,7 @@ function SistemaHeader({
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
   addStrategyDisabled?: boolean;
+  topBarGapClass?: string;
 }) {
   const pathname = usePathname();
   const isContaPage = pathname === "/conta" || pathname?.endsWith("/conta") === true;
@@ -140,7 +142,7 @@ function SistemaHeader({
 
   return (
     <header
-      className="shrink-0 min-h-0 border-b border-neutral-200 bg-white/80 backdrop-blur w-full flex items-center justify-start relative z-[1000]"
+      className={`shrink-0 min-h-0 border-b border-neutral-200 bg-white/80 backdrop-blur w-full flex items-center justify-start relative z-[1000] ${topBarGapClass}`}
       aria-label="Menu"
     >
       <div
@@ -214,7 +216,7 @@ function SistemaHeader({
           />
           <nav
             ref={menuPanelRef}
-            className="absolute left-0 top-full z-[1100] mt-0 w-[160px] rounded-b-lg border border-t-0 border-zinc-200 bg-white shadow-lg py-1"
+            className="absolute left-0 top-full z-[1200] mt-0 w-[160px] rounded-b-lg border border-t-0 border-zinc-200 bg-white shadow-lg py-1"
             aria-label="Main"
           >
             <button
@@ -319,7 +321,8 @@ export default function SistemaLayoutClient({
   isFreeUser?: boolean;
 }) {
   const { hideStatusBar: prefHide } = useAppBarSafe();
-  const topBarGapClass = prefHide !== true ? "crypto-status-bar-reserve" : "";
+  /** Só reserva espaço quando a preferência é explicitamente false (barra visível). true ou null = não reservar. */
+  const topBarGapClass = prefHide === false ? "crypto-status-bar-reserve" : "";
   const [menuOpen, setMenuOpen] = useState(false);
   const [indicatorsPanelOpen, setIndicatorsPanelOpen] = useState(false);
   const [indicatorsPanelInitialView, setIndicatorsPanelInitialView] = useState<"list" | "add">("list");
@@ -512,7 +515,7 @@ function SistemaLayoutInner({
       <ChartHeaderProvider>
         <ChartSymbolProvider>
           <ChartLayoutSaveProvider>
-            <div className={`h-full w-full flex flex-col overflow-hidden bg-transparent relative ${topBarGapClass}`}>
+            <div className="h-full w-full flex flex-col overflow-hidden bg-transparent relative">
               <SistemaHeader
                 menuOpen={menuOpen}
                 onMenuToggle={onMenuToggle}
@@ -522,6 +525,7 @@ function SistemaLayoutInner({
                 onAddStrategyClick={onAddStrategyClick}
                 onDrawingsClick={onDrawingsClick}
                 addStrategyDisabled={addStrategyDisabled}
+                topBarGapClass={topBarGapClass}
               />
               <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
                 <div ref={scrollContainerRef} className="flex-1 min-h-0 min-w-0 overflow-auto">
@@ -542,7 +546,7 @@ function SistemaLayoutInner({
               {indicatorsPanelOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-[39]"
+                    className="fixed inset-0 z-[1300]"
                     aria-hidden
                     onClick={() => setIndicatorsPanelOpen(false)}
                   />
@@ -552,7 +556,7 @@ function SistemaLayoutInner({
               {strategiesPanelOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-[39]"
+                    className="fixed inset-0 z-[1300]"
                     aria-hidden
                     onClick={() => setStrategiesPanelOpen(false)}
                   />
@@ -562,7 +566,7 @@ function SistemaLayoutInner({
               {drawingsPanelOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-[39]"
+                    className="fixed inset-0 z-[1300]"
                     aria-hidden
                     onClick={() => setDrawingsPanelOpen(false)}
                   />

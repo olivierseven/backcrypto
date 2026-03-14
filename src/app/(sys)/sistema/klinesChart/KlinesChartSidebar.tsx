@@ -133,6 +133,7 @@ export interface KlinesChartSidebarProps {
   selectFibonacciTool: () => void;
   selectFreeRetracementTool: () => void;
   selectChannelTool: () => void;
+  selectStopGainTool: () => void;
   selectRectangleTool: () => void;
   selectVerticalLineTool: () => void;
   selectTextTool: () => void;
@@ -265,6 +266,7 @@ export function KlinesChartSidebar({
   selectFibonacciTool,
   selectFreeRetracementTool,
   selectChannelTool,
+  selectStopGainTool,
   selectRectangleTool,
   selectVerticalLineTool,
   selectTextTool,
@@ -1053,6 +1055,9 @@ export function KlinesChartSidebar({
               <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`}>
                 <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
               </button>
+              <button type="button" onClick={selectStopGainTool} title={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "stopGain" ? "bg-zinc-200" : ""}`}>
+                <img src={`${ASSET_PREFIX}/assets/draw/stopgain.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+              </button>
               <button type="button" onClick={selectVerticalLineTool} title={(t as Record<string, string>).verticalLine ?? "Vertical line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}>
                 <span aria-hidden>|</span>
               </button>
@@ -1442,6 +1447,7 @@ export function KlinesChartSidebar({
                   <button type="button" onClick={selectFreeRetracementTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden /></button>
                   <button type="button" onClick={selectRectangleTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectChannelTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectStopGainTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "stopGain" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/stopgain.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectVerticalLineTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}><span aria-hidden>|</span></button>
                   <button type="button" onClick={selectTextTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectArrowTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>

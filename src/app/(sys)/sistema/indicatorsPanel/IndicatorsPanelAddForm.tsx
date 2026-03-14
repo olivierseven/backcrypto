@@ -18,6 +18,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     panelsWithSecondary,
     panelsFreeForSecondary,
     indicatorCountByPanel,
+    isFreeUser,
     MAIN_MAX_INDICATORS,
     SECONDARY_MAX_INDICATORS,
     INDICATOR_COLOR_PALETTE,
@@ -30,9 +31,13 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   const firstFreePanelForSecondary: IndicatorPanel =
     panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2";
 
-  /** Volume só pode ir em painel vazio (0 indicadores). Outros secundários em painéis livres (< 3). SAR e VWAP só no main. */
-  const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
-  const firstEmptyPanelForVolume: IndicatorPanel = indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2";
+  /** Volume só pode ir em painel vazio (0 indicadores). Modo free: apenas painel 2. */
+  const hasEmptyPanelForVolume = isFreeUser
+    ? indicatorCountByPanel.panel2 === 0
+    : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0);
+  const firstEmptyPanelForVolume: IndicatorPanel = isFreeUser
+    ? (indicatorCountByPanel.panel2 === 0 ? "panel2" : "panel2")
+    : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2");
   const chartOptionValue: string =
     form.indicatorType === "SAR" || form.indicatorType === "VWAP"
       ? "main"
@@ -239,9 +244,9 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             {form.indicatorType === "Volume" ? (
               <>
                 {indicatorCountByPanel.panel2 === 0 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-                {indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-                {indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-                {indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
                 {!hasEmptyPanelForVolume && (
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
@@ -260,9 +265,9 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <>
                 <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
                 <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-                <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-                <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
-                <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
+                <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
               </>
             )}
           </select>

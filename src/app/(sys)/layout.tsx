@@ -33,11 +33,11 @@ export default async function SysLayout({ children }: { children: ReactNode }) {
   const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
   if (!userId) redirect(loginUrl);
 
-  let user: { language: string | null; hideStatusBar: boolean | null; role: string | null } | null;
+  let user: { language: string | null; hideStatusBar: boolean | null; role: string | null; tier: string | null } | null;
   try {
     user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
-      select: { language: true, hideStatusBar: true, role: true },
+      select: { language: true, hideStatusBar: true, role: true, tier: true },
     });
   } catch (err) {
     const isConnectionError =
@@ -58,10 +58,11 @@ export default async function SysLayout({ children }: { children: ReactNode }) {
 
   const lang = (user.language ?? "en") as "en" | "pt";
   const isAdmin = user.role === "admin";
+  const isFreeUser = user.tier === "free";
 
   return (
     <div className="h-[100dvh] min-h-0 w-full flex flex-col">
-      <SistemaLayoutClient lang={lang} hideStatusBar={user.hideStatusBar ?? true} isAdmin={isAdmin}>
+      <SistemaLayoutClient lang={lang} hideStatusBar={user.hideStatusBar ?? true} isAdmin={isAdmin} isFreeUser={isFreeUser}>
         {children}
       </SistemaLayoutClient>
     </div>

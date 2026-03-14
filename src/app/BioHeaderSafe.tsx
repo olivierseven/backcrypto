@@ -2,9 +2,9 @@
 
 import { useAppBarSafe } from "./AppBarSafeContext";
 
-/** Reserva espaço no topo quando "Oculta barra de status" está desativado (app, web desktop e mobile). */
+/** Reserva espaço no topo apenas quando "Ocultar barra de status" está desativado (false). Se true ou null, não reserva. */
 export default function BioHeaderSafe({ children }: { children: React.ReactNode }) {
   const { hideStatusBar } = useAppBarSafe();
-  if (hideStatusBar === true) return <>{children}</>;
+  if (hideStatusBar !== false) return <>{children}</>;
   return <div className="crypto-status-bar-reserve crypto-status-bar-reserve-header">{children}</div>;
 }

@@ -13,10 +13,24 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta, retração de Fibonacci, retração livre, canal, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
-  type?: "segment" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+  /** Tipo: segmento de reta, retração de Fibonacci, retração livre, canal, stop/gain, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
+  type?: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
+  /** Proporção ganho (acima da linha do meio). Mín 1, máx 10, 2 decimais. Só stopGain. Default: 1 */
+  stopGainRatioUp?: number;
+  /** Proporção perda (abaixo da linha do meio). Mín 1, máx 10, 2 decimais. Só stopGain. Default: 1 */
+  stopGainRatioDown?: number;
+  /** Abertura total em preço (distribuída pela proporção). Só stopGain. Default: 0 */
+  stopGainOpenAmount?: number;
+  /** Opacidade do preenchimento verde (ganho) e vermelho (perda), 0.1–0.7. Só stopGain. Default: 0.5 */
+  stopGainFillOpacity?: number;
+  /** Exibir percentuais (ganho/perda em % em relação ao meio). Só stopGain. Default: false */
+  stopGainShowPercent?: boolean;
+  /** Marcar os valores (meio, ganho, perda) no eixo Y. Só stopGain. Default: false */
+  stopGainShowValuesOnYAxis?: boolean;
+  /** Grossura dos traços do Stop/Gain: fino ou médio. Default: medium */
+  stopGainStrokeWidth?: "thin" | "medium";
   /** Cor do traço (hex). Default: #000000 */
   color?: string;
   /** Ponta no início do segmento. Default: none (fibonacci ignora) */
@@ -125,6 +139,7 @@ export type DrawDefaults = {
   fibonacci: Partial<Pick<DrawSegment, "color" | "fibLevel618Color" | "showPercent" | "showValues" | "fibStrokeWidth" | "fibLevel618StrokeWidth" | "fibLevelPct1" | "fibShow1618" | "fibShowValuesOnYAxis">>;
   freeRetracement: Partial<Pick<DrawSegment, "color" | "freeRetracementLevelPct1" | "freeRetracementLevelPct" | "freeRetracementLevelPctExt" | "freeRetracementShowValuesOnYAxis" | "freeRetracementExtensionIndices" | "fibStrokeWidth" | "showPercent" | "showValues">>;
   channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
+  stopGain: Partial<Pick<DrawSegment, "stopGainRatioUp" | "stopGainRatioDown" | "stopGainFillOpacity" | "stopGainShowPercent" | "stopGainShowValuesOnYAxis" | "stopGainStrokeWidth">>;
   rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
   horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;
   verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;

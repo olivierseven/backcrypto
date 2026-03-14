@@ -31,7 +31,7 @@ export interface DrawOverlayProps {
   chartW: number;
   chartH: number;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
   drawPending: { index1: number; price1: number } | null;
   setDrawPending: (p: { index1: number; price1: number } | null) => void;
   drawPendingRectSecond: { index: number; price: number } | null;
@@ -44,6 +44,8 @@ export interface DrawOverlayProps {
   setDrawPendingLineSecond: (p: { index: number; price: number } | null) => void;
   drawPendingChannelSecond: { index: number; price: number } | null;
   setDrawPendingChannelSecond: (p: { index: number; price: number } | null) => void;
+  drawPendingStopGainSecond: { index: number; price: number } | null;
+  setDrawPendingStopGainSecond: (p: { index: number; price: number } | null) => void;
   drawPendingHorizontalSecond: { index: number; price: number } | null;
   setDrawPendingHorizontalSecond: (p: { index: number; price: number } | null) => void;
   drawPendingArrow: { index1: number; price1: number; angleRad: number } | null;
@@ -88,6 +90,8 @@ export function DrawOverlay({
   setDrawPendingLineSecond,
   drawPendingChannelSecond,
   setDrawPendingChannelSecond,
+  drawPendingStopGainSecond,
+  setDrawPendingStopGainSecond,
   drawPendingHorizontalSecond,
   setDrawPendingHorizontalSecond,
   drawPendingArrow,
@@ -226,6 +230,11 @@ export function DrawOverlay({
           </g>
         );
       })()}
+      {drawPending && drawTool === "stopGain" && drawPendingStopGainSecond && (() => {
+        const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
+        const p2 = segmentToPixel(drawPendingStopGainSecond.index, drawPending.price1);
+        return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke="#000000" strokeWidth={1} strokeDasharray="4 2" />;
+      })()}
       {drawPending && drawTool === "horizontalLine" && drawPendingHorizontalSecond && (() => {
         const p1 = segmentToPixel(drawPending.index1, drawPending.price1);
         const p2 = segmentToPixel(drawPendingHorizontalSecond.index, drawPending.price1);
@@ -295,7 +304,7 @@ export function DrawOverlay({
             const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
             if (!point) return;
             const { px, py } = point;
-            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler") && drawPending === null && drawPendingArrow === null && (drawTool !== "text" || drawPendingText === null)) {
+            if ((drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler") && drawPending === null && drawPendingArrow === null && (drawTool !== "text" || drawPendingText === null)) {
               if (e.cancelable) e.preventDefault();
               const d = snapToCandlePoint(px, py);
               if (drawTool === "text") {
@@ -373,6 +382,28 @@ export function DrawOverlay({
                   d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
                 }
               }
+              if (seg.type === "stopGain") {
+                const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+                const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+                const openAmount = Math.max(0, seg.stopGainOpenAmount ?? 0);
+                const gainOffset = openAmount * (ru / (ru + rd));
+                const stopOffset = openAmount * (rd / (ru + rd));
+                const midPrice = seg.price1;
+                const priceTop = midPrice + gainOffset;
+                const priceBottom = midPrice - stopOffset;
+                const pa = segmentToPixel(seg.index1, midPrice);
+                const pb = segmentToPixel(seg.index2, midPrice);
+                const paUp = segmentToPixel(seg.index1, priceTop);
+                const pbUp = segmentToPixel(seg.index2, priceTop);
+                const paDn = segmentToPixel(seg.index1, priceBottom);
+                const pbDn = segmentToPixel(seg.index2, priceBottom);
+                const xMin = Math.min(pa.x, pb.x);
+                const xMax = Math.max(pa.x, pb.x);
+                const yTop = Math.min(paUp.y, pbUp.y);
+                const yBottom = Math.max(paDn.y, pbDn.y);
+                const inside = px >= xMin && px <= xMax && py >= yTop && py <= yBottom;
+                d = inside ? 0 : Math.min(d, distanceToSegment(px, py, pa.x, pa.y, pb.x, pb.y), distanceToSegment(px, py, paUp.x, paUp.y, pbUp.x, pbUp.y), distanceToSegment(px, py, paDn.x, paDn.y, pbDn.x, pbDn.y));
+              }
               if (seg.type === "rectangle") {
                 const rMinI = Math.min(seg.index1, seg.index2);
                 const rMaxI = Math.max(seg.index1, seg.index2);
@@ -424,7 +455,7 @@ export function DrawOverlay({
               setDrawPendingArrow((prev) => prev ? { ...prev, angleRad } : null);
               return;
             }
-            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "freeRetracement" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
+            if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "freeRetracement" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "stopGain" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
             if (e.cancelable) e.preventDefault();
             const d = snapToCandlePoint(point.px, point.py);
             if (drawTool === "arrow") setArrowPreviewTipPx({ x: point.px, y: point.py });
@@ -433,6 +464,7 @@ export function DrawOverlay({
             else if (drawTool === "freeRetracement") setDrawPendingFreeRetraceSecond({ index: d.index, price: d.price });
             else if (drawTool === "line" || drawTool === "ruler") setDrawPendingLineSecond({ index: d.index, price: d.price });
             else if (drawTool === "channel") setDrawPendingChannelSecond({ index: d.index, price: d.price });
+            else if (drawTool === "stopGain") setDrawPendingStopGainSecond({ index: d.index, price: drawPending.price1 });
             else if (drawTool === "horizontalLine") setDrawPendingHorizontalSecond({ index: d.index, price: drawPending.price1 });
             else if (drawTool === "verticalLine") setDrawPending({ index1: d.index, price1: drawPending.price1 });
           }}
@@ -555,6 +587,32 @@ export function DrawOverlay({
               });
               setDrawPending(null);
               setDrawPendingChannelSecond(null);
+              onSegmentCreated?.(newIndex);
+              return;
+            }
+            if (drawTool === "stopGain" && drawPending !== null) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+              const point = getSvgPoint(chartSvgRef, e.clientX, e.clientY);
+              if (!point) {
+                setDrawPending(null);
+                setDrawPendingStopGainSecond(null);
+                return;
+              }
+              const d = snapToCandlePoint(point.px, point.py);
+              const i1 = Math.min(drawPending.index1, d.index);
+              const i2 = Math.max(drawPending.index1, d.index);
+              const midPrice = drawPending.price1;
+              const dfSg = drawDefaults.stopGain;
+              const newSeg: DrawSegment = { index1: i1, price1: midPrice, index2: i2, price2: midPrice, type: "stopGain", stopGainRatioUp: dfSg?.stopGainRatioUp ?? 1, stopGainRatioDown: dfSg?.stopGainRatioDown ?? 1, stopGainOpenAmount: 0, stopGainFillOpacity: dfSg?.stopGainFillOpacity ?? 0.5, stopGainShowPercent: dfSg?.stopGainShowPercent ?? false, stopGainShowValuesOnYAxis: dfSg?.stopGainShowValuesOnYAxis ?? false, stopGainStrokeWidth: dfSg?.stopGainStrokeWidth ?? "medium" };
+              let newIndex = 0;
+              flushSync(() => {
+                setDrawSegments((seg) => {
+                  newIndex = seg.length;
+                  return [...seg, newSeg];
+                });
+              });
+              setDrawPending(null);
+              setDrawPendingStopGainSecond(null);
               onSegmentCreated?.(newIndex);
               return;
             }
@@ -708,6 +766,28 @@ export function DrawOverlay({
                     d = Math.min(d, distanceToSegment(px, py, p2.x, p2.y, pe.x, pe.y), distanceToSegment(px, py, p2u.x, p2u.y, p2uExt.x, p2uExt.y), distanceToSegment(px, py, p2d.x, p2d.y, p2dExt.x, p2dExt.y));
                   }
                 }
+                if (seg.type === "stopGain") {
+                  const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+                  const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+                  const openAmount = Math.max(0, seg.stopGainOpenAmount ?? 0);
+                  const gainOffset = openAmount * (ru / (ru + rd));
+                  const stopOffset = openAmount * (rd / (ru + rd));
+                  const midPrice = seg.price1;
+                  const priceTop = midPrice + gainOffset;
+                  const priceBottom = midPrice - stopOffset;
+                  const pa = segmentToPixel(seg.index1, midPrice);
+                  const pb = segmentToPixel(seg.index2, midPrice);
+                  const paUp = segmentToPixel(seg.index1, priceTop);
+                  const pbUp = segmentToPixel(seg.index2, priceTop);
+                  const paDn = segmentToPixel(seg.index1, priceBottom);
+                  const pbDn = segmentToPixel(seg.index2, priceBottom);
+                  const xMin = Math.min(pa.x, pb.x);
+                  const xMax = Math.max(pa.x, pb.x);
+                  const yTop = Math.min(paUp.y, pbUp.y);
+                  const yBottom = Math.max(paDn.y, pbDn.y);
+                  const inside = px >= xMin && px <= xMax && py >= yTop && py <= yBottom;
+                  d = inside ? 0 : Math.min(d, distanceToSegment(px, py, pa.x, pa.y, pb.x, pb.y), distanceToSegment(px, py, paUp.x, paUp.y, pbUp.x, pbUp.y), distanceToSegment(px, py, paDn.x, paDn.y, pbDn.x, pbDn.y));
+                }
                 if (seg.type === "rectangle") {
                   const rMinI = Math.min(seg.index1, seg.index2);
                   const rMaxI = Math.max(seg.index1, seg.index2);
@@ -732,7 +812,7 @@ export function DrawOverlay({
             }
             const d = snapToCandlePoint(px, py);
             if (drawPending === null) {
-              if (drawTool === "channel") onChartDrawClick?.();
+              if (drawTool === "channel" || drawTool === "stopGain") onChartDrawClick?.();
               setDrawPending({ index1: d.index, price1: d.price });
             } else if (drawTool === "channel") {
               const dfCh = drawDefaults.channel;
@@ -743,6 +823,19 @@ export function DrawOverlay({
                 return [...seg, newSeg];
               });
               setDrawPending(null);
+            } else if (drawTool === "stopGain") {
+              const i1 = Math.min(drawPending.index1, d.index);
+              const i2 = Math.max(drawPending.index1, d.index);
+              const midPrice = drawPending.price1;
+              const dfSg = drawDefaults.stopGain;
+              setDrawSegments((seg) => {
+                const newSeg: DrawSegment = { index1: i1, price1: midPrice, index2: i2, price2: midPrice, type: "stopGain", stopGainRatioUp: dfSg?.stopGainRatioUp ?? 1, stopGainRatioDown: dfSg?.stopGainRatioDown ?? 1, stopGainOpenAmount: 0, stopGainFillOpacity: dfSg?.stopGainFillOpacity ?? 0.5, stopGainShowPercent: dfSg?.stopGainShowPercent ?? false, stopGainShowValuesOnYAxis: dfSg?.stopGainShowValuesOnYAxis ?? false, stopGainStrokeWidth: dfSg?.stopGainStrokeWidth ?? "medium" };
+                const newIndex = seg.length;
+                onSegmentCreated?.(newIndex);
+                return [...seg, newSeg];
+              });
+              setDrawPending(null);
+              setDrawPendingStopGainSecond(null);
             }
           }}
         />

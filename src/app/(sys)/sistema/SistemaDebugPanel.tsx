@@ -6,6 +6,7 @@ import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
+import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
 
 type ValidateSingleResult = {
   symbol: string;
@@ -51,6 +52,24 @@ export default function SistemaDebugPanel() {
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
   const [debugTab, setDebugTab] = useState<"main" | "inspect">("main");
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
+  const [sessionDebugEnabled, setSessionDebugEnabledState] = useState(false);
+  const [sessionDebugInfo, setSessionDebugInfoState] = useState<SessionDebugInfo | null>(null);
+
+  useEffect(() => {
+    setSessionDebugEnabledState(getSessionDebugEnabled());
+  }, [open]);
+
+  useEffect(() => {
+    if (!sessionDebugEnabled || typeof window === "undefined") return;
+    const read = () => setSessionDebugInfoState(window.__backcryptoSessionDebugInfo ?? null);
+    read();
+    window.addEventListener("backcrypto-session-debug-update", read);
+    const id = setInterval(read, 2000);
+    return () => {
+      window.removeEventListener("backcrypto-session-debug-update", read);
+      clearInterval(id);
+    };
+  }, [sessionDebugEnabled]);
 
   function formatTime(ms: number): string {
     const d = new Date(ms);
@@ -744,6 +763,41 @@ export default function SistemaDebugPanel() {
                 </span>
                 <span>Debug save/load (cor eixo Y)</span>
               </button>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={sessionDebugEnabled}
+                onClick={() => {
+                  const next = !sessionDebugEnabled;
+                  setSessionDebugEnabled(next);
+                  setSessionDebugEnabledState(next);
+                }}
+                className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700 mb-2 text-left w-full py-1 rounded hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1"
+              >
+                <span
+                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${sessionDebugEnabled ? "bg-violet-600 border-violet-600 text-white" : "border-zinc-300 bg-white"}`}
+                  aria-hidden
+                >
+                  {sessionDebugEnabled ? "✓" : ""}
+                </span>
+                <span>Debug sessão (uma aba)</span>
+              </button>
+              {sessionDebugEnabled && (
+                <div className="mb-3 p-2 rounded bg-zinc-100 text-xs font-mono text-zinc-800 space-y-1">
+                  <div className="font-semibold text-zinc-600 mb-1">Sessão / aba (esta página)</div>
+                  {sessionDebugInfo ? (
+                    <>
+                      <div><span className="text-zinc-500">tabId (short):</span> {sessionDebugInfo.tabIdShort}</div>
+                      <div><span className="text-zinc-500">status:</span> {sessionDebugInfo.status}</div>
+                      <div><span className="text-zinc-500">resultado:</span> {sessionDebugInfo.resultado}</div>
+                      <div><span className="text-zinc-500">última atualização:</span> {new Date(sessionDebugInfo.lastAt).toLocaleTimeString()}</div>
+                      {sessionDebugInfo.erro && <div className="text-red-600"><span className="text-zinc-500">erro:</span> {sessionDebugInfo.erro}</div>}
+                    </>
+                  ) : (
+                    <div className="text-zinc-500">Aguardando requisição session/claim…</div>
+                  )}
+                </div>
+              )}
               <div className="flex justify-end gap-2 mb-1">
                 <button
                   type="button"

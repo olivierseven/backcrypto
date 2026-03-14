@@ -13,7 +13,7 @@ export interface DrawSegmentRenderProps {
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;
@@ -246,6 +246,63 @@ export function DrawSegmentRender({
             </>
           );
         })()}
+      </g>
+    );
+  }
+
+  if (seg.type === "stopGain") {
+    const midPrice = seg.price1;
+    const ru = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioUp ?? 1) * 100) / 100));
+    const rd = Math.max(1, Math.min(10, Math.round((seg.stopGainRatioDown ?? 1) * 100) / 100));
+    const openAmount = Math.max(0, seg.stopGainOpenAmount ?? 0);
+    const gainOffset = openAmount * (ru / (ru + rd));
+    const stopOffset = openAmount * (rd / (ru + rd));
+    const priceTop = midPrice + gainOffset;
+    const priceBottom = midPrice - stopOffset;
+    const pa = segmentToPixel(seg.index1, midPrice);
+    const pb = segmentToPixel(seg.index2, midPrice);
+    const paUp = segmentToPixel(seg.index1, priceTop);
+    const pbUp = segmentToPixel(seg.index2, priceTop);
+    const paDn = segmentToPixel(seg.index1, priceBottom);
+    const pbDn = segmentToPixel(seg.index2, priceBottom);
+    const fillOpacity = Math.max(0.1, Math.min(0.7, seg.stopGainFillOpacity ?? 0.5));
+    const green = "#059669";
+    const red = "#dc2626";
+    const midColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
+    const strokeW = FIB_STROKE_WIDTH_VALUES[(seg.stopGainStrokeWidth === "thin" ? "thin" : "medium") as FibStrokeWidth];
+    const showPercent = seg.stopGainShowPercent === true;
+    const pctGain = midPrice > 0 ? (gainOffset / midPrice) * 100 : 0;
+    const pctStop = midPrice > 0 ? (stopOffset / midPrice) * 100 : 0;
+    const padH = Math.max(10, Math.ceil(fontSize * 1.1) + 4);
+    const textGain = `+${pctGain.toFixed(2)}%`;
+    const textStop = `-${pctStop.toFixed(2)}%`;
+    const approxCharWidth = fontSize * 0.55;
+    const padW = Math.max(36, Math.ceil(Math.max(textGain.length, textStop.length) * approxCharWidth) + 6);
+    const midX = (pa.x + pb.x) / 2;
+    const gainLineCenterY = (paUp.y + pbUp.y) / 2;
+    const stopLineCenterY = (paDn.y + pbDn.y) / 2;
+    const gap = 2;
+    const dottedDash = HORIZONTAL_LINE_STROKE_STYLE_DASH.dotted;
+    const rightEndMid = segmentToPixel(Math.max(seg.index2, maxVisibleIndex), midPrice);
+    const showMidExtension = isSelected && pb.x < rightEndMid.x;
+    return (
+      <g key={idx}>
+        <polygon points={`${pa.x},${pa.y} ${pb.x},${pb.y} ${pbUp.x},${pbUp.y} ${paUp.x},${paUp.y}`} fill={green} fillOpacity={fillOpacity} stroke="none" />
+        <polygon points={`${pa.x},${pa.y} ${pb.x},${pb.y} ${pbDn.x},${pbDn.y} ${paDn.x},${paDn.y}`} fill={red} fillOpacity={fillOpacity} stroke="none" />
+        <line x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke={midColor} strokeWidth={strokeW} />
+        {showMidExtension && (
+          <line x1={pb.x} y1={pb.y} x2={rightEndMid.x} y2={rightEndMid.y} stroke={midColor} strokeWidth={strokeW} strokeDasharray={dottedDash} />
+        )}
+        <line x1={paUp.x} y1={paUp.y} x2={pbUp.x} y2={pbUp.y} stroke={green} strokeWidth={strokeW} />
+        <line x1={paDn.x} y1={paDn.y} x2={pbDn.x} y2={pbDn.y} stroke={red} strokeWidth={strokeW} />
+        {showPercent && (
+          <>
+            <rect x={midX - padW / 2} y={gainLineCenterY - padH - gap} width={padW} height={padH} rx={2} fill="#fff" fillOpacity={0.9} stroke={green} strokeWidth={1} />
+            <text x={midX} y={gainLineCenterY - gap - padH / 2} textAnchor="middle" dominantBaseline="middle" fill={green} className="font-mono select-none" style={{ fontSize }}>{textGain}</text>
+            <rect x={midX - padW / 2} y={stopLineCenterY + gap} width={padW} height={padH} rx={2} fill="#fff" fillOpacity={0.9} stroke={red} strokeWidth={1} />
+            <text x={midX} y={stopLineCenterY + gap + padH / 2} textAnchor="middle" dominantBaseline="middle" fill={red} className="font-mono select-none" style={{ fontSize }}>{textStop}</text>
+          </>
+        )}
       </g>
     );
   }
