@@ -676,3 +676,118 @@ export function computeMacdColumn(
   }
   return out;
 }
+
+const HIGH_IDX = 2;
+const LOW_IDX = 3;
+
+/**
+ * ADX (Average Directional Index) com +DI e -DI — Wilder.
+ * Usa high[2], low[3], close[4]. Retorna três colunas: plusDi, minusDi, adx (0–100).
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeAdxColumns(
+  data: (string | number)[][],
+  period: number
+): { plusDi: (number | null)[]; minusDi: (number | null)[]; adx: (number | null)[] } {
+  const n = data.length;
+  const plusDi: (number | null)[] = new Array(n).fill(null);
+  const minusDi: (number | null)[] = new Array(n).fill(null);
+  const adx: (number | null)[] = new Array(n).fill(null);
+  const periodUse = Math.max(1, Math.min(500, period));
+  if (n < periodUse + 1) return { plusDi, minusDi, adx };
+
+  const get = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const tr: number[] = [];
+  const plusDm: number[] = [];
+  const minusDm: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const h = get(data[i], HIGH_IDX);
+    const l = get(data[i], LOW_IDX);
+    const c = get(data[i], CLOSE_INDEX);
+    if (h == null || l == null) {
+      tr.push(0);
+      plusDm.push(0);
+      minusDm.push(0);
+      continue;
+    }
+    const hl = h - l;
+    if (i + 1 >= n) {
+      tr.push(hl);
+      plusDm.push(0);
+      minusDm.push(0);
+      continue;
+    }
+    const prevH = get(data[i + 1], HIGH_IDX);
+    const prevL = get(data[i + 1], LOW_IDX);
+    const prevC = get(data[i + 1], CLOSE_INDEX);
+    const trVal = prevC != null
+      ? Math.max(hl, Math.abs(h - prevC), Math.abs(l - prevC))
+      : hl;
+    tr.push(trVal);
+
+    const upMove = prevH != null ? h - prevH : 0;
+    const downMove = prevL != null ? prevL - l : 0;
+    if (upMove > downMove && upMove > 0) {
+      plusDm.push(upMove);
+      minusDm.push(0);
+    } else if (downMove > upMove && downMove > 0) {
+      plusDm.push(0);
+      minusDm.push(downMove);
+    } else {
+      plusDm.push(0);
+      minusDm.push(0);
+    }
+  }
+
+  const wilderSmooth = (arr: number[]): (number | null)[] => {
+    const out: (number | null)[] = new Array(n).fill(null);
+    const startIdx = n - periodUse;
+    let sum = 0;
+    for (let j = startIdx; j < n; j++) sum += arr[j];
+    out[startIdx] = sum / periodUse;
+    for (let j = startIdx - 1; j >= 0; j--) {
+      out[j] = ((out[j + 1] as number) * (periodUse - 1) + arr[j]) / periodUse;
+    }
+    return out;
+  };
+
+  const smoothTr = wilderSmooth(tr);
+  const smoothPlusDm = wilderSmooth(plusDm);
+  const smoothMinusDm = wilderSmooth(minusDm);
+
+  for (let i = 0; i < n; i++) {
+    const sTr = smoothTr[i];
+    const sPlus = smoothPlusDm[i];
+    const sMinus = smoothMinusDm[i];
+    if (sTr == null || sTr === 0) continue;
+    if (sPlus != null && Number.isFinite(sPlus)) plusDi[i] = (100 * sPlus) / sTr;
+    if (sMinus != null && Number.isFinite(sMinus)) minusDi[i] = (100 * sMinus) / sTr;
+  }
+
+  const dx: (number | null)[] = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) {
+    const p = plusDi[i];
+    const m = minusDi[i];
+    if (p != null && m != null && Number.isFinite(p) && Number.isFinite(m)) {
+      const sum = p + m;
+      dx[i] = sum === 0 ? 0 : (100 * Math.abs(p - m)) / sum;
+    }
+  }
+
+  const dxNums = dx.map((v) => v ?? 0);
+  const startIdx = n - periodUse;
+  let sumDx = 0;
+  for (let j = startIdx; j < n; j++) sumDx += dxNums[j];
+  adx[startIdx] = sumDx / periodUse;
+  for (let j = startIdx - 1; j >= 0; j--) {
+    adx[j] = ((adx[j + 1] as number) * (periodUse - 1) + dxNums[j]) / periodUse;
+  }
+
+  return { plusDi, minusDi, adx };
+}

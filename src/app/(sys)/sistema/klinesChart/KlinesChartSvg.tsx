@@ -727,6 +727,21 @@ export function KlinesChartSvg({
                   </g>
                 );
               })}
+              {panelLines.filter((ind) => ind.type === "ADX" && ind.adxLimits && ind.adxPart === "plusDi").map((ind, idx) => {
+                const upper = Math.max(0, Math.min(100, ind.adxLimitUpper ?? 25));
+                const lower = Math.max(0, Math.min(100, ind.adxLimitLower ?? 20));
+                const yUpper = yPanel(upper);
+                const yLower = yPanel(lower);
+                const lStrokeWidth = ind.adxLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeDasharray = ind.adxLimitLineStyle === "dotted" ? "2 2" : ind.adxLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const stroke = ind.adxLimitColor ?? "#71717a";
+                return (
+                  <g key={`adx-limits-${idx}`}>
+                    <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                  </g>
+                );
+              })}
               </g>
             </g>
           );

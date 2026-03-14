@@ -64,6 +64,9 @@ export function getIndicatorLabel(
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? (typeof (t as Record<string, string>).volumeUsdtLabel === "string" ? (t as Record<string, string>).volumeUsdtLabel : "Volume (USDT)") : (typeof (t as Record<string, string>).volumeLabel === "string" ? (t as Record<string, string>).volumeLabel : "Volume");
   }
+  if (ind.type === "ADX") {
+    return `ADX(${ind.period})`;
+  }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
 
@@ -119,6 +122,9 @@ export function getIndicatorLabelShort(
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
     return `BB(${ind.period}) Z=${z} ${letter}`;
+  }
+  if (ind.type === "ADX") {
+    return `ADX(${ind.period})`;
   }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? "Vol USDT" : "Vol";

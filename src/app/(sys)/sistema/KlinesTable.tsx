@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeAdxColumns } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
@@ -527,6 +527,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           out[i].push(middle[i] ?? null);
           out[i].push(lower[i] ?? null);
         }
+      } else if (ind.type === "ADX") {
+        const { plusDi, minusDi, adx } = computeAdxColumns(data, period);
+        for (let i = 0; i < out.length; i++) {
+          out[i].push(plusDi[i] ?? null);
+          out[i].push(minusDi[i] ?? null);
+          out[i].push(adx[i] ?? null);
+        }
       } else {
         const col =
           ind.type === "EMA"
@@ -554,6 +561,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       } else if (ind.type === "WilliamsR") {
         col += 1;
       } else if (ind.type === "Bollinger") {
+        col += 3;
+      } else if (ind.type === "ADX") {
         col += 3;
       } else if (ind.type === "Volume") {
         // Volume usa coluna 5 ou 7, não consome slot
@@ -626,7 +635,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   const visibleIndicatorColumns = useMemo(() => {
-    const list: { ind: (typeof userIndicators)[0]; columnIndex: number; isSignal: boolean; isHistogram: boolean }[] = [];
+    const list: { ind: (typeof userIndicators)[0]; columnIndex: number; isSignal: boolean; isHistogram: boolean; adxPart?: "plusDi" | "minusDi" | "adx" }[] = [];
     for (let u = 0; u < userIndicators.length; u++) {
       const ind = userIndicators[u];
       if (ind.intervals.length === 1 && ind.intervals[0] === 0) continue;
@@ -636,6 +645,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         continue;
       }
       const start = getIndicatorColumnStart(u);
+      if (ind.type === "ADX") {
+        list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false, adxPart: "plusDi" });
+        list.push({ ind, columnIndex: start + 1, isSignal: false, isHistogram: false, adxPart: "minusDi" });
+        list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: false, adxPart: "adx" });
+        continue;
+      }
       list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
       if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
       if (ind.type === "MACD" && ind.macdHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
@@ -1058,12 +1073,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             onVolumeAtPriceColorBelowChange={setVolumeAtPriceColorBelow}
             onVolumeAtPriceBucketsChange={(v) => setVolumeAtPriceBuckets(clampEvenBuckets(v))}
             onVolumeAtPriceOpacityChange={(v) => setVolumeAtPriceOpacity(Math.max(VOLUME_AT_PRICE_OPACITY_MIN, Math.min(VOLUME_AT_PRICE_OPACITY_MAX, v)))}
-            indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }) => ({
+            indicatorLines={visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart }) => ({
               columnIndex,
+              adxPart,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-              color: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
-              lineWidth: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
-              lineStyle: ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
+              color: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
+              lineWidth: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
               label: ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
               shortLabel: ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
@@ -1072,7 +1088,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
               histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : undefined,
               histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main"),
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -1106,6 +1122,22 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : undefined,
               bollingerMiddleLineStyle: ind.type === "Bollinger" ? (ind.bollingerMiddleLineStyle ?? "dashed") : undefined,
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
+              adxPlusDiColor: ind.type === "ADX" ? (ind.adxPlusDiColor ?? "#22c55e") : undefined,
+              adxPlusDiLineWidth: ind.type === "ADX" ? (ind.adxPlusDiLineWidth ?? "normal") : undefined,
+              adxPlusDiLineStyle: ind.type === "ADX" ? (ind.adxPlusDiLineStyle ?? "solid") : undefined,
+              adxMinusDiColor: ind.type === "ADX" ? (ind.adxMinusDiColor ?? "#ef4444") : undefined,
+              adxMinusDiLineWidth: ind.type === "ADX" ? (ind.adxMinusDiLineWidth ?? "normal") : undefined,
+              adxMinusDiLineStyle: ind.type === "ADX" ? (ind.adxMinusDiLineStyle ?? "solid") : undefined,
+              adxAdxColor: ind.type === "ADX" ? (ind.adxAdxColor ?? "#eab308") : undefined,
+              adxAdxLineWidth: ind.type === "ADX" ? (ind.adxAdxLineWidth ?? "normal") : undefined,
+              adxAdxLineStyle: ind.type === "ADX" ? (ind.adxAdxLineStyle ?? "solid") : undefined,
+              adxFixedScale: ind.type === "ADX" ? (ind.adxFixedScale !== false) : undefined,
+              adxLimits: ind.type === "ADX" ? (ind.adxLimits === true) : undefined,
+              adxLimitUpper: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitUpper ?? 25) : undefined,
+              adxLimitLower: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitLower ?? 20) : undefined,
+              adxLimitColor: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitColor ?? "#71717a") : undefined,
+              adxLimitLineWidth: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitLineWidth ?? "normal") : undefined,
+              adxLimitLineStyle: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitLineStyle ?? "dotted") : undefined,
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
             getLayoutExtraConfig={() => ({
@@ -1258,13 +1290,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               <th className="px-3 py-2 font-medium text-right">{t.trades}</th>
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyBase}</th>
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyQuote}</th>
-              {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }, idx) => (
+              {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart }, idx) => (
                 <th
-                  key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
+                  key={`${ind.id}-${adxPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}
                   className="px-3 py-2 font-medium text-right text-xs"
-                  style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                  style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                 >
-                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
+                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
               {visibleStrategies.map((strategy) => (
@@ -1294,12 +1326,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   <td className="px-3 py-1.5 text-right font-mono text-zinc-500">{formatNum(String(k[10]))}</td>
                 </>
               );
-              const userCols = visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram }, idx) => {
+              const userCols = visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart }, idx) => {
                 const val = k[columnIndex];
-                const borderColor = isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color;
+                const borderColor = ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.color;
                 return (
                   <td
-                    key={`${ind.id}-${isSignal ? "sig" : isHistogram ? "hist" : "main"}-${idx}`}
+                    key={`${ind.id}-${adxPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}
                     className="px-3 py-1.5 text-right font-mono text-zinc-500"
                     style={{ borderLeftColor: borderColor, borderLeftWidth: 1, borderLeftStyle: "solid" }}
                   >

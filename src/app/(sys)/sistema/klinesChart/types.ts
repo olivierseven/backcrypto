@@ -31,7 +31,26 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Volume";
+  type?: "SMA" | "EMA" | "WMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Volume";
+  /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
+  adxPart?: "plusDi" | "minusDi" | "adx";
+  adxPlusDiColor?: string;
+  adxPlusDiLineWidth?: "thin" | "normal";
+  adxPlusDiLineStyle?: "solid" | "dotted" | "dashed";
+  adxMinusDiColor?: string;
+  adxMinusDiLineWidth?: "thin" | "normal";
+  adxMinusDiLineStyle?: "solid" | "dotted" | "dashed";
+  adxAdxColor?: string;
+  adxAdxLineWidth?: "thin" | "normal";
+  adxAdxLineStyle?: "solid" | "dotted" | "dashed";
+  /** Só para ADX: escala fixa 0–100 (true) ou ajustar aos dados (false). */
+  adxFixedScale?: boolean;
+  adxLimits?: boolean;
+  adxLimitUpper?: number;
+  adxLimitLower?: number;
+  adxLimitColor?: string;
+  adxLimitLineWidth?: "thin" | "normal";
+  adxLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
   panel?: "main" | "panel2" | "panel3" | "panel4" | "panel5";
   /** Só para RSI: true = escala fixa 0–100 no eixo Y; false ou ausente (para não-RSI) = escala automática. */

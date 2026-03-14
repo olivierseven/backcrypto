@@ -114,6 +114,22 @@ const INITIAL_ADD_FORM: AddFormState = {
   volumeColorBelow: "#ef4444",
   volumeColorAboveOpen: false,
   volumeColorBelowOpen: false,
+  adxPlusDiColor: "#22c55e",
+  adxPlusDiLineWidth: "normal",
+  adxPlusDiLineStyle: "solid",
+  adxMinusDiColor: "#ef4444",
+  adxMinusDiLineWidth: "normal",
+  adxMinusDiLineStyle: "solid",
+  adxAdxColor: "#eab308",
+  adxAdxLineWidth: "normal",
+  adxAdxLineStyle: "solid",
+  adxFixedScale: true,
+  adxLimits: false,
+  adxLimitUpper: 25,
+  adxLimitLower: 20,
+  adxLimitColor: "#71717a",
+  adxLimitLineWidth: "normal",
+  adxLimitLineStyle: "dotted",
 };
 
 interface IndicatorsPanelProps {
@@ -199,6 +215,22 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     williamsRLimitColor: string;
     williamsRLimitLineWidth: IndicatorLineWidth;
     williamsRLimitLineStyle: IndicatorLineStyle;
+    adxPlusDiColor: string;
+    adxPlusDiLineWidth: IndicatorLineWidth;
+    adxPlusDiLineStyle: IndicatorLineStyle;
+    adxMinusDiColor: string;
+    adxMinusDiLineWidth: IndicatorLineWidth;
+    adxMinusDiLineStyle: IndicatorLineStyle;
+    adxAdxColor: string;
+    adxAdxLineWidth: IndicatorLineWidth;
+    adxAdxLineStyle: IndicatorLineStyle;
+    adxFixedScale: boolean;
+    adxLimits: boolean;
+    adxLimitUpper: number;
+    adxLimitLower: number;
+    adxLimitColor: string;
+    adxLimitLineWidth: IndicatorLineWidth;
+    adxLimitLineStyle: IndicatorLineStyle;
     sarStart: number;
     sarStartText: string;
     sarIncrement: number;
@@ -208,7 +240,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     sarPointSize: "thin" | "normal";
   } | null>(null);
 
-  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" ? "panel2" : "main");
+  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" || i.type === "ADX" ? "panel2" : "main");
 
   const indicatorCountByPanel = useMemo(() => {
     let main = 0;
@@ -275,7 +307,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
-  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "Volume";
+  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "Volume";
   const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
   const chosenPanelUsedForVolume =
     (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 > 0) ||
@@ -318,7 +350,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         : (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
           ? addForm.chartOption
           : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2")
-      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR"
+      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX"
       ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (addForm.chartOption === "panel5" && panelsFreeForSecondary.panel5)
         ? addForm.chartOption
         : (panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2")
@@ -332,7 +364,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const newInd = addIndicator({
       type: addForm.indicatorType,
       period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
-      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
+      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" ? "close" : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
         bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
@@ -389,6 +421,24 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         williamsRLimitColor: addForm.williamsRLimitColor,
         williamsRLimitLineWidth: addForm.williamsRLimitLineWidth,
         williamsRLimitLineStyle: addForm.williamsRLimitLineStyle,
+      } : {}),
+      ...(addForm.indicatorType === "ADX" ? {
+        adxPlusDiColor: addForm.adxPlusDiColor,
+        adxPlusDiLineWidth: addForm.adxPlusDiLineWidth,
+        adxPlusDiLineStyle: addForm.adxPlusDiLineStyle,
+        adxMinusDiColor: addForm.adxMinusDiColor,
+        adxMinusDiLineWidth: addForm.adxMinusDiLineWidth,
+        adxMinusDiLineStyle: addForm.adxMinusDiLineStyle,
+        adxAdxColor: addForm.adxAdxColor,
+        adxAdxLineWidth: addForm.adxAdxLineWidth,
+        adxAdxLineStyle: addForm.adxAdxLineStyle,
+        adxFixedScale: addForm.adxFixedScale,
+        adxLimits: addForm.adxLimits,
+        adxLimitUpper: addForm.adxLimitUpper,
+        adxLimitLower: addForm.adxLimitLower,
+        adxLimitColor: addForm.adxLimitColor,
+        adxLimitLineWidth: addForm.adxLimitLineWidth,
+        adxLimitLineStyle: addForm.adxLimitLineStyle,
       } : {}),
       ...(addForm.indicatorType === "SAR" ? {
         sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
@@ -447,7 +497,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
 
   const startEdit = useCallback((ind: UserIndicatorConfig) => {
     setEditingId(ind.id);
-    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" || ind.panel === "panel5" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");
+    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" || ind.panel === "panel5" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
     const fieldKey = ind.type === "WilliamsR" ? "close" : ind.fieldKey;
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
@@ -505,6 +555,22 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       williamsRLimitColor: ind.type === "WilliamsR" && ind.williamsRLimits ? (ind.williamsRLimitColor ?? "#dc2626") : "#dc2626",
       williamsRLimitLineWidth: (ind.type === "WilliamsR" && ind.williamsRLimits && (ind.williamsRLimitLineWidth === "thin" || ind.williamsRLimitLineWidth === "normal") ? ind.williamsRLimitLineWidth : "normal") as IndicatorLineWidth,
       williamsRLimitLineStyle: (ind.type === "WilliamsR" && ind.williamsRLimits && (ind.williamsRLimitLineStyle === "solid" || ind.williamsRLimitLineStyle === "dotted" || ind.williamsRLimitLineStyle === "dashed") ? ind.williamsRLimitLineStyle : "dotted") as IndicatorLineStyle,
+      adxPlusDiColor: ind.type === "ADX" ? (ind.adxPlusDiColor ?? "#22c55e") : "#22c55e",
+      adxPlusDiLineWidth: (ind.type === "ADX" && (ind.adxPlusDiLineWidth === "thin" || ind.adxPlusDiLineWidth === "normal") ? ind.adxPlusDiLineWidth : "normal") as IndicatorLineWidth,
+      adxPlusDiLineStyle: (ind.type === "ADX" && (ind.adxPlusDiLineStyle === "solid" || ind.adxPlusDiLineStyle === "dotted" || ind.adxPlusDiLineStyle === "dashed") ? ind.adxPlusDiLineStyle : "solid") as IndicatorLineStyle,
+      adxMinusDiColor: ind.type === "ADX" ? (ind.adxMinusDiColor ?? "#ef4444") : "#ef4444",
+      adxMinusDiLineWidth: (ind.type === "ADX" && (ind.adxMinusDiLineWidth === "thin" || ind.adxMinusDiLineWidth === "normal") ? ind.adxMinusDiLineWidth : "normal") as IndicatorLineWidth,
+      adxMinusDiLineStyle: (ind.type === "ADX" && (ind.adxMinusDiLineStyle === "solid" || ind.adxMinusDiLineStyle === "dotted" || ind.adxMinusDiLineStyle === "dashed") ? ind.adxMinusDiLineStyle : "solid") as IndicatorLineStyle,
+      adxAdxColor: ind.type === "ADX" ? (ind.adxAdxColor ?? "#eab308") : "#eab308",
+      adxAdxLineWidth: (ind.type === "ADX" && (ind.adxAdxLineWidth === "thin" || ind.adxAdxLineWidth === "normal") ? ind.adxAdxLineWidth : "normal") as IndicatorLineWidth,
+      adxAdxLineStyle: (ind.type === "ADX" && (ind.adxAdxLineStyle === "solid" || ind.adxAdxLineStyle === "dotted" || ind.adxAdxLineStyle === "dashed") ? ind.adxAdxLineStyle : "solid") as IndicatorLineStyle,
+      adxFixedScale: ind.type === "ADX" ? (ind.adxFixedScale !== false) : true,
+      adxLimits: ind.type === "ADX" ? (ind.adxLimits === true) : false,
+      adxLimitUpper: ind.type === "ADX" && ind.adxLimits ? (typeof ind.adxLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(ind.adxLimitUpper))) : 25) : 25,
+      adxLimitLower: ind.type === "ADX" && ind.adxLimits ? (typeof ind.adxLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(ind.adxLimitLower))) : 20) : 20,
+      adxLimitColor: ind.type === "ADX" && ind.adxLimits ? (ind.adxLimitColor ?? "#71717a") : "#71717a",
+      adxLimitLineWidth: (ind.type === "ADX" && ind.adxLimits && (ind.adxLimitLineWidth === "thin" || ind.adxLimitLineWidth === "normal") ? ind.adxLimitLineWidth : "normal") as IndicatorLineWidth,
+      adxLimitLineStyle: (ind.type === "ADX" && ind.adxLimits && (ind.adxLimitLineStyle === "solid" || ind.adxLimitLineStyle === "dotted" || ind.adxLimitLineStyle === "dashed") ? ind.adxLimitLineStyle : "dotted") as IndicatorLineStyle,
       sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
       sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
       sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
@@ -595,6 +661,24 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         williamsRLimitColor: editForm.williamsRLimitColor,
         williamsRLimitLineWidth: editForm.williamsRLimitLineWidth,
         williamsRLimitLineStyle: editForm.williamsRLimitLineStyle,
+      } : {}),
+      ...(ind?.type === "ADX" ? {
+        adxPlusDiColor: editForm.adxPlusDiColor,
+        adxPlusDiLineWidth: editForm.adxPlusDiLineWidth,
+        adxPlusDiLineStyle: editForm.adxPlusDiLineStyle,
+        adxMinusDiColor: editForm.adxMinusDiColor,
+        adxMinusDiLineWidth: editForm.adxMinusDiLineWidth,
+        adxMinusDiLineStyle: editForm.adxMinusDiLineStyle,
+        adxAdxColor: editForm.adxAdxColor,
+        adxAdxLineWidth: editForm.adxAdxLineWidth,
+        adxAdxLineStyle: editForm.adxAdxLineStyle,
+        adxFixedScale: editForm.adxFixedScale,
+        adxLimits: editForm.adxLimits,
+        adxLimitUpper: editForm.adxLimitUpper,
+        adxLimitLower: editForm.adxLimitLower,
+        adxLimitColor: editForm.adxLimitColor,
+        adxLimitLineWidth: editForm.adxLimitLineWidth,
+        adxLimitLineStyle: editForm.adxLimitLineStyle,
       } : {}),
       ...(ind?.type === "SAR" ? {
         sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),

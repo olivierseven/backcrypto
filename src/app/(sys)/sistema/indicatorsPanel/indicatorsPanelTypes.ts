@@ -90,6 +90,22 @@ export interface AddFormState {
   volumeColorBelow: string;
   volumeColorAboveOpen: boolean;
   volumeColorBelowOpen: boolean;
+  adxPlusDiColor: string;
+  adxPlusDiLineWidth: IndicatorLineWidth;
+  adxPlusDiLineStyle: IndicatorLineStyle;
+  adxMinusDiColor: string;
+  adxMinusDiLineWidth: IndicatorLineWidth;
+  adxMinusDiLineStyle: IndicatorLineStyle;
+  adxAdxColor: string;
+  adxAdxLineWidth: IndicatorLineWidth;
+  adxAdxLineStyle: IndicatorLineStyle;
+  adxFixedScale: boolean;
+  adxLimits: boolean;
+  adxLimitUpper: number;
+  adxLimitLower: number;
+  adxLimitColor: string;
+  adxLimitLineWidth: IndicatorLineWidth;
+  adxLimitLineStyle: IndicatorLineStyle;
 }
 
 export interface EditFormState {
@@ -170,6 +186,22 @@ export interface EditFormState {
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
+  adxPlusDiColor: string;
+  adxPlusDiLineWidth: IndicatorLineWidth;
+  adxPlusDiLineStyle: IndicatorLineStyle;
+  adxMinusDiColor: string;
+  adxMinusDiLineWidth: IndicatorLineWidth;
+  adxMinusDiLineStyle: IndicatorLineStyle;
+  adxAdxColor: string;
+  adxAdxLineWidth: IndicatorLineWidth;
+  adxAdxLineStyle: IndicatorLineStyle;
+  adxFixedScale: boolean;
+  adxLimits: boolean;
+  adxLimitUpper: number;
+  adxLimitLower: number;
+  adxLimitColor: string;
+  adxLimitLineWidth: IndicatorLineWidth;
+  adxLimitLineStyle: IndicatorLineStyle;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

@@ -95,6 +95,9 @@ export function getSeriesValue(
       if (part === "upper") return ind.type === "Bollinger" ? 0 : null;
       if (part === "middle") return ind.type === "Bollinger" ? 1 : null;
       if (part === "lower") return ind.type === "Bollinger" ? 2 : null;
+      if (part === "plusDi") return ind.type === "ADX" ? 0 : null;
+      if (part === "minusDi") return ind.type === "ADX" ? 1 : null;
+      if (part === "adx") return ind.type === "ADX" ? 2 : null;
       return null;
     })();
     if (extraOffset == null) return null;

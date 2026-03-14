@@ -47,7 +47,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR"
+        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX"
           ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
             ? form.chartOption
             : hasFreePanelForSecondary
@@ -175,6 +175,32 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           chartOption: freePanel,
         };
       }
+      if (newType === "ADX") {
+        return {
+          ...prev,
+          indicatorType: "ADX",
+          period: 14,
+          periodText: "14",
+          fieldKey: "close",
+          chartOption: freePanel,
+          adxPlusDiColor: "#22c55e",
+          adxPlusDiLineWidth: "normal",
+          adxPlusDiLineStyle: "solid",
+          adxMinusDiColor: "#ef4444",
+          adxMinusDiLineWidth: "normal",
+          adxMinusDiLineStyle: "solid",
+          adxAdxColor: "#eab308",
+          adxAdxLineWidth: "normal",
+          adxAdxLineStyle: "solid",
+          adxFixedScale: true,
+          adxLimits: false,
+          adxLimitUpper: 25,
+          adxLimitLower: 20,
+          adxLimitColor: "#71717a",
+          adxLimitLineWidth: "normal",
+          adxLimitLineStyle: "dotted",
+        };
+      }
       if (newType === "VWAP") {
         return {
           ...prev,
@@ -251,7 +277,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
               </>
-            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR") ? (
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX") ? (
               <>
                 {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                 {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -283,6 +309,18 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             className="rounded border-zinc-300"
           />
           <span className="text-xs text-zinc-700">{(t as Record<string, string>).rsiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
+        </label>
+      )}
+
+      {form.indicatorType === "ADX" && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.adxFixedScale}
+            onChange={(e) => setForm((prev) => ({ ...prev, adxFixedScale: e.target.checked }))}
+            className="rounded border-zinc-300"
+          />
+          <span className="text-xs text-zinc-700">{(t as Record<string, string>).adxFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
         </label>
       )}
 
@@ -577,6 +615,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="OBV">OBV</option>
           <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
           <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
+          <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
           <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
@@ -993,7 +1032,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       </div>
       )}
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
         <select

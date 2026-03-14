@@ -1210,7 +1210,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   if (windowN === 0) return null;
 
   const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" =>
-    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5") ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5") ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
@@ -1290,7 +1290,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const useFixedScale =
       !hasObv &&
       lines.length > 0 &&
-      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || ind.type === "Stochastic");
+      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
     if (useFixedScale) return { min: 0, max: 100 };
     const useFixedScaleWilliams =
       !hasObv &&
@@ -1322,7 +1322,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       min = 0;
       if (max < 0) max = 0;
     }
-    if (lines.some((ind) => ind.type === "RSI" || ind.type === "Stochastic")) {
+    if (lines.some((ind) => (ind.type === "RSI") || (ind.type === "Stochastic") || (ind.type === "ADX" && ind.adxFixedScale !== false))) {
       min = Math.min(min, 0);
       max = Math.max(max, 100);
     }

@@ -302,7 +302,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
-    ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "Volume" ? "panel2" : "main");
+    ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
   const seriesOptions = useMemo(() => {
     const tStrat = getCryptoT(lang).sistema.strategies as Record<string, string>;
@@ -332,8 +332,15 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
         return;
       }
+      // ADX: só as 3 colunas (+DI, -DI, ADX), sem opção genérica
+      if (ind.type === "ADX") {
+        const adxLabel = getIndicatorLabel(ind, tKlines, userIndicators);
+        opts.push({ key: `ind_${ind.id}:plusDi`, label: `(${num}) +DI (${adxLabel})` });
+        opts.push({ key: `ind_${ind.id}:minusDi`, label: `(${num}) -DI (${adxLabel})` });
+        opts.push({ key: `ind_${ind.id}:adx`, label: `(${num}) ADX (${adxLabel})` });
+        return;
+      }
       opts.push({ key: `ind_${ind.id}`, label: `(${num}) ${getIndicatorLabel(ind, tKlines, userIndicators)}` });
-      // Subindicadores (precisam existir no dropdown para usar em estratégias):
       // - MACD: Signal e Histogram
       if (ind.type === "MACD" && ind.macdSignalLine) {
         const sigLabel = (tKlines as Record<string, string>).macdSignalLabel
