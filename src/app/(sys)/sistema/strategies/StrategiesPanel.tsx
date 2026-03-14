@@ -302,7 +302,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
-    ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" ? "panel2" : "main");
+    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
   const seriesOptions = useMemo(() => {
     const tStrat = getCryptoT(lang).sistema.strategies as Record<string, string>;
@@ -322,24 +322,40 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     userIndicators.forEach((ind) => {
       const panel = getIndicatorPanel(ind);
       const num = panelToNum(panel);
-      // Bollinger: três colunas no listbox (banda superior, média, banda inferior)
+      // Bollinger: nome da fonte (BB(period,Z) + campo) + bandas/meio abreviados
       if (ind.type === "Bollinger") {
-        const upperLabel = (tKlines as Record<string, string>).bollingerShowUpper ?? "Upper band";
-        const middleLabel = (tKlines as Record<string, string>).bollingerShowMiddle ?? "Middle (MA)";
-        const lowerLabel = (tKlines as Record<string, string>).bollingerShowLower ?? "Lower band";
-        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${upperLabel}` });
-        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${middleLabel}` });
-        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
+        const indLabel = getIndicatorLabel(ind, tKlines, userIndicators);
+        const t = tKlines as Record<string, string>;
+        const upperLabel = t.bollingerShortUpper ?? "Up";
+        const middleLabel = t.bollingerShortMiddle ?? "Mid";
+        const lowerLabel = t.bollingerShortLower ?? "Lo";
+        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${indLabel} – ${upperLabel}` });
+        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${indLabel} – ${middleLabel}` });
+        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${indLabel} – ${lowerLabel}` });
         return;
       }
-      // Donchian: três colunas (canal superior, meio, canal inferior)
+      // Donchian: nome da fonte (DC(period) + campo) + bandas/meio abreviados
       if (ind.type === "Donchian") {
-        const upperLabel = (tKlines as Record<string, string>).donchianShowUpper ?? "Upper channel";
-        const middleLabel = (tKlines as Record<string, string>).donchianShowMiddle ?? "Middle line";
-        const lowerLabel = (tKlines as Record<string, string>).donchianShowLower ?? "Lower channel";
-        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${upperLabel}` });
-        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${middleLabel}` });
-        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${lowerLabel}` });
+        const indLabel = getIndicatorLabel(ind, tKlines, userIndicators);
+        const t = tKlines as Record<string, string>;
+        const upperLabel = t.donchianShortUpper ?? "Up";
+        const middleLabel = t.donchianShortMiddle ?? "Mid";
+        const lowerLabel = t.donchianShortLower ?? "Lo";
+        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${indLabel} – ${upperLabel}` });
+        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${indLabel} – ${middleLabel}` });
+        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${indLabel} – ${lowerLabel}` });
+        return;
+      }
+      // Keltner: nome da fonte (getIndicatorLabel = KC(period,mult) + campo ex. Fech.) + bandas/meio abreviados
+      if (ind.type === "Keltner") {
+        const indLabel = getIndicatorLabel(ind, tKlines, userIndicators);
+        const t = tKlines as Record<string, string>;
+        const upperLabel = t.keltnerShortUpper ?? "Up";
+        const middleLabel = t.keltnerShortMiddle ?? "Mid";
+        const lowerLabel = t.keltnerShortLower ?? "Lo";
+        opts.push({ key: `ind_${ind.id}:upper`, label: `(${num}) ${indLabel} – ${upperLabel}` });
+        opts.push({ key: `ind_${ind.id}:middle`, label: `(${num}) ${indLabel} – ${middleLabel}` });
+        opts.push({ key: `ind_${ind.id}:lower`, label: `(${num}) ${indLabel} – ${lowerLabel}` });
         return;
       }
       // ADX: só as 3 colunas (+DI, -DI, ADX), sem opção genérica

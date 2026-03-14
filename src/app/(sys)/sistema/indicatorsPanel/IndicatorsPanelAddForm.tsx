@@ -39,7 +39,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     ? (indicatorCountByPanel.panel2 === 0 ? "panel2" : "panel2")
     : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2");
   const chartOptionValue: string =
-    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
+    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
       ? "main"
       : form.indicatorType === "Volume"
         ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
@@ -47,7 +47,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI"
+        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI"
           ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
             ? form.chartOption
             : hasFreePanelForSecondary
@@ -76,6 +76,26 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           rsiLimitColor: "#dc2626",
           rsiLimitLineWidth: "normal",
           rsiLimitLineStyle: "dotted",
+        };
+      }
+      if (newType === "MFI") {
+        return {
+          ...prev,
+          indicatorType: "MFI",
+          period: 14,
+          periodText: "14",
+          chartOption: freePanel,
+          mfiFixedScale: true,
+          mfiCenterLine: false,
+          mfiCenterLineColor: "#71717a",
+          mfiCenterLineWidth: "normal",
+          mfiCenterLineStyle: "dotted",
+          mfiLimits: false,
+          mfiLimitUpper: 80,
+          mfiLimitLower: 20,
+          mfiLimitColor: "#dc2626",
+          mfiLimitLineWidth: "normal",
+          mfiLimitLineStyle: "dotted",
         };
       }
       if (newType === "MACD") {
@@ -256,6 +276,31 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           bollingerMiddleLineWidth: "normal",
         };
       }
+      if (newType === "Keltner") {
+        return {
+          ...prev,
+          indicatorType: "Keltner",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+          keltnerMaType: "EMA",
+          keltnerMultiplier: 2,
+          keltnerMultiplierText: "2",
+          keltnerShowUpper: true,
+          keltnerShowLower: true,
+          keltnerShowMiddle: false,
+          keltnerBandOpacity: 0.2,
+          keltnerBandOpacityText: "20",
+          keltnerLimitsColor: "#6366f1",
+          keltnerLimitsColorOpen: false,
+          keltnerLimitsLineStyle: "solid",
+          keltnerLimitsLineWidth: "normal",
+          keltnerMiddleColor: "#a855f7",
+          keltnerMiddleLineStyle: "dashed",
+          keltnerMiddleLineWidth: "normal",
+        };
+      }
       if (newType === "Donchian") {
         return {
           ...prev,
@@ -331,6 +376,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="HMA">{(t as Record<string, string>).hmaLabel ?? "HMA"}</option>
           <option value="VWMA">{(t as Record<string, string>).vwmaLabel ?? "VWMA"}</option>
           <option value="RSI">RSI</option>
+          <option value="MFI">{(t as Record<string, string>).mfiLabel ?? "MFI"}</option>
           <option value="MACD">MACD</option>
           <option value="Stochastic">Stochastic</option>
           <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
@@ -341,6 +387,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
+          <option value="Keltner">{(t as Record<string, string>).keltnerLabel ?? "Keltner Channels"}</option>
           <option value="Donchian">{(t as Record<string, string>).donchianLabel ?? "Donchian Channels"}</option>
           <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
         </select>
@@ -348,7 +395,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
 
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" ? (
+        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" ? (
           <span className="text-sm text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
         ) : (
           <select
@@ -367,7 +414,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
               </>
-            ) : (form.indicatorType === "RSI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI") ? (
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI") ? (
               <>
                 {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                 {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -390,7 +437,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         )}
       </div>
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
         <select
@@ -468,6 +515,18 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             className="rounded border-zinc-300"
           />
           <span className="text-xs text-zinc-700">{(t as Record<string, string>).rsiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
+        </label>
+      )}
+
+      {form.indicatorType === "MFI" && (
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.mfiFixedScale}
+            onChange={(e) => setForm((prev) => ({ ...prev, mfiFixedScale: e.target.checked }))}
+            className="rounded border-zinc-300"
+          />
+          <span className="text-xs text-zinc-700">{(t as Record<string, string>).mfiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
         </label>
       )}
 
@@ -614,6 +673,118 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
                   onChange={(e) => setForm((prev) => ({ ...prev, rsiCenterLineStyle: e.target.value as IndicatorLineStyle }))}
                   className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
                 >
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {form.indicatorType === "MFI" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.mfiCenterLine}
+              onChange={(e) => setForm((prev) => ({ ...prev, mfiCenterLine: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).mfiCenterLineLabel ?? "Linha central 50%"}</span>
+          </label>
+          {form.mfiCenterLine && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, mfiCenterLineColor: hex }))}
+                      className={`w-6 h-6 rounded border shrink-0 ${form.mfiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`}
+                      style={{ backgroundColor: hex }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <select
+                  value={form.mfiCenterLineWidth}
+                  onChange={(e) => setForm((prev) => ({ ...prev, mfiCenterLineWidth: e.target.value as IndicatorLineWidth }))}
+                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+                >
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <select
+                  value={form.mfiCenterLineStyle}
+                  onChange={(e) => setForm((prev) => ({ ...prev, mfiCenterLineStyle: e.target.value as IndicatorLineStyle }))}
+                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+                >
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {form.indicatorType === "MFI" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.mfiLimits}
+              onChange={(e) => setForm((prev) => ({ ...prev, mfiLimits: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).mfiLimitsLabel ?? "Limites superior e inferior"}</span>
+          </label>
+          {form.mfiLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).mfiLimitUpperLabel ?? "Superior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.mfiLimitUpper}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).mfiLimitLowerLabel ?? "Inferior %"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-10 text-center text-sm tabular-nums">{form.mfiLimitLower}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.mfiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <select value={form.mfiLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, mfiLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <select value={form.mfiLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, mfiLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
                   <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
                   <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
                   <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
@@ -852,6 +1023,99 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             </select>
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
             <select value={form.bollingerLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, bollingerLimitsLineStyle: e.target.value as typeof form.bollingerLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+            </select>
+          </div>
+        </>
+      )}
+
+      {form.indicatorType === "Keltner" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMaType ?? "Média móvel"}</span>
+            <select
+              value={form.keltnerMaType}
+              onChange={(e) => setForm((prev) => ({ ...prev, keltnerMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            >
+              <option value="SMA">SMA</option>
+              <option value="EMA">EMA</option>
+              <option value="WMA">WMA</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMultiplierLabel ?? "Multiplicador ATR (0–10)"}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={form.keltnerMultiplierText}
+              onChange={(e) => setForm((prev) => ({ ...prev, keltnerMultiplierText: e.target.value }))}
+              onBlur={() => {
+                const n = parseFloat(form.keltnerMultiplierText);
+                const v = Number.isFinite(n) ? Math.max(0, Math.min(10, n)) : 2;
+                setForm((prev) => ({ ...prev, keltnerMultiplier: v, keltnerMultiplierText: String(v) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.keltnerShowUpper} onChange={(e) => setForm((p) => ({ ...p, keltnerShowUpper: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).keltnerShowUpper ?? "Banda superior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.keltnerShowLower} onChange={(e) => setForm((p) => ({ ...p, keltnerShowLower: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).keltnerShowLower ?? "Banda inferior"}
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-zinc-600">
+              <input type="checkbox" checked={form.keltnerShowMiddle} onChange={(e) => setForm((p) => ({ ...p, keltnerShowMiddle: e.target.checked }))} className="rounded" />
+              {(t as Record<string, string>).keltnerShowMiddle ?? "Média móvel"}
+            </label>
+          </div>
+          <div className="flex items-center gap-2 relative">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}</span>
+            <button
+              type="button"
+              onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColorOpen: !prev.keltnerLimitsColorOpen }))}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
+              aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}
+              aria-expanded={form.keltnerLimitsColorOpen}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.keltnerLimitsColor }} />
+              </span>
+              <span className="text-zinc-500 text-xs">▾</span>
+            </button>
+            {form.keltnerLimitsColorOpen && (
+              <>
+                <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColorOpen: false }))} />
+                <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                      <button
+                        key={hex}
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColor: hex, keltnerLimitsColorOpen: false }))}
+                        className={`w-10 h-10 rounded border-2 ${form.keltnerLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
+                        style={{ backgroundColor: hex }}
+                        aria-label={`Color ${hex}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
+            <select value={form.keltnerLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, keltnerLimitsLineWidth: e.target.value as typeof form.keltnerLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
+              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+            </select>
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
+            <select value={form.keltnerLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, keltnerLimitsLineStyle: e.target.value as typeof form.keltnerLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
               <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
               <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
               <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>

@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Donchian" | "Volume" | "CCI";
+  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   adxPlusDiColor?: string;
@@ -67,6 +67,18 @@ export interface ChartIndicatorLine {
   rsiLimitColor?: string;
   rsiLimitLineWidth?: "thin" | "normal";
   rsiLimitLineStyle?: "solid" | "dotted" | "dashed";
+  /** Só para MFI: mesmas opções que RSI (escala fixa 0–100, linha 50%, limites). */
+  mfiFixedScale?: boolean;
+  mfiCenterLine?: boolean;
+  mfiCenterLineColor?: string;
+  mfiCenterLineWidth?: "thin" | "normal";
+  mfiCenterLineStyle?: "solid" | "dotted" | "dashed";
+  mfiLimits?: boolean;
+  mfiLimitUpper?: number;
+  mfiLimitLower?: number;
+  mfiLimitColor?: string;
+  mfiLimitLineWidth?: "thin" | "normal";
+  mfiLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Desenho: linha (default), barras (histograma MACD) ou pontos (SAR). */
   display?: "line" | "histogram" | "points";
   /** Só para display "points" (SAR): tamanho do ponto (thin = mais fino, normal = mais grosso). */
@@ -114,6 +126,17 @@ export interface ChartIndicatorLine {
   donchianMiddleColor?: string;
   donchianMiddleLineStyle?: "solid" | "dotted" | "dashed";
   donchianMiddleLineWidth?: "thin" | "normal";
+  /** Só para Keltner Channels: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
+  keltnerShowUpper?: boolean;
+  keltnerShowLower?: boolean;
+  keltnerShowMiddle?: boolean;
+  keltnerBandOpacity?: number;
+  keltnerLimitsColor?: string;
+  keltnerLimitsLineStyle?: "solid" | "dotted" | "dashed";
+  keltnerLimitsLineWidth?: "thin" | "normal";
+  keltnerMiddleColor?: string;
+  keltnerMiddleLineStyle?: "solid" | "dotted" | "dashed";
+  keltnerMiddleLineWidth?: "thin" | "normal";
   /** Só para CCI: escala fixa no eixo Y (ex.: -100 a 100). */
   cciFixedScale?: boolean;
   /** Só para CCI: limites superior/inferior (ex. 100 / -100). */

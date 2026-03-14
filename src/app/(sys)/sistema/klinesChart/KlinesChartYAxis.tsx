@@ -329,9 +329,11 @@ export function KlinesChartYAxis({
                       ? (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))
                       : ind.type === "OBV" && formatObvValue
                         ? formatObvValue(lastVal)
-                        : lastVal >= 0 && lastVal <= 100 && lastVal === Math.round(lastVal)
+                        : (ind.type === "RSI" || ind.type === "MFI") && lastVal >= 0 && lastVal <= 100
                           ? lastVal.toFixed(1)
-                          : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
+                          : lastVal >= 0 && lastVal <= 100 && lastVal === Math.round(lastVal)
+                            ? lastVal.toFixed(1)
+                            : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
                 </text>
               </g>
             );

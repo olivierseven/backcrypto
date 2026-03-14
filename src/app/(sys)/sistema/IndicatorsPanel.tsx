@@ -68,6 +68,17 @@ const INITIAL_ADD_FORM: AddFormState = {
   rsiLimitColor: "#dc2626",
   rsiLimitLineWidth: "normal",
   rsiLimitLineStyle: "dotted",
+  mfiFixedScale: true,
+  mfiCenterLine: false,
+  mfiCenterLineColor: "#71717a",
+  mfiCenterLineWidth: "normal",
+  mfiCenterLineStyle: "dotted",
+  mfiLimits: false,
+  mfiLimitUpper: 80,
+  mfiLimitLower: 20,
+  mfiLimitColor: "#dc2626",
+  mfiLimitLineWidth: "normal",
+  mfiLimitLineStyle: "dotted",
   stochLimits: false,
   stochLimitUpper: 80,
   stochLimitLower: 20,
@@ -109,6 +120,21 @@ const INITIAL_ADD_FORM: AddFormState = {
   bollingerMiddleColor: "#a855f7",
   bollingerMiddleLineStyle: "dashed",
   bollingerMiddleLineWidth: "normal",
+  keltnerMaType: "EMA",
+  keltnerMultiplier: 2,
+  keltnerMultiplierText: "2",
+  keltnerShowUpper: true,
+  keltnerShowLower: true,
+  keltnerShowMiddle: false,
+  keltnerBandOpacity: 0.2,
+  keltnerBandOpacityText: "20",
+  keltnerLimitsColor: "#6366f1",
+  keltnerLimitsColorOpen: false,
+  keltnerLimitsLineStyle: "solid",
+  keltnerLimitsLineWidth: "normal",
+  keltnerMiddleColor: "#a855f7",
+  keltnerMiddleLineStyle: "dashed",
+  keltnerMiddleLineWidth: "normal",
   volumeInUsdt: false,
   volumeColorAbove: "#10b981",
   volumeColorBelow: "#ef4444",
@@ -282,7 +308,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     sarPointSize: "thin" | "normal";
   } | null>(null);
 
-  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" || i.type === "ADX" || i.type === "CCI" ? "panel2" : "main");
+  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MFI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "ATR" || i.type === "ADX" || i.type === "CCI" ? "panel2" : "main");
 
   const indicatorCountByPanel = useMemo(() => {
     let main = 0;
@@ -349,7 +375,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
-  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "Volume";
+  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "Volume";
   const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
   const chosenPanelUsedForVolume =
     (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 > 0) ||
@@ -421,12 +447,27 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         bollingerMiddleLineStyle: addForm.lineStyle,
         bollingerMiddleLineWidth: addForm.lineWidth,
       } : {}),
+      ...(addForm.indicatorType === "Keltner" ? {
+        keltnerMaType: addForm.keltnerMaType,
+        keltnerMultiplier: Math.max(0, Math.min(10, parseFloat(addForm.keltnerMultiplierText) || 2)),
+        keltnerShowUpper: addForm.keltnerShowUpper,
+        keltnerShowLower: addForm.keltnerShowLower,
+        keltnerShowMiddle: addForm.keltnerShowMiddle,
+        keltnerBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(addForm.keltnerBandOpacityText) || 20) / 100)),
+        keltnerLimitsColor: addForm.keltnerLimitsColor,
+        keltnerLimitsLineStyle: addForm.keltnerLimitsLineStyle,
+        keltnerLimitsLineWidth: addForm.keltnerLimitsLineWidth,
+        keltnerMiddleColor: addForm.color,
+        keltnerMiddleLineStyle: addForm.lineStyle,
+        keltnerMiddleLineWidth: addForm.lineWidth,
+      } : {}),
       color: addForm.color,
       intervals: currentGroupMinutes != null ? [currentGroupMinutes] : [],
       panel: effectivePanel,
       lineWidth: addForm.lineWidth,
       lineStyle: addForm.lineStyle,
       ...(addForm.indicatorType === "RSI" ? { rsiFixedScale: addForm.rsiFixedScale, rsiCenterLine: addForm.rsiCenterLine, rsiCenterLineColor: addForm.rsiCenterLineColor, rsiCenterLineWidth: addForm.rsiCenterLineWidth, rsiCenterLineStyle: addForm.rsiCenterLineStyle, rsiLimits: addForm.rsiLimits, rsiLimitUpper: addForm.rsiLimitUpper, rsiLimitLower: addForm.rsiLimitLower, rsiLimitColor: addForm.rsiLimitColor, rsiLimitLineWidth: addForm.rsiLimitLineWidth, rsiLimitLineStyle: addForm.rsiLimitLineStyle } : {}),
+      ...(addForm.indicatorType === "MFI" ? { mfiFixedScale: addForm.mfiFixedScale, mfiCenterLine: addForm.mfiCenterLine, mfiCenterLineColor: addForm.mfiCenterLineColor, mfiCenterLineWidth: addForm.mfiCenterLineWidth, mfiCenterLineStyle: addForm.mfiCenterLineStyle, mfiLimits: addForm.mfiLimits, mfiLimitUpper: addForm.mfiLimitUpper, mfiLimitLower: addForm.mfiLimitLower, mfiLimitColor: addForm.mfiLimitColor, mfiLimitLineWidth: addForm.mfiLimitLineWidth, mfiLimitLineStyle: addForm.mfiLimitLineStyle } : {}),
       ...(addForm.indicatorType === "MACD" ? {
         macdFastMaType: addForm.macdFastMaType,
         macdFastPeriod: Math.max(1, Math.min(500, fastP)),
@@ -563,7 +604,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
 
   const startEdit = useCallback((ind: UserIndicatorConfig) => {
     setEditingId(ind.id);
-    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" || ind.panel === "panel5" ? ind.panel : (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? "panel2" : "main");
+    const panel = ind.panel === "main" || ind.panel === "panel2" || ind.panel === "panel3" || ind.panel === "panel4" || ind.panel === "panel5" ? ind.panel : (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? "panel2" : "main");
     const fieldKey = ind.type === "WilliamsR" ? "close" : ind.fieldKey;
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
@@ -602,6 +643,17 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : "#dc2626",
       rsiLimitLineWidth: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineWidth === "thin" || ind.rsiLimitLineWidth === "normal") ? ind.rsiLimitLineWidth : "normal") as IndicatorLineWidth,
       rsiLimitLineStyle: (ind.type === "RSI" && ind.rsiLimits && (ind.rsiLimitLineStyle === "solid" || ind.rsiLimitLineStyle === "dotted" || ind.rsiLimitLineStyle === "dashed") ? ind.rsiLimitLineStyle : "dotted") as IndicatorLineStyle,
+      mfiFixedScale: ind.type === "MFI" ? (ind.mfiFixedScale !== false) : true,
+      mfiCenterLine: ind.type === "MFI" ? (ind.mfiCenterLine === true) : false,
+      mfiCenterLineColor: ind.type === "MFI" && ind.mfiCenterLine ? (ind.mfiCenterLineColor ?? "#71717a") : "#71717a",
+      mfiCenterLineWidth: (ind.type === "MFI" && ind.mfiCenterLine && (ind.mfiCenterLineWidth === "thin" || ind.mfiCenterLineWidth === "normal") ? ind.mfiCenterLineWidth : "normal") as IndicatorLineWidth,
+      mfiCenterLineStyle: (ind.type === "MFI" && ind.mfiCenterLine && (ind.mfiCenterLineStyle === "solid" || ind.mfiCenterLineStyle === "dotted" || ind.mfiCenterLineStyle === "dashed") ? ind.mfiCenterLineStyle : "dotted") as IndicatorLineStyle,
+      mfiLimits: ind.type === "MFI" ? (ind.mfiLimits === true) : false,
+      mfiLimitUpper: ind.type === "MFI" && ind.mfiLimits ? (typeof ind.mfiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(ind.mfiLimitUpper))) : 80) : 80,
+      mfiLimitLower: ind.type === "MFI" && ind.mfiLimits ? (typeof ind.mfiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(ind.mfiLimitLower))) : 20) : 20,
+      mfiLimitColor: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitColor ?? "#dc2626") : "#dc2626",
+      mfiLimitLineWidth: (ind.type === "MFI" && ind.mfiLimits && (ind.mfiLimitLineWidth === "thin" || ind.mfiLimitLineWidth === "normal") ? ind.mfiLimitLineWidth : "normal") as IndicatorLineWidth,
+      mfiLimitLineStyle: (ind.type === "MFI" && ind.mfiLimits && (ind.mfiLimitLineStyle === "solid" || ind.mfiLimitLineStyle === "dotted" || ind.mfiLimitLineStyle === "dashed") ? ind.mfiLimitLineStyle : "dotted") as IndicatorLineStyle,
       stochLimits: ind.type === "Stochastic" ? (ind.stochLimits === true) : false,
       stochLimitUpper: ind.type === "Stochastic" && ind.stochLimits ? (typeof ind.stochLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(ind.stochLimitUpper))) : 80) : 80,
       stochLimitLower: ind.type === "Stochastic" && ind.stochLimits ? (typeof ind.stochLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(ind.stochLimitLower))) : 20) : 20,
@@ -680,6 +732,20 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : "#a855f7",
       bollingerMiddleLineStyle: (ind.type === "Bollinger" && (ind.bollingerMiddleLineStyle === "solid" || ind.bollingerMiddleLineStyle === "dotted" || ind.bollingerMiddleLineStyle === "dashed") ? ind.bollingerMiddleLineStyle : "dashed") as IndicatorLineStyle,
       bollingerMiddleLineWidth: (ind.type === "Bollinger" && (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal") ? ind.bollingerMiddleLineWidth : "normal") as IndicatorLineWidth,
+      keltnerMaType: ind.type === "Keltner" ? (ind.keltnerMaType === "SMA" || ind.keltnerMaType === "EMA" || ind.keltnerMaType === "WMA" ? ind.keltnerMaType : "EMA") : "EMA",
+      keltnerMultiplier: ind.type === "Keltner" ? (typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2) : 2,
+      keltnerMultiplierText: String(ind.type === "Keltner" ? (typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2) : 2),
+      keltnerShowUpper: ind.type === "Keltner" ? (ind.keltnerShowUpper !== false) : true,
+      keltnerShowLower: ind.type === "Keltner" ? (ind.keltnerShowLower !== false) : true,
+      keltnerShowMiddle: ind.type === "Keltner" ? (ind.keltnerShowMiddle === true) : false,
+      keltnerBandOpacity: ind.type === "Keltner" ? (typeof ind.keltnerBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.keltnerBandOpacity)) : 0.2) : 0.2,
+      keltnerBandOpacityText: String(Math.round((ind.type === "Keltner" ? (typeof ind.keltnerBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.keltnerBandOpacity)) : 0.2) : 0.2) * 100)),
+      keltnerLimitsColor: ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? "#6366f1") : "#6366f1",
+      keltnerLimitsLineStyle: (ind.type === "Keltner" && (ind.keltnerLimitsLineStyle === "solid" || ind.keltnerLimitsLineStyle === "dotted" || ind.keltnerLimitsLineStyle === "dashed") ? ind.keltnerLimitsLineStyle : "solid") as IndicatorLineStyle,
+      keltnerLimitsLineWidth: (ind.type === "Keltner" && (ind.keltnerLimitsLineWidth === "thin" || ind.keltnerLimitsLineWidth === "normal") ? ind.keltnerLimitsLineWidth : "normal") as IndicatorLineWidth,
+      keltnerMiddleColor: ind.type === "Keltner" ? (ind.keltnerMiddleColor ?? "#a855f7") : "#a855f7",
+      keltnerMiddleLineStyle: (ind.type === "Keltner" && (ind.keltnerMiddleLineStyle === "solid" || ind.keltnerMiddleLineStyle === "dotted" || ind.keltnerMiddleLineStyle === "dashed") ? ind.keltnerMiddleLineStyle : "dashed") as IndicatorLineStyle,
+      keltnerMiddleLineWidth: (ind.type === "Keltner" && (ind.keltnerMiddleLineWidth === "thin" || ind.keltnerMiddleLineWidth === "normal") ? ind.keltnerMiddleLineWidth : "normal") as IndicatorLineWidth,
       volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : false,
       volumeColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : "#10b981",
       volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
@@ -712,6 +778,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       lineWidth: editForm.lineWidth,
       lineStyle: editForm.lineStyle,
       ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
+      ...(ind?.type === "MFI" ? { mfiFixedScale: editForm.mfiFixedScale, mfiCenterLine: editForm.mfiCenterLine, mfiCenterLineColor: editForm.mfiCenterLineColor, mfiCenterLineWidth: editForm.mfiCenterLineWidth, mfiCenterLineStyle: editForm.mfiCenterLineStyle, mfiLimits: editForm.mfiLimits, mfiLimitUpper: editForm.mfiLimitUpper, mfiLimitLower: editForm.mfiLimitLower, mfiLimitColor: editForm.mfiLimitColor, mfiLimitLineWidth: editForm.mfiLimitLineWidth, mfiLimitLineStyle: editForm.mfiLimitLineStyle } : {}),
       ...(ind?.type === "MACD" ? {
         macdFastMaType: editForm.macdFastMaType,
         macdFastPeriod: Math.max(1, Math.min(500, fastP)),
@@ -810,6 +877,20 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         bollingerMiddleColor: editForm.color,
         bollingerMiddleLineStyle: editForm.lineStyle,
         bollingerMiddleLineWidth: editForm.lineWidth,
+      } : {}),
+      ...(ind?.type === "Keltner" ? {
+        keltnerMaType: editForm.keltnerMaType,
+        keltnerMultiplier: Math.max(0, Math.min(10, parseFloat(editForm.keltnerMultiplierText) || 2)),
+        keltnerShowUpper: editForm.keltnerShowUpper,
+        keltnerShowLower: editForm.keltnerShowLower,
+        keltnerShowMiddle: editForm.keltnerShowMiddle,
+        keltnerBandOpacity: Math.max(0, Math.min(0.3, (parseFloat(editForm.keltnerBandOpacityText) || 20) / 100)),
+        keltnerLimitsColor: editForm.keltnerLimitsColor,
+        keltnerLimitsLineStyle: editForm.keltnerLimitsLineStyle,
+        keltnerLimitsLineWidth: editForm.keltnerLimitsLineWidth,
+        keltnerMiddleColor: editForm.color,
+        keltnerMiddleLineStyle: editForm.lineStyle,
+        keltnerMiddleLineWidth: editForm.lineWidth,
       } : {}),
     };
     updateIndicatorWithStrategyReset(editingId, updates);

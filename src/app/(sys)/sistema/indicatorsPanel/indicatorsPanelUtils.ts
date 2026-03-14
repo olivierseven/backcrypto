@@ -59,10 +59,14 @@ export function getIndicatorLabel(
   }
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
-    return `Bollinger(${ind.period}) Z=${z} ${fieldLabel}`;
+    return `BB(${ind.period},${z}) ${fieldLabel}`;
+  }
+  if (ind.type === "Keltner") {
+    const mult = typeof ind.keltnerMultiplier === "number" ? ind.keltnerMultiplier : 2;
+    return `KC(${ind.period},${mult}) ${fieldLabel}`;
   }
   if (ind.type === "Donchian") {
-    return `Donchian(${ind.period})`;
+    return `DC(${ind.period}) ${fieldLabel}`;
   }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? (typeof (t as Record<string, string>).volumeUsdtLabel === "string" ? (t as Record<string, string>).volumeUsdtLabel : "Volume (USDT)") : (typeof (t as Record<string, string>).volumeLabel === "string" ? (t as Record<string, string>).volumeLabel : "Volume");
@@ -72,6 +76,9 @@ export function getIndicatorLabel(
   }
   if (ind.type === "CCI") {
     return `CCI(${ind.period}) ${fieldLabel}`;
+  }
+  if (ind.type === "MFI") {
+    return `MFI(${ind.period})`;
   }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
@@ -127,10 +134,14 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "Bollinger") {
     const z = ind.bollingerZ ?? 2;
-    return `BB(${ind.period}) Z=${z} ${letter}`;
+    return `BB(${ind.period},${z}) ${letter}`;
+  }
+  if (ind.type === "Keltner") {
+    const mult = typeof ind.keltnerMultiplier === "number" ? ind.keltnerMultiplier : 2;
+    return `KC(${ind.period},${mult}) ${letter}`;
   }
   if (ind.type === "Donchian") {
-    return `DC(${ind.period})`;
+    return `DC(${ind.period}) ${letter}`;
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;
@@ -140,6 +151,9 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? "Vol USDT" : "Vol";
+  }
+  if (ind.type === "MFI") {
+    return `MFI(${ind.period})`;
   }
   return `${ind.type}(${ind.period}) ${letter}`;
 }

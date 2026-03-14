@@ -44,7 +44,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   const firstForEdit = (visibleForEdit[0]?.value ?? (ind.type === "WilliamsR" ? "close" : firstEnabledFieldValue)) as IndicatorFieldKey;
   const editFieldValue = (visibleForEdit.some((o) => o.value === editForm?.fieldKey) ? editForm!.fieldKey : firstForEdit) as string;
 
-  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? "panel2" : "main");
+  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? "panel2" : "main");
   const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : null;
   const [bollingerLimitsColorOpen, setBollingerLimitsColorOpen] = useState(false);
 
@@ -125,7 +125,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <select
@@ -133,7 +133,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 onChange={(e) => setEditForm((f) => (f ? { ...f, panel: e.target.value as IndicatorPanel } : f))}
                 className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
               >
-                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
+                {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
                   <>
                     {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                     {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -360,6 +360,63 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 </select>
               </div>
             </>
+          ) : ind.type === "Keltner" ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
+                <select value={editForm.fieldKey} onChange={(e) => setEditForm((f) => (f ? { ...f, fieldKey: e.target.value as IndicatorFieldKey } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                  {visibleForEdit.map((opt) => (
+                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.period}</span>
+                <div className="flex-1 flex items-center gap-1">
+                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.max(1, f.period - 1), periodText: String(Math.max(1, f.period - 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">−</button>
+                  <input type="text" inputMode="numeric" value={editForm.periodText} onChange={(e) => setEditForm((f) => (f ? { ...f, periodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setEditForm((f) => (f ? { ...f, period: v, periodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
+                  <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="w-8 h-8 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 text-sm">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerMaType ?? "Média móvel"}</span>
+                <select value={editForm.keltnerMaType} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerMaType: e.target.value as "SMA" | "EMA" | "WMA" } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                  <option value="SMA">SMA</option>
+                  <option value="EMA">EMA</option>
+                  <option value="WMA">WMA</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerMultiplierLabel ?? "Mult. ATR (0–10)"}</span>
+                <input type="text" inputMode="decimal" value={editForm.keltnerMultiplierText} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerMultiplierText: e.target.value } : f))} onBlur={() => { const n = parseFloat(editForm.keltnerMultiplierText); const v = Number.isFinite(n) ? Math.max(0, Math.min(10, n)) : 2; setEditForm((f) => (f ? { ...f, keltnerMultiplier: v, keltnerMultiplierText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1" />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <label className="flex items-center gap-1.5 text-[10px] text-zinc-600"><input type="checkbox" checked={editForm.keltnerShowUpper} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerShowUpper: e.target.checked } : f))} className="rounded" />{(t as Record<string, string>).keltnerShowUpper ?? "Banda sup."}</label>
+                <label className="flex items-center gap-1.5 text-[10px] text-zinc-600"><input type="checkbox" checked={editForm.keltnerShowLower} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerShowLower: e.target.checked } : f))} className="rounded" />{(t as Record<string, string>).keltnerShowLower ?? "Banda inf."}</label>
+                <label className="flex items-center gap-1.5 text-[10px] text-zinc-600"><input type="checkbox" checked={editForm.keltnerShowMiddle} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerShowMiddle: e.target.checked } : f))} className="rounded" />{(t as Record<string, string>).keltnerShowMiddle ?? "Média"}</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, keltnerLimitsColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.keltnerLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
+                <select value={editForm.keltnerLimitsLineWidth} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerLimitsLineWidth: e.target.value as IndicatorLineWidth } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
+                <select value={editForm.keltnerLimitsLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, keltnerLimitsLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                </select>
+              </div>
+            </>
           ) : ind.type === "Donchian" ? (
             <>
               <div className="flex items-center gap-2">
@@ -557,7 +614,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <select
@@ -565,7 +622,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 onChange={(e) => setEditForm((f) => (f ? { ...f, panel: e.target.value as IndicatorPanel } : f))}
                 className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
               >
-                {ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
+                {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "Volume" ? (
                   <>
                     {panelsFreeForSecondaryEdit.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                     {panelsFreeForSecondaryEdit.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -691,6 +748,98 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
                     <select value={editForm.rsiLimitLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, rsiLimitLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {ind.type === "MFI" && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={editForm.mfiFixedScale} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiFixedScale: e.target.checked } : f))} className="rounded border-zinc-300" />
+              <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).mfiFixedScaleLabel ?? "Escala fixa 0–100 no eixo Y"}</span>
+            </label>
+          )}
+          {ind.type === "MFI" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.mfiCenterLine} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiCenterLine: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).mfiCenterLineLabel ?? "Linha central 50%"}</span>
+              </label>
+              {editForm.mfiCenterLine && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiCenterLineColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.mfiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                    <select value={editForm.mfiCenterLineWidth} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiCenterLineWidth: e.target.value as IndicatorLineWidth } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal}</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                    <select value={editForm.mfiCenterLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiCenterLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {ind.type === "MFI" && (
+            <>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.mfiLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).mfiLimitsLabel ?? "Limites superior e inferior"}</span>
+              </label>
+              {editForm.mfiLimits && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).mfiLimitUpperLabel ?? "Superior %"}</span>
+                    <div className="flex items-center gap-0.5">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiLimitUpper: Math.max(0, Math.min(100, (f.mfiLimitUpper ?? 80) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.mfiLimitUpper}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiLimitUpper: Math.max(0, Math.min(100, (f.mfiLimitUpper ?? 80) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).mfiLimitLowerLabel ?? "Inferior %"}</span>
+                    <div className="flex items-center gap-0.5">
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiLimitLower: Math.max(0, Math.min(100, (f.mfiLimitLower ?? 20) - 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">−</button>
+                      <span className="w-8 text-center text-xs tabular-nums">{editForm.mfiLimitLower}</span>
+                      <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiLimitLower: Math.max(0, Math.min(100, (f.mfiLimitLower ?? 20) + 1)) } : f))} className="w-7 h-7 rounded border border-zinc-300 bg-white text-zinc-600 text-xs">+</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, mfiLimitColor: hex } : f))} className={`w-5 h-5 rounded border shrink-0 ${editForm.mfiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                    <select value={editForm.mfiLimitLineWidth} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiLimitLineWidth: e.target.value as IndicatorLineWidth } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal}</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                    <select value={editForm.mfiLimitLineStyle} onChange={(e) => setEditForm((f) => (f ? { ...f, mfiLimitLineStyle: e.target.value as IndicatorLineStyle } : f))} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white">
                       <option value="solid">{(t as Record<string, string>).lineStyleSolid}</option>
                       <option value="dotted">{(t as Record<string, string>).lineStyleDotted}</option>
                       <option value="dashed">{(t as Record<string, string>).lineStyleDashed}</option>

@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeHmaColumn, computeVwmaColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeHmaColumn, computeVwmaColumn } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
@@ -527,6 +527,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           out[i].push(middle[i] ?? null);
           out[i].push(lower[i] ?? null);
         }
+      } else if (ind.type === "Keltner") {
+        const mult = typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2;
+        const { upper, middle, lower } = computeKeltnerChannels(data, valueIndex, period, ind.keltnerMaType ?? "EMA", mult);
+        for (let i = 0; i < out.length; i++) {
+          out[i].push(upper[i] ?? null);
+          out[i].push(middle[i] ?? null);
+          out[i].push(lower[i] ?? null);
+        }
       } else if (ind.type === "Donchian") {
         const { upper, middle, lower } = computeDonchianChannels(dataForInd, period);
         for (let i = 0; i < out.length; i++) {
@@ -543,6 +551,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
       } else if (ind.type === "CCI") {
         const col = computeCciColumn(dataForInd, valueIndex, period);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "MFI") {
+        const col = computeMfiColumn(data, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else {
         const col =
@@ -574,13 +585,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         col += 1 + (ind.stochDLine ? 1 : 0);
       } else if (ind.type === "WilliamsR") {
         col += 1;
-      } else if (ind.type === "Bollinger" || ind.type === "Donchian") {
+      } else if (ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian") {
         col += 3;
       } else if (ind.type === "ADX") {
         col += 3;
       } else if (ind.type === "Volume") {
         // Volume usa coluna 5 ou 7, não consome slot
-      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP" || ind.type === "CCI") {
+      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP" || ind.type === "CCI" || ind.type === "MFI") {
         col += 1;
       } else {
         col += 1;
@@ -1102,7 +1113,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
               histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : undefined,
               histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" ? "panel2" : "main"),
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -1114,6 +1125,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
               rsiLimitLineWidth: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
               rsiLimitLineStyle: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
+              mfiFixedScale: ind.type === "MFI" ? (ind.mfiFixedScale !== false) : undefined,
+              mfiCenterLine: ind.type === "MFI" ? (ind.mfiCenterLine === true) : undefined,
+              mfiCenterLineColor: ind.type === "MFI" && ind.mfiCenterLine ? (ind.mfiCenterLineColor ?? "#71717a") : undefined,
+              mfiCenterLineWidth: ind.type === "MFI" && ind.mfiCenterLine ? (ind.mfiCenterLineWidth ?? "normal") : undefined,
+              mfiCenterLineStyle: ind.type === "MFI" && ind.mfiCenterLine ? (ind.mfiCenterLineStyle ?? "dotted") : undefined,
+              mfiLimits: ind.type === "MFI" ? (ind.mfiLimits === true) : undefined,
+              mfiLimitUpper: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitUpper ?? 80) : undefined,
+              mfiLimitLower: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitLower ?? 20) : undefined,
+              mfiLimitColor: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitColor ?? "#dc2626") : undefined,
+              mfiLimitLineWidth: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitLineWidth ?? "normal") : undefined,
+              mfiLimitLineStyle: ind.type === "MFI" && ind.mfiLimits ? (ind.mfiLimitLineStyle ?? "dotted") : undefined,
               stochLimits: ind.type === "Stochastic" ? (ind.stochLimits === true) : undefined,
               stochLimitUpper: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitUpper ?? 80) : undefined,
               stochLimitLower: ind.type === "Stochastic" && ind.stochLimits ? (ind.stochLimitLower ?? 20) : undefined,
@@ -1136,6 +1158,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : undefined,
               bollingerMiddleLineStyle: ind.type === "Bollinger" ? (ind.bollingerMiddleLineStyle ?? "dashed") : undefined,
               bollingerMiddleLineWidth: ind.type === "Bollinger" ? (ind.bollingerMiddleLineWidth ?? "normal") : undefined,
+              keltnerShowUpper: ind.type === "Keltner" ? (ind.keltnerShowUpper !== false) : undefined,
+              keltnerShowLower: ind.type === "Keltner" ? (ind.keltnerShowLower !== false) : undefined,
+              keltnerShowMiddle: ind.type === "Keltner" ? (ind.keltnerShowMiddle === true) : undefined,
+              keltnerBandOpacity: ind.type === "Keltner" ? (ind.keltnerBandOpacity ?? 0.2) : undefined,
+              keltnerLimitsColor: ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? "#6366f1") : undefined,
+              keltnerLimitsLineStyle: ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? "solid") : undefined,
+              keltnerLimitsLineWidth: ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? "normal") : undefined,
+              keltnerMiddleColor: ind.type === "Keltner" ? (ind.keltnerMiddleColor ?? "#a855f7") : undefined,
+              keltnerMiddleLineStyle: ind.type === "Keltner" ? (ind.keltnerMiddleLineStyle ?? "dashed") : undefined,
+              keltnerMiddleLineWidth: ind.type === "Keltner" ? (ind.keltnerMiddleLineWidth ?? "normal") : undefined,
               donchianShowUpper: ind.type === "Donchian" ? (ind.donchianShowUpper !== false) : undefined,
               donchianShowLower: ind.type === "Donchian" ? (ind.donchianShowLower !== false) : undefined,
               donchianShowMiddle: ind.type === "Donchian" ? (ind.donchianShowMiddle === true) : undefined,

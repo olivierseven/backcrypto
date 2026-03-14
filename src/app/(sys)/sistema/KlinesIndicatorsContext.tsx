@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Donchian" | "Volume" | "ADX" | "CCI";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
 export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4" | "panel5";
@@ -272,7 +272,7 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
-const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "RSI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Donchian", "Volume", "ADX", "CCI"] as const;
+const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI"] as const;
 
 function safePeriod(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
@@ -324,10 +324,10 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     ...u,
     period,
     intervals,
-    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
+    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
     panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
       ? u.panel
-      : (u.type === "RSI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" || u.type === "ADX" || u.type === "CCI" ? "panel2" : "main")),
+      : (u.type === "RSI" || u.type === "MFI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" || u.type === "ADX" || u.type === "CCI" ? "panel2" : "main")),
     sarStart: u.type === "SAR" ? (typeof u.sarStart === "number" ? Math.max(0.001, Math.min(1, u.sarStart)) : 0.02) : undefined,
     sarIncrement: u.type === "SAR" ? (typeof u.sarIncrement === "number" ? Math.max(0.001, Math.min(1, u.sarIncrement)) : 0.02) : undefined,
     sarMax: u.type === "SAR" ? (typeof u.sarMax === "number" ? Math.max(0.02, Math.min(1, u.sarMax)) : 0.2) : undefined,
@@ -345,6 +345,17 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     rsiLimitColor: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitColor ?? "#dc2626") : undefined,
     rsiLimitLineWidth: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineWidth === "thin" || u.rsiLimitLineWidth === "normal" ? u.rsiLimitLineWidth : "normal") : undefined,
     rsiLimitLineStyle: u.type === "RSI" && u.rsiLimits ? (u.rsiLimitLineStyle === "solid" || u.rsiLimitLineStyle === "dotted" || u.rsiLimitLineStyle === "dashed" ? u.rsiLimitLineStyle : "dotted") : undefined,
+    mfiFixedScale: u.type === "MFI" ? (u.mfiFixedScale === false ? false : true) : undefined,
+    mfiCenterLine: u.type === "MFI" ? (u.mfiCenterLine === true) : undefined,
+    mfiCenterLineColor: u.type === "MFI" && u.mfiCenterLine ? (u.mfiCenterLineColor ?? "#71717a") : undefined,
+    mfiCenterLineWidth: u.type === "MFI" && u.mfiCenterLine ? (u.mfiCenterLineWidth === "thin" || u.mfiCenterLineWidth === "normal" ? u.mfiCenterLineWidth : "normal") : undefined,
+    mfiCenterLineStyle: u.type === "MFI" && u.mfiCenterLine ? (u.mfiCenterLineStyle === "solid" || u.mfiCenterLineStyle === "dotted" || u.mfiCenterLineStyle === "dashed" ? u.mfiCenterLineStyle : "dotted") : undefined,
+    mfiLimits: u.type === "MFI" ? (u.mfiLimits === true) : undefined,
+    mfiLimitUpper: u.type === "MFI" && u.mfiLimits ? (typeof u.mfiLimitUpper === "number" ? Math.max(0, Math.min(100, Math.round(u.mfiLimitUpper))) : 80) : undefined,
+    mfiLimitLower: u.type === "MFI" && u.mfiLimits ? (typeof u.mfiLimitLower === "number" ? Math.max(0, Math.min(100, Math.round(u.mfiLimitLower))) : 20) : undefined,
+    mfiLimitColor: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitColor ?? "#dc2626") : undefined,
+    mfiLimitLineWidth: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitLineWidth === "thin" || u.mfiLimitLineWidth === "normal" ? u.mfiLimitLineWidth : "normal") : undefined,
+    mfiLimitLineStyle: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitLineStyle === "solid" || u.mfiLimitLineStyle === "dotted" || u.mfiLimitLineStyle === "dashed" ? u.mfiLimitLineStyle : "dotted") : undefined,
     macdFastMaType: u.type === "MACD" ? (u.macdFastMaType === "SMA" || u.macdFastMaType === "EMA" || u.macdFastMaType === "WMA" ? u.macdFastMaType : "EMA") : undefined,
     macdFastPeriod: u.type === "MACD" ? (typeof u.macdFastPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdFastPeriod))) : 12) : undefined,
     macdSlowMaType: u.type === "MACD" ? (u.macdSlowMaType === "SMA" || u.macdSlowMaType === "EMA" || u.macdSlowMaType === "WMA" ? u.macdSlowMaType : "EMA") : undefined,
@@ -398,6 +409,18 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     donchianMiddleColor: u.type === "Donchian" ? (u.donchianMiddleColor ?? "#a855f7") : undefined,
     donchianMiddleLineStyle: u.type === "Donchian" ? (u.donchianMiddleLineStyle === "solid" || u.donchianMiddleLineStyle === "dotted" || u.donchianMiddleLineStyle === "dashed" ? u.donchianMiddleLineStyle : "dashed") : undefined,
     donchianMiddleLineWidth: u.type === "Donchian" ? (u.donchianMiddleLineWidth === "thin" || u.donchianMiddleLineWidth === "normal" ? u.donchianMiddleLineWidth : "normal") : undefined,
+    keltnerMaType: u.type === "Keltner" ? (u.keltnerMaType === "SMA" || u.keltnerMaType === "EMA" || u.keltnerMaType === "WMA" ? u.keltnerMaType : "EMA") : undefined,
+    keltnerMultiplier: u.type === "Keltner" ? (typeof u.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, u.keltnerMultiplier)) : 2) : undefined,
+    keltnerShowUpper: u.type === "Keltner" ? (u.keltnerShowUpper !== false) : undefined,
+    keltnerShowLower: u.type === "Keltner" ? (u.keltnerShowLower !== false) : undefined,
+    keltnerShowMiddle: u.type === "Keltner" ? (u.keltnerShowMiddle === true) : undefined,
+    keltnerBandOpacity: u.type === "Keltner" ? (typeof u.keltnerBandOpacity === "number" ? Math.max(0, Math.min(0.3, u.keltnerBandOpacity)) : 0.2) : undefined,
+    keltnerLimitsColor: u.type === "Keltner" ? (u.keltnerLimitsColor ?? "#6366f1") : undefined,
+    keltnerLimitsLineStyle: u.type === "Keltner" ? (u.keltnerLimitsLineStyle === "solid" || u.keltnerLimitsLineStyle === "dotted" || u.keltnerLimitsLineStyle === "dashed" ? u.keltnerLimitsLineStyle : "solid") : undefined,
+    keltnerLimitsLineWidth: u.type === "Keltner" ? (u.keltnerLimitsLineWidth === "thin" || u.keltnerLimitsLineWidth === "normal" ? u.keltnerLimitsLineWidth : "normal") : undefined,
+    keltnerMiddleColor: u.type === "Keltner" ? (u.keltnerMiddleColor ?? "#a855f7") : undefined,
+    keltnerMiddleLineStyle: u.type === "Keltner" ? (u.keltnerMiddleLineStyle === "solid" || u.keltnerMiddleLineStyle === "dotted" || u.keltnerMiddleLineStyle === "dashed" ? u.keltnerMiddleLineStyle : "dashed") : undefined,
+    keltnerMiddleLineWidth: u.type === "Keltner" ? (u.keltnerMiddleLineWidth === "thin" || u.keltnerMiddleLineWidth === "normal" ? u.keltnerMiddleLineWidth : "normal") : undefined,
     volumeInUsdt: u.type === "Volume" ? (u.volumeInUsdt === true) : undefined,
     volumeColorAbove: u.type === "Volume" ? (u.volumeColorAbove ?? "#10b981") : undefined,
     volumeColorBelow: u.type === "Volume" ? (u.volumeColorBelow ?? "#ef4444") : undefined,
@@ -435,7 +458,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow"
+  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "keltnerMaType" | "keltnerMultiplier" | "keltnerShowUpper" | "keltnerShowLower" | "keltnerShowMiddle" | "keltnerBandOpacity" | "keltnerLimitsColor" | "keltnerLimitsLineStyle" | "keltnerLimitsLineWidth" | "keltnerMiddleColor" | "keltnerMiddleLineStyle" | "keltnerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow"
 >;
 
 interface ContextValue {

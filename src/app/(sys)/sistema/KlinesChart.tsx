@@ -1289,7 +1289,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   if (windowN === 0) return null;
 
   const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" =>
-    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5") ?? (ind.type === "RSI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5") ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
@@ -1369,7 +1369,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const useFixedScale =
       !hasObv &&
       lines.length > 0 &&
-      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
+      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || (ind.type === "MFI" && ind.mfiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
     if (useFixedScale) return { min: 0, max: 100 };
     const useFixedScaleWilliams =
       !hasObv &&

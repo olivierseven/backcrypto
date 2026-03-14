@@ -305,6 +305,44 @@ export function computeBollingerBands(
   return { upper, middle, lower };
 }
 
+/**
+ * Keltner Channels: linha do meio = média móvel do campo no período; bandas = meio ± (multiplicador × ATR).
+ * ATR usa high, low, close (colunas 2, 3, 4). Retorna upper, middle, lower (mesmo tamanho que data).
+ */
+export function computeKeltnerChannels(
+  data: (string | number)[][],
+  valueIndex: number,
+  period: number,
+  maType: BollingerMaType,
+  multiplier: number
+): { upper: (number | null)[]; middle: (number | null)[]; lower: (number | null)[] } {
+  const periodUse = Math.max(1, Math.min(500, period));
+  const multUse = Math.max(0, Math.min(10, multiplier));
+  const middle =
+    maType === "EMA"
+      ? computeEmaColumn(data, valueIndex, periodUse)
+      : maType === "WMA"
+        ? computeWmaColumn(data, valueIndex, periodUse)
+        : computeSmaColumn(data, valueIndex, periodUse);
+  const atr = computeAtrColumn(data, periodUse);
+  const n = data.length;
+  const upper: (number | null)[] = [];
+  const lower: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const m = middle[i];
+    const a = atr[i];
+    if (m != null && a != null && Number.isFinite(m) && Number.isFinite(a)) {
+      const half = multUse * a;
+      upper.push(m + half);
+      lower.push(m - half);
+    } else {
+      upper.push(null);
+      lower.push(null);
+    }
+  }
+  return { upper, middle, lower };
+}
+
 /** Índices das colunas high e low no array kline. */
 const HIGH_INDEX = 2;
 const LOW_INDEX = 3;
@@ -412,6 +450,95 @@ export function computeRsiColumn(
     avgGain = (avgGain * (period - 1) + gains[j]) / period;
     avgLoss = (avgLoss * (period - 1) + losses[j]) / period;
     out[j] = rsiFromAvgs(avgGain, avgLoss);
+  }
+
+  return out;
+}
+
+/** Índices high, low, close, volume no array kline. */
+const HIGH_IDX = 2;
+const LOW_IDX = 3;
+const CLOSE_IDX_COL = 4;
+
+/**
+ * MFI (Money Flow Index) — mesmo esquema do RSI: escala 0–100, suavização de Wilder.
+ * Typical Price = (High + Low + Close) / 3; Raw Money Flow = TP × Volume.
+ * Positive flow quando TP atual > TP anterior; negative flow quando TP atual < TP anterior.
+ * Money Ratio = média suavizada positive / média suavizada negative; MFI = 100 - 100/(1 + ratio).
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeMfiColumn(
+  data: (string | number)[][],
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  if (period < 1 || n < period + 2) return out;
+
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const typicalPrice: number[] = [];
+  const rawFlow: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const h = getNum(data[i], HIGH_IDX);
+    const l = getNum(data[i], LOW_IDX);
+    const c = getNum(data[i], CLOSE_IDX_COL);
+    const v = getNum(data[i], VOLUME_INDEX);
+    if (h == null || l == null || c == null || v == null || v < 0) {
+      typicalPrice.push(0);
+      rawFlow.push(0);
+    } else {
+      const tp = (h + l + c) / 3;
+      typicalPrice.push(tp);
+      rawFlow.push(tp * v);
+    }
+  }
+
+  const positiveFlow: number[] = [];
+  const negativeFlow: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const tpCur = typicalPrice[i];
+    const tpPrev = typicalPrice[i + 1];
+    const rf = rawFlow[i];
+    if (tpCur > tpPrev) {
+      positiveFlow.push(rf);
+      negativeFlow.push(0);
+    } else if (tpCur < tpPrev) {
+      positiveFlow.push(0);
+      negativeFlow.push(rf);
+    } else {
+      positiveFlow.push(0);
+      negativeFlow.push(0);
+    }
+  }
+
+  const startIdx = n - period - 1;
+  let sumP = 0;
+  let sumN = 0;
+  for (let j = startIdx; j < startIdx + period && j < positiveFlow.length; j++) {
+    sumP += positiveFlow[j];
+    sumN += negativeFlow[j];
+  }
+  let avgP = sumP / period;
+  let avgN = sumN / period;
+
+  const mfiFromAvgs = (ap: number, an: number): number => {
+    if (an === 0) return 100;
+    const ratio = ap / an;
+    return 100 - 100 / (1 + ratio);
+  };
+
+  out[startIdx] = mfiFromAvgs(avgP, avgN);
+
+  for (let j = startIdx - 1; j >= 0; j--) {
+    avgP = (avgP * (period - 1) + positiveFlow[j]) / period;
+    avgN = (avgN * (period - 1) + negativeFlow[j]) / period;
+    out[j] = mfiFromAvgs(avgP, avgN);
   }
 
   return out;
@@ -813,9 +940,6 @@ export function computeMacdColumn(
   }
   return out;
 }
-
-const HIGH_IDX = 2;
-const LOW_IDX = 3;
 
 /**
  * ADX (Average Directional Index) com +DI e -DI — Wilder.
