@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI";
+  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   adxPlusDiColor?: string;
@@ -150,6 +150,17 @@ export interface ChartIndicatorLine {
   cciAsHistogram?: boolean;
   cciHistogramColorAbove?: string;
   cciHistogramColorBelow?: string;
+  /** Só para CMF: escala fixa no eixo Y (ex.: -1 a 1). */
+  cmfFixedScale?: boolean;
+  cmfLimits?: boolean;
+  cmfLimitUpper?: number;
+  cmfLimitLower?: number;
+  cmfLimitColor?: string;
+  cmfLimitLineWidth?: "thin" | "normal";
+  cmfLimitLineStyle?: "solid" | "dotted" | "dashed";
+  cmfAsHistogram?: boolean;
+  cmfHistogramColorAbove?: string;
+  cmfHistogramColorBelow?: string;
 }
 
 export type IntervalOption = { value: number; label: string; param: string };

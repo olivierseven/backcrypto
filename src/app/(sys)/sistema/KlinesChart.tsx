@@ -1413,6 +1413,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       min = Math.min(min, -100);
       max = Math.max(max, 100);
     }
+    if (lines.some((ind) => ind.type === "CMF" && ind.cmfFixedScale)) {
+      min = Math.min(min, -1);
+      max = Math.max(max, 1);
+    }
     if (min !== 0 || max !== 100) {
       const range = max - min || 1;
       const pad = range * 0.05;

@@ -77,6 +77,9 @@ export function getIndicatorLabel(
   if (ind.type === "CCI") {
     return `CCI(${ind.period}) ${fieldLabel}`;
   }
+  if (ind.type === "CMF") {
+    return `CMF(${ind.period})`;
+  }
   if (ind.type === "MFI") {
     return `MFI(${ind.period})`;
   }
@@ -148,6 +151,9 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "CCI") {
     return `CCI(${ind.period}) ${letter}`;
+  }
+  if (ind.type === "CMF") {
+    return `CMF(${ind.period})`;
   }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? "Vol USDT" : "Vol";

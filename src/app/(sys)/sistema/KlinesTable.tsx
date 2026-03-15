@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeHmaColumn, computeVwmaColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeVwmaColumn } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
@@ -552,6 +552,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       } else if (ind.type === "CCI") {
         const col = computeCciColumn(dataForInd, valueIndex, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+      } else if (ind.type === "CMF") {
+        const col = computeCmfColumn(data, period);
+        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else if (ind.type === "MFI") {
         const col = computeMfiColumn(data, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
@@ -591,7 +594,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         col += 3;
       } else if (ind.type === "Volume") {
         // Volume usa coluna 5 ou 7, não consome slot
-      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP" || ind.type === "CCI" || ind.type === "MFI") {
+      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MFI") {
         col += 1;
       } else {
         col += 1;
@@ -1102,18 +1105,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               columnIndex,
               adxPart,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-              color: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
-              lineWidth: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
-              lineStyle: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
+              color: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
+              lineWidth: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
               label: ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
               shortLabel: ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
-              display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "CCI" && ind.cciAsHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
+              display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "CCI" && ind.cciAsHistogram ? "histogram" as const : ind.type === "CMF" && ind.cmfAsHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
               volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : undefined,
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
-              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : undefined,
-              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" ? "panel2" : "main"),
+              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
+              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -1201,6 +1204,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               cciLimitColor: ind.type === "CCI" && ind.cciLimits ? (ind.cciLimitColor ?? "#dc2626") : undefined,
               cciLimitLineWidth: ind.type === "CCI" && ind.cciLimits ? (ind.cciLimitLineWidth ?? "normal") : undefined,
               cciLimitLineStyle: ind.type === "CCI" && ind.cciLimits ? (ind.cciLimitLineStyle ?? "dotted") : undefined,
+              cmfFixedScale: ind.type === "CMF" ? (ind.cmfFixedScale === true) : undefined,
+              cmfLimits: ind.type === "CMF" ? (ind.cmfLimits === true) : undefined,
+              cmfLimitUpper: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitUpper ?? 0.25) : undefined,
+              cmfLimitLower: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLower ?? -0.25) : undefined,
+              cmfLimitColor: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitColor ?? "#dc2626") : undefined,
+              cmfLimitLineWidth: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineWidth ?? "normal") : undefined,
+              cmfLimitLineStyle: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineStyle ?? "dotted") : undefined,
             }))}
             strategyCandleOverlays={strategyCandleOverlays}
             getLayoutExtraConfig={() => ({
@@ -1359,7 +1369,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   className="px-3 py-2 font-medium text-right text-xs"
                   style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                 >
-                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "CCI" ? `CCI(${ind.period})` : `${ind.type}(${ind.period})`}
+                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
               {visibleStrategies.map((strategy) => (

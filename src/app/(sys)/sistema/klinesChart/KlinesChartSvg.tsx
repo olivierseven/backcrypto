@@ -305,7 +305,7 @@ export function KlinesChartSvg({
                 if (raw == null) return null;
                 const v = Number(raw);
                 if (!Number.isFinite(v)) return null;
-                return (ind.type === "RSI" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "CCI") ? v.toFixed(1) : formatYAxis(v);
+                return (ind.type === "RSI" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "CCI") ? v.toFixed(1) : ind.type === "CMF" ? v.toFixed(3) : formatYAxis(v);
               })()
             : null;
         return (
@@ -914,6 +914,21 @@ export function KlinesChartSvg({
                 const stroke = ind.cciLimitColor ?? "#dc2626";
                 return (
                   <g key={`cci-limits-${idx}`}>
+                    <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                  </g>
+                );
+              })}
+              {panelLines.filter((ind) => ind.type === "CMF" && ind.cmfLimits).map((ind, idx) => {
+                const upper = Math.max(-1, Math.min(1, ind.cmfLimitUpper ?? 0.25));
+                const lower = Math.max(-1, Math.min(1, ind.cmfLimitLower ?? -0.25));
+                const yUpper = yPanel(upper);
+                const yLower = yPanel(lower);
+                const lStrokeWidth = ind.cmfLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeDasharray = ind.cmfLimitLineStyle === "dotted" ? "2 2" : ind.cmfLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const stroke = ind.cmfLimitColor ?? "#dc2626";
+                return (
+                  <g key={`cmf-limits-${idx}`}>
                     <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                     <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                   </g>

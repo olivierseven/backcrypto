@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI";
+export type UserIndicatorType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF";
 
 /** Onde o indicador é renderizado: Main = área principal; Panel 2/3/4 = indicadores secundários (ex.: RSI). */
 export type IndicatorPanel = "main" | "panel2" | "panel3" | "panel4" | "panel5";
@@ -207,6 +207,19 @@ export interface UserIndicatorConfig {
   cciHistogramColorAbove?: string;
   /** Só para CCI histograma: cor das barras abaixo de zero. */
   cciHistogramColorBelow?: string;
+  /** Só para CMF (Chaikin Money Flow): escala fixa no eixo Y (ex.: -1 a 1). */
+  cmfFixedScale?: boolean;
+  /** Só para CMF: exibir limites superior/inferior (ex. 0.25 / -0.25). */
+  cmfLimits?: boolean;
+  cmfLimitUpper?: number;
+  cmfLimitLower?: number;
+  cmfLimitColor?: string;
+  cmfLimitLineWidth?: IndicatorLineWidth;
+  cmfLimitLineStyle?: IndicatorLineStyle;
+  /** Só para CMF: exibir como histograma (barras acima/abaixo de zero). */
+  cmfAsHistogram?: boolean;
+  cmfHistogramColorAbove?: string;
+  cmfHistogramColorBelow?: string;
 }
 
 const FIELD_KEY_TO_INDEX: Record<string, number> = {
@@ -272,7 +285,7 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
-const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI"] as const;
+const VALID_INDICATOR_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI", "CMF"] as const;
 
 function safePeriod(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
@@ -324,10 +337,10 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     ...u,
     period,
     intervals,
-    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
+    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" || u.type === "CMF" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
     panel: u.type === "SAR" || u.type === "VWAP" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
       ? u.panel
-      : (u.type === "RSI" || u.type === "MFI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" || u.type === "ADX" || u.type === "CCI" ? "panel2" : "main")),
+      : (u.type === "RSI" || u.type === "MFI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "ATR" || u.type === "Volume" || u.type === "ADX" || u.type === "CCI" || u.type === "CMF" ? "panel2" : "main")),
     sarStart: u.type === "SAR" ? (typeof u.sarStart === "number" ? Math.max(0.001, Math.min(1, u.sarStart)) : 0.02) : undefined,
     sarIncrement: u.type === "SAR" ? (typeof u.sarIncrement === "number" ? Math.max(0.001, Math.min(1, u.sarIncrement)) : 0.02) : undefined,
     sarMax: u.type === "SAR" ? (typeof u.sarMax === "number" ? Math.max(0.02, Math.min(1, u.sarMax)) : 0.2) : undefined,
@@ -450,6 +463,16 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     cciAsHistogram: u.type === "CCI" ? (u.cciAsHistogram === true) : undefined,
     cciHistogramColorAbove: u.type === "CCI" && u.cciAsHistogram ? (u.cciHistogramColorAbove ?? "#059669") : undefined,
     cciHistogramColorBelow: u.type === "CCI" && u.cciAsHistogram ? (u.cciHistogramColorBelow ?? "#dc2626") : undefined,
+    cmfFixedScale: u.type === "CMF" ? (u.cmfFixedScale === true) : undefined,
+    cmfLimits: u.type === "CMF" ? (u.cmfLimits === true) : undefined,
+    cmfLimitUpper: u.type === "CMF" && u.cmfLimits ? (typeof u.cmfLimitUpper === "number" ? Math.max(-1, Math.min(1, u.cmfLimitUpper)) : 0.25) : undefined,
+    cmfLimitLower: u.type === "CMF" && u.cmfLimits ? (typeof u.cmfLimitLower === "number" ? Math.max(-1, Math.min(1, u.cmfLimitLower)) : -0.25) : undefined,
+    cmfLimitColor: u.type === "CMF" && u.cmfLimits ? (u.cmfLimitColor ?? "#dc2626") : undefined,
+    cmfLimitLineWidth: u.type === "CMF" && u.cmfLimits ? (u.cmfLimitLineWidth === "thin" || u.cmfLimitLineWidth === "normal" ? u.cmfLimitLineWidth : "normal") : undefined,
+    cmfLimitLineStyle: u.type === "CMF" && u.cmfLimits ? (u.cmfLimitLineStyle === "solid" || u.cmfLimitLineStyle === "dotted" || u.cmfLimitLineStyle === "dashed" ? u.cmfLimitLineStyle : "dotted") : undefined,
+    cmfAsHistogram: u.type === "CMF" ? (u.cmfAsHistogram === true) : undefined,
+    cmfHistogramColorAbove: u.type === "CMF" && u.cmfAsHistogram ? (u.cmfHistogramColorAbove ?? "#059669") : undefined,
+    cmfHistogramColorBelow: u.type === "CMF" && u.cmfAsHistogram ? (u.cmfHistogramColorBelow ?? "#dc2626") : undefined,
     showLastValueOnYAxis: u.showLastValueOnYAxis !== false,
   };
   });
@@ -458,7 +481,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "keltnerMaType" | "keltnerMultiplier" | "keltnerShowUpper" | "keltnerShowLower" | "keltnerShowMiddle" | "keltnerBandOpacity" | "keltnerLimitsColor" | "keltnerLimitsLineStyle" | "keltnerLimitsLineWidth" | "keltnerMiddleColor" | "keltnerMiddleLineStyle" | "keltnerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow"
+  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "keltnerMaType" | "keltnerMultiplier" | "keltnerShowUpper" | "keltnerShowLower" | "keltnerShowMiddle" | "keltnerBandOpacity" | "keltnerLimitsColor" | "keltnerLimitsLineStyle" | "keltnerLimitsLineWidth" | "keltnerMiddleColor" | "keltnerMiddleLineStyle" | "keltnerMiddleLineWidth" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow" | "cmfFixedScale" | "cmfLimits" | "cmfLimitUpper" | "cmfLimitLower" | "cmfLimitColor" | "cmfLimitLineWidth" | "cmfLimitLineStyle" | "cmfAsHistogram" | "cmfHistogramColorAbove" | "cmfHistogramColorBelow"
 >;
 
 interface ContextValue {

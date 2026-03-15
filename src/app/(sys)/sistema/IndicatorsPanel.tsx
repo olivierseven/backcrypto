@@ -166,6 +166,16 @@ const INITIAL_ADD_FORM: AddFormState = {
   cciAsHistogram: false,
   cciHistogramColorAbove: "#059669",
   cciHistogramColorBelow: "#dc2626",
+  cmfFixedScale: false,
+  cmfLimits: true,
+  cmfLimitUpper: 0.25,
+  cmfLimitLower: -0.25,
+  cmfLimitColor: "#dc2626",
+  cmfLimitLineWidth: "normal",
+  cmfLimitLineStyle: "dotted",
+  cmfAsHistogram: false,
+  cmfHistogramColorAbove: "#059669",
+  cmfHistogramColorBelow: "#dc2626",
   donchianShowUpper: true,
   donchianShowLower: true,
   donchianShowMiddle: false,
@@ -375,7 +385,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
-  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "Volume";
+  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Volume";
   const hasEmptyPanelForVolume = indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0;
   const chosenPanelUsedForVolume =
     (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 > 0) ||
@@ -418,7 +428,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         : (addForm.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
           ? addForm.chartOption
           : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2")
-      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI"
+      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF"
       ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (addForm.chartOption === "panel5" && panelsFreeForSecondary.panel5)
         ? addForm.chartOption
         : (panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2")
@@ -432,7 +442,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const newInd = addIndicator({
       type: addForm.indicatorType,
       period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
-      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
+      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
         bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
@@ -534,6 +544,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciAsHistogram: addForm.cciAsHistogram,
         cciHistogramColorAbove: addForm.cciHistogramColorAbove,
         cciHistogramColorBelow: addForm.cciHistogramColorBelow,
+      } : {}),
+      ...(addForm.indicatorType === "CMF" ? {
+        cmfFixedScale: addForm.cmfFixedScale,
+        cmfLimits: addForm.cmfLimits,
+        cmfLimitUpper: addForm.cmfLimitUpper,
+        cmfLimitLower: addForm.cmfLimitLower,
+        cmfLimitColor: addForm.cmfLimitColor,
+        cmfLimitLineWidth: addForm.cmfLimitLineWidth,
+        cmfLimitLineStyle: addForm.cmfLimitLineStyle,
+        cmfAsHistogram: addForm.cmfAsHistogram,
+        cmfHistogramColorAbove: addForm.cmfHistogramColorAbove,
+        cmfHistogramColorBelow: addForm.cmfHistogramColorBelow,
       } : {}),
       ...(addForm.indicatorType === "Donchian" ? {
         donchianShowUpper: addForm.donchianShowUpper,
@@ -699,6 +721,16 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       cciAsHistogram: ind.type === "CCI" ? (ind.cciAsHistogram === true) : false,
       cciHistogramColorAbove: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : "#059669",
       cciHistogramColorBelow: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : "#dc2626",
+      cmfFixedScale: ind.type === "CMF" ? (ind.cmfFixedScale === true) : false,
+      cmfLimits: ind.type === "CMF" ? (ind.cmfLimits === true) : true,
+      cmfLimitUpper: ind.type === "CMF" && ind.cmfLimits ? (typeof ind.cmfLimitUpper === "number" ? Math.max(-1, Math.min(1, ind.cmfLimitUpper)) : 0.25) : 0.25,
+      cmfLimitLower: ind.type === "CMF" && ind.cmfLimits ? (typeof ind.cmfLimitLower === "number" ? Math.max(-1, Math.min(1, ind.cmfLimitLower)) : -0.25) : -0.25,
+      cmfLimitColor: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitColor ?? "#dc2626") : "#dc2626",
+      cmfLimitLineWidth: (ind.type === "CMF" && ind.cmfLimits && (ind.cmfLimitLineWidth === "thin" || ind.cmfLimitLineWidth === "normal") ? ind.cmfLimitLineWidth : "normal") as IndicatorLineWidth,
+      cmfLimitLineStyle: (ind.type === "CMF" && ind.cmfLimits && (ind.cmfLimitLineStyle === "solid" || ind.cmfLimitLineStyle === "dotted" || ind.cmfLimitLineStyle === "dashed") ? ind.cmfLimitLineStyle : "dotted") as IndicatorLineStyle,
+      cmfAsHistogram: ind.type === "CMF" ? (ind.cmfAsHistogram === true) : false,
+      cmfHistogramColorAbove: ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : "#059669",
+      cmfHistogramColorBelow: ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : "#dc2626",
       donchianShowUpper: ind.type === "Donchian" ? (ind.donchianShowUpper !== false) : true,
       donchianShowLower: ind.type === "Donchian" ? (ind.donchianShowLower !== false) : true,
       donchianShowMiddle: ind.type === "Donchian" ? (ind.donchianShowMiddle === true) : false,
@@ -845,6 +877,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciAsHistogram: editForm.cciAsHistogram,
         cciHistogramColorAbove: editForm.cciHistogramColorAbove,
         cciHistogramColorBelow: editForm.cciHistogramColorBelow,
+      } : {}),
+      ...(ind?.type === "CMF" ? {
+        cmfFixedScale: editForm.cmfFixedScale,
+        cmfLimits: editForm.cmfLimits,
+        cmfLimitUpper: editForm.cmfLimitUpper,
+        cmfLimitLower: editForm.cmfLimitLower,
+        cmfLimitColor: editForm.cmfLimitColor,
+        cmfLimitLineWidth: editForm.cmfLimitLineWidth,
+        cmfLimitLineStyle: editForm.cmfLimitLineStyle,
+        cmfAsHistogram: editForm.cmfAsHistogram,
+        cmfHistogramColorAbove: editForm.cmfHistogramColorAbove,
+        cmfHistogramColorBelow: editForm.cmfHistogramColorBelow,
       } : {}),
       ...(ind?.type === "Donchian" ? {
         donchianShowUpper: editForm.donchianShowUpper,

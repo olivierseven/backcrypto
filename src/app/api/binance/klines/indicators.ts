@@ -1108,3 +1108,51 @@ export function computeCciColumn(
   }
   return out;
 }
+
+/**
+ * Chaikin Money Flow (CMF).
+ * Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low) = (2*Close - High - Low) / (High - Low); 0 se High === Low.
+ * Money Flow Volume = MF Multiplier × Volume.
+ * CMF = Sum(MFV, period) / Sum(Volume, period). Valores típicos entre -1 e +1.
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeCmfColumn(
+  data: (string | number)[][],
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = [];
+  const periodUse = Math.max(1, Math.min(500, period));
+  if (n < periodUse) return new Array(n).fill(null);
+
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  for (let i = 0; i < n; i++) {
+    const end = Math.min(i + periodUse, n);
+    let sumMfv = 0;
+    let sumVol = 0;
+    for (let j = i; j < end; j++) {
+      const h = getNum(data[j], HIGH_IDX);
+      const l = getNum(data[j], LOW_IDX);
+      const c = getNum(data[j], CLOSE_IDX_COL);
+      const v = getNum(data[j], VOLUME_INDEX);
+      if (h == null || l == null || c == null || v == null || v < 0) continue;
+      const range = h - l;
+      const mfm = range === 0 ? 0 : (2 * c - h - l) / range;
+      sumMfv += mfm * v;
+      sumVol += v;
+    }
+    if (sumVol === 0) {
+      out.push(null);
+      continue;
+    }
+    const cmf = sumMfv / sumVol;
+    out.push(Number.isFinite(cmf) ? cmf : null);
+  }
+  return out;
+}

@@ -47,7 +47,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI"
+        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF"
           ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
             ? form.chartOption
             : hasFreePanelForSecondary
@@ -241,6 +241,26 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           cciHistogramColorBelow: "#dc2626",
         };
       }
+      if (newType === "CMF") {
+        return {
+          ...prev,
+          indicatorType: "CMF",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: freePanel,
+          cmfFixedScale: false,
+          cmfLimits: true,
+          cmfLimitUpper: 0.25,
+          cmfLimitLower: -0.25,
+          cmfLimitColor: "#dc2626",
+          cmfLimitLineWidth: "normal",
+          cmfLimitLineStyle: "dotted",
+          cmfAsHistogram: false,
+          cmfHistogramColorAbove: "#059669",
+          cmfHistogramColorBelow: "#dc2626",
+        };
+      }
       if (newType === "VWAP") {
         return {
           ...prev,
@@ -385,6 +405,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
           <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
           <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
+          <option value="CMF">{(t as Record<string, string>).cmfLabel ?? "CMF"}</option>
           <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
           <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
           <option value="Keltner">{(t as Record<string, string>).keltnerLabel ?? "Keltner Channels"}</option>
@@ -414,7 +435,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
                   <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
                 )}
               </>
-            ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI") ? (
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") ? (
               <>
                 {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
                 {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
@@ -618,6 +639,86 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
                 <select value={form.cciLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, cciLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
+                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
+                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {form.indicatorType === "CMF" && (
+        <>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.cmfFixedScale} onChange={(e) => setForm((prev) => ({ ...prev, cmfFixedScale: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).cmfFixedScaleLabel ?? "Escala fixa -1 a 1 no eixo Y"}</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.cmfAsHistogram} onChange={(e) => setForm((prev) => ({ ...prev, cmfAsHistogram: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).cmfAsHistogramLabel ?? "Exibir como histograma"}</span>
+          </label>
+          {form.cmfAsHistogram && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfHistogramColorAbove: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfHistogramColorBelow: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.cmfLimits} onChange={(e) => setForm((prev) => ({ ...prev, cmfLimits: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).cmfLimitsLabel ?? "Limites superior e inferior (-1 a 1)"}</span>
+          </label>
+          {form.cmfLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cmfLimitUpperLabel ?? "Superior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-14 text-center text-sm tabular-nums">{form.cmfLimitUpper.toFixed(2)}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cmfLimitLowerLabel ?? "Inferior"}</span>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <span className="w-14 text-center text-sm tabular-nums">{form.cmfLimitLower.toFixed(2)}</span>
+                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <div className="flex flex-wrap gap-1">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <select value={form.cmfLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, cmfLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
+                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
+                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <select value={form.cmfLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, cmfLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
                   <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
                   <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
                   <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
