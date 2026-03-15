@@ -190,6 +190,11 @@ export interface AddFormState {
   ichimokuChikouLineStyle: IndicatorLineStyle;
   ichimokuCloudOpacity: number;
   ichimokuCloudOpacityText: string;
+  ichimokuShowTenkan: boolean;
+  ichimokuShowKijun: boolean;
+  ichimokuShowSpanA: boolean;
+  ichimokuShowSpanB: boolean;
+  ichimokuShowChikou: boolean;
 }
 
 export interface EditFormState {
@@ -370,6 +375,11 @@ export interface EditFormState {
   ichimokuChikouLineStyle: IndicatorLineStyle;
   ichimokuCloudOpacity: number;
   ichimokuCloudOpacityText: string;
+  ichimokuShowTenkan: boolean;
+  ichimokuShowKijun: boolean;
+  ichimokuShowSpanA: boolean;
+  ichimokuShowSpanB: boolean;
+  ichimokuShowChikou: boolean;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

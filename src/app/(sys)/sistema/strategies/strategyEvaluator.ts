@@ -100,6 +100,11 @@ export function getSeriesValue(
       if (part === "plusDi") return ind.type === "ADX" ? 0 : null;
       if (part === "minusDi") return ind.type === "ADX" ? 1 : null;
       if (part === "adx") return ind.type === "ADX" ? 2 : null;
+      if (part === "tenkan") return ind.type === "Ichimoku" ? 0 : null;
+      if (part === "kijun") return ind.type === "Ichimoku" ? 1 : null;
+      if (part === "spanA") return ind.type === "Ichimoku" ? 2 : null;
+      if (part === "spanB") return ind.type === "Ichimoku" ? 3 : null;
+      if (part === "chikou") return ind.type === "Ichimoku" ? 4 : null;
       return null;
     })();
     if (extraOffset == null) return null;

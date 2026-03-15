@@ -3,7 +3,7 @@
 /**
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
-import { useId, useRef, useState, useEffect, type RefObject } from "react";
+import { useId, useRef, useState, useEffect, type RefObject, type ReactNode } from "react";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, VOLUME_AT_PRICE_MAX_WIDTH_PX } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
@@ -41,8 +41,8 @@ export interface KlinesChartSvgProps {
   candleColors: { bull: string; bear: string };
   yTickValues: number[];
   verticalIndicesFiltered: number[];
-  dateBreaksFiltered: { index: number; dateStr: string }[];
-  dayBreaksFiltered: { index: number; label: string }[];
+  dateBreaksFiltered: { index: number; dateStr: string; openTime?: number }[];
+  dayBreaksFiltered: { index: number; label: string; openTime?: number }[];
   showMainAxis: boolean;
   showSecondaryAxis: boolean;
   showLastCloseLine: boolean;
@@ -304,7 +304,12 @@ export function KlinesChartSvg({
         const crosshairVal =
           showCrosshairValues && crosshairPoint
             ? (() => {
-                const raw = fullReversed[crosshairPoint.index]?.[ind.columnIndex];
+                // Span A e Span B: valor desenhado no candle vem do candle (index - disp) em fullReversed
+                const isSpanAB = ind.type === "Ichimoku" && (ind.ichimokuPart === "spanA" || ind.ichimokuPart === "spanB");
+                const disp = isSpanAB ? Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26)) : 0;
+                const readIndex = isSpanAB ? crosshairPoint.index - disp : crosshairPoint.index;
+                if (readIndex < 0 || readIndex >= fullReversed.length) return null;
+                const raw = fullReversed[readIndex]?.[ind.columnIndex];
                 if (raw == null) return null;
                 const v = Number(raw);
                 if (!Number.isFinite(v)) return null;
@@ -424,7 +429,7 @@ export function KlinesChartSvg({
               <g className="text-[12px] font-mono" fill={backgroundTextHex}>
                 {dayBreaksFiltered.map((b) => {
                   const isDay01 = b.label === "01";
-                  const openTimeMs = windowSlice[b.index][0] as number;
+                  const openTimeMs = b.openTime ?? (b.index < windowN ? (windowSlice[b.index][0] as number) : 0);
                   const x = cx(b.index);
                   if (isDay01) {
                     return (
@@ -452,9 +457,11 @@ export function KlinesChartSvg({
               {showSecondaryAxis && (
                 <g className="font-mono" style={{ fontSize: fontSizeSmall }} fill={secondaryGridHex}>
                   {verticalIndicesFiltered.map((idx) => (
-                    <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
-                      {formatTimeLabel(windowSlice[idx][0] as number)}
-                    </text>
+                    idx < windowN
+                      ? <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
+                          {formatTimeLabel(windowSlice[idx][0] as number)}
+                        </text>
+                      : <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle" />
                   ))}
                 </g>
               )}
@@ -724,50 +731,76 @@ export function KlinesChartSvg({
                     </g>
                   );
                 }
-                if (ind.type === "Ichimoku") {
+                if (ind.type === "Ichimoku" && ind.ichimokuPart) {
+                  const part = ind.ichimokuPart;
+                  const baseCol = col - (part === "tenkan" ? 0 : part === "kijun" ? 1 : part === "spanA" ? 2 : part === "spanB" ? 3 : 4);
                   const disp = Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26));
-                  const tenkanPts: { i: number; val: number }[] = [];
-                  const kijunPts: { i: number; val: number }[] = [];
-                  const spanAPts: { i: number; val: number }[] = [];
-                  const spanBPts: { i: number; val: number }[] = [];
-                  const chikouPts: { i: number; val: number }[] = [];
+                  const pts: { i: number; val: number }[] = [];
                   for (let i = 0; i < windowSlice.length; i++) {
-                    const t = windowSlice[i][col];
-                    const k = windowSlice[i][col + 1];
-                    const braw = windowSlice[i][col + 2];
-                    const c = windowSlice[i][col + 3];
-                    if (t != null && typeof t === "number" && Number.isFinite(t)) tenkanPts.push({ i, val: t });
-                    if (k != null && typeof k === "number" && Number.isFinite(k)) kijunPts.push({ i, val: k });
-                    const j = i + disp;
-                    if (j < totalSlots) {
-                      if (t != null && k != null && typeof t === "number" && typeof k === "number" && Number.isFinite(t) && Number.isFinite(k)) {
-                        spanAPts.push({ i: j, val: (t + k) / 2 });
-                      }
-                      if (braw != null && typeof braw === "number" && Number.isFinite(braw)) spanBPts.push({ i: j, val: braw });
+                    const v = windowSlice[i][col];
+                    if (v == null || typeof v !== "number" || !Number.isFinite(v)) continue;
+                    if (part === "spanA" || part === "spanB") {
+                      const j = i + disp;
+                      if (j < totalSlots) pts.push({ i: j, val: v });
+                    } else {
+                      pts.push({ i, val: v });
                     }
-                    if (c != null && typeof c === "number" && Number.isFinite(c)) chikouPts.push({ i, val: c });
                   }
-                  const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
-                  const greenCloud = "#22c55e";
-                  const redCloud = "#ef4444";
-                  const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
-                  const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
-                  const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
-                  const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
-                  const cloudPaths: { d: string; fill: string }[] = [];
-                  let segStart: number | null = null;
-                  let segAboveA: boolean | null = null;
-                  for (let idx = 0; idx < indices.length; idx++) {
-                    const i = indices[idx]!;
-                    const a = aMap.get(i);
-                    const b = bMap.get(i);
-                    if (a == null || b == null) continue;
-                    const aboveA = a >= b;
-                    if (segStart === null) {
-                      segStart = i;
-                      segAboveA = aboveA;
-                    } else if (aboveA !== segAboveA) {
-                      const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+                  const show = part === "tenkan" ? (ind.ichimokuShowTenkan !== false) : part === "kijun" ? (ind.ichimokuShowKijun !== false) : part === "spanA" ? (ind.ichimokuShowSpanA !== false) : part === "spanB" ? (ind.ichimokuShowSpanB !== false) : (ind.ichimokuShowChikou === true);
+                  const toPath = (p: { i: number; val: number }[]) => p.length < 2 ? "" : p.map((pt, idx) => `${idx === 0 ? "M" : "L"} ${cx(pt.i)} ${yPanel(pt.val)}`).join(" ");
+                  const strokeVal = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: w === "thin" ? 1 : 2, dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
+                  const s = strokeVal(ind.lineWidth, ind.lineStyle);
+                  let cloudEl: ReactNode = null;
+                  if (part === "tenkan") {
+                    const spanAPts: { i: number; val: number }[] = [];
+                    const spanBPts: { i: number; val: number }[] = [];
+                    for (let i = 0; i < windowSlice.length; i++) {
+                      const j = i + disp;
+                      if (j >= totalSlots) continue;
+                      const a = windowSlice[i][baseCol + 2];
+                      const b = windowSlice[i][baseCol + 3];
+                      if (a != null && typeof a === "number" && Number.isFinite(a)) spanAPts.push({ i: j, val: a });
+                      if (b != null && typeof b === "number" && Number.isFinite(b)) spanBPts.push({ i: j, val: b });
+                    }
+                    const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
+                    const greenCloud = "#22c55e";
+                    const redCloud = "#ef4444";
+                    const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
+                    const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
+                    const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
+                    const cloudPaths: { d: string; fill: string }[] = [];
+                    let segStart: number | null = null;
+                    let segAboveA: boolean | null = null;
+                    for (let idx = 0; idx < indices.length; idx++) {
+                      const i = indices[idx]!;
+                      const a = aMap.get(i);
+                      const b = bMap.get(i);
+                      if (a == null || b == null) continue;
+                      const aboveA = a >= b;
+                      if (segStart === null) {
+                        segStart = i;
+                        segAboveA = aboveA;
+                      } else if (aboveA !== segAboveA) {
+                        const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+                        let d = "";
+                        for (const j of segIndices) {
+                          const av = aMap.get(j);
+                          const bv = bMap.get(j);
+                          if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${yPanel(segAboveA ? av : bv)}`;
+                        }
+                        for (let j = segIndices.length - 1; j >= 0; j--) {
+                          const jj = segIndices[j]!;
+                          const av = aMap.get(jj);
+                          const bv = bMap.get(jj);
+                          if (av != null && bv != null) d += ` L ${cx(jj)} ${yPanel(segAboveA ? bv : av)}`;
+                        }
+                        if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+                        segStart = i;
+                        segAboveA = aboveA;
+                      }
+                    }
+                    if (segStart !== null && segAboveA !== null) {
+                      const segIndices = indices.filter((j) => j >= segStart!);
                       let d = "";
                       for (const j of segIndices) {
                         const av = aMap.get(j);
@@ -781,43 +814,13 @@ export function KlinesChartSvg({
                         if (av != null && bv != null) d += ` L ${cx(jj)} ${yPanel(segAboveA ? bv : av)}`;
                       }
                       if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
-                      segStart = i;
-                      segAboveA = aboveA;
                     }
+                    cloudEl = <>{cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}</>;
                   }
-                  if (segStart !== null && segAboveA !== null) {
-                    const segIndices = indices.filter((j) => j >= segStart!);
-                    let d = "";
-                    for (const j of segIndices) {
-                      const av = aMap.get(j);
-                      const bv = bMap.get(j);
-                      if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${yPanel(segAboveA ? av : bv)}`;
-                    }
-                    for (let j = segIndices.length - 1; j >= 0; j--) {
-                      const jj = segIndices[j]!;
-                      const av = aMap.get(jj);
-                      const bv = bMap.get(jj);
-                      if (av != null && bv != null) d += ` L ${cx(jj)} ${yPanel(segAboveA ? bv : av)}`;
-                    }
-                    if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
-                  }
-                  const stroke = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({
-                    width: w === "thin" ? 1 : 2,
-                    dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined,
-                  });
-                  const tenkanS = stroke(ind.ichimokuTenkanLineWidth, ind.ichimokuTenkanLineStyle);
-                  const kijunS = stroke(ind.ichimokuKijunLineWidth, ind.ichimokuKijunLineStyle);
-                  const spanAS = stroke(ind.ichimokuSpanALineWidth, ind.ichimokuSpanALineStyle);
-                  const spanBS = stroke(ind.ichimokuSpanBLineWidth, ind.ichimokuSpanBLineStyle);
-                  const chikouS = stroke(ind.ichimokuChikouLineWidth, ind.ichimokuChikouLineStyle);
                   return (
                     <g key={indIdx}>
-                      {cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}
-                      {toPath(tenkanPts) && <path d={toPath(tenkanPts)} fill="none" stroke={ind.ichimokuTenkanColor ?? "#6366f1"} strokeWidth={tenkanS.width} strokeDasharray={tenkanS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                      {toPath(kijunPts) && <path d={toPath(kijunPts)} fill="none" stroke={ind.ichimokuKijunColor ?? "#ea580c"} strokeWidth={kijunS.width} strokeDasharray={kijunS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                      {toPath(spanAPts) && <path d={toPath(spanAPts)} fill="none" stroke={ind.ichimokuSpanAColor ?? "#22c55e"} strokeWidth={spanAS.width} strokeDasharray={spanAS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                      {toPath(spanBPts) && <path d={toPath(spanBPts)} fill="none" stroke={ind.ichimokuSpanBColor ?? "#ef4444"} strokeWidth={spanBS.width} strokeDasharray={spanBS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                      {toPath(chikouPts) && <path d={toPath(chikouPts)} fill="none" stroke={ind.ichimokuChikouColor ?? "#a855f7"} strokeWidth={chikouS.width} strokeDasharray={chikouS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {cloudEl}
+                      {show && toPath(pts) && <path d={toPath(pts)} fill="none" stroke={ind.color} strokeWidth={s.width} strokeDasharray={s.dash} strokeLinecap="round" strokeLinejoin="round" />}
                     </g>
                   );
                 }
@@ -1364,50 +1367,76 @@ export function KlinesChartSvg({
               </g>
             );
           }
-          if (ind.type === "Ichimoku") {
+          if (ind.type === "Ichimoku" && ind.ichimokuPart) {
+            const part = ind.ichimokuPart;
+            const baseCol = col - (part === "tenkan" ? 0 : part === "kijun" ? 1 : part === "spanA" ? 2 : part === "spanB" ? 3 : 4);
             const disp = Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26));
-            const tenkanPts: { i: number; val: number }[] = [];
-            const kijunPts: { i: number; val: number }[] = [];
-            const spanAPts: { i: number; val: number }[] = [];
-            const spanBPts: { i: number; val: number }[] = [];
-            const chikouPts: { i: number; val: number }[] = [];
+            const pts: { i: number; val: number }[] = [];
             for (let i = 0; i < windowSlice.length; i++) {
-              const t = windowSlice[i][col];
-              const k = windowSlice[i][col + 1];
-              const braw = windowSlice[i][col + 2];
-              const c = windowSlice[i][col + 3];
-              if (t != null && typeof t === "number" && Number.isFinite(t)) tenkanPts.push({ i, val: t });
-              if (k != null && typeof k === "number" && Number.isFinite(k)) kijunPts.push({ i, val: k });
-              const j = i + disp;
-              if (j < totalSlots) {
-                if (t != null && k != null && typeof t === "number" && typeof k === "number" && Number.isFinite(t) && Number.isFinite(k)) {
-                  spanAPts.push({ i: j, val: (t + k) / 2 });
-                }
-                if (braw != null && typeof braw === "number" && Number.isFinite(braw)) spanBPts.push({ i: j, val: braw });
+              const v = windowSlice[i][col];
+              if (v == null || typeof v !== "number" || !Number.isFinite(v)) continue;
+              if (part === "spanA" || part === "spanB") {
+                const j = i + disp;
+                if (j < totalSlots) pts.push({ i: j, val: v });
+              } else {
+                pts.push({ i, val: v });
               }
-              if (c != null && typeof c === "number" && Number.isFinite(c)) chikouPts.push({ i, val: c });
             }
-            const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
-            const greenCloud = "#22c55e";
-            const redCloud = "#ef4444";
-            const toPathI = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
-            const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
-            const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
-            const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
-            const cloudPaths: { d: string; fill: string }[] = [];
-            let segStart: number | null = null;
-            let segAboveA: boolean | null = null;
-            for (let idx = 0; idx < indices.length; idx++) {
-              const i = indices[idx]!;
-              const a = aMap.get(i);
-              const b = bMap.get(i);
-              if (a == null || b == null) continue;
-              const aboveA = a >= b;
-              if (segStart === null) {
-                segStart = i;
-                segAboveA = aboveA;
-              } else if (aboveA !== segAboveA) {
-                const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+            const show = part === "tenkan" ? (ind.ichimokuShowTenkan !== false) : part === "kijun" ? (ind.ichimokuShowKijun !== false) : part === "spanA" ? (ind.ichimokuShowSpanA !== false) : part === "spanB" ? (ind.ichimokuShowSpanB !== false) : (ind.ichimokuShowChikou === true);
+            const toPathI = (p: { i: number; val: number }[]) => p.length < 2 ? "" : p.map((pt, idx) => `${idx === 0 ? "M" : "L"} ${cx(pt.i)} ${y(pt.val)}`).join(" ");
+            const strokeVal = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: w === "thin" ? 1 : 2, dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
+            const s = strokeVal(ind.lineWidth, ind.lineStyle);
+            let cloudEl: ReactNode = null;
+            if (part === "tenkan") {
+              const spanAPts: { i: number; val: number }[] = [];
+              const spanBPts: { i: number; val: number }[] = [];
+              for (let i = 0; i < windowSlice.length; i++) {
+                const j = i + disp;
+                if (j >= totalSlots) continue;
+                const a = windowSlice[i][baseCol + 2];
+                const b = windowSlice[i][baseCol + 3];
+                if (a != null && typeof a === "number" && Number.isFinite(a)) spanAPts.push({ i: j, val: a });
+                if (b != null && typeof b === "number" && Number.isFinite(b)) spanBPts.push({ i: j, val: b });
+              }
+              const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
+              const greenCloud = "#22c55e";
+              const redCloud = "#ef4444";
+              const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
+              const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
+              const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
+              const cloudPaths: { d: string; fill: string }[] = [];
+              let segStart: number | null = null;
+              let segAboveA: boolean | null = null;
+              for (let idx = 0; idx < indices.length; idx++) {
+                const i = indices[idx]!;
+                const a = aMap.get(i);
+                const b = bMap.get(i);
+                if (a == null || b == null) continue;
+                const aboveA = a >= b;
+                if (segStart === null) {
+                  segStart = i;
+                  segAboveA = aboveA;
+                } else if (aboveA !== segAboveA) {
+                  const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+                  let d = "";
+                  for (const j of segIndices) {
+                    const av = aMap.get(j);
+                    const bv = bMap.get(j);
+                    if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${y(segAboveA ? av : bv)}`;
+                  }
+                  for (let j = segIndices.length - 1; j >= 0; j--) {
+                    const jj = segIndices[j]!;
+                    const av = aMap.get(jj);
+                    const bv = bMap.get(jj);
+                    if (av != null && bv != null) d += ` L ${cx(jj)} ${y(segAboveA ? bv : av)}`;
+                  }
+                  if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+                  segStart = i;
+                  segAboveA = aboveA;
+                }
+              }
+              if (segStart !== null && segAboveA !== null) {
+                const segIndices = indices.filter((j) => j >= segStart!);
                 let d = "";
                 for (const j of segIndices) {
                   const av = aMap.get(j);
@@ -1421,43 +1450,13 @@ export function KlinesChartSvg({
                   if (av != null && bv != null) d += ` L ${cx(jj)} ${y(segAboveA ? bv : av)}`;
                 }
                 if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
-                segStart = i;
-                segAboveA = aboveA;
               }
+              cloudEl = <>{cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}</>;
             }
-            if (segStart !== null && segAboveA !== null) {
-              const segIndices = indices.filter((j) => j >= segStart!);
-              let d = "";
-              for (const j of segIndices) {
-                const av = aMap.get(j);
-                const bv = bMap.get(j);
-                if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${y(segAboveA ? av : bv)}`;
-              }
-              for (let j = segIndices.length - 1; j >= 0; j--) {
-                const jj = segIndices[j]!;
-                const av = aMap.get(jj);
-                const bv = bMap.get(jj);
-                if (av != null && bv != null) d += ` L ${cx(jj)} ${y(segAboveA ? bv : av)}`;
-              }
-              if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
-            }
-            const stroke = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({
-              width: w === "thin" ? 1 : 2,
-              dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined,
-            });
-            const tenkanS = stroke(ind.ichimokuTenkanLineWidth, ind.ichimokuTenkanLineStyle);
-            const kijunS = stroke(ind.ichimokuKijunLineWidth, ind.ichimokuKijunLineStyle);
-            const spanAS = stroke(ind.ichimokuSpanALineWidth, ind.ichimokuSpanALineStyle);
-            const spanBS = stroke(ind.ichimokuSpanBLineWidth, ind.ichimokuSpanBLineStyle);
-            const chikouS = stroke(ind.ichimokuChikouLineWidth, ind.ichimokuChikouLineStyle);
             return (
               <g key={indIdx}>
-                {cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}
-                {toPathI(tenkanPts) && <path d={toPathI(tenkanPts)} fill="none" stroke={ind.ichimokuTenkanColor ?? "#6366f1"} strokeWidth={tenkanS.width} strokeDasharray={tenkanS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                {toPathI(kijunPts) && <path d={toPathI(kijunPts)} fill="none" stroke={ind.ichimokuKijunColor ?? "#ea580c"} strokeWidth={kijunS.width} strokeDasharray={kijunS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                {toPathI(spanAPts) && <path d={toPathI(spanAPts)} fill="none" stroke={ind.ichimokuSpanAColor ?? "#22c55e"} strokeWidth={spanAS.width} strokeDasharray={spanAS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                {toPathI(spanBPts) && <path d={toPathI(spanBPts)} fill="none" stroke={ind.ichimokuSpanBColor ?? "#ef4444"} strokeWidth={spanBS.width} strokeDasharray={spanBS.dash} strokeLinecap="round" strokeLinejoin="round" />}
-                {toPathI(chikouPts) && <path d={toPathI(chikouPts)} fill="none" stroke={ind.ichimokuChikouColor ?? "#a855f7"} strokeWidth={chikouS.width} strokeDasharray={chikouS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                {cloudEl}
+                {show && toPathI(pts) && <path d={toPathI(pts)} fill="none" stroke={ind.color} strokeWidth={s.width} strokeDasharray={s.dash} strokeLinecap="round" strokeLinejoin="round" />}
               </g>
             );
           }

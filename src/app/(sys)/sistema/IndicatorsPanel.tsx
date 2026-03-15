@@ -214,6 +214,11 @@ const INITIAL_ADD_FORM: AddFormState = {
   ichimokuChikouLineStyle: "solid",
   ichimokuCloudOpacity: 0.3,
   ichimokuCloudOpacityText: "30",
+  ichimokuShowTenkan: true,
+  ichimokuShowKijun: true,
+  ichimokuShowSpanA: true,
+  ichimokuShowSpanB: true,
+  ichimokuShowChikou: false,
 };
 
 interface IndicatorsPanelProps {
@@ -642,6 +647,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         ichimokuChikouLineWidth: addForm.ichimokuChikouLineWidth,
         ichimokuChikouLineStyle: addForm.ichimokuChikouLineStyle,
         ichimokuCloudOpacity: Math.max(0, Math.min(0.7, (parseFloat(addForm.ichimokuCloudOpacityText) || 30) / 100)),
+        ichimokuShowTenkan: addForm.ichimokuShowTenkan,
+        ichimokuShowKijun: addForm.ichimokuShowKijun,
+        ichimokuShowSpanA: addForm.ichimokuShowSpanA,
+        ichimokuShowSpanB: addForm.ichimokuShowSpanB,
+        ichimokuShowChikou: addForm.ichimokuShowChikou,
       } : {}),
       ...(addForm.indicatorType === "SAR" ? {
         sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
@@ -845,6 +855,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       ichimokuChikouLineStyle: (ind.type === "Ichimoku" && (ind.ichimokuChikouLineStyle === "solid" || ind.ichimokuChikouLineStyle === "dotted" || ind.ichimokuChikouLineStyle === "dashed") ? ind.ichimokuChikouLineStyle : "solid") as IndicatorLineStyle,
       ichimokuCloudOpacity: ind.type === "Ichimoku" ? (typeof ind.ichimokuCloudOpacity === "number" ? Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity)) : 0.3) : 0.3,
       ichimokuCloudOpacityText: String(Math.round((ind.type === "Ichimoku" ? (typeof ind.ichimokuCloudOpacity === "number" ? Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity)) : 0.3) : 0.3) * 100)),
+      ichimokuShowTenkan: ind.type === "Ichimoku" ? (ind.ichimokuShowTenkan !== false) : true,
+      ichimokuShowKijun: ind.type === "Ichimoku" ? (ind.ichimokuShowKijun !== false) : true,
+      ichimokuShowSpanA: ind.type === "Ichimoku" ? (ind.ichimokuShowSpanA !== false) : true,
+      ichimokuShowSpanB: ind.type === "Ichimoku" ? (ind.ichimokuShowSpanB !== false) : true,
+      ichimokuShowChikou: ind.type === "Ichimoku" ? (ind.ichimokuShowChikou === true) : false,
       sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
       sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
       sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
@@ -1028,6 +1043,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         ichimokuChikouLineWidth: editForm.ichimokuChikouLineWidth,
         ichimokuChikouLineStyle: editForm.ichimokuChikouLineStyle,
         ichimokuCloudOpacity: Math.max(0, Math.min(0.7, (parseFloat(editForm.ichimokuCloudOpacityText) || 30) / 100)),
+        ichimokuShowTenkan: editForm.ichimokuShowTenkan,
+        ichimokuShowKijun: editForm.ichimokuShowKijun,
+        ichimokuShowSpanA: editForm.ichimokuShowSpanA,
+        ichimokuShowSpanB: editForm.ichimokuShowSpanB,
+        ichimokuShowChikou: editForm.ichimokuShowChikou,
       } : {}),
       ...(ind?.type === "SAR" ? {
         sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),

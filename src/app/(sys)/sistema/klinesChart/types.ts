@@ -34,6 +34,8 @@ export interface ChartIndicatorLine {
   type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
+  /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
+  ichimokuPart?: "tenkan" | "kijun" | "spanA" | "spanB" | "chikou";
   adxPlusDiColor?: string;
   adxPlusDiLineWidth?: "thin" | "normal";
   adxPlusDiLineStyle?: "solid" | "dotted" | "dashed";
@@ -126,7 +128,7 @@ export interface ChartIndicatorLine {
   donchianMiddleColor?: string;
   donchianMiddleLineStyle?: "solid" | "dotted" | "dashed";
   donchianMiddleLineWidth?: "thin" | "normal";
-  /** Só para Ichimoku: colunas tenkan, kijun, spanB (52), chikou em columnIndex..columnIndex+3. Senkou A/B desenhados à frente com ichimokuDisplacement. */
+  /** Só para Ichimoku: colunas tenkan, kijun, spanA, spanB, chikou em columnIndex..columnIndex+4. Senkou A/B desenhados à frente com ichimokuDisplacement. */
   ichimokuDisplacement?: number;
   ichimokuTenkanColor?: string;
   ichimokuTenkanLineWidth?: "thin" | "normal";
@@ -144,6 +146,12 @@ export interface ChartIndicatorLine {
   ichimokuChikouLineWidth?: "thin" | "normal";
   ichimokuChikouLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuCloudOpacity?: number;
+  /** Só para Ichimoku: exibir cada linha (default true, true, true, true, false para Chikou). */
+  ichimokuShowTenkan?: boolean;
+  ichimokuShowKijun?: boolean;
+  ichimokuShowSpanA?: boolean;
+  ichimokuShowSpanB?: boolean;
+  ichimokuShowChikou?: boolean;
   /** Só para Keltner Channels: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
   keltnerShowUpper?: boolean;
   keltnerShowLower?: boolean;

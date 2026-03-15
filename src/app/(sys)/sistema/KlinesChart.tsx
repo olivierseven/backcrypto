@@ -1590,7 +1590,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   // Data no subeixo: por dia (mudança de data) ou, no diário/semanal, a cada 7 candles
   const isDailyOrWeekly = groupMinutes === 1440 || groupMinutes === 10080;
-  const dateBreaks: { index: number; dateStr: string }[] = [];
+  const dateBreaks: { index: number; dateStr: string; openTime?: number }[] = [];
   if (isDailyOrWeekly) {
     for (let i = 0; i < windowN; i += 7) {
       dateBreaks.push({ index: i, dateStr: formatDateLabel(windowSlice[i][0]) });
@@ -1606,19 +1606,48 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
   }
 
+  // Verticais: quantidade 30→6, 50→6, 100→8, 150→12; primeira vertical sempre no início do dia (meia-noite UTC)
+  const numVerticals =
+    windowN <= 30 ? 6
+      : windowN <= 50 ? 6
+        : windowN <= 100 ? 8
+          : 12;
+  const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
+  const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
+  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : (dateBreaks[0]?.index ?? 0);
+  const verticalIndices: number[] = [];
+  for (let i = anchorIndex; i >= 0; i -= verticalEvery) verticalIndices.push(i);
+  for (let i = anchorIndex + verticalEvery; i < totalSlots; i += verticalEvery) verticalIndices.push(i);
+  verticalIndices.sort((a, b) => a - b);
+  const verticalIndicesFiltered = [...new Set(verticalIndices)].filter((i) => i >= 0 && i < totalSlots);
+
+  // Quebras de data no futuro (velas invisíveis) para desenhar a grade vertical de dias
+  if (invisibleCandlesEnd > 0 && windowN > 0) {
+    const lastOpenTime = Number(windowSlice[windowN - 1][0]);
+    const intervalMs = groupMinutes * 60 * 1000;
+    if (Number.isFinite(lastOpenTime) && Number.isFinite(intervalMs)) {
+      for (let i = windowN; i < totalSlots; i += verticalEvery) {
+        const fakeOpenTime = lastOpenTime + (i - windowN + 1) * intervalMs;
+        dateBreaks.push({ index: i, dateStr: formatDateLabel(fakeOpenTime), openTime: fakeOpenTime });
+      }
+    }
+  }
+
   // Evitar sobreposição de datas: só mostrar data se distância da última exibida for >= minGapCandles
   const minGapCandlesForDate = 10;
-  const dateBreaksFiltered: { index: number; dateStr: string }[] = [];
+  const dateBreaksFiltered: { index: number; dateStr: string; openTime?: number }[] = [];
   for (const b of dateBreaks) {
     if (dateBreaksFiltered.length === 0 || b.index - dateBreaksFiltered[dateBreaksFiltered.length - 1].index >= minGapCandlesForDate) {
-      dateBreaksFiltered.push(b);
+      dateBreaksFiltered.push({ index: b.index, dateStr: b.dateStr, openTime: b.openTime });
     }
   }
 
   // Dia (dd) em cada quebra de data (usado em 2h+ linha 1; 1h usa em linha 2)
-  const dayBreaksFiltered: { index: number; label: string }[] = [];
+  const dayBreaksFiltered: { index: number; label: string; openTime?: number }[] = [];
   for (const b of dateBreaksFiltered) {
-    dayBreaksFiltered.push({ index: b.index, label: formatDayOnly(windowSlice[b.index][0] as number) });
+    const openTime = b.openTime ?? (b.index < windowN ? (windowSlice[b.index][0] as number) : undefined);
+    const label = openTime != null ? formatDayOnly(openTime) : "";
+    dayBreaksFiltered.push({ index: b.index, label, openTime });
   }
 
   // Mês/ano uma vez por mês, centralizado (mesmo mecanismo para 1h e 2h+)
@@ -1644,21 +1673,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const centerIndex = r.start + Math.floor((r.end - r.start) / 2);
     monthYearCentered.push({ centerIndex, label: r.label });
   }
-
-  // Verticais: quantidade 30→6, 50→6, 100→8, 150→12; primeira vertical sempre no início do dia (meia-noite UTC)
-  const numVerticals =
-    windowN <= 30 ? 6
-      : windowN <= 50 ? 6
-        : windowN <= 100 ? 8
-          : 12;
-  const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
-  const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
-  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : (dateBreaks[0]?.index ?? 0);
-  const verticalIndices: number[] = [];
-  for (let i = anchorIndex; i >= 0; i -= verticalEvery) verticalIndices.push(i);
-  for (let i = anchorIndex + verticalEvery; i < windowN; i += verticalEvery) verticalIndices.push(i);
-  verticalIndices.sort((a, b) => a - b);
-  const verticalIndicesFiltered = [...new Set(verticalIndices)].filter((i) => i >= 0 && i < windowN);
 
   const canPrev = startIndex > 0;
   const canNext = startIndex + visibleCount < n;

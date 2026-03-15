@@ -367,6 +367,16 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         opts.push({ key: `ind_${ind.id}:adx`, label: `(${num}) ADX (${adxLabel})` });
         return;
       }
+      // Ichimoku: 5 colunas (Tenkan, Kijun, Span A, Span B, Chikou), sem opção genérica
+      if (ind.type === "Ichimoku") {
+        const indLabel = getIndicatorLabel(ind, tKlines, userIndicators);
+        opts.push({ key: `ind_${ind.id}:tenkan`, label: `(${num}) ${indLabel} – Tenkan` });
+        opts.push({ key: `ind_${ind.id}:kijun`, label: `(${num}) ${indLabel} – Kijun` });
+        opts.push({ key: `ind_${ind.id}:spanA`, label: `(${num}) ${indLabel} – Span A` });
+        opts.push({ key: `ind_${ind.id}:spanB`, label: `(${num}) ${indLabel} – Span B` });
+        opts.push({ key: `ind_${ind.id}:chikou`, label: `(${num}) ${indLabel} – Chikou` });
+        return;
+      }
       opts.push({ key: `ind_${ind.id}`, label: `(${num}) ${getIndicatorLabel(ind, tKlines, userIndicators)}` });
       // - MACD: Signal e Histogram
       if (ind.type === "MACD" && ind.macdSignalLine) {

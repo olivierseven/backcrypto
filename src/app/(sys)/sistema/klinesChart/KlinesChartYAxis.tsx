@@ -147,8 +147,52 @@ export function KlinesChartYAxis({
     return () => clearInterval(id);
   }, [currentCandleCloseTimeMs, groupMinutes]);
 
+  const crosshairActive =
+    crosshairPoint !== null &&
+    (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging);
+  const crosshairOverlay =
+    crosshairActive && crosshairPoint !== null
+      ? (() => {
+          const crossY = crosshairPoint.panelClickY != null ? crosshairPoint.panelClickY : y(crosshairPoint.price);
+          const isPanelValue = crosshairPoint.panelValue != null;
+          const displayValue = isPanelValue ? crosshairPoint.panelValue! : crosshairPoint.price;
+          const valueStr = isPanelValue && displayValue >= 0 && displayValue <= 100 ? displayValue.toFixed(1) : formatYAxis(displayValue);
+          const pctVsLast = !isPanelValue && lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : null;
+          const pctStr = pctVsLast != null ? (pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%") : null;
+          const pctColor = pctVsLast != null && pctVsLast >= 0 ? "#059669" : "#dc2626";
+          const padding = 5;
+          const lineHeight = Math.max(fontSize + 2, 10);
+          const boxH = pctStr != null ? padding * 2 + lineHeight * 2 : padding * 2 + lineHeight;
+          const boxY = crossY - boxH / 2;
+          return (
+            <div
+              className="pointer-events-none absolute left-0 top-0 font-mono tabular-nums"
+              style={{ width: Y_AXIS_WIDTH, height: chartHeight, fontSize }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: boxX,
+                  top: boxY,
+                  width: boxWidth,
+                  height: boxH,
+                  background: isDarkFooterYAxis ? "#3f3f46" : "white",
+                  border: `1px dashed ${lineTableHex}`,
+                  borderRadius: 2,
+                  padding,
+                  boxSizing: "border-box",
+                }}
+              >
+                <div style={{ color: footerYAxisTextHex, fontWeight: 500, lineHeight: `${lineHeight}px` }}>{valueStr}</div>
+                {pctStr != null && <div style={{ color: pctColor, fontSize: fontSize, lineHeight: `${lineHeight}px`, marginTop: 1 }}>{pctStr}</div>}
+              </div>
+            </div>
+          );
+        })()
+      : null;
+
   return (
-    <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
+    <div className="flex-shrink-0 border-l border-zinc-200 relative" style={{ backgroundColor: footerYAxisHex }}>
       <svg width={Y_AXIS_WIDTH} height={chartHeight} className="font-mono tabular-nums" style={{ fontSize }}>
         {yTickValues.map((v, i) => (
           <text key={i} x={textX} y={y(v) + 4} textAnchor="start" fill={footerYAxisTextHex}>
@@ -269,29 +313,41 @@ export function KlinesChartYAxis({
         })}
         {indicatorLines
           .filter((ind) => ind.showLastValueOnYAxis !== false)
-          .map((ind, indIdx) => {
+          .flatMap((ind, indIdx) => {
+            const panelKey = getPanel(ind);
+            // No eixo Y mostra-se sempre o último (candle mais recente). klines[0] = mais recente.
+            const lastRow = n > 0 ? (klines[0] as unknown[]) : null;
             const lastVal =
-              n > 0
+              lastRow != null
                 ? (() => {
-                    const v = klines[0][ind.columnIndex];
+                    // Span A e Span B: valor desenhado no último candle vem de klines[disp]
+                    const isSpanAB = ind.type === "Ichimoku" && (ind.ichimokuPart === "spanA" || ind.ichimokuPart === "spanB");
+                    const disp = isSpanAB ? Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26)) : 0;
+                    const valueRow = isSpanAB ? disp : 0;
+                    if (valueRow < 0 || valueRow >= n) return null;
+                    const row = klines[valueRow] as unknown[];
+                    const v = row[ind.columnIndex];
                     if (v == null) return null;
                     const num = typeof v === "number" ? v : Number(v);
                     return Number.isFinite(num) ? num : null;
                   })()
                 : null;
-            if (lastVal == null) return null;
-            const panelKey = getPanel(ind);
+            if (lastVal == null) return [];
+            if (ind.type === "Ichimoku" && ind.ichimokuPart) {
+              const show = ind.ichimokuPart === "tenkan" ? (ind.ichimokuShowTenkan !== false) : ind.ichimokuPart === "kijun" ? (ind.ichimokuShowKijun !== false) : ind.ichimokuPart === "spanA" ? (ind.ichimokuShowSpanA !== false) : ind.ichimokuPart === "spanB" ? (ind.ichimokuShowSpanB !== false) : (ind.ichimokuShowChikou === true);
+              if (!show) return [];
+            }
             const lastValY =
               panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel2" || panelKey === "panel3" || panelKey === "panel4" || panelKey === "panel5" ? panelKey : "panel2");
             const ext = panelKey === "main" ? null : panelExtents[panelKey];
             const inRange =
               panelKey === "main" ? lastVal >= yMin && lastVal <= yMax : ext != null && lastVal >= ext.min && lastVal <= ext.max;
-            if (!inRange) return null;
+            if (!inRange) return [];
             const isVolumeStyle = ind.type === "Volume";
             const textColor = isVolumeStyle
               ? (() => {
-                  const openRaw = n > 0 ? klines[0][1] : null;
-                  const closeRaw = n > 0 ? klines[0][4] : null;
+                  const openRaw = lastRow != null ? lastRow[1] : null;
+                  const closeRaw = lastRow != null ? lastRow[4] : null;
                   const open = openRaw != null ? (typeof openRaw === "string" ? parseFloat(openRaw) : Number(openRaw)) : NaN;
                   const close = closeRaw != null ? (typeof closeRaw === "string" ? parseFloat(closeRaw) : Number(closeRaw)) : NaN;
                   const lastCandleUp = Number.isFinite(open) && Number.isFinite(close) && close >= open;
@@ -302,7 +358,7 @@ export function KlinesChartYAxis({
                   ? (ind.histogramColorAbove ?? "#059669")
                   : (ind.histogramColorBelow ?? "#dc2626")
                 : ind.color;
-            return (
+            return [
               <g key={indIdx}>
                 <rect
                   x={boxX}
@@ -335,45 +391,9 @@ export function KlinesChartYAxis({
                             ? lastVal.toFixed(1)
                             : (formatPanelValue ? formatPanelValue(lastVal) : formatYAxis(lastVal))}
                 </text>
-              </g>
-            );
+              </g>,
+            ];
           })}
-        {crosshairPoint !== null &&
-          (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
-          (() => {
-            const crossY = crosshairPoint.panelClickY != null ? crosshairPoint.panelClickY : y(crosshairPoint.price);
-            const isPanelValue = crosshairPoint.panelValue != null;
-            const displayValue = isPanelValue ? crosshairPoint.panelValue! : crosshairPoint.price;
-            const valueStr = isPanelValue && displayValue >= 0 && displayValue <= 100 ? displayValue.toFixed(1) : formatYAxis(displayValue);
-            const pctVsLast = !isPanelValue && lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : null;
-            const pctStr = pctVsLast != null ? (pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%") : null;
-            const pctColor = pctVsLast != null && pctVsLast >= 0 ? "#059669" : "#dc2626";
-            const boxH = pctStr != null ? 28 : 16;
-            const boxY = crossY - 8;
-            return (
-              <g>
-                <rect
-                  x={boxX}
-                  y={boxY}
-                  width={boxWidth}
-                  height={boxH}
-                  fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-                  stroke={lineTableHex}
-                  strokeWidth={1}
-                  strokeDasharray="2 2"
-                  rx={2}
-                />
-                <text x={textX} y={crossY + 4} textAnchor="start" className="font-mono font-medium" style={{ fontSize }} fill={footerYAxisTextHex}>
-                  {valueStr}
-                </text>
-                {pctStr != null && (
-                  <text x={textX} y={crossY + 15} textAnchor="start" className="font-mono" style={{ fontSize }} fill={pctColor}>
-                    {pctStr}
-                  </text>
-                )}
-              </g>
-            );
-          })()}
         {showLastClose && (
           <g>
             <rect
@@ -397,6 +417,7 @@ export function KlinesChartYAxis({
           </g>
         )}
       </svg>
+      {crosshairOverlay}
     </div>
   );
 }
