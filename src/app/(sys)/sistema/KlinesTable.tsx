@@ -505,10 +505,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const wrCol = computeWilliamsRColumn(dataForInd, period, wrValueIndex);
         for (let i = 0; i < out.length; i++) out[i].push(wrCol[i] ?? null);
       } else if (ind.type === "OBV") {
-        const col = computeObvColumn(data);
+        const volIdx = ind.obvVolumeSource === "usdt" ? 7 : 5;
+        const col = computeObvColumn(data, volIdx);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else if (ind.type === "AD") {
-        const col = computeAdColumn(data);
+        const volIdx = ind.adVolumeSource === "usdt" ? 7 : 5;
+        const col = computeAdColumn(data, volIdx);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else if (ind.type === "SAR") {
         const start = typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02;

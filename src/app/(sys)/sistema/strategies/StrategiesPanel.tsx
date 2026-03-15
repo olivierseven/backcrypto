@@ -312,7 +312,8 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       { key: "high", label: `(1) ${tKlines.fieldHigh ?? "High"}` },
       { key: "low", label: `(1) ${tKlines.fieldLow ?? "Low"}` },
       { key: "close", label: `(1) ${tKlines.fieldClose ?? "Close"}` },
-      { key: "volume", label: `(1) ${tKlines.volUsdt ?? tKlines.volumeBtc ?? "Volume"}` },
+      { key: "volume", label: `(1) ${(tKlines as Record<string, string>).volumeBaseLabel ?? tKlines.volumeBtc ?? "Vol (base)"}` },
+      { key: "volumeUsdt", label: `(1) ${(tKlines as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}` },
       // Funções calculadas a partir de OHLC (sem coluna na tabela)
       { key: "HL2", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHL2 ?? "HL2"}` },
       { key: "HLC3", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHLC3 ?? "HLC3"}` },

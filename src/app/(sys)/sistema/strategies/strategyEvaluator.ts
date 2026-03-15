@@ -17,13 +17,15 @@ import { normalizeOffset, normalizeBarsAfter } from "./strategiesTypes";
 
 export type KlineRow = (string | number | null)[];
 
+/** Coluna 5 = volume em base; coluna 7 = volume em quote (USDT). */
 function getBaseColumnIndex(seriesKey: string): number | null {
   switch (seriesKey) {
     case "open": return 1;
     case "high": return 2;
     case "low": return 3;
     case "close": return 4;
-    case "volume": return 5;
+    case "volume": return 5;   // volume em base (ex.: BTC)
+    case "volumeUsdt": return 7; // volume em quote (ex.: USDT)
     default: return null;
   }
 }

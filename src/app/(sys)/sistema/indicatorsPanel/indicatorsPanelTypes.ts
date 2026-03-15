@@ -111,6 +111,8 @@ export interface AddFormState {
   keltnerMiddleColor: string;
   keltnerMiddleLineStyle: IndicatorLineStyle;
   keltnerMiddleLineWidth: IndicatorLineWidth;
+  obvVolumeSource: "base" | "usdt";
+  adVolumeSource: "base" | "usdt";
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
@@ -266,6 +268,8 @@ export interface EditFormState {
   keltnerMiddleColor: string;
   keltnerMiddleLineStyle: IndicatorLineStyle;
   keltnerMiddleLineWidth: IndicatorLineWidth;
+  obvVolumeSource: "base" | "usdt";
+  adVolumeSource: "base" | "usdt";
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
@@ -316,6 +320,8 @@ export interface EditFormState {
   donchianMiddleColor: string;
   donchianMiddleLineStyle: IndicatorLineStyle;
   donchianMiddleLineWidth: IndicatorLineWidth;
+  obvVolumeSource: "base" | "usdt";
+  adVolumeSource: "base" | "usdt";
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

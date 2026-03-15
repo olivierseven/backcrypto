@@ -646,9 +646,9 @@ export function computeWilliamsRColumn(
 /**
  * OBV (On-Balance Volume): volume acumulado com sinal dado pela variação do close.
  * Se close atual > close anterior: OBV += volume; se close < anterior: OBV -= volume; senão mantém.
- * Dados em ordem DESC (índice 0 = mais recente). Usa close[4] e volume[5].
+ * Dados em ordem DESC (índice 0 = mais recente). Usa close[4] e volume em volumeIndex (5 = base, 7 = USDT).
  */
-export function computeObvColumn(data: (string | number)[][]): (number | null)[] {
+export function computeObvColumn(data: (string | number)[][], volumeIndex: number = 5): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = new Array(n).fill(null);
   if (n === 0) return out;
@@ -659,7 +659,7 @@ export function computeObvColumn(data: (string | number)[][]): (number | null)[]
     return Number.isFinite(v) ? v : null;
   };
   const closeIdx = 4;
-  const volIdx = 5;
+  const volIdx = volumeIndex === 7 ? 7 : 5;
   out[n - 1] = 0;
   for (let j = n - 2; j >= 0; j--) {
     const prevObv = out[j + 1];
@@ -690,9 +690,9 @@ export function computeObvColumn(data: (string | number)[][]): (number | null)[]
  * Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low) = (2*Close - High - Low) / (High - Low); 0 se High === Low.
  * Money Flow Volume = MF Multiplier × Volume.
  * A/D = soma acumulada de Money Flow Volume (do mais antigo para o mais recente).
- * Dados em ordem DESC (índice 0 = mais recente). Usa high[2], low[3], close[4], volume[5].
+ * Dados em ordem DESC (índice 0 = mais recente). Usa high[2], low[3], close[4], volume em volumeIndex (5 = base, 7 = USDT).
  */
-export function computeAdColumn(data: (string | number)[][]): (number | null)[] {
+export function computeAdColumn(data: (string | number)[][], volumeIndex: number = 5): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = new Array(n).fill(null);
   if (n === 0) return out;
@@ -702,6 +702,7 @@ export function computeAdColumn(data: (string | number)[][]): (number | null)[] 
     const v = Number(raw);
     return Number.isFinite(v) ? v : null;
   };
+  const volIdx = volumeIndex === 7 ? 7 : 5;
   out[n - 1] = 0;
   for (let j = n - 2; j >= 0; j--) {
     const prevAd = out[j + 1];
@@ -712,7 +713,7 @@ export function computeAdColumn(data: (string | number)[][]): (number | null)[] 
     const h = getNum(data[j], HIGH_IDX);
     const l = getNum(data[j], LOW_IDX);
     const c = getNum(data[j], CLOSE_IDX_COL);
-    const v = getNum(data[j], VOLUME_INDEX);
+    const v = getNum(data[j], volIdx);
     if (h == null || l == null || c == null || v == null || v < 0) {
       out[j] = prevAd;
       continue;

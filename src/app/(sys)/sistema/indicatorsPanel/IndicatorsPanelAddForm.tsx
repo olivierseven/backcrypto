@@ -168,6 +168,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           periodText: "1",
           fieldKey: "volume",
           chartOption: freePanel,
+          obvVolumeSource: "base",
         };
       }
       if (newType === "AD") {
@@ -178,6 +179,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           periodText: "1",
           fieldKey: "volume",
           chartOption: freePanel,
+          adVolumeSource: "base",
         };
       }
       if (newType === "SAR") {
@@ -400,28 +402,38 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
           aria-label={t.indicatorType}
         >
-          <option value="SMA">SMA</option>
-          <option value="EMA">EMA</option>
-          <option value="WMA">WMA</option>
-          <option value="HMA">{(t as Record<string, string>).hmaLabel ?? "HMA"}</option>
-          <option value="VWMA">{(t as Record<string, string>).vwmaLabel ?? "VWMA"}</option>
-          <option value="RSI">RSI</option>
-          <option value="MFI">{(t as Record<string, string>).mfiLabel ?? "MFI"}</option>
-          <option value="MACD">MACD</option>
-          <option value="Stochastic">Stochastic</option>
-          <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
-          <option value="OBV">OBV</option>
-          <option value="AD">{(t as Record<string, string>).adLabel ?? "A/D"}</option>
-          <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
-          <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
-          <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
-          <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
-          <option value="CMF">{(t as Record<string, string>).cmfLabel ?? "CMF"}</option>
-          <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
-          <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
-          <option value="Keltner">{(t as Record<string, string>).keltnerLabel ?? "Keltner Channels"}</option>
-          <option value="Donchian">{(t as Record<string, string>).donchianLabel ?? "Donchian Channels"}</option>
-          <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
+          <optgroup label={(t as Record<string, string>).indicatorGroupMovingAverages ?? "Moving Averages"}>
+            <option value="SMA">SMA</option>
+            <option value="EMA">EMA</option>
+            <option value="WMA">WMA</option>
+            <option value="HMA">{(t as Record<string, string>).hmaLabel ?? "HMA"}</option>
+            <option value="VWMA">{(t as Record<string, string>).vwmaLabel ?? "VWMA"}</option>
+          </optgroup>
+          <optgroup label={(t as Record<string, string>).indicatorGroupMomentum ?? "Momentum"}>
+            <option value="RSI">RSI</option>
+            <option value="MFI">{(t as Record<string, string>).mfiLabel ?? "MFI"}</option>
+            <option value="MACD">MACD</option>
+            <option value="Stochastic">Stochastic</option>
+            <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
+            <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
+          </optgroup>
+          <optgroup label={(t as Record<string, string>).indicatorGroupTrend ?? "Trend"}>
+            <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
+            <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
+          </optgroup>
+          <optgroup label={(t as Record<string, string>).indicatorGroupVolume ?? "Volume"}>
+            <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
+            <option value="OBV">OBV</option>
+            <option value="AD">{(t as Record<string, string>).adLabel ?? "A/D"}</option>
+            <option value="CMF">{(t as Record<string, string>).cmfLabel ?? "CMF"}</option>
+            <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
+          </optgroup>
+          <optgroup label={(t as Record<string, string>).indicatorGroupVolatilityChannels ?? "Volatility / Channels"}>
+            <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
+            <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
+            <option value="Keltner">{(t as Record<string, string>).keltnerLabel ?? "Keltner Channels"}</option>
+            <option value="Donchian">{(t as Record<string, string>).donchianLabel ?? "Donchian Channels"}</option>
+          </optgroup>
         </select>
       </div>
 
@@ -486,6 +498,27 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               {opt.label}
             </option>
           ))}
+        </select>
+      </div>
+      )}
+
+      {(form.indicatorType === "OBV" || form.indicatorType === "AD") && (
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
+        <select
+          value={form.indicatorType === "OBV" ? (form.obvVolumeSource ?? "base") : (form.adVolumeSource ?? "base")}
+          onChange={(e) => {
+            const v = e.target.value as "base" | "usdt";
+            setForm((prev) => ({
+              ...prev,
+              ...(prev.indicatorType === "OBV" ? { obvVolumeSource: v } : { adVolumeSource: v }),
+            }));
+          }}
+          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+          aria-label={(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}
+        >
+          <option value="base">{(t as Record<string, string>).volumeBaseLabel ?? "Vol (base)"}</option>
+          <option value="usdt">{(t as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}</option>
         </select>
       </div>
       )}

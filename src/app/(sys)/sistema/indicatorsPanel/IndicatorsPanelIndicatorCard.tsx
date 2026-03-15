@@ -535,7 +535,23 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 </div>
               </div>
             </>
-          ) : ind.type === "OBV" || ind.type === "AD" ? null : (
+          ) : ind.type === "OBV" || ind.type === "AD" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
+              <select
+                value={ind.type === "OBV" ? (editForm.obvVolumeSource ?? "base") : (editForm.adVolumeSource ?? "base")}
+                onChange={(e) => {
+                  const v = e.target.value as "base" | "usdt";
+                  setEditForm((f) => (f ? { ...f, ...(ind.type === "OBV" ? { obvVolumeSource: v } : { adVolumeSource: v }) } : f));
+                }}
+                className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-2 py-1 bg-white"
+                aria-label={(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}
+              >
+                <option value="base">{(t as Record<string, string>).volumeBaseLabel ?? "Vol (base)"}</option>
+                <option value="usdt">{(t as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}</option>
+              </select>
+            </div>
+          ) : (
           <>
           {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && ind.type !== "Donchian" && (
             <div className="flex items-center gap-2">
