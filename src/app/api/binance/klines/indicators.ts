@@ -391,6 +391,71 @@ export function computeDonchianChannels(
 }
 
 /**
+ * Ichimoku: Tenkan, Kijun, Span B (52 high+low)/2 no candle, Chikou = close deslocado.
+ * Dados em ordem DESC (índice 0 = mais recente).
+ * Senkou Span A e B no gráfico são desenhados **displacement** candles à frente (área futura + velas invisíveis): A = (Tenkan+Kijun)/2, B = spanBRaw no mesmo candle.
+ */
+export function computeIchimokuColumns(
+  data: (string | number)[][],
+  tenkanPeriod: number,
+  kijunPeriod: number,
+  spanBPeriod: number,
+  displacement: number
+): {
+  tenkan: (number | null)[];
+  kijun: (number | null)[];
+  spanBRaw: (number | null)[];
+  chikou: (number | null)[];
+} {
+  const n = data.length;
+  const tp = Math.max(1, Math.min(500, tenkanPeriod));
+  const kp = Math.max(1, Math.min(500, kijunPeriod));
+  const sp = Math.max(1, Math.min(500, spanBPeriod));
+  const disp = Math.max(0, Math.min(500, displacement));
+
+  const getC = (i: number): number | null => {
+    const raw = data[i]?.[4];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const highLowMid = (start: number, period: number): number | null => {
+    let maxH: number | null = null;
+    let minL: number | null = null;
+    const end = Math.min(start + period, n);
+    for (let j = start; j < end; j++) {
+      const hRaw = data[j]?.[2];
+      const lRaw = data[j]?.[3];
+      if (hRaw != null) {
+        const h = Number(hRaw);
+        if (Number.isFinite(h)) maxH = maxH == null ? h : Math.max(maxH, h);
+      }
+      if (lRaw != null) {
+        const l = Number(lRaw);
+        if (Number.isFinite(l)) minL = minL == null ? l : Math.min(minL, l);
+      }
+    }
+    if (maxH != null && minL != null) return (maxH + minL) / 2;
+    return null;
+  };
+
+  const tenkan: (number | null)[] = [];
+  const kijun: (number | null)[] = [];
+  const spanBRaw: (number | null)[] = [];
+  const chikou: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    tenkan.push(highLowMid(i, tp));
+    kijun.push(highLowMid(i, kp));
+    spanBRaw.push(highLowMid(i, sp));
+    const chikouIdx = i + disp;
+    chikou.push(chikouIdx < n ? getC(chikouIdx) : null);
+  }
+
+  return { tenkan, kijun, spanBRaw, chikou };
+}
+
+/**
  * RSI (Índice de Força Relativa) sobre uma coluna (tipicamente close).
  * Período padrão 14. Suavização de Wilder: primeira média = SMA dos primeiros "period" ganhos/perdas,
  * depois média suavizada = (anterior * (period-1) + atual) / period.

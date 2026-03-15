@@ -35,6 +35,8 @@ export interface KlinesChartSvgProps {
   fullReversed: (number | string | null)[][];
   startIndex: number;
   windowN: number;
+  /** windowN + velas invisíveis efetivas (Ichimoku pode estender até 100). */
+  totalSlots: number;
   n: number;
   candleColors: { bull: string; bear: string };
   yTickValues: number[];
@@ -144,6 +146,7 @@ export function KlinesChartSvg({
   fullReversed,
   startIndex,
   windowN,
+  totalSlots,
   n,
   candleColors,
   yTickValues,
@@ -517,10 +520,10 @@ export function KlinesChartSvg({
                   const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
                   const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
-                  const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "2 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+                  const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
                   const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-                  const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
                   const middleD = toPathPanel(middlePts);
@@ -590,10 +593,10 @@ export function KlinesChartSvg({
                   const bandColor = ind.keltnerLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.keltnerBandOpacity ?? 0.2));
                   const limitsStrokeWidth = ind.keltnerLimitsLineWidth === "thin" ? 1 : 2;
-                  const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "2 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+                  const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "1 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
                   const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-                  const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
                   const middleD = toPathPanel(middlePts);
@@ -663,10 +666,10 @@ export function KlinesChartSvg({
                   const bandColor = ind.donchianLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
                   const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
-                  const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "2 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
+                  const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
                   const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-                  const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
                   const middleD = toPathPanel(middlePts);
@@ -718,6 +721,103 @@ export function KlinesChartSvg({
                       {ind.donchianShowUpper !== false && upperD && <path d={upperD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
                       {ind.donchianShowLower !== false && lowerD && <path d={lowerD} fill="none" stroke={bandColor} strokeWidth={limitsStrokeWidth} strokeDasharray={limitsDash} strokeLinecap="round" strokeLinejoin="round" />}
                       {ind.donchianShowMiddle === true && middleD && <path d={middleD} fill="none" stroke={middleColor} strokeWidth={middleStrokeWidth} strokeDasharray={middleDash} strokeLinecap="round" strokeLinejoin="round" />}
+                    </g>
+                  );
+                }
+                if (ind.type === "Ichimoku") {
+                  const disp = Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26));
+                  const tenkanPts: { i: number; val: number }[] = [];
+                  const kijunPts: { i: number; val: number }[] = [];
+                  const spanAPts: { i: number; val: number }[] = [];
+                  const spanBPts: { i: number; val: number }[] = [];
+                  const chikouPts: { i: number; val: number }[] = [];
+                  for (let i = 0; i < windowSlice.length; i++) {
+                    const t = windowSlice[i][col];
+                    const k = windowSlice[i][col + 1];
+                    const braw = windowSlice[i][col + 2];
+                    const c = windowSlice[i][col + 3];
+                    if (t != null && typeof t === "number" && Number.isFinite(t)) tenkanPts.push({ i, val: t });
+                    if (k != null && typeof k === "number" && Number.isFinite(k)) kijunPts.push({ i, val: k });
+                    const j = i + disp;
+                    if (j < totalSlots) {
+                      if (t != null && k != null && typeof t === "number" && typeof k === "number" && Number.isFinite(t) && Number.isFinite(k)) {
+                        spanAPts.push({ i: j, val: (t + k) / 2 });
+                      }
+                      if (braw != null && typeof braw === "number" && Number.isFinite(braw)) spanBPts.push({ i: j, val: braw });
+                    }
+                    if (c != null && typeof c === "number" && Number.isFinite(c)) chikouPts.push({ i, val: c });
+                  }
+                  const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
+                  const greenCloud = "#22c55e";
+                  const redCloud = "#ef4444";
+                  const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
+                  const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
+                  const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
+                  const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
+                  const cloudPaths: { d: string; fill: string }[] = [];
+                  let segStart: number | null = null;
+                  let segAboveA: boolean | null = null;
+                  for (let idx = 0; idx < indices.length; idx++) {
+                    const i = indices[idx]!;
+                    const a = aMap.get(i);
+                    const b = bMap.get(i);
+                    if (a == null || b == null) continue;
+                    const aboveA = a >= b;
+                    if (segStart === null) {
+                      segStart = i;
+                      segAboveA = aboveA;
+                    } else if (aboveA !== segAboveA) {
+                      const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+                      let d = "";
+                      for (const j of segIndices) {
+                        const av = aMap.get(j);
+                        const bv = bMap.get(j);
+                        if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${yPanel(segAboveA ? av : bv)}`;
+                      }
+                      for (let j = segIndices.length - 1; j >= 0; j--) {
+                        const jj = segIndices[j]!;
+                        const av = aMap.get(jj);
+                        const bv = bMap.get(jj);
+                        if (av != null && bv != null) d += ` L ${cx(jj)} ${yPanel(segAboveA ? bv : av)}`;
+                      }
+                      if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+                      segStart = i;
+                      segAboveA = aboveA;
+                    }
+                  }
+                  if (segStart !== null && segAboveA !== null) {
+                    const segIndices = indices.filter((j) => j >= segStart!);
+                    let d = "";
+                    for (const j of segIndices) {
+                      const av = aMap.get(j);
+                      const bv = bMap.get(j);
+                      if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${yPanel(segAboveA ? av : bv)}`;
+                    }
+                    for (let j = segIndices.length - 1; j >= 0; j--) {
+                      const jj = segIndices[j]!;
+                      const av = aMap.get(jj);
+                      const bv = bMap.get(jj);
+                      if (av != null && bv != null) d += ` L ${cx(jj)} ${yPanel(segAboveA ? bv : av)}`;
+                    }
+                    if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+                  }
+                  const stroke = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({
+                    width: w === "thin" ? 1 : 2,
+                    dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined,
+                  });
+                  const tenkanS = stroke(ind.ichimokuTenkanLineWidth, ind.ichimokuTenkanLineStyle);
+                  const kijunS = stroke(ind.ichimokuKijunLineWidth, ind.ichimokuKijunLineStyle);
+                  const spanAS = stroke(ind.ichimokuSpanALineWidth, ind.ichimokuSpanALineStyle);
+                  const spanBS = stroke(ind.ichimokuSpanBLineWidth, ind.ichimokuSpanBLineStyle);
+                  const chikouS = stroke(ind.ichimokuChikouLineWidth, ind.ichimokuChikouLineStyle);
+                  return (
+                    <g key={indIdx}>
+                      {cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}
+                      {toPath(tenkanPts) && <path d={toPath(tenkanPts)} fill="none" stroke={ind.ichimokuTenkanColor ?? "#6366f1"} strokeWidth={tenkanS.width} strokeDasharray={tenkanS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {toPath(kijunPts) && <path d={toPath(kijunPts)} fill="none" stroke={ind.ichimokuKijunColor ?? "#ea580c"} strokeWidth={kijunS.width} strokeDasharray={kijunS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {toPath(spanAPts) && <path d={toPath(spanAPts)} fill="none" stroke={ind.ichimokuSpanAColor ?? "#22c55e"} strokeWidth={spanAS.width} strokeDasharray={spanAS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {toPath(spanBPts) && <path d={toPath(spanBPts)} fill="none" stroke={ind.ichimokuSpanBColor ?? "#ef4444"} strokeWidth={spanBS.width} strokeDasharray={spanBS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                      {toPath(chikouPts) && <path d={toPath(chikouPts)} fill="none" stroke={ind.ichimokuChikouColor ?? "#a855f7"} strokeWidth={chikouS.width} strokeDasharray={chikouS.dash} strokeLinecap="round" strokeLinejoin="round" />}
                     </g>
                   );
                 }
@@ -797,7 +897,7 @@ export function KlinesChartSvg({
                 if (points.length < 2) return null;
                 const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                 const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-                const strokeDasharray = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                const strokeDasharray = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                 return (
                   <path
                     key={indIdx}
@@ -814,7 +914,7 @@ export function KlinesChartSvg({
               {panelLines.filter((ind) => (ind.type === "RSI" && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine)).map((ind, idx) => {
                 const y50 = yPanel(50);
                 const cStrokeWidth = ind.type === "RSI" ? (ind.rsiCenterLineWidth === "thin" ? 1 : 2) : (ind.mfiCenterLineWidth === "thin" ? 1 : 2);
-                const cStrokeDasharray = ind.type === "RSI" ? (ind.rsiCenterLineStyle === "dotted" ? "2 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined) : (ind.mfiCenterLineStyle === "dotted" ? "2 2" : ind.mfiCenterLineStyle === "dashed" ? "6 4" : undefined);
+                const cStrokeDasharray = ind.type === "RSI" ? (ind.rsiCenterLineStyle === "dotted" ? "1 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined) : (ind.mfiCenterLineStyle === "dotted" ? "1 2" : ind.mfiCenterLineStyle === "dashed" ? "6 4" : undefined);
                 const cColor = ind.type === "RSI" ? (ind.rsiCenterLineColor ?? "#71717a") : (ind.mfiCenterLineColor ?? "#71717a");
                 return (
                   <line
@@ -835,7 +935,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.rsiLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.rsiLimitLineStyle === "dotted" ? "2 2" : ind.rsiLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.rsiLimitLineStyle === "dotted" ? "1 2" : ind.rsiLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.rsiLimitColor ?? "#dc2626";
                 return (
                   <g key={`limits-${idx}`}>
@@ -850,7 +950,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.mfiLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.mfiLimitLineStyle === "dotted" ? "2 2" : ind.mfiLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.mfiLimitLineStyle === "dotted" ? "1 2" : ind.mfiLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.mfiLimitColor ?? "#dc2626";
                 return (
                   <g key={`mfi-limits-${idx}`}>
@@ -865,7 +965,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.stochLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.stochLimitLineStyle === "dotted" ? "2 2" : ind.stochLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.stochLimitLineStyle === "dotted" ? "1 2" : ind.stochLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.stochLimitColor ?? "#dc2626";
                 return (
                   <g key={`stoch-limits-${idx}`}>
@@ -880,7 +980,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.williamsRLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.williamsRLimitLineStyle === "dotted" ? "2 2" : ind.williamsRLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.williamsRLimitLineStyle === "dotted" ? "1 2" : ind.williamsRLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.williamsRLimitColor ?? "#dc2626";
                 return (
                   <g key={`williams-r-limits-${idx}`}>
@@ -895,7 +995,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.adxLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.adxLimitLineStyle === "dotted" ? "2 2" : ind.adxLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.adxLimitLineStyle === "dotted" ? "1 2" : ind.adxLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.adxLimitColor ?? "#71717a";
                 return (
                   <g key={`adx-limits-${idx}`}>
@@ -910,7 +1010,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.cciLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.cciLimitLineStyle === "dotted" ? "2 2" : ind.cciLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.cciLimitLineStyle === "dotted" ? "1 2" : ind.cciLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.cciLimitColor ?? "#dc2626";
                 return (
                   <g key={`cci-limits-${idx}`}>
@@ -925,7 +1025,7 @@ export function KlinesChartSvg({
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
                 const lStrokeWidth = ind.cmfLimitLineWidth === "thin" ? 1 : 2;
-                const lStrokeDasharray = ind.cmfLimitLineStyle === "dotted" ? "2 2" : ind.cmfLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const lStrokeDasharray = ind.cmfLimitLineStyle === "dotted" ? "1 2" : ind.cmfLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.cmfLimitColor ?? "#dc2626";
                 return (
                   <g key={`cmf-limits-${idx}`}>
@@ -1060,10 +1160,10 @@ export function KlinesChartSvg({
             const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
             const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
-            const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "2 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+            const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
             const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-            const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
             const middleD = toPath(middlePts);
@@ -1133,10 +1233,10 @@ export function KlinesChartSvg({
             const bandColor = ind.keltnerLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.keltnerBandOpacity ?? 0.2));
             const limitsStrokeWidth = ind.keltnerLimitsLineWidth === "thin" ? 1 : 2;
-            const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "2 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
+            const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "1 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
             const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-            const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
             const middleD = toPath(middlePts);
@@ -1206,10 +1306,10 @@ export function KlinesChartSvg({
             const bandColor = ind.donchianLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
             const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
-            const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "2 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
+            const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
             const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-            const middleDash = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
             const middleD = toPath(middlePts);
@@ -1264,6 +1364,103 @@ export function KlinesChartSvg({
               </g>
             );
           }
+          if (ind.type === "Ichimoku") {
+            const disp = Math.max(0, Math.min(500, ind.ichimokuDisplacement ?? 26));
+            const tenkanPts: { i: number; val: number }[] = [];
+            const kijunPts: { i: number; val: number }[] = [];
+            const spanAPts: { i: number; val: number }[] = [];
+            const spanBPts: { i: number; val: number }[] = [];
+            const chikouPts: { i: number; val: number }[] = [];
+            for (let i = 0; i < windowSlice.length; i++) {
+              const t = windowSlice[i][col];
+              const k = windowSlice[i][col + 1];
+              const braw = windowSlice[i][col + 2];
+              const c = windowSlice[i][col + 3];
+              if (t != null && typeof t === "number" && Number.isFinite(t)) tenkanPts.push({ i, val: t });
+              if (k != null && typeof k === "number" && Number.isFinite(k)) kijunPts.push({ i, val: k });
+              const j = i + disp;
+              if (j < totalSlots) {
+                if (t != null && k != null && typeof t === "number" && typeof k === "number" && Number.isFinite(t) && Number.isFinite(k)) {
+                  spanAPts.push({ i: j, val: (t + k) / 2 });
+                }
+                if (braw != null && typeof braw === "number" && Number.isFinite(braw)) spanBPts.push({ i: j, val: braw });
+              }
+              if (c != null && typeof c === "number" && Number.isFinite(c)) chikouPts.push({ i, val: c });
+            }
+            const cloudOpacity = Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity ?? 0.3));
+            const greenCloud = "#22c55e";
+            const redCloud = "#ef4444";
+            const toPathI = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
+            const aMap = new Map(spanAPts.map((p) => [p.i, p.val]));
+            const bMap = new Map(spanBPts.map((p) => [p.i, p.val]));
+            const indices = [...new Set([...aMap.keys(), ...bMap.keys()])].sort((x, y) => x - y);
+            const cloudPaths: { d: string; fill: string }[] = [];
+            let segStart: number | null = null;
+            let segAboveA: boolean | null = null;
+            for (let idx = 0; idx < indices.length; idx++) {
+              const i = indices[idx]!;
+              const a = aMap.get(i);
+              const b = bMap.get(i);
+              if (a == null || b == null) continue;
+              const aboveA = a >= b;
+              if (segStart === null) {
+                segStart = i;
+                segAboveA = aboveA;
+              } else if (aboveA !== segAboveA) {
+                const segIndices = indices.filter((j) => j >= segStart! && j <= i);
+                let d = "";
+                for (const j of segIndices) {
+                  const av = aMap.get(j);
+                  const bv = bMap.get(j);
+                  if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${y(segAboveA ? av : bv)}`;
+                }
+                for (let j = segIndices.length - 1; j >= 0; j--) {
+                  const jj = segIndices[j]!;
+                  const av = aMap.get(jj);
+                  const bv = bMap.get(jj);
+                  if (av != null && bv != null) d += ` L ${cx(jj)} ${y(segAboveA ? bv : av)}`;
+                }
+                if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+                segStart = i;
+                segAboveA = aboveA;
+              }
+            }
+            if (segStart !== null && segAboveA !== null) {
+              const segIndices = indices.filter((j) => j >= segStart!);
+              let d = "";
+              for (const j of segIndices) {
+                const av = aMap.get(j);
+                const bv = bMap.get(j);
+                if (av != null && bv != null) d += `${d ? " L" : "M"} ${cx(j)} ${y(segAboveA ? av : bv)}`;
+              }
+              for (let j = segIndices.length - 1; j >= 0; j--) {
+                const jj = segIndices[j]!;
+                const av = aMap.get(jj);
+                const bv = bMap.get(jj);
+                if (av != null && bv != null) d += ` L ${cx(jj)} ${y(segAboveA ? bv : av)}`;
+              }
+              if (d) cloudPaths.push({ d: `${d} Z`, fill: segAboveA ? greenCloud : redCloud });
+            }
+            const stroke = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({
+              width: w === "thin" ? 1 : 2,
+              dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined,
+            });
+            const tenkanS = stroke(ind.ichimokuTenkanLineWidth, ind.ichimokuTenkanLineStyle);
+            const kijunS = stroke(ind.ichimokuKijunLineWidth, ind.ichimokuKijunLineStyle);
+            const spanAS = stroke(ind.ichimokuSpanALineWidth, ind.ichimokuSpanALineStyle);
+            const spanBS = stroke(ind.ichimokuSpanBLineWidth, ind.ichimokuSpanBLineStyle);
+            const chikouS = stroke(ind.ichimokuChikouLineWidth, ind.ichimokuChikouLineStyle);
+            return (
+              <g key={indIdx}>
+                {cloudPaths.map((cp, ci) => <path key={ci} d={cp.d} fill={cp.fill} fillOpacity={cloudOpacity} stroke="none" />)}
+                {toPathI(tenkanPts) && <path d={toPathI(tenkanPts)} fill="none" stroke={ind.ichimokuTenkanColor ?? "#6366f1"} strokeWidth={tenkanS.width} strokeDasharray={tenkanS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                {toPathI(kijunPts) && <path d={toPathI(kijunPts)} fill="none" stroke={ind.ichimokuKijunColor ?? "#ea580c"} strokeWidth={kijunS.width} strokeDasharray={kijunS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                {toPathI(spanAPts) && <path d={toPathI(spanAPts)} fill="none" stroke={ind.ichimokuSpanAColor ?? "#22c55e"} strokeWidth={spanAS.width} strokeDasharray={spanAS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                {toPathI(spanBPts) && <path d={toPathI(spanBPts)} fill="none" stroke={ind.ichimokuSpanBColor ?? "#ef4444"} strokeWidth={spanBS.width} strokeDasharray={spanBS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+                {toPathI(chikouPts) && <path d={toPathI(chikouPts)} fill="none" stroke={ind.ichimokuChikouColor ?? "#a855f7"} strokeWidth={chikouS.width} strokeDasharray={chikouS.dash} strokeLinecap="round" strokeLinejoin="round" />}
+              </g>
+            );
+          }
           const points: { i: number; val: number }[] = [];
           for (let i = 0; i < windowSlice.length; i++) {
             const v = windowSlice[i][col];
@@ -1289,7 +1486,7 @@ export function KlinesChartSvg({
           if (points.length < 2) return null;
           const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
           const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-          const strokeDasharray = ind.lineStyle === "dotted" ? "2 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+          const strokeDasharray = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
           return (
             <path
               key={indIdx}

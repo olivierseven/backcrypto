@@ -354,6 +354,41 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           donchianMiddleLineWidth: "normal",
         };
       }
+      if (newType === "Ichimoku") {
+        return {
+          ...prev,
+          indicatorType: "Ichimoku",
+          period: 26,
+          periodText: "26",
+          fieldKey: "close",
+          chartOption: "main",
+          ichimokuTenkanPeriod: 9,
+          ichimokuTenkanPeriodText: "9",
+          ichimokuKijunPeriod: 26,
+          ichimokuKijunPeriodText: "26",
+          ichimokuSpanBPeriod: 52,
+          ichimokuSpanBPeriodText: "52",
+          ichimokuDisplacement: 26,
+          ichimokuDisplacementText: "26",
+          ichimokuTenkanColor: "#6366f1",
+          ichimokuKijunColor: "#ea580c",
+          ichimokuSpanAColor: "#22c55e",
+          ichimokuSpanBColor: "#ef4444",
+          ichimokuChikouColor: "#a855f7",
+          ichimokuTenkanLineWidth: "normal",
+          ichimokuTenkanLineStyle: "solid",
+          ichimokuKijunLineWidth: "normal",
+          ichimokuKijunLineStyle: "solid",
+          ichimokuSpanALineWidth: "normal",
+          ichimokuSpanALineStyle: "solid",
+          ichimokuSpanBLineWidth: "normal",
+          ichimokuSpanBLineStyle: "solid",
+          ichimokuChikouLineWidth: "normal",
+          ichimokuChikouLineStyle: "solid",
+          ichimokuCloudOpacity: 0.3,
+          ichimokuCloudOpacityText: "30",
+        };
+      }
       if (newType === "HMA") {
         return {
           ...prev,
@@ -420,6 +455,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <optgroup label={(t as Record<string, string>).indicatorGroupTrend ?? "Trend"}>
             <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
             <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
+            <option value="Ichimoku">{(t as Record<string, string>).ichimokuLabel ?? "Ichimoku"}</option>
           </optgroup>
           <optgroup label={(t as Record<string, string>).indicatorGroupVolume ?? "Volume"}>
             <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
@@ -439,7 +475,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
 
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" ? (
+        {form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku" ? (
           <span className="text-sm text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
         ) : (
           <select
@@ -523,7 +559,53 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       </div>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && (
+      {form.indicatorType === "Ichimoku" && (
+      <>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-20 shrink-0">{(t as Record<string, string>).ichimokuTenkanPeriod ?? "Tenkan"}</span>
+          <input type="text" inputMode="numeric" value={form.ichimokuTenkanPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-20 shrink-0">{(t as Record<string, string>).ichimokuKijunPeriod ?? "Kijun"}</span>
+          <input type="text" inputMode="numeric" value={form.ichimokuKijunPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-20 shrink-0">{(t as Record<string, string>).ichimokuSpanBPeriod ?? "Span B"}</span>
+          <input type="text" inputMode="numeric" value={form.ichimokuSpanBPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-20 shrink-0">{(t as Record<string, string>).ichimokuDisplacement ?? "Desloc."}</span>
+          <input type="text" inputMode="numeric" value={form.ichimokuDisplacementText} onChange={(e) => setForm((p) => ({ ...p, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).ichimokuCloudOpacity ?? "Opac. nuvem"}</span>
+        <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+        <span className="w-10 text-center text-sm font-mono tabular-nums">{Math.round((form.ichimokuCloudOpacity ?? 0.3) * 100)}%</span>
+        <button type="button" onClick={() => { const v = Math.min(70, (form.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).color ?? "Cores"}</span>
+        {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label, idx) => {
+          const key = label === "Tenkan" ? "ichimokuTenkanColor" : label === "Kijun" ? "ichimokuKijunColor" : label === "Span A" ? "ichimokuSpanAColor" : label === "Span B" ? "ichimokuSpanBColor" : "ichimokuChikouColor";
+          const val = form[key];
+          return (
+            <div key={label} className="flex items-center gap-1">
+              <span className="text-[10px] text-zinc-500">{label}</span>
+              <div className="flex gap-0.5">
+                {INDICATOR_COLOR_PALETTE.slice(0, 12).map((hex) => (
+                  <button key={hex} type="button" onClick={() => setForm((p) => ({ ...p, [key]: hex }))} className={`w-5 h-5 rounded border shrink-0 ${val === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      </>
+      )}
+
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && (
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
         <div className="flex-1 min-w-0 flex items-center gap-1">

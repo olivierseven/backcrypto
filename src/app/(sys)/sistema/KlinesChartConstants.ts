@@ -40,6 +40,8 @@ export const VISIBLE_COUNT_MIN = 7;
 export const VISIBLE_COUNT_MAX = 200;
 export const DEFAULT_VISIBLE: VisibleCount = 50;
 export const INVISIBLE_CANDLES_END = 3;
+/** Teto interno de slots à direita (nuvem Ichimoku + velas invisíveis configuráveis). */
+export const INVISIBLE_CANDLES_END_MAX = 50;
 
 export const SIDEBAR_WIDTH = 40;
 export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";

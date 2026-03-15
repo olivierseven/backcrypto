@@ -1126,7 +1126,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const lastCloseText = num(c.lastCloseTextColor);
     if (lastCloseText != null && LINE_GRID_PALETTE.some((b) => b.id === lastCloseText)) setLastCloseTextColor(lastCloseText as LineGridId);
     const invisibleEnd = num(c.invisibleCandlesEnd);
-    if (invisibleEnd != null && invisibleEnd >= 0 && invisibleEnd <= 30) setInvisibleCandlesEnd(invisibleEnd);
+    if (invisibleEnd != null && invisibleEnd >= 0 && invisibleEnd <= 50) setInvisibleCandlesEnd(invisibleEnd);
     const secondaryPanelH = num(c.secondaryPanelHeightPercent);
     if (secondaryPanelH != null && secondaryPanelH >= SECONDARY_PANEL_HEIGHT_MIN && secondaryPanelH <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(secondaryPanelH));
     if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
@@ -1450,7 +1450,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   for (const ind of indicatorLines) {
     if (getPanel(ind) !== "main") continue;
     const col = ind.columnIndex;
-    const cols = (ind.type === "Bollinger" || ind.type === "Donchian") ? [col, col + 1, col + 2] : [col];
+    const cols =
+      ind.type === "Bollinger" || ind.type === "Donchian"
+        ? [col, col + 1, col + 2]
+        : ind.type === "Ichimoku"
+          ? [col, col + 1, col + 2, col + 3]
+          : [col];
     for (let i = 0; i < windowSlice.length; i++) {
       for (const c of cols) {
         const v = windowSlice[i][c];
@@ -2108,6 +2113,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               fullReversed={fullReversed}
               startIndex={startIndex}
               windowN={windowN}
+              totalSlots={totalSlots}
               n={n}
               candleColors={candleColors}
               yTickValues={yTickValues}

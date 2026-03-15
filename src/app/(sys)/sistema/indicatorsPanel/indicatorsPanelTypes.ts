@@ -165,6 +165,31 @@ export interface AddFormState {
   donchianMiddleColor: string;
   donchianMiddleLineStyle: IndicatorLineStyle;
   donchianMiddleLineWidth: IndicatorLineWidth;
+  ichimokuTenkanPeriod: number;
+  ichimokuTenkanPeriodText: string;
+  ichimokuKijunPeriod: number;
+  ichimokuKijunPeriodText: string;
+  ichimokuSpanBPeriod: number;
+  ichimokuSpanBPeriodText: string;
+  ichimokuDisplacement: number;
+  ichimokuDisplacementText: string;
+  ichimokuTenkanColor: string;
+  ichimokuKijunColor: string;
+  ichimokuSpanAColor: string;
+  ichimokuSpanBColor: string;
+  ichimokuChikouColor: string;
+  ichimokuTenkanLineWidth: IndicatorLineWidth;
+  ichimokuTenkanLineStyle: IndicatorLineStyle;
+  ichimokuKijunLineWidth: IndicatorLineWidth;
+  ichimokuKijunLineStyle: IndicatorLineStyle;
+  ichimokuSpanALineWidth: IndicatorLineWidth;
+  ichimokuSpanALineStyle: IndicatorLineStyle;
+  ichimokuSpanBLineWidth: IndicatorLineWidth;
+  ichimokuSpanBLineStyle: IndicatorLineStyle;
+  ichimokuChikouLineWidth: IndicatorLineWidth;
+  ichimokuChikouLineStyle: IndicatorLineStyle;
+  ichimokuCloudOpacity: number;
+  ichimokuCloudOpacityText: string;
 }
 
 export interface EditFormState {
@@ -320,8 +345,31 @@ export interface EditFormState {
   donchianMiddleColor: string;
   donchianMiddleLineStyle: IndicatorLineStyle;
   donchianMiddleLineWidth: IndicatorLineWidth;
-  obvVolumeSource: "base" | "usdt";
-  adVolumeSource: "base" | "usdt";
+  ichimokuTenkanPeriod: number;
+  ichimokuTenkanPeriodText: string;
+  ichimokuKijunPeriod: number;
+  ichimokuKijunPeriodText: string;
+  ichimokuSpanBPeriod: number;
+  ichimokuSpanBPeriodText: string;
+  ichimokuDisplacement: number;
+  ichimokuDisplacementText: string;
+  ichimokuTenkanColor: string;
+  ichimokuKijunColor: string;
+  ichimokuSpanAColor: string;
+  ichimokuSpanBColor: string;
+  ichimokuChikouColor: string;
+  ichimokuTenkanLineWidth: IndicatorLineWidth;
+  ichimokuTenkanLineStyle: IndicatorLineStyle;
+  ichimokuKijunLineWidth: IndicatorLineWidth;
+  ichimokuKijunLineStyle: IndicatorLineStyle;
+  ichimokuSpanALineWidth: IndicatorLineWidth;
+  ichimokuSpanALineStyle: IndicatorLineStyle;
+  ichimokuSpanBLineWidth: IndicatorLineWidth;
+  ichimokuSpanBLineStyle: IndicatorLineStyle;
+  ichimokuChikouLineWidth: IndicatorLineWidth;
+  ichimokuChikouLineStyle: IndicatorLineStyle;
+  ichimokuCloudOpacity: number;
+  ichimokuCloudOpacityText: string;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

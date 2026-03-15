@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeVwmaColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
@@ -547,6 +547,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           out[i].push(middle[i] ?? null);
           out[i].push(lower[i] ?? null);
         }
+      } else if (ind.type === "Ichimoku") {
+        const tenkanP = typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9;
+        const kijunP = typeof ind.ichimokuKijunPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuKijunPeriod)) : 26;
+        const spanBP = typeof ind.ichimokuSpanBPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuSpanBPeriod)) : 52;
+        const disp = typeof ind.ichimokuDisplacement === "number" ? Math.max(0, Math.min(500, ind.ichimokuDisplacement)) : 26;
+        const { tenkan, kijun, spanBRaw, chikou } = computeIchimokuColumns(data, tenkanP, kijunP, spanBP, disp);
+        for (let i = 0; i < out.length; i++) {
+          out[i].push(tenkan[i] ?? null);
+          out[i].push(kijun[i] ?? null);
+          out[i].push(spanBRaw[i] ?? null);
+          out[i].push(chikou[i] ?? null);
+        }
       } else if (ind.type === "ADX") {
         const { plusDi, minusDi, adx } = computeAdxColumns(data, period);
         for (let i = 0; i < out.length; i++) {
@@ -595,6 +607,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         col += 1;
       } else if (ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian") {
         col += 3;
+      } else if (ind.type === "Ichimoku") {
+        col += 4;
       } else if (ind.type === "ADX") {
         col += 3;
       } else if (ind.type === "Volume") {
@@ -1121,7 +1135,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
               histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
               histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main"),
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -1186,6 +1200,23 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               donchianMiddleColor: ind.type === "Donchian" ? (ind.donchianMiddleColor ?? "#a855f7") : undefined,
               donchianMiddleLineStyle: ind.type === "Donchian" ? (ind.donchianMiddleLineStyle ?? "dashed") : undefined,
               donchianMiddleLineWidth: ind.type === "Donchian" ? (ind.donchianMiddleLineWidth ?? "normal") : undefined,
+              ichimokuTenkanColor: ind.type === "Ichimoku" ? (ind.ichimokuTenkanColor ?? "#6366f1") : undefined,
+              ichimokuTenkanLineWidth: ind.type === "Ichimoku" ? (ind.ichimokuTenkanLineWidth ?? "normal") : undefined,
+              ichimokuTenkanLineStyle: ind.type === "Ichimoku" ? (ind.ichimokuTenkanLineStyle ?? "solid") : undefined,
+              ichimokuKijunColor: ind.type === "Ichimoku" ? (ind.ichimokuKijunColor ?? "#ea580c") : undefined,
+              ichimokuKijunLineWidth: ind.type === "Ichimoku" ? (ind.ichimokuKijunLineWidth ?? "normal") : undefined,
+              ichimokuKijunLineStyle: ind.type === "Ichimoku" ? (ind.ichimokuKijunLineStyle ?? "solid") : undefined,
+              ichimokuSpanAColor: ind.type === "Ichimoku" ? (ind.ichimokuSpanAColor ?? "#22c55e") : undefined,
+              ichimokuSpanALineWidth: ind.type === "Ichimoku" ? (ind.ichimokuSpanALineWidth ?? "normal") : undefined,
+              ichimokuSpanALineStyle: ind.type === "Ichimoku" ? (ind.ichimokuSpanALineStyle ?? "solid") : undefined,
+              ichimokuSpanBColor: ind.type === "Ichimoku" ? (ind.ichimokuSpanBColor ?? "#ef4444") : undefined,
+              ichimokuSpanBLineWidth: ind.type === "Ichimoku" ? (ind.ichimokuSpanBLineWidth ?? "normal") : undefined,
+              ichimokuSpanBLineStyle: ind.type === "Ichimoku" ? (ind.ichimokuSpanBLineStyle ?? "solid") : undefined,
+              ichimokuChikouColor: ind.type === "Ichimoku" ? (ind.ichimokuChikouColor ?? "#a855f7") : undefined,
+              ichimokuChikouLineWidth: ind.type === "Ichimoku" ? (ind.ichimokuChikouLineWidth ?? "normal") : undefined,
+              ichimokuChikouLineStyle: ind.type === "Ichimoku" ? (ind.ichimokuChikouLineStyle ?? "solid") : undefined,
+              ichimokuCloudOpacity: ind.type === "Ichimoku" ? (typeof ind.ichimokuCloudOpacity === "number" ? Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity)) : 0.3) : undefined,
+              ichimokuDisplacement: ind.type === "Ichimoku" ? (typeof ind.ichimokuDisplacement === "number" ? Math.max(0, Math.min(500, ind.ichimokuDisplacement)) : 26) : undefined,
               adxPlusDiColor: ind.type === "ADX" ? (ind.adxPlusDiColor ?? "#22c55e") : undefined,
               adxPlusDiLineWidth: ind.type === "ADX" ? (ind.adxPlusDiLineWidth ?? "normal") : undefined,
               adxPlusDiLineStyle: ind.type === "ADX" ? (ind.adxPlusDiLineStyle ?? "solid") : undefined,
@@ -1372,9 +1403,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 <th
                   key={`${ind.id}-${adxPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}
                   className="px-3 py-2 font-medium text-right text-xs"
-                  style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
+                  style={{ borderLeftColor: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.type === "Ichimoku" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ind.color, borderLeftWidth: 2, borderLeftStyle: "solid" }}
                 >
-                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`}
+                  {ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "Ichimoku" ? `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26}/${ind.ichimokuSpanBPeriod ?? 52})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`}
                 </th>
               ))}
               {visibleStrategies.map((strategy) => (
@@ -1406,7 +1437,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               );
               const userCols = visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart }, idx) => {
                 const val = k[columnIndex];
-                const borderColor = ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color;
+                const borderColor = ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.type === "Ichimoku" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ind.color;
                 return (
                   <td
                     key={`${ind.id}-${adxPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}

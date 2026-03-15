@@ -71,6 +71,12 @@ export function getIndicatorLabel(
   if (ind.type === "Donchian") {
     return `DC(${ind.period}) ${fieldLabel}`;
   }
+  if (ind.type === "Ichimoku") {
+    const t = ind.ichimokuTenkanPeriod ?? 9;
+    const k = ind.ichimokuKijunPeriod ?? 26;
+    const b = ind.ichimokuSpanBPeriod ?? 52;
+    return `Ichimoku(${t}/${k}/${b})`;
+  }
   if (ind.type === "Volume") {
     return ind.volumeInUsdt ? (typeof (t as Record<string, string>).volumeUsdtLabel === "string" ? (t as Record<string, string>).volumeUsdtLabel : "Volume (USDT)") : (typeof (t as Record<string, string>).volumeLabel === "string" ? (t as Record<string, string>).volumeLabel : "Volume");
   }
@@ -151,6 +157,9 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "Donchian") {
     return `DC(${ind.period}) ${letter}`;
+  }
+  if (ind.type === "Ichimoku") {
+    return `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26})`;
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;

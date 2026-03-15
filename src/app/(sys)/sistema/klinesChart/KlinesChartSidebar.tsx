@@ -616,8 +616,8 @@ export function KlinesChartSidebar({
               </span>
               <button
                 type="button"
-                onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))}
-                disabled={invisibleCandlesEnd >= 30}
+                onClick={() => setInvisibleCandlesEnd((v) => Math.min(50, v + 1))}
+                disabled={invisibleCandlesEnd >= 50}
                 aria-label="+"
                 className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -1142,7 +1142,7 @@ export function KlinesChartSidebar({
       </div>
       </div>
       {isHorizontal && (
-        <div className="ml-auto flex w-[60px] shrink-0 items-center justify-center border-l border-zinc-200/80 pl-1">
+        <div className="flex h-full min-w-[60px] w-[60px] shrink-0 flex-none items-center justify-center pl-1" style={{ width: 60, background: "transparent", border: "none", touchAction: "pan-y" }} aria-hidden>
           <button
             type="button"
             onClick={() => setYPadOffset((v) => Math.max(0, v - 1))}
@@ -1242,7 +1242,7 @@ export function KlinesChartSidebar({
                   <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
                     <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.max(0, v - 1))} disabled={invisibleCandlesEnd <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
                     <span className="w-6 text-center font-mono text-zinc-800 tabular-nums">{invisibleCandlesEnd}</span>
-                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))} disabled={invisibleCandlesEnd >= 30} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+                    <button type="button" onClick={() => setInvisibleCandlesEnd((v) => Math.min(50, v + 1))} disabled={invisibleCandlesEnd >= 50} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">

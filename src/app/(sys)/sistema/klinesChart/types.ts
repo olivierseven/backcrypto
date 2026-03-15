@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF";
+  type?: "SMA" | "EMA" | "WMA" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   adxPlusDiColor?: string;
@@ -126,6 +126,24 @@ export interface ChartIndicatorLine {
   donchianMiddleColor?: string;
   donchianMiddleLineStyle?: "solid" | "dotted" | "dashed";
   donchianMiddleLineWidth?: "thin" | "normal";
+  /** Só para Ichimoku: colunas tenkan, kijun, spanB (52), chikou em columnIndex..columnIndex+3. Senkou A/B desenhados à frente com ichimokuDisplacement. */
+  ichimokuDisplacement?: number;
+  ichimokuTenkanColor?: string;
+  ichimokuTenkanLineWidth?: "thin" | "normal";
+  ichimokuTenkanLineStyle?: "solid" | "dotted" | "dashed";
+  ichimokuKijunColor?: string;
+  ichimokuKijunLineWidth?: "thin" | "normal";
+  ichimokuKijunLineStyle?: "solid" | "dotted" | "dashed";
+  ichimokuSpanAColor?: string;
+  ichimokuSpanALineWidth?: "thin" | "normal";
+  ichimokuSpanALineStyle?: "solid" | "dotted" | "dashed";
+  ichimokuSpanBColor?: string;
+  ichimokuSpanBLineWidth?: "thin" | "normal";
+  ichimokuSpanBLineStyle?: "solid" | "dotted" | "dashed";
+  ichimokuChikouColor?: string;
+  ichimokuChikouLineWidth?: "thin" | "normal";
+  ichimokuChikouLineStyle?: "solid" | "dotted" | "dashed";
+  ichimokuCloudOpacity?: number;
   /** Só para Keltner Channels: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
   keltnerShowUpper?: boolean;
   keltnerShowLower?: boolean;

@@ -125,7 +125,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <select
@@ -470,6 +470,57 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 </div>
               </div>
             </>
+          ) : ind.type === "Ichimoku" ? (
+            <>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-medium text-zinc-600 w-12 shrink-0">{(t as Record<string, string>).ichimokuTenkanPeriod ?? "Tenkan"}</span>
+                  <input type="text" inputMode="numeric" value={editForm.ichimokuTenkanPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = parseInt(editForm.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setEditForm((f) => (f ? { ...f, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-1.5 py-0.5" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-medium text-zinc-600 w-12 shrink-0">{(t as Record<string, string>).ichimokuKijunPeriod ?? "Kijun"}</span>
+                  <input type="text" inputMode="numeric" value={editForm.ichimokuKijunPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = parseInt(editForm.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setEditForm((f) => (f ? { ...f, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-1.5 py-0.5" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-medium text-zinc-600 w-12 shrink-0">{(t as Record<string, string>).ichimokuSpanBPeriod ?? "Span B"}</span>
+                  <input type="text" inputMode="numeric" value={editForm.ichimokuSpanBPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = parseInt(editForm.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setEditForm((f) => (f ? { ...f, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-1.5 py-0.5" />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-medium text-zinc-600 w-12 shrink-0">{(t as Record<string, string>).ichimokuDisplacement ?? "Desloc."}</span>
+                  <input type="text" inputMode="numeric" value={editForm.ichimokuDisplacementText} onChange={(e) => setEditForm((f) => (f ? { ...f, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = parseInt(editForm.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setEditForm((f) => (f ? { ...f, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) } : f)); }} className="flex-1 min-w-0 text-xs border border-zinc-300 rounded px-1.5 py-0.5" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).ichimokuCloudOpacity ?? "Opac. nuvem"}</span>
+                <button type="button" onClick={() => { const v = Math.max(0, (editForm.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setEditForm((f) => (f ? { ...f, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) } : f)); }} disabled={((editForm.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 text-xs">−</button>
+                <span className="w-6 text-center text-[10px] font-mono tabular-nums">{Math.round((editForm.ichimokuCloudOpacity ?? 0.3) * 100)}%</span>
+                <button type="button" onClick={() => { const v = Math.min(70, (editForm.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setEditForm((f) => (f ? { ...f, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) } : f)); }} disabled={((editForm.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 text-xs">+</button>
+              </div>
+              {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label) => {
+                const colorKey = label === "Tenkan" ? "ichimokuTenkanColor" : label === "Kijun" ? "ichimokuKijunColor" : label === "Span A" ? "ichimokuSpanAColor" : label === "Span B" ? "ichimokuSpanBColor" : "ichimokuChikouColor";
+                const widthKey = label === "Tenkan" ? "ichimokuTenkanLineWidth" : label === "Kijun" ? "ichimokuKijunLineWidth" : label === "Span A" ? "ichimokuSpanALineWidth" : label === "Span B" ? "ichimokuSpanBLineWidth" : "ichimokuChikouLineWidth";
+                const styleKey = label === "Tenkan" ? "ichimokuTenkanLineStyle" : label === "Kijun" ? "ichimokuKijunLineStyle" : label === "Span A" ? "ichimokuSpanALineStyle" : label === "Span B" ? "ichimokuSpanBLineStyle" : "ichimokuChikouLineStyle";
+                return (
+                  <div key={label} className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-zinc-600 w-12 shrink-0">{label}</span>
+                    <div className="flex gap-0.5">
+                      {INDICATOR_COLOR_PALETTE.slice(0, 10).map((hex: string) => (
+                        <button key={hex} type="button" onClick={() => setEditForm((f) => (f ? { ...f, [colorKey]: hex } : f))} className={`w-4 h-4 rounded border shrink-0 ${editForm[colorKey as keyof typeof editForm] === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
+                      ))}
+                    </div>
+                    <select value={editForm[widthKey as keyof typeof editForm] as string} onChange={(e) => setEditForm((f) => (f ? { ...f, [widthKey]: e.target.value as IndicatorLineWidth } : f))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-14">
+                      <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
+                      <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                    </select>
+                    <select value={editForm[styleKey as keyof typeof editForm] as string} onChange={(e) => setEditForm((f) => (f ? { ...f, [styleKey]: e.target.value as IndicatorLineStyle } : f))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-14">
+                      <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+                      <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                      <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                    </select>
+                  </div>
+                );
+              })}
+            </>
           ) : ind.type === "SAR" ? (
             <>
               <div className="flex items-center gap-2">
@@ -630,7 +681,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <select

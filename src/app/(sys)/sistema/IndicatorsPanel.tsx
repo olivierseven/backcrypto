@@ -189,6 +189,31 @@ const INITIAL_ADD_FORM: AddFormState = {
   donchianMiddleColor: "#a855f7",
   donchianMiddleLineStyle: "dashed",
   donchianMiddleLineWidth: "normal",
+  ichimokuTenkanPeriod: 9,
+  ichimokuTenkanPeriodText: "9",
+  ichimokuKijunPeriod: 26,
+  ichimokuKijunPeriodText: "26",
+  ichimokuSpanBPeriod: 52,
+  ichimokuSpanBPeriodText: "52",
+  ichimokuDisplacement: 26,
+  ichimokuDisplacementText: "26",
+  ichimokuTenkanColor: "#6366f1",
+  ichimokuKijunColor: "#ea580c",
+  ichimokuSpanAColor: "#22c55e",
+  ichimokuSpanBColor: "#ef4444",
+  ichimokuChikouColor: "#a855f7",
+  ichimokuTenkanLineWidth: "normal",
+  ichimokuTenkanLineStyle: "solid",
+  ichimokuKijunLineWidth: "normal",
+  ichimokuKijunLineStyle: "solid",
+  ichimokuSpanALineWidth: "normal",
+  ichimokuSpanALineStyle: "solid",
+  ichimokuSpanBLineWidth: "normal",
+  ichimokuSpanBLineStyle: "solid",
+  ichimokuChikouLineWidth: "normal",
+  ichimokuChikouLineStyle: "solid",
+  ichimokuCloudOpacity: 0.3,
+  ichimokuCloudOpacityText: "30",
 };
 
 interface IndicatorsPanelProps {
@@ -318,6 +343,31 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     sarMax: number;
     sarMaxText: string;
     sarPointSize: "thin" | "normal";
+    ichimokuTenkanPeriod: number;
+    ichimokuTenkanPeriodText: string;
+    ichimokuKijunPeriod: number;
+    ichimokuKijunPeriodText: string;
+    ichimokuSpanBPeriod: number;
+    ichimokuSpanBPeriodText: string;
+    ichimokuDisplacement: number;
+    ichimokuDisplacementText: string;
+    ichimokuTenkanColor: string;
+    ichimokuKijunColor: string;
+    ichimokuSpanAColor: string;
+    ichimokuSpanBColor: string;
+    ichimokuChikouColor: string;
+    ichimokuTenkanLineWidth: IndicatorLineWidth;
+    ichimokuTenkanLineStyle: IndicatorLineStyle;
+    ichimokuKijunLineWidth: IndicatorLineWidth;
+    ichimokuKijunLineStyle: IndicatorLineStyle;
+    ichimokuSpanALineWidth: IndicatorLineWidth;
+    ichimokuSpanALineStyle: IndicatorLineStyle;
+    ichimokuSpanBLineWidth: IndicatorLineWidth;
+    ichimokuSpanBLineStyle: IndicatorLineStyle;
+    ichimokuChikouLineWidth: IndicatorLineWidth;
+    ichimokuChikouLineStyle: IndicatorLineStyle;
+    ichimokuCloudOpacity: number;
+    ichimokuCloudOpacityText: string;
   } | null>(null);
 
   const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MFI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "AD" || i.type === "ATR" || i.type === "ADX" || i.type === "CCI" ? "panel2" : "main");
@@ -422,7 +472,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const fastP = addForm.indicatorType === "MACD" ? (Number(addForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = addForm.indicatorType === "MACD" ? (Number(addForm.macdSlowPeriodText) || 26) : periodNum;
     setAddForm((prev) => ({ ...prev, period: periodNum, periodText: String(periodNum) }));
-    const effectivePanel: IndicatorPanel = addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP"
+    const effectivePanel: IndicatorPanel = addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Ichimoku"
       ? "main"
       : addForm.indicatorType === "Volume"
       ? isFreeUser
@@ -443,8 +493,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     };
     const newInd = addIndicator({
       type: addForm.indicatorType,
-      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
-      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
+      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "Ichimoku" ? (parseInt(addForm.ichimokuKijunPeriodText, 10) || 26) : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
+      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Ichimoku" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
         bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
@@ -570,6 +620,28 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         donchianMiddleColor: addForm.donchianMiddleColor,
         donchianMiddleLineStyle: addForm.donchianMiddleLineStyle,
         donchianMiddleLineWidth: addForm.donchianMiddleLineWidth,
+      } : {}),
+      ...(addForm.indicatorType === "Ichimoku" ? {
+        ichimokuTenkanPeriod: Math.max(1, Math.min(500, parseInt(addForm.ichimokuTenkanPeriodText, 10) || 9)),
+        ichimokuKijunPeriod: Math.max(1, Math.min(500, parseInt(addForm.ichimokuKijunPeriodText, 10) || 26)),
+        ichimokuSpanBPeriod: Math.max(1, Math.min(500, parseInt(addForm.ichimokuSpanBPeriodText, 10) || 52)),
+        ichimokuDisplacement: Math.max(0, Math.min(500, parseInt(addForm.ichimokuDisplacementText, 10) || 26)),
+        ichimokuTenkanColor: addForm.ichimokuTenkanColor,
+        ichimokuTenkanLineWidth: addForm.ichimokuTenkanLineWidth,
+        ichimokuTenkanLineStyle: addForm.ichimokuTenkanLineStyle,
+        ichimokuKijunColor: addForm.ichimokuKijunColor,
+        ichimokuKijunLineWidth: addForm.ichimokuKijunLineWidth,
+        ichimokuKijunLineStyle: addForm.ichimokuKijunLineStyle,
+        ichimokuSpanAColor: addForm.ichimokuSpanAColor,
+        ichimokuSpanALineWidth: addForm.ichimokuSpanALineWidth,
+        ichimokuSpanALineStyle: addForm.ichimokuSpanALineStyle,
+        ichimokuSpanBColor: addForm.ichimokuSpanBColor,
+        ichimokuSpanBLineWidth: addForm.ichimokuSpanBLineWidth,
+        ichimokuSpanBLineStyle: addForm.ichimokuSpanBLineStyle,
+        ichimokuChikouColor: addForm.ichimokuChikouColor,
+        ichimokuChikouLineWidth: addForm.ichimokuChikouLineWidth,
+        ichimokuChikouLineStyle: addForm.ichimokuChikouLineStyle,
+        ichimokuCloudOpacity: Math.max(0, Math.min(0.7, (parseFloat(addForm.ichimokuCloudOpacityText) || 30) / 100)),
       } : {}),
       ...(addForm.indicatorType === "SAR" ? {
         sarStart: parseSar(addForm.sarStartText, 0.02, 0.001, 1),
@@ -748,6 +820,31 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       donchianMiddleColor: ind.type === "Donchian" ? (ind.donchianMiddleColor ?? "#a855f7") : "#a855f7",
       donchianMiddleLineStyle: (ind.type === "Donchian" && (ind.donchianMiddleLineStyle === "solid" || ind.donchianMiddleLineStyle === "dotted" || ind.donchianMiddleLineStyle === "dashed") ? ind.donchianMiddleLineStyle : "dashed") as IndicatorLineStyle,
       donchianMiddleLineWidth: (ind.type === "Donchian" && (ind.donchianMiddleLineWidth === "thin" || ind.donchianMiddleLineWidth === "normal") ? ind.donchianMiddleLineWidth : "normal") as IndicatorLineWidth,
+      ichimokuTenkanPeriod: ind.type === "Ichimoku" ? (typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9) : 9,
+      ichimokuTenkanPeriodText: String(ind.type === "Ichimoku" ? (typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9) : 9),
+      ichimokuKijunPeriod: ind.type === "Ichimoku" ? (typeof ind.ichimokuKijunPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuKijunPeriod)) : 26) : 26,
+      ichimokuKijunPeriodText: String(ind.type === "Ichimoku" ? (typeof ind.ichimokuKijunPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuKijunPeriod)) : 26) : 26),
+      ichimokuSpanBPeriod: ind.type === "Ichimoku" ? (typeof ind.ichimokuSpanBPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuSpanBPeriod)) : 52) : 52,
+      ichimokuSpanBPeriodText: String(ind.type === "Ichimoku" ? (typeof ind.ichimokuSpanBPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuSpanBPeriod)) : 52) : 52),
+      ichimokuDisplacement: ind.type === "Ichimoku" ? (typeof ind.ichimokuDisplacement === "number" ? Math.max(0, Math.min(500, ind.ichimokuDisplacement)) : 26) : 26,
+      ichimokuDisplacementText: String(ind.type === "Ichimoku" ? (typeof ind.ichimokuDisplacement === "number" ? Math.max(0, Math.min(500, ind.ichimokuDisplacement)) : 26) : 26),
+      ichimokuTenkanColor: ind.type === "Ichimoku" ? (ind.ichimokuTenkanColor ?? "#6366f1") : "#6366f1",
+      ichimokuKijunColor: ind.type === "Ichimoku" ? (ind.ichimokuKijunColor ?? "#ea580c") : "#ea580c",
+      ichimokuSpanAColor: ind.type === "Ichimoku" ? (ind.ichimokuSpanAColor ?? "#22c55e") : "#22c55e",
+      ichimokuSpanBColor: ind.type === "Ichimoku" ? (ind.ichimokuSpanBColor ?? "#ef4444") : "#ef4444",
+      ichimokuChikouColor: ind.type === "Ichimoku" ? (ind.ichimokuChikouColor ?? "#a855f7") : "#a855f7",
+      ichimokuTenkanLineWidth: (ind.type === "Ichimoku" && (ind.ichimokuTenkanLineWidth === "thin" || ind.ichimokuTenkanLineWidth === "normal") ? ind.ichimokuTenkanLineWidth : "normal") as IndicatorLineWidth,
+      ichimokuTenkanLineStyle: (ind.type === "Ichimoku" && (ind.ichimokuTenkanLineStyle === "solid" || ind.ichimokuTenkanLineStyle === "dotted" || ind.ichimokuTenkanLineStyle === "dashed") ? ind.ichimokuTenkanLineStyle : "solid") as IndicatorLineStyle,
+      ichimokuKijunLineWidth: (ind.type === "Ichimoku" && (ind.ichimokuKijunLineWidth === "thin" || ind.ichimokuKijunLineWidth === "normal") ? ind.ichimokuKijunLineWidth : "normal") as IndicatorLineWidth,
+      ichimokuKijunLineStyle: (ind.type === "Ichimoku" && (ind.ichimokuKijunLineStyle === "solid" || ind.ichimokuKijunLineStyle === "dotted" || ind.ichimokuKijunLineStyle === "dashed") ? ind.ichimokuKijunLineStyle : "solid") as IndicatorLineStyle,
+      ichimokuSpanALineWidth: (ind.type === "Ichimoku" && (ind.ichimokuSpanALineWidth === "thin" || ind.ichimokuSpanALineWidth === "normal") ? ind.ichimokuSpanALineWidth : "normal") as IndicatorLineWidth,
+      ichimokuSpanALineStyle: (ind.type === "Ichimoku" && (ind.ichimokuSpanALineStyle === "solid" || ind.ichimokuSpanALineStyle === "dotted" || ind.ichimokuSpanALineStyle === "dashed") ? ind.ichimokuSpanALineStyle : "solid") as IndicatorLineStyle,
+      ichimokuSpanBLineWidth: (ind.type === "Ichimoku" && (ind.ichimokuSpanBLineWidth === "thin" || ind.ichimokuSpanBLineWidth === "normal") ? ind.ichimokuSpanBLineWidth : "normal") as IndicatorLineWidth,
+      ichimokuSpanBLineStyle: (ind.type === "Ichimoku" && (ind.ichimokuSpanBLineStyle === "solid" || ind.ichimokuSpanBLineStyle === "dotted" || ind.ichimokuSpanBLineStyle === "dashed") ? ind.ichimokuSpanBLineStyle : "solid") as IndicatorLineStyle,
+      ichimokuChikouLineWidth: (ind.type === "Ichimoku" && (ind.ichimokuChikouLineWidth === "thin" || ind.ichimokuChikouLineWidth === "normal") ? ind.ichimokuChikouLineWidth : "normal") as IndicatorLineWidth,
+      ichimokuChikouLineStyle: (ind.type === "Ichimoku" && (ind.ichimokuChikouLineStyle === "solid" || ind.ichimokuChikouLineStyle === "dotted" || ind.ichimokuChikouLineStyle === "dashed") ? ind.ichimokuChikouLineStyle : "solid") as IndicatorLineStyle,
+      ichimokuCloudOpacity: ind.type === "Ichimoku" ? (typeof ind.ichimokuCloudOpacity === "number" ? Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity)) : 0.3) : 0.3,
+      ichimokuCloudOpacityText: String(Math.round((ind.type === "Ichimoku" ? (typeof ind.ichimokuCloudOpacity === "number" ? Math.max(0, Math.min(0.7, ind.ichimokuCloudOpacity)) : 0.3) : 0.3) * 100)),
       sarStart: ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02,
       sarStartText: String(ind.type === "SAR" ? (typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02) : 0.02),
       sarIncrement: ind.type === "SAR" ? (typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02) : 0.02,
@@ -805,7 +902,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       period: ind?.type === "MACD" ? fastP : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : editForm.fieldKey,
       color: editForm.color,
-      panel: ind?.type === "SAR" || ind?.type === "VWAP" ? "main" : editForm.panel,
+      panel: ind?.type === "SAR" || ind?.type === "VWAP" || ind?.type === "Ichimoku" ? "main" : editForm.panel,
       intervals: editForm.intervals ?? [],
       showLastValueOnYAxis: editForm.showLastValueOnYAxis,
       ...(ind?.type === "Volume" ? {
@@ -909,6 +1006,28 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         donchianMiddleColor: editForm.donchianMiddleColor,
         donchianMiddleLineStyle: editForm.donchianMiddleLineStyle,
         donchianMiddleLineWidth: editForm.donchianMiddleLineWidth,
+      } : {}),
+      ...(ind?.type === "Ichimoku" ? {
+        ichimokuTenkanPeriod: Math.max(1, Math.min(500, parseInt(editForm.ichimokuTenkanPeriodText, 10) || 9)),
+        ichimokuKijunPeriod: Math.max(1, Math.min(500, parseInt(editForm.ichimokuKijunPeriodText, 10) || 26)),
+        ichimokuSpanBPeriod: Math.max(1, Math.min(500, parseInt(editForm.ichimokuSpanBPeriodText, 10) || 52)),
+        ichimokuDisplacement: Math.max(0, Math.min(500, parseInt(editForm.ichimokuDisplacementText, 10) || 26)),
+        ichimokuTenkanColor: editForm.ichimokuTenkanColor,
+        ichimokuTenkanLineWidth: editForm.ichimokuTenkanLineWidth,
+        ichimokuTenkanLineStyle: editForm.ichimokuTenkanLineStyle,
+        ichimokuKijunColor: editForm.ichimokuKijunColor,
+        ichimokuKijunLineWidth: editForm.ichimokuKijunLineWidth,
+        ichimokuKijunLineStyle: editForm.ichimokuKijunLineStyle,
+        ichimokuSpanAColor: editForm.ichimokuSpanAColor,
+        ichimokuSpanALineWidth: editForm.ichimokuSpanALineWidth,
+        ichimokuSpanALineStyle: editForm.ichimokuSpanALineStyle,
+        ichimokuSpanBColor: editForm.ichimokuSpanBColor,
+        ichimokuSpanBLineWidth: editForm.ichimokuSpanBLineWidth,
+        ichimokuSpanBLineStyle: editForm.ichimokuSpanBLineStyle,
+        ichimokuChikouColor: editForm.ichimokuChikouColor,
+        ichimokuChikouLineWidth: editForm.ichimokuChikouLineWidth,
+        ichimokuChikouLineStyle: editForm.ichimokuChikouLineStyle,
+        ichimokuCloudOpacity: Math.max(0, Math.min(0.7, (parseFloat(editForm.ichimokuCloudOpacityText) || 30) / 100)),
       } : {}),
       ...(ind?.type === "SAR" ? {
         sarStart: (() => { const n = parseFloat(editForm.sarStartText); return Number.isFinite(n) ? Math.max(0.001, Math.min(1, n)) : 0.02; })(),
