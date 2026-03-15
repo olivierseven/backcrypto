@@ -45,6 +45,9 @@ export function getIndicatorLabel(
   if (ind.type === "OBV") {
     return `OBV ${fieldLabel}`;
   }
+  if (ind.type === "AD") {
+    return "A/D";
+  }
   if (ind.type === "SAR") {
     const start = ind.sarStart ?? 0.02;
     const inc = ind.sarIncrement ?? 0.02;
@@ -125,6 +128,9 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "OBV") {
     return `OBV ${letter}`;
+  }
+  if (ind.type === "AD") {
+    return "A/D";
   }
   if (ind.type === "SAR") {
     return "SAR";

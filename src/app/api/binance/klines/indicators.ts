@@ -686,6 +686,46 @@ export function computeObvColumn(data: (string | number)[][]): (number | null)[]
 }
 
 /**
+ * Accumulation/Distribution (A/D): linha de volume acumulado ponderada pelo preço.
+ * Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low) = (2*Close - High - Low) / (High - Low); 0 se High === Low.
+ * Money Flow Volume = MF Multiplier × Volume.
+ * A/D = soma acumulada de Money Flow Volume (do mais antigo para o mais recente).
+ * Dados em ordem DESC (índice 0 = mais recente). Usa high[2], low[3], close[4], volume[5].
+ */
+export function computeAdColumn(data: (string | number)[][]): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  if (n === 0) return out;
+  const getNum = (row: (string | number)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+  out[n - 1] = 0;
+  for (let j = n - 2; j >= 0; j--) {
+    const prevAd = out[j + 1];
+    if (prevAd == null) {
+      out[j] = null;
+      continue;
+    }
+    const h = getNum(data[j], HIGH_IDX);
+    const l = getNum(data[j], LOW_IDX);
+    const c = getNum(data[j], CLOSE_IDX_COL);
+    const v = getNum(data[j], VOLUME_INDEX);
+    if (h == null || l == null || c == null || v == null || v < 0) {
+      out[j] = prevAd;
+      continue;
+    }
+    const range = h - l;
+    const mfm = range === 0 ? 0 : (2 * c - h - l) / range;
+    const mfv = mfm * v;
+    out[j] = prevAd + mfv;
+  }
+  return out;
+}
+
+/**
  * Average True Range (ATR) — Wilder.
  * TR = max(H-L, |H-prevClose|, |L-prevClose|). ATR = RMA (Wilder smoothing) de TR com o período dado.
  * Dados em ordem DESC (índice 0 = mais recente). Usa apenas high, low, close (sem escolha de campo).

@@ -302,7 +302,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
-    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
+    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
   const seriesOptions = useMemo(() => {
     const tStrat = getCryptoT(lang).sistema.strategies as Record<string, string>;
