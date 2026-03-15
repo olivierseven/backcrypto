@@ -13,7 +13,7 @@ export interface DrawSegmentRenderProps {
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;
@@ -425,6 +425,18 @@ export function DrawSegmentRender({
     return (
       <g key={idx}>
         <rect x={rx} y={ry} width={rw} height={rh} fill={filled ? strokeColor : "none"} fillOpacity={filled ? 0.3 : undefined} stroke={strokeColor} strokeWidth={rectStrokeW} />
+      </g>
+    );
+  }
+
+  if (seg.type === "pencil") {
+    const pts = seg.pencilPoints ?? [];
+    const strokeW = seg.pencilStrokeWidth === "thick" ? 3 : seg.pencilStrokeWidth === "thin" ? 1 : 2;
+    if (pts.length < 2) return null;
+    const d = pts.map((pt) => segmentToPixel(pt.index, pt.price)).map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+    return (
+      <g key={idx}>
+        <path d={d} fill="none" stroke={strokeColor} strokeWidth={strokeW} strokeLinecap="round" strokeLinejoin="round" />
       </g>
     );
   }

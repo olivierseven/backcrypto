@@ -4,7 +4,8 @@
  * Painel flutuante de opções do segmento selecionado (cor, tipo de traço, espessura, excluir).
  * Extraído de KlinesChart para reduzir tamanho do arquivo principal.
  */
-import { useState, useEffect, type RefObject } from "react";
+import { useState, useEffect, useCallback, type RefObject } from "react";
+import { KLINE_SEGMENT_OPTIONS_COLLAPSED_KEY } from "../KlinesChartConstants";
 import type { DrawSegment, FibStrokeWidth, SegmentCap, ArrowSize } from "../KlinesChartDrawing";
 import { FIB_STROKE_WIDTH_OPTIONS, ARROW_SIZE_OPTIONS, ARROW_LENGTH_PX, TEXT_SIZE_OPTIONS, type TextSize } from "../KlinesChartDrawing";
 import { DEFAULT_SEGMENT_COLOR } from "../KlinesChartDrawing";
@@ -19,7 +20,7 @@ export interface KlinesChartSegmentOptionsProps {
   selectedSegmentIndex: number | null;
   setDrawSegments: React.Dispatch<React.SetStateAction<DrawSegment[]>>;
   setSelectedSegmentIndex: (i: number | null) => void;
-  persistDrawDefault: (type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => void;
+  persistDrawDefault: (type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "pencil", partial: Partial<DrawSegment>) => void;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   pixelToData: (x: number, y: number) => { index: number; price: number };
   t: Record<string, string>;
@@ -45,6 +46,28 @@ export function KlinesChartSegmentOptions({
   const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
   const [fibLevel618ColorListboxOpen, setFibLevel618ColorListboxOpen] = useState(false);
   const [channelExtremityColorListboxOpen, setChannelExtremityColorListboxOpen] = useState(false);
+
+  const [collapsed, setCollapsedState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = window.localStorage.getItem(KLINE_SEGMENT_OPTIONS_COLLAPSED_KEY);
+      return raw === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const setCollapsed = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    setCollapsedState((prev) => {
+      const next = typeof value === "function" ? value(prev) : value;
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_SEGMENT_OPTIONS_COLLAPSED_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (segmentToolboxCollapsed) {
@@ -77,7 +100,9 @@ export function KlinesChartSegmentOptions({
                 ? tAs.arrowColor ?? t.segmentColor
                 : drawSegments[selectedSegmentIndex]?.type === "text"
                   ? tAs.textColor ?? t.segmentColor
-                  : t.segmentColor;
+                  : drawSegments[selectedSegmentIndex]?.type === "pencil"
+                    ? tAs.pencilColor ?? t.segmentColor
+                    : t.segmentColor;
 
   return (
     <div
@@ -92,12 +117,13 @@ export function KlinesChartSegmentOptions({
         <span className="text-[11px] font-medium text-zinc-600 truncate min-w-0 flex-1">{t.segmentOptionsTitle}</span>
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
-          className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
-          title={t.drawExitMode}
-          aria-label={t.drawExitMode}
+          onClick={(e) => { e.stopPropagation(); setCollapsed((c) => !c); }}
+          className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none shrink-0"
+          title={collapsed ? (tAs.segmentOptionsExpand ?? "Expandir") : (tAs.segmentOptionsCollapse ?? "Recolher")}
+          aria-label={collapsed ? (tAs.segmentOptionsExpand ?? "Expandir") : (tAs.segmentOptionsCollapse ?? "Recolher")}
+          aria-expanded={!collapsed}
         >
-          <span aria-hidden>×</span>
+          <span aria-hidden>{collapsed ? "▶" : "▼"}</span>
         </button>
         <div
           role="button"
@@ -142,7 +168,17 @@ export function KlinesChartSegmentOptions({
         >
           <span aria-hidden>⠿</span>
         </div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setSelectedSegmentIndex(null); }}
+          className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold shrink-0"
+          title={t.drawExitMode}
+          aria-label={t.drawExitMode}
+        >
+          <span aria-hidden>×</span>
+        </button>
       </div>
+      {!collapsed && (
       <div className="py-1.5 px-1.5 space-y-1.5">
         <div>
           <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{colorLabel}</div>
@@ -178,7 +214,7 @@ export function KlinesChartSegmentOptions({
                       aria-selected={isSelected}
                       aria-label={colorLabel}
                       onClick={() => {
-                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+                        const segType = (drawSegments[selectedSegmentIndex]?.type ?? "segment") as "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "pencil";
                         setDrawSegments((prev) => {
                           const next = [...prev];
                           const seg = next[selectedSegmentIndex];
@@ -302,6 +338,33 @@ export function KlinesChartSegmentOptions({
               />
               <span className="text-xs text-zinc-700">{tAs.horizontalLineShowOnYAxis ?? "Marcar no eixo Y"}</span>
             </label>
+          </>
+        )}
+        {drawSegments[selectedSegmentIndex]?.type === "pencil" && (
+          <>
+            <div>
+              <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{tAs.pencilStrokeWidth ?? "Espessura"}</div>
+              <select
+                id="pencil-stroke-width-listbox"
+                value={(drawSegments[selectedSegmentIndex] as DrawSegment & { pencilStrokeWidth?: "thin" | "medium" | "thick" })?.pencilStrokeWidth ?? "medium"}
+                onChange={(e) => {
+                  const v = e.target.value as "thin" | "medium" | "thick";
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, pencilStrokeWidth: v };
+                    return next;
+                  });
+                  persistDrawDefault("pencil", { pencilStrokeWidth: v });
+                }}
+                className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
+                aria-label={tAs.pencilStrokeWidth ?? "Espessura"}
+              >
+                <option value="thin">{tAs.strokeThin ?? "Fina"}</option>
+                <option value="medium">{tAs.strokeMedium ?? "Média"}</option>
+                <option value="thick">{tAs.strokeThick ?? "Grossa"}</option>
+              </select>
+            </div>
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "verticalLine" && (
@@ -1253,6 +1316,7 @@ export function KlinesChartSegmentOptions({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }

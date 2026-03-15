@@ -58,6 +58,8 @@ export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";
 export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";
 export const KLINE_DRAW_MAGNETIC_KEY = "backcrypto-klines-draw-magnetic";
 export const KLINE_DRAW_DEFAULTS_KEY = "backcrypto-klines-draw-defaults";
+/** Preferência do usuário: opções do segmento recolhidas (true) ou expandidas (false). */
+export const KLINE_SEGMENT_OPTIONS_COLLAPSED_KEY = "backcrypto-klines-segment-options-collapsed";
 export const KLINE_USER_INDICATORS_KEY = "backcrypto-klines-user-indicators";
 export const KLINE_STRATEGIES_KEY = "backcrypto-klines-strategies";
 export const KLINE_STRATEGIES_APPLIED_KEY = "backcrypto-klines-strategies-applied";

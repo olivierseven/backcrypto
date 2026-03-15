@@ -122,7 +122,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
@@ -139,6 +139,7 @@ export interface KlinesChartSidebarProps {
   selectTextTool: () => void;
   selectArrowTool: () => void;
   selectHorizontalLineTool: () => void;
+  selectPencilTool: () => void;
   exitRulerToCrosshair: () => void;
   toggleRuler: () => void;
   selectSelectTool: () => void;
@@ -272,6 +273,7 @@ export function KlinesChartSidebar({
   selectTextTool,
   selectArrowTool,
   selectHorizontalLineTool,
+  selectPencilTool,
   exitRulerToCrosshair,
   toggleRuler,
   selectSelectTool,
@@ -1067,6 +1069,9 @@ export function KlinesChartSidebar({
               <button type="button" onClick={selectArrowTool} title={(t as Record<string, string>).arrowTool ?? "Arrow"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}>
                 <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
               </button>
+              <button type="button" onClick={selectPencilTool} title={(t as Record<string, string>).pencilTool ?? "Lápis"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).pencilTool ?? "Lápis"}>
+                <span aria-hidden className="text-lg leading-none">✎</span>
+              </button>
             </div>
           </div>
         )}
@@ -1451,6 +1456,7 @@ export function KlinesChartSidebar({
                   <button type="button" onClick={selectVerticalLineTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}><span aria-hidden>|</span></button>
                   <button type="button" onClick={selectTextTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectArrowTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
+                  <button type="button" onClick={selectPencilTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-200" : ""}`} title={(t as Record<string, string>).pencilTool ?? "Lápis"}><span aria-hidden>✎</span></button>
                 </div>
               </>
             )}

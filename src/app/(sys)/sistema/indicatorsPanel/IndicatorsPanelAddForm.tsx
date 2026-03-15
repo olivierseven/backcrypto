@@ -483,227 +483,227 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       </div>
 
       {form.indicatorType === "Ichimoku" && (
-      <>
-      <div className="grid grid-cols-1 gap-y-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuTenkanPeriod ?? "Tenkan"}</span>
-          <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-            <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuTenkanPeriod ?? 9) - 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-            <input type="text" inputMode="numeric" value={form.ichimokuTenkanPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-            <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuTenkanPeriod ?? 9) + 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuKijunPeriod ?? "Kijun"}</span>
-          <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-            <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuKijunPeriod ?? 26) - 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-            <input type="text" inputMode="numeric" value={form.ichimokuKijunPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-            <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuKijunPeriod ?? 26) + 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuSpanBPeriod ?? "Span B"}</span>
-          <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-            <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuSpanBPeriod ?? 52) - 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-            <input type="text" inputMode="numeric" value={form.ichimokuSpanBPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-            <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuSpanBPeriod ?? 52) + 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuDisplacement ?? "Desloc."}</span>
-          <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-            <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuDisplacement ?? 26) - 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-            <input type="text" inputMode="numeric" value={form.ichimokuDisplacementText} onChange={(e) => setForm((p) => ({ ...p, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-            <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuDisplacement ?? 26) + 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).ichimokuCloudOpacity ?? "Opac. nuvem"}</span>
-        <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-        <span className="w-10 text-center text-sm font-mono tabular-nums">{Math.round((form.ichimokuCloudOpacity ?? 0.3) * 100)}%</span>
-        <button type="button" onClick={() => { const v = Math.min(70, (form.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
-      </div>
-      <div className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).ichimokuShowLinesLabel ?? "Linhas a mostrar"}</div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label) => {
-          const showKey = label === "Tenkan" ? "ichimokuShowTenkan" : label === "Kijun" ? "ichimokuShowKijun" : label === "Span A" ? "ichimokuShowSpanA" : label === "Span B" ? "ichimokuShowSpanB" : "ichimokuShowChikou";
-          return (
-            <label key={label} className="flex items-center gap-1.5 cursor-pointer">
-              <input type="checkbox" checked={form[showKey]} onChange={(e) => setForm((p) => ({ ...p, [showKey]: e.target.checked }))} className="rounded border-zinc-300" />
-              <span className="text-[10px] text-zinc-700">{label}</span>
-            </label>
-          );
-        })}
-      </div>
-      <div className="grid grid-cols-1 gap-y-2">
-        {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label) => {
-          const colorKey = label === "Tenkan" ? "ichimokuTenkanColor" : label === "Kijun" ? "ichimokuKijunColor" : label === "Span A" ? "ichimokuSpanAColor" : label === "Span B" ? "ichimokuSpanBColor" : "ichimokuChikouColor";
-          const widthKey = label === "Tenkan" ? "ichimokuTenkanLineWidth" : label === "Kijun" ? "ichimokuKijunLineWidth" : label === "Span A" ? "ichimokuSpanALineWidth" : label === "Span B" ? "ichimokuSpanBLineWidth" : "ichimokuChikouLineWidth";
-          const styleKey = label === "Tenkan" ? "ichimokuTenkanLineStyle" : label === "Kijun" ? "ichimokuKijunLineStyle" : label === "Span A" ? "ichimokuSpanALineStyle" : label === "Span B" ? "ichimokuSpanBLineStyle" : "ichimokuChikouLineStyle";
-          const val = form[colorKey];
-          return (
-            <div key={label} className="relative flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{label}</span>
-              <button type="button" onClick={() => setIchimokuColorOpen(ichimokuColorOpen === label ? null : label)} className="w-6 h-6 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: val }} aria-label={(t as Record<string, string>).color ?? "Cor"} />
-              {ichimokuColorOpen === label && (
-                <>
-                  <div className="fixed inset-0 z-10" aria-hidden onClick={() => setIchimokuColorOpen(null)} />
-                  <div className="absolute left-0 top-full mt-1 z-20 p-2 bg-white border border-zinc-200 rounded-lg shadow-lg w-[min-content] min-w-[8rem]">
-                    <div className="grid grid-cols-4 gap-1.5 [&>button]:w-6 [&>button]:h-6 [&>button]:shrink-0 [&>button]:rounded [&>button]:border">
-                      {INDICATOR_COLOR_PALETTE.map((hex) => (
-                        <button key={hex} type="button" onClick={() => { setForm((p) => ({ ...p, [colorKey]: hex })); setIchimokuColorOpen(null); }} className={val === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"} style={{ backgroundColor: hex }} />
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              <select value={form[widthKey]} onChange={(e) => setForm((p) => ({ ...p, [widthKey]: e.target.value as IndicatorLineWidth }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-20">
-                <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
-                <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-              </select>
-              <select value={form[styleKey]} onChange={(e) => setForm((p) => ({ ...p, [styleKey]: e.target.value as IndicatorLineStyle }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-24">
-                <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
-                <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-              </select>
+        <>
+          <div className="grid grid-cols-1 gap-y-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuTenkanPeriod ?? "Tenkan"}</span>
+              <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
+                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuTenkanPeriod ?? 9) - 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
+                <input type="text" inputMode="numeric" value={form.ichimokuTenkanPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
+                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuTenkanPeriod ?? 9) + 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+              </div>
             </div>
-          );
-        })}
-      </div>
-      </>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuKijunPeriod ?? "Kijun"}</span>
+              <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
+                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuKijunPeriod ?? 26) - 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
+                <input type="text" inputMode="numeric" value={form.ichimokuKijunPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
+                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuKijunPeriod ?? 26) + 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuSpanBPeriod ?? "Span B"}</span>
+              <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
+                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuSpanBPeriod ?? 52) - 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
+                <input type="text" inputMode="numeric" value={form.ichimokuSpanBPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
+                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuSpanBPeriod ?? 52) + 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuDisplacement ?? "Desloc."}</span>
+              <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
+                <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuDisplacement ?? 26) - 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
+                <input type="text" inputMode="numeric" value={form.ichimokuDisplacementText} onChange={(e) => setForm((p) => ({ ...p, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
+                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuDisplacement ?? 26) + 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).ichimokuCloudOpacity ?? "Opac. nuvem"}</span>
+            <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+            <span className="w-10 text-center text-sm font-mono tabular-nums">{Math.round((form.ichimokuCloudOpacity ?? 0.3) * 100)}%</span>
+            <button type="button" onClick={() => { const v = Math.min(70, (form.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+          </div>
+          <div className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).ichimokuShowLinesLabel ?? "Linhas a mostrar"}</div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label) => {
+              const showKey = label === "Tenkan" ? "ichimokuShowTenkan" : label === "Kijun" ? "ichimokuShowKijun" : label === "Span A" ? "ichimokuShowSpanA" : label === "Span B" ? "ichimokuShowSpanB" : "ichimokuShowChikou";
+              return (
+                <label key={label} className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={form[showKey]} onChange={(e) => setForm((p) => ({ ...p, [showKey]: e.target.checked }))} className="rounded border-zinc-300" />
+                  <span className="text-[10px] text-zinc-700">{label}</span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="grid grid-cols-1 gap-y-2">
+            {(["Tenkan", "Kijun", "Span A", "Span B", "Chikou"] as const).map((label) => {
+              const colorKey = label === "Tenkan" ? "ichimokuTenkanColor" : label === "Kijun" ? "ichimokuKijunColor" : label === "Span A" ? "ichimokuSpanAColor" : label === "Span B" ? "ichimokuSpanBColor" : "ichimokuChikouColor";
+              const widthKey = label === "Tenkan" ? "ichimokuTenkanLineWidth" : label === "Kijun" ? "ichimokuKijunLineWidth" : label === "Span A" ? "ichimokuSpanALineWidth" : label === "Span B" ? "ichimokuSpanBLineWidth" : "ichimokuChikouLineWidth";
+              const styleKey = label === "Tenkan" ? "ichimokuTenkanLineStyle" : label === "Kijun" ? "ichimokuKijunLineStyle" : label === "Span A" ? "ichimokuSpanALineStyle" : label === "Span B" ? "ichimokuSpanBLineStyle" : "ichimokuChikouLineStyle";
+              const val = form[colorKey];
+              return (
+                <div key={label} className="relative flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{label}</span>
+                  <button type="button" onClick={() => setIchimokuColorOpen(ichimokuColorOpen === label ? null : label)} className="w-6 h-6 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: val }} aria-label={(t as Record<string, string>).color ?? "Cor"} />
+                  {ichimokuColorOpen === label && (
+                    <>
+                      <div className="fixed inset-0 z-10" aria-hidden onClick={() => setIchimokuColorOpen(null)} />
+                      <div className="absolute left-0 top-full mt-1 z-20 p-2 bg-white border border-zinc-200 rounded-lg shadow-lg w-[min-content] min-w-[8rem]">
+                        <div className="grid grid-cols-4 gap-1.5 [&>button]:w-6 [&>button]:h-6 [&>button]:shrink-0 [&>button]:rounded [&>button]:border">
+                          {INDICATOR_COLOR_PALETTE.map((hex) => (
+                            <button key={hex} type="button" onClick={() => { setForm((p) => ({ ...p, [colorKey]: hex })); setIchimokuColorOpen(null); }} className={val === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"} style={{ backgroundColor: hex }} />
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <select value={form[widthKey]} onChange={(e) => setForm((p) => ({ ...p, [widthKey]: e.target.value as IndicatorLineWidth }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-20">
+                    <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
+                    <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
+                  </select>
+                  <select value={form[styleKey]} onChange={(e) => setForm((p) => ({ ...p, [styleKey]: e.target.value as IndicatorLineStyle }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-24">
+                    <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
+                    <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
+                    <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku") && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-        <select
-          value={chartOptionValue}
-          onChange={(e) => setForm((prev) => ({ ...prev, chartOption: e.target.value as IndicatorPanel }))}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.chartOption}
-        >
-          {form.indicatorType === "Volume" ? (
-            <>
-              {indicatorCountByPanel.panel2 === 0 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-              {!isFreeUser && indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-              {!isFreeUser && indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-              {!isFreeUser && indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
-              {!hasEmptyPanelForVolume && (
-                <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
-              )}
-            </>
-          ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") ? (
-            <>
-              {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-              {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-              {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-              {panelsFreeForSecondary.panel5 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
-              {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5 && (
-                <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
-              )}
-            </>
-          ) : (
-            <>
-              <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
-              <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-              <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-              <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
-              <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
-            </>
-          )}
-        </select>
-      </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
+          <select
+            value={chartOptionValue}
+            onChange={(e) => setForm((prev) => ({ ...prev, chartOption: e.target.value as IndicatorPanel }))}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            aria-label={t.chartOption}
+          >
+            {form.indicatorType === "Volume" ? (
+              <>
+                {indicatorCountByPanel.panel2 === 0 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                {!isFreeUser && indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                {!hasEmptyPanelForVolume && (
+                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
+                )}
+              </>
+            ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") ? (
+              <>
+                {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
+                {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
+                {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
+                {panelsFreeForSecondary.panel5 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
+                {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5 && (
+                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
+                )}
+              </>
+            ) : (
+              <>
+                <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
+                <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
+                <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
+                <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
+                <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
+              </>
+            )}
+          </select>
+        </div>
       )}
 
       {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "Ichimoku" && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
-        <select
-          value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
-          onChange={(e) => {
-            const newKey = e.target.value as IndicatorFieldKey;
-            setForm((prev) => ({ ...prev, fieldKey: newKey }));
-          }}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.field}
-        >
-          {fieldOptionsVisibleForAdd.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
+          <select
+            value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
+            onChange={(e) => {
+              const newKey = e.target.value as IndicatorFieldKey;
+              setForm((prev) => ({ ...prev, fieldKey: newKey }));
+            }}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            aria-label={t.field}
+          >
+            {fieldOptionsVisibleForAdd.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
       {(form.indicatorType === "OBV" || form.indicatorType === "AD") && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
-        <select
-          value={form.indicatorType === "OBV" ? (form.obvVolumeSource ?? "base") : (form.adVolumeSource ?? "base")}
-          onChange={(e) => {
-            const v = e.target.value as "base" | "usdt";
-            setForm((prev) => ({
-              ...prev,
-              ...(prev.indicatorType === "OBV" ? { obvVolumeSource: v } : { adVolumeSource: v }),
-            }));
-          }}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}
-        >
-          <option value="base">{(t as Record<string, string>).volumeBaseLabel ?? "Vol (base)"}</option>
-          <option value="usdt">{(t as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}</option>
-        </select>
-      </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
+          <select
+            value={form.indicatorType === "OBV" ? (form.obvVolumeSource ?? "base") : (form.adVolumeSource ?? "base")}
+            onChange={(e) => {
+              const v = e.target.value as "base" | "usdt";
+              setForm((prev) => ({
+                ...prev,
+                ...(prev.indicatorType === "OBV" ? { obvVolumeSource: v } : { adVolumeSource: v }),
+              }));
+            }}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            aria-label={(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}
+          >
+            <option value="base">{(t as Record<string, string>).volumeBaseLabel ?? "Vol (base)"}</option>
+            <option value="usdt">{(t as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}</option>
+          </select>
+        </div>
       )}
 
       {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
-        <div className="flex-1 min-w-0 flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => {
-              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1)));
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-            aria-label="-"
-          >
-            −
-          </button>
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={form.periodText}
-            onFocus={(e) => {
-              const el = e.currentTarget;
-              queueMicrotask(() => el?.select());
-            }}
-            onChange={(e) => setForm((prev) => ({ ...prev, periodText: e.target.value.replace(/[^\d]/g, "") }))}
-            onBlur={() => {
-              const n = Number(form.periodText);
-              const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7;
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
-            aria-label={t.period}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1)));
-              setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-            }}
-            className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-            aria-label="+"
-          >
-            +
-          </button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
+          <div className="flex-1 min-w-0 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1)));
+                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+              aria-label="-"
+            >
+              −
+            </button>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={form.periodText}
+              onFocus={(e) => {
+                const el = e.currentTarget;
+                queueMicrotask(() => el?.select());
+              }}
+              onChange={(e) => setForm((prev) => ({ ...prev, periodText: e.target.value.replace(/[^\d]/g, "") }))}
+              onBlur={() => {
+                const n = Number(form.periodText);
+                const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7;
+                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+              }}
+              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+              aria-label={t.period}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1)));
+                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
+              }}
+              className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+              aria-label="+"
+            >
+              +
+            </button>
+          </div>
         </div>
-      </div>
       )}
 
       {form.indicatorType === "RSI" && (
@@ -1652,40 +1652,40 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       )}
 
       {form.indicatorType !== "Ichimoku" && (
-      <div className="flex items-center gap-2 relative">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-        <button
-          type="button"
-          onClick={() => setForm((prev) => ({ ...prev, colorOpen: !prev.colorOpen }))}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-          aria-label={t.color}
-          aria-expanded={form.colorOpen}
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.color }} />
-          </span>
-          <span className="text-zinc-500 text-xs">▾</span>
-        </button>
-        {form.colorOpen && (
-          <>
-            <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, colorOpen: false }))} />
-            <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
-              <div className="grid grid-cols-3 gap-2">
-                {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                  <button
-                    key={hex}
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, color: hex, colorOpen: false }))}
-                    className={`w-10 h-10 rounded border-2 shrink-0 ${form.color === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                    style={{ backgroundColor: hex }}
-                    aria-label={`Color ${hex}`}
-                  />
-                ))}
+        <div className="flex items-center gap-2 relative">
+          <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+          <button
+            type="button"
+            onClick={() => setForm((prev) => ({ ...prev, colorOpen: !prev.colorOpen }))}
+            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
+            aria-label={t.color}
+            aria-expanded={form.colorOpen}
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.color }} />
+            </span>
+            <span className="text-zinc-500 text-xs">▾</span>
+          </button>
+          {form.colorOpen && (
+            <>
+              <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, colorOpen: false }))} />
+              <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
+                <div className="grid grid-cols-3 gap-2">
+                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, color: hex, colorOpen: false }))}
+                      className={`w-10 h-10 rounded border-2 shrink-0 ${form.color === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
+                      style={{ backgroundColor: hex }}
+                      aria-label={`Color ${hex}`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </div>
       )}
 
       {(form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Ichimoku") && (

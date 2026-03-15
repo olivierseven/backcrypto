@@ -13,8 +13,8 @@ export type DrawSegment = {
   price1: number;
   index2: number;
   price2: number;
-  /** Tipo: segmento de reta, retração de Fibonacci, retração livre, canal, stop/gain, retângulo, reta horizontal, reta vertical, seta ou texto. Default: segment */
-  type?: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text";
+  /** Tipo: segmento de reta, retração de Fibonacci, retração livre, canal, stop/gain, retângulo, reta horizontal, reta vertical, seta, texto ou lápis (desenho livre). Default: segment */
+  type?: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "pencil";
   /** Deslocamento em preço da reta paralela (só canal). Default: 0 */
   channelOffset?: number;
   /** Proporção ganho (acima da linha do meio). Mín 1, máx 10, 2 decimais. Só stopGain. Default: 1 */
@@ -105,6 +105,10 @@ export type DrawSegment = {
   textBold?: boolean;
   /** Tamanho da fonte do texto. Só text. Default: medium */
   textSize?: TextSize;
+  /** Pontos do traço livre (índice + preço). Só pencil. index1/price1 e index2/price2 = primeiro e último. */
+  pencilPoints?: { index: number; price: number }[];
+  /** Espessura do traço do lápis: fina, média ou grossa. Só pencil. Default: medium */
+  pencilStrokeWidth?: "thin" | "medium" | "thick";
 };
 
 /** Tamanho da fonte do texto (pequeno, médio, grande). */
@@ -145,6 +149,7 @@ export type DrawDefaults = {
   verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;
   arrow: Partial<Pick<DrawSegment, "color" | "arrowSize" | "arrowAngle">>;
   text: Partial<Pick<DrawSegment, "color" | "textBold" | "textSize">>;
+  pencil: Partial<Pick<DrawSegment, "color" | "pencilStrokeWidth">>;
 };
 
 /** strokeDasharray para reta horizontal: contínuo, tracejado, pontilhado. */
@@ -228,4 +233,28 @@ export function distanceToSegment(
   const qx = x1 + t * dx;
   const qy = y1 + t * dy;
   return Math.hypot(px - qx, py - qy);
+}
+
+/** Distância mínima do ponto (px, py) à polilinha definida por segmentToPixel e pontos { index, price }[]. */
+export function distanceToPencilPath(
+  px: number,
+  py: number,
+  points: { index: number; price: number }[],
+  segmentToPixel: (index: number, price: number) => { x: number; y: number }
+): number {
+  if (points.length < 2) {
+    if (points.length === 1) {
+      const p = segmentToPixel(points[0].index, points[0].price);
+      return Math.hypot(px - p.x, py - p.y);
+    }
+    return Infinity;
+  }
+  let minD = Infinity;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = segmentToPixel(points[i].index, points[i].price);
+    const b = segmentToPixel(points[i + 1].index, points[i + 1].price);
+    const d = distanceToSegment(px, py, a.x, a.y, b.x, b.y);
+    if (d < minD) minD = d;
+  }
+  return minD;
 }

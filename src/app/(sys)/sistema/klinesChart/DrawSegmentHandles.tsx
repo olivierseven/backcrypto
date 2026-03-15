@@ -7,7 +7,7 @@
  */
 import { DEFAULT_SEGMENT_COLOR, getTextSegmentBox, type DrawSegment, type TextSize } from "../KlinesChartDrawing";
 
-export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove";
+export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd";
 
 export interface DrawSegmentHandlesProps {
   segment: DrawSegment;
@@ -40,6 +40,7 @@ export function DrawSegmentHandles({
   const isVerticalLine = seg.type === "verticalLine";
   const isArrow = seg.type === "arrow";
   const isText = seg.type === "text";
+  const isPencil = seg.type === "pencil";
   const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const stopGainMidPos = isStopGain ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
@@ -110,6 +111,54 @@ export function DrawSegmentHandles({
           onClick={(e) => e.stopPropagation()}
         />
       )}
+      {isPencil && (() => {
+        const pts = seg.pencilPoints ?? [];
+        if (pts.length < 2) return null;
+        const d = pts.map((pt) => segmentToPixel(pt.index, pt.price)).map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)).join(" ");
+        return (
+          <>
+            <path
+              d={d}
+              fill="none"
+              stroke="transparent"
+              strokeWidth={14}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ cursor: "grab" }}
+              aria-label={(t as Record<string, string>).pencilMove ?? "Arrastar para mover"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilMove" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilMove" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle
+              cx={h1.x}
+              cy={h1.y}
+              r={5}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "grab" }}
+              aria-label={(t as Record<string, string>).pencilStart ?? "Editar início"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilStart" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilStart" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={h1.x} cy={h1.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+            <circle
+              cx={h2.x}
+              cy={h2.y}
+              r={5}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: "grab" }}
+              aria-label={(t as Record<string, string>).pencilEnd ?? "Editar fim"}
+              onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilEnd" }); }}
+              onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "pencilEnd" }); }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
+          </>
+        );
+      })()}
       {isText && (() => {
         const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
         const sizeKey = (seg.textSize as TextSize) ?? "small";
@@ -169,7 +218,7 @@ export function DrawSegmentHandles({
           />
         );
       })()}
-      {!isVerticalLine && !isArrow && !isText && (
+      {!isVerticalLine && !isArrow && !isText && !isPencil && (
         <>
           <circle
             cx={h1.x}

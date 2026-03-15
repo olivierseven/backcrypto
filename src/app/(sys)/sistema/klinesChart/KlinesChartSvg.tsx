@@ -100,13 +100,15 @@ export interface KlinesChartSvgProps {
   setDrawPendingArrow: (p: { index1: number; price1: number; angleRad: number } | null) => void;
   drawPendingText: { index1: number; price1: number } | null;
   setDrawPendingText: (p: { index1: number; price1: number } | null) => void;
+  drawPendingPencil: { index: number; price: number }[] | null;
+  setDrawPendingPencil: (p: { index: number; price: number }[] | null) => void;
   onCreateTextSegment?: (textContent: string) => void;
   pixelToData: (x: number, y: number) => { index: number; price: number };
   selectedSegmentIndex: number | null;
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" } | null>>;
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
@@ -210,6 +212,8 @@ export function KlinesChartSvg({
   setDrawPendingArrow,
   drawPendingText,
   setDrawPendingText,
+  drawPendingPencil,
+  setDrawPendingPencil,
   onCreateTextSegment,
   pixelToData,
   selectedSegmentIndex,
@@ -1700,6 +1704,8 @@ export function KlinesChartSvg({
           setDrawPendingArrow={setDrawPendingArrow}
           drawPendingText={drawPendingText}
           setDrawPendingText={setDrawPendingText}
+          drawPendingPencil={drawPendingPencil}
+          setDrawPendingPencil={setDrawPendingPencil}
           segmentToPixel={segmentToPixel}
           snapToCandlePoint={snapToCandlePoint}
           pixelToData={pixelToData}

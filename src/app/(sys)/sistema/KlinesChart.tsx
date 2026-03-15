@@ -105,6 +105,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid" },
   arrow: { color: SEGMENT_COLOR_PALETTE[0], arrowSize: "medium" },
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
+  pencil: { color: SEGMENT_COLOR_PALETTE[0], pencilStrokeWidth: "medium" },
 };
 
 export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
@@ -274,6 +275,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     setDrawPendingArrow,
     drawPendingText,
     setDrawPendingText,
+    drawPendingPencil,
+    setDrawPendingPencil,
+    selectPencilTool,
   } = drawing;
 
   const fullReversed = [...klines].reverse();
@@ -295,11 +299,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   // Sempre abrir a caixa de opções do segmento encostada no canto esquerdo
   useEffect(() => {
     if (selectedSegmentIndex === null) setSegmentOptionsPosition(null);
-  }, [selectedSegmentIndex]);
-
-  // Selecionar um desenho fecha a caixa de ferramentas de desenho
-  useEffect(() => {
-    if (selectedSegmentIndex !== null) setDrawOpen(false);
   }, [selectedSegmentIndex]);
 
   // Com a caixa de opções do segmento aberta, desativa a rolagem por toque só na div role="presentation" (área do plot)
@@ -430,6 +429,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         verticalLine: { ...BUILTIN_DRAW_DEFAULTS.verticalLine, ...parsed.verticalLine },
         arrow: { ...BUILTIN_DRAW_DEFAULTS.arrow, ...parsed.arrow },
         text: { ...BUILTIN_DRAW_DEFAULTS.text, ...parsed.text },
+        pencil: { ...BUILTIN_DRAW_DEFAULTS.pencil, ...parsed.pencil },
       });
     } catch {
       /* ignore */
@@ -437,7 +437,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   }, []);
 
   // Persistir padrões quando o usuário altera opções de um segmento
-  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text", partial: Partial<DrawSegment>) => {
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "pencil", partial: Partial<DrawSegment>) => {
     setDrawDefaults((prev) => {
       const next: DrawDefaults = {
         segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
@@ -450,6 +450,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         verticalLine: type === "verticalLine" ? { ...prev.verticalLine, ...partial } : prev.verticalLine,
         arrow: type === "arrow" ? { ...prev.arrow, ...partial } : prev.arrow,
         text: type === "text" ? { ...prev.text, ...partial } : prev.text,
+        pencil: type === "pencil" ? { ...prev.pencil, ...partial } : prev.pencil,
       };
       try {
         if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
@@ -1853,6 +1854,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             selectTextTool={selectTextTool}
             selectArrowTool={selectArrowTool}
             selectHorizontalLineTool={selectHorizontalLineTool}
+            selectPencilTool={selectPencilTool}
             exitRulerToCrosshair={exitRulerToCrosshair}
             toggleRuler={toggleRuler}
             selectSelectTool={selectSelectTool}
@@ -1873,7 +1875,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             onUpgradeRequest={() => setShowUpgradeModal(true)}
           />
         </div>
-        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" ? "none" : "pan-x pan-y" }}>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" || drawTool === "pencil" ? "none" : "pan-x pan-y" }}>
           <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
@@ -2031,6 +2033,15 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                       aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}
                     >
                       <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectPencilTool}
+                      title={(t as Record<string, string>).pencilTool ?? "Lápis"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).pencilTool ?? "Lápis"}
+                    >
+                      <span aria-hidden className="text-lg leading-none">✎</span>
                     </button>
                   </div>
                   <div className="flex justify-center border-t border-zinc-100 pt-0.5 mt-0.5">
@@ -2197,6 +2208,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               setDrawPendingArrow={setDrawPendingArrow}
               drawPendingText={drawPendingText}
               setDrawPendingText={setDrawPendingText}
+              drawPendingPencil={drawPendingPencil}
+              setDrawPendingPencil={setDrawPendingPencil}
               onCreateTextSegment={handleCreateTextSegment}
               pixelToData={pixelToData}
               selectedSegmentIndex={selectedSegmentIndex}
@@ -2207,7 +2220,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               onSelectToolPan={onSelectToolPan}
               onChartDrawClick={() => {
                 setSegmentToolboxCollapsed(true);
-                setDrawOpen(false);
+                // Não fechar a caixa de desenho ao clicar no gráfico; reabrir após criar fica a cargo de onSegmentCreated/handleCreateTextSegment
               }}
               onSegmentCreated={(newIndex) => {
                 setSelectedSegmentIndex(newIndex);
