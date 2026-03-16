@@ -136,7 +136,7 @@ export async function POST(req: Request) {
         layout: layoutCol as Prisma.InputJsonValue,
         indicators: indicatorsCol as Prisma.InputJsonValue,
         strategies: strategiesCol as Prisma.InputJsonValue,
-        others: Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : null,
+        others: Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : Prisma.DbNull,
         name: name ?? null,
       },
       update: {
@@ -178,14 +178,14 @@ export async function POST(req: Request) {
         layout: layout ?? undefined,
         indicators: indicators ?? undefined,
         strategies: strategies ?? undefined,
-        others: others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as object) : null,
+        others: others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as Prisma.InputJsonValue) : Prisma.DbNull,
         name: name ?? null,
       },
       update: {
         ...(body.layout !== undefined && { layout }),
         ...(body.indicators !== undefined && { indicators }),
         ...(body.strategies !== undefined && { strategies }),
-        ...(body.others !== undefined && { others: (body.others as object) ?? null }),
+        ...(body.others !== undefined && { others: body.others != null && typeof body.others === "object" ? (body.others as Prisma.InputJsonValue) : Prisma.DbNull }),
         ...(name !== undefined && { name }),
       },
     });
