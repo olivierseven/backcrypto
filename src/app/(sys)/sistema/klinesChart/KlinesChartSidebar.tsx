@@ -704,7 +704,7 @@ export function KlinesChartSidebar({
             <>
               <div className="border-t border-zinc-100 pt-2 mt-2" />
               <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange(e.target.checked)} className="rounded border-zinc-300" />
+                <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange?.(e.target.checked)} className="rounded border-zinc-300" />
                 <span>{(t as Record<string, string>).volumeAtPrice ?? "Volume no preço"}</span>
               </label>
               {volumeAtPriceEnabled && (
@@ -1284,7 +1284,7 @@ export function KlinesChartSidebar({
                   <>
                     <div className="border-t border-zinc-100 pt-2 mt-2" />
                     <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                      <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange(e.target.checked)} className="rounded border-zinc-300" />
+                      <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange?.(e.target.checked)} className="rounded border-zinc-300" />
                       <span>{(t as Record<string, string>).volumeAtPrice ?? "Volume no preço"}</span>
                     </label>
                     {volumeAtPriceEnabled && (
