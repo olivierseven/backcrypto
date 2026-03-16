@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
@@ -11,7 +12,8 @@ import { getCryptoT } from "@/app/lib/translations";
 import type { CryptoLang } from "@/app/lib/translations";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { useChartHeader } from "./ChartHeaderContext";
-import SistemaDebugPanel from "./SistemaDebugPanel";
+
+const SistemaDebugPanel = dynamic(() => import("./SistemaDebugPanel"), { ssr: false });
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
 import { SistemaDebugProvider } from "./SistemaDebugContext";
 import { ChartHeaderProvider } from "./ChartHeaderContext";

@@ -307,6 +307,18 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
     ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
+  /** Intervalo efetivo para filtrar séries: ao editar, usa o intervalo da estratégia; ao criar, usa o do gráfico. */
+  const effectiveIntervalMinutes = editingStrategyId
+    ? (strategies.find((s) => s.id === editingStrategyId)?.intervalMinutes ?? chartIntervalMinutes)
+    : chartIntervalMinutes;
+  /** Indicadores visíveis no intervalo efetivo: "Todos os tempos" (intervals vazio) ou intervalo incluído em "Mostrar em". */
+  const indicatorsForInterval = useMemo(() => {
+    return userIndicators.filter((ind) => {
+      if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+      if (ind.intervals.length === 0) return true;
+      return ind.intervals.includes(effectiveIntervalMinutes);
+    });
+  }, [userIndicators, effectiveIntervalMinutes]);
   const seriesOptions = useMemo(() => {
     const tStrat = getCryptoT(lang).sistema.strategies as Record<string, string>;
     const fnShort = tStrat.seriesFunctionsShort ?? "F";
@@ -323,7 +335,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       { key: "OHLC4", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldOHLC4 ?? "OHLC4"}` },
       { key: "HLCC4", label: `(${fnShort}) ${(tKlines as Record<string, string>).fieldHLCC4 ?? "HLCC4"}` },
     ];
-    userIndicators.forEach((ind) => {
+    indicatorsForInterval.forEach((ind) => {
       const panel = getIndicatorPanel(ind);
       const num = panelToNum(panel);
       // Bollinger: nome da fonte (BB(period,Z) + campo) + bandas/meio abreviados
@@ -401,7 +413,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       }
     });
     return opts;
-  }, [lang, userIndicators, tKlines]);
+  }, [lang, indicatorsForInterval, userIndicators, tKlines]);
 
   /** No modo combinado: lista só colunas de estratégias criadas (estratégia e valor na visualização = comparação com constante). */
   /** No modo combinado só aparecem estratégias normais (não combinadas), para montar "está verdadeira/falsa". */

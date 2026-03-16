@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "node scripts/dev.js",
     "build": "node scripts/build.js",
     "start": "next start -p 3004",
@@ -26,7 +28,6 @@
     "verify-schema-vs-db": "node scripts/verify-schema-vs-db.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
@@ -35,6 +36,7 @@
     "@capacitor/push-notifications": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
+    "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
     "firebase-admin": "^13.6.1",
@@ -50,14 +52,15 @@
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
-    "pg": "^8.13.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "pg": "^8.13.0",
     "postcss": "^8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

@@ -5,7 +5,8 @@ import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
-import { KLINE_DRAW_SEGMENTS_KEY } from "./KlinesChartConstants";
+import { useChartSymbol } from "./ChartSymbolContext";
+import { KLINE_DRAW_SEGMENTS_KEY, getDrawStorageKey } from "./KlinesChartConstants";
 import { DEFAULT_SEGMENT_COLOR, type DrawSegment } from "./KlinesChartDrawing";
 
 interface DrawingsPanelProps {
@@ -26,11 +27,14 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
   const t = getCryptoT(lang).sistema.klines as Record<string, string>;
   const { hideStatusBar } = useAppBarSafe();
   const { currentGroupMinutes } = useKlinesIndicators();
+  const { symbol } = useChartSymbol();
   const [savedDrawingsList, setSavedDrawingsList] = useState<DrawSegment[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
+  const drawStorageKey = currentGroupMinutes != null ? getDrawStorageKey(symbol, currentGroupMinutes) : null;
+
   useEffect(() => {
-    if (typeof window === "undefined" || currentGroupMinutes == null) {
+    if (typeof window === "undefined" || drawStorageKey == null) {
       setSavedDrawingsList([]);
       return;
     }
@@ -41,13 +45,31 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
         return;
       }
       const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-      const key = String(currentGroupMinutes);
-      const list = Array.isArray(data[key]) ? data[key] : [];
+      const list = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
       setSavedDrawingsList(list);
     } catch {
       setSavedDrawingsList([]);
     }
-  }, [currentGroupMinutes]);
+  }, [drawStorageKey]);
+
+  useEffect(() => {
+    if (drawStorageKey == null) return;
+    const handler = () => {
+      try {
+        const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
+        if (!raw) {
+          setSavedDrawingsList([]);
+          return;
+        }
+        const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
+        setSavedDrawingsList(Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : []);
+      } catch {
+        setSavedDrawingsList([]);
+      }
+    };
+    window.addEventListener("backcrypto-drawings-updated", handler);
+    return () => window.removeEventListener("backcrypto-drawings-updated", handler);
+  }, [drawStorageKey]);
 
   const drawingTypeLabel = (seg: DrawSegment) => {
     const type = seg.type ?? "segment";
@@ -77,14 +99,13 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
   };
 
   const deleteDrawingAtIndex = (index: number) => {
-    if (currentGroupMinutes == null || typeof window === "undefined") return;
+    if (drawStorageKey == null || typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
       const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
-      const key = String(currentGroupMinutes);
-      const list = Array.isArray(data[key]) ? data[key] : [];
+      const list = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
       const next = list.filter((_, i) => i !== index);
-      data[key] = next;
+      data[drawStorageKey] = next;
       window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
       setSavedDrawingsList(next);
       window.dispatchEvent(new CustomEvent("backcrypto-drawings-updated"));

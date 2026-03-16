@@ -46,6 +46,7 @@ import {
   KLINE_DRAW_SEGMENTS_KEY,
   KLINE_DRAW_VISIBLE_KEY,
   KLINE_DRAW_DEFAULTS_KEY,
+  getDrawStorageKey,
   MS_PER_DAY,
 } from "./KlinesChartConstants";
 import {
@@ -321,8 +322,15 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => cancelAnimationFrame(id);
   }, [groupMinutes]);
 
-  // Chave de storage por timeframe (símbolo + intervalo) para desenhos e visibilidade
-  const drawStorageKey = (symbolProp ? `${String(symbolProp)}|${groupMinutes}` : String(groupMinutes));
+  const drawStorageKey = getDrawStorageKey(symbolProp ?? null, groupMinutes);
+
+  // Expor n e lastClose para o teste QA (reta horizontal no final ao preço de fechamento)
+  useEffect(() => {
+    if (typeof window === "undefined" || klines.length === 0) return;
+    const n = klines.length;
+    const lastClose = parseNum(String(klines[0][4]));
+    (window as unknown as { __backcryptoKlinesInfo?: { n: number; lastClose: number } }).__backcryptoKlinesInfo = { n, lastClose };
+  }, [klines]);
 
   // Carregar segmentos e visibilidade de desenho do localStorage ao mudar o timeframe (símbolo ou intervalo)
   useEffect(() => {

@@ -56,6 +56,11 @@ export const KLINE_GROUP_MINUTES_KEY = "backcrypto-klines-group-minutes";
 export const KLINE_SYMBOL_KEY = "backcrypto-klines-symbol";
 export const KLINE_DRAW_SEGMENTS_KEY = "backcrypto-klines-draw-segments";
 export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";
+
+/** Chave de storage para desenhos/visibilidade: símbolo|intervalo ou só intervalo. Usado por KlinesChart e DrawingsPanel. */
+export function getDrawStorageKey(symbol: string | null | undefined, groupMinutes: number): string {
+  return symbol ? `${String(symbol)}|${groupMinutes}` : String(groupMinutes);
+}
 export const KLINE_DRAW_MAGNETIC_KEY = "backcrypto-klines-draw-magnetic";
 export const KLINE_DRAW_DEFAULTS_KEY = "backcrypto-klines-draw-defaults";
 /** Preferência do usuário: opções do segmento recolhidas (true) ou expandidas (false). */

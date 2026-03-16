@@ -7,6 +7,7 @@ import { API_BASE } from "@/app/constants";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
+import { runDrawingsQaTests } from "./debug/drawingsQaTests";
 
 type ValidateSingleResult = {
   symbol: string;
@@ -50,7 +51,8 @@ export default function SistemaDebugPanel() {
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
-  const [debugTab, setDebugTab] = useState<"main" | "inspect">("main");
+  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa">("main");
+  const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
   const [sessionDebugEnabled, setSessionDebugEnabledState] = useState(false);
   const [sessionDebugInfo, setSessionDebugInfoState] = useState<SessionDebugInfo | null>(null);
@@ -70,6 +72,7 @@ export default function SistemaDebugPanel() {
       clearInterval(id);
     };
   }, [sessionDebugEnabled]);
+
 
   function formatTime(ms: number): string {
     const d = new Date(ms);
@@ -529,6 +532,13 @@ export default function SistemaDebugPanel() {
             >
               {(t as Record<string, string>).tabInspect ?? "Inspecionar"}
             </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("qa")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "qa" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabQa ?? "QA"}
+            </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {debugTab === "main" && (
@@ -715,6 +725,48 @@ export default function SistemaDebugPanel() {
               )}
             </section>
               </>
+            )}
+            {debugTab === "qa" && (
+              <section>
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).qaDrawingsTitle ?? "Testes QA — Desenhos"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).qaDrawingsHint ?? "Mesma lógica dos testes Vitest (npm test), rodando no browser."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setQaResults(runDrawingsQaTests())}
+                  className="mb-3 text-sm font-medium px-3 py-2 rounded-md bg-zinc-800 text-white hover:bg-zinc-700"
+                >
+                  {(t as Record<string, string>).qaDrawingsRun ?? "Executar testes"}
+                </button>
+                {qaResults.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Clique em &quot;Executar testes&quot; para rodar.</p>
+                ) : (
+                  <>
+                    <ul className="space-y-3">
+                      {qaResults.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="shrink-0" aria-hidden>{r.pass ? "✅" : "❌"}</span>
+                          <div className="min-w-0 flex-1">
+                            <span className={r.pass ? "text-zinc-700" : "text-red-700"}>{r.name}</span>
+                            {r.message != null && <span className="block text-xs text-zinc-500 mt-0.5">{r.message}</span>}
+                            {r.evidence != null && (
+                              <pre className="mt-1.5 p-2 text-[10px] font-mono text-zinc-600 bg-zinc-100 rounded border border-zinc-200 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                                {r.evidence}
+                              </pre>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-xs text-zinc-500">
+                      {(t as Record<string, string>).qaDrawingsSummary ?? "Total"}: {qaResults.filter((r) => r.pass).length}/{qaResults.length} passaram
+                    </p>
+                  </>
+                )}
+              </section>
             )}
             {debugTab === "inspect" && (
               <>

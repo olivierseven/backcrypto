@@ -981,6 +981,42 @@ export function KlinesChartSegmentOptions({
             <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
               <input
                 type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showPercent === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: checked };
+                    return next;
+                  });
+                  persistDrawDefault("fibonacci", { showPercent: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showPercent ?? "Mostrar %"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.showValues === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, showValues: checked };
+                    return next;
+                  });
+                  persistDrawDefault("fibonacci", { showValues: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{t.showValues ?? "Mostrar valores"}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-zinc-100 text-sm text-zinc-700">
+              <input
+                type="checkbox"
                 checked={drawSegments[selectedSegmentIndex]?.fibShowValuesOnYAxis === true}
                 onChange={(e) => {
                   const checked = e.target.checked;
