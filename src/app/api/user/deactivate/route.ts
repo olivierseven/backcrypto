@@ -24,7 +24,7 @@ async function hasActiveSubscription(userId: string): Promise<boolean> {
   const now = Math.floor(Date.now() / 1000);
   for (const subId of subscriptionIds) {
     try {
-      const sub = await stripe.subscriptions.retrieve(subId);
+      const sub = await stripe.subscriptions.retrieve(subId) as Stripe.Subscription & { current_period_end?: number };
       const active = sub.status === "active" || sub.status === "past_due";
       const cancelAtPeriodEnd = sub.cancel_at_period_end && (sub.current_period_end ?? 0) > now;
       if (active || cancelAtPeriodEnd) return true;
