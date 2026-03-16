@@ -480,7 +480,7 @@ export function DrawOverlay({
             if (drawTool === "pencil" && drawPendingPencil !== null) {
               if (e.cancelable) e.preventDefault();
               const d = snapToCandlePoint(point.px, point.py);
-              setDrawPendingPencil((prev) => (prev ? [...prev, { index: d.index, price: d.price }] : null));
+              setDrawPendingPencil(drawPendingPencil ? [...drawPendingPencil, { index: d.index, price: d.price }] : null);
               return;
             }
             if ((drawTool !== "rectangle" && drawTool !== "fibonacci" && drawTool !== "freeRetracement" && drawTool !== "line" && drawTool !== "channel" && drawTool !== "stopGain" && drawTool !== "horizontalLine" && drawTool !== "verticalLine" && drawTool !== "arrow" && drawTool !== "ruler") || drawPending === null) return;
