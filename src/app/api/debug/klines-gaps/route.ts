@@ -45,8 +45,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Body: { gaps: [{ interval: '1m'|'1h', from, to }] }" }, { status: 400 });
     }
 
+    type GapItem = { interval: "1m" | "1h"; from: number; to: number };
     const created = await cryptoPrisma.binanceKlineGap.createMany({
-      data: valid.map((g) => ({
+      data: valid.map((g: GapItem) => ({
         symbol,
         interval: g.interval,
         gapFrom: BigInt(g.from),
