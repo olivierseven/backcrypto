@@ -1680,9 +1680,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   // Último fechamento: preferir preço ao vivo (evita mostrar BTC após trocar para ETH quando klines[0] ainda é do par anterior)
   const lastClose =
-    liveLastClose != null && Number.isFinite(parseNum(liveLastClose))
-      ? parseNum(liveLastClose)
-      : (n > 0 ? parseNum(klines[0][4]) : 0);
+    liveLastClose != null && Number.isFinite(parseNum(String(liveLastClose)))
+      ? parseNum(String(liveLastClose))
+      : (n > 0 ? parseNum(String(klines[0][4])) : 0);
   const lastCloseY = y(lastClose);
   const lastCloseInVisibleRange =
     lastClose >= yMin && lastClose <= yMax;
