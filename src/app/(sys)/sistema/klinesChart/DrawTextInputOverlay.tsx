@@ -101,7 +101,6 @@ export function DrawTextInputOverlay({
   return (
     <foreignObject x={x} y={y} width={320} height={140} style={{ overflow: "visible" }}>
       <div
-        xmlns="http://www.w3.org/1999/xhtml"
         style={{
           width: MAX_BOX_WIDTH_PX,
           maxWidth: MAX_BOX_WIDTH_PX,
