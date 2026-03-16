@@ -1027,7 +1027,6 @@ export const cryptoTranslations = {
         anotherSessionActiveHint: "Close the other tab or click below to use this tab instead.",
         anotherSessionActiveRetry: "Use this tab",
         upgradePlanCta: "View plans",
-        cancel: "Cancel",
       },
       debug: {
         title: "Debug",
@@ -2190,7 +2189,6 @@ export const cryptoTranslations = {
         anotherSessionActiveHint: "Feche a outra aba ou clique abaixo para usar esta aba.",
         anotherSessionActiveRetry: "Usar esta aba",
         upgradePlanCta: "Ver planos",
-        cancel: "Cancelar",
       },
       debug: {
         title: "Debug",
