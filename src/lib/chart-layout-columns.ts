@@ -4,7 +4,8 @@
  * Desenhos (draw-segments) ficam só no localStorage, não vão no layout.
  */
 
-type JsonValue = Record<string, unknown> | unknown[] | null;
+/** Compatible with Prisma JsonValue (string | number | boolean | object | array | null). */
+type JsonValue = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
 /** Chaves que vão na coluna others (configs rápidas). Símbolo fica só em localStorage (KLINE_SYMBOL_KEY), fallback BTCUSDT. */
 export const OTHERS_KEYS = [
