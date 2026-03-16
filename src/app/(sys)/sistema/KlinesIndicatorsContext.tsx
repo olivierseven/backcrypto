@@ -409,6 +409,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     const intervals = safeIntervals(u.intervals) ?? []; // [] = "Todos os tempos" (layout antigo sem intervals)
     return {
     ...u,
+    type: u.type as UserIndicatorType,
     period,
     intervals,
     fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" || u.type === "AD" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" || u.type === "CMF" || u.type === "Ichimoku" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
