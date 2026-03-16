@@ -182,10 +182,10 @@ export async function POST(req: Request) {
         name: name ?? null,
       },
       update: {
-        ...(body.layout !== undefined && { layout }),
-        ...(body.indicators !== undefined && { indicators }),
-        ...(body.strategies !== undefined && { strategies }),
-        ...(body.others !== undefined && { others: body.others != null && typeof body.others === "object" ? (body.others as Prisma.InputJsonValue) : Prisma.DbNull }),
+        ...(body.layout !== undefined && { layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue) }),
+        ...(body.indicators !== undefined && { indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue) }),
+        ...(body.strategies !== undefined && { strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue) }),
+        ...(body.others !== undefined && { others: others == null || typeof others !== "object" ? Prisma.DbNull : (others as Prisma.InputJsonValue) }),
         ...(name !== undefined && { name }),
       },
     });
