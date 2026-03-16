@@ -59,10 +59,16 @@ export interface Strategy {
   applyToAllSymbols: boolean;
   /** Símbolo ao qual a estratégia se aplica quando applyToAllSymbols é false (ex.: BTCUSDT). */
   symbol?: string;
-  /** Cor do candle quando a condição é verdadeira (hex). Usa a mesma paleta das médias móveis. */
+  /** Cor do candle quando a condição é verdadeira (hex). Usa a mesma paleta das médias móveis. Usada também para o sinal quando visualizationMode === "signal". */
   color?: string;
   /** Se true, a estratégia foi criada no modo combinado (condições sobre outras estratégias). */
   isCombined?: boolean;
+  /** Modo de exibição: pintar o candle com a cor ou desenhar um sinal (seta, x, bola). Default: "paint". */
+  visualizationMode?: "paint" | "signal";
+  /** Forma do sinal quando visualizationMode === "signal". Default: "arrowUp". */
+  signalShape?: "arrowUp" | "arrowDown" | "x" | "circle";
+  /** Posição do sinal em relação ao candle: abaixo (logo abaixo do candle) ou acima. Default: "below". */
+  signalPosition?: "below" | "above";
 }
 
 /** Formato legado (antes de intervalMinutes/applyToAllSymbols): migração. */

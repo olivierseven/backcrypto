@@ -191,12 +191,16 @@ export interface ChartIndicatorLine {
 
 export type IntervalOption = { value: number; label: string; param: string };
 
-/** Overlay de estratégia: pinta o candle com a cor quando a condição é verdadeira. results[i] = true para klines[i] (klines[0] = mais recente). */
+/** Overlay de estratégia: pinta o candle com a cor ou desenha sinal quando a condição é verdadeira. results[i] = true para klines[i] (klines[0] = mais recente). */
 export interface StrategyCandleOverlay {
   id: string;
   name: string;
   color: string;
   results: boolean[];
+  /** "paint" = pinta o candle; "signal" = desenha forma (seta, x, bola) na posição configurada. */
+  visualizationMode?: "paint" | "signal";
+  signalShape?: "arrowUp" | "arrowDown" | "x" | "circle";
+  signalPosition?: "below" | "above";
 }
 
 export type KlinesChartProps = {

@@ -1079,7 +1079,8 @@ export function KlinesChartSvg({
           const wickTop = y(highP);
           const wickBottom = y(lowP);
           const klinesIndex = n - 1 - startIndex - i;
-          const strategyColor = strategyCandleOverlays.find((o) => o.results[klinesIndex])?.color;
+          const paintOverlay = strategyCandleOverlays.find((o) => o.results[klinesIndex] && o.visualizationMode !== "signal");
+          const strategyColor = paintOverlay?.color;
           const color = strategyColor ?? (bull ? candleColors.bull : candleColors.bear);
           const strokeColor = color === "#f5f5f5" ? "#171717" : color;
           const slotLeft = MARGIN_LEFT + i * gap;
@@ -1113,6 +1114,64 @@ export function KlinesChartSvg({
             </g>
           );
         })}
+        {strategyCandleOverlays.some((o) => o.visualizationMode === "signal") && (
+          <g key="strategy-signals" pointerEvents="none">
+            {windowSlice.map((k, i) => {
+              const klinesIndex = n - 1 - startIndex - i;
+              const highP = parseNum(String(k[2] ?? ""));
+              const lowP = parseNum(String(k[3] ?? ""));
+              const wickTop = y(highP);
+              const wickBottom = y(lowP);
+              const x = cx(i);
+              const SIGNAL_OFFSET = 8;
+              return strategyCandleOverlays
+                .filter((o) => o.visualizationMode === "signal" && o.results[klinesIndex])
+                .map((o, oIdx) => {
+                  const pos = o.signalPosition === "above" ? wickTop - SIGNAL_OFFSET : wickBottom + SIGNAL_OFFSET;
+                  const shape = o.signalShape ?? "arrowUp";
+                  const col = o.color ?? "#6366f1";
+                  const r = 5;
+                  if (shape === "circle") {
+                    return <circle key={`${o.id}-${i}-${oIdx}`} cx={x} cy={pos} r={r} fill="none" stroke={col} strokeWidth={1.5} />;
+                  }
+                  if (shape === "x") {
+                    const d = 4;
+                    return (
+                      <g key={`${o.id}-${i}-${oIdx}`} stroke={col} strokeWidth={1.5}>
+                        <line x1={x - d} y1={pos - d} x2={x + d} y2={pos + d} />
+                        <line x1={x + d} y1={pos - d} x2={x - d} y2={pos + d} />
+                      </g>
+                    );
+                  }
+                  const arrowH = 6;
+                  const arrowW = 4;
+                  if (shape === "arrowUp") {
+                    return (
+                      <path
+                        key={`${o.id}-${i}-${oIdx}`}
+                        d={`M ${x} ${pos - arrowH} L ${x - arrowW} ${pos + arrowH} L ${x} ${pos + arrowH * 0.3} L ${x + arrowW} ${pos + arrowH} Z`}
+                        fill={col}
+                        stroke={col}
+                        strokeWidth={1}
+                      />
+                    );
+                  }
+                  if (shape === "arrowDown") {
+                    return (
+                      <path
+                        key={`${o.id}-${i}-${oIdx}`}
+                        d={`M ${x} ${pos + arrowH} L ${x - arrowW} ${pos - arrowH} L ${x} ${pos - arrowH * 0.3} L ${x + arrowW} ${pos - arrowH} Z`}
+                        fill={col}
+                        stroke={col}
+                        strokeWidth={1}
+                      />
+                    );
+                  }
+                  return null;
+                });
+            })}
+          </g>
+        )}
         {volumeAtPriceData && volumeAtPriceData.buckets.length > 0 && volumeAtPriceData.maxVolume > 0 && (() => {
           const widthPercent = Math.max(30, Math.min(100, volumeAtPriceWidthPercent ?? 100)) / 100;
           const maxWidthBase = Math.min(VOLUME_AT_PRICE_MAX_WIDTH_PX, chartW / 3);

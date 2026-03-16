@@ -681,6 +681,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       name: s.name,
       color: s.color ?? palette[Math.min(2 + (idx % Math.max(1, palette.length - 2)), palette.length - 1)] ?? "#6366f1",
       results: strategyResults.get(s.id) ?? [],
+      visualizationMode: s.visualizationMode ?? "paint",
+      signalShape: s.signalShape ?? "arrowUp",
+      signalPosition: s.signalPosition ?? "below",
     }));
   }, [visibleStrategies, strategyResults, layoutAppliedTick]);
 

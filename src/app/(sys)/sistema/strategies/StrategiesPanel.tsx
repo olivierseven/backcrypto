@@ -260,6 +260,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   /** Cor do candle quando a condição é verdadeira (mesma paleta das médias móveis). */
   const [addColor, setAddColor] = useState<string>(() => INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
   const [addColorOpen, setAddColorOpen] = useState(false);
+  const [addVisualizationMode, setAddVisualizationMode] = useState<"paint" | "signal">("paint");
+  const [addSignalShape, setAddSignalShape] = useState<"arrowUp" | "arrowDown" | "x" | "circle">("arrowUp");
+  const [addSignalPosition, setAddSignalPosition] = useState<"below" | "above">("below");
   /** true = só do símbolo atual (ou "qualquer símbolo"); false = todas as estratégias. */
   const [showOnlyCurrentSymbol, setShowOnlyCurrentSymbol] = useState(true);
 
@@ -456,7 +459,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       return;
     }
     if (editingStrategyId) {
-      const updates = { name, root: addRoot, applyToAllSymbols: applyToAll, symbol: strategySymbol, color: addColor, isCombined };
+      const updates = { name, root: addRoot, applyToAllSymbols: applyToAll, symbol: strategySymbol, color: addColor, isCombined, visualizationMode: addVisualizationMode, signalShape: addSignalShape, signalPosition: addSignalPosition };
       updateStrategy(editingStrategyId, updates);
       const nextStrategies = strategies.map((s) => (s.id === editingStrategyId ? { ...s, ...updates } : s));
       chartLayoutSave?.saveLayoutNow("strategies", { strategies: nextStrategies, appliedStrategyIds });
@@ -471,6 +474,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
         symbol: strategySymbol,
         color: addColor,
         isCombined,
+        visualizationMode: addVisualizationMode,
+        signalShape: addSignalShape,
+        signalPosition: addSignalPosition,
       };
       addStrategy(strategy);
       chartLayoutSave?.saveLayoutNow("strategies", { strategies: [...strategies, strategy], appliedStrategyIds });
@@ -481,6 +487,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     setAddApplyToAllSymbols(false);
     setAddColor(INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
     setAddColorOpen(false);
+    setAddVisualizationMode("paint");
+    setAddSignalShape("arrowUp");
+    setAddSignalPosition("below");
     setAddOpen(false);
   };
 
@@ -493,6 +502,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     setAddRootCombined(mode === "combined" ? rootCopy : createEmptyGroup("AND"));
     setAddApplyToAllSymbols(s.applyToAllSymbols ?? false);
     setAddColor(s.color ?? INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
+    setAddVisualizationMode(s.visualizationMode ?? "paint");
+    setAddSignalShape(s.signalShape ?? "arrowUp");
+    setAddSignalPosition(s.signalPosition ?? "below");
     setEditingStrategyId(s.id);
     setAddOpen(true);
   };
@@ -893,6 +905,59 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 </>
               )}
             </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).strategyVisualization ?? "Exibir"}</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="viz-mode"
+                    checked={addVisualizationMode === "paint"}
+                    onChange={() => setAddVisualizationMode("paint")}
+                    className="rounded border-zinc-300"
+                  />
+                  <span className="text-sm text-zinc-700">{(t as Record<string, string>).strategyVisualizationPaint ?? "Pintar candle"}</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="viz-mode"
+                    checked={addVisualizationMode === "signal"}
+                    onChange={() => setAddVisualizationMode("signal")}
+                    className="rounded border-zinc-300"
+                  />
+                  <span className="text-sm text-zinc-700">{(t as Record<string, string>).strategyVisualizationSignal ?? "Desenhar sinal"}</span>
+                </label>
+              </div>
+            </div>
+            {addVisualizationMode === "signal" && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-zinc-600 block mb-0.5">{(t as Record<string, string>).strategySignalShape ?? "Forma do sinal"}</label>
+                  <select
+                    value={addSignalShape}
+                    onChange={(e) => setAddSignalShape(e.target.value as "arrowUp" | "arrowDown" | "x" | "circle")}
+                    className="w-full text-sm rounded border border-zinc-300 px-2 py-1.5 bg-white text-zinc-800"
+                  >
+                    <option value="arrowUp">{(t as Record<string, string>).strategySignalArrowUp ?? "Seta para cima"}</option>
+                    <option value="arrowDown">{(t as Record<string, string>).strategySignalArrowDown ?? "Seta para baixo"}</option>
+                    <option value="x">{(t as Record<string, string>).strategySignalX ?? "X"}</option>
+                    <option value="circle">{(t as Record<string, string>).strategySignalCircle ?? "Bola"}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-zinc-600 block mb-0.5">{(t as Record<string, string>).strategySignalPosition ?? "Posição do sinal"}</label>
+                  <select
+                    value={addSignalPosition}
+                    onChange={(e) => setAddSignalPosition(e.target.value as "below" | "above")}
+                    className="w-full text-sm rounded border border-zinc-300 px-2 py-1.5 bg-white text-zinc-800"
+                  >
+                    <option value="below">{(t as Record<string, string>).strategySignalPositionBelow ?? "Abaixo do candle"}</option>
+                    <option value="above">{(t as Record<string, string>).strategySignalPositionAbove ?? "Acima do candle"}</option>
+                  </select>
+                </div>
+              </>
+            )}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium text-zinc-600">{t.conditions} ({totalConditions}/{STRATEGY_MAX_CONDITIONS})</span>
@@ -930,6 +995,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   setEditingStrategyId(null);
                   setAddApplyToAllSymbols(false);
                   setAddColorOpen(false);
+                  setAddVisualizationMode("paint");
+                  setAddSignalShape("arrowUp");
+                  setAddSignalPosition("below");
                 }}
                 className="px-3 py-2 text-sm font-medium rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
               >
