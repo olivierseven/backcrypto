@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { Role } from "@/lib/prisma-bio-client";
+import { Prisma, Role } from "@/lib/prisma-bio-client";
 import { mergeColumnsToConfig, splitConfigToColumns } from "@/lib/chart-layout-columns";
 
 export const runtime = "nodejs";
@@ -87,22 +87,22 @@ export async function POST(req: Request) {
     const configStr = JSON.stringify(config);
     if (configStr.length > CONFIG_MAX_BYTES) return NextResponse.json({ error: "config_too_large" }, { status: 400 });
     const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, others: othersCol } = splitConfigToColumns(config);
-    const othersVal = Object.keys(othersCol).length > 0 ? othersCol : null;
+    const othersVal = Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : Prisma.DbNull;
     await cryptoPrisma.chartModel.upsert({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
       create: {
         userId: ADMIN_USER_ID,
         slot,
-        layout: layoutCol,
-        indicators: indicatorsCol,
-        strategies: strategiesCol,
+        layout: layoutCol as Prisma.InputJsonValue,
+        indicators: indicatorsCol as Prisma.InputJsonValue,
+        strategies: strategiesCol as Prisma.InputJsonValue,
         others: othersVal,
         name: name ?? null,
       },
       update: {
-        layout: layoutCol,
-        indicators: indicatorsCol,
-        strategies: strategiesCol,
+        layout: layoutCol as Prisma.InputJsonValue,
+        indicators: indicatorsCol as Prisma.InputJsonValue,
+        strategies: strategiesCol as Prisma.InputJsonValue,
         others: othersVal,
         ...(name !== undefined && { name }),
       },
@@ -129,22 +129,22 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "config_too_large", message: `${label} exceeds max size` }, { status: 400 });
       }
     }
-    const othersVal = others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as object) : null;
+    const othersVal = others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as Prisma.InputJsonValue) : Prisma.DbNull;
     await cryptoPrisma.chartModel.upsert({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
       create: {
         userId: ADMIN_USER_ID,
         slot,
-        layout: layout ?? undefined,
-        indicators: indicators ?? undefined,
-        strategies: strategies ?? undefined,
+        layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue),
+        indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue),
+        strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue),
         others: othersVal,
         name: name ?? null,
       },
       update: {
-        ...(body.layout !== undefined && { layout }),
-        ...(body.indicators !== undefined && { indicators }),
-        ...(body.strategies !== undefined && { strategies }),
+        ...(body.layout !== undefined && { layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue) }),
+        ...(body.indicators !== undefined && { indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue) }),
+        ...(body.strategies !== undefined && { strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue) }),
         ...(body.others !== undefined && { others: othersVal }),
         ...(name !== undefined && { name }),
       },
