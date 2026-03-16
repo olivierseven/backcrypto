@@ -230,6 +230,10 @@ export async function PATCH(req: Request) {
 
   const update: { layout?: unknown; indicators?: unknown; strategies?: unknown; others?: unknown } = {};
 
+  function toJsonInput(v: unknown): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue {
+    return v == null ? Prisma.DbNull : (v as Prisma.InputJsonValue);
+  }
+
   if (body.appliedStrategyIds !== undefined) {
     const appliedStrategyIds = Array.isArray(body.appliedStrategyIds)
       ? body.appliedStrategyIds.filter((id): id is string => typeof id === "string")
@@ -281,18 +285,29 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "invalid_body", message: "Send appliedStrategyIds, layout, indicators, strategies or others" }, { status: 400 });
   }
 
+  const updatePayload: {
+    layout?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+    indicators?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+    strategies?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+    others?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+  } = {};
+  if (update.layout !== undefined) updatePayload.layout = toJsonInput(update.layout);
+  if (update.indicators !== undefined) updatePayload.indicators = toJsonInput(update.indicators);
+  if (update.strategies !== undefined) updatePayload.strategies = toJsonInput(update.strategies);
+  if (update.others !== undefined) updatePayload.others = toJsonInput(update.others);
+
   await cryptoPrisma.chartLayout.upsert({
     where: { userId_slot: { userId, slot } },
     create: {
       userId,
       slot,
-      layout: update.layout ?? undefined,
-      indicators: update.indicators ?? undefined,
-      strategies: update.strategies ?? undefined,
-      others: update.others ?? undefined,
+      layout: update.layout !== undefined ? toJsonInput(update.layout) : undefined,
+      indicators: update.indicators !== undefined ? toJsonInput(update.indicators) : undefined,
+      strategies: update.strategies !== undefined ? toJsonInput(update.strategies) : undefined,
+      others: update.others !== undefined ? toJsonInput(update.others) : undefined,
       name: null,
     },
-    update,
+    update: updatePayload,
   });
 
   return NextResponse.json({ ok: true, slot });
