@@ -378,7 +378,7 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
   }
   if (receiptTo) {
     const valor = (amountCents / 100).toFixed(2).replace(".", ",");
-    const publicRef = `BG-${invoice.id.slice(-8).toUpperCase()}`;
+    const publicRef = `BG-${(invoice.id ?? "").slice(-8).toUpperCase()}`;
     const dashboardUrl = `${EMAIL_LINK_BASE}${BASE_PATH}/sistema`;
     const lang: CryptoLang = user?.language === "pt" ? "pt" : "en";
     const t = getCryptoT(lang).receiptEmail;
