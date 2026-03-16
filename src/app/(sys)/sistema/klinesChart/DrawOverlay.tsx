@@ -474,7 +474,7 @@ export function DrawOverlay({
               if (e.cancelable) e.preventDefault();
               const tail = segmentToPixel(drawPendingArrow.index1, drawPendingArrow.price1);
               const angleRad = Math.atan2(tail.y - point.py, point.px - tail.x);
-              setDrawPendingArrow((prev) => prev ? { ...prev, angleRad } : null);
+              setDrawPendingArrow({ ...drawPendingArrow, angleRad });
               return;
             }
             if (drawTool === "pencil" && drawPendingPencil !== null) {
