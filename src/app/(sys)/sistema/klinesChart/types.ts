@@ -236,7 +236,7 @@ export type KlinesChartProps = {
   /** Indicador vertical "volume no preço": usa cache do intervalo mapeado (ex.: 1h → 15m). */
   volumeAtPriceEnabled?: boolean;
   /** Klines do intervalo de cache para VAP (mesma moeda, tempo menor); quando definido, usa em vez de klines. */
-  volumeAtPriceKlines?: (string | number)[][];
+  volumeAtPriceKlines?: (string | number | null)[][];
   volumeAtPriceBuckets?: number;
   /** Percentual (20–100%) do máximo de velas do cache para o VAP; passo 1%. */
   volumeAtPricePercent?: number;
