@@ -574,7 +574,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     ichimokuShowSpanB: u.type === "Ichimoku" ? (u.ichimokuShowSpanB !== false) : undefined,
     ichimokuShowChikou: u.type === "Ichimoku" ? (u.ichimokuShowChikou === true) : undefined,
     showLastValueOnYAxis: u.showLastValueOnYAxis !== false,
-  };
+  } as UserIndicatorConfig;
   });
 }
 
