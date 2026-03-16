@@ -268,7 +268,7 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     const subFromParent = parent.subscription_details?.subscription;
     if (typeof subFromParent === "string") subscriptionId = subFromParent;
   }
-  if (!subscriptionId) {
+  if (!subscriptionId && typeof invoice.id === "string") {
     try {
       const fullInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ["subscription"] }) as InvoiceWithSubscription;
       subscriptionId = typeof fullInvoice.subscription === "string" ? fullInvoice.subscription : fullInvoice.subscription?.id ?? null;
