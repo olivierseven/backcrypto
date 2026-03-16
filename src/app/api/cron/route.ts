@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 
-const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
+const BINANCE_BASE = process.env.BINANCE_API_BASE_URL || "https://api.binance.com";
 const SYMBOLS = ["BTCUSDT", "ETHUSDT"];
 const INTERVAL_1M = "1m";
 const FAST_DAYS = 90;
@@ -49,15 +49,24 @@ async function fetchKlines(
   startTime: number,
   endTime: number
 ): Promise<BinanceKline[]> {
-  const url = new URL(BINANCE_KLINES);
+  const base = BINANCE_BASE.replace(/\/$/, "");
+  const url = new URL(`${base}/api/v3/klines`);
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("interval", INTERVAL_1M);
   url.searchParams.set("limit", "10");
   url.searchParams.set("startTime", String(startTime));
   url.searchParams.set("endTime", String(endTime));
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`Binance ${res.status}: ${await res.text()}`);
-  const data = (await res.json()) as unknown;
+  const text = await res.text();
+  if (!res.ok) {
+    if (res.status === 451) {
+      throw new Error(
+        "Binance 451: API bloqueada na região do servidor (Vercel). Use um proxy: defina BINANCE_API_BASE_URL com a URL de um proxy que encaminhe para https://api.binance.com"
+      );
+    }
+    throw new Error(`Binance ${res.status}: ${text}`);
+  }
+  const data = JSON.parse(text) as unknown;
   if (!Array.isArray(data)) return [];
   return data as BinanceKline[];
 }
