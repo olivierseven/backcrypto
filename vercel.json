@@ -4,5 +4,8 @@
   ],
   "crons": [
     { "path": "/crypto/api/cron", "schedule": "* * * * *" }
-  ]
+  ],
+  "functions": {
+    "src/app/api/cron/route.ts": { "regions": ["gru1"] }
+  }
 }
