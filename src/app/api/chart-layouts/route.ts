@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { Role } from "@/lib/prisma-bio-client";
+import { Prisma, Role } from "@/lib/prisma-bio-client";
 import { mergeColumnsToConfig, splitConfigToColumns } from "@/lib/chart-layout-columns";
 import { claimOrRejectSession, getTabIdFromRequest } from "@/lib/session-tab-claim";
 
@@ -133,17 +133,17 @@ export async function POST(req: Request) {
       create: {
         userId: targetUserId,
         slot,
-        layout: layoutCol,
-        indicators: indicatorsCol,
-        strategies: strategiesCol,
-        others: Object.keys(othersCol).length > 0 ? othersCol : null,
+        layout: layoutCol as Prisma.InputJsonValue,
+        indicators: indicatorsCol as Prisma.InputJsonValue,
+        strategies: strategiesCol as Prisma.InputJsonValue,
+        others: Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : null,
         name: name ?? null,
       },
       update: {
-        layout: layoutCol,
-        indicators: indicatorsCol,
-        strategies: strategiesCol,
-        others: othersCol,
+        layout: layoutCol as Prisma.InputJsonValue,
+        indicators: indicatorsCol as Prisma.InputJsonValue,
+        strategies: strategiesCol as Prisma.InputJsonValue,
+        others: othersCol as Prisma.InputJsonValue,
         ...(name !== undefined && { name }),
       },
     });
