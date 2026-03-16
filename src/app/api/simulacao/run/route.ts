@@ -44,7 +44,7 @@ function computeMapDisplayYearEntry(
 
 const GRID_SIZE = REGIAO_SIZE * REGIAO_SIZE;
 
-export function buildMapaFromNotWhitePixels(
+function buildMapaFromNotWhitePixels(
   notWhitePixels: [number, number][],
   indiceGrid?: number[],
   indiceBranco?: number
@@ -98,7 +98,7 @@ export function buildMapaFromNotWhitePixels(
   };
 }
 
-export type Body = {
+type Body = {
   mode: "one" | "n";
   params: Record<string, number>;
   state?: { vetor1: GenesisIndividual[]; vetor2: GenesisIndividual[]; especie: EspecieParams; mortesAcumuladas?: number };
@@ -123,12 +123,12 @@ type DebugContext = {
 };
 
 /** Soma qtde de vetor1 + vetor2. Usado para decisões de parada e, no genesis, para cobrar 1 coin só se houve população resultante. */
-export function totalPopulation(vetor1: { qtde: number }[], vetor2: { qtde: number }[]): number {
+function totalPopulation(vetor1: { qtde: number }[], vetor2: { qtde: number }[]): number {
   return (vetor1?.reduce((s, i) => s + (i?.qtde ?? 0), 0) ?? 0) + (vetor2?.reduce((s, i) => s + (i?.qtde ?? 0), 0) ?? 0);
 }
 
 /** Resultado de executeSimulationOne (1 iteração ou genesis). Usado pela fila para devolver ao cliente. */
-export type SimulationOneResult = {
+type SimulationOneResult = {
   vetor1: GenesisIndividual[];
   vetor2: GenesisIndividual[];
   especie: EspecieParams;
@@ -139,7 +139,7 @@ export type SimulationOneResult = {
 };
 
 /** Executa simulação em modo "one" (1 iteração ou genesis). Usado pelo run POST e pelo processador da fila (fila_1x). */
-export function executeSimulationOne(body: Body, _debugContext?: DebugContext | null): SimulationOneResult {
+function executeSimulationOne(body: Body, _debugContext?: DebugContext | null): SimulationOneResult {
   const { params, state, currentIteration, notWhitePixels, indiceGrid, indiceBranco, origensAgendadas } = body;
   const mapa = buildMapaFromNotWhitePixels(notWhitePixels ?? [], indiceGrid, indiceBranco);
   const periodoGenesis = params.periodo_i1 ?? -100;
@@ -225,7 +225,7 @@ export function executeSimulationOne(body: Body, _debugContext?: DebugContext | 
 }
 
 /** Executa simulação em modo "n" (batch). Usado pelo run POST e pelo processador da fila. */
-export function executeSimulationN(
+function executeSimulationN(
   body: Body,
   debugContext?: DebugContext | null
 ): {
