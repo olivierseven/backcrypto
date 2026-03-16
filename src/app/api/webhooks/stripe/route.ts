@@ -292,10 +292,10 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     return;
   }
 
-  const firstLine = invoice.lines?.data?.[0];
+  const firstLine = invoice.lines?.data?.[0] as { price?: { id?: string }; pricing?: { price_details?: { price?: string } } } | undefined;
   const priceId =
     firstLine?.price?.id ??
-    (firstLine as { pricing?: { price_details?: { price?: string } } } | undefined)?.pricing?.price_details?.price;
+    firstLine?.pricing?.price_details?.price;
   let coins = 0;
   if (priceId === PRICE_ID_7) coins = 7;
   else if (priceId === PRICE_ID_49) coins = 49;
