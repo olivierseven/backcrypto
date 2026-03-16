@@ -645,7 +645,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             </div>
           ) : (
           <>
-          {ind.type !== "ATR" && ind.type !== "ADX" && ind.type !== "VWAP" && ind.type !== "Donchian" && ind.type !== "Ichimoku" && (
+          {!["ATR", "ADX", "VWAP", "Donchian", "Ichimoku"].includes(ind.type as string) && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
               <select
