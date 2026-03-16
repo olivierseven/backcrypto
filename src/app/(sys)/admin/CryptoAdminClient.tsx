@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/app/constants";
 import { CRYPTO_WELCOME_COINS, CRYPTO_WELCOME_DURATION_DAYS } from "@/lib/crypto-bonus";
+import { BIO_WELCOME_COINS, BIO_WELCOME_DURATION_DAYS } from "@/lib/bio-bonus";
 
 interface Props {
   userId: string;
