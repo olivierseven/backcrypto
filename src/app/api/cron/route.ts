@@ -1,25 +1,30 @@
 /**
  * Cron job chamado pela Vercel a cada minuto (* * * * *).
- * Atualiza o último candle 1m em BinanceKlineFast (BTCUSDT).
- * Protegido por CRON_SECRET: definir na Vercel em Environment Variables.
+ * Replica a lógica 1m do binance-klines-fast-sync:
+ * - BinanceKlineFast 1m incremental para BTCUSDT e ETHUSDT
+ * - Atualiza o último candle (delete + insert) e insere novos
+ * - Expurgo: remove 1m com mais de 90 dias
+ * Protegido por CRON_SECRET (Vercel envia em Authorization: Bearer <CRON_SECRET>).
  */
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 
 const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
-const SYMBOL = "BTCUSDT";
-const INTERVAL = "1m";
+const SYMBOLS = ["BTCUSDT", "ETHUSDT"];
+const INTERVAL_1M = "1m";
+const FAST_DAYS = 90;
+const ONE_MINUTE_MS = 60 * 1000;
+
+function getCutoff90DaysMs(): number {
+  return Date.now() - FAST_DAYS * 24 * 60 * 60 * 1000;
+}
 
 type BinanceKline = [number, string, string, string, string, string, number, string, number, string, string, number];
 
-function klineToRow(
-  k: BinanceKline,
-  symbol: string,
-  interval: string
-) {
+function klineToRow(k: BinanceKline, symbol: string) {
   return {
     symbol,
-    interval,
+    interval: INTERVAL_1M,
     openTime: BigInt(k[0]),
     open: k[1],
     high: k[2],
@@ -34,6 +39,24 @@ function klineToRow(
   };
 }
 
+async function fetchKlines(
+  symbol: string,
+  startTime: number,
+  endTime: number
+): Promise<BinanceKline[]> {
+  const url = new URL(BINANCE_KLINES);
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("interval", INTERVAL_1M);
+  url.searchParams.set("limit", "10");
+  url.searchParams.set("startTime", String(startTime));
+  url.searchParams.set("endTime", String(endTime));
+  const res = await fetch(url.toString());
+  if (!res.ok) throw new Error(`Binance ${res.status}: ${await res.text()}`);
+  const data = (await res.json()) as unknown;
+  if (!Array.isArray(data)) return [];
+  return data as BinanceKline[];
+}
+
 export async function GET(request: Request) {
   try {
     const secret = process.env.CRON_SECRET;
@@ -42,34 +65,63 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Últimos 3 minutos para pegar o candle que acabou de fechar
     const now = Date.now();
-    const startTime = now - 4 * 60 * 1000;
-    const url = new URL(BINANCE_KLINES);
-    url.searchParams.set("symbol", SYMBOL);
-    url.searchParams.set("interval", INTERVAL);
-    url.searchParams.set("limit", "5");
-    url.searchParams.set("startTime", String(startTime));
+    const startWindow = getCutoff90DaysMs();
+    const cutoff = BigInt(startWindow);
+    const result: { symbol: string; inserted: number; purged: number }[] = [];
 
-    const res = await fetch(url.toString());
-    const text = await res.text();
-    if (!res.ok) {
-      console.error("[cron] Binance error", res.status, text.slice(0, 200));
-      return NextResponse.json({ error: "Binance request failed" }, { status: 502 });
+    for (const symbol of SYMBOLS) {
+      let inserted = 0;
+      const lastRow = await cryptoPrisma.binanceKlineFast.findFirst({
+        where: { symbol, interval: INTERVAL_1M },
+        orderBy: { openTime: "desc" },
+        select: { openTime: true },
+      });
+
+      const startTime = lastRow ? Number(lastRow.openTime) : now - 5 * ONE_MINUTE_MS;
+      if (startTime >= now) {
+        const purged = (
+          await cryptoPrisma.binanceKlineFast.deleteMany({
+            where: { symbol, interval: INTERVAL_1M, openTime: { lt: cutoff } },
+          })
+        ).count;
+        result.push({ symbol, inserted: 0, purged });
+        continue;
+      }
+
+      const klines = await fetchKlines(symbol, startTime, now);
+      if (klines.length === 0) {
+        const purged = (
+          await cryptoPrisma.binanceKlineFast.deleteMany({
+            where: { symbol, interval: INTERVAL_1M, openTime: { lt: cutoff } },
+          })
+        ).count;
+        result.push({ symbol, inserted: 0, purged });
+        continue;
+      }
+
+      if (lastRow) {
+        await cryptoPrisma.binanceKlineFast.deleteMany({
+          where: { symbol, interval: INTERVAL_1M, openTime: lastRow.openTime },
+        });
+      }
+      const rows = klines.map((k) => klineToRow(k, symbol));
+      const { count } = await cryptoPrisma.binanceKlineFast.createMany({
+        data: rows,
+        skipDuplicates: true,
+      });
+      inserted = count;
+
+      const purged = (
+        await cryptoPrisma.binanceKlineFast.deleteMany({
+          where: { symbol, interval: INTERVAL_1M, openTime: { lt: cutoff } },
+        })
+      ).count;
+
+      result.push({ symbol, inserted, purged });
     }
 
-    const data = JSON.parse(text) as unknown;
-    if (!Array.isArray(data) || data.length === 0) {
-      return NextResponse.json({ ok: true, inserted: 0 });
-    }
-
-    const rows = (data as BinanceKline[]).map((k) => klineToRow(k, SYMBOL, INTERVAL));
-    const { count } = await cryptoPrisma.binanceKlineFast.createMany({
-      data: rows,
-      skipDuplicates: true,
-    });
-
-    return NextResponse.json({ ok: true, inserted: count });
+    return NextResponse.json({ ok: true, result });
   } catch (e) {
     console.error("[api/cron]", e);
     return NextResponse.json(
