@@ -412,7 +412,7 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     type: u.type as UserIndicatorType,
     period,
     intervals,
-    fieldKey: u.type === "WilliamsR" ? "close" : (u.type === "OBV" || u.type === "AD" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" || u.type === "CMF" || u.type === "Ichimoku" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey),
+    fieldKey: (u.type === "WilliamsR" ? "close" : (u.type === "OBV" || u.type === "AD" ? "volume" : u.type === "ATR" || u.type === "VWAP" || u.type === "ADX" || u.type === "MFI" || u.type === "CMF" || u.type === "Ichimoku" ? "close" : u.type === "Volume" ? "volume" : u.type === "CCI" ? (u.fieldKey ?? "HLC3") : u.fieldKey)) as IndicatorFieldKey,
     panel: u.type === "SAR" || u.type === "VWAP" || u.type === "Ichimoku" ? "main" : (u.panel === "main" || u.panel === "panel2" || u.panel === "panel3" || u.panel === "panel4" || u.panel === "panel5"
       ? u.panel
       : (u.type === "RSI" || u.type === "MFI" || u.type === "MACD" || u.type === "Stochastic" || u.type === "WilliamsR" || u.type === "OBV" || u.type === "AD" || u.type === "ATR" || u.type === "Volume" || u.type === "ADX" || u.type === "CCI" || u.type === "CMF" ? "panel2" : "main")),
