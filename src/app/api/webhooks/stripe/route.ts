@@ -257,8 +257,11 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
  * Cobrança recorrente da assinatura: a cada mês ($7) ou ano ($49) que o Stripe cobra e paga,
  * creditamos 7 ou 49 coins. Se o usuário cancelar o cartão ou parar de pagar, não há evento → não creditamos.
  */
+type InvoiceWithSubscription = Stripe.Invoice & { subscription?: string | Stripe.Subscription };
+
 async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Invoice): Promise<void> {
-  let subscriptionId: string | null = typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id ?? null;
+  const inv = invoice as InvoiceWithSubscription;
+  let subscriptionId: string | null = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id ?? null;
   // API 2025+: subscription pode vir em parent.subscription_details.subscription
   if (!subscriptionId && invoice.parent && typeof invoice.parent === "object") {
     const parent = invoice.parent as { subscription_details?: { subscription?: string } };
@@ -267,7 +270,7 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
   }
   if (!subscriptionId) {
     try {
-      const fullInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ["subscription"] });
+      const fullInvoice = await stripe.invoices.retrieve(invoice.id, { expand: ["subscription"] }) as InvoiceWithSubscription;
       subscriptionId = typeof fullInvoice.subscription === "string" ? fullInvoice.subscription : fullInvoice.subscription?.id ?? null;
       if (!subscriptionId && (fullInvoice as { parent?: { subscription_details?: { subscription?: string } } }).parent?.subscription_details?.subscription) {
         subscriptionId = (fullInvoice as { parent: { subscription_details: { subscription: string } } }).parent.subscription_details.subscription;
