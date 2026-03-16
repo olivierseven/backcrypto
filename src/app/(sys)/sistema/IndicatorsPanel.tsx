@@ -717,9 +717,9 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
     setEditForm({
-      period: ind.period,
-      periodText: String(ind.period),
-      fieldKey,
+      period: ind.type === "VWAP" ? 1 : ind.period,
+      periodText: ind.type === "VWAP" ? "1" : String(ind.period),
+      fieldKey: ind.type === "VWAP" ? "close" : fieldKey,
       color: ind.color,
       panel,
       lineWidth: (ind.lineWidth === "thin" || ind.lineWidth === "normal" ? ind.lineWidth : "normal") as IndicatorLineWidth,
@@ -867,7 +867,6 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       sarMax: ind.type === "SAR" ? (typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2) : 0.2,
       sarMaxText: String(ind.type === "SAR" ? (typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2) : 0.2),
       sarPointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : "normal",
-      ...(ind.type === "VWAP" ? { period: 1, periodText: "1", fieldKey: "close" as const } : {}),
       bollingerMaType: ind.type === "Bollinger" ? (ind.bollingerMaType === "SMA" || ind.bollingerMaType === "EMA" || ind.bollingerMaType === "WMA" ? ind.bollingerMaType : "SMA") : "SMA",
       bollingerZ: ind.type === "Bollinger" ? (typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2) : 2,
       bollingerZText: String(ind.type === "Bollinger" ? (typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2) : 2),
