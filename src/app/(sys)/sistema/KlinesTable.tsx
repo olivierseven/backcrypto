@@ -1331,7 +1331,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   ? config.appliedStrategyIds.filter((x): x is string => typeof x === "string")
                   : null;
               const indicatorIds = new Set<string>(
-                (indicatorsFromLayout ?? userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
+                (Array.isArray(indicatorsFromLayout) ? indicatorsFromLayout : userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
               );
               const strategiesList: Strategy[] = strategiesFromLayoutRaw
                 ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
