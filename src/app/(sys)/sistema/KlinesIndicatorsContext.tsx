@@ -161,6 +161,26 @@ export interface UserIndicatorConfig {
   /** Só para Bollinger: estilo de traço da média. */
   bollingerMiddleLineStyle?: IndicatorLineStyle;
   bollingerMiddleLineWidth?: IndicatorLineWidth;
+  /** Só para Keltner: tipo da média móvel (SMA | EMA | WMA). */
+  keltnerMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para Keltner: multiplicador (0–10, default 2). */
+  keltnerMultiplier?: number;
+  /** Só para Keltner: exibir banda superior (default true). */
+  keltnerShowUpper?: boolean;
+  /** Só para Keltner: exibir banda inferior (default true). */
+  keltnerShowLower?: boolean;
+  /** Só para Keltner: exibir linha da média móvel (default false). */
+  keltnerShowMiddle?: boolean;
+  /** Só para Keltner: opacidade da faixa (0–0.3, default 0.2). */
+  keltnerBandOpacity?: number;
+  /** Só para Keltner: cor das bandas superior/inferior. */
+  keltnerLimitsColor?: string;
+  keltnerLimitsLineStyle?: IndicatorLineStyle;
+  keltnerLimitsLineWidth?: IndicatorLineWidth;
+  /** Só para Keltner: cor da média móvel. */
+  keltnerMiddleColor?: string;
+  keltnerMiddleLineStyle?: IndicatorLineStyle;
+  keltnerMiddleLineWidth?: IndicatorLineWidth;
   /** Só para Donchian Channels: exibir canal superior (default true). */
   donchianShowUpper?: boolean;
   /** Só para Donchian Channels: exibir canal inferior (default true). */
