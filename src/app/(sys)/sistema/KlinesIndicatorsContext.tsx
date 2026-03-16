@@ -64,6 +64,20 @@ export interface UserIndicatorConfig {
   rsiLimitColor?: string;
   rsiLimitLineWidth?: IndicatorLineWidth;
   rsiLimitLineStyle?: IndicatorLineStyle;
+  /** Só para MFI: escala fixa 0–100 no eixo Y (default true). */
+  mfiFixedScale?: boolean;
+  /** Só para MFI: exibir linha central em 50. */
+  mfiCenterLine?: boolean;
+  mfiCenterLineColor?: string;
+  mfiCenterLineWidth?: IndicatorLineWidth;
+  mfiCenterLineStyle?: IndicatorLineStyle;
+  /** Só para MFI: exibir limites superior/inferior. */
+  mfiLimits?: boolean;
+  mfiLimitUpper?: number;
+  mfiLimitLower?: number;
+  mfiLimitColor?: string;
+  mfiLimitLineWidth?: IndicatorLineWidth;
+  mfiLimitLineStyle?: IndicatorLineStyle;
   /** Só para MACD: tipo da média rápida (SMA | EMA | WMA). */
   macdFastMaType?: "SMA" | "EMA" | "WMA";
   /** Só para MACD: período da média rápida. */
