@@ -13,7 +13,7 @@ export const CLOSE_INDEX = 4;
  * Exportada para uso no cliente (cálculo de indicadores do usuário).
  */
 export function computeSmaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -44,7 +44,7 @@ export function computeSmaColumn(
  * e depois EMA[i] = α*value[i] + (1-α)*EMA[i+1] do mais antigo para o mais recente.
  */
 export function computeEmaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -92,7 +92,7 @@ export function computeEmaColumn(
  * Denominador = 1+2+...+period = period*(period+1)/2.
  */
 export function computeWmaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -162,7 +162,7 @@ function computeWmaFromValues(
  * Períodos fracionários são arredondados (n/2 e √n pelo menos 1).
  */
 export function computeHmaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -193,7 +193,7 @@ export const VOLUME_INDEX = 5;
  * Preço = coluna valueIndex (ex.: close); volume = coluna 5.
  */
 export function computeVwmaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -226,7 +226,7 @@ export function computeVwmaColumn(
  * DP = sqrt( média dos (x - média)² ).
  */
 export function computeStdColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -272,7 +272,7 @@ export type BollingerMaType = "SMA" | "EMA" | "WMA";
  * Retorna três colunas: upper, middle, lower (todas no mesmo tamanho que data).
  */
 export function computeBollingerBands(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number,
   maType: BollingerMaType,
@@ -310,7 +310,7 @@ export function computeBollingerBands(
  * ATR usa high, low, close (colunas 2, 3, 4). Retorna upper, middle, lower (mesmo tamanho que data).
  */
 export function computeKeltnerChannels(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number,
   maType: BollingerMaType,
@@ -353,7 +353,7 @@ const LOW_INDEX = 3;
  * Retorna três colunas: upper, middle, lower (mesmo tamanho que data).
  */
 export function computeDonchianChannels(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number
 ): { upper: (number | null)[]; middle: (number | null)[]; lower: (number | null)[] } {
   const periodUse = Math.max(1, Math.min(500, period));
@@ -396,7 +396,7 @@ export function computeDonchianChannels(
  * Senkou Span A e B no gráfico são desenhados **displacement** candles à frente (área futura + velas invisíveis): A = (Tenkan+Kijun)/2, B = spanBRaw no mesmo candle.
  */
 export function computeIchimokuColumns(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   tenkanPeriod: number,
   kijunPeriod: number,
   spanBPeriod: number,
@@ -463,7 +463,7 @@ export function computeIchimokuColumns(
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeRsiColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -471,7 +471,7 @@ export function computeRsiColumn(
   const out: (number | null)[] = new Array(n).fill(null);
   if (period < 1 || n < period + 2) return out;
 
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -533,14 +533,14 @@ const CLOSE_IDX_COL = 4;
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeMfiColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number
 ): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = new Array(n).fill(null);
   if (period < 1 || n < period + 2) return out;
 
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -612,7 +612,7 @@ export function computeMfiColumn(
 export type MaType = "SMA" | "EMA" | "WMA";
 
 function computeMaColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   maType: MaType,
   period: number
@@ -629,13 +629,13 @@ function computeMaColumn(
  * - Sobre outro indicador (valueIndex >= 12): usa a mesma coluna para min/max no período e valor atual (Stochastic do indicador).
  */
 export function computeStochasticKColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number,
   valueIndex: number
 ): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = [];
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -676,13 +676,13 @@ export function computeStochasticKColumn(
  * Dados em ordem DESC; usa high[2], low[3], price = valueIndex (tipicamente close 4).
  */
 export function computeWilliamsRColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number,
   valueIndex: number
 ): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = [];
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -713,11 +713,11 @@ export function computeWilliamsRColumn(
  * Se close atual > close anterior: OBV += volume; se close < anterior: OBV -= volume; senão mantém.
  * Dados em ordem DESC (índice 0 = mais recente). Usa close[4] e volume em volumeIndex (5 = base, 7 = USDT).
  */
-export function computeObvColumn(data: (string | number)[][], volumeIndex: number = 5): (number | null)[] {
+export function computeObvColumn(data: (string | number | null)[][], volumeIndex: number = 5): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = new Array(n).fill(null);
   if (n === 0) return out;
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -757,11 +757,11 @@ export function computeObvColumn(data: (string | number)[][], volumeIndex: numbe
  * A/D = soma acumulada de Money Flow Volume (do mais antigo para o mais recente).
  * Dados em ordem DESC (índice 0 = mais recente). Usa high[2], low[3], close[4], volume em volumeIndex (5 = base, 7 = USDT).
  */
-export function computeAdColumn(data: (string | number)[][], volumeIndex: number = 5): (number | null)[] {
+export function computeAdColumn(data: (string | number | null)[][], volumeIndex: number = 5): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = new Array(n).fill(null);
   if (n === 0) return out;
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -797,7 +797,7 @@ export function computeAdColumn(data: (string | number)[][], volumeIndex: number
  * Dados em ordem DESC (índice 0 = mais recente). Usa apenas high, low, close (sem escolha de campo).
  */
 export function computeAtrColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number
 ): (number | null)[] {
   const n = data.length;
@@ -805,7 +805,7 @@ export function computeAtrColumn(
   const periodUse = Math.max(1, Math.min(500, period));
   if (n < periodUse) return out;
 
-  const get = (row: (string | number)[], col: number): number | null => {
+  const get = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -869,7 +869,7 @@ export function computeVwapColumn(data: (string | number)[][]): (number | null)[
   const out: (number | null)[] = new Array(n).fill(null);
   if (n === 0) return out;
 
-  const get = (row: (string | number)[], col: number): number | null => {
+  const get = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -911,7 +911,7 @@ export function computeVwapColumn(data: (string | number)[][]): (number | null)[
  * Dados em ordem DESC (índice 0 = mais recente). Usa high, low, close.
  */
 export function computeParabolicSarColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   start: number,
   increment: number,
   max: number
@@ -920,7 +920,7 @@ export function computeParabolicSarColumn(
   const out: (number | null)[] = new Array(n).fill(null);
   if (n < 2) return out;
 
-  const get = (row: (string | number)[], col: number): number | null => {
+  const get = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -1024,7 +1024,7 @@ export function computeParabolicSarColumn(
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeMacdColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   fastMaType: MaType,
   fastPeriod: number,
@@ -1053,7 +1053,7 @@ export function computeMacdColumn(
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeAdxColumns(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number
 ): { plusDi: (number | null)[]; minusDi: (number | null)[]; adx: (number | null)[] } {
   const n = data.length;
@@ -1063,7 +1063,7 @@ export function computeAdxColumns(
   const periodUse = Math.max(1, Math.min(500, period));
   if (n < periodUse + 1) return { plusDi, minusDi, adx };
 
-  const get = (row: (string | number)[], col: number): number | null => {
+  const get = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -1166,7 +1166,7 @@ export function computeAdxColumns(
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeCciColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   valueIndex: number,
   period: number
 ): (number | null)[] {
@@ -1175,7 +1175,7 @@ export function computeCciColumn(
   const periodUse = Math.max(1, Math.min(500, period));
   if (n < periodUse) return new Array(n).fill(null);
 
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
@@ -1223,7 +1223,7 @@ export function computeCciColumn(
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeCmfColumn(
-  data: (string | number)[][],
+  data: (string | number | null)[][],
   period: number
 ): (number | null)[] {
   const n = data.length;
@@ -1231,7 +1231,7 @@ export function computeCmfColumn(
   const periodUse = Math.max(1, Math.min(500, period));
   if (n < periodUse) return new Array(n).fill(null);
 
-  const getNum = (row: (string | number)[], col: number): number | null => {
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
     if (raw == null) return null;
     const v = Number(raw);
