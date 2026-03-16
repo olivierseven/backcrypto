@@ -1,5 +1,10 @@
 /**
  * Cron job chamado pela Vercel a cada minuto (* * * * *).
+ * Path na Vercel: /crypto/api/cron (basePath do app é /crypto).
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Replica a lógica 1m do binance-klines-fast-sync:
  * - BinanceKlineFast 1m incremental para BTCUSDT e ETHUSDT
  * - Atualiza o último candle (delete + insert) e insere novos
