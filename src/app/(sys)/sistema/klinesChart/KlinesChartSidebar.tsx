@@ -122,7 +122,7 @@ export interface KlinesChartSidebarProps {
   drawingsVisible: boolean;
   setDrawingsVisible: (v: boolean | ((o: boolean) => boolean)) => void;
   drawMode: boolean;
-  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
+  drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
   drawMagnetic: boolean;
   setDrawMagnetic: (v: boolean) => void;
   drawPanelSide: "left" | "right";
