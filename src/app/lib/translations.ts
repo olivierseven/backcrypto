@@ -2362,3 +2362,6 @@ export function translateValidationError(msg: string | null, lang: CryptoLang): 
 export function getCryptoT(lang: CryptoLang) {
   return cryptoTranslations[lang] ?? cryptoTranslations.en;
 }
+
+/** Alias para compatibilidade com BioResetPasswordForm e outras páginas Bio. */
+export const bioTranslations = cryptoTranslations;
