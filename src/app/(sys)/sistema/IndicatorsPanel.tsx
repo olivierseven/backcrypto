@@ -900,7 +900,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
       showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
       intervals: [...(ind.intervals || [])],
-    });
+    } as AddFormState);
   }, []);
 
   const saveEdit = useCallback(() => {
