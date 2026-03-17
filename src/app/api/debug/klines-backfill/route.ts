@@ -13,7 +13,7 @@ import { getKlineSymbols, isAllowedSymbol, isBinanceInvalidSymbolError, resolveS
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const CORRETORA = "binance";
-const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
+const BINANCE_BASE = (process.env.BINANCE_API_BASE_URL || "https://api.binance.com").replace(/\/$/, "");
 const LIMIT = 1000;
 const ONE_MINUTE_MS = 60 * 1000;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
@@ -31,7 +31,7 @@ async function fetchBinanceKlines(
   endTime: number,
   options?: { omitEndTime?: boolean }
 ): Promise<[number, string, string, string, string, string, number, string, number, string, string, number][]> {
-  const url = new URL(BINANCE_KLINES);
+  const url = new URL(`${BINANCE_BASE}/api/v3/klines`);
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("interval", interval);
   url.searchParams.set("limit", String(LIMIT));
@@ -40,7 +40,14 @@ async function fetchBinanceKlines(
   const urlStr = url.toString();
   const res = await fetch(urlStr);
   const text = await res.text();
-  if (!res.ok) throw new Error(`Binance ${res.status}: ${text}`);
+  if (!res.ok) {
+    if (res.status === 451) {
+      throw new Error(
+        "Binance 451: API bloqueada na região do servidor. Defina BINANCE_API_BASE_URL com a URL de um proxy (ex.: São Paulo) que encaminhe para https://api.binance.com"
+      );
+    }
+    throw new Error(`Binance ${res.status}: ${text}`);
+  }
   const data = JSON.parse(text) as unknown;
   if (!Array.isArray(data)) {
     console.warn("[klines-backfill] Binance non-array response:", text.slice(0, 300));

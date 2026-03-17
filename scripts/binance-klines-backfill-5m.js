@@ -12,7 +12,7 @@ require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
 const { PrismaClient } = require("../src/lib/prisma-bio-client");
 
-const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
+const BINANCE_BASE = (process.env.BINANCE_API_BASE_URL || "https://api.binance.com").replace(/\/$/, "");
 const SYMBOL = "BTCUSDT";
 const INTERVAL = "5m";
 const LIMIT = 1000;
@@ -41,7 +41,7 @@ function sleep(ms) {
 }
 
 async function fetchKlines(startTime, endTime) {
-  const url = new URL(BINANCE_KLINES);
+  const url = new URL(`${BINANCE_BASE}/api/v3/klines`);
   url.searchParams.set("symbol", SYMBOL);
   url.searchParams.set("interval", INTERVAL);
   url.searchParams.set("limit", String(LIMIT));
