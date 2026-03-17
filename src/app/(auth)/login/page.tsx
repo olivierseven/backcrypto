@@ -5,6 +5,11 @@ import { jwtVerify } from "jose";
 import BioLoginForm from "@/app/BioLoginForm";
 import BioMaintenanceView from "@/app/BioMaintenanceView";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
+import {
+  getBypassCookieName,
+  verifyBypassCookie,
+  isBypassConfigured,
+} from "@/lib/maintenance-bypass";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,11 +47,14 @@ export default async function LoginPage({
   }
 
   if (process.env.SITE_MAINTENANCE === "1") {
-    return (
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
-        <BioMaintenanceView />
-      </Suspense>
-    );
+    const bypassCookie = store.get(getBypassCookieName())?.value;
+    if (!verifyBypassCookie(bypassCookie)) {
+      return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
+          <BioMaintenanceView showBypassForm={isBypassConfigured()} />
+        </Suspense>
+      );
+    }
   }
 
   return (

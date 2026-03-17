@@ -1,11 +1,12 @@
 import { ASSET_PREFIX } from "./constants";
+import BioMaintenanceBypassForm from "./BioMaintenanceBypassForm";
 
 const MAINTENANCE_MSG = {
   en: "The server is under maintenance for improvements and we'll be back soon.",
   pt: "O servidor está em manutenção para melhoria/ajuste e voltaremos em breve.",
 };
 
-export default function BioMaintenanceView() {
+export default function BioMaintenanceView({ showBypassForm = false }: { showBypassForm?: boolean }) {
   return (
     <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
       <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-12 sm:py-10">
@@ -65,7 +66,8 @@ export default function BioMaintenanceView() {
                 <p className="text-zinc-700">{MAINTENANCE_MSG.en}</p>
               </div>
               <p className="text-zinc-600 text-sm">{MAINTENANCE_MSG.pt}</p>
-              <p className="text-zinc-500 text-xs border-t border-zinc-200 pt-4">
+              {showBypassForm && <BioMaintenanceBypassForm />}
+              <p className="text-zinc-500 text-xs border-t border-zinc-200 pt-4 mt-4">
                 {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>

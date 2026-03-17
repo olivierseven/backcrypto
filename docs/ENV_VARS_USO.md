@@ -34,6 +34,8 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 | **UNVERIFIED_TTL_HOURS** | `src/app/api/auth/register/route.ts` — limpeza de contas não verificadas (padrão 24) |
 | **GOOGLE_CLIENT_ID** | `src/app/api/auth/google/start/route.ts`, `callback/route.ts` — OAuth Google |
 | **GOOGLE_CLIENT_SECRET** | `src/app/api/auth/google/callback/route.ts` — OAuth Google |
+| **SITE_MAINTENANCE** | `src/app/(auth)/login/page.tsx`, `register/page.tsx`, `reset-password/page.tsx` — quando `"1"`, exibe tela de manutenção. |
+| **MAINTENANCE_BYPASS_PASSWORD** | `src/lib/maintenance-bypass.ts`, `src/app/api/maintenance-bypass/route.ts` — senha para liberar acesso durante a manutenção (cookie 24h). Opcional. |
 | **AUTH_PUBLIC_ORIGIN** | `src/lib/redirect-origin.ts` — origem usada no OAuth quando atrás de proxy (ex.: `https://sevencoins.com.br`). Opcional; em produção evita “Connection failed” se o proxy não enviar `X-Forwarded-Host`. |
 
 **Google Cloud Console (OAuth):**
@@ -56,7 +58,7 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 - **RESEND_API_KEY**, **MAIL_FROM**, **MAIL_REPLY_TO**, **MAIL_CONTACT**
 - **ADMIN_EMAIL**, **EMAIL_VERIFICATION_TOKEN_TTL_MIN**, **JWT_EXPIRES_DAYS**, **SECURE_COOKIES**
 - **STRIPE_SECRET_KEY**, **PRICE_COINS_700**, **PRICE_COINS_4900**, **STRIPE_WEBHOOK_SECRET** (são do app principal; no Bio só os **BG_***)
-- **UNVERIFIED_TTL_HOURS**, **SITE_MAINTENANCE**, **MAINT_BYPASS_TOKEN**
+- **UNVERIFIED_TTL_HOURS**
 - **NEXT_PUBLIC_SHOW_COOKIE_BANNER**
 - **NEXT_PUBLIC_ADS_MODE**, **NEXT_PUBLIC_ADS_CLIENT**, **NEXT_PUBLIC_ADS_SLOT_*****, **NEXT_PUBLIC_ADS_TEST**
 - **ERBI_API_KEY**, **GEMINI_***, **SUMMARIZER_ENGINE**, **NEXT_PUBLIC_ERBI_API_KEY**
