@@ -2,13 +2,18 @@
  * Dispara o sync de klines 1m + 1h (BinanceKlineFast e BinanceKline) chamando a API.
  * Única fonte da lógica: GET /api/cron (rota no app, mesmo do cron a cada minuto na Vercel).
  *
- * Uso: CRON_SECRET=xxx node scripts/binance-klines-fast-sync.js
- *      SYNC_URL=https://backcrypto.vercel.app/crypto node scripts/binance-klines-fast-sync.js
- * Requer: CRON_SECRET no .env ou em variável de ambiente.
+ * Uso: CRON_SECRET no .env. SYNC_URL opcional.
+ * - Sem SYNC_URL: chama produção (https://backcrypto.vercel.app/crypto).
+ * - Em dev: no .env.local defina SYNC_URL=http://localhost:3004/crypto e tenha o servidor rodando; o VBS atualiza o banco do .env (dev).
  */
 
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+const envLocal = path.resolve(__dirname, "..", ".env.local");
+if (fs.existsSync(envLocal)) {
+  require("dotenv").config({ path: envLocal, override: true });
+}
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const BASE_URL = (process.env.SYNC_URL || "https://backcrypto.vercel.app/crypto").replace(/\/$/, "");

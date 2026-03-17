@@ -793,7 +793,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       setNeedsRefresh(false);
       const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
       const res = await fetch(
-        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`
+        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`,
+        { cache: "no-store" }
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

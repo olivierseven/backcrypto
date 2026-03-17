@@ -8,6 +8,7 @@ import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
 import { runDrawingsQaTests } from "./debug/drawingsQaTests";
+import { runIndicatorsQaTests } from "./debug/indicatorsQaTests";
 
 type ValidateSingleResult = {
   symbol: string;
@@ -53,9 +54,19 @@ export default function SistemaDebugPanel() {
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
   const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa">("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
+  const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
   const [sessionDebugEnabled, setSessionDebugEnabledState] = useState(false);
   const [sessionDebugInfo, setSessionDebugInfoState] = useState<SessionDebugInfo | null>(null);
+  const [syncKlinesLoading, setSyncKlinesLoading] = useState(false);
+  const [syncKlinesMessage, setSyncKlinesMessage] = useState<string | null>(null);
+  const [cacheRefreshLoading, setCacheRefreshLoading] = useState(false);
+  const [cacheRefreshMessage, setCacheRefreshMessage] = useState<string | null>(null);
+  const [isDevHost, setIsDevHost] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setIsDevHost(window.location.hostname === "localhost");
+  }, []);
 
   useEffect(() => {
     setSessionDebugEnabledState(getSessionDebugEnabled());
@@ -397,6 +408,51 @@ export default function SistemaDebugPanel() {
     }
   }
 
+  async function runSyncKlines() {
+    setSyncKlinesMessage(null);
+    setSyncKlinesLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/debug/sync-klines`, { credentials: "include", cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSyncKlinesMessage((data?.error ?? `HTTP ${res.status}`) + (data?.details ? ` — ${JSON.stringify(data.details)}` : ""));
+        return;
+      }
+      const lines = data?.result?.map((r: { symbol: string; inserted: number; purged: number; inserted1h: number; purged1h: number }) =>
+        `${r.symbol}: 1m +${r.inserted} −${r.purged} | 1h +${r.inserted1h} −${r.purged1h}`
+      ) ?? [];
+      setSyncKlinesMessage(lines.length ? lines.join("\n") : (t as { ok?: string }).ok ?? "OK");
+      runValidate();
+    } catch (e) {
+      setSyncKlinesMessage(e instanceof Error ? e.message : t.error);
+    } finally {
+      setSyncKlinesLoading(false);
+    }
+  }
+
+  async function runCacheRefresh() {
+    setCacheRefreshMessage(null);
+    setCacheRefreshLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/debug/cache-refresh`, { credentials: "include", cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCacheRefreshMessage((data?.error ?? `HTTP ${res.status}`) + (data?.details ? ` — ${JSON.stringify(data.details)}` : ""));
+        return;
+      }
+      const total = data?.totalRows ?? 0;
+      const lines = data?.details?.map((d: { symbol: string; interval: string; rows: number }) =>
+        `${d.symbol} ${d.interval}: ${d.rows} rows`
+      ) ?? [];
+      setCacheRefreshMessage(total ? `Total: ${total} rows\n${lines.join("\n")}` : (t as { ok?: string }).ok ?? "OK");
+      runValidate();
+    } catch (e) {
+      setCacheRefreshMessage(e instanceof Error ? e.message : t.error);
+    } finally {
+      setCacheRefreshLoading(false);
+    }
+  }
+
   function ResultBlock({ label, res }: { label: string; res: ValidateSingleResult }) {
     const interval = res.interval as "1m" | "1h";
     const canBackfill = !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "1h");
@@ -724,9 +780,56 @@ export default function SistemaDebugPanel() {
                 <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
               )}
             </section>
+            {isDevHost && (
+              <>
+              <section className="mt-4">
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).syncKlinesDevTitle ?? "Sync klines (dev)"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).syncKlinesDevHint ?? "Atualiza BinanceKlineFast 1m e BinanceKline 1h no banco do .env. Só em localhost; produção não é afetada."}
+                </p>
+                <button
+                  type="button"
+                  disabled={syncKlinesLoading}
+                  onClick={() => runSyncKlines()}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {syncKlinesLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).syncKlinesDevRun ?? "Executar sync agora")}
+                </button>
+                {syncKlinesMessage && (
+                  <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
+                    {syncKlinesMessage}
+                  </pre>
+                )}
+              </section>
+              <section className="mt-4">
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).cacheRefreshDevTitle ?? "Refresh cache (dev)"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).cacheRefreshDevHint ?? "Recria BinanceKlineCache (3m–1D) a partir de 1m/1h. Só em localhost; produção não é afetada."}
+                </p>
+                <button
+                  type="button"
+                  disabled={cacheRefreshLoading}
+                  onClick={() => runCacheRefresh()}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {cacheRefreshLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).cacheRefreshDevRun ?? "Executar refresh agora")}
+                </button>
+                {cacheRefreshMessage && (
+                  <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
+                    {cacheRefreshMessage}
+                  </pre>
+                )}
+              </section>
+              </>
+            )}
               </>
             )}
             {debugTab === "qa" && (
+              <>
               <section>
                 <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                   {(t as Record<string, string>).qaDrawingsTitle ?? "Testes QA — Desenhos"}
@@ -767,6 +870,47 @@ export default function SistemaDebugPanel() {
                   </>
                 )}
               </section>
+              <section className="mt-6">
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).qaIndicatorsTitle ?? "Testes QA — Indicadores"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).qaIndicatorsHint ?? "SMA: adicionar em 1h e 4h, verificar que não aparece em 2h; editar para todos os tempos; cor/espessura; séries em criar estratégia e meus indicadores; excluir."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setQaIndicatorResults(runIndicatorsQaTests())}
+                  className="mb-3 text-sm font-medium px-3 py-2 rounded-md bg-zinc-800 text-white hover:bg-zinc-700"
+                >
+                  {(t as Record<string, string>).qaIndicatorsRun ?? "Executar testes — Indicadores"}
+                </button>
+                {qaIndicatorResults.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Clique em &quot;Executar testes — Indicadores&quot; para rodar.</p>
+                ) : (
+                  <>
+                    <ul className="space-y-3">
+                      {qaIndicatorResults.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="shrink-0" aria-hidden>{r.pass ? "✅" : "❌"}</span>
+                          <div className="min-w-0 flex-1">
+                            <span className={r.pass ? "text-zinc-700" : "text-red-700"}>{r.name}</span>
+                            {r.message != null && <span className="block text-xs text-zinc-500 mt-0.5">{r.message}</span>}
+                            {r.evidence != null && (
+                              <pre className="mt-1.5 p-2 text-[10px] font-mono text-zinc-600 bg-zinc-100 rounded border border-zinc-200 whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                                {r.evidence}
+                              </pre>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-xs text-zinc-500">
+                      {(t as Record<string, string>).qaIndicatorsSummary ?? "Total"}: {qaIndicatorResults.filter((r) => r.pass).length}/{qaIndicatorResults.length} passaram
+                    </p>
+                  </>
+                )}
+              </section>
+              </>
             )}
             {debugTab === "inspect" && (
               <>

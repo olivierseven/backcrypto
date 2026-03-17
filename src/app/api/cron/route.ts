@@ -50,18 +50,20 @@ function klineToRow(k: BinanceKline, symbol: string, interval: string) {
   };
 }
 
-async function fetchKlines(
+/** Candles por request (API Binance máx 1000; usar 1000). */
+const SYNC_KLINES_LIMIT = 1000;
+
+async function fetchKlinesChunk(
   symbol: string,
   interval: string,
   startTime: number,
-  endTime: number,
-  limit = 10
+  endTime: number
 ): Promise<BinanceKline[]> {
   const base = BINANCE_BASE.replace(/\/$/, "");
   const url = new URL(`${base}/api/v3/klines`);
   url.searchParams.set("symbol", symbol);
   url.searchParams.set("interval", interval);
-  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("limit", String(SYNC_KLINES_LIMIT));
   url.searchParams.set("startTime", String(startTime));
   url.searchParams.set("endTime", String(endTime));
   const res = await fetch(url.toString());
@@ -77,6 +79,26 @@ async function fetchKlines(
   const data = JSON.parse(text) as unknown;
   if (!Array.isArray(data)) return [];
   return data as BinanceKline[];
+}
+
+/** Busca todos os candles de startTime até endTime (Binance devolve até 1000 por request; faz loop até acabar). */
+async function fetchKlinesUpToNow(
+  symbol: string,
+  interval: string,
+  startTime: number,
+  endTime: number
+): Promise<BinanceKline[]> {
+  const all: BinanceKline[] = [];
+  let currentStart = startTime;
+  while (currentStart < endTime) {
+    const chunk = await fetchKlinesChunk(symbol, interval, currentStart, endTime);
+    if (chunk.length === 0) break;
+    all.push(...chunk);
+    const lastOpen = chunk[chunk.length - 1]![0];
+    currentStart = lastOpen + (interval === INTERVAL_1M ? ONE_MINUTE_MS : ONE_HOUR_MS);
+    if (chunk.length < SYNC_KLINES_LIMIT) break;
+  }
+  return all;
 }
 
 export async function GET(request: Request) {
@@ -113,7 +135,7 @@ export async function GET(request: Request) {
         ).count;
         // fall through to 1h
       } else {
-        const klines = await fetchKlines(symbol, INTERVAL_1M, startTime, now, 10);
+        const klines = await fetchKlinesUpToNow(symbol, INTERVAL_1M, startTime, now);
         if (klines.length > 0) {
           if (lastRow) {
             await cryptoPrisma.binanceKlineFast.deleteMany({
@@ -146,7 +168,7 @@ export async function GET(request: Request) {
       const startTime1h = lastRow1h ? Math.max(startWindow1h, Number(lastRow1h.openTime)) : startWindow1h;
 
       if (startTime1h < now) {
-        const klines1h = await fetchKlines(symbol, INTERVAL_1H, startTime1h, now, 5);
+        const klines1h = await fetchKlinesUpToNow(symbol, INTERVAL_1H, startTime1h, now);
         if (klines1h.length > 0) {
           if (lastRow1h) {
             await cryptoPrisma.binanceKline.deleteMany({

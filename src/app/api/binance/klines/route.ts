@@ -6,6 +6,8 @@
  * GET /api/binance/klines?symbol=BTCUSDT&interval=5m&limit=1000
  * Resposta: { klines: array Binance [openTime, open, high, low, close, volume, closeTime, ...], lastUpdateUtc?: ms (openTime do último 1m em Fast), needsRefresh?: true }
  */
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
