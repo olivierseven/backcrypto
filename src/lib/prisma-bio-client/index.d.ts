@@ -89,6 +89,11 @@ export type BinanceKline = $Result.DefaultSelection<Prisma.$BinanceKlinePayload>
  */
 export type BinanceKlineFast = $Result.DefaultSelection<Prisma.$BinanceKlineFastPayload>
 /**
+ * Model BinanceKlineMonth
+ * 
+ */
+export type BinanceKlineMonth = $Result.DefaultSelection<Prisma.$BinanceKlineMonthPayload>
+/**
  * Model BinanceKlineCache
  * 
  */
@@ -490,6 +495,16 @@ export class PrismaClient<
     * ```
     */
   get binanceKlineFast(): Prisma.BinanceKlineFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceKlineMonth`: Exposes CRUD operations for the **BinanceKlineMonth** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceKlineMonths
+    * const binanceKlineMonths = await prisma.binanceKlineMonth.findMany()
+    * ```
+    */
+  get binanceKlineMonth(): Prisma.BinanceKlineMonthDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.binanceKlineCache`: Exposes CRUD operations for the **BinanceKlineCache** model.
@@ -966,6 +981,7 @@ export namespace Prisma {
     PagarMeOrder: 'PagarMeOrder',
     BinanceKline: 'BinanceKline',
     BinanceKlineFast: 'BinanceKlineFast',
+    BinanceKlineMonth: 'BinanceKlineMonth',
     BinanceKlineCache: 'BinanceKlineCache',
     BinanceKlineGap: 'BinanceKlineGap'
   };
@@ -986,7 +1002,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineCache" | "binanceKlineGap"
+      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineGap"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2100,6 +2116,80 @@ export namespace Prisma {
           }
         }
       }
+      BinanceKlineMonth: {
+        payload: Prisma.$BinanceKlineMonthPayload<ExtArgs>
+        fields: Prisma.BinanceKlineMonthFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceKlineMonthFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceKlineMonthFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceKlineMonthFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceKlineMonthFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceKlineMonthFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceKlineMonthCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceKlineMonthCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceKlineMonthCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceKlineMonthDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          update: {
+            args: Prisma.BinanceKlineMonthUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceKlineMonthDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceKlineMonthUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceKlineMonthUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceKlineMonthUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineMonthPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceKlineMonthAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceKlineMonth>
+          }
+          groupBy: {
+            args: Prisma.BinanceKlineMonthGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineMonthGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceKlineMonthCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineMonthCountAggregateOutputType> | number
+          }
+        }
+      }
       BinanceKlineCache: {
         payload: Prisma.$BinanceKlineCachePayload<ExtArgs>
         fields: Prisma.BinanceKlineCacheFieldRefs
@@ -2359,6 +2449,7 @@ export namespace Prisma {
     pagarMeOrder?: PagarMeOrderOmit
     binanceKline?: BinanceKlineOmit
     binanceKlineFast?: BinanceKlineFastOmit
+    binanceKlineMonth?: BinanceKlineMonthOmit
     binanceKlineCache?: BinanceKlineCacheOmit
     binanceKlineGap?: BinanceKlineGapOmit
   }
@@ -17792,6 +17883,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMinAggregateOutputType = {
+    corretora: string | null
     symbol: string | null
     interval: string | null
     openTime: bigint | null
@@ -17808,6 +17900,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMaxAggregateOutputType = {
+    corretora: string | null
     symbol: string | null
     interval: string | null
     openTime: bigint | null
@@ -17824,6 +17917,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineCountAggregateOutputType = {
+    corretora: number
     symbol: number
     interval: number
     openTime: number
@@ -17870,6 +17964,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMinAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -17886,6 +17981,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMaxAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -17902,6 +17998,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineCountAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -18005,6 +18102,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineGroupByOutputType = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint
@@ -18040,6 +18138,7 @@ export namespace Prisma {
 
 
   export type BinanceKlineSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -18056,6 +18155,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKline"]>
 
   export type BinanceKlineSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -18072,6 +18172,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKline"]>
 
   export type BinanceKlineSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -18088,6 +18189,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKline"]>
 
   export type BinanceKlineSelectScalar = {
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -18103,12 +18205,13 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: boolean
   }
 
-  export type BinanceKlineOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKline"]>
+  export type BinanceKlineOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKline"]>
 
   export type $BinanceKlinePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BinanceKline"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      corretora: string
       symbol: string
       interval: string
       openTime: bigint
@@ -18205,8 +18308,8 @@ export namespace Prisma {
      * // Get first 10 BinanceKlines
      * const binanceKlines = await prisma.binanceKline.findMany({ take: 10 })
      * 
-     * // Only select the `symbol`
-     * const binanceKlineWithSymbolOnly = await prisma.binanceKline.findMany({ select: { symbol: true } })
+     * // Only select the `corretora`
+     * const binanceKlineWithCorretoraOnly = await prisma.binanceKline.findMany({ select: { corretora: true } })
      * 
      */
     findMany<T extends BinanceKlineFindManyArgs>(args?: SelectSubset<T, BinanceKlineFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -18250,9 +18353,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Create many BinanceKlines and only return the `symbol`
-     * const binanceKlineWithSymbolOnly = await prisma.binanceKline.createManyAndReturn({
-     *   select: { symbol: true },
+     * // Create many BinanceKlines and only return the `corretora`
+     * const binanceKlineWithCorretoraOnly = await prisma.binanceKline.createManyAndReturn({
+     *   select: { corretora: true },
      *   data: [
      *     // ... provide data here
      *   ]
@@ -18341,9 +18444,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more BinanceKlines and only return the `symbol`
-     * const binanceKlineWithSymbolOnly = await prisma.binanceKline.updateManyAndReturn({
-     *   select: { symbol: true },
+     * // Update zero or more BinanceKlines and only return the `corretora`
+     * const binanceKlineWithCorretoraOnly = await prisma.binanceKline.updateManyAndReturn({
+     *   select: { corretora: true },
      *   where: {
      *     // ... provide filter here
      *   },
@@ -18545,6 +18648,7 @@ export namespace Prisma {
    * Fields of the BinanceKline model
    */
   interface BinanceKlineFieldRefs {
+    readonly corretora: FieldRef<"BinanceKline", 'String'>
     readonly symbol: FieldRef<"BinanceKline", 'String'>
     readonly interval: FieldRef<"BinanceKline", 'String'>
     readonly openTime: FieldRef<"BinanceKline", 'BigInt'>
@@ -18965,6 +19069,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMinAggregateOutputType = {
+    corretora: string | null
     symbol: string | null
     interval: string | null
     openTime: bigint | null
@@ -18981,6 +19086,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMaxAggregateOutputType = {
+    corretora: string | null
     symbol: string | null
     interval: string | null
     openTime: bigint | null
@@ -18997,6 +19103,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastCountAggregateOutputType = {
+    corretora: number
     symbol: number
     interval: number
     openTime: number
@@ -19043,6 +19150,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMinAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -19059,6 +19167,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMaxAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -19075,6 +19184,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastCountAggregateInputType = {
+    corretora?: true
     symbol?: true
     interval?: true
     openTime?: true
@@ -19178,6 +19288,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastGroupByOutputType = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint
@@ -19213,6 +19324,7 @@ export namespace Prisma {
 
 
   export type BinanceKlineFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -19229,6 +19341,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKlineFast"]>
 
   export type BinanceKlineFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -19245,6 +19358,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKlineFast"]>
 
   export type BinanceKlineFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -19261,6 +19375,7 @@ export namespace Prisma {
   }, ExtArgs["result"]["binanceKlineFast"]>
 
   export type BinanceKlineFastSelectScalar = {
+    corretora?: boolean
     symbol?: boolean
     interval?: boolean
     openTime?: boolean
@@ -19276,12 +19391,13 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: boolean
   }
 
-  export type BinanceKlineFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineFast"]>
+  export type BinanceKlineFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineFast"]>
 
   export type $BinanceKlineFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BinanceKlineFast"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
+      corretora: string
       symbol: string
       interval: string
       openTime: bigint
@@ -19378,8 +19494,8 @@ export namespace Prisma {
      * // Get first 10 BinanceKlineFasts
      * const binanceKlineFasts = await prisma.binanceKlineFast.findMany({ take: 10 })
      * 
-     * // Only select the `symbol`
-     * const binanceKlineFastWithSymbolOnly = await prisma.binanceKlineFast.findMany({ select: { symbol: true } })
+     * // Only select the `corretora`
+     * const binanceKlineFastWithCorretoraOnly = await prisma.binanceKlineFast.findMany({ select: { corretora: true } })
      * 
      */
     findMany<T extends BinanceKlineFastFindManyArgs>(args?: SelectSubset<T, BinanceKlineFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -19423,9 +19539,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Create many BinanceKlineFasts and only return the `symbol`
-     * const binanceKlineFastWithSymbolOnly = await prisma.binanceKlineFast.createManyAndReturn({
-     *   select: { symbol: true },
+     * // Create many BinanceKlineFasts and only return the `corretora`
+     * const binanceKlineFastWithCorretoraOnly = await prisma.binanceKlineFast.createManyAndReturn({
+     *   select: { corretora: true },
      *   data: [
      *     // ... provide data here
      *   ]
@@ -19514,9 +19630,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more BinanceKlineFasts and only return the `symbol`
-     * const binanceKlineFastWithSymbolOnly = await prisma.binanceKlineFast.updateManyAndReturn({
-     *   select: { symbol: true },
+     * // Update zero or more BinanceKlineFasts and only return the `corretora`
+     * const binanceKlineFastWithCorretoraOnly = await prisma.binanceKlineFast.updateManyAndReturn({
+     *   select: { corretora: true },
      *   where: {
      *     // ... provide filter here
      *   },
@@ -19718,6 +19834,7 @@ export namespace Prisma {
    * Fields of the BinanceKlineFast model
    */
   interface BinanceKlineFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceKlineFast", 'String'>
     readonly symbol: FieldRef<"BinanceKlineFast", 'String'>
     readonly interval: FieldRef<"BinanceKlineFast", 'String'>
     readonly openTime: FieldRef<"BinanceKlineFast", 'BigInt'>
@@ -20094,6 +20211,1192 @@ export namespace Prisma {
      * Omit specific fields from the BinanceKlineFast
      */
     omit?: BinanceKlineFastOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceKlineMonth
+   */
+
+  export type AggregateBinanceKlineMonth = {
+    _count: BinanceKlineMonthCountAggregateOutputType | null
+    _avg: BinanceKlineMonthAvgAggregateOutputType | null
+    _sum: BinanceKlineMonthSumAggregateOutputType | null
+    _min: BinanceKlineMonthMinAggregateOutputType | null
+    _max: BinanceKlineMonthMaxAggregateOutputType | null
+  }
+
+  export type BinanceKlineMonthAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineMonthSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineMonthMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineMonthMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineMonthCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    _all: number
+  }
+
+
+  export type BinanceKlineMonthAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineMonthSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineMonthMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineMonthMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineMonthCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    _all?: true
+  }
+
+  export type BinanceKlineMonthAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineMonth to aggregate.
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineMonths to fetch.
+     */
+    orderBy?: BinanceKlineMonthOrderByWithRelationInput | BinanceKlineMonthOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceKlineMonthWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineMonths from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineMonths.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceKlineMonths
+    **/
+    _count?: true | BinanceKlineMonthCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceKlineMonthAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceKlineMonthSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceKlineMonthMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceKlineMonthMaxAggregateInputType
+  }
+
+  export type GetBinanceKlineMonthAggregateType<T extends BinanceKlineMonthAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceKlineMonth]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceKlineMonth[P]>
+      : GetScalarType<T[P], AggregateBinanceKlineMonth[P]>
+  }
+
+
+
+
+  export type BinanceKlineMonthGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceKlineMonthWhereInput
+    orderBy?: BinanceKlineMonthOrderByWithAggregationInput | BinanceKlineMonthOrderByWithAggregationInput[]
+    by: BinanceKlineMonthScalarFieldEnum[] | BinanceKlineMonthScalarFieldEnum
+    having?: BinanceKlineMonthScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceKlineMonthCountAggregateInputType | true
+    _avg?: BinanceKlineMonthAvgAggregateInputType
+    _sum?: BinanceKlineMonthSumAggregateInputType
+    _min?: BinanceKlineMonthMinAggregateInputType
+    _max?: BinanceKlineMonthMaxAggregateInputType
+  }
+
+  export type BinanceKlineMonthGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    _count: BinanceKlineMonthCountAggregateOutputType | null
+    _avg: BinanceKlineMonthAvgAggregateOutputType | null
+    _sum: BinanceKlineMonthSumAggregateOutputType | null
+    _min: BinanceKlineMonthMinAggregateOutputType | null
+    _max: BinanceKlineMonthMaxAggregateOutputType | null
+  }
+
+  type GetBinanceKlineMonthGroupByPayload<T extends BinanceKlineMonthGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceKlineMonthGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceKlineMonthGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceKlineMonthGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceKlineMonthGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceKlineMonthSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineMonth"]>
+
+  export type BinanceKlineMonthSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineMonth"]>
+
+  export type BinanceKlineMonthSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineMonth"]>
+
+  export type BinanceKlineMonthSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }
+
+  export type BinanceKlineMonthOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineMonth"]>
+
+  export type $BinanceKlineMonthPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceKlineMonth"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+    }, ExtArgs["result"]["binanceKlineMonth"]>
+    composites: {}
+  }
+
+  type BinanceKlineMonthGetPayload<S extends boolean | null | undefined | BinanceKlineMonthDefaultArgs> = $Result.GetResult<Prisma.$BinanceKlineMonthPayload, S>
+
+  type BinanceKlineMonthCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceKlineMonthFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceKlineMonthCountAggregateInputType | true
+    }
+
+  export interface BinanceKlineMonthDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceKlineMonth'], meta: { name: 'BinanceKlineMonth' } }
+    /**
+     * Find zero or one BinanceKlineMonth that matches the filter.
+     * @param {BinanceKlineMonthFindUniqueArgs} args - Arguments to find a BinanceKlineMonth
+     * @example
+     * // Get one BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceKlineMonthFindUniqueArgs>(args: SelectSubset<T, BinanceKlineMonthFindUniqueArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceKlineMonth that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceKlineMonthFindUniqueOrThrowArgs} args - Arguments to find a BinanceKlineMonth
+     * @example
+     * // Get one BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceKlineMonthFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceKlineMonthFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineMonth that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthFindFirstArgs} args - Arguments to find a BinanceKlineMonth
+     * @example
+     * // Get one BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceKlineMonthFindFirstArgs>(args?: SelectSubset<T, BinanceKlineMonthFindFirstArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineMonth that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthFindFirstOrThrowArgs} args - Arguments to find a BinanceKlineMonth
+     * @example
+     * // Get one BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceKlineMonthFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceKlineMonthFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceKlineMonths that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceKlineMonths
+     * const binanceKlineMonths = await prisma.binanceKlineMonth.findMany()
+     * 
+     * // Get first 10 BinanceKlineMonths
+     * const binanceKlineMonths = await prisma.binanceKlineMonth.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceKlineMonthWithCorretoraOnly = await prisma.binanceKlineMonth.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceKlineMonthFindManyArgs>(args?: SelectSubset<T, BinanceKlineMonthFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceKlineMonth.
+     * @param {BinanceKlineMonthCreateArgs} args - Arguments to create a BinanceKlineMonth.
+     * @example
+     * // Create one BinanceKlineMonth
+     * const BinanceKlineMonth = await prisma.binanceKlineMonth.create({
+     *   data: {
+     *     // ... data to create a BinanceKlineMonth
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceKlineMonthCreateArgs>(args: SelectSubset<T, BinanceKlineMonthCreateArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceKlineMonths.
+     * @param {BinanceKlineMonthCreateManyArgs} args - Arguments to create many BinanceKlineMonths.
+     * @example
+     * // Create many BinanceKlineMonths
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceKlineMonthCreateManyArgs>(args?: SelectSubset<T, BinanceKlineMonthCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceKlineMonths and returns the data saved in the database.
+     * @param {BinanceKlineMonthCreateManyAndReturnArgs} args - Arguments to create many BinanceKlineMonths.
+     * @example
+     * // Create many BinanceKlineMonths
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceKlineMonths and only return the `corretora`
+     * const binanceKlineMonthWithCorretoraOnly = await prisma.binanceKlineMonth.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceKlineMonthCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceKlineMonthCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceKlineMonth.
+     * @param {BinanceKlineMonthDeleteArgs} args - Arguments to delete one BinanceKlineMonth.
+     * @example
+     * // Delete one BinanceKlineMonth
+     * const BinanceKlineMonth = await prisma.binanceKlineMonth.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceKlineMonth
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceKlineMonthDeleteArgs>(args: SelectSubset<T, BinanceKlineMonthDeleteArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceKlineMonth.
+     * @param {BinanceKlineMonthUpdateArgs} args - Arguments to update one BinanceKlineMonth.
+     * @example
+     * // Update one BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceKlineMonthUpdateArgs>(args: SelectSubset<T, BinanceKlineMonthUpdateArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceKlineMonths.
+     * @param {BinanceKlineMonthDeleteManyArgs} args - Arguments to filter BinanceKlineMonths to delete.
+     * @example
+     * // Delete a few BinanceKlineMonths
+     * const { count } = await prisma.binanceKlineMonth.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceKlineMonthDeleteManyArgs>(args?: SelectSubset<T, BinanceKlineMonthDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineMonths.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceKlineMonths
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceKlineMonthUpdateManyArgs>(args: SelectSubset<T, BinanceKlineMonthUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineMonths and returns the data updated in the database.
+     * @param {BinanceKlineMonthUpdateManyAndReturnArgs} args - Arguments to update many BinanceKlineMonths.
+     * @example
+     * // Update many BinanceKlineMonths
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceKlineMonths and only return the `corretora`
+     * const binanceKlineMonthWithCorretoraOnly = await prisma.binanceKlineMonth.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceKlineMonthUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceKlineMonthUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceKlineMonth.
+     * @param {BinanceKlineMonthUpsertArgs} args - Arguments to update or create a BinanceKlineMonth.
+     * @example
+     * // Update or create a BinanceKlineMonth
+     * const binanceKlineMonth = await prisma.binanceKlineMonth.upsert({
+     *   create: {
+     *     // ... data to create a BinanceKlineMonth
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceKlineMonth we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceKlineMonthUpsertArgs>(args: SelectSubset<T, BinanceKlineMonthUpsertArgs<ExtArgs>>): Prisma__BinanceKlineMonthClient<$Result.GetResult<Prisma.$BinanceKlineMonthPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceKlineMonths.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthCountArgs} args - Arguments to filter BinanceKlineMonths to count.
+     * @example
+     * // Count the number of BinanceKlineMonths
+     * const count = await prisma.binanceKlineMonth.count({
+     *   where: {
+     *     // ... the filter for the BinanceKlineMonths we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceKlineMonthCountArgs>(
+      args?: Subset<T, BinanceKlineMonthCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceKlineMonthCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceKlineMonth.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceKlineMonthAggregateArgs>(args: Subset<T, BinanceKlineMonthAggregateArgs>): Prisma.PrismaPromise<GetBinanceKlineMonthAggregateType<T>>
+
+    /**
+     * Group by BinanceKlineMonth.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineMonthGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceKlineMonthGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceKlineMonthGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceKlineMonthGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceKlineMonthGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceKlineMonthGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceKlineMonth model
+   */
+  readonly fields: BinanceKlineMonthFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceKlineMonth.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceKlineMonthClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceKlineMonth model
+   */
+  interface BinanceKlineMonthFieldRefs {
+    readonly corretora: FieldRef<"BinanceKlineMonth", 'String'>
+    readonly symbol: FieldRef<"BinanceKlineMonth", 'String'>
+    readonly interval: FieldRef<"BinanceKlineMonth", 'String'>
+    readonly openTime: FieldRef<"BinanceKlineMonth", 'BigInt'>
+    readonly open: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly high: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly low: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly close: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly volume: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceKlineMonth", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceKlineMonth", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceKlineMonth", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceKlineMonth", 'Decimal'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceKlineMonth findUnique
+   */
+  export type BinanceKlineMonthFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineMonth to fetch.
+     */
+    where: BinanceKlineMonthWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineMonth findUniqueOrThrow
+   */
+  export type BinanceKlineMonthFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineMonth to fetch.
+     */
+    where: BinanceKlineMonthWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineMonth findFirst
+   */
+  export type BinanceKlineMonthFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineMonth to fetch.
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineMonths to fetch.
+     */
+    orderBy?: BinanceKlineMonthOrderByWithRelationInput | BinanceKlineMonthOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineMonths.
+     */
+    cursor?: BinanceKlineMonthWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineMonths from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineMonths.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineMonths.
+     */
+    distinct?: BinanceKlineMonthScalarFieldEnum | BinanceKlineMonthScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineMonth findFirstOrThrow
+   */
+  export type BinanceKlineMonthFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineMonth to fetch.
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineMonths to fetch.
+     */
+    orderBy?: BinanceKlineMonthOrderByWithRelationInput | BinanceKlineMonthOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineMonths.
+     */
+    cursor?: BinanceKlineMonthWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineMonths from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineMonths.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineMonths.
+     */
+    distinct?: BinanceKlineMonthScalarFieldEnum | BinanceKlineMonthScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineMonth findMany
+   */
+  export type BinanceKlineMonthFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineMonths to fetch.
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineMonths to fetch.
+     */
+    orderBy?: BinanceKlineMonthOrderByWithRelationInput | BinanceKlineMonthOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceKlineMonths.
+     */
+    cursor?: BinanceKlineMonthWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineMonths from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineMonths.
+     */
+    skip?: number
+    distinct?: BinanceKlineMonthScalarFieldEnum | BinanceKlineMonthScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineMonth create
+   */
+  export type BinanceKlineMonthCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceKlineMonth.
+     */
+    data: XOR<BinanceKlineMonthCreateInput, BinanceKlineMonthUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceKlineMonth createMany
+   */
+  export type BinanceKlineMonthCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceKlineMonths.
+     */
+    data: BinanceKlineMonthCreateManyInput | BinanceKlineMonthCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineMonth createManyAndReturn
+   */
+  export type BinanceKlineMonthCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceKlineMonths.
+     */
+    data: BinanceKlineMonthCreateManyInput | BinanceKlineMonthCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineMonth update
+   */
+  export type BinanceKlineMonthUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceKlineMonth.
+     */
+    data: XOR<BinanceKlineMonthUpdateInput, BinanceKlineMonthUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceKlineMonth to update.
+     */
+    where: BinanceKlineMonthWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineMonth updateMany
+   */
+  export type BinanceKlineMonthUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceKlineMonths.
+     */
+    data: XOR<BinanceKlineMonthUpdateManyMutationInput, BinanceKlineMonthUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineMonths to update
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * Limit how many BinanceKlineMonths to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineMonth updateManyAndReturn
+   */
+  export type BinanceKlineMonthUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceKlineMonths.
+     */
+    data: XOR<BinanceKlineMonthUpdateManyMutationInput, BinanceKlineMonthUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineMonths to update
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * Limit how many BinanceKlineMonths to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineMonth upsert
+   */
+  export type BinanceKlineMonthUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceKlineMonth to update in case it exists.
+     */
+    where: BinanceKlineMonthWhereUniqueInput
+    /**
+     * In case the BinanceKlineMonth found by the `where` argument doesn't exist, create a new BinanceKlineMonth with this data.
+     */
+    create: XOR<BinanceKlineMonthCreateInput, BinanceKlineMonthUncheckedCreateInput>
+    /**
+     * In case the BinanceKlineMonth was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceKlineMonthUpdateInput, BinanceKlineMonthUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceKlineMonth delete
+   */
+  export type BinanceKlineMonthDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceKlineMonth to delete.
+     */
+    where: BinanceKlineMonthWhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineMonth deleteMany
+   */
+  export type BinanceKlineMonthDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineMonths to delete
+     */
+    where?: BinanceKlineMonthWhereInput
+    /**
+     * Limit how many BinanceKlineMonths to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineMonth without action
+   */
+  export type BinanceKlineMonthDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineMonth
+     */
+    select?: BinanceKlineMonthSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineMonth
+     */
+    omit?: BinanceKlineMonthOmit<ExtArgs> | null
   }
 
 
@@ -22513,6 +23816,7 @@ export namespace Prisma {
 
 
   export const BinanceKlineScalarFieldEnum: {
+    corretora: 'corretora',
     symbol: 'symbol',
     interval: 'interval',
     openTime: 'openTime',
@@ -22532,6 +23836,7 @@ export namespace Prisma {
 
 
   export const BinanceKlineFastScalarFieldEnum: {
+    corretora: 'corretora',
     symbol: 'symbol',
     interval: 'interval',
     openTime: 'openTime',
@@ -22548,6 +23853,26 @@ export namespace Prisma {
   };
 
   export type BinanceKlineFastScalarFieldEnum = (typeof BinanceKlineFastScalarFieldEnum)[keyof typeof BinanceKlineFastScalarFieldEnum]
+
+
+  export const BinanceKlineMonthScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+  };
+
+  export type BinanceKlineMonthScalarFieldEnum = (typeof BinanceKlineMonthScalarFieldEnum)[keyof typeof BinanceKlineMonthScalarFieldEnum]
 
 
   export const BinanceKlineCacheScalarFieldEnum: {
@@ -23954,6 +25279,7 @@ export namespace Prisma {
     AND?: BinanceKlineWhereInput | BinanceKlineWhereInput[]
     OR?: BinanceKlineWhereInput[]
     NOT?: BinanceKlineWhereInput | BinanceKlineWhereInput[]
+    corretora?: StringFilter<"BinanceKline"> | string
     symbol?: StringFilter<"BinanceKline"> | string
     interval?: StringFilter<"BinanceKline"> | string
     openTime?: BigIntFilter<"BinanceKline"> | bigint | number
@@ -23970,6 +25296,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineOrderByWithRelationInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -23986,10 +25313,11 @@ export namespace Prisma {
   }
 
   export type BinanceKlineWhereUniqueInput = Prisma.AtLeast<{
-    symbol_interval_openTime?: BinanceKlineSymbolIntervalOpenTimeCompoundUniqueInput
+    corretora_symbol_interval_openTime?: BinanceKlineCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
     AND?: BinanceKlineWhereInput | BinanceKlineWhereInput[]
     OR?: BinanceKlineWhereInput[]
     NOT?: BinanceKlineWhereInput | BinanceKlineWhereInput[]
+    corretora?: StringFilter<"BinanceKline"> | string
     symbol?: StringFilter<"BinanceKline"> | string
     interval?: StringFilter<"BinanceKline"> | string
     openTime?: BigIntFilter<"BinanceKline"> | bigint | number
@@ -24003,9 +25331,10 @@ export namespace Prisma {
     numberOfTrades?: IntFilter<"BinanceKline"> | number
     takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKline"> | Decimal | DecimalJsLike | number | string
     takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKline"> | Decimal | DecimalJsLike | number | string
-  }, "symbol_interval_openTime">
+  }, "corretora_symbol_interval_openTime">
 
   export type BinanceKlineOrderByWithAggregationInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -24030,6 +25359,7 @@ export namespace Prisma {
     AND?: BinanceKlineScalarWhereWithAggregatesInput | BinanceKlineScalarWhereWithAggregatesInput[]
     OR?: BinanceKlineScalarWhereWithAggregatesInput[]
     NOT?: BinanceKlineScalarWhereWithAggregatesInput | BinanceKlineScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceKline"> | string
     symbol?: StringWithAggregatesFilter<"BinanceKline"> | string
     interval?: StringWithAggregatesFilter<"BinanceKline"> | string
     openTime?: BigIntWithAggregatesFilter<"BinanceKline"> | bigint | number
@@ -24049,6 +25379,7 @@ export namespace Prisma {
     AND?: BinanceKlineFastWhereInput | BinanceKlineFastWhereInput[]
     OR?: BinanceKlineFastWhereInput[]
     NOT?: BinanceKlineFastWhereInput | BinanceKlineFastWhereInput[]
+    corretora?: StringFilter<"BinanceKlineFast"> | string
     symbol?: StringFilter<"BinanceKlineFast"> | string
     interval?: StringFilter<"BinanceKlineFast"> | string
     openTime?: BigIntFilter<"BinanceKlineFast"> | bigint | number
@@ -24065,6 +25396,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastOrderByWithRelationInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -24081,10 +25413,11 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastWhereUniqueInput = Prisma.AtLeast<{
-    symbol_interval_openTime?: BinanceKlineFastSymbolIntervalOpenTimeCompoundUniqueInput
+    corretora_symbol_interval_openTime?: BinanceKlineFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
     AND?: BinanceKlineFastWhereInput | BinanceKlineFastWhereInput[]
     OR?: BinanceKlineFastWhereInput[]
     NOT?: BinanceKlineFastWhereInput | BinanceKlineFastWhereInput[]
+    corretora?: StringFilter<"BinanceKlineFast"> | string
     symbol?: StringFilter<"BinanceKlineFast"> | string
     interval?: StringFilter<"BinanceKlineFast"> | string
     openTime?: BigIntFilter<"BinanceKlineFast"> | bigint | number
@@ -24098,9 +25431,10 @@ export namespace Prisma {
     numberOfTrades?: IntFilter<"BinanceKlineFast"> | number
     takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKlineFast"> | Decimal | DecimalJsLike | number | string
     takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKlineFast"> | Decimal | DecimalJsLike | number | string
-  }, "symbol_interval_openTime">
+  }, "corretora_symbol_interval_openTime">
 
   export type BinanceKlineFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -24125,6 +25459,7 @@ export namespace Prisma {
     AND?: BinanceKlineFastScalarWhereWithAggregatesInput | BinanceKlineFastScalarWhereWithAggregatesInput[]
     OR?: BinanceKlineFastScalarWhereWithAggregatesInput[]
     NOT?: BinanceKlineFastScalarWhereWithAggregatesInput | BinanceKlineFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceKlineFast"> | string
     symbol?: StringWithAggregatesFilter<"BinanceKlineFast"> | string
     interval?: StringWithAggregatesFilter<"BinanceKlineFast"> | string
     openTime?: BigIntWithAggregatesFilter<"BinanceKlineFast"> | bigint | number
@@ -24138,6 +25473,106 @@ export namespace Prisma {
     numberOfTrades?: IntWithAggregatesFilter<"BinanceKlineFast"> | number
     takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineFast"> | Decimal | DecimalJsLike | number | string
     takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineFast"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthWhereInput = {
+    AND?: BinanceKlineMonthWhereInput | BinanceKlineMonthWhereInput[]
+    OR?: BinanceKlineMonthWhereInput[]
+    NOT?: BinanceKlineMonthWhereInput | BinanceKlineMonthWhereInput[]
+    corretora?: StringFilter<"BinanceKlineMonth"> | string
+    symbol?: StringFilter<"BinanceKlineMonth"> | string
+    interval?: StringFilter<"BinanceKlineMonth"> | string
+    openTime?: BigIntFilter<"BinanceKlineMonth"> | bigint | number
+    open?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKlineMonth"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKlineMonth"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceKlineMonthCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceKlineMonthWhereInput | BinanceKlineMonthWhereInput[]
+    OR?: BinanceKlineMonthWhereInput[]
+    NOT?: BinanceKlineMonthWhereInput | BinanceKlineMonthWhereInput[]
+    corretora?: StringFilter<"BinanceKlineMonth"> | string
+    symbol?: StringFilter<"BinanceKlineMonth"> | string
+    interval?: StringFilter<"BinanceKlineMonth"> | string
+    openTime?: BigIntFilter<"BinanceKlineMonth"> | bigint | number
+    open?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKlineMonth"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKlineMonth"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceKlineMonthOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    _count?: BinanceKlineMonthCountOrderByAggregateInput
+    _avg?: BinanceKlineMonthAvgOrderByAggregateInput
+    _max?: BinanceKlineMonthMaxOrderByAggregateInput
+    _min?: BinanceKlineMonthMinOrderByAggregateInput
+    _sum?: BinanceKlineMonthSumOrderByAggregateInput
+  }
+
+  export type BinanceKlineMonthScalarWhereWithAggregatesInput = {
+    AND?: BinanceKlineMonthScalarWhereWithAggregatesInput | BinanceKlineMonthScalarWhereWithAggregatesInput[]
+    OR?: BinanceKlineMonthScalarWhereWithAggregatesInput[]
+    NOT?: BinanceKlineMonthScalarWhereWithAggregatesInput | BinanceKlineMonthScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceKlineMonth"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceKlineMonth"> | string
+    interval?: StringWithAggregatesFilter<"BinanceKlineMonth"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceKlineMonth"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceKlineMonth"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceKlineMonth"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineMonth"> | Decimal | DecimalJsLike | number | string
   }
 
   export type BinanceKlineCacheWhereInput = {
@@ -25508,6 +26943,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineCreateInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25524,6 +26960,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineUncheckedCreateInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25540,6 +26977,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25556,6 +26994,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25572,6 +27011,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineCreateManyInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25588,6 +27028,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25604,6 +27045,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25620,6 +27062,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastCreateInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25636,6 +27079,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastUncheckedCreateInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25652,6 +27096,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25668,6 +27113,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25684,6 +27130,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastCreateManyInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
@@ -25700,6 +27147,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -25716,6 +27164,126 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineMonthUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -27065,13 +28633,15 @@ export namespace Prisma {
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
-  export type BinanceKlineSymbolIntervalOpenTimeCompoundUniqueInput = {
+  export type BinanceKlineCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
   }
 
   export type BinanceKlineCountOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27102,6 +28672,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMaxOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27118,6 +28689,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineMinOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27163,13 +28735,15 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
-  export type BinanceKlineFastSymbolIntervalOpenTimeCompoundUniqueInput = {
+  export type BinanceKlineFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
     symbol: string
     interval: string
     openTime: bigint | number
   }
 
   export type BinanceKlineFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27200,6 +28774,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27216,6 +28791,7 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
     openTime?: SortOrder
@@ -27232,6 +28808,92 @@ export namespace Prisma {
   }
 
   export type BinanceKlineFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceKlineMonthCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineMonthSumOrderByAggregateInput = {
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder

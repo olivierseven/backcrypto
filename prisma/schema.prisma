@@ -340,10 +340,11 @@ model PagarMeOrder {
   @@schema("backcrypto")
 }
 
-// Velas (klines) Binance — BTCUSDT 1m; manter 180 dias com expurgo
+// Velas (klines) — corretora (ex.: binance), símbolo, intervalo (ex.: 1h); expurgo 5 anos.
 model BinanceKline {
+  corretora                String   // ex.: binance
   symbol                   String   // ex.: BTCUSDT
-  interval                 String   // ex.: 1m
+  interval                 String   // ex.: 1h
   openTime                 BigInt   // abertura (ms UTC)
   open                     Decimal  @db.Decimal(32, 8)
   high                     Decimal  @db.Decimal(32, 8)
@@ -356,16 +357,17 @@ model BinanceKline {
   takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 
-// Cópia idêntica de BinanceKline (mesma estrutura e dados)
+// Cópia 1m (mesma estrutura); expurgo 9 dias. Incremental a cada minuto.
 model BinanceKlineFast {
+  corretora                String   // ex.: binance
   symbol                   String
-  interval                 String
+  interval                 String   // 1m
   openTime                 BigInt
   open                     Decimal  @db.Decimal(32, 8)
   high                     Decimal  @db.Decimal(32, 8)
@@ -378,17 +380,40 @@ model BinanceKlineFast {
   takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 
-// Cache de klines agregados a partir de BinanceKline 1m. Sem 1m; intervalos até 1D.
-// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo script binance-kline-cache-refresh.
+// Velas 5m (sync da API Binance); mesma estrutura que BinanceKline. Nome histórico "Month"; expurgo 90 dias.
+model BinanceKlineMonth {
+  corretora                String
+  symbol                   String
+  interval                 String   // 5m
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineMonth_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Cache de klines agregados: de 1m (1m,2m,3m,4m), de 5m (5m,15m,30m,45m), de 1h (1h–1d).
+// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo cron cache-refresh.
 model BinanceKlineCache {
   symbol                   String
-  interval                 String   // 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  interval                 String   // 1m | 2m | 3m | 4m | 5m | 15m | 30m | 45m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
   openTime                 BigInt
   open                     Decimal  @db.Decimal(32, 8)
   high                     Decimal  @db.Decimal(32, 8)

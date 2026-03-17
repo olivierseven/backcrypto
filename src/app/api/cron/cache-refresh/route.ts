@@ -1,7 +1,10 @@
 /**
- * Cron diário: recria BinanceKlineCache (agregados 3m–1D a partir de 1m e 1h).
+ * Cron diário: recria BinanceKlineCache e faz expurgo.
+ * - De 1m (BinanceKlineFast): 1m, 2m, 3m, 4m
+ * - De 5m (BinanceKlineMonth): 5m, 15m, 30m, 45m
+ * - De 1h (BinanceKline): 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d
  * Path: /crypto/api/cron/cache-refresh
- * Schedule sugerido: 0 6 * * * (6h UTC).
+ * Schedule: 0 0 * * * (1x ao dia). Ao final: expurgo por KLINE_*_DAYS (.env).
  * Protegido por CRON_SECRET.
  */
 export const dynamic = "force-dynamic";
@@ -10,16 +13,41 @@ export const maxDuration = 300;
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
+import { getKlineSymbols } from "@/app/lib/kline-symbols";
+const KLINE_1M_DAYS = Math.max(1, parseInt(process.env.KLINE_1M_DAYS ?? "9", 10) || 9);
+const KLINE_5M_DAYS = Math.max(1, parseInt(process.env.KLINE_5M_DAYS ?? "90", 10) || 90);
+const KLINE_1H_DAYS = Math.max(1, parseInt(process.env.KLINE_1H_DAYS ?? "730", 10) || 730);
+const CORRETORA = "binance";
 
-const SYMBOLS = ["BTCUSDT", "ETHUSDT"];
-const CACHE_INTERVALS_FAST = [
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function getCutoff1mMs(): number {
+  return Date.now() - KLINE_1M_DAYS * ONE_DAY_MS;
+}
+
+function getCutoff5mMs(): number {
+  return Date.now() - KLINE_5M_DAYS * ONE_DAY_MS;
+}
+
+function getCutoff1hMs(): number {
+  return Date.now() - KLINE_1H_DAYS * ONE_DAY_MS;
+}
+/** Cache a partir de BinanceKlineFast (1m): 1m, 2m, 3m, 4m */
+const CACHE_INTERVALS_FROM_1M = [
+  { param: "1m", minutes: 1 },
+  { param: "2m", minutes: 2 },
   { param: "3m", minutes: 3 },
+  { param: "4m", minutes: 4 },
+];
+/** Cache a partir de BinanceKlineMonth (5m): 5m, 15m, 30m, 45m */
+const CACHE_INTERVALS_FROM_5M = [
   { param: "5m", minutes: 5 },
   { param: "15m", minutes: 15 },
   { param: "30m", minutes: 30 },
   { param: "45m", minutes: 45 },
 ];
-const CACHE_INTERVALS_NORMAL = [
+/** Cache a partir de BinanceKline (1h): 1h até 1d */
+const CACHE_INTERVALS_FROM_1H = [
   { param: "1h", minutes: 60 },
   { param: "2h", minutes: 120 },
   { param: "3h", minutes: 180 },
@@ -56,9 +84,10 @@ export async function GET(request: Request) {
     await cryptoPrisma.$executeRaw(Prisma.sql`TRUNCATE TABLE backcrypto."BinanceKlineCache"`);
 
     const details: { symbol: string; interval: string; rows: number }[] = [];
+    const SYMBOLS = getKlineSymbols();
 
     for (const symbol of SYMBOLS) {
-      for (const interval of CACHE_INTERVALS_FAST) {
+      for (const interval of CACHE_INTERVALS_FROM_1M) {
         const bucketMs = BigInt(interval.minutes * 60 * 1000);
         const intervalLabel = interval.param;
         const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
@@ -75,7 +104,7 @@ export async function GET(request: Request) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" < ${cutoffMs}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m' AND "openTime" < ${cutoffMs}
           )
           SELECT
             ${symbol},
@@ -96,7 +125,45 @@ export async function GET(request: Request) {
         `);
         details.push({ symbol, interval: intervalLabel, rows });
       }
-      for (const interval of CACHE_INTERVALS_NORMAL) {
+      for (const interval of CACHE_INTERVALS_FROM_5M) {
+        const bucketMs = BigInt(interval.minutes * 60 * 1000);
+        const intervalLabel = interval.param;
+        const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
+          INSERT INTO backcrypto."BinanceKlineCache" (
+            "symbol", "interval", "openTime", "open", "high", "low", "close",
+            "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
+            "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
+          )
+          WITH k AS (
+            SELECT
+              (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
+              "openTime",
+              "open", "high", "low", "close", "volume", "closeTime",
+              "quoteAssetVolume", "numberOfTrades",
+              "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
+            FROM backcrypto."BinanceKlineMonth"
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '5m' AND "openTime" < ${cutoffMs}
+          )
+          SELECT
+            ${symbol},
+            ${intervalLabel},
+            k.bucket,
+            (array_agg(k."open" ORDER BY k."openTime"))[1],
+            max(k."high"),
+            min(k."low"),
+            (array_agg(k."close" ORDER BY k."openTime" DESC))[1],
+            sum(k."volume"),
+            max(k."closeTime"),
+            sum(k."quoteAssetVolume"),
+            sum(k."numberOfTrades")::int,
+            sum(k."takerBuyBaseAssetVolume"),
+            sum(k."takerBuyQuoteAssetVolume")
+          FROM k
+          GROUP BY k.bucket
+        `);
+        details.push({ symbol, interval: intervalLabel, rows });
+      }
+      for (const interval of CACHE_INTERVALS_FROM_1H) {
         const bucketMs = BigInt(interval.minutes * 60 * 1000);
         const intervalLabel = interval.param;
         const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
@@ -113,7 +180,7 @@ export async function GET(request: Request) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKline"
-            WHERE symbol = ${symbol} AND "interval" = '1h' AND "openTime" < ${cutoffMs}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1h' AND "openTime" < ${cutoffMs}
           )
           SELECT
             ${symbol},
@@ -137,7 +204,40 @@ export async function GET(request: Request) {
     }
 
     const totalRows = details.reduce((s, d) => s + d.rows, 0);
-    return NextResponse.json({ ok: true, totalRows, details });
+
+    // Expurgo (1x ao dia, depois do refresh do cache): Fast > 9 dias, 1h > 5 anos, BinanceKlineMonth 5m > 90 dias
+    const cutoffFast = BigInt(getCutoff1mMs());
+    const cutoff5m = BigInt(getCutoff5mMs());
+    const cutoff1h = BigInt(getCutoff1hMs());
+    let purgedFast = 0;
+    let purged5m = 0;
+    let purged1h = 0;
+    for (const symbol of SYMBOLS) {
+      purgedFast += (
+        await cryptoPrisma.binanceKlineFast.deleteMany({
+          where: { corretora: CORRETORA, symbol, interval: "1m", openTime: { lt: cutoffFast } },
+        })
+      ).count;
+      purged5m += (
+        await cryptoPrisma.binanceKlineMonth.deleteMany({
+          where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { lt: cutoff5m } },
+        })
+      ).count;
+      purged1h += (
+        await cryptoPrisma.binanceKline.deleteMany({
+          where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { lt: cutoff1h } },
+        })
+      ).count;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      totalRows,
+      details,
+      purgedFast,
+      purged5m,
+      purged1h,
+    });
   } catch (e) {
     console.error("[api/cron/cache-refresh]", e);
     return NextResponse.json(

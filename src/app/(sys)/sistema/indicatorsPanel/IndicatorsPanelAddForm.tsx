@@ -121,6 +121,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   const lineWidthOptions: ComboboxOption[] = useMemo(() => [
     { value: "thin", label: tRecord.lineWidthThin ?? "Fino" },
     { value: "normal", label: tRecord.lineWidthNormal ?? "Normal" },
+    { value: "thick", label: tRecord.lineWidthThick ?? "Grossa" },
   ], [tRecord]);
   const lineStyleOptions: ComboboxOption[] = useMemo(() => [
     { value: "solid", label: tRecord.lineStyleSolid ?? "Sólido" },

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
+import { getKlineSymbols } from "@/app/lib/kline-symbols";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
@@ -23,7 +24,7 @@ type ValidateSingleResult = {
 };
 
 type ValidateResult =
-  | { "1m": ValidateSingleResult; "1h": ValidateSingleResult }
+  | { "1m": ValidateSingleResult; "5m": ValidateSingleResult; "1h": ValidateSingleResult }
   | ValidateSingleResult
   | null;
 
@@ -34,7 +35,7 @@ export default function SistemaDebugPanel() {
   const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
-  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [symbol, setSymbol] = useState(() => getKlineSymbols()[0] ?? "BTCUSDT");
   const [binanceSpotPrice, setBinanceSpotPrice] = useState<string | null>(null);
   const [binanceSpotLastEventAtUtc, setBinanceSpotLastEventAtUtc] = useState<number | null>(null);
   const [binanceSpotStatus, setBinanceSpotStatus] = useState<"connecting" | "open" | "closed" | "error">("closed");
@@ -45,14 +46,15 @@ export default function SistemaDebugPanel() {
   const [backfillLoading, setBackfillLoading] = useState<string | null>(null);
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
   const [registerGapsLoading, setRegisterGapsLoading] = useState<string | null>(null);
-  const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "1h" | null>(null);
+  const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "5m" | "1h" | null>(null);
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
+  const [backfillAllSymbols, setBackfillAllSymbols] = useState(false);
   const [chartModels, setChartModels] = useState<{ slot: number; name?: string }[]>([]);
   const [chartModelsLoading, setChartModelsLoading] = useState(false);
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
-  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa">("main");
+  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico">("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
@@ -288,11 +290,11 @@ export default function SistemaDebugPanel() {
     }
   }
 
-  function isBothResults(r: ValidateResult): r is { "1m": ValidateSingleResult; "1h": ValidateSingleResult } {
-    return r != null && typeof r === "object" && "1m" in r && "1h" in r;
+  function isHistoricResults(r: ValidateResult): r is { "1m": ValidateSingleResult; "5m": ValidateSingleResult; "1h": ValidateSingleResult } {
+    return r != null && typeof r === "object" && "1m" in r && "5m" in r && "1h" in r;
   }
 
-  async function runRegisterGaps(interval: "1m" | "1h", gaps: { from: number; to: number }[]) {
+  async function runRegisterGaps(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[]) {
     if (gaps.length === 0) return;
     setBackfillMessage(null);
     setRegisterGapsLoading(interval);
@@ -322,7 +324,7 @@ export default function SistemaDebugPanel() {
     }
   }
 
-  async function runBackfill(interval: "1m" | "1h", gaps: { from: number; to: number }[]) {
+  async function runBackfill(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[]) {
     if (gaps.length === 0) return;
     setBackfillMessage(null);
     setBackfillLoading(interval);
@@ -342,7 +344,7 @@ export default function SistemaDebugPanel() {
         setBackfillMessage((data && typeof data.error === "string" ? data.error : null) || t.error);
         return;
       }
-      const inserted = interval === "1m" ? data.inserted1m : data.inserted1h;
+      const inserted = interval === "1m" ? data.inserted1m : interval === "5m" ? data.inserted5m : data.inserted1h;
       const detail = Array.isArray(data.details) ? data.details.find((d: { interval: string }) => d.interval === interval) : null;
       const msg = (t as { backfillSuccess?: string }).backfillSuccess?.replace("{n}", String(inserted ?? 0)) ?? `Inseridas: ${inserted ?? 0}`;
       setBackfillMessage(detail && (detail.fetched === 0 || (detail.inserted === 0 && detail.fetched > 0)) ? `${msg} (Binance: ${detail.fetched}, inseridas: ${detail.inserted})` : msg);
@@ -355,17 +357,22 @@ export default function SistemaDebugPanel() {
   }
 
   const ONE_MINUTE_MS = 60 * 1000;
+  const FIVE_MINUTES_MS = 5 * 60 * 1000;
   const ONE_HOUR_MS = 60 * 60 * 1000;
-  const FAST_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
-  const KLINE_1H_YEARS_MS = 5 * 365.25 * 24 * 60 * 60 * 1000;
+  const KLINE_1M_DAYS_MS = 9 * 24 * 60 * 60 * 1000;
+  const KLINE_5M_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+  const KLINE_1H_DAYS_MS = 730 * 24 * 60 * 60 * 1000;
 
   function floorToHourMs(ms: number) {
     return Math.floor(ms / ONE_HOUR_MS) * ONE_HOUR_MS;
   }
+  function floorTo5mMs(ms: number) {
+    return Math.floor(ms / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
+  }
 
-  async function runPastBackfill(interval: "1m" | "1h") {
+  async function runPastBackfill(interval: "1m" | "5m" | "1h") {
     const sym = symbol.trim();
-    if (!sym) {
+    if (!backfillAllSymbols && !sym) {
       setPastBackfillMessage((t as { error?: string }).error ?? "Informe o símbolo.");
       return;
     }
@@ -377,10 +384,13 @@ export default function SistemaDebugPanel() {
       let from: number;
       let to: number;
       if (interval === "1m") {
-        from = now - FAST_DAYS_MS - ONE_MINUTE_MS;
+        from = now - KLINE_1M_DAYS_MS - ONE_MINUTE_MS;
         to = now + ONE_MINUTE_MS;
+      } else if (interval === "5m") {
+        from = floorTo5mMs(now - KLINE_5M_DAYS_MS) - FIVE_MINUTES_MS;
+        to = floorTo5mMs(now) + FIVE_MINUTES_MS;
       } else {
-        from = floorToHourMs(now - KLINE_1H_YEARS_MS) - ONE_HOUR_MS;
+        from = floorToHourMs(now - KLINE_1H_DAYS_MS) - ONE_HOUR_MS;
         to = floorToHourMs(now) + ONE_HOUR_MS;
       }
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
@@ -388,7 +398,7 @@ export default function SistemaDebugPanel() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          symbol: sym,
+          symbol: backfillAllSymbols ? "all" : sym,
           gaps: [{ interval, from, to }],
         }),
       });
@@ -397,7 +407,8 @@ export default function SistemaDebugPanel() {
         setPastBackfillMessage((data && typeof data.error === "string" ? data.error : null) || t.error);
         return;
       }
-      const inserted = interval === "1m" ? data.inserted1m : data.inserted1h;
+      const inserted =
+        interval === "1m" ? data.inserted1m : interval === "5m" ? data.inserted5m : data.inserted1h;
       const msg = (t as { backfillPastSuccess?: string }).backfillPastSuccess?.replace("{n}", String(inserted ?? 0)) ?? `Concluído. Inseridas: ${inserted ?? 0}`;
       setPastBackfillMessage(msg);
       runValidate();
@@ -418,8 +429,8 @@ export default function SistemaDebugPanel() {
         setSyncKlinesMessage((data?.error ?? `HTTP ${res.status}`) + (data?.details ? ` — ${JSON.stringify(data.details)}` : ""));
         return;
       }
-      const lines = data?.result?.map((r: { symbol: string; inserted: number; purged: number; inserted1h: number; purged1h: number }) =>
-        `${r.symbol}: 1m +${r.inserted} −${r.purged} | 1h +${r.inserted1h} −${r.purged1h}`
+      const lines = data?.result?.map((r: { symbol: string; inserted: number; inserted5m?: number; inserted1h: number }) =>
+        `${r.symbol}: 1m +${r.inserted} | 5m +${(r as { inserted5m?: number }).inserted5m ?? 0} | 1h +${r.inserted1h}`
       ) ?? [];
       setSyncKlinesMessage(lines.length ? lines.join("\n") : (t as { ok?: string }).ok ?? "OK");
       runValidate();
@@ -454,8 +465,8 @@ export default function SistemaDebugPanel() {
   }
 
   function ResultBlock({ label, res }: { label: string; res: ValidateSingleResult }) {
-    const interval = res.interval as "1m" | "1h";
-    const canBackfill = !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "1h");
+    const interval = res.interval as "1m" | "5m" | "1h";
+    const canBackfill = !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "5m" || interval === "1h");
     return (
       <div className="p-3 bg-zinc-50 rounded-md text-sm font-mono space-y-1">
         <p className="text-xs font-semibold text-zinc-600 mb-1.5">{label}</p>
@@ -595,6 +606,13 @@ export default function SistemaDebugPanel() {
             >
               {(t as Record<string, string>).tabQa ?? "QA"}
             </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("historico")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "historico" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabHistorico ?? "Histórico"}
+            </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {debugTab === "main" && (
@@ -706,6 +724,10 @@ export default function SistemaDebugPanel() {
                 <p className="mt-1 text-xs text-red-600">{binanceSpotError}</p>
               )}
             </section>
+              </>
+            )}
+            {debugTab === "historico" && (
+              <>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {t.validateKlines}
@@ -717,8 +739,9 @@ export default function SistemaDebugPanel() {
                   className="flex-1 min-w-0 text-sm border border-zinc-300 rounded-md px-2.5 py-1.5 text-zinc-800 bg-white"
                   aria-label={t.symbol}
                 >
-                  <option value="BTCUSDT">BTCUSDT</option>
-                  <option value="ETHUSDT">ETHUSDT</option>
+                  {getKlineSymbols().map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
                 </select>
                 <button
                   type="button"
@@ -737,14 +760,15 @@ export default function SistemaDebugPanel() {
               )}
               {result && (
                 <div className="mt-3 space-y-3">
-                  {isBothResults(result) ? (
+                  {isHistoricResults(result) ? (
                     <>
                       <ResultBlock label={t.validateKlines1m} res={result["1m"]} />
+                      <ResultBlock label={t.validateKlines5m} res={result["5m"]} />
                       <ResultBlock label={t.validateKlines1h} res={result["1h"]} />
                     </>
                   ) : (
                     <ResultBlock
-                      label={(result as ValidateSingleResult).interval === "1m" ? t.validateKlines1m : t.validateKlines1h}
+                      label={(result as ValidateSingleResult).interval === "1m" ? t.validateKlines1m : (result as ValidateSingleResult).interval === "5m" ? t.validateKlines5m : t.validateKlines1h}
                       res={result as ValidateSingleResult}
                     />
                   )}
@@ -758,6 +782,15 @@ export default function SistemaDebugPanel() {
               <p className="text-xs text-zinc-500 mb-2">
                 {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima."}
               </p>
+              <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={backfillAllSymbols}
+                  onChange={(e) => setBackfillAllSymbols(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                {(t as Record<string, string>).backfillAllSymbols ?? "Para todas as moedas (BTCUSDT e ETHUSDT)"}
+              </label>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -765,7 +798,15 @@ export default function SistemaDebugPanel() {
                   onClick={() => runPastBackfill("1m")}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (90 dias)"}
+                  {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (9 dias)"}
+                </button>
+                <button
+                  type="button"
+                  disabled={pastBackfillLoading !== null || loading}
+                  onClick={() => runPastBackfill("5m")}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {pastBackfillLoading === "5m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast5m?: string }).backfillPast5m ?? "Backfill 5m (90 dias)"}
                 </button>
                 <button
                   type="button"
@@ -773,59 +814,55 @@ export default function SistemaDebugPanel() {
                   onClick={() => runPastBackfill("1h")}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (5 anos)"}
+                  {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (730 dias)"}
                 </button>
               </div>
               {pastBackfillMessage && (
                 <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
               )}
             </section>
-            {isDevHost && (
-              <>
-              <section className="mt-4">
-                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
-                  {(t as Record<string, string>).syncKlinesDevTitle ?? "Sync klines (dev)"}
-                </h4>
-                <p className="text-xs text-zinc-500 mb-2">
-                  {(t as Record<string, string>).syncKlinesDevHint ?? "Atualiza BinanceKlineFast 1m e BinanceKline 1h no banco do .env. Só em localhost; produção não é afetada."}
-                </p>
-                <button
-                  type="button"
-                  disabled={syncKlinesLoading}
-                  onClick={() => runSyncKlines()}
-                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {syncKlinesLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).syncKlinesDevRun ?? "Executar sync agora")}
-                </button>
-                {syncKlinesMessage && (
-                  <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
-                    {syncKlinesMessage}
-                  </pre>
-                )}
-              </section>
-              <section className="mt-4">
-                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
-                  {(t as Record<string, string>).cacheRefreshDevTitle ?? "Refresh cache (dev)"}
-                </h4>
-                <p className="text-xs text-zinc-500 mb-2">
-                  {(t as Record<string, string>).cacheRefreshDevHint ?? "Recria BinanceKlineCache (3m–1D) a partir de 1m/1h. Só em localhost; produção não é afetada."}
-                </p>
-                <button
-                  type="button"
-                  disabled={cacheRefreshLoading}
-                  onClick={() => runCacheRefresh()}
-                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {cacheRefreshLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).cacheRefreshDevRun ?? "Executar refresh agora")}
-                </button>
-                {cacheRefreshMessage && (
-                  <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
-                    {cacheRefreshMessage}
-                  </pre>
-                )}
-              </section>
-              </>
-            )}
+            <section className="mt-4">
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                {(t as Record<string, string>).syncKlinesTitle ?? "Sync klines"}
+              </h4>
+              <p className="text-xs text-zinc-500 mb-2">
+                {(t as Record<string, string>).syncKlinesHint ?? "Atualiza BinanceKlineFast 1m, BinanceKlineMonth 5m e BinanceKline 1h no banco do ambiente atual."}
+              </p>
+              <button
+                type="button"
+                disabled={syncKlinesLoading}
+                onClick={() => runSyncKlines()}
+                className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {syncKlinesLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).syncKlinesRun ?? "Executar sync agora")}
+              </button>
+              {syncKlinesMessage && (
+                <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
+                  {syncKlinesMessage}
+                </pre>
+              )}
+            </section>
+            <section className="mt-4">
+              <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                {(t as Record<string, string>).cacheRefreshTitle ?? "Refresh cache"}
+              </h4>
+              <p className="text-xs text-zinc-500 mb-2">
+                {(t as Record<string, string>).cacheRefreshHint ?? "Recria BinanceKlineCache (1m–1d) a partir de 1m, 5m e 1h. Ambiente atual."}
+              </p>
+              <button
+                type="button"
+                disabled={cacheRefreshLoading}
+                onClick={() => runCacheRefresh()}
+                className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+              >
+                {cacheRefreshLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).cacheRefreshRun ?? "Executar refresh agora")}
+              </button>
+              {cacheRefreshMessage && (
+                <pre className="mt-2 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-2 rounded border border-zinc-200">
+                  {cacheRefreshMessage}
+                </pre>
+              )}
+            </section>
               </>
             )}
             {debugTab === "qa" && (

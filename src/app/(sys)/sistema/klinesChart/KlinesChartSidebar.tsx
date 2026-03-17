@@ -27,7 +27,6 @@ export interface KlinesChartSidebarProps {
   chartHeight: number;
   settingsRef: RefObject<HTMLDivElement | null>;
   colorsRef: RefObject<HTMLDivElement | null>;
-  saveLoadRef: RefObject<HTMLDivElement | null>;
   drawRef: RefObject<HTMLDivElement | null>;
   /** Layout da sidebar: vertical (esquerda) ou horizontal (topo). */
   orientation?: "vertical" | "horizontal";
@@ -144,31 +143,12 @@ export interface KlinesChartSidebarProps {
   toggleRuler: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
-  // Save/Load
-  saveOpen: boolean;
-  setSaveOpen: (v: boolean | ((o: boolean) => boolean)) => void;
-  loadOpen: boolean;
-  setLoadOpen: (v: boolean | ((o: boolean) => boolean)) => void;
-  savedLayouts: { slot: number; config: Record<string, unknown>; name?: string }[];
-  savedLayoutsError?: string | null;
-  /** Admin: pode salvar no slot 0 (layout default). */
-  canSaveDefault?: boolean;
-  /** Admin: pode renomear ChartModels (slot 0) na seção Carregar. */
-  canRenameChartModels?: boolean;
-  onSaveLayout: (slot: number) => void;
-  onLoadLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }) => void;
-  onRenameLayout: (layout: { slot: number; config: Record<string, unknown>; name?: string }, newName: string) => void;
-  onFetchSavedLayouts: () => void;
-  /** Usuário free: ao clicar em Salvar/Carregar chama este callback (modal de upgrade) em vez de abrir o painel. */
-  isFreeUser?: boolean;
-  onUpgradeRequest?: () => void;
 }
 
 export function KlinesChartSidebar({
   chartHeight,
   settingsRef,
   colorsRef,
-  saveLoadRef,
   drawRef,
   orientation = "vertical",
   t,
@@ -278,20 +258,6 @@ export function KlinesChartSidebar({
   toggleRuler,
   selectSelectTool,
   clearAllDrawing,
-  saveOpen,
-  setSaveOpen,
-  loadOpen,
-  setLoadOpen,
-  savedLayouts,
-  savedLayoutsError = null,
-  canSaveDefault = false,
-  canRenameChartModels = false,
-  onSaveLayout,
-  onLoadLayout,
-  onRenameLayout,
-  onFetchSavedLayouts,
-  isFreeUser = false,
-  onUpgradeRequest,
 }: KlinesChartSidebarProps) {
   const candlePresetLabel = (id: string) => {
     const map: Record<string, string> = {
@@ -315,8 +281,6 @@ export function KlinesChartSidebar({
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
   const [vapColorAboveOpen, setVapColorAboveOpen] = useState(false);
   const [vapColorBelowOpen, setVapColorBelowOpen] = useState(false);
-  const [editingLayoutSlot, setEditingLayoutSlot] = useState<number | null>(null);
-  const [renameInputValue, setRenameInputValue] = useState("");
   const [showVolumePrefsSaved, setShowVolumePrefsSaved] = useState(false);
   const volumePrefsSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Chamado ao clicar em "Salvar" ao lado de Volume ou Volume no preço: persiste as prefs atuais no layout (aplicação no gráfico já é imediata). */
@@ -334,8 +298,6 @@ export function KlinesChartSidebar({
       if (volumePrefsSavedTimeoutRef.current) clearTimeout(volumePrefsSavedTimeoutRef.current);
     };
   }, []);
-  const getLayoutLabel = (layout: { slot: number; name?: string }) =>
-    layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot)));
   useLayoutEffect(() => {
     if (!settingsOpen) {
       setVapColorAboveOpen(false);
@@ -349,12 +311,10 @@ export function KlinesChartSidebar({
   const intervalTriggerRef = useRef<HTMLDivElement>(null);
   const chartTypeTriggerRef = useRef<HTMLDivElement>(null);
   const settingsTriggerRef = useRef<HTMLDivElement>(null);
-  const saveTriggerRef = useRef<HTMLDivElement>(null);
-  const loadTriggerRef = useRef<HTMLDivElement>(null);
   const [portalStyle, setPortalStyle] = useState<{ top: number; left: number } | null>(null);
 
   useLayoutEffect(() => {
-    const anyOpen = chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen;
+    const anyOpen = chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left");
     if (!anyOpen) {
       setPortalStyle(null);
       return;
@@ -370,11 +330,7 @@ export function KlinesChartSidebar({
               ? colorsRef.current
               : drawOpen && drawPanelSide === "left"
                 ? drawRef.current
-                : saveOpen
-                  ? saveTriggerRef.current
-                  : loadOpen
-                    ? loadTriggerRef.current
-                    : null;
+                : null;
     if (!el) {
       setPortalStyle(null);
       return;
@@ -408,7 +364,7 @@ export function KlinesChartSidebar({
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
     };
-  }, [isHorizontal, chartTypeOpen, intervalsOpen, settingsOpen, colorsOpen, drawOpen, drawPanelSide, saveOpen, loadOpen]);
+  }, [isHorizontal, chartTypeOpen, intervalsOpen, settingsOpen, colorsOpen, drawOpen, drawPanelSide]);
 
   const popoverPositionClass = isHorizontal ? "absolute left-0 top-full mt-1" : "absolute left-full top-0 ml-1";
   const rootClassName = isHorizontal
@@ -511,6 +467,59 @@ export function KlinesChartSidebar({
           })()}
         </div>
       )}
+      <div className={sectionWrapClassName}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (drawMode && drawTool === "select") {
+              closeDrawMode();
+            } else {
+              selectSelectTool();
+            }
+          }}
+          title={t.drawSelectSegment}
+          className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
+          aria-label={t.drawSelectSegment}
+          aria-pressed={drawMode && drawTool === "select"}
+        >
+          <span aria-hidden>👆</span>
+        </button>
+        <button
+          type="button"
+          data-ruler-toggle
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleRuler();
+          }}
+          title={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
+          className={`${iconButtonClassName} ${drawMode && drawTool === "ruler" ? "bg-zinc-200" : ""}`}
+          aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
+          aria-pressed={drawMode && drawTool === "ruler"}
+        >
+          <img src={`${ASSET_PREFIX}/assets/draw/${drawMode && drawTool === "ruler" ? "ruler" : "crosshair"}.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
+        </button>
+        <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
+          <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
+          <span aria-hidden>🧲</span>
+        </label>
+      </div>
+      <div ref={drawRef} className={sectionWrapClassName}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setColorsOpen(false);
+            setSettingsOpen(false);
+            openDrawPanel();
+          }}
+          className={`${iconButtonClassName} ${drawOpen ? "bg-zinc-200" : ""}`}
+          title={t.drawTool}
+          aria-expanded={drawOpen}
+        >
+          <img src={`${ASSET_PREFIX}/assets/draw/esquadro.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
+        </button>
+      </div>
       <div ref={settingsTriggerRef} className={isHorizontal ? "relative flex items-center" : undefined}>
         <button
           type="button"
@@ -525,21 +534,6 @@ export function KlinesChartSidebar({
         >
           ⚙️
         </button>
-      <button
-        type="button"
-        onClick={() => setChartSizePercent((v) => (v >= 150 ? 100 : v >= 125 ? 150 : 125))}
-        className={`${iconButtonClassName} ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
-        title={
-          chartSizePercent >= 150
-            ? ((t as Record<string, string>).chartSizeRestore150 ?? "Tamanho atual: 150% (clique para voltar a 100%)")
-            : chartSizePercent >= 125
-              ? ((t as Record<string, string>).chartSizeTo150 ?? "Tamanho atual: 125% (clique para 150%)")
-              : ((t as Record<string, string>).chartSizeEnlarge ?? "Tamanho atual: 100% (clique para expandir a 125%)")
-        }
-        aria-pressed={chartSizePercent >= 125}
-      >
-        🔍
-      </button>
       {false && settingsOpen && !isHorizontal && (
         <div
           className={`${popoverPositionClass} z-10 min-w-[160px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
@@ -972,178 +966,22 @@ export function KlinesChartSidebar({
           </div>
         )}
       </div>
-      <div ref={drawRef} className={sectionWrapClassName}>
+      <div className={sectionWrapClassName}>
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setDrawingsVisible((v) => !v);
-          }}
-          className={`${iconButtonClassName} ${!drawingsVisible ? "opacity-60" : ""}`}
-          title={(t as Record<string, string>).drawVisibilityTitle}
-          aria-label={(t as Record<string, string>).drawVisibilityAria}
-          aria-pressed={!drawingsVisible}
+          onClick={() => setChartSizePercent((v) => (v >= 150 ? 100 : v >= 125 ? 150 : 125))}
+          className={`${iconButtonClassName} ${chartSizePercent >= 125 ? "bg-zinc-200/80" : ""}`}
+          title={
+            chartSizePercent >= 150
+              ? ((t as Record<string, string>).chartSizeRestore150 ?? "Tamanho atual: 150% (clique para voltar a 100%)")
+              : chartSizePercent >= 125
+                ? ((t as Record<string, string>).chartSizeTo150 ?? "Tamanho atual: 125% (clique para 150%)")
+                : ((t as Record<string, string>).chartSizeEnlarge ?? "Tamanho atual: 100% (clique para expandir a 125%)")
+          }
+          aria-pressed={chartSizePercent >= 125}
         >
-          <span className={!drawingsVisible ? "opacity-50" : ""} aria-hidden>👁</span>
+          🔍
         </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setColorsOpen(false);
-            setSettingsOpen(false);
-            openDrawPanel();
-          }}
-          className={`${iconButtonClassName} ${drawOpen ? "bg-zinc-200" : ""}`}
-          title={t.drawTool}
-          aria-expanded={drawOpen}
-        >
-          <img src={`${ASSET_PREFIX}/assets/draw/esquadro.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (drawMode && drawTool === "select") {
-              closeDrawMode();
-            } else {
-              selectSelectTool();
-            }
-          }}
-          title={t.drawSelectSegment}
-          className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
-          aria-label={t.drawSelectSegment}
-          aria-pressed={drawMode && drawTool === "select"}
-        >
-          <span aria-hidden>👆</span>
-        </button>
-        <button
-          type="button"
-          data-ruler-toggle
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleRuler();
-          }}
-          title={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
-          className={`${iconButtonClassName} ${drawMode && drawTool === "ruler" ? "bg-zinc-200" : ""}`}
-          aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
-          aria-pressed={drawMode && drawTool === "ruler"}
-        >
-          <img src={`${ASSET_PREFIX}/assets/draw/${drawMode && drawTool === "ruler" ? "ruler" : "crosshair"}.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
-        </button>
-        <label className={`${iconButtonClassName} ${drawMagnetic ? "bg-zinc-200" : ""}`} title={t.drawMagnetic}>
-          <input type="checkbox" checked={drawMagnetic} onChange={(e) => setDrawMagnetic(e.target.checked)} className="rounded border-zinc-300 sr-only" />
-          <span aria-hidden>🧲</span>
-        </label>
-        {false && drawOpen && drawPanelSide === "left" && !isHorizontal && (
-          <div className={`${popoverPositionClass} z-20 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={t.drawTool}>
-            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{t.drawTool}</p>
-            <div className="grid grid-cols-2 gap-1">
-              <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`} aria-label={t.lineSegment}>
-                <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectHorizontalLineTool} title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`}>
-                <span aria-hidden>―</span>
-              </button>
-              <button type="button" onClick={selectFibonacciTool} title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectFreeRetracementTool} title={(t as Record<string, string>).freeRetracement ?? "Retração livre"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
-              </button>
-              <button type="button" onClick={selectRectangleTool} title={(t as Record<string, string>).rectangleTool ?? "Rectangle"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectChannelTool} title={(t as Record<string, string>).channelTool ?? "Channel"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectStopGainTool} title={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "stopGain" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/stopgain.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectVerticalLineTool} title={(t as Record<string, string>).verticalLine ?? "Vertical line"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-200" : ""}`}>
-                <span aria-hidden>|</span>
-              </button>
-              <button type="button" onClick={selectTextTool} title={(t as Record<string, string>).drawTextTool ?? "Text"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectArrowTool} title={(t as Record<string, string>).arrowTool ?? "Arrow"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}>
-                <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" />
-              </button>
-              <button type="button" onClick={selectPencilTool} title={(t as Record<string, string>).pencilTool ?? "Lápis"} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-200" : ""}`} aria-label={(t as Record<string, string>).pencilTool ?? "Lápis"}>
-                <span aria-hidden className="text-lg leading-none">✎</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      <div ref={saveLoadRef} className={isHorizontal ? "flex items-center" : "w-full flex flex-col items-center"}>
-        <div ref={saveTriggerRef} className={isHorizontal ? "relative flex items-center" : "relative w-full"}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSaveOpen((o) => !o);
-              setLoadOpen(false);
-            }}
-            className={iconButtonClassName}
-            title={t.saveLayout}
-            aria-expanded={saveOpen}
-          >
-            💾
-          </button>
-          {false && saveOpen && !isHorizontal && (
-            <div
-              className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-              {[1, 2, 3, 4, 5, 6, 7].map((slot) => {
-                const layout = savedLayouts.find((l) => l.slot === slot);
-                return (
-                  <button key={slot} type="button" onClick={() => onSaveLayout(slot)} className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 truncate">
-                    {layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot))}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        <div ref={loadTriggerRef} className={isHorizontal ? "relative flex items-center" : "relative w-full"}>
-          <button
-            type="button"
-            onClick={async (e) => {
-              e.stopPropagation();
-              setLoadOpen((o) => {
-                if (!o) onFetchSavedLayouts();
-                return !o;
-              });
-              setSaveOpen(false);
-            }}
-            className={iconButtonClassName}
-            title={t.loadLayout}
-            aria-expanded={loadOpen}
-          >
-            📂
-          </button>
-          {false && loadOpen && !isHorizontal && (
-            <div
-              className={`${popoverPositionClass} z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-              {savedLayouts.length === 0 ? (
-                <p className="px-2 py-1.5 text-sm text-zinc-500">{t.noSavedLayouts}</p>
-              ) : (
-                  savedLayouts.map((layout) => (
-                    <div key={layout.slot} className="flex items-center gap-1">
-                      <button type="button" onClick={() => onLoadLayout(layout)} className="flex-1 text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100">{getLayoutLabel(layout)}</button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} aria-label={t.renameLayout}>✏️</button>
-                    </div>
-                  ))
-              )}
-            </div>
-          )}
-        </div>
       </div>
       </div>
       {isHorizontal && (
@@ -1183,7 +1021,7 @@ export function KlinesChartSidebar({
         </div>
       )}
       {portalStyle &&
-        (chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left") || saveOpen || loadOpen) &&
+        (chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left")) &&
         typeof document !== "undefined" &&
         createPortal(
           <div
@@ -1442,9 +1280,21 @@ export function KlinesChartSidebar({
                 </div>
               </div>
             )}
-            {drawOpen && drawPanelSide === "left" && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !saveOpen && !loadOpen && (
+            {drawOpen && drawPanelSide === "left" && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && (
               <>
-                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{t.drawTool}</p>
+                <div className="flex items-center justify-between gap-2 px-2 pb-2 border-b border-zinc-100 mb-2">
+                  <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{t.drawTool}</p>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDrawingsVisible((v) => !v); }}
+                    className={`w-8 h-8 flex items-center justify-center rounded text-base hover:bg-zinc-100 shrink-0 ${!drawingsVisible ? "opacity-60" : ""}`}
+                    title={(t as Record<string, string>).drawVisibilityTitle}
+                    aria-label={(t as Record<string, string>).drawVisibilityAria}
+                    aria-pressed={!drawingsVisible}
+                  >
+                    <span className={!drawingsVisible ? "opacity-50" : ""} aria-hidden>👁</span>
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-1">
                   <button type="button" onClick={selectLineTool} title={t.lineSegment} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectHorizontalLineTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-200" : ""}`}><span aria-hidden>―</span></button>
@@ -1458,99 +1308,6 @@ export function KlinesChartSidebar({
                   <button type="button" onClick={selectArrowTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-200" : ""}`}><img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" /></button>
                   <button type="button" onClick={selectPencilTool} className={`flex items-center justify-center w-9 h-9 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-200" : ""}`} title={(t as Record<string, string>).pencilTool ?? "Lápis"}><span aria-hidden>✎</span></button>
                 </div>
-              </>
-            )}
-            {saveOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && (
-              <>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-                {[1, 2, 3, 4, 5, 6, 7].map((slot) => {
-                  const layout = savedLayouts.find((l) => l.slot === slot);
-                  const locked = isFreeUser;
-                  const label = layout ? getLayoutLabel(layout) : t.layoutName.replace("{n}", String(slot));
-                  return (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => { if (locked) onUpgradeRequest?.(); else onSaveLayout(slot); }}
-                      className={`w-full text-left px-2 py-1.5 rounded text-sm truncate flex items-center gap-1.5 ${locked ? "opacity-60 cursor-not-allowed" : "hover:bg-zinc-100"}`}
-                      title={locked ? ((t as Record<string, string>).upgradePlanModalTitle ?? undefined) : (layout ? getLayoutLabel(layout) : undefined)}
-                    >
-                      {locked ? "🔒 " : ""}{label}
-                    </button>
-                  );
-                })}
-              </>
-            )}
-            {loadOpen && !chartTypeOpen && !intervalsOpen && !settingsOpen && !colorsOpen && !(drawOpen && drawPanelSide === "left") && !saveOpen && (
-              <>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-                {savedLayoutsError ? (
-                  <p className="px-2 py-1.5 text-sm text-red-600">{savedLayoutsError}</p>
-                ) : savedLayouts.length === 0 ? (
-                  <p className="px-2 py-1.5 text-sm text-zinc-500">{t.noSavedLayouts}</p>
-                ) : (
-                  <>
-                    {(() => {
-                      const chartModelLayouts = savedLayouts.filter((l) => l.slot === 0);
-                      const userLayouts = savedLayouts.filter((l) => l.slot >= 1);
-                      const canRename = (layout: { slot: number }) =>
-                        layout.slot >= 1 || canRenameChartModels;
-                      const renderLayoutRow = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
-                        const loadLocked = isFreeUser && layout.slot >= 1;
-                        return (
-                          <div key={layout.slot} className="flex items-center gap-1 px-1 py-0.5">
-                            {editingLayoutSlot === layout.slot ? (
-                              <>
-                                <input
-                                  type="text"
-                                  maxLength={24}
-                                  value={renameInputValue}
-                                  onChange={(e) => setRenameInputValue(e.target.value)}
-                                  placeholder={t.layoutNamePlaceholder}
-                                  className="flex-1 min-w-0 px-2 py-1 text-sm border border-zinc-200 rounded"
-                                  autoFocus
-                                />
-                                <button type="button" onClick={() => { const v = renameInputValue.trim().slice(0, 24); onRenameLayout(layout, v); setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutOk}</button>
-                                <button type="button" onClick={() => { setEditingLayoutSlot(null); setRenameInputValue(""); }} className="shrink-0 px-2 py-1 text-xs rounded bg-zinc-100 hover:bg-zinc-200">{t.renameLayoutCancel}</button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => { if (loadLocked) onUpgradeRequest?.(); else onLoadLayout(layout); }}
-                                  className={`flex-1 min-w-0 text-left px-2 py-1.5 rounded text-sm truncate flex items-center gap-1.5 ${loadLocked ? "opacity-60 cursor-not-allowed" : "hover:bg-zinc-100"}`}
-                                  title={loadLocked ? ((t as Record<string, string>).upgradePlanModalTitle ?? undefined) : undefined}
-                                >
-                                  {loadLocked ? "🔒 " : ""}{getLayoutLabel(layout)}
-                                </button>
-                                {canRename(layout) && !loadLocked && (
-                                  <button type="button" onClick={(e) => { e.stopPropagation(); setEditingLayoutSlot(layout.slot); setRenameInputValue(layout.name?.trim() ?? ""); }} title={t.renameLayout} className="shrink-0 p-1 rounded hover:bg-zinc-100" aria-label={t.renameLayout}>✏️</button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        );
-                      };
-                      return (
-                        <>
-                          {chartModelLayouts.length > 0 && (
-                            <>
-                              <div className="text-[10px] font-medium text-zinc-400 px-2 pt-1 pb-0.5">{(t as Record<string, string>).chartModelsSection ?? "Chart Models"}</div>
-                              {chartModelLayouts.map(renderLayoutRow)}
-                              <div className="border-t border-zinc-100 my-1.5" />
-                            </>
-                          )}
-                          {userLayouts.length > 0 && (
-                            <>
-                              <div className="text-[10px] font-medium text-zinc-400 px-2 pt-0.5 pb-0.5">{(t as Record<string, string>).myLayoutsSection ?? "My layouts"}</div>
-                              {userLayouts.map(renderLayoutRow)}
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </>
-                )}
               </>
             )}
           </div>,

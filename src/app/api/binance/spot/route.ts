@@ -5,6 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
+import { resolveSymbol } from "@/app/lib/kline-symbols";
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -22,19 +23,21 @@ function startOfTodayUtcMs(): number {
 }
 
 export async function GET(request: NextRequest) {
-  const symbol = request.nextUrl.searchParams.get("symbol") ?? "BTCUSDT";
+  const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol"));
   try {
     const startOfToday = startOfTodayUtcMs();
     const lastHourPrevDayOpen = startOfToday - ONE_HOUR_MS; // 23:00 UTC do dia anterior
 
+    const CORRETORA = "binance";
     const [latest, prevDayLastHour, prevDayLast1m] = await Promise.all([
       cryptoPrisma.binanceKlineFast.findFirst({
-        where: { symbol, interval: "1m" },
+        where: { corretora: CORRETORA, symbol, interval: "1m" },
         orderBy: { openTime: "desc" },
         select: { close: true },
       }),
       cryptoPrisma.binanceKline.findFirst({
         where: {
+          corretora: CORRETORA,
           symbol,
           interval: "1h",
           openTime: BigInt(lastHourPrevDayOpen),
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest) {
         select: { close: true },
       }),
       cryptoPrisma.binanceKlineFast.findFirst({
-        where: { symbol, interval: "1m", openTime: { lt: BigInt(startOfToday) } },
+        where: { corretora: CORRETORA, symbol, interval: "1m", openTime: { lt: BigInt(startOfToday) } },
         orderBy: { openTime: "desc" },
         select: { close: true },
       }),

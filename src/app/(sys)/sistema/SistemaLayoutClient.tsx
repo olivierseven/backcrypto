@@ -23,6 +23,8 @@ import DrawingsPanel from "./DrawingsPanel";
 import { StrategiesProvider, useStrategies } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
 import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
+import { ChartSaveLoadProvider, useChartSaveLoad } from "./ChartSaveLoadContext";
+import SaveLoadPanel from "./SaveLoadPanel";
 import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
 import SingleTabGuard from "./SingleTabGuard";
 
@@ -115,10 +117,12 @@ function SistemaHeader({
   const pathname = usePathname();
   const isContaPage = pathname === "/conta" || pathname?.endsWith("/conta") === true;
   const isPlansPage = pathname === "/plans" || pathname?.endsWith("/plans") === true;
+  const isSistemaChartPage = pathname === "/sistema" || pathname?.endsWith("/sistema") === true;
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const { data: headerData } = useChartHeader();
   const { symbol, setSymbol, symbolOptions, symbolPanelOpen, openSymbolPanel, closeSymbolPanel } = useChartSymbol();
+  const { openSavePanel, openLoadPanel } = useChartSaveLoad();
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const menuPanelRef = useRef<HTMLElement>(null);
 
@@ -258,6 +262,24 @@ function SistemaHeader({
             >
               {(t as Record<string, string>).menuDrawings ?? "Drawings"}
             </button>
+            {isSistemaChartPage && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { openSavePanel(); onMenuToggle(false); }}
+                  className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  {t.saveLayout}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { openLoadPanel(); onMenuToggle(false); }}
+                  className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                >
+                  {t.loadLayout}
+                </button>
+              </>
+            )}
             <a
               href={`${API_BASE}/auth/logout`}
               onClick={() => onMenuToggle(false)}
@@ -468,6 +490,90 @@ function SistemaLayoutInner({
       <ChartHeaderProvider>
         <ChartSymbolProvider>
           <ChartLayoutSaveProvider>
+            <ChartSaveLoadProvider>
+            <SistemaLayoutContent
+              menuOpen={menuOpen}
+              onMenuToggle={onMenuToggle}
+              onMyIndicatorsClick={onMyIndicatorsClick}
+              onAddIndicatorClick={onAddIndicatorClick}
+              onMyStrategiesClick={onMyStrategiesClick}
+              onAddStrategyClick={onAddStrategyClick}
+              onDrawingsClick={onDrawingsClick}
+              addStrategyDisabled={addStrategyDisabled}
+              topBarGapClass={topBarGapClass}
+              indicatorsPanelOpen={indicatorsPanelOpen}
+              setIndicatorsPanelOpen={setIndicatorsPanelOpen}
+              strategiesPanelOpen={strategiesPanelOpen}
+              setStrategiesPanelOpen={setStrategiesPanelOpen}
+              drawingsPanelOpen={drawingsPanelOpen}
+              setDrawingsPanelOpen={setDrawingsPanelOpen}
+              indicatorsPanelInitialView={indicatorsPanelInitialView}
+              strategiesPanelInitialView={strategiesPanelInitialView}
+              isSistemaChartPage={isSistemaChartPage}
+              scrollContainerRef={scrollContainerRef}
+              isAdmin={isAdmin}
+              isFreeUser={isFreeUser}
+              children={children}
+            />
+            </ChartSaveLoadProvider>
+          </ChartLayoutSaveProvider>
+        </ChartSymbolProvider>
+      </ChartHeaderProvider>
+    </SistemaDebugProvider>
+  );
+}
+
+function SistemaLayoutContent({
+  menuOpen,
+  onMenuToggle,
+  onMyIndicatorsClick,
+  onAddIndicatorClick,
+  onMyStrategiesClick,
+  onAddStrategyClick,
+  onDrawingsClick,
+  addStrategyDisabled,
+  topBarGapClass,
+  indicatorsPanelOpen,
+  setIndicatorsPanelOpen,
+  strategiesPanelOpen,
+  setStrategiesPanelOpen,
+  drawingsPanelOpen,
+  setDrawingsPanelOpen,
+  indicatorsPanelInitialView,
+  strategiesPanelInitialView,
+  isSistemaChartPage,
+  scrollContainerRef,
+  isAdmin,
+  isFreeUser,
+  children,
+}: {
+  menuOpen: boolean;
+  onMenuToggle: (open: boolean) => void;
+  onMyIndicatorsClick: () => void;
+  onAddIndicatorClick: () => void;
+  onMyStrategiesClick: () => void;
+  onAddStrategyClick: () => void;
+  onDrawingsClick: () => void;
+  addStrategyDisabled: boolean;
+  topBarGapClass: string;
+  indicatorsPanelOpen: boolean;
+  setIndicatorsPanelOpen: (v: boolean) => void;
+  strategiesPanelOpen: boolean;
+  setStrategiesPanelOpen: (v: boolean) => void;
+  drawingsPanelOpen: boolean;
+  setDrawingsPanelOpen: (v: boolean) => void;
+  indicatorsPanelInitialView: "list" | "add";
+  strategiesPanelInitialView: "list" | "add";
+  isSistemaChartPage: boolean;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  isAdmin: boolean;
+  isFreeUser: boolean;
+  children: React.ReactNode;
+}) {
+  const { panelView, closePanel } = useChartSaveLoad();
+
+  return (
+    <>
             <div className="h-full w-full flex flex-col overflow-hidden bg-transparent relative">
               <SistemaHeader
                 menuOpen={menuOpen}
@@ -520,11 +626,18 @@ function SistemaLayoutInner({
                   <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
                 </>
               )}
+              {panelView && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[1300]"
+                    aria-hidden
+                    onClick={() => closePanel()}
+                  />
+                  <SaveLoadPanel initialView={panelView} onClose={() => closePanel()} />
+                </>
+              )}
             </div>
             {isAdmin && <SistemaDebugPanel />}
-          </ChartLayoutSaveProvider>
-        </ChartSymbolProvider>
-      </ChartHeaderProvider>
-    </SistemaDebugProvider>
+    </>
   );
 }

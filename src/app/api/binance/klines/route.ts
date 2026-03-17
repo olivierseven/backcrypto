@@ -13,13 +13,17 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
+import { resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const CORRETORA = "binance";
 
 const INTERVAL_TO_MINUTES: Record<string, number> = {
   "1m": 1,
+  "2m": 2,
   "3m": 3,
+  "4m": 4,
   "5m": 5,
   "15m": 15,
   "30m": 30,
@@ -37,9 +41,9 @@ const INTERVAL_TO_MINUTES: Record<string, number> = {
   "1M": 43200, // 30 days
 };
 
-/** Intervalos que existem na BinanceKlineCache (até 1D). Sem 1m. */
+/** Intervalos que existem na BinanceKlineCache: 1m–4m (de Fast), 5m/15m/30m/45m (de 5m), 1h–1d (de 1h). */
 const CACHE_INTERVALS = new Set<string>([
-  "3m", "5m", "15m", "30m", "45m", "1h", "2h", "3h", "4h", "6h", "8h", "12h", "1d",
+  "1m", "2m", "3m", "4m", "5m", "15m", "30m", "45m", "1h", "2h", "3h", "4h", "6h", "8h", "12h", "1d",
 ]);
 
 function parseIntervalMinutes(interval: string | null, groupMinutes: number | null): number {
@@ -120,7 +124,7 @@ function applyTimezoneOffset(data: (string | number)[][], offsetHours: number): 
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const symbol = searchParams.get("symbol") ?? "BTCUSDT";
+  const symbol = resolveSymbol(searchParams.get("symbol"));
   const limit = Math.min(Number(searchParams.get("limit")) || 1000, 5000);
   const groupMinutes = parseIntervalMinutes(
     searchParams.get("interval"),
@@ -165,7 +169,7 @@ export async function GET(request: NextRequest) {
     .$queryRaw<[{ openTime: number | bigint } | null]>(
       Prisma.sql`
         SELECT "openTime" FROM backcrypto."BinanceKlineFast"
-        WHERE symbol = ${symbol} AND "interval" = '1m'
+        WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
         ORDER BY "openTime" DESC
         LIMIT 1
       `
@@ -182,7 +186,7 @@ export async function GET(request: NextRequest) {
                  "closeTime", "quoteAssetVolume", "numberOfTrades",
                  "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           FROM backcrypto."BinanceKlineFast"
-          WHERE symbol = ${symbol} AND "interval" = '1m'
+          WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
           ORDER BY "openTime" DESC
           LIMIT ${limit}
         `
@@ -223,7 +227,7 @@ export async function GET(request: NextRequest) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
           )
           SELECT
             k.bucket::bigint AS "openTime",
@@ -295,7 +299,7 @@ export async function GET(request: NextRequest) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
           ),
           today_1d AS (
             SELECT

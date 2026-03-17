@@ -1,6 +1,6 @@
 /**
  * Backfill de klines BTCUSDT 1h na tabela BinanceKline.
- * Período: últimos 5 anos até agora (UTC, dinâmico).
+ * Período: últimos KLINE_1H_DAYS dias (.env, default 730) até agora.
  * Reescreve (delete + insert) o range de cada lote baixado.
  *
  * Uso: node scripts/binance-klines-backfill-1h.js
@@ -18,15 +18,15 @@ const INTERVAL = "1h";
 const LIMIT = 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const DELAY_MS = 1100; // ~1 req/s para evitar rate limit
-const KLINE_1H_YEARS = 5;
+const CORRETORA = "binance";
+const KLINE_1H_DAYS = Math.max(1, parseInt(process.env.KLINE_1H_DAYS ?? "730", 10) || 730);
 
 function floorToHourMs(ms) {
   return Math.floor(ms / ONE_HOUR_MS) * ONE_HOUR_MS;
 }
 
 function getStartMs(nowMs) {
-  // Aproximação consistente com o sync (365.25 dias/ano) e alinhado à hora.
-  const start = nowMs - KLINE_1H_YEARS * 365.25 * 24 * 60 * 60 * 1000;
+  const start = nowMs - KLINE_1H_DAYS * 24 * 60 * 60 * 1000;
   return floorToHourMs(start);
 }
 
@@ -56,6 +56,7 @@ async function fetchKlines(startTime, endTime) {
 
 function klineToRow(k) {
   return {
+    corretora: CORRETORA,
     symbol: SYMBOL,
     interval: INTERVAL,
     openTime: BigInt(k[0]),
@@ -84,8 +85,8 @@ async function main() {
       " → " +
       new Date(END_MS).toISOString() +
       " (últimos " +
-      KLINE_1H_YEARS +
-      " anos)"
+      KLINE_1H_DAYS +
+      " dias)"
   );
 
   let startTime = START_MS;
@@ -106,7 +107,7 @@ async function main() {
     const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
     const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
     await prisma.binanceKline.deleteMany({
-      where: { symbol: SYMBOL, interval: INTERVAL, openTime: { gte: minOpen, lte: maxOpen } },
+      where: { corretora: CORRETORA, symbol: SYMBOL, interval: INTERVAL, openTime: { gte: minOpen, lte: maxOpen } },
     });
     const created = await prisma.binanceKline.createMany({ data: rows });
     totalInserted += created.count;

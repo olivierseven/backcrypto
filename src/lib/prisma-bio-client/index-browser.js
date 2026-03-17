@@ -291,6 +291,7 @@ exports.Prisma.PagarMeOrderScalarFieldEnum = {
 };
 
 exports.Prisma.BinanceKlineScalarFieldEnum = {
+  corretora: 'corretora',
   symbol: 'symbol',
   interval: 'interval',
   openTime: 'openTime',
@@ -307,6 +308,24 @@ exports.Prisma.BinanceKlineScalarFieldEnum = {
 };
 
 exports.Prisma.BinanceKlineFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+};
+
+exports.Prisma.BinanceKlineMonthScalarFieldEnum = {
+  corretora: 'corretora',
   symbol: 'symbol',
   interval: 'interval',
   openTime: 'openTime',
@@ -453,6 +472,7 @@ exports.Prisma.ModelName = {
   PagarMeOrder: 'PagarMeOrder',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
+  BinanceKlineMonth: 'BinanceKlineMonth',
   BinanceKlineCache: 'BinanceKlineCache',
   BinanceKlineGap: 'BinanceKlineGap'
 };

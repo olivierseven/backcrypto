@@ -1,15 +1,28 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useMemo, useLayoutEffect, type ReactNode } from "react";
+import { getKlineSymbols } from "@/app/lib/kline-symbols";
 import { KLINE_SYMBOL_KEY } from "./KlinesChartConstants";
 
-export const SYMBOL_OPTIONS = ["BTCUSDT", "ETHUSDT"] as const;
+const DEFAULT_SYMBOL = "BTCUSDT";
+
+function getSymbolOptions(): string[] {
+  const list = getKlineSymbols();
+  return list.length > 0 ? list : [DEFAULT_SYMBOL, "ETHUSDT"];
+}
+
+export function getSymbolOptionsExport(): string[] {
+  return getSymbolOptions();
+}
+
+export const SYMBOL_OPTIONS = getSymbolOptions() as readonly string[];
 export type SymbolOption = (typeof SYMBOL_OPTIONS)[number];
 
 function getStoredSymbol(): string {
-  if (typeof window === "undefined") return "BTCUSDT";
+  if (typeof window === "undefined") return getSymbolOptions()[0] ?? DEFAULT_SYMBOL;
+  const options = getSymbolOptions();
   const stored = window.localStorage.getItem(KLINE_SYMBOL_KEY);
-  return stored && SYMBOL_OPTIONS.includes(stored as SymbolOption) ? stored : "BTCUSDT";
+  return stored && options.includes(stored) ? stored : (options[0] ?? DEFAULT_SYMBOL);
 }
 
 interface ChartSymbolContextValue {
@@ -24,7 +37,7 @@ interface ChartSymbolContextValue {
 const ChartSymbolContext = createContext<ChartSymbolContextValue | null>(null);
 
 export function ChartSymbolProvider({ children }: { children: ReactNode }) {
-  const [symbol, setSymbolState] = useState<string>("BTCUSDT");
+  const [symbol, setSymbolState] = useState<string>(() => getSymbolOptions()[0] ?? DEFAULT_SYMBOL);
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -33,7 +46,8 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSymbol = useCallback((s: string) => {
-    if (!SYMBOL_OPTIONS.includes(s as SymbolOption)) return;
+    const options = getSymbolOptions();
+    if (!options.includes(s)) return;
     setSymbolState(s);
     try {
       if (typeof window !== "undefined") window.localStorage.setItem(KLINE_SYMBOL_KEY, s);
@@ -49,7 +63,7 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
     () => ({
       symbol,
       setSymbol,
-      symbolOptions: SYMBOL_OPTIONS,
+      symbolOptions: getSymbolOptions(),
       symbolPanelOpen,
       openSymbolPanel,
       closeSymbolPanel,
@@ -68,9 +82,9 @@ export function useChartSymbol(): ChartSymbolContextValue {
   const ctx = useContext(ChartSymbolContext);
   if (!ctx) {
     return {
-      symbol: "BTCUSDT",
+      symbol: getSymbolOptions()[0] ?? DEFAULT_SYMBOL,
       setSymbol: () => {},
-      symbolOptions: SYMBOL_OPTIONS,
+      symbolOptions: getSymbolOptions(),
       symbolPanelOpen: false,
       openSymbolPanel: () => {},
       closeSymbolPanel: () => {},

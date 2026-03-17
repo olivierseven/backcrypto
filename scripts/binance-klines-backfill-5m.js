@@ -1,8 +1,9 @@
 /**
- * Backfill de klines BTCUSDT 1m no banco (backcrypto.BinanceKlineFast).
- * Período: últimos KLINE_1M_DAYS dias (.env, default 9) até agora. Se rodar de novo, reescreve o range.
+ * Backfill de klines BTCUSDT 5m na tabela BinanceKlineMonth.
+ * Período: últimos KLINE_5M_DAYS dias (.env, default 90) até agora.
+ * Reescreve (delete + insert) o range de cada lote baixado.
  *
- * Uso: node scripts/binance-klines-backfill.js
+ * Uso: node scripts/binance-klines-backfill-5m.js
  * Requer: DATABASE_URL no .env e prisma generate já rodado.
  */
 
@@ -13,20 +14,24 @@ const { PrismaClient } = require("../src/lib/prisma-bio-client");
 
 const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
 const SYMBOL = "BTCUSDT";
-const INTERVAL = "1m";
+const INTERVAL = "5m";
 const LIMIT = 1000;
-const ONE_MINUTE_MS = 60 * 1000;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
 const DELAY_MS = 1100; // ~1 req/s para evitar rate limit
 const CORRETORA = "binance";
-const KLINE_1M_DAYS = Math.max(1, parseInt(process.env.KLINE_1M_DAYS ?? "9", 10) || 9);
+const KLINE_5M_DAYS = Math.max(1, parseInt(process.env.KLINE_5M_DAYS ?? "90", 10) || 90);
 
-/** Início do passado = KLINE_1M_DAYS dias atrás (UTC). */
-function getStartMs() {
-  return Date.now() - KLINE_1M_DAYS * 24 * 60 * 60 * 1000;
+function floorTo5mMs(ms) {
+  return Math.floor(ms / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
 }
-/** Fim = agora (próximo minuto para incluir o atual). */
-function getEndMs() {
-  return Date.now() + ONE_MINUTE_MS;
+
+function getStartMs(nowMs) {
+  const start = nowMs - KLINE_5M_DAYS * 24 * 60 * 60 * 1000;
+  return floorTo5mMs(start);
+}
+
+function getEndMs(nowMs) {
+  return floorTo5mMs(nowMs) + FIVE_MINUTES_MS;
 }
 
 const prisma = new PrismaClient();
@@ -68,22 +73,20 @@ function klineToRow(k) {
 }
 
 async function main() {
-  const START_MS = getStartMs();
-  const END_MS = getEndMs();
-  console.log("[binance-klines-backfill] Iniciando…");
-  console.log("[binance-klines-backfill] Tabela: BinanceKlineFast | 1m | passado = " + KLINE_1M_DAYS + " dias até agora.");
-  console.log("[binance-klines-backfill] Período: " + new Date(START_MS).toISOString() + " → " + new Date(END_MS).toISOString());
-
-  // Reescrever se rodar novamente: remove o range que vamos preencher.
-  const deleted = await prisma.binanceKlineFast.deleteMany({
-    where: {
-      corretora: CORRETORA,
-      symbol: SYMBOL,
-      interval: INTERVAL,
-      openTime: { gte: BigInt(START_MS), lt: BigInt(END_MS) },
-    },
-  });
-  if (deleted.count > 0) console.log("[binance-klines-backfill] Removidas " + deleted.count + " linhas antigas do range (reescrevendo).");
+  const now = Date.now();
+  const START_MS = getStartMs(now);
+  const END_MS = getEndMs(now);
+  console.log("[binance-klines-backfill-5m] Iniciando…");
+  console.log("[binance-klines-backfill-5m] Tabela: BinanceKlineMonth | 5m");
+  console.log(
+    "[binance-klines-backfill-5m] Período: " +
+      new Date(START_MS).toISOString() +
+      " → " +
+      new Date(END_MS).toISOString() +
+      " (últimos " +
+      KLINE_5M_DAYS +
+      " dias)"
+  );
 
   let startTime = START_MS;
   let totalInserted = 0;
@@ -95,20 +98,22 @@ async function main() {
     totalFetched += klines.length;
 
     if (klines.length === 0) {
-      console.log("[binance-klines-backfill] Sem mais dados da API.");
+      console.log("[binance-klines-backfill-5m] Sem mais dados da API.");
       break;
     }
 
     const rows = klines.map(klineToRow);
-    const created = await prisma.binanceKlineFast.createMany({
-      data: rows,
-      skipDuplicates: true,
+    const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
+    const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
+    await prisma.binanceKlineMonth.deleteMany({
+      where: { corretora: CORRETORA, symbol: SYMBOL, interval: INTERVAL, openTime: { gte: minOpen, lte: maxOpen } },
     });
+    const created = await prisma.binanceKlineMonth.createMany({ data: rows });
     totalInserted += created.count;
     batches += 1;
 
     const lastOpenTime = klines[klines.length - 1][0];
-    const nextStart = lastOpenTime + ONE_MINUTE_MS;
+    const nextStart = lastOpenTime + FIVE_MINUTES_MS;
     const percent = (((nextStart - START_MS) / (END_MS - START_MS)) * 100).toFixed(1);
     console.log(
       `  [${batches}] + ${klines.length} velas (inseridas: ${created.count}) | total: ${totalInserted} | ~${percent}%`
@@ -120,13 +125,13 @@ async function main() {
     await sleep(DELAY_MS);
   }
 
-  console.log("[binance-klines-backfill] Concluído.");
-  console.log("[binance-klines-backfill] Total buscado: " + totalFetched + " | Total inserido: " + totalInserted);
+  console.log("[binance-klines-backfill-5m] Concluído.");
+  console.log("[binance-klines-backfill-5m] Total buscado: " + totalFetched + " | Total inserido: " + totalInserted);
 }
 
 main()
   .catch((e) => {
-    console.error("[binance-klines-backfill] Erro:", e);
+    console.error("[binance-klines-backfill-5m] Erro:", e);
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());

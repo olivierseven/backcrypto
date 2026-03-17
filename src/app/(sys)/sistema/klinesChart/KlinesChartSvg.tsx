@@ -14,6 +14,11 @@ import { DrawSegmentHandles } from "./DrawSegmentHandles";
 import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
 import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
+
+function lineWidthToStroke(w: "thin" | "normal" | "thick" | undefined): number {
+  return w === "thin" ? 1 : w === "thick" ? 3 : 2;
+}
+
 export interface KlinesChartSvgProps {
   chartSvgRef: RefObject<SVGSVGElement | null>;
   crosshairOverlayRef: RefObject<SVGRectElement | null>;
@@ -530,10 +535,10 @@ export function KlinesChartSvg({
                   }
                   const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
-                  const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
+                  const limitsStrokeWidth = lineWidthToStroke(ind.bollingerLimitsLineWidth);
                   const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
-                  const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
                   const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
@@ -603,10 +608,10 @@ export function KlinesChartSvg({
                   }
                   const bandColor = ind.keltnerLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.keltnerBandOpacity ?? 0.2));
-                  const limitsStrokeWidth = ind.keltnerLimitsLineWidth === "thin" ? 1 : 2;
+                  const limitsStrokeWidth = lineWidthToStroke(ind.keltnerLimitsLineWidth);
                   const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "1 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
-                  const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
                   const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
@@ -676,10 +681,10 @@ export function KlinesChartSvg({
                   }
                   const bandColor = ind.donchianLimitsColor ?? "#6366f1";
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
-                  const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
+                  const limitsStrokeWidth = lineWidthToStroke(ind.donchianLimitsLineWidth);
                   const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
                   const middleColor = ind.color ?? "#6366f1";
-                  const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                  const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
                   const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
@@ -752,7 +757,7 @@ export function KlinesChartSvg({
                   }
                   const show = part === "tenkan" ? (ind.ichimokuShowTenkan !== false) : part === "kijun" ? (ind.ichimokuShowKijun !== false) : part === "spanA" ? (ind.ichimokuShowSpanA !== false) : part === "spanB" ? (ind.ichimokuShowSpanB !== false) : (ind.ichimokuShowChikou === true);
                   const toPath = (p: { i: number; val: number }[]) => p.length < 2 ? "" : p.map((pt, idx) => `${idx === 0 ? "M" : "L"} ${cx(pt.i)} ${yPanel(pt.val)}`).join(" ");
-                  const strokeVal = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: w === "thin" ? 1 : 2, dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
+                  const strokeVal = (w: "thin" | "normal" | "thick" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: lineWidthToStroke(w), dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
                   const s = strokeVal(ind.lineWidth, ind.lineStyle);
                   let cloudEl: ReactNode = null;
                   if (part === "tenkan") {
@@ -903,7 +908,7 @@ export function KlinesChartSvg({
                 }
                 if (points.length < 2) return null;
                 const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
-                const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+                const strokeWidth = lineWidthToStroke(ind.lineWidth);
                 const strokeDasharray = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
                 return (
                   <path
@@ -920,7 +925,7 @@ export function KlinesChartSvg({
               })}
               {panelLines.filter((ind) => (ind.type === "RSI" && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine)).map((ind, idx) => {
                 const y50 = yPanel(50);
-                const cStrokeWidth = ind.type === "RSI" ? (ind.rsiCenterLineWidth === "thin" ? 1 : 2) : (ind.mfiCenterLineWidth === "thin" ? 1 : 2);
+                const cStrokeWidth = ind.type === "RSI" ? lineWidthToStroke(ind.rsiCenterLineWidth) : lineWidthToStroke(ind.mfiCenterLineWidth);
                 const cStrokeDasharray = ind.type === "RSI" ? (ind.rsiCenterLineStyle === "dotted" ? "1 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined) : (ind.mfiCenterLineStyle === "dotted" ? "1 2" : ind.mfiCenterLineStyle === "dashed" ? "6 4" : undefined);
                 const cColor = ind.type === "RSI" ? (ind.rsiCenterLineColor ?? "#71717a") : (ind.mfiCenterLineColor ?? "#71717a");
                 return (
@@ -941,7 +946,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(0, Math.min(100, ind.rsiLimitLower ?? 10));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.rsiLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.rsiLimitLineWidth);
                 const lStrokeDasharray = ind.rsiLimitLineStyle === "dotted" ? "1 2" : ind.rsiLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.rsiLimitColor ?? "#dc2626";
                 return (
@@ -956,7 +961,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(0, Math.min(100, ind.mfiLimitLower ?? 20));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.mfiLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.mfiLimitLineWidth);
                 const lStrokeDasharray = ind.mfiLimitLineStyle === "dotted" ? "1 2" : ind.mfiLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.mfiLimitColor ?? "#dc2626";
                 return (
@@ -971,7 +976,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(0, Math.min(100, ind.stochLimitLower ?? 20));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.stochLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.stochLimitLineWidth);
                 const lStrokeDasharray = ind.stochLimitLineStyle === "dotted" ? "1 2" : ind.stochLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.stochLimitColor ?? "#dc2626";
                 return (
@@ -986,7 +991,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(-100, Math.min(0, ind.williamsRLimitLower ?? -80));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.williamsRLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.williamsRLimitLineWidth);
                 const lStrokeDasharray = ind.williamsRLimitLineStyle === "dotted" ? "1 2" : ind.williamsRLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.williamsRLimitColor ?? "#dc2626";
                 return (
@@ -1001,7 +1006,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(0, Math.min(100, ind.adxLimitLower ?? 20));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.adxLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.adxLimitLineWidth);
                 const lStrokeDasharray = ind.adxLimitLineStyle === "dotted" ? "1 2" : ind.adxLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.adxLimitColor ?? "#71717a";
                 return (
@@ -1016,7 +1021,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(-500, Math.min(500, ind.cciLimitLower ?? -100));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.cciLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.cciLimitLineWidth);
                 const lStrokeDasharray = ind.cciLimitLineStyle === "dotted" ? "1 2" : ind.cciLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.cciLimitColor ?? "#dc2626";
                 return (
@@ -1031,7 +1036,7 @@ export function KlinesChartSvg({
                 const lower = Math.max(-1, Math.min(1, ind.cmfLimitLower ?? -0.25));
                 const yUpper = yPanel(upper);
                 const yLower = yPanel(lower);
-                const lStrokeWidth = ind.cmfLimitLineWidth === "thin" ? 1 : 2;
+                const lStrokeWidth = lineWidthToStroke(ind.cmfLimitLineWidth);
                 const lStrokeDasharray = ind.cmfLimitLineStyle === "dotted" ? "1 2" : ind.cmfLimitLineStyle === "dashed" ? "6 4" : undefined;
                 const stroke = ind.cmfLimitColor ?? "#dc2626";
                 return (
@@ -1225,10 +1230,10 @@ export function KlinesChartSvg({
             }
             const bandColor = ind.bollingerLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
-            const limitsStrokeWidth = ind.bollingerLimitsLineWidth === "thin" ? 1 : 2;
+            const limitsStrokeWidth = lineWidthToStroke(ind.bollingerLimitsLineWidth);
             const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
-            const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+            const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
             const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
@@ -1298,10 +1303,10 @@ export function KlinesChartSvg({
             }
             const bandColor = ind.keltnerLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.keltnerBandOpacity ?? 0.2));
-            const limitsStrokeWidth = ind.keltnerLimitsLineWidth === "thin" ? 1 : 2;
+            const limitsStrokeWidth = lineWidthToStroke(ind.keltnerLimitsLineWidth);
             const limitsDash = ind.keltnerLimitsLineStyle === "dotted" ? "1 2" : ind.keltnerLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
-            const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+            const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
             const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
@@ -1371,10 +1376,10 @@ export function KlinesChartSvg({
             }
             const bandColor = ind.donchianLimitsColor ?? "#6366f1";
             const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
-            const limitsStrokeWidth = ind.donchianLimitsLineWidth === "thin" ? 1 : 2;
+            const limitsStrokeWidth = lineWidthToStroke(ind.donchianLimitsLineWidth);
             const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
             const middleColor = ind.color ?? "#6366f1";
-            const middleStrokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+            const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
             const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
@@ -1447,7 +1452,7 @@ export function KlinesChartSvg({
             }
             const show = part === "tenkan" ? (ind.ichimokuShowTenkan !== false) : part === "kijun" ? (ind.ichimokuShowKijun !== false) : part === "spanA" ? (ind.ichimokuShowSpanA !== false) : part === "spanB" ? (ind.ichimokuShowSpanB !== false) : (ind.ichimokuShowChikou === true);
             const toPathI = (p: { i: number; val: number }[]) => p.length < 2 ? "" : p.map((pt, idx) => `${idx === 0 ? "M" : "L"} ${cx(pt.i)} ${y(pt.val)}`).join(" ");
-            const strokeVal = (w: "thin" | "normal" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: w === "thin" ? 1 : 2, dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
+            const strokeVal = (w: "thin" | "normal" | "thick" | undefined, style: "solid" | "dotted" | "dashed" | undefined) => ({ width: lineWidthToStroke(w), dash: style === "dotted" ? "1 2" : style === "dashed" ? "6 4" : undefined });
             const s = strokeVal(ind.lineWidth, ind.lineStyle);
             let cloudEl: ReactNode = null;
             if (part === "tenkan") {
@@ -1547,7 +1552,7 @@ export function KlinesChartSvg({
           }
           if (points.length < 2) return null;
           const d = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
-          const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
+          const strokeWidth = lineWidthToStroke(ind.lineWidth);
           const strokeDasharray = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
           return (
             <path

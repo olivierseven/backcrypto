@@ -91,6 +91,7 @@ import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
 import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
 import { useChartLayoutSave } from "./ChartLayoutSaveContext";
+import { useChartSaveLoad } from "./ChartSaveLoadContext";
 import { getSessionTabId } from "./sessionTabId";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
@@ -124,8 +125,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const [startIndex, setStartIndex] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [loadOpen, setLoadOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
   const [showClearDrawConfirm, setShowClearDrawConfirm] = useState(false);
@@ -217,7 +216,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const crosshairOverlayDivRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
-  const saveLoadRef = useRef<HTMLDivElement>(null);
   const chartSvgRef = useRef<SVGSVGElement>(null);
   const chartDimensionsRef = useRef<{ w: number; h: number; sizePercent?: number }>({ w: 0, h: 0 });
   const candleAreaRef = useRef({ left: MARGIN_LEFT, top: MARGIN_TOP, width: 0, height: 0 });
@@ -859,18 +857,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => document.removeEventListener("click", close);
   }, [colorsOpen]);
 
-  useEffect(() => {
-    if (!saveOpen && !loadOpen) return;
-    const close = (e: MouseEvent) => {
-      if (saveLoadRef.current && !saveLoadRef.current.contains(e.target as Node)) {
-        setSaveOpen(false);
-        setLoadOpen(false);
-      }
-    };
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [saveOpen, loadOpen]);
-
   const [canSaveDefault, setCanSaveDefault] = useState(false);
 
   const fetchSavedLayouts = useCallback(async () => {
@@ -898,10 +884,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   useEffect(() => {
     fetchSavedLayouts();
   }, [fetchSavedLayouts]);
-
-  useEffect(() => {
-    if (loadOpen) fetchSavedLayouts();
-  }, [loadOpen, fetchSavedLayouts]);
 
   const getCurrentLayoutConfigRef = useRef<() => Record<string, unknown>>(() => ({}));
   getCurrentLayoutConfigRef.current = () => {
@@ -989,7 +971,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     slot === 0 ? t.defaultLayout : (savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot)));
 
   const handleSaveLayout = (slot: number) => {
-    setSaveOpen(false);
     if (isFreeUser) {
       setShowUpgradeModal(true);
       return;
@@ -1166,7 +1147,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot)));
 
   const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
-    setLoadOpen(false);
     // Free user pode carregar modelo default (slot 0); só bloquear slots 1–7
     if (isFreeUser && layout.slot >= 1) {
       setShowUpgradeModal(true);
@@ -1204,6 +1184,24 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       /* ignore */
     }
   };
+
+  const { registerSaveLoadData } = useChartSaveLoad();
+  useEffect(() => {
+    registerSaveLoadData({
+      savedLayouts,
+      savedLayoutsError,
+      canSaveDefault,
+      canRenameChartModels: isAdmin,
+      getLayoutLabel,
+      onSaveLayout: handleSaveLayout,
+      onLoadLayout: handleLoadLayout,
+      onRenameLayout: handleRenameLayout,
+      fetchSavedLayouts,
+      isFreeUser,
+      onUpgradeRequest: () => setShowUpgradeModal(true),
+    });
+    return () => registerSaveLoadData(null);
+  }, [registerSaveLoadData, savedLayouts, savedLayoutsError, canSaveDefault, isAdmin, fetchSavedLayouts, isFreeUser]);
 
   // Ao mudar visibleCount (+/-, listbox) ou n: sempre mostrar os últimos candles
   useEffect(() => {
@@ -1756,7 +1754,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             chartHeight={chartHeight}
             settingsRef={settingsRef}
             colorsRef={colorsRef}
-            saveLoadRef={saveLoadRef}
             drawRef={drawRef}
             orientation="horizontal"
             t={t}
@@ -1867,20 +1864,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             toggleRuler={toggleRuler}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
-            saveOpen={saveOpen}
-            setSaveOpen={setSaveOpen}
-            loadOpen={loadOpen}
-            setLoadOpen={setLoadOpen}
-            savedLayouts={savedLayouts}
-            savedLayoutsError={savedLayoutsError}
-            canSaveDefault={canSaveDefault}
-            canRenameChartModels={isAdmin}
-            onSaveLayout={handleSaveLayout}
-            onLoadLayout={handleLoadLayout}
-            onRenameLayout={handleRenameLayout}
-            onFetchSavedLayouts={fetchSavedLayouts}
-            isFreeUser={isFreeUser}
-            onUpgradeRequest={() => setShowUpgradeModal(true)}
           />
         </div>
         <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" || drawTool === "pencil" ? "none" : "pan-x pan-y" }}>
@@ -1901,6 +1884,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     aria-label={t.drawExitMode}
                   >
                     <span aria-hidden>×</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDrawingsVisible((v) => !v); }}
+                    className={`p-0.5 rounded hover:bg-zinc-200 text-base leading-none ${!drawingsVisible ? "opacity-60" : "text-zinc-600 hover:text-zinc-800"}`}
+                    title={(t as Record<string, string>).drawVisibilityTitle}
+                    aria-label={(t as Record<string, string>).drawVisibilityAria}
+                    aria-pressed={!drawingsVisible}
+                  >
+                    <span className={!drawingsVisible ? "opacity-70" : ""} aria-hidden>👁</span>
                   </button>
                   <div
                     role="button"

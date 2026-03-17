@@ -340,10 +340,11 @@ model PagarMeOrder {
   @@schema("backcrypto")
 }
 
-// Velas (klines) Binance — BTCUSDT 1m; manter 180 dias com expurgo
+// Velas (klines) — corretora (ex.: binance), símbolo, intervalo (ex.: 1h); expurgo 5 anos.
 model BinanceKline {
+  corretora                String // ex.: binance
   symbol                   String // ex.: BTCUSDT
-  interval                 String // ex.: 1m
+  interval                 String // ex.: 1h
   openTime                 BigInt // abertura (ms UTC)
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -356,16 +357,17 @@ model BinanceKline {
   takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 
-// Cópia idêntica de BinanceKline (mesma estrutura e dados)
+// Cópia 1m (mesma estrutura); expurgo 9 dias. Incremental a cada minuto.
 model BinanceKlineFast {
+  corretora                String // ex.: binance
   symbol                   String
-  interval                 String
+  interval                 String // 1m
   openTime                 BigInt
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -378,9 +380,32 @@ model BinanceKlineFast {
   takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Velas mensais (interval 1M); mesma estrutura que BinanceKline.
+model BinanceKlineMonth {
+  corretora                String
+  symbol                   String
+  interval                 String // 1M
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineMonth_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 

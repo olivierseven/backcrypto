@@ -1,11 +1,12 @@
 /**
  * Registrar gaps conhecidos (sem dado na Binance). Validação passa a ignorá-los.
  * Apenas admin. POST /api/debug/klines-gaps
- * Body: { symbol?: string, gaps: { interval: "1m"|"1h", from: number, to: number }[] }
+ * Body: { symbol?: string, gaps: { interval: "1m"|"5m"|"1h", from: number, to: number }[] }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
+import { resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -30,22 +31,24 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const symbol = (body.symbol as string)?.trim() || "BTCUSDT";
+    const symbol = resolveSymbol((body.symbol as string)?.trim());
     const gaps = Array.isArray(body.gaps) ? body.gaps : [];
     const valid = gaps.filter(
-      (g: unknown): g is { interval: "1m" | "1h"; from: number; to: number } =>
+      (g: unknown): g is { interval: "1m" | "5m" | "1h"; from: number; to: number } =>
         g != null &&
         typeof g === "object" &&
-        ((g as { interval?: string }).interval === "1m" || (g as { interval?: string }).interval === "1h") &&
+        ((g as { interval?: string }).interval === "1m" ||
+          (g as { interval?: string }).interval === "5m" ||
+          (g as { interval?: string }).interval === "1h") &&
         typeof (g as { from?: number }).from === "number" &&
         typeof (g as { to?: number }).to === "number"
     );
 
     if (valid.length === 0) {
-      return NextResponse.json({ error: "Body: { gaps: [{ interval: '1m'|'1h', from, to }] }" }, { status: 400 });
+      return NextResponse.json({ error: "Body: { gaps: [{ interval: '1m'|'5m'|'1h', from, to }] }" }, { status: 400 });
     }
 
-    type GapItem = { interval: "1m" | "1h"; from: number; to: number };
+    type GapItem = { interval: "1m" | "5m" | "1h"; from: number; to: number };
     const created = await cryptoPrisma.binanceKlineGap.createMany({
       data: valid.map((g: GapItem) => ({
         symbol,

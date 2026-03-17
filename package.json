@@ -21,6 +21,7 @@
     "binance-klines-fast-sync:loop": "node scripts/binance-klines-fast-sync-loop.js",
     "binance-kline-cache-refresh": "node scripts/binance-kline-cache-refresh.js",
     "binance-klines-backfill": "node scripts/binance-klines-backfill.js",
+    "binance-klines-backfill-5m": "node scripts/binance-klines-backfill-5m.js",
     "binance-klines-backfill-1h": "node scripts/binance-klines-backfill-1h.js",
     "dump-db": "node scripts/dump-db.js",
     "restore-db": "node scripts/restore-db.js",

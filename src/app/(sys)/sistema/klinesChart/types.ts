@@ -22,7 +22,7 @@ export type Kline = [
 export interface ChartIndicatorLine {
   columnIndex: number;
   color: string;
-  lineWidth?: "thin" | "normal";
+  lineWidth?: "thin" | "normal" | "thick";
   lineStyle?: "solid" | "dotted" | "dashed";
   /** Rótulo exibido na faixa de indicadores no topo (ex.: "SMA(7) Close"). */
   label?: string;
@@ -37,13 +37,13 @@ export interface ChartIndicatorLine {
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
   ichimokuPart?: "tenkan" | "kijun" | "spanA" | "spanB" | "chikou";
   adxPlusDiColor?: string;
-  adxPlusDiLineWidth?: "thin" | "normal";
+  adxPlusDiLineWidth?: "thin" | "normal" | "thick";
   adxPlusDiLineStyle?: "solid" | "dotted" | "dashed";
   adxMinusDiColor?: string;
-  adxMinusDiLineWidth?: "thin" | "normal";
+  adxMinusDiLineWidth?: "thin" | "normal" | "thick";
   adxMinusDiLineStyle?: "solid" | "dotted" | "dashed";
   adxAdxColor?: string;
-  adxAdxLineWidth?: "thin" | "normal";
+  adxAdxLineWidth?: "thin" | "normal" | "thick";
   adxAdxLineStyle?: "solid" | "dotted" | "dashed";
   /** Só para ADX: escala fixa 0–100 (true) ou ajustar aos dados (false). */
   adxFixedScale?: boolean;
@@ -51,7 +51,7 @@ export interface ChartIndicatorLine {
   adxLimitUpper?: number;
   adxLimitLower?: number;
   adxLimitColor?: string;
-  adxLimitLineWidth?: "thin" | "normal";
+  adxLimitLineWidth?: "thin" | "normal" | "thick";
   adxLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
   panel?: "main" | "panel2" | "panel3" | "panel4" | "panel5";
@@ -60,26 +60,26 @@ export interface ChartIndicatorLine {
   /** Só para RSI: desenhar linha horizontal em 50%. */
   rsiCenterLine?: boolean;
   rsiCenterLineColor?: string;
-  rsiCenterLineWidth?: "thin" | "normal";
+  rsiCenterLineWidth?: "thin" | "normal" | "thick";
   rsiCenterLineStyle?: "solid" | "dotted" | "dashed";
   /** Só para RSI: limites superior/inferior. */
   rsiLimits?: boolean;
   rsiLimitUpper?: number;
   rsiLimitLower?: number;
   rsiLimitColor?: string;
-  rsiLimitLineWidth?: "thin" | "normal";
+  rsiLimitLineWidth?: "thin" | "normal" | "thick";
   rsiLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Só para MFI: mesmas opções que RSI (escala fixa 0–100, linha 50%, limites). */
   mfiFixedScale?: boolean;
   mfiCenterLine?: boolean;
   mfiCenterLineColor?: string;
-  mfiCenterLineWidth?: "thin" | "normal";
+  mfiCenterLineWidth?: "thin" | "normal" | "thick";
   mfiCenterLineStyle?: "solid" | "dotted" | "dashed";
   mfiLimits?: boolean;
   mfiLimitUpper?: number;
   mfiLimitLower?: number;
   mfiLimitColor?: string;
-  mfiLimitLineWidth?: "thin" | "normal";
+  mfiLimitLineWidth?: "thin" | "normal" | "thick";
   mfiLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Desenho: linha (default), barras (histograma MACD) ou pontos (SAR). */
   display?: "line" | "histogram" | "points";
@@ -96,14 +96,14 @@ export interface ChartIndicatorLine {
   stochLimitUpper?: number;
   stochLimitLower?: number;
   stochLimitColor?: string;
-  stochLimitLineWidth?: "thin" | "normal";
+  stochLimitLineWidth?: "thin" | "normal" | "thick";
   stochLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Só para Williams %R: limites (escala -100 a 0; ex. -20 / -80). */
   williamsRLimits?: boolean;
   williamsRLimitUpper?: number;
   williamsRLimitLower?: number;
   williamsRLimitColor?: string;
-  williamsRLimitLineWidth?: "thin" | "normal";
+  williamsRLimitLineWidth?: "thin" | "normal" | "thick";
   williamsRLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Só para Bollinger: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
   bollingerShowUpper?: boolean;
@@ -113,10 +113,10 @@ export interface ChartIndicatorLine {
   bollingerBandOpacity?: number;
   bollingerLimitsColor?: string;
   bollingerLimitsLineStyle?: "solid" | "dotted" | "dashed";
-  bollingerLimitsLineWidth?: "thin" | "normal";
+  bollingerLimitsLineWidth?: "thin" | "normal" | "thick";
   bollingerMiddleColor?: string;
   bollingerMiddleLineStyle?: "solid" | "dotted" | "dashed";
-  bollingerMiddleLineWidth?: "thin" | "normal";
+  bollingerMiddleLineWidth?: "thin" | "normal" | "thick";
   /** Só para Donchian Channels: colunas upper/middle/lower em columnIndex, columnIndex+1, columnIndex+2. */
   donchianShowUpper?: boolean;
   donchianShowLower?: boolean;
@@ -124,26 +124,26 @@ export interface ChartIndicatorLine {
   donchianBandOpacity?: number;
   donchianLimitsColor?: string;
   donchianLimitsLineStyle?: "solid" | "dotted" | "dashed";
-  donchianLimitsLineWidth?: "thin" | "normal";
+  donchianLimitsLineWidth?: "thin" | "normal" | "thick";
   donchianMiddleColor?: string;
   donchianMiddleLineStyle?: "solid" | "dotted" | "dashed";
-  donchianMiddleLineWidth?: "thin" | "normal";
+  donchianMiddleLineWidth?: "thin" | "normal" | "thick";
   /** Só para Ichimoku: colunas tenkan, kijun, spanA, spanB, chikou em columnIndex..columnIndex+4. Senkou A/B desenhados à frente com ichimokuDisplacement. */
   ichimokuDisplacement?: number;
   ichimokuTenkanColor?: string;
-  ichimokuTenkanLineWidth?: "thin" | "normal";
+  ichimokuTenkanLineWidth?: "thin" | "normal" | "thick";
   ichimokuTenkanLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuKijunColor?: string;
-  ichimokuKijunLineWidth?: "thin" | "normal";
+  ichimokuKijunLineWidth?: "thin" | "normal" | "thick";
   ichimokuKijunLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuSpanAColor?: string;
   ichimokuSpanALineWidth?: "thin" | "normal";
   ichimokuSpanALineStyle?: "solid" | "dotted" | "dashed";
   ichimokuSpanBColor?: string;
-  ichimokuSpanBLineWidth?: "thin" | "normal";
+  ichimokuSpanBLineWidth?: "thin" | "normal" | "thick";
   ichimokuSpanBLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuChikouColor?: string;
-  ichimokuChikouLineWidth?: "thin" | "normal";
+  ichimokuChikouLineWidth?: "thin" | "normal" | "thick";
   ichimokuChikouLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuCloudOpacity?: number;
   /** Só para Ichimoku: exibir cada linha (default true, true, true, true, false para Chikou). */
@@ -159,10 +159,10 @@ export interface ChartIndicatorLine {
   keltnerBandOpacity?: number;
   keltnerLimitsColor?: string;
   keltnerLimitsLineStyle?: "solid" | "dotted" | "dashed";
-  keltnerLimitsLineWidth?: "thin" | "normal";
+  keltnerLimitsLineWidth?: "thin" | "normal" | "thick";
   keltnerMiddleColor?: string;
   keltnerMiddleLineStyle?: "solid" | "dotted" | "dashed";
-  keltnerMiddleLineWidth?: "thin" | "normal";
+  keltnerMiddleLineWidth?: "thin" | "normal" | "thick";
   /** Só para CCI: escala fixa no eixo Y (ex.: -100 a 100). */
   cciFixedScale?: boolean;
   /** Só para CCI: limites superior/inferior (ex. 100 / -100). */
@@ -170,7 +170,7 @@ export interface ChartIndicatorLine {
   cciLimitUpper?: number;
   cciLimitLower?: number;
   cciLimitColor?: string;
-  cciLimitLineWidth?: "thin" | "normal";
+  cciLimitLineWidth?: "thin" | "normal" | "thick";
   cciLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** CCI como histograma: barras acima/abaixo de zero. */
   cciAsHistogram?: boolean;
@@ -182,7 +182,7 @@ export interface ChartIndicatorLine {
   cmfLimitUpper?: number;
   cmfLimitLower?: number;
   cmfLimitColor?: string;
-  cmfLimitLineWidth?: "thin" | "normal";
+  cmfLimitLineWidth?: "thin" | "normal" | "thick";
   cmfLimitLineStyle?: "solid" | "dotted" | "dashed";
   cmfAsHistogram?: boolean;
   cmfHistogramColorAbove?: string;
