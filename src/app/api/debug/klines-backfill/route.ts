@@ -3,6 +3,7 @@
  * Apenas admin. POST /api/debug/klines-backfill
  * Body: { symbol?: string, interval: "1m" | "5m" | "1h", from: number, to: number } (from/to em ms UTC)
  * Ou: { symbol?: string, gaps: { interval: "1m"|"5m"|"1h", from: number, to: number }[] }
+ * Opcional: onlyMissing: true — quando symbol "all", só processa moedas que ainda não têm histórico nesse intervalo.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
@@ -71,6 +72,36 @@ function klineToRow(
   };
 }
 
+/** Símbolos da lista env que ainda não têm nenhum dado no intervalo (para backfill "apenas novas moedas"). */
+async function getSymbolsWithNoData(interval: "1m" | "5m" | "1h"): Promise<string[]> {
+  const SYMBOLS = getKlineSymbols();
+  if (interval === "1m") {
+    const withData = await cryptoPrisma.binanceKlineFast.findMany({
+      where: { corretora: CORRETORA, interval: "1m" },
+      select: { symbol: true },
+      distinct: ["symbol"],
+    });
+    const set = new Set(withData.map((r) => r.symbol));
+    return SYMBOLS.filter((s) => !set.has(s));
+  }
+  if (interval === "5m") {
+    const withData = await cryptoPrisma.binanceKlineMonth.findMany({
+      where: { corretora: CORRETORA, interval: "5m" },
+      select: { symbol: true },
+      distinct: ["symbol"],
+    });
+    const set = new Set(withData.map((r) => r.symbol));
+    return SYMBOLS.filter((s) => !set.has(s));
+  }
+  const withData = await cryptoPrisma.binanceKline.findMany({
+    where: { corretora: CORRETORA, interval: "1h" },
+    select: { symbol: true },
+    distinct: ["symbol"],
+  });
+  const set = new Set(withData.map((r) => r.symbol));
+  return SYMBOLS.filter((s) => !set.has(s));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get(COOKIE)?.value;
@@ -92,6 +123,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const symbolParam = (body.symbol as string)?.trim() || "BTCUSDT";
+    const onlyMissing = body.onlyMissing === true;
     const SYMBOLS = getKlineSymbols();
     const symbolsToRun =
       symbolParam.toLowerCase() === "all"
@@ -127,94 +159,100 @@ export async function POST(request: NextRequest) {
     let totalInserted1h = 0;
     const details: { symbol: string; interval: string; from: number; to: number; fetched: number; inserted: number }[] = [];
 
-    for (const symbol of symbolsToRun) {
-      try {
-      for (const gap of gaps) {
-        const step = stepMs(gap.interval);
-        const startTime = gap.from + step;
-        const endTimeInclusive = gap.to - 1;
-        if (startTime > endTimeInclusive) continue;
+    for (const gap of gaps) {
+      const symbolsForGap =
+        onlyMissing && symbolParam.toLowerCase() === "all"
+          ? await getSymbolsWithNoData(gap.interval)
+          : symbolsToRun;
+      if (symbolsForGap.length === 0 && onlyMissing) continue;
 
-        let cursor = startTime;
-        let gapFetched = 0;
-        let gapInserted = 0;
-        while (cursor <= endTimeInclusive) {
-          let klines = await fetchBinanceKlines(symbol, gap.interval, cursor, endTimeInclusive);
-          if (klines.length === 0 && cursor === startTime) {
-            const fallbackEnd = gap.to + step - 1;
-            klines = await fetchBinanceKlines(symbol, gap.interval, cursor, fallbackEnd);
-            klines = klines.filter((k) => k[0] <= endTimeInclusive);
-          }
-          if (klines.length === 0 && cursor === startTime) {
-            const wideStart = gap.from;
-            const wideEnd = gap.to + step - 1;
-            klines = await fetchBinanceKlines(symbol, gap.interval, wideStart, wideEnd);
-            klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
-          }
-          if (klines.length === 0 && cursor === startTime && (gap.interval === "1h" || gap.interval === "5m")) {
-            klines = await fetchBinanceKlines(symbol, gap.interval, gap.from, 0, { omitEndTime: true });
-            klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
-          }
-          gapFetched += klines.length;
-          if (klines.length === 0) break;
+      for (const symbol of symbolsForGap) {
+        try {
+          const step = stepMs(gap.interval);
+          const startTime = gap.from + step;
+          const endTimeInclusive = gap.to - 1;
+          if (startTime > endTimeInclusive) continue;
 
-          const rows = klines.map((k) => klineToRow(k, symbol, gap.interval));
-          const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
-          const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
-          if (gap.interval === "1m") {
-            const created = await cryptoPrisma.binanceKlineFast.createMany({
-              data: rows,
-              skipDuplicates: true,
-            });
-            totalInserted1m += created.count;
-            gapInserted += created.count;
-          } else if (gap.interval === "5m") {
-            await cryptoPrisma.binanceKlineMonth.deleteMany({
-              where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { gte: minOpen, lte: maxOpen } },
-            });
-            const created = await cryptoPrisma.binanceKlineMonth.createMany({ data: rows });
-            totalInserted5m += created.count;
-            gapInserted += created.count;
-          } else {
-            await cryptoPrisma.binanceKline.deleteMany({
-              where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { gte: minOpen, lte: maxOpen } },
-            });
-            const created = await cryptoPrisma.binanceKline.createMany({ data: rows });
-            totalInserted1h += created.count;
-            gapInserted += created.count;
+          let cursor = startTime;
+          let gapFetched = 0;
+          let gapInserted = 0;
+          while (cursor <= endTimeInclusive) {
+            let klines = await fetchBinanceKlines(symbol, gap.interval, cursor, endTimeInclusive);
+            if (klines.length === 0 && cursor === startTime) {
+              const fallbackEnd = gap.to + step - 1;
+              klines = await fetchBinanceKlines(symbol, gap.interval, cursor, fallbackEnd);
+              klines = klines.filter((k) => k[0] <= endTimeInclusive);
+            }
+            if (klines.length === 0 && cursor === startTime) {
+              const wideStart = gap.from;
+              const wideEnd = gap.to + step - 1;
+              klines = await fetchBinanceKlines(symbol, gap.interval, wideStart, wideEnd);
+              klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
+            }
+            if (klines.length === 0 && cursor === startTime && (gap.interval === "1h" || gap.interval === "5m")) {
+              klines = await fetchBinanceKlines(symbol, gap.interval, gap.from, 0, { omitEndTime: true });
+              klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
+            }
+            gapFetched += klines.length;
+            if (klines.length === 0) break;
+
+            const rows = klines.map((k) => klineToRow(k, symbol, gap.interval));
+            const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
+            const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
+            if (gap.interval === "1m") {
+              const created = await cryptoPrisma.binanceKlineFast.createMany({
+                data: rows,
+                skipDuplicates: true,
+              });
+              totalInserted1m += created.count;
+              gapInserted += created.count;
+            } else if (gap.interval === "5m") {
+              await cryptoPrisma.binanceKlineMonth.deleteMany({
+                where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { gte: minOpen, lte: maxOpen } },
+              });
+              const created = await cryptoPrisma.binanceKlineMonth.createMany({ data: rows });
+              totalInserted5m += created.count;
+              gapInserted += created.count;
+            } else {
+              await cryptoPrisma.binanceKline.deleteMany({
+                where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { gte: minOpen, lte: maxOpen } },
+              });
+              const created = await cryptoPrisma.binanceKline.createMany({ data: rows });
+              totalInserted1h += created.count;
+              gapInserted += created.count;
+            }
+            const lastOpen = klines[klines.length - 1][0];
+            cursor = lastOpen + step;
+            if (klines.length < LIMIT) break;
+            await sleep(DELAY_MS);
           }
-          const lastOpen = klines[klines.length - 1][0];
-          cursor = lastOpen + step;
-          if (klines.length < LIMIT) break;
-          await sleep(DELAY_MS);
+          console.log(
+            "[klines-backfill]",
+            symbol,
+            gap.interval,
+            new Date(gap.from).toISOString(),
+            "→",
+            new Date(gap.to).toISOString(),
+            "| fetched:",
+            gapFetched,
+            "inserted:",
+            gapInserted
+          );
+          details.push({
+            symbol,
+            interval: gap.interval,
+            from: gap.from,
+            to: gap.to,
+            fetched: gapFetched,
+            inserted: gapInserted,
+          });
+        } catch (e) {
+          if (isBinanceInvalidSymbolError(e)) {
+            console.warn("[klines-backfill] Symbol not in API, skipping:", symbol);
+            continue;
+          }
+          throw e;
         }
-        console.log(
-          "[klines-backfill]",
-          symbol,
-          gap.interval,
-          new Date(gap.from).toISOString(),
-          "→",
-          new Date(gap.to).toISOString(),
-          "| fetched:",
-          gapFetched,
-          "inserted:",
-          gapInserted
-        );
-        details.push({
-          symbol,
-          interval: gap.interval,
-          from: gap.from,
-          to: gap.to,
-          fetched: gapFetched,
-          inserted: gapInserted,
-        });
-      }
-      } catch (e) {
-        if (isBinanceInvalidSymbolError(e)) {
-          console.warn("[klines-backfill] Symbol not in API, skipping:", symbol);
-          continue;
-        }
-        throw e;
       }
     }
 

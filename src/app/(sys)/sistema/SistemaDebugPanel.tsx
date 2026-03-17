@@ -49,6 +49,7 @@ export default function SistemaDebugPanel() {
   const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "5m" | "1h" | null>(null);
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
   const [backfillAllSymbols, setBackfillAllSymbols] = useState(false);
+  const [backfillOnlyMissing, setBackfillOnlyMissing] = useState(false);
   const [chartModels, setChartModels] = useState<{ slot: number; name?: string }[]>([]);
   const [chartModelsLoading, setChartModelsLoading] = useState(false);
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
@@ -400,6 +401,7 @@ export default function SistemaDebugPanel() {
         body: JSON.stringify({
           symbol: backfillAllSymbols ? "all" : sym,
           gaps: [{ interval, from, to }],
+          onlyMissing: backfillAllSymbols && backfillOnlyMissing,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -791,6 +793,17 @@ export default function SistemaDebugPanel() {
                 />
                 {(t as Record<string, string>).backfillAllSymbols ?? "Para todas as moedas (BTCUSDT e ETHUSDT)"}
               </label>
+              {backfillAllSymbols && (
+                <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={backfillOnlyMissing}
+                    onChange={(e) => setBackfillOnlyMissing(e.target.checked)}
+                    className="rounded border-zinc-300"
+                  />
+                  {(t as Record<string, string>).backfillOnlyMissing ?? "Apenas moedas sem histórico (novas)"}
+                </label>
+              )}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
