@@ -6,18 +6,18 @@ export const dynamic = "force-dynamic";
 
 const PAGE_META = {
   pt: {
-    title: "Crypto Strategy | Simulador de Estratégias para Criptomoedas",
+    title: "Crypto Strategy | Criador de Estratégias de Trading",
     description:
-      "Simulador de estratégias para criptomoedas com dados históricos. Teste indicadores técnicos, MACD, RSI, médias móveis e compare com Buy & Hold.",
+      "Crie, combine e teste estratégias de trading diretamente no gráfico. Utilize indicadores técnicos, regras de entrada e saída e dados reais do mercado — sem precisar programar.",
     keywords:
-      "backtest criptomoedas, simulador estratégias, MACD, RSI, médias móveis, Bitcoin, SevenCoins, análise técnica",
+      "estratégias trading, strategy builder, indicadores técnicos, RSI, MACD, médias móveis, análise gráfica, criptomoedas, SevenCoins",
   },
   en: {
-    title: "Crypto Strategy | Strategy Simulator",
+    title: "Crypto Strategy | Trading Strategy Builder",
     description:
-      "Crypto strategy simulator using historical data. Test technical indicators, MACD, RSI, moving averages and compare with Buy & Hold.",
+      "Create, combine and test trading strategies directly on the chart. Use technical indicators, entry and exit rules, and real market data — no coding required.",
     keywords:
-      "crypto backtest, strategy simulator, MACD, RSI, moving averages, Bitcoin, SevenCoins, technical analysis",
+      "trading strategies, strategy builder, technical indicators, RSI, MACD, moving averages, crypto analysis, SevenCoins",
   },
 } as const;
 
