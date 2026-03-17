@@ -745,3 +745,30 @@
 .strategies-default-model select option:disabled {
   opacity: 0.5;
 }
+
+/* Combobox/dropdown: altura máxima padronizada (mobile e desktop) */
+.combobox-dropdown-max {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Botões +/− padronizados (período e demais steppers) */
+.stepper-btn {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  border: 1px solid rgb(212 212 212);
+  background: white;
+  color: rgb(63 63 70);
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+.stepper-btn:hover:not(:disabled) {
+  background: rgb(244 244 245);
+}
+.stepper-btn:disabled {
+  opacity: 0.4;
+}

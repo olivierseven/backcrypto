@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { UserIndicatorType, IndicatorPanel, IndicatorFieldKey, IndicatorLineWidth, IndicatorLineStyle } from "../KlinesIndicatorsContext";
+import { DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES } from "../KlinesChartConstants";
+import { Combobox, type ComboboxOption } from "../components/Combobox";
+import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
+import { StepperButton } from "../components/StepperButton";
 import { useIndicatorsPanelContext } from "./IndicatorsPanelContext";
 import type { AddFormState } from "./indicatorsPanelTypes";
 
@@ -12,8 +16,20 @@ interface IndicatorsPanelAddFormProps {
 
 type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 
+/** Grupos e tipos para o combobox de tipo de indicador (mesma ordem e labels do select antigo). */
+const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
+  { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "EMA", labelEn: "EMA" }, { value: "WMA", labelEn: "WMA" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
+  { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
+  { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }] },
+  { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
+  { groupLabelKey: "indicatorGroupVolatilityChannels", types: [{ value: "ATR", labelKey: "atrLabel" }, { value: "Bollinger", labelKey: "bollingerLabel" }, { value: "Keltner", labelKey: "keltnerLabel" }, { value: "Donchian", labelKey: "donchianLabel" }] },
+];
+
 export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddFormProps) {
   const [ichimokuColorOpen, setIchimokuColorOpen] = useState<IchimokuColorLine | null>(null);
+  const [showBlockedLayoutHint, setShowBlockedLayoutHint] = useState(false);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const typeDropdownRef = useRef<HTMLDivElement>(null);
   const {
     t,
     userIndicators,
@@ -28,8 +44,32 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     INDICATOR_COLOR_PALETTE,
     addButtonDisabled,
     defaultModelMaxIndicatorsReached,
+    isDefaultLayout,
     handleAdd,
   } = useIndicatorsPanelContext();
+
+  const isTypeBlockedInDefaultLayout = (type: string) => Boolean(isDefaultLayout && !DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES.includes(type));
+
+  useEffect(() => {
+    if (!typeDropdownOpen) return;
+    const close = (e: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) setTypeDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [typeDropdownOpen]);
+
+  const tRecord = t as Record<string, string>;
+  const getTypeLabel = (value: UserIndicatorType, item: { labelKey?: string; labelEn?: string }) =>
+    item.labelKey ? (tRecord[item.labelKey] ?? value) : (item.labelEn ?? value);
+  const currentTypeLabel = (() => {
+    for (const g of INDICATOR_TYPE_GROUPS) {
+      for (const item of g.types) {
+        if (item.value === form.indicatorType) return getTypeLabel(form.indicatorType, item);
+      }
+    }
+    return form.indicatorType;
+  })();
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
   const firstFreePanelForSecondary: IndicatorPanel =
@@ -42,6 +82,61 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   const firstEmptyPanelForVolume: IndicatorPanel = isFreeUser
     ? (indicatorCountByPanel.panel2 === 0 ? "panel2" : "panel2")
     : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2");
+
+  const chartPanelOptions: ComboboxOption[] = useMemo(() => {
+    const p2 = tRecord.chartOptionPanel2 ?? "Panel 2";
+    const p3 = tRecord.chartOptionPanel3 ?? "Panel 3";
+    const p4 = tRecord.chartOptionPanel4 ?? "Panel 4";
+    const p5 = tRecord.chartOptionPanel5 ?? "Panel 5";
+    const main = tRecord.chartOptionMain ?? "Main";
+    const none = tRecord.chartOptionNoPanelAvailable ?? "Nenhum painel disponível";
+    if (form.indicatorType === "Volume") {
+      const opts: ComboboxOption[] = [];
+      if (indicatorCountByPanel.panel2 === 0) opts.push({ value: "panel2", label: p2 });
+      if (!isFreeUser && indicatorCountByPanel.panel3 === 0) opts.push({ value: "panel3", label: p3 });
+      if (!isFreeUser && indicatorCountByPanel.panel4 === 0) opts.push({ value: "panel4", label: p4 });
+      if (!isFreeUser && indicatorCountByPanel.panel5 === 0) opts.push({ value: "panel5", label: p5 });
+      const hasEmpty = isFreeUser ? indicatorCountByPanel.panel2 === 0 : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0);
+      if (!hasEmpty) opts.push({ value: "", label: none });
+      return opts;
+    }
+    if (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") {
+      const opts: ComboboxOption[] = [];
+      if (panelsFreeForSecondary.panel2) opts.push({ value: "panel2", label: p2 });
+      if (panelsFreeForSecondary.panel3) opts.push({ value: "panel3", label: p3 });
+      if (panelsFreeForSecondary.panel4) opts.push({ value: "panel4", label: p4 });
+      if (panelsFreeForSecondary.panel5) opts.push({ value: "panel5", label: p5 });
+      if (!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5) opts.push({ value: "", label: none });
+      return opts;
+    }
+    return [
+      { value: "main", label: main, disabled: indicatorCountByPanel.main >= MAIN_MAX_INDICATORS },
+      { value: "panel2", label: p2, disabled: indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS },
+      { value: "panel3", label: (isFreeUser ? "🔒 " : "") + p3, disabled: indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser },
+      { value: "panel4", label: (isFreeUser ? "🔒 " : "") + p4, disabled: indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser },
+      { value: "panel5", label: (isFreeUser ? "🔒 " : "") + p5, disabled: indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser },
+    ];
+  }, [form.indicatorType, indicatorCountByPanel, panelsFreeForSecondary, isFreeUser, tRecord]);
+
+  const lineWidthOptions: ComboboxOption[] = useMemo(() => [
+    { value: "thin", label: tRecord.lineWidthThin ?? "Fino" },
+    { value: "normal", label: tRecord.lineWidthNormal ?? "Normal" },
+  ], [tRecord]);
+  const lineStyleOptions: ComboboxOption[] = useMemo(() => [
+    { value: "solid", label: tRecord.lineStyleSolid ?? "Sólido" },
+    { value: "dotted", label: tRecord.lineStyleDotted ?? "Pontilhado" },
+    { value: "dashed", label: tRecord.lineStyleDashed ?? "Tracejado" },
+  ], [tRecord]);
+  const maTypeOptions: ComboboxOption[] = useMemo(() => [
+    { value: "SMA", label: "SMA" },
+    { value: "EMA", label: "EMA" },
+    { value: "WMA", label: "WMA" },
+  ], []);
+  const volumeSourceOptions: ComboboxOption[] = useMemo(() => [
+    { value: "base", label: tRecord.volumeBaseLabel ?? "Vol (base)" },
+    { value: "usdt", label: tRecord.volumeUsdtLabel ?? "Vol (USDT)" },
+  ], [tRecord]);
+
   const chartOptionValue: string =
     form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
       ? "main"
@@ -439,48 +534,76 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.indicatorType}</span>
-        <select
-          value={form.indicatorType}
-          onChange={(e) => setType(e.target.value as UserIndicatorType)}
-          className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-          aria-label={t.indicatorType}
-        >
-          <optgroup label={(t as Record<string, string>).indicatorGroupMovingAverages ?? "Moving Averages"}>
-            <option value="SMA">SMA</option>
-            <option value="EMA">EMA</option>
-            <option value="WMA">WMA</option>
-            <option value="HMA">{(t as Record<string, string>).hmaLabel ?? "HMA"}</option>
-            <option value="VWMA">{(t as Record<string, string>).vwmaLabel ?? "VWMA"}</option>
-          </optgroup>
-          <optgroup label={(t as Record<string, string>).indicatorGroupMomentum ?? "Momentum"}>
-            <option value="RSI">RSI</option>
-            <option value="MFI">{(t as Record<string, string>).mfiLabel ?? "MFI"}</option>
-            <option value="MACD">MACD</option>
-            <option value="Stochastic">Stochastic</option>
-            <option value="WilliamsR">{(t as Record<string, string>).williamsRLabel ?? "Williams %R"}</option>
-            <option value="CCI">{(t as Record<string, string>).cciLabel ?? "CCI"}</option>
-          </optgroup>
-          <optgroup label={(t as Record<string, string>).indicatorGroupTrend ?? "Trend"}>
-            <option value="ADX">{(t as Record<string, string>).adxLabel ?? "ADX"}</option>
-            <option value="SAR">{(t as Record<string, string>).sarLabel ?? "Parabolic SAR"}</option>
-            <option value="Ichimoku">{(t as Record<string, string>).ichimokuLabel ?? "Ichimoku"}</option>
-          </optgroup>
-          <optgroup label={(t as Record<string, string>).indicatorGroupVolume ?? "Volume"}>
-            <option value="Volume">{(t as Record<string, string>).volumeLabel ?? "Volume"}</option>
-            <option value="OBV">OBV</option>
-            <option value="AD">{(t as Record<string, string>).adLabel ?? "A/D"}</option>
-            <option value="CMF">{(t as Record<string, string>).cmfLabel ?? "CMF"}</option>
-            <option value="VWAP">{(t as Record<string, string>).vwapLabel ?? "VWAP"}</option>
-          </optgroup>
-          <optgroup label={(t as Record<string, string>).indicatorGroupVolatilityChannels ?? "Volatility / Channels"}>
-            <option value="ATR">{(t as Record<string, string>).atrLabel ?? "ATR"}</option>
-            <option value="Bollinger">{(t as Record<string, string>).bollingerLabel ?? "Bollinger Bands"}</option>
-            <option value="Keltner">{(t as Record<string, string>).keltnerLabel ?? "Keltner Channels"}</option>
-            <option value="Donchian">{(t as Record<string, string>).donchianLabel ?? "Donchian Channels"}</option>
-          </optgroup>
-        </select>
+        <span className="text-xs font-medium text-zinc-600 w-16 shrink-0 flex items-center gap-1">
+          {t.indicatorType}
+          {isDefaultLayout && (
+            <button
+              type="button"
+              onClick={() => setShowBlockedLayoutHint((v) => !v)}
+              className="w-5 h-5 flex items-center justify-center rounded-full border border-zinc-400 text-zinc-500 text-xs font-bold hover:bg-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+              aria-label={(t as Record<string, string>).indicatorsBlockedDefaultLayoutInfoButton ?? "Ver aviso"}
+              title={(t as Record<string, string>).indicatorsBlockedDefaultLayout}
+            >
+              ?
+            </button>
+          )}
+        </span>
+        <div className="flex-1 min-w-0 relative" ref={typeDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setTypeDropdownOpen((v) => !v)}
+            className="w-full text-left text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-1"
+            aria-label={t.indicatorType}
+            aria-expanded={typeDropdownOpen}
+            aria-haspopup="listbox"
+          >
+            <span className="truncate">{currentTypeLabel}</span>
+            <span className="text-zinc-500 text-xs shrink-0">▾</span>
+          </button>
+          {typeDropdownOpen && (
+            <div
+              className="absolute left-0 right-0 top-full z-40 mt-1 combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+              role="listbox"
+              aria-label={t.indicatorType}
+            >
+              {INDICATOR_TYPE_GROUPS.map((group) => (
+                <div key={group.groupLabelKey}>
+                  <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wide px-2 py-1 sticky top-0 bg-white border-b border-zinc-100">
+                    {tRecord[group.groupLabelKey] ?? group.groupLabelKey}
+                  </div>
+                  {group.types.map((item) => {
+                    const blocked = isTypeBlockedInDefaultLayout(item.value);
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        role="option"
+                        aria-selected={form.indicatorType === item.value}
+                        disabled={blocked}
+                        title={blocked ? tRecord.indicatorsBlockedDefaultLayout : undefined}
+                        onClick={() => {
+                          if (!blocked) {
+                            setType(item.value);
+                            setTypeDropdownOpen(false);
+                          }
+                        }}
+                        className={`w-full text-left text-sm px-2 py-1.5 rounded flex items-center gap-1 ${form.indicatorType === item.value ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"} ${blocked ? "opacity-60 cursor-not-allowed" : ""}`}
+                      >
+                        {blocked ? "🔒 " : ""}{getTypeLabel(item.value, item)}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+      {isDefaultLayout && showBlockedLayoutHint && (
+        <p className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded px-2 py-1.5">
+          {(t as Record<string, string>).indicatorsBlockedDefaultLayout}
+        </p>
+      )}
 
       {form.indicatorType === "Ichimoku" && (
         <>
@@ -488,41 +611,41 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
               <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuTenkanPeriod ?? "Tenkan"}</span>
               <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuTenkanPeriod ?? 9) - 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-                <input type="text" inputMode="numeric" value={form.ichimokuTenkanPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuTenkanPeriod ?? 9) + 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+                <StepperButton onStep={() => { const v = Math.max(1, (form.ichimokuTenkanPeriod ?? 9) - 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) <= 1} className="stepper-btn">−</StepperButton>
+                <input type="text" inputMode="numeric" value={form.ichimokuTenkanPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuTenkanPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuTenkanPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 9; setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                <StepperButton onStep={() => { const v = Math.min(500, (form.ichimokuTenkanPeriod ?? 9) + 1); setForm((p) => ({ ...p, ichimokuTenkanPeriod: v, ichimokuTenkanPeriodText: String(v) })); }} disabled={(form.ichimokuTenkanPeriod ?? 9) >= 500} className="stepper-btn">+</StepperButton>
               </div>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
               <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuKijunPeriod ?? "Kijun"}</span>
               <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuKijunPeriod ?? 26) - 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-                <input type="text" inputMode="numeric" value={form.ichimokuKijunPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuKijunPeriod ?? 26) + 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+                <StepperButton onStep={() => { const v = Math.max(1, (form.ichimokuKijunPeriod ?? 26) - 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) <= 1} className="stepper-btn">−</StepperButton>
+                <input type="text" inputMode="numeric" value={form.ichimokuKijunPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuKijunPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuKijunPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                <StepperButton onStep={() => { const v = Math.min(500, (form.ichimokuKijunPeriod ?? 26) + 1); setForm((p) => ({ ...p, ichimokuKijunPeriod: v, ichimokuKijunPeriodText: String(v) })); }} disabled={(form.ichimokuKijunPeriod ?? 26) >= 500} className="stepper-btn">+</StepperButton>
               </div>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
               <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuSpanBPeriod ?? "Span B"}</span>
               <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-                <button type="button" onClick={() => { const v = Math.max(1, (form.ichimokuSpanBPeriod ?? 52) - 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) <= 1} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-                <input type="text" inputMode="numeric" value={form.ichimokuSpanBPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuSpanBPeriod ?? 52) + 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+                <StepperButton onStep={() => { const v = Math.max(1, (form.ichimokuSpanBPeriod ?? 52) - 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) <= 1} className="stepper-btn">−</StepperButton>
+                <input type="text" inputMode="numeric" value={form.ichimokuSpanBPeriodText} onChange={(e) => setForm((p) => ({ ...p, ichimokuSpanBPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuSpanBPeriodText, 10); const v = Number.isFinite(n) ? Math.max(1, Math.min(500, n)) : 52; setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                <StepperButton onStep={() => { const v = Math.min(500, (form.ichimokuSpanBPeriod ?? 52) + 1); setForm((p) => ({ ...p, ichimokuSpanBPeriod: v, ichimokuSpanBPeriodText: String(v) })); }} disabled={(form.ichimokuSpanBPeriod ?? 52) >= 500} className="stepper-btn">+</StepperButton>
               </div>
             </div>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
               <span className="text-xs font-medium text-zinc-600 sm:w-20 shrink-0">{(t as Record<string, string>).ichimokuDisplacement ?? "Desloc."}</span>
               <div className="flex items-center gap-1 w-full sm:flex-1 min-w-0">
-                <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuDisplacement ?? 26) - 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">−</button>
-                <input type="text" inputMode="numeric" value={form.ichimokuDisplacementText} onChange={(e) => setForm((p) => ({ ...p, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 text-center" />
-                <button type="button" onClick={() => { const v = Math.min(500, (form.ichimokuDisplacement ?? 26) + 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) >= 500} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 disabled:opacity-40 shrink-0">+</button>
+                <StepperButton onStep={() => { const v = Math.max(0, (form.ichimokuDisplacement ?? 26) - 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) <= 0} className="stepper-btn">−</StepperButton>
+                <input type="text" inputMode="numeric" value={form.ichimokuDisplacementText} onChange={(e) => setForm((p) => ({ ...p, ichimokuDisplacementText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = parseInt(form.ichimokuDisplacementText, 10); const v = Number.isFinite(n) ? Math.max(0, Math.min(500, n)) : 26; setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                <StepperButton onStep={() => { const v = Math.min(500, (form.ichimokuDisplacement ?? 26) + 1); setForm((p) => ({ ...p, ichimokuDisplacement: v, ichimokuDisplacementText: String(v) })); }} disabled={(form.ichimokuDisplacement ?? 26) >= 500} className="stepper-btn">+</StepperButton>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).ichimokuCloudOpacity ?? "Opac. nuvem"}</span>
-            <button type="button" onClick={() => { const v = Math.max(0, (form.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
+            <StepperButton onStep={() => { const v = Math.max(0, (form.ichimokuCloudOpacity ?? 0.3) * 100 - 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) <= 0} className="stepper-btn">−</StepperButton>
             <span className="w-10 text-center text-sm font-mono tabular-nums">{Math.round((form.ichimokuCloudOpacity ?? 0.3) * 100)}%</span>
-            <button type="button" onClick={() => { const v = Math.min(70, (form.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            <StepperButton onStep={() => { const v = Math.min(70, (form.ichimokuCloudOpacity ?? 0.3) * 100 + 10); setForm((p) => ({ ...p, ichimokuCloudOpacity: v / 100, ichimokuCloudOpacityText: String(Math.round(v)) })); }} disabled={((form.ichimokuCloudOpacity ?? 0.3) * 100) >= 70} className="stepper-btn">+</StepperButton>
           </div>
           <div className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).ichimokuShowLinesLabel ?? "Linhas a mostrar"}</div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -545,28 +668,9 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               return (
                 <div key={label} className="relative flex flex-wrap items-center gap-2">
                   <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{label}</span>
-                  <button type="button" onClick={() => setIchimokuColorOpen(ichimokuColorOpen === label ? null : label)} className="w-6 h-6 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: val }} aria-label={(t as Record<string, string>).color ?? "Cor"} />
-                  {ichimokuColorOpen === label && (
-                    <>
-                      <div className="fixed inset-0 z-10" aria-hidden onClick={() => setIchimokuColorOpen(null)} />
-                      <div className="absolute left-0 top-full mt-1 z-20 p-2 bg-white border border-zinc-200 rounded-lg shadow-lg w-[min-content] min-w-[8rem]">
-                        <div className="grid grid-cols-4 gap-1.5 [&>button]:w-6 [&>button]:h-6 [&>button]:shrink-0 [&>button]:rounded [&>button]:border">
-                          {INDICATOR_COLOR_PALETTE.map((hex) => (
-                            <button key={hex} type="button" onClick={() => { setForm((p) => ({ ...p, [colorKey]: hex })); setIchimokuColorOpen(null); }} className={val === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"} style={{ backgroundColor: hex }} />
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  <select value={form[widthKey]} onChange={(e) => setForm((p) => ({ ...p, [widthKey]: e.target.value as IndicatorLineWidth }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-20">
-                    <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
-                    <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                  </select>
-                  <select value={form[styleKey]} onChange={(e) => setForm((p) => ({ ...p, [styleKey]: e.target.value as IndicatorLineStyle }))} className="text-[10px] border border-zinc-300 rounded px-1 py-0.5 bg-white w-24">
-                    <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
-                    <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                    <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                  </select>
+                  <ColorPaletteCombobox value={val} onChange={(hex) => setForm((p) => ({ ...p, [colorKey]: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).color ?? "Cor"} />
+                  <Combobox value={form[widthKey]} onChange={(v) => setForm((p) => ({ ...p, [widthKey]: v as IndicatorLineWidth }))} options={lineWidthOptions} size="sm" className="w-20" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
+                  <Combobox value={form[styleKey]} onChange={(v) => setForm((p) => ({ ...p, [styleKey]: v as IndicatorLineStyle }))} options={lineStyleOptions} size="sm" className="w-24" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
                 </div>
               );
             })}
@@ -577,131 +681,62 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku") && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
-          <select
+          <Combobox
             value={chartOptionValue}
-            onChange={(e) => setForm((prev) => ({ ...prev, chartOption: e.target.value as IndicatorPanel }))}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            onChange={(v) => setForm((prev) => ({ ...prev, chartOption: v as IndicatorPanel }))}
+            options={chartPanelOptions}
+            className="flex-1 min-w-0"
+            size="lg"
             aria-label={t.chartOption}
-          >
-            {form.indicatorType === "Volume" ? (
-              <>
-                {indicatorCountByPanel.panel2 === 0 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-                {!isFreeUser && indicatorCountByPanel.panel3 === 0 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-                {!isFreeUser && indicatorCountByPanel.panel4 === 0 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-                {!isFreeUser && indicatorCountByPanel.panel5 === 0 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
-                {!hasEmptyPanelForVolume && (
-                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
-                )}
-              </>
-            ) : (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") ? (
-              <>
-                {panelsFreeForSecondary.panel2 && <option value="panel2">{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>}
-                {panelsFreeForSecondary.panel3 && <option value="panel3">{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>}
-                {panelsFreeForSecondary.panel4 && <option value="panel4">{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>}
-                {panelsFreeForSecondary.panel5 && <option value="panel5">{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>}
-                {!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5 && (
-                  <option value="">{(t as Record<string, string>).chartOptionNoPanelAvailable ?? "Nenhum painel disponível"}</option>
-                )}
-              </>
-            ) : (
-              <>
-                <option value="main" disabled={indicatorCountByPanel.main >= MAIN_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionMain ?? "Main"}</option>
-                <option value="panel2" disabled={indicatorCountByPanel.panel2 >= SECONDARY_MAX_INDICATORS}>{(t as Record<string, string>).chartOptionPanel2 ?? "Panel 2"}</option>
-                <option value="panel3" disabled={indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel3 ?? "Panel 3"}</option>
-                <option value="panel4" disabled={indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel4 ?? "Panel 4"}</option>
-                <option value="panel5" disabled={indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser}>{isFreeUser ? "🔒 " : ""}{(t as Record<string, string>).chartOptionPanel5 ?? "Panel 5"}</option>
-              </>
-            )}
-          </select>
+          />
         </div>
       )}
 
       {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "Ichimoku" && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
-          <select
+          <Combobox
             value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.fieldKey) ? form.fieldKey : firstEnabledFieldValueForAdd) as string}
-            onChange={(e) => {
-              const newKey = e.target.value as IndicatorFieldKey;
-              setForm((prev) => ({ ...prev, fieldKey: newKey }));
-            }}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            onChange={(v) => setForm((prev) => ({ ...prev, fieldKey: v as IndicatorFieldKey }))}
+            options={fieldOptionsVisibleForAdd.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}
+            className="flex-1 min-w-0"
+            size="lg"
             aria-label={t.field}
-          >
-            {fieldOptionsVisibleForAdd.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       )}
 
       {(form.indicatorType === "OBV" || form.indicatorType === "AD") && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
-          <select
+          <Combobox
             value={form.indicatorType === "OBV" ? (form.obvVolumeSource ?? "base") : (form.adVolumeSource ?? "base")}
-            onChange={(e) => {
-              const v = e.target.value as "base" | "usdt";
-              setForm((prev) => ({
-                ...prev,
-                ...(prev.indicatorType === "OBV" ? { obvVolumeSource: v } : { adVolumeSource: v }),
-              }));
-            }}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
+            onChange={(v) => setForm((prev) => ({ ...prev, ...(prev.indicatorType === "OBV" ? { obvVolumeSource: v as "base" | "usdt" } : { adVolumeSource: v as "base" | "usdt" }) }))}
+            options={volumeSourceOptions}
+            className="flex-1 min-w-0"
+            size="lg"
             aria-label={(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}
-          >
-            <option value="base">{(t as Record<string, string>).volumeBaseLabel ?? "Vol (base)"}</option>
-            <option value="usdt">{(t as Record<string, string>).volumeUsdtLabel ?? "Vol (USDT)"}</option>
-          </select>
+          />
         </div>
       )}
 
       {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
-          <div className="flex-1 min-w-0 flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1)));
-                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-              }}
-              className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-              aria-label="-"
-            >
-              −
-            </button>
+          <div className="flex items-center gap-1">
+            <StepperButton onStep={() => { const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) - 1))); setForm((prev) => ({ ...prev, period: next, periodText: String(next) })); }} className="stepper-btn" aria-label="-">−</StepperButton>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
               value={form.periodText}
-              onFocus={(e) => {
-                const el = e.currentTarget;
-                queueMicrotask(() => el?.select());
-              }}
+              onFocus={(e) => { const el = e.currentTarget; queueMicrotask(() => el?.select()); }}
               onChange={(e) => setForm((prev) => ({ ...prev, periodText: e.target.value.replace(/[^\d]/g, "") }))}
-              onBlur={() => {
-                const n = Number(form.periodText);
-                const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7;
-                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-              }}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5"
+              onBlur={() => { const n = Number(form.periodText); const next = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 7; setForm((prev) => ({ ...prev, period: next, periodText: String(next) })); }}
+              className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
               aria-label={t.period}
             />
-            <button
-              type="button"
-              onClick={() => {
-                const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1)));
-                setForm((prev) => ({ ...prev, period: next, periodText: String(next) }));
-              }}
-              className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
-              aria-label="+"
-            >
-              +
-            </button>
+            <StepperButton onStep={() => { const next = Math.max(1, Math.min(500, Math.round((form.period ?? 7) + 1))); setForm((prev) => ({ ...prev, period: next, periodText: String(next) })); }} className="stepper-btn" aria-label="+">+</StepperButton>
           </div>
         </div>
       )}
@@ -757,19 +792,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciHistogramColorAbove: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cciHistogramColorAbove} onChange={(hex) => setForm((prev) => ({ ...prev, cciHistogramColorAbove: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciHistogramColorBelow: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cciHistogramColorBelow} onChange={(hex) => setForm((prev) => ({ ...prev, cciHistogramColorBelow: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
               </div>
             </div>
           )}
@@ -787,41 +814,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cciLimitUpperLabel ?? "Superior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.cciLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cciLimitUpper: Math.max(-500, Math.min(500, prev.cciLimitUpper + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cciLimitLowerLabel ?? "Inferior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower - 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.cciLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cciLimitLower: Math.max(-500, Math.min(500, prev.cciLimitLower + 10)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cciLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cciLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cciLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, cciLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select value={form.cciLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, cciLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.cciLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, cciLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select value={form.cciLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, cciLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.cciLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, cciLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -842,19 +858,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfHistogramColorAbove: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cmfHistogramColorAbove} onChange={(hex) => setForm((prev) => ({ ...prev, cmfHistogramColorAbove: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfHistogramColorBelow: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cmfHistogramColorBelow} onChange={(hex) => setForm((prev) => ({ ...prev, cmfHistogramColorBelow: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
               </div>
             </div>
           )}
@@ -867,41 +875,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cmfLimitUpperLabel ?? "Superior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-14 text-center text-sm tabular-nums">{form.cmfLimitUpper.toFixed(2)}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cmfLimitUpper: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitUpper + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).cmfLimitLowerLabel ?? "Inferior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower - 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-14 text-center text-sm tabular-nums">{form.cmfLimitLower.toFixed(2)}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, cmfLimitLower: Math.max(-1, Math.min(1, Math.round((prev.cmfLimitLower + 0.05) * 100) / 100)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, cmfLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.cmfLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.cmfLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, cmfLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select value={form.cmfLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, cmfLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.cmfLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, cmfLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select value={form.cmfLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, cmfLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.cmfLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, cmfLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -923,40 +920,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button
-                      key={hex}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, rsiCenterLineColor: hex }))}
-                      className={`w-6 h-6 rounded border shrink-0 ${form.rsiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`}
-                      style={{ backgroundColor: hex }}
-                    />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.rsiCenterLineColor} onChange={(hex) => setForm((prev) => ({ ...prev, rsiCenterLineColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select
-                  value={form.rsiCenterLineWidth}
-                  onChange={(e) => setForm((prev) => ({ ...prev, rsiCenterLineWidth: e.target.value as IndicatorLineWidth }))}
-                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-                >
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.rsiCenterLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, rsiCenterLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select
-                  value={form.rsiCenterLineStyle}
-                  onChange={(e) => setForm((prev) => ({ ...prev, rsiCenterLineStyle: e.target.value as IndicatorLineStyle }))}
-                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-                >
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.rsiCenterLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, rsiCenterLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -978,40 +950,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button
-                      key={hex}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, mfiCenterLineColor: hex }))}
-                      className={`w-6 h-6 rounded border shrink-0 ${form.mfiCenterLineColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`}
-                      style={{ backgroundColor: hex }}
-                    />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.mfiCenterLineColor} onChange={(hex) => setForm((prev) => ({ ...prev, mfiCenterLineColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select
-                  value={form.mfiCenterLineWidth}
-                  onChange={(e) => setForm((prev) => ({ ...prev, mfiCenterLineWidth: e.target.value as IndicatorLineWidth }))}
-                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-                >
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.mfiCenterLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, mfiCenterLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select
-                  value={form.mfiCenterLineStyle}
-                  onChange={(e) => setForm((prev) => ({ ...prev, mfiCenterLineStyle: e.target.value as IndicatorLineStyle }))}
-                  className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-                >
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.mfiCenterLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, mfiCenterLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1034,41 +981,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).mfiLimitUpperLabel ?? "Superior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.mfiLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, mfiLimitUpper: Math.max(0, Math.min(100, prev.mfiLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).mfiLimitLowerLabel ?? "Inferior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.mfiLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, mfiLimitLower: Math.max(0, Math.min(100, prev.mfiLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, mfiLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.mfiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.mfiLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, mfiLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select value={form.mfiLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, mfiLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.mfiLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, mfiLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select value={form.mfiLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, mfiLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.mfiLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, mfiLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1091,41 +1027,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).rsiLimitUpperLabel ?? "Superior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, rsiLimitUpper: Math.max(0, Math.min(100, prev.rsiLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, rsiLimitUpper: Math.max(0, Math.min(100, prev.rsiLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.rsiLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, rsiLimitUpper: Math.max(0, Math.min(100, prev.rsiLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, rsiLimitUpper: Math.max(0, Math.min(100, prev.rsiLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).rsiLimitLowerLabel ?? "Inferior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, rsiLimitLower: Math.max(0, Math.min(100, prev.rsiLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, rsiLimitLower: Math.max(0, Math.min(100, prev.rsiLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.rsiLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, rsiLimitLower: Math.max(0, Math.min(100, prev.rsiLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, rsiLimitLower: Math.max(0, Math.min(100, prev.rsiLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, rsiLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.rsiLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.rsiLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, rsiLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-                <select value={form.rsiLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, rsiLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.rsiLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, rsiLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-                <select value={form.rsiLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, rsiLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-                </select>
+                <Combobox value={form.rsiLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, rsiLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1145,56 +1070,12 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </label>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-24 shrink-0">{(t as Record<string, string>).volumeColorPositive ?? "Cor positivo"}</span>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, volumeColorAboveOpen: !prev.volumeColorAboveOpen }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-              aria-expanded={form.volumeColorAboveOpen}
-            >
-              <span className="w-4 h-4 rounded shrink-0 border border-zinc-300" style={{ backgroundColor: form.volumeColorAbove }} />
-              <span className="text-zinc-500 text-xs">▼</span>
-            </button>
+            <ColorPaletteCombobox value={form.volumeColorAbove} onChange={(hex) => setForm((prev) => ({ ...prev, volumeColorAbove: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).volumeColorPositive ?? "Cor positivo"} />
           </div>
-          {form.volumeColorAboveOpen && (
-            <div className="flex flex-wrap gap-1 p-1 border border-zinc-200 rounded bg-zinc-50">
-              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                <button
-                  key={hex}
-                  type="button"
-                  className="w-6 h-6 rounded border border-zinc-300 shrink-0"
-                  style={{ backgroundColor: hex }}
-                  onClick={() => setForm((prev) => ({ ...prev, volumeColorAbove: hex, volumeColorAboveOpen: false }))}
-                  aria-label={hex}
-                />
-              ))}
-            </div>
-          )}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-24 shrink-0">{(t as Record<string, string>).volumeColorNegative ?? "Cor negativo"}</span>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, volumeColorBelowOpen: !prev.volumeColorBelowOpen }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-              aria-expanded={form.volumeColorBelowOpen}
-            >
-              <span className="w-4 h-4 rounded shrink-0 border border-zinc-300" style={{ backgroundColor: form.volumeColorBelow }} />
-              <span className="text-zinc-500 text-xs">▼</span>
-            </button>
+            <ColorPaletteCombobox value={form.volumeColorBelow} onChange={(hex) => setForm((prev) => ({ ...prev, volumeColorBelow: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).volumeColorNegative ?? "Cor negativo"} />
           </div>
-          {form.volumeColorBelowOpen && (
-            <div className="flex flex-wrap gap-1 p-1 border border-zinc-200 rounded bg-zinc-50">
-              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                <button
-                  key={hex}
-                  type="button"
-                  className="w-6 h-6 rounded border border-zinc-300 shrink-0"
-                  style={{ backgroundColor: hex }}
-                  onClick={() => setForm((prev) => ({ ...prev, volumeColorBelow: hex, volumeColorBelowOpen: false }))}
-                  aria-label={hex}
-                />
-              ))}
-            </div>
-          )}
         </>
       )}
 
@@ -1202,34 +1083,18 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerMaType ?? "Média móvel"}</span>
-            <select
-              value={form.bollingerMaType}
-              onChange={(e) => setForm((prev) => ({ ...prev, bollingerMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="SMA">SMA</option>
-              <option value="EMA">EMA</option>
-              <option value="WMA">WMA</option>
-            </select>
+            <Combobox value={form.bollingerMaType} onChange={(v) => setForm((prev) => ({ ...prev, bollingerMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdFastMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).field ?? "Campo"}</span>
-            <select
-              value={form.fieldKey}
-              onChange={(e) => setForm((prev) => ({ ...prev, fieldKey: e.target.value as typeof form.fieldKey }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              {fieldOptionsVisibleForAdd.map((opt) => (
-                <option key={opt.value} value={opt.value} disabled={opt.disabled}>{opt.label}</option>
-              ))}
-            </select>
+            <Combobox value={form.fieldKey} onChange={(v) => setForm((prev) => ({ ...prev, fieldKey: v as typeof form.fieldKey }))} options={fieldOptionsVisibleForAdd.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))} className="flex-1 min-w-0" size="lg" aria-label={t.field} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).period ?? "Período"}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-1">
-              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            <div className="flex items-center gap-1">
+              <StepperButton onStep={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="stepper-btn">−</StepperButton>
+              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <StepperButton onStep={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="stepper-btn">+</StepperButton>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -1261,52 +1126,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               {(t as Record<string, string>).bollingerShowMiddle ?? "Média móvel"}
             </label>
           </div>
-          <div className="flex items-center gap-2 relative">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}</span>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColorOpen: !prev.bollingerLimitsColorOpen }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-              aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}
-              aria-expanded={form.bollingerLimitsColorOpen}
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.bollingerLimitsColor }} />
-              </span>
-              <span className="text-zinc-500 text-xs">▾</span>
-            </button>
-            {form.bollingerLimitsColorOpen && (
-              <>
-                <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColorOpen: false }))} />
-                <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                      <button
-                        key={hex}
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, bollingerLimitsColor: hex, bollingerLimitsColorOpen: false }))}
-                        className={`w-10 h-10 rounded border-2 ${form.bollingerLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                        style={{ backgroundColor: hex }}
-                        aria-label={`Color ${hex}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+            <ColorPaletteCombobox value={form.bollingerLimitsColor} onChange={(hex) => setForm((prev) => ({ ...prev, bollingerLimitsColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
-            <select value={form.bollingerLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, bollingerLimitsLineWidth: e.target.value as typeof form.bollingerLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-            </select>
+            <Combobox value={form.bollingerLimitsLineWidth} onChange={(v) => setForm((p) => ({ ...p, bollingerLimitsLineWidth: v as typeof form.bollingerLimitsLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
-            <select value={form.bollingerLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, bollingerLimitsLineStyle: e.target.value as typeof form.bollingerLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
-              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-            </select>
+            <Combobox value={form.bollingerLimitsLineStyle} onChange={(v) => setForm((p) => ({ ...p, bollingerLimitsLineStyle: v as typeof form.bollingerLimitsLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
           </div>
         </>
       )}
@@ -1315,15 +1143,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMaType ?? "Média móvel"}</span>
-            <select
-              value={form.keltnerMaType}
-              onChange={(e) => setForm((prev) => ({ ...prev, keltnerMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="SMA">SMA</option>
-              <option value="EMA">EMA</option>
-              <option value="WMA">WMA</option>
-            </select>
+            <Combobox value={form.keltnerMaType} onChange={(v) => setForm((prev) => ({ ...prev, keltnerMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdFastMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMultiplierLabel ?? "Multiplicador ATR (0–10)"}</span>
@@ -1354,52 +1174,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               {(t as Record<string, string>).keltnerShowMiddle ?? "Média móvel"}
             </label>
           </div>
-          <div className="flex items-center gap-2 relative">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}</span>
-            <button
-              type="button"
-              onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColorOpen: !prev.keltnerLimitsColorOpen }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-              aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}
-              aria-expanded={form.keltnerLimitsColorOpen}
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.keltnerLimitsColor }} />
-              </span>
-              <span className="text-zinc-500 text-xs">▾</span>
-            </button>
-            {form.keltnerLimitsColorOpen && (
-              <>
-                <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColorOpen: false }))} />
-                <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                      <button
-                        key={hex}
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, keltnerLimitsColor: hex, keltnerLimitsColorOpen: false }))}
-                        className={`w-10 h-10 rounded border-2 ${form.keltnerLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                        style={{ backgroundColor: hex }}
-                        aria-label={`Color ${hex}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+            <ColorPaletteCombobox value={form.keltnerLimitsColor} onChange={(hex) => setForm((prev) => ({ ...prev, keltnerLimitsColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
-            <select value={form.keltnerLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, keltnerLimitsLineWidth: e.target.value as typeof form.keltnerLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-            </select>
+            <Combobox value={form.keltnerLimitsLineWidth} onChange={(v) => setForm((p) => ({ ...p, keltnerLimitsLineWidth: v as typeof form.keltnerLimitsLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
-            <select value={form.keltnerLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, keltnerLimitsLineStyle: e.target.value as typeof form.keltnerLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
-              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-            </select>
+            <Combobox value={form.keltnerLimitsLineStyle} onChange={(v) => setForm((p) => ({ ...p, keltnerLimitsLineStyle: v as typeof form.keltnerLimitsLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
           </div>
         </>
       )}
@@ -1408,10 +1191,10 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).period ?? "Período"}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-1">
-              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-              <button type="button" onClick={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            <div className="flex items-center gap-1">
+              <StepperButton onStep={() => setForm((p) => ({ ...p, period: Math.max(1, p.period - 1), periodText: String(Math.max(1, p.period - 1)) }))} className="stepper-btn">−</StepperButton>
+              <input type="text" inputMode="numeric" value={form.periodText} onChange={(e) => setForm((p) => ({ ...p, periodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 20; setForm((p) => ({ ...p, period: v, periodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <StepperButton onStep={() => setForm((p) => ({ ...p, period: Math.min(500, p.period + 1), periodText: String(Math.min(500, p.period + 1)) }))} className="stepper-btn">+</StepperButton>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -1431,39 +1214,24 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianBandOpacity ?? "Opacidade faixa"}</span>
             <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-              <button type="button" onClick={() => { const v = Math.max(0, (form.donchianBandOpacity ?? 0.2) - 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) <= 0} className="w-9 h-9 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">−</button>
+              <StepperButton onStep={() => { const v = Math.max(0, (form.donchianBandOpacity ?? 0.2) - 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) <= 0} className="stepper-btn">−</StepperButton>
               <span className="w-10 text-center text-sm font-mono text-zinc-800 tabular-nums" aria-live="polite">{Math.round((form.donchianBandOpacity ?? 0.2) * 100)}%</span>
-              <button type="button" onClick={() => { const v = Math.min(0.3, (form.donchianBandOpacity ?? 0.2) + 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) >= 0.3} className="w-9 h-9 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40">+</button>
+              <StepperButton onStep={() => { const v = Math.min(0.3, (form.donchianBandOpacity ?? 0.2) + 0.05); setForm((p) => ({ ...p, donchianBandOpacity: v, donchianBandOpacityText: String(Math.round(v * 100)) })); }} disabled={(form.donchianBandOpacity ?? 0.2) >= 0.3} className="stepper-btn">+</StepperButton>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianLimitsColor ?? "Cor canais"}</span>
-            <div className="flex flex-wrap gap-1">
-              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, donchianLimitsColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.donchianLimitsColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-              ))}
-            </div>
+            <ColorPaletteCombobox value={form.donchianLimitsColor} onChange={(hex) => setForm((prev) => ({ ...prev, donchianLimitsColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).donchianLimitsColor ?? "Cor canais"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-            <select value={form.donchianLimitsLineWidth} onChange={(e) => setForm((p) => ({ ...p, donchianLimitsLineWidth: e.target.value as typeof form.donchianLimitsLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-            </select>
+            <Combobox value={form.donchianLimitsLineWidth} onChange={(v) => setForm((p) => ({ ...p, donchianLimitsLineWidth: v as typeof form.donchianLimitsLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-            <select value={form.donchianLimitsLineStyle} onChange={(e) => setForm((p) => ({ ...p, donchianLimitsLineStyle: e.target.value as typeof form.donchianLimitsLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Sólido"}</option>
-              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-            </select>
+            <Combobox value={form.donchianLimitsLineStyle} onChange={(v) => setForm((p) => ({ ...p, donchianLimitsLineStyle: v as typeof form.donchianLimitsLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}</span>
-            <div className="flex flex-wrap gap-1">
-              {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, donchianMiddleColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.donchianMiddleColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-              ))}
-            </div>
+            <ColorPaletteCombobox value={form.donchianMiddleColor} onChange={(hex) => setForm((prev) => ({ ...prev, donchianMiddleColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"} />
           </div>
         </>
       )}
@@ -1517,14 +1285,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarPointSize ?? "Tamanho do ponto"}</span>
-            <select
-              value={form.sarPointSize}
-              onChange={(e) => setForm((prev) => ({ ...prev, sarPointSize: e.target.value as "thin" | "normal" }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fino"}</option>
-              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-            </select>
+            <Combobox value={form.sarPointSize} onChange={(v) => setForm((prev) => ({ ...prev, sarPointSize: v as "thin" | "normal" }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).sarPointSize ?? "Tamanho"} />
           </div>
         </>
       )}
@@ -1533,42 +1294,26 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdFastMa ?? "Média rápida"}</span>
-            <select
-              value={form.macdFastMaType}
-              onChange={(e) => setForm((prev) => ({ ...prev, macdFastMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="SMA">SMA</option>
-              <option value="EMA">EMA</option>
-              <option value="WMA">WMA</option>
-            </select>
+            <Combobox value={form.macdFastMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdFastMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdFastMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdFastPeriod ?? "Período rápido"}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-1">
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdFastPeriod: Math.max(1, prev.macdFastPeriod - 1), macdFastPeriodText: String(Math.max(1, prev.macdFastPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-              <input type="text" inputMode="numeric" value={form.macdFastPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdFastPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdFastPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 12; setForm((prev) => ({ ...prev, macdFastPeriod: v, macdFastPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdFastPeriod: Math.min(500, prev.macdFastPeriod + 1), macdFastPeriodText: String(Math.min(500, prev.macdFastPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            <div className="flex items-center gap-1">
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdFastPeriod: Math.max(1, prev.macdFastPeriod - 1), macdFastPeriodText: String(Math.max(1, prev.macdFastPeriod - 1)) }))} className="stepper-btn">−</StepperButton>
+              <input type="text" inputMode="numeric" value={form.macdFastPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdFastPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdFastPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 12; setForm((prev) => ({ ...prev, macdFastPeriod: v, macdFastPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdFastPeriod: Math.min(500, prev.macdFastPeriod + 1), macdFastPeriodText: String(Math.min(500, prev.macdFastPeriod + 1)) }))} className="stepper-btn">+</StepperButton>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSlowMa ?? "Média lenta"}</span>
-            <select
-              value={form.macdSlowMaType}
-              onChange={(e) => setForm((prev) => ({ ...prev, macdSlowMaType: e.target.value as "SMA" | "EMA" | "WMA" }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-            >
-              <option value="SMA">SMA</option>
-              <option value="EMA">EMA</option>
-              <option value="WMA">WMA</option>
-            </select>
+            <Combobox value={form.macdSlowMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSlowMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSlowMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSlowPeriod ?? "Período lento"}</span>
-            <div className="flex-1 min-w-0 flex items-center gap-1">
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdSlowPeriod: Math.max(1, prev.macdSlowPeriod - 1), macdSlowPeriodText: String(Math.max(1, prev.macdSlowPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-              <input type="text" inputMode="numeric" value={form.macdSlowPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdSlowPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdSlowPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 26; setForm((prev) => ({ ...prev, macdSlowPeriod: v, macdSlowPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-              <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdSlowPeriod: Math.min(500, prev.macdSlowPeriod + 1), macdSlowPeriodText: String(Math.min(500, prev.macdSlowPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+            <div className="flex items-center gap-1">
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdSlowPeriod: Math.max(1, prev.macdSlowPeriod - 1), macdSlowPeriodText: String(Math.max(1, prev.macdSlowPeriod - 1)) }))} className="stepper-btn">−</StepperButton>
+              <input type="text" inputMode="numeric" value={form.macdSlowPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdSlowPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdSlowPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 26; setForm((prev) => ({ ...prev, macdSlowPeriod: v, macdSlowPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdSlowPeriod: Math.min(500, prev.macdSlowPeriod + 1), macdSlowPeriodText: String(Math.min(500, prev.macdSlowPeriod + 1)) }))} className="stepper-btn">+</StepperButton>
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
@@ -1589,42 +1334,27 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA da sinal"}</span>
-                <select value={form.macdSignalMaType} onChange={(e) => setForm((prev) => ({ ...prev, macdSignalMaType: e.target.value as "SMA" | "EMA" | "WMA" }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="SMA">SMA</option>
-                  <option value="EMA">EMA</option>
-                  <option value="WMA">WMA</option>
-                </select>
+                <Combobox value={form.macdSignalMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSignalMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSignalMa ?? "MA"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalPeriod ?? "Período sinal"}</span>
-                <div className="flex-1 min-w-0 flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdSignalPeriod: Math.max(1, prev.macdSignalPeriod - 1), macdSignalPeriodText: String(Math.max(1, prev.macdSignalPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-                  <input type="text" inputMode="numeric" value={form.macdSignalPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdSignalPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdSignalPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 9; setForm((prev) => ({ ...prev, macdSignalPeriod: v, macdSignalPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, macdSignalPeriod: Math.min(500, prev.macdSignalPeriod + 1), macdSignalPeriodText: String(Math.min(500, prev.macdSignalPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+                <div className="flex items-center gap-1">
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdSignalPeriod: Math.max(1, prev.macdSignalPeriod - 1), macdSignalPeriodText: String(Math.max(1, prev.macdSignalPeriod - 1)) }))} className="stepper-btn">−</StepperButton>
+                  <input type="text" inputMode="numeric" value={form.macdSignalPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, macdSignalPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.macdSignalPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 9; setForm((prev) => ({ ...prev, macdSignalPeriod: v, macdSignalPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, macdSignalPeriod: Math.min(500, prev.macdSignalPeriod + 1), macdSignalPeriodText: String(Math.min(500, prev.macdSignalPeriod + 1)) }))} className="stepper-btn">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, macdSignalColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.macdSignalColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.macdSignalColor} onChange={(hex) => setForm((prev) => ({ ...prev, macdSignalColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.macdSignalLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, macdSignalLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.macdSignalLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, macdSignalLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.macdSignalLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, macdSignalLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
+                <Combobox value={form.macdSignalLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, macdSignalLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1632,19 +1362,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, macdHistogramColorAbove: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.macdHistogramColorAbove === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.macdHistogramColorAbove} onChange={(hex) => setForm((prev) => ({ ...prev, macdHistogramColorAbove: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, macdHistogramColorBelow: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.macdHistogramColorBelow === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.macdHistogramColorBelow} onChange={(hex) => setForm((prev) => ({ ...prev, macdHistogramColorBelow: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
               </div>
             </div>
           )}
@@ -1652,39 +1374,9 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       )}
 
       {form.indicatorType !== "Ichimoku" && (
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-          <button
-            type="button"
-            onClick={() => setForm((prev) => ({ ...prev, colorOpen: !prev.colorOpen }))}
-            className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-            aria-label={t.color}
-            aria-expanded={form.colorOpen}
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: form.color }} />
-            </span>
-            <span className="text-zinc-500 text-xs">▾</span>
-          </button>
-          {form.colorOpen && (
-            <>
-              <div className="fixed inset-0 z-30" aria-hidden onClick={() => setForm((prev) => ({ ...prev, colorOpen: false }))} />
-              <div className="absolute left-[4.5rem] right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2">
-                <div className="grid grid-cols-3 gap-2">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button
-                      key={hex}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, color: hex, colorOpen: false }))}
-                      className={`w-10 h-10 rounded border-2 shrink-0 ${form.color === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: hex }}
-                      aria-label={`Color ${hex}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          <ColorPaletteCombobox value={form.color} onChange={(hex) => setForm((prev) => ({ ...prev, color: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
         </div>
       )}
 
@@ -1692,28 +1384,11 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
-            <select
-              value={form.lineWidth}
-              onChange={(e) => setForm((prev) => ({ ...prev, lineWidth: e.target.value as IndicatorLineWidth }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-              aria-label={(t as Record<string, string>).lineWidth}
-            >
-              <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Thin"}</option>
-              <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-            </select>
+            <Combobox value={form.lineWidth} onChange={(v) => setForm((prev) => ({ ...prev, lineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
-            <select
-              value={form.lineStyle}
-              onChange={(e) => setForm((prev) => ({ ...prev, lineStyle: e.target.value as IndicatorLineStyle }))}
-              className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white"
-              aria-label={(t as Record<string, string>).lineStyle}
-            >
-              <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Solid"}</option>
-              <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Dotted"}</option>
-              <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Dashed"}</option>
-            </select>
+            <Combobox value={form.lineStyle} onChange={(v) => setForm((prev) => ({ ...prev, lineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle} />
           </div>
         </>
       )}
@@ -1734,41 +1409,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitUpperLabel ?? "Superior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochLimitUpper: Math.max(0, Math.min(100, prev.stochLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochLimitLowerLabel ?? "Inferior %"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.stochLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochLimitLower: Math.max(0, Math.min(100, prev.stochLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.stochLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, stochLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.stochLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.stochLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, stochLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.stochLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
+                <Combobox value={form.stochLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, stochLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1780,42 +1444,27 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDMaLabel ?? "Tipo da MM"}</span>
-                <select value={form.stochDMaType} onChange={(e) => setForm((prev) => ({ ...prev, stochDMaType: e.target.value as "SMA" | "EMA" | "WMA" }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="SMA">SMA</option>
-                  <option value="EMA">EMA</option>
-                  <option value="WMA">WMA</option>
-                </select>
+                <Combobox value={form.stochDMaType} onChange={(v) => setForm((prev) => ({ ...prev, stochDMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).stochDMaLabel ?? "MA"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).stochDPeriodLabel ?? "Período %D"}</span>
-                <div className="flex-1 min-w-0 flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.max(1, prev.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, prev.stochDPeriod - 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">−</button>
-                  <input type="text" inputMode="numeric" value={form.stochDPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setForm((prev) => ({ ...prev, stochDPeriod: v, stochDPeriodText: String(v) })); }} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5" />
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.min(500, prev.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, prev.stochDPeriod + 1)) }))} className="w-9 h-9 flex items-center justify-center rounded border border-zinc-300 bg-white text-zinc-700">+</button>
+                <div className="flex items-center gap-1">
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.max(1, prev.stochDPeriod - 1), stochDPeriodText: String(Math.max(1, prev.stochDPeriod - 1)) }))} className="stepper-btn">−</StepperButton>
+                  <input type="text" inputMode="numeric" value={form.stochDPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, stochDPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.stochDPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 3; setForm((prev) => ({ ...prev, stochDPeriod: v, stochDPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, stochDPeriod: Math.min(500, prev.stochDPeriod + 1), stochDPeriodText: String(Math.min(500, prev.stochDPeriod + 1)) }))} className="stepper-btn">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, stochDColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.stochDColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.stochDColor} onChange={(hex) => setForm((prev) => ({ ...prev, stochDColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.stochDLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.stochDLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, stochDLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.stochDLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, stochDLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
+                <Combobox value={form.stochDLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, stochDLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1838,41 +1487,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitUpperLabel ?? "Superior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitUpper}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, williamsRLimitUpper: Math.max(-100, Math.min(0, prev.williamsRLimitUpper + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).williamsRLimitLowerLabel ?? "Inferior"}</span>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower - 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">−</StepperButton>
                   <span className="w-10 text-center text-sm tabular-nums">{form.williamsRLimitLower}</span>
-                  <button type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</button>
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, williamsRLimitLower: Math.max(-100, Math.min(0, prev.williamsRLimitLower + 1)) }))} className="w-8 h-8 rounded border border-zinc-300 bg-white text-zinc-600">+</StepperButton>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
-                <div className="flex flex-wrap gap-1">
-                  {INDICATOR_COLOR_PALETTE.map((hex: string) => (
-                    <button key={hex} type="button" onClick={() => setForm((prev) => ({ ...prev, williamsRLimitColor: hex }))} className={`w-6 h-6 rounded border shrink-0 ${form.williamsRLimitColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
-                  ))}
-                </div>
+                <ColorPaletteCombobox value={form.williamsRLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, williamsRLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
-                <select value={form.williamsRLimitLineWidth} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineWidth: e.target.value as IndicatorLineWidth }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="thin">{(t as Record<string, string>).lineWidthThin ?? "Fina"}</option>
-                  <option value="normal">{(t as Record<string, string>).lineWidthNormal ?? "Normal"}</option>
-                </select>
+                <Combobox value={form.williamsRLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, williamsRLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
-                <select value={form.williamsRLimitLineStyle} onChange={(e) => setForm((prev) => ({ ...prev, williamsRLimitLineStyle: e.target.value as IndicatorLineStyle }))} className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white">
-                  <option value="solid">{(t as Record<string, string>).lineStyleSolid ?? "Contínuo"}</option>
-                  <option value="dotted">{(t as Record<string, string>).lineStyleDotted ?? "Pontilhado"}</option>
-                  <option value="dashed">{(t as Record<string, string>).lineStyleDashed ?? "Tracejado"}</option>
-                </select>
+                <Combobox value={form.williamsRLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, williamsRLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}

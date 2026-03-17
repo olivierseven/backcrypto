@@ -12,6 +12,7 @@ import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
 import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_STRATEGIES } from "../KlinesChartConstants";
+import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
   type Strategy,
@@ -139,7 +140,7 @@ function SeriesCombobox({
         <div
           role="listbox"
           aria-label={ariaLabel ?? "Series"}
-          className="absolute left-0 top-full mt-0.5 z-20 min-w-full w-max max-h-[200px] overflow-y-scroll rounded border border-zinc-200 bg-white shadow-lg py-0.5 series-combobox-listbox"
+          className="absolute left-0 top-full mt-0.5 z-20 min-w-full w-max combobox-dropdown-max rounded border border-zinc-200 bg-white shadow-lg py-0.5 series-combobox-listbox"
         >
           <div className="series-combobox-listbox-inner">
             {options.map((o) => {
@@ -259,7 +260,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const [addApplyToAllSymbols, setAddApplyToAllSymbols] = useState(false);
   /** Cor do candle quando a condição é verdadeira (mesma paleta das médias móveis). */
   const [addColor, setAddColor] = useState<string>(() => INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
-  const [addColorOpen, setAddColorOpen] = useState(false);
   const [addVisualizationMode, setAddVisualizationMode] = useState<"paint" | "signal">("paint");
   const [addSignalShape, setAddSignalShape] = useState<"arrowUp" | "arrowDown" | "x" | "circle">("arrowUp");
   const [addSignalPosition, setAddSignalPosition] = useState<"below" | "above">("below");
@@ -498,7 +498,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     setAddRootCombined(createEmptyGroup("AND"));
     setAddApplyToAllSymbols(false);
     setAddColor(INDICATOR_COLOR_PALETTE?.[2] ?? "#ef4444");
-    setAddColorOpen(false);
     setAddVisualizationMode("paint");
     setAddSignalShape("arrowUp");
     setAddSignalPosition("below");
@@ -880,42 +879,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               />
               <span className="text-sm text-zinc-700">{t.applyToAllSymbols}</span>
             </label>
-            <div className="flex items-center gap-2 relative">
+            <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-zinc-600 w-40 shrink-0">{t.strategyCandleColor}</label>
-              <button
-                type="button"
-                onClick={() => setAddColorOpen((o) => !o)}
-                className="flex-1 min-w-0 text-sm border border-zinc-300 rounded px-2 py-1.5 bg-white flex items-center justify-between gap-2"
-                aria-expanded={addColorOpen}
-                aria-label={t.strategyCandleColor}
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: addColor }} />
-                </span>
-                <span className="text-zinc-500 text-xs">▾</span>
-              </button>
-              {addColorOpen && (
-                <>
-                  <div className="fixed inset-0 z-30" aria-hidden onClick={() => setAddColorOpen(false)} />
-                  <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2 panel-scroll">
-                    <div className="grid grid-cols-3 gap-2">
-                      {(INDICATOR_COLOR_PALETTE ?? []).map((hex) => (
-                        <button
-                          key={hex}
-                          type="button"
-                          onClick={() => {
-                            setAddColor(hex);
-                            setAddColorOpen(false);
-                          }}
-                          className={`w-10 h-10 rounded border-2 shrink-0 ${addColor === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                          style={{ backgroundColor: hex }}
-                          title={hex}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+              <ColorPaletteCombobox value={addColor} onChange={setAddColor} palette={INDICATOR_COLOR_PALETTE ?? []} aria-label={t.strategyCandleColor} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).strategyVisualization ?? "Exibir"}</label>
@@ -1006,7 +972,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   setAddOpen(false);
                   setEditingStrategyId(null);
                   setAddApplyToAllSymbols(false);
-                  setAddColorOpen(false);
                   setAddVisualizationMode("paint");
                   setAddSignalShape("arrowUp");
                   setAddSignalPosition("below");

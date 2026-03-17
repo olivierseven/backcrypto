@@ -3,22 +3,27 @@ export const MAIN_MAX_INDICATORS = 7;
 /** Máximo de indicadores em cada painel secundário (2, 3 ou 4). */
 export const SECONDARY_MAX_INDICATORS = 3;
 
-/** Paleta de cores (claro → escuro), pelo menos 12. Inclui amarelo para MACD, MAs e RSI. */
+/** Paleta de cores para indicadores (nomes clássicos). */
 export const INDICATOR_COLOR_PALETTE = [
-  "#ffffff",
-  "#000000",
-  "#ef4444",
-  "#f97316",
-  "#f59e0b",
-  "#eab308", // amarelo
-  "#84cc16",
-  "#10b981",
-  "#06b6d4",
-  "#3b82f6",
-  "#6366f1",
-  "#8b5cf6",
-  "#ec4899",
-  "#64748b",
+  "#FFFFFF", // white
+  "#000000", // black
+  "#808080", // gray
+  "#000080", // navy
+  "#0000FF", // blue
+  "#00FFFF", // aqua / cyan
+  "#7FFFD4", // aquamarine
+  "#008000", // green
+  "#00FF00", // lime
+  "#808000", // olive
+  "#DAA520", // goldenrod
+  "#8B4513", // saddle brown
+  "#8B008B", // dark magenta
+  "#A020F0", // purple
+  "#FF00FF", // fuchsia / magenta
+  "#FF1493", // deep pink
+  "#FF0000", // red
+  "#FF8C00", // dark orange
+  "#FFFF00", // yellow
 ];
 
 export const INTERVAL_OPTIONS: { value: number; label: string }[] = [

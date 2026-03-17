@@ -1884,7 +1884,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           />
         </div>
         <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" || drawTool === "pencil" ? "none" : "pan-x pan-y" }}>
-          <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative" style={{ backgroundColor: containerBgHex }}>
+          <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative z-[20]" style={{ backgroundColor: containerBgHex }}>
             {drawOpen && (
               <div
                 ref={drawToolboxRef}

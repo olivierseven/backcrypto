@@ -542,7 +542,7 @@ export function KlinesChartSidebar({
       </button>
       {false && settingsOpen && !isHorizontal && (
         <div
-          className={`${popoverPositionClass} z-10 min-w-[160px] max-h-[80vh] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
+          className={`${popoverPositionClass} z-10 min-w-[160px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label={t.configTitle}
@@ -764,7 +764,7 @@ export function KlinesChartSidebar({
                       <span className="w-5 h-5 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorAbove ?? "#059669" }} aria-hidden />
                     </button>
                     {vapColorAboveOpen && (
-                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] max-h-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor metade acima"} onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorAbove ?? "Cor metade acima"} onClick={(e) => e.stopPropagation()}>
                         <div className="grid grid-cols-4 gap-1">
                           {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
                             <button key={hex} type="button" role="option" aria-selected={(volumeAtPriceColorAbove ?? "#059669") === hex} onClick={() => { onVolumeAtPriceColorAboveChange?.(hex); setVapColorAboveOpen(false); }} title={hex} className={`w-6 h-6 rounded border-2 shrink-0 ${(volumeAtPriceColorAbove ?? "#059669") === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: hex }} />
@@ -786,7 +786,7 @@ export function KlinesChartSidebar({
                       <span className="w-5 h-5 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorBelow ?? "#dc2626" }} aria-hidden />
                     </button>
                     {vapColorBelowOpen && (
-                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] max-h-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor metade abaixo"} onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute left-0 top-full mt-1 z-20 min-w-[120px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg p-2" role="listbox" aria-label={(t as Record<string, string>).volumeAtPriceColorBelow ?? "Cor metade abaixo"} onClick={(e) => e.stopPropagation()}>
                         <div className="grid grid-cols-4 gap-1">
                           {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
                             <button key={hex} type="button" role="option" aria-selected={(volumeAtPriceColorBelow ?? "#dc2626") === hex} onClick={() => { onVolumeAtPriceColorBelowChange?.(hex); setVapColorBelowOpen(false); }} title={hex} className={`w-6 h-6 rounded border-2 shrink-0 ${(volumeAtPriceColorBelow ?? "#dc2626") === hex ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: hex }} />
@@ -828,7 +828,7 @@ export function KlinesChartSidebar({
         </button>
         {false && colorsOpen && !isHorizontal && (
           <div
-            className={`${popoverPositionClass} z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
+            className={`${popoverPositionClass} z-10 min-w-[180px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2`}
             style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1187,7 +1187,7 @@ export function KlinesChartSidebar({
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className="fixed z-[100] w-max min-w-[7.5rem] max-h-[400px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
+            className="fixed z-[100] w-max min-w-[7.5rem] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
             style={{ top: portalStyle.top, left: portalStyle.left }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1337,7 +1337,7 @@ export function KlinesChartSidebar({
                             <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorAbove ?? "#059669" }} />
                           </button>
                           {vapColorAboveOpen && (
-                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] max-h-[160px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
+                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
                               <div className="grid grid-cols-4 gap-0.5">
                                 {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
                                   <button key={hex} type="button" onClick={() => { onVolumeAtPriceColorAboveChange?.(hex); setVapColorAboveOpen(false); }} className={`w-5 h-5 rounded border shrink-0 ${(volumeAtPriceColorAbove ?? "#059669") === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />
@@ -1352,7 +1352,7 @@ export function KlinesChartSidebar({
                             <span className="w-4 h-4 rounded border border-zinc-300 shrink-0" style={{ backgroundColor: volumeAtPriceColorBelow ?? "#dc2626" }} />
                           </button>
                           {vapColorBelowOpen && (
-                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] max-h-[160px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
+                            <div className="absolute left-0 top-full mt-1 z-[101] min-w-[100px] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg p-1.5">
                               <div className="grid grid-cols-4 gap-0.5">
                                 {CANDLE_COLOR_PRESETS.flatMap((p) => [p.bull, p.bear]).filter((hex, i, arr) => arr.indexOf(hex) === i).map((hex) => (
                                   <button key={hex} type="button" onClick={() => { onVolumeAtPriceColorBelowChange?.(hex); setVapColorBelowOpen(false); }} className={`w-5 h-5 rounded border shrink-0 ${(volumeAtPriceColorBelow ?? "#dc2626") === hex ? "border-zinc-900 ring-1" : "border-zinc-300"}`} style={{ backgroundColor: hex }} />

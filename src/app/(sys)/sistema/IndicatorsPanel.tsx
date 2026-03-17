@@ -22,7 +22,7 @@ import {
   isMovingAverageType,
   useIndicatorsPanelFields,
 } from "./indicatorsPanel/index";
-import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_INDICATORS } from "./KlinesChartConstants";
+import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_INDICATORS, DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES } from "./KlinesChartConstants";
 import { IndicatorsPanelContext } from "./indicatorsPanel/IndicatorsPanelContext";
 import { IndicatorsPanelAddForm } from "./indicatorsPanel/IndicatorsPanelAddForm";
 import { IndicatorsPanelIndicatorCard } from "./indicatorsPanel/IndicatorsPanelIndicatorCard";
@@ -251,6 +251,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditFormState | null>(null);
+  /** true = só indicadores que aparecem no timeframe atual; false = todos do layout (incluindo outros timeframes). */
+  const [showOnlyCurrentTimeframe, setShowOnlyCurrentTimeframe] = useState(true);
 
   const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MFI" || i.type === "MACD" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "AD" || i.type === "ATR" || i.type === "ADX" || i.type === "CCI" ? "panel2" : "main");
 
@@ -341,8 +343,10 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     (addForm.chartOption === "panel3" && indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS) ||
     (addForm.chartOption === "panel4" && indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS) ||
     (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS);
+  const defaultLayoutTypeBlocked = isDefaultModel && !DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES.includes(addForm.indicatorType);
   const addButtonDisabled =
     defaultModelMaxIndicatorsReached ||
+    defaultLayoutTypeBlocked ||
     (addForm.indicatorType === "Volume" && (!hasEmptyPanelForVolume || chosenPanelUsedForVolume)) ||
     (isSecondaryType && addForm.indicatorType !== "Volume" && !hasFreePanelForSecondary) ||
     (!isSecondaryType && chosenPanelFull);
@@ -992,6 +996,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       INTERVAL_OPTIONS,
       addButtonDisabled,
       defaultModelMaxIndicatorsReached,
+      isDefaultLayout: isDefaultModel,
       handleAdd,
       editingId,
       editForm,
@@ -1023,6 +1028,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       isMA,
       addButtonDisabled,
       defaultModelMaxIndicatorsReached,
+      isDefaultModel,
       handleAdd,
       editingId,
       editForm,
@@ -1070,19 +1076,42 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
                   return ind.intervals.length === 0 || ind.intervals.includes(currentGroupMinutes);
                 })
               : userIndicators.filter((ind) => !(ind.intervals.length === 1 && ind.intervals[0] === 0));
-            if (indicatorsForCurrentTimeframe.length === 0) {
-              return (
-                <p className="text-sm text-zinc-500 py-2">
-                  {(t as Record<string, string>).noIndicatorsForTimeframe ?? "Nenhum indicador para este timeframe. Altere \"Mostrar em\" ao editar um indicador para incluir este período ou \"Todos os tempos\"."}
-                </p>
-              );
-            }
+            const currentTimeframeLabel = currentGroupMinutes != null ? (INTERVAL_OPTIONS.find((o) => o.value === currentGroupMinutes)?.label ?? String(currentGroupMinutes)) : "—";
+            const listToShow = showOnlyCurrentTimeframe ? indicatorsForCurrentTimeframe : userIndicators;
             return (
-              <div className="space-y-2">
-                {indicatorsForCurrentTimeframe.map((ind) => (
-                  <IndicatorsPanelIndicatorCard key={ind.id} ind={ind} />
-                ))}
-              </div>
+              <>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <div className="flex rounded-md border border-zinc-300 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setShowOnlyCurrentTimeframe(true)}
+                      className={`text-xs px-2.5 py-1 ${showOnlyCurrentTimeframe ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+                    >
+                      {(t as Record<string, string>).indicatorsFilterCurrentTimeframe ?? "Deste tempo"}{currentGroupMinutes != null ? ` (${currentTimeframeLabel})` : ""}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowOnlyCurrentTimeframe(false)}
+                      className={`text-xs px-2.5 py-1 border-l border-zinc-300 ${!showOnlyCurrentTimeframe ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+                    >
+                      {(t as Record<string, string>).indicatorsFilterAll ?? "Todos"}
+                    </button>
+                  </div>
+                </div>
+                {showOnlyCurrentTimeframe && indicatorsForCurrentTimeframe.length === 0 ? (
+                  <p className="text-sm text-zinc-500 py-2">
+                    {(t as Record<string, string>).noIndicatorsForTimeframe ?? "Nenhum indicador para este timeframe. Altere \"Mostrar em\" ao editar um indicador para incluir este período ou \"Todos os tempos\"."}
+                  </p>
+                ) : listToShow.length === 0 ? (
+                  <p className="text-sm text-zinc-500 py-2">{(t as Record<string, string>).noIndicatorsYet ?? "Nenhum indicador salvo."}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {listToShow.map((ind) => (
+                      <IndicatorsPanelIndicatorCard key={ind.id} ind={ind} />
+                    ))}
+                  </div>
+                )}
+              </>
             );
           })()}
         </IndicatorsPanelContext.Provider>

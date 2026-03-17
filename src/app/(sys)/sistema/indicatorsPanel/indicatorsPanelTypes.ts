@@ -405,6 +405,8 @@ export interface IndicatorsPanelContextValue {
   addButtonDisabled: boolean;
   /** true quando o layout ativo é modelo default e já há DEFAULT_MODEL_MAX_INDICATORS indicadores. */
   defaultModelMaxIndicatorsReached?: boolean;
+  /** true quando o layout ativo é default (slot 0): só alguns tipos de indicador podem ser usados. */
+  isDefaultLayout?: boolean;
   handleAdd: () => void;
   editingId: string | null;
   editForm: EditFormState | null;

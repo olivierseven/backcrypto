@@ -50,6 +50,8 @@ export const KLINE_LOCAL_PREFS_KEY = "backcrypto-klines-local-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
 /** Máximo de indicadores permitidos quando o layout ativo é um modelo default (ChartModel). */
 export const DEFAULT_MODEL_MAX_INDICATORS = 2;
+/** No layout default, só estes tipos de indicador podem ser selecionados. Nos layouts 1–7, todos. */
+export const DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES: readonly string[] = ["SMA", "EMA", "RSI", "MACD", "Stochastic", "Volume", "Bollinger"];
 /** No modelo default só é permitida uma estratégia. */
 export const DEFAULT_MODEL_MAX_STRATEGIES = 1;
 export const KLINE_GROUP_MINUTES_KEY = "backcrypto-klines-group-minutes";
