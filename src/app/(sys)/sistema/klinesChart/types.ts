@@ -137,7 +137,7 @@ export interface ChartIndicatorLine {
   ichimokuKijunLineWidth?: "thin" | "normal" | "thick";
   ichimokuKijunLineStyle?: "solid" | "dotted" | "dashed";
   ichimokuSpanAColor?: string;
-  ichimokuSpanALineWidth?: "thin" | "normal";
+  ichimokuSpanALineWidth?: "thin" | "normal" | "thick";
   ichimokuSpanALineStyle?: "solid" | "dotted" | "dashed";
   ichimokuSpanBColor?: string;
   ichimokuSpanBLineWidth?: "thin" | "normal" | "thick";
