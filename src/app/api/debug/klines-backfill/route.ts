@@ -8,8 +8,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@/lib/prisma-bio-client";
-import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
-import { DEFAULT_SYMBOLS_LIST, getKlineSymbolsFromDb, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
+import { cryptoPrisma, getCryptoPrismaDev, getCryptoPrismaProd } from "@/lib/crypto-db";
+import { DEFAULT_SYMBOLS_LIST, getKlineSymbolsFromDb, getKlineSymbolsWithPeriods, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -19,7 +19,15 @@ const LIMIT = 1000;
 const ONE_MINUTE_MS = 60 * 1000;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const DELAY_MS = 350;
+
+function floorToHourMs(ms: number): number {
+  return Math.floor(ms / ONE_HOUR_MS) * ONE_HOUR_MS;
+}
+function floorTo5mMs(ms: number): number {
+  return Math.floor(ms / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -138,8 +146,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
+    // target=prod => URL_PROD (produção). Qualquer outro valor => DEV (DATABASE_URL). Nunca misturar.
     const target = body.target === "prod" ? "prod" : "dev";
-    // Um único client por request: quando target=prod escrevemos SOMENTE em URL_PROD; quando dev, SOMENTE em DATABASE_URL.
     const db: PrismaClient =
       target === "prod"
         ? (() => {
@@ -153,18 +161,20 @@ export async function POST(request: NextRequest) {
           })()
         : cryptoPrisma;
 
-    // Lista de símbolos do banco (KlineSymbol onde ativo = true), mesmo alvo onde escrevemos
     const SYMBOLS = await getKlineSymbolsFromDb(db);
-
+    const dbLabel = target === "prod" ? "URL_PROD (produção)" : "URL_DEV (dev)";
     console.log(
-      "[klines-backfill] target=%s — writing ONLY to %s — symbols count: %d",
+      "[klines-backfill] body.target=%s → target=%s — DB: %s — symbols: %d (%s)",
+      body.target,
       target,
-      target === "prod" ? "URL_PROD (produção)" : "DATABASE_URL (dev)",
-      SYMBOLS.length
+      dbLabel,
+      SYMBOLS.length,
+      SYMBOLS.slice(0, 5).join(", ") + (SYMBOLS.length > 5 ? "…" : "")
     );
 
     const symbolParam = (body.symbol as string)?.trim() || "BTCUSDT";
     const onlyMissing = body.onlyMissing === true;
+    const useSymbolPeriods = body.useSymbolPeriods === true;
     const symUpper = symbolParam.trim().toUpperCase();
     const symbolsToRun =
       symbolParam.toLowerCase() === "all"
@@ -174,8 +184,38 @@ export async function POST(request: NextRequest) {
           : [SYMBOLS[0] ?? "BTCUSDT"];
 
     type Gap = { interval: "1m" | "5m" | "1h"; from: number; to: number };
+    type PerSymbolGap = { symbol: string; interval: "1m" | "5m" | "1h"; from: number; to: number };
     let gaps: Gap[];
-    if (Array.isArray(body.gaps) && body.gaps.length > 0) {
+    let perSymbolGaps: PerSymbolGap[] = [];
+
+    if (useSymbolPeriods && (body.interval === "1m" || body.interval === "5m" || body.interval === "1h")) {
+      const interval = body.interval as "1m" | "5m" | "1h";
+      const symbolsWithPeriods = await getKlineSymbolsWithPeriods(db);
+      let toRun = symbolsWithPeriods.filter((s) => symbolsToRun.includes(s.symbol));
+      if (onlyMissing && symbolParam.toLowerCase() === "all") {
+        const noData = await getSymbolsWithNoData(db, interval, SYMBOLS);
+        const set = new Set(noData);
+        toRun = toRun.filter((s) => set.has(s.symbol));
+      }
+      const now = Date.now();
+      perSymbolGaps = toRun.map((s) => {
+        const daysMs = (interval === "1m" ? s.requiredDays1m : interval === "5m" ? s.requiredDays5m : s.requiredDays1h) * ONE_DAY_MS;
+        let from: number;
+        let to: number;
+        if (interval === "1m") {
+          from = now - daysMs - ONE_MINUTE_MS;
+          to = now + ONE_MINUTE_MS;
+        } else if (interval === "5m") {
+          from = floorTo5mMs(now - daysMs) - FIVE_MINUTES_MS;
+          to = floorTo5mMs(now) + FIVE_MINUTES_MS;
+        } else {
+          from = floorToHourMs(now - daysMs) - ONE_HOUR_MS;
+          to = floorToHourMs(now) + ONE_HOUR_MS;
+        }
+        return { symbol: s.symbol, interval, from, to };
+      });
+      gaps = [];
+    } else if (Array.isArray(body.gaps) && body.gaps.length > 0) {
       gaps = body.gaps.filter((g: unknown) => {
         const x = g as Gap;
         return g != null && typeof g === "object" && (x.interval === "1m" || x.interval === "5m" || x.interval === "1h") && typeof x.from === "number" && typeof x.to === "number";
@@ -199,6 +239,97 @@ export async function POST(request: NextRequest) {
     let totalInserted5m = 0;
     let totalInserted1h = 0;
     const details: { symbol: string; interval: string; from: number; to: number; fetched: number; inserted: number }[] = [];
+
+    for (const g of perSymbolGaps) {
+      const gap: Gap = { interval: g.interval, from: g.from, to: g.to };
+      const symbol = g.symbol;
+      try {
+        const step = stepMs(gap.interval);
+        const startTime = gap.from + step;
+        const endTimeInclusive = gap.to - 1;
+        if (startTime <= endTimeInclusive) {
+          let cursor = startTime;
+          let gapFetched = 0;
+          let gapInserted = 0;
+          while (cursor <= endTimeInclusive) {
+            let klines = await fetchBinanceKlines(symbol, gap.interval, cursor, endTimeInclusive);
+            if (klines.length === 0 && cursor === startTime) {
+              const fallbackEnd = gap.to + step - 1;
+              klines = await fetchBinanceKlines(symbol, gap.interval, cursor, fallbackEnd);
+              klines = klines.filter((k) => k[0] <= endTimeInclusive);
+            }
+            if (klines.length === 0 && cursor === startTime) {
+              const wideStart = gap.from;
+              const wideEnd = gap.to + step - 1;
+              klines = await fetchBinanceKlines(symbol, gap.interval, wideStart, wideEnd);
+              klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
+            }
+            if (klines.length === 0 && cursor === startTime && (gap.interval === "1h" || gap.interval === "5m")) {
+              klines = await fetchBinanceKlines(symbol, gap.interval, gap.from, 0, { omitEndTime: true });
+              klines = klines.filter((k) => k[0] > gap.from && k[0] < gap.to);
+            }
+            gapFetched += klines.length;
+            if (klines.length === 0) break;
+
+            const rows = klines.map((k) => klineToRow(k, symbol, gap.interval));
+            const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
+            const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
+            if (gap.interval === "1m") {
+              const created = await db.binanceKlineFast.createMany({
+                data: rows,
+                skipDuplicates: true,
+              });
+              totalInserted1m += created.count;
+              gapInserted += created.count;
+            } else if (gap.interval === "5m") {
+              await db.binanceKlineMonth.deleteMany({
+                where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { gte: minOpen, lte: maxOpen } },
+              });
+              const created = await db.binanceKlineMonth.createMany({ data: rows });
+              totalInserted5m += created.count;
+              gapInserted += created.count;
+            } else {
+              await db.binanceKline.deleteMany({
+                where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { gte: minOpen, lte: maxOpen } },
+              });
+              const created = await db.binanceKline.createMany({ data: rows });
+              totalInserted1h += created.count;
+              gapInserted += created.count;
+            }
+            const lastOpen = klines[klines.length - 1][0];
+            cursor = lastOpen + step;
+            if (klines.length < LIMIT) break;
+            await sleep(DELAY_MS);
+          }
+          console.log(
+            "[klines-backfill]",
+            symbol,
+            gap.interval,
+            new Date(gap.from).toISOString(),
+            "→",
+            new Date(gap.to).toISOString(),
+            "| fetched:",
+            gapFetched,
+            "inserted:",
+            gapInserted
+          );
+          details.push({
+            symbol,
+            interval: gap.interval,
+            from: gap.from,
+            to: gap.to,
+            fetched: gapFetched,
+            inserted: gapInserted,
+          });
+        }
+      } catch (e) {
+        if (isBinanceInvalidSymbolError(e)) {
+          console.warn("[klines-backfill] Symbol not in API, skipping:", symbol);
+          continue;
+        }
+        throw e;
+      }
+    }
 
     for (const gap of gaps) {
       const       symbolsForGap =

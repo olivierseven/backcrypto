@@ -1,11 +1,11 @@
 /**
  * Lista de símbolos do servidor (tabela KlineSymbol, ativo = true).
  * GET /api/debug/kline-symbols?target=dev|prod — apenas admin, só em dev.
- * target=prod usa banco URL_PROD; target=dev usa DATABASE_URL.
+ * target=prod usa URL_PROD; target=dev usa URL_DEV (ou DATABASE_URL se URL_DEV não definido).
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
+import { cryptoPrisma, getCryptoPrismaDev, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -36,16 +36,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
     const target = request.nextUrl.searchParams.get("target");
-    const db =
-      target === "prod"
-        ? (() => {
-            try {
-              return getCryptoPrismaProd();
-            } catch {
-              return cryptoPrisma;
-            }
-          })()
-        : cryptoPrisma;
+    const db = target === "prod"
+      ? (() => {
+          try {
+            return getCryptoPrismaProd();
+          } catch {
+            return cryptoPrisma;
+          }
+        })()
+      : getCryptoPrismaDev();
     const symbols = await getKlineSymbolsFromDb(db);
     return NextResponse.json({ symbols: symbols.length > 0 ? symbols : DEFAULT_SYMBOLS.split(",") });
   } catch (e) {

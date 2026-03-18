@@ -364,6 +364,14 @@ exports.Prisma.BinanceKlineGapScalarFieldEnum = {
   gapTo: 'gapTo'
 };
 
+exports.Prisma.KlineSymbolScalarFieldEnum = {
+  symbol: 'symbol',
+  ativo: 'ativo',
+  requiredDays1m: 'requiredDays1m',
+  requiredDays5m: 'requiredDays5m',
+  requiredDays1h: 'requiredDays1h'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -474,7 +482,8 @@ exports.Prisma.ModelName = {
   BinanceKlineFast: 'BinanceKlineFast',
   BinanceKlineMonth: 'BinanceKlineMonth',
   BinanceKlineCache: 'BinanceKlineCache',
-  BinanceKlineGap: 'BinanceKlineGap'
+  BinanceKlineGap: 'BinanceKlineGap',
+  KlineSymbol: 'KlineSymbol'
 };
 
 /**

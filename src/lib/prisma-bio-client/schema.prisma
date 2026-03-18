@@ -386,11 +386,11 @@ model BinanceKlineFast {
   @@schema("backcrypto")
 }
 
-// Velas mensais (interval 1M); mesma estrutura que BinanceKline.
+// Velas 5m (sync da API Binance); mesma estrutura que BinanceKline. Nome histórico "Month"; expurgo 90 dias.
 model BinanceKlineMonth {
   corretora                String
   symbol                   String
-  interval                 String // 1M
+  interval                 String // 5m
   openTime                 BigInt
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -409,11 +409,11 @@ model BinanceKlineMonth {
   @@schema("backcrypto")
 }
 
-// Cache de klines agregados a partir de BinanceKline 1m. Sem 1m; intervalos até 1D.
-// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo script binance-kline-cache-refresh.
+// Cache de klines agregados: de 1m (1m,2m,3m,4m), de 5m (5m,15m,30m,45m), de 1h (1h–1d).
+// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo cron cache-refresh.
 model BinanceKlineCache {
   symbol                   String
-  interval                 String // 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  interval                 String // 1m | 2m | 3m | 4m | 5m | 15m | 30m | 45m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
   openTime                 BigInt
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -441,5 +441,16 @@ model BinanceKlineGap {
 
   @@id([symbol, interval, gapFrom, gapTo])
   @@index([symbol, interval])
+  @@schema("backcrypto")
+}
+
+// Lista de símbolos para sync (cron) e cache-refresh. Fonte de verdade no banco.
+model KlineSymbol {
+  symbol         String  @id // ex: BTCUSDT
+  ativo          Boolean @default(true) // false = não sync/cache nem dropdown
+  requiredDays1m Int? // janela 1m em dias (ex.: 9); null = default 9
+  requiredDays5m Int? // janela 5m em dias (ex.: 90); null = default 90
+  requiredDays1h Int? // janela 1h em dias (ex.: 730); null = default 730
+
   @@schema("backcrypto")
 }

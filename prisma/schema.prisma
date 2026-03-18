@@ -446,8 +446,11 @@ model BinanceKlineGap {
 
 // Lista de símbolos para sync (cron) e cache-refresh. Fonte de verdade no banco.
 model KlineSymbol {
-  symbol String  @id    // ex: BTCUSDT
-  ativo  Boolean @default(true) // false = não sync/cache nem dropdown
+  symbol          String   @id // ex: BTCUSDT
+  ativo           Boolean  @default(true) // false = não sync/cache nem dropdown
+  requiredDays1m  Int?     // janela 1m em dias (ex.: 9); null = default 9
+  requiredDays5m  Int?     // janela 5m em dias (ex.: 90); null = default 90
+  requiredDays1h  Int?     // janela 1h em dias (ex.: 730); null = default 730
 
   @@schema("backcrypto")
 }

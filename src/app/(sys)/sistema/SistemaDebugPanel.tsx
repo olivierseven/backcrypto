@@ -57,7 +57,7 @@ export default function SistemaDebugPanel() {
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
-  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico">("main");
+  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod">("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
@@ -69,14 +69,29 @@ export default function SistemaDebugPanel() {
   const [cacheRefreshMessage, setCacheRefreshMessage] = useState<string | null>(null);
   const [isDevHost, setIsDevHost] = useState(false);
   const [historicoSymbolsList, setHistoricoSymbolsList] = useState<string[]>(() => [...DEFAULT_SYMBOLS_LIST]);
+  const [validadorLoading, setValidadorLoading] = useState(false);
+  const [validadorRows, setValidadorRows] = useState<{
+    symbol: string;
+    count1m: number;
+    count5m: number;
+    count1h: number;
+    ok1m: boolean;
+    ok5m: boolean;
+    ok1h: boolean;
+    gapCount1m: number;
+    gapCount5m: number;
+    gapCount1h: number;
+  }[]>([]);
+  const [validadorIncomplete, setValidadorIncomplete] = useState<string[]>([]);
+  const [validadorWithGaps, setValidadorWithGaps] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsDevHost(window.location.hostname === "localhost");
   }, []);
 
   useEffect(() => {
-    if (!open || !isDevHost || debugTab !== "historico") return;
-    const target = backfillTarget;
+    if (!open || !isDevHost || (debugTab !== "historico-dev" && debugTab !== "historico-prod")) return;
+    const target = debugTab === "historico-prod" ? "prod" : "dev";
     fetch(`${API_BASE}/debug/kline-symbols?target=${target}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data: { symbols?: string[] }) => {
@@ -86,10 +101,14 @@ export default function SistemaDebugPanel() {
         }
       })
       .catch(() => {});
-  }, [open, isDevHost, debugTab, backfillTarget]);
+  }, [open, isDevHost, debugTab]);
 
   const historicoSymbols = historicoSymbolsList;
   const displaySymbol = historicoSymbols.includes(symbol) ? symbol : (historicoSymbols[0] ?? "BTCUSDT");
+  const isHistoricoTab = debugTab === "historico-dev" || debugTab === "historico-prod";
+  const historicoTarget: "dev" | "prod" = debugTab === "historico-prod" ? "prod" : "dev";
+  const isValidadorTab = debugTab === "validador-dev" || debugTab === "validador-prod";
+  const validadorTarget: "dev" | "prod" = debugTab === "validador-prod" ? "prod" : "dev";
 
   useEffect(() => {
     setSessionDebugEnabledState(getSessionDebugEnabled());
@@ -287,14 +306,14 @@ export default function SistemaDebugPanel() {
     setSymbol("BTCUSDT");
   }
 
-  async function runValidate() {
+  async function runValidate(target: "dev" | "prod") {
     setError(null);
     setResult(null);
     setBackfillMessage(null);
     setRegisterGapsLoading(null);
     setLoading(true);
     try {
-      const targetParam = isDevHost && backfillTarget === "prod" ? "&target=prod" : "";
+      const targetParam = isDevHost && target === "prod" ? "&target=prod" : "";
       const res = await fetch(
         `${API_BASE}/debug/klines-validate?symbol=${encodeURIComponent(symbol.trim())}${targetParam}`,
         { credentials: "include" }
@@ -316,7 +335,7 @@ export default function SistemaDebugPanel() {
     return r != null && typeof r === "object" && "1m" in r && "5m" in r && "1h" in r;
   }
 
-  async function runRegisterGaps(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[]) {
+  async function runRegisterGaps(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[], target: "dev" | "prod") {
     if (gaps.length === 0) return;
     setBackfillMessage(null);
     setRegisterGapsLoading(interval);
@@ -325,7 +344,7 @@ export default function SistemaDebugPanel() {
       const gapPayload = {
         symbol: symbol.trim(),
         gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
-        ...(isDevHost && backfillTarget === "prod" ? { target: "prod" as const } : {}),
+        ...(isDevHost && target === "prod" ? { target: "prod" as const } : {}),
       };
       const res = await fetch(`${API_BASE}/debug/klines-gaps`, {
         method: "POST",
@@ -340,7 +359,7 @@ export default function SistemaDebugPanel() {
       }
       const n = data.registered ?? 0;
       setBackfillMessage((t as { registerGapsSuccess?: string }).registerGapsSuccess?.replace("{n}", String(n)) ?? `Registrados: ${n}`);
-      runValidate();
+      runValidate(target);
     } catch (e) {
       setBackfillMessage(e instanceof Error ? e.message : t.error);
     } finally {
@@ -384,7 +403,7 @@ export default function SistemaDebugPanel() {
     return lines.join("\n");
   }
 
-  async function runBackfill(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[]) {
+  async function runBackfill(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[], target: "dev" | "prod") {
     if (gaps.length === 0) return;
     setBackfillMessage(null);
     setBackfillLoading(interval);
@@ -392,7 +411,7 @@ export default function SistemaDebugPanel() {
     const payload = {
       symbol: symbol.trim(),
       gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
-      target: backfillTarget,
+      target,
     };
     try {
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
@@ -434,7 +453,7 @@ export default function SistemaDebugPanel() {
     return Math.floor(ms / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
   }
 
-  async function runPastBackfill(interval: "1m" | "5m" | "1h") {
+  async function runPastBackfill(interval: "1m" | "5m" | "1h", target: "dev" | "prod") {
     const sym = symbol.trim();
     if (!backfillAllSymbols && !sym) {
       setPastBackfillMessage((t as { error?: string }).error ?? "Informe o símbolo.");
@@ -459,9 +478,10 @@ export default function SistemaDebugPanel() {
       }
       const payload = {
         symbol: backfillAllSymbols ? "all" : sym,
-        gaps: [{ interval, from, to }],
+        useSymbolPeriods: true,
+        interval,
         onlyMissing: backfillAllSymbols && backfillOnlyMissing,
-        target: backfillTarget,
+        target,
       };
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
         method: "POST",
@@ -487,11 +507,11 @@ export default function SistemaDebugPanel() {
     }
   }
 
-  async function runSyncKlines() {
+  async function runSyncKlines(target: "dev" | "prod") {
     setSyncKlinesMessage(null);
     setSyncKlinesLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/debug/sync-klines`, { credentials: "include", cache: "no-store" });
+      const res = await fetch(`${API_BASE}/debug/sync-klines?target=${target}`, { credentials: "include", cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSyncKlinesMessage((data?.error ?? `HTTP ${res.status}`) + (data?.details ? ` — ${JSON.stringify(data.details)}` : ""));
@@ -501,7 +521,7 @@ export default function SistemaDebugPanel() {
         `${r.symbol}: 1m +${r.inserted} | 5m +${(r as { inserted5m?: number }).inserted5m ?? 0} | 1h +${r.inserted1h}`
       ) ?? [];
       setSyncKlinesMessage(lines.length ? lines.join("\n") : (t as { ok?: string }).ok ?? "OK");
-      runValidate();
+      runValidate(target);
     } catch (e) {
       setSyncKlinesMessage(e instanceof Error ? e.message : t.error);
     } finally {
@@ -509,11 +529,11 @@ export default function SistemaDebugPanel() {
     }
   }
 
-  async function runCacheRefresh() {
+  async function runCacheRefresh(target: "dev" | "prod") {
     setCacheRefreshMessage(null);
     setCacheRefreshLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/debug/cache-refresh`, { credentials: "include", cache: "no-store" });
+      const res = await fetch(`${API_BASE}/debug/cache-refresh?target=${target}`, { credentials: "include", cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setCacheRefreshMessage((data?.error ?? `HTTP ${res.status}`) + (data?.details ? ` — ${JSON.stringify(data.details)}` : ""));
@@ -524,7 +544,7 @@ export default function SistemaDebugPanel() {
         `${d.symbol} ${d.interval}: ${d.rows} rows`
       ) ?? [];
       setCacheRefreshMessage(total ? `Total: ${total} rows\n${lines.join("\n")}` : (t as { ok?: string }).ok ?? "OK");
-      runValidate();
+      runValidate(target);
     } catch (e) {
       setCacheRefreshMessage(e instanceof Error ? e.message : t.error);
     } finally {
@@ -532,7 +552,29 @@ export default function SistemaDebugPanel() {
     }
   }
 
-  function ResultBlock({ label, res }: { label: string; res: ValidateSingleResult }) {
+  async function runValidador(target: "dev" | "prod") {
+    setValidadorRows([]);
+    setValidadorIncomplete([]);
+    setValidadorWithGaps([]);
+    setValidadorLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/debug/klines-validate-all?target=${target}`, { credentials: "include", cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setValidadorIncomplete([(data?.error ?? `HTTP ${res.status}`) as string]);
+        return;
+      }
+      if (Array.isArray(data.rows)) setValidadorRows(data.rows);
+      if (Array.isArray(data.incomplete)) setValidadorIncomplete(data.incomplete);
+      if (Array.isArray(data.withGaps)) setValidadorWithGaps(data.withGaps);
+    } catch (e) {
+      setValidadorIncomplete([e instanceof Error ? e.message : t.error]);
+    } finally {
+      setValidadorLoading(false);
+    }
+  }
+
+  function ResultBlock({ label, res, target }: { label: string; res: ValidateSingleResult; target: "dev" | "prod" }) {
     const interval = res.interval as "1m" | "5m" | "1h";
     const canBackfill = isDevHost && !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "5m" || interval === "1h");
     return (
@@ -562,7 +604,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={backfillLoading !== null || registerGapsLoading !== null}
-                  onClick={() => runBackfill(interval, res.gaps)}
+                  onClick={() => runBackfill(interval, res.gaps, target)}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {backfillLoading === interval ? (t as { backfillLoading?: string }).backfillLoading ?? "Preenchendo…" : (t as { backfill?: string }).backfill ?? "Preencher gaps"}
@@ -570,7 +612,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={backfillLoading !== null || registerGapsLoading !== null}
-                  onClick={() => runRegisterGaps(interval, res.gaps)}
+                  onClick={() => runRegisterGaps(interval, res.gaps, target)}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-zinc-600 text-white hover:bg-zinc-700 disabled:opacity-50"
                 >
                   {registerGapsLoading === interval ? (t as { registerGapsLoading?: string }).registerGapsLoading ?? "Registrando…" : (t as { registerGaps?: string }).registerGaps ?? "Registrar gaps"}
@@ -623,7 +665,7 @@ export default function SistemaDebugPanel() {
       {open && (
         <div
           className="fixed inset-y-0 right-0 z-40 bg-white border-l border-zinc-200 shadow-xl flex flex-col min-w-[280px]"
-          style={{ width: "min(400px, 33.333vw)" }}
+          style={{ width: "50vw" }}
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-2">
@@ -676,10 +718,31 @@ export default function SistemaDebugPanel() {
             </button>
             <button
               type="button"
-              onClick={() => setDebugTab("historico")}
-              className={`flex-1 py-2 text-xs font-medium ${debugTab === "historico" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+              onClick={() => setDebugTab("historico-dev")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "historico-dev" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
             >
-              {(t as Record<string, string>).tabHistorico ?? "Histórico"}
+              {(t as Record<string, string>).tabHistoricoDev ?? "Hist (dev)"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("historico-prod")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "historico-prod" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabHistoricoProd ?? "Hist (prod)"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("validador-dev")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "validador-dev" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabValidadorDev ?? "Val (dev)"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("validador-prod")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "validador-prod" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabValidadorProd ?? "Val (prod)"}
             </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -794,40 +857,13 @@ export default function SistemaDebugPanel() {
             </section>
               </>
             )}
-            {debugTab === "historico" && (
+            {isHistoricoTab && (
               <>
             <p className="text-xs text-zinc-500 mb-3">
-              {(t as Record<string, string>).ambienteLabel ?? "Ambiente:"}{" "}
-              <span className="font-medium text-zinc-700">{isDevHost ? ((t as Record<string, string>).ambienteDev ?? "Dev") : ((t as Record<string, string>).ambienteProd ?? "Prod")}</span>
-              {" — "}
-              {isDevHost ? ((t as Record<string, string>).ambienteHintDev ?? "Validação, sync e cache usam o banco do .env local.") : ((t as Record<string, string>).ambienteHintProd ?? "Validação, sync e cache usam o banco de produção (CRON atualiza cache).")}
+              {historicoTarget === "prod"
+                ? ((t as Record<string, string>).historicoProdHint ?? "Banco de produção (URL_PROD). Validação, backfill, sync e cache usam este banco.")
+                : ((t as Record<string, string>).historicoDevHint ?? "Banco de desenvolvimento (DATABASE_URL). Validação, backfill, sync e cache usam este banco.")}
             </p>
-            {isDevHost && (
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs text-zinc-600">{(t as Record<string, string>).backfillTargetLabel ?? "Alvo:"}</span>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
-                  <input
-                    type="radio"
-                    name="historicoTarget"
-                    checked={backfillTarget === "dev"}
-                    onChange={() => setBackfillTarget("dev")}
-                    className="rounded-full border-zinc-300"
-                  />
-                  {(t as Record<string, string>).backfillTargetDev ?? "Dev"}
-                </label>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
-                  <input
-                    type="radio"
-                    name="historicoTarget"
-                    checked={backfillTarget === "prod"}
-                    onChange={() => setBackfillTarget("prod")}
-                    className="rounded-full border-zinc-300"
-                  />
-                  {(t as Record<string, string>).backfillTargetProd ?? "Prod"}
-                </label>
-                <span className="text-xs text-zinc-500">— {(t as Record<string, string>).historicoTargetHint ?? "Validação, preencher e registrar gaps usam este banco."}</span>
-              </div>
-            )}
             {isDevHost && (
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
@@ -846,7 +882,7 @@ export default function SistemaDebugPanel() {
                 </select>
                 <button
                   type="button"
-                  onClick={runValidate}
+                  onClick={() => runValidate(historicoTarget)}
                   disabled={loading}
                   className="text-sm font-medium px-3 py-1.5 rounded-md bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-50"
                 >
@@ -863,14 +899,15 @@ export default function SistemaDebugPanel() {
                 <div className="mt-3 space-y-3">
                   {isHistoricResults(result) ? (
                     <>
-                      <ResultBlock label={t.validateKlines1m} res={result["1m"]} />
-                      <ResultBlock label={t.validateKlines5m} res={result["5m"]} />
-                      <ResultBlock label={t.validateKlines1h} res={result["1h"]} />
+                      <ResultBlock label={t.validateKlines1m} res={result["1m"]} target={historicoTarget} />
+                      <ResultBlock label={t.validateKlines5m} res={result["5m"]} target={historicoTarget} />
+                      <ResultBlock label={t.validateKlines1h} res={result["1h"]} target={historicoTarget} />
                     </>
                   ) : (
                     <ResultBlock
                       label={(result as ValidateSingleResult).interval === "1m" ? t.validateKlines1m : (result as ValidateSingleResult).interval === "5m" ? t.validateKlines5m : t.validateKlines1h}
                       res={result as ValidateSingleResult}
+                      target={historicoTarget}
                     />
                   )}
                 </div>
@@ -883,7 +920,7 @@ export default function SistemaDebugPanel() {
                 {(t as { backfillPast?: string }).backfillPast ?? "Backfill do passado"}
               </h4>
               <p className="text-xs text-zinc-500 mb-2">
-                {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima. Usa o Alvo (Dev/Prod) do topo."}
+                {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima. Mesmas tabelas, símbolos do banco desta aba."}
               </p>
               <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
                 <input
@@ -910,7 +947,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("1m")}
+                  onClick={() => runPastBackfill("1m", historicoTarget)}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (9 dias)"}
@@ -918,7 +955,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("5m")}
+                  onClick={() => runPastBackfill("5m", historicoTarget)}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "5m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast5m?: string }).backfillPast5m ?? "Backfill 5m (90 dias)"}
@@ -926,7 +963,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("1h")}
+                  onClick={() => runPastBackfill("1h", historicoTarget)}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (730 dias)"}
@@ -942,8 +979,8 @@ export default function SistemaDebugPanel() {
               )}
             </section>
             )}
-            {(!isDevHost || backfillTarget === "dev") && (
-            <>
+            {isDevHost && (
+            <div className="space-y-4">
             <section className="mt-4">
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {(t as Record<string, string>).syncKlinesTitle ?? "Sync klines"}
@@ -954,7 +991,7 @@ export default function SistemaDebugPanel() {
               <button
                 type="button"
                 disabled={syncKlinesLoading}
-                onClick={() => runSyncKlines()}
+                onClick={() => runSyncKlines(historicoTarget)}
                 className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
               >
                 {syncKlinesLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).syncKlinesRun ?? "Executar sync agora")}
@@ -975,7 +1012,7 @@ export default function SistemaDebugPanel() {
               <button
                 type="button"
                 disabled={cacheRefreshLoading}
-                onClick={() => runCacheRefresh()}
+                onClick={() => runCacheRefresh(historicoTarget)}
                 className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
               >
                 {cacheRefreshLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).cacheRefreshRun ?? "Executar refresh agora")}
@@ -986,9 +1023,9 @@ export default function SistemaDebugPanel() {
                 </pre>
               )}
             </section>
-            </>
+            </div>
             )}
-              </>
+            </>
             )}
             {debugTab === "qa" && (
               <>
@@ -1074,8 +1111,144 @@ export default function SistemaDebugPanel() {
               </section>
               </>
             )}
+            {isValidadorTab && isDevHost && (
+              <div className="space-y-4">
+              <p className="text-xs text-zinc-500 mb-3">
+                {validadorTarget === "prod"
+                  ? ((t as Record<string, string>).historicoProdHint ?? "Banco de produção (URL_PROD).")
+                  : ((t as Record<string, string>).historicoDevHint ?? "Banco de desenvolvimento (URL_DEV).")}
+              </p>
+              <section>
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).validadorTitle ?? "Validador de tempo por cryptomoeda"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).validadorHint ?? "Percorre todas as moedas do banco. Tabela: quantidade de registros (1m, 5m, 1h) e OK / problema. Ao final: moedas incompletas."}
+                </p>
+                <div className="mb-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={validadorLoading}
+                    onClick={() => runValidador(validadorTarget)}
+                    className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {validadorLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).validadorRun ?? "Executar validação")}
+                  </button>
+                </div>
+                {validadorRows.length > 0 && (
+                  <>
+                    <div className="overflow-x-auto border border-zinc-200 rounded-md">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-zinc-100">
+                            <th className="text-left p-2 border-b border-zinc-200">{(t as Record<string, string>).symbol ?? "Criptomoeda"}</th>
+                            <th className="text-right p-2 border-b border-zinc-200">1m</th>
+                            <th className="text-right p-2 border-b border-zinc-200">5m</th>
+                            <th className="text-right p-2 border-b border-zinc-200">1h</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {validadorRows.map((row) => (
+                            <tr key={row.symbol} className="border-b border-zinc-100 hover:bg-zinc-50">
+                              <td className="p-2 font-medium">{row.symbol}</td>
+                              <td className="p-2 text-right">
+                                {row.count1m.toLocaleString()}
+                                <span className="ml-1" aria-hidden>{row.ok1m ? "✓" : "✗"}</span>
+                              </td>
+                              <td className="p-2 text-right">
+                                {row.count5m.toLocaleString()}
+                                <span className="ml-1" aria-hidden>{row.ok5m ? "✓" : "✗"}</span>
+                              </td>
+                              <td className="p-2 text-right">
+                                {row.count1h.toLocaleString()}
+                                <span className="ml-1" aria-hidden>{row.ok1h ? "✓" : "✗"}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {validadorIncomplete.length > 0 && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                        <p className="text-xs font-medium text-amber-800 mb-1">
+                          {(t as Record<string, string>).validadorIncompleteTitle ?? "Criptomoedas incompletas (com problema em 1m, 5m ou 1h):"}
+                        </p>
+                        <p className="text-xs text-amber-800 font-mono">{validadorIncomplete.join(", ")}</p>
+                      </div>
+                    )}
+                    {validadorIncomplete.length === 0 && validadorRows.length > 0 && (
+                      <p className="mt-3 text-sm text-emerald-700">{(t as Record<string, string>).validadorAllOk ?? "Todas as moedas OK."}</p>
+                    )}
+                  </>
+                )}
+                {validadorRows.length > 0 && (
+                  <>
+                    <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mt-6 mb-2">
+                      {(t as Record<string, string>).validadorGapTitle ?? "Validador de gap (no período de dados)"}
+                    </h4>
+                    <p className="text-xs text-zinc-500 mb-2">
+                      {(t as Record<string, string>).validadorGapHint ?? "Analisa se existe algum gap (intervalo pulado) em 1m, 5m e 1h no período configurado por moeda."}
+                    </p>
+                    <div className="overflow-x-auto border border-zinc-200 rounded-md">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-zinc-100">
+                            <th className="text-left p-2 border-b border-zinc-200">{(t as Record<string, string>).symbol ?? "Criptomoeda"}</th>
+                            <th className="text-right p-2 border-b border-zinc-200">1m</th>
+                            <th className="text-right p-2 border-b border-zinc-200">5m</th>
+                            <th className="text-right p-2 border-b border-zinc-200">1h</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {validadorRows.map((row) => {
+                            const gc1m = row.gapCount1m ?? 0;
+                            const gc5m = row.gapCount5m ?? 0;
+                            const gc1h = row.gapCount1h ?? 0;
+                            const ok1m = gc1m === 0;
+                            const ok5m = gc5m === 0;
+                            const ok1h = gc1h === 0;
+                            return (
+                              <tr key={row.symbol} className="border-b border-zinc-100 hover:bg-zinc-50">
+                                <td className="p-2 font-medium">{row.symbol}</td>
+                                <td className="p-2 text-right">
+                                  {ok1m ? "0" : gc1m.toLocaleString()}
+                                  <span className="ml-1" aria-hidden>{ok1m ? "✓" : "✗"}</span>
+                                </td>
+                                <td className="p-2 text-right">
+                                  {ok5m ? "0" : gc5m.toLocaleString()}
+                                  <span className="ml-1" aria-hidden>{ok5m ? "✓" : "✗"}</span>
+                                </td>
+                                <td className="p-2 text-right">
+                                  {ok1h ? "0" : gc1h.toLocaleString()}
+                                  <span className="ml-1" aria-hidden>{ok1h ? "✓" : "✗"}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    {validadorWithGaps.length > 0 && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                        <p className="text-xs font-medium text-amber-800 mb-1">
+                          {(t as Record<string, string>).validadorWithGapsTitle ?? "Criptomoedas com gap (1m, 5m ou 1h):"}
+                        </p>
+                        <p className="text-xs text-amber-800 font-mono">{validadorWithGaps.join(", ")}</p>
+                      </div>
+                    )}
+                    {validadorWithGaps.length === 0 && validadorRows.length > 0 && (
+                      <p className="mt-3 text-sm text-emerald-700">{(t as Record<string, string>).validadorGapAllOk ?? "Nenhum gap no período."}</p>
+                    )}
+                  </>
+                )}
+                {validadorRows.length === 0 && !validadorLoading && (
+                  <p className="text-sm text-zinc-500">{(t as Record<string, string>).validadorRunFirst ?? "Clique em Executar validação para preencher a tabela."}</p>
+                )}
+              </section>
+              </div>
+            )}
             {debugTab === "inspect" && (
-              <>
+              <div className="space-y-4">
             <section>
               <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
                 <input
@@ -1186,7 +1359,7 @@ export default function SistemaDebugPanel() {
                 {layoutLoadLog.length === 0 ? "(vazio — ative o log e entre na página do gráfico)" : layoutLoadLog.join("\n")}
               </pre>
             </section>
-              </>
+              </div>
             )}
           </div>
         </div>

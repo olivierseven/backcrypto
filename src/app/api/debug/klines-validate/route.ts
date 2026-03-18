@@ -9,188 +9,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@/lib/prisma-bio-client";
-import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
-import { Prisma } from "@/lib/prisma-bio-client";
-import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
+import { cryptoPrisma, getCryptoPrismaDev, getCryptoPrismaProd } from "@/lib/crypto-db";
+import {
+  DEFAULT_REQUIRED_DAYS_1H,
+  DEFAULT_REQUIRED_DAYS_1M,
+  DEFAULT_REQUIRED_DAYS_5M,
+  getKlineSymbolsWithPeriods,
+  resolveSymbol,
+} from "@/app/lib/kline-symbols";
+import { validate1m, validate5m, validate1h } from "@/app/lib/klines-validate";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const ONE_MINUTE_MS = 60 * 1000;
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
-type IntervalKey = "1m" | "5m" | "1h";
-
-type ValidateSingleResult = {
-  symbol: string;
-  interval: IntervalKey;
-  table: string;
-  oldest: string | null;
-  newest: string | null;
-  count: number;
-  days: number;
-  ok: boolean;
-  gaps: { from: number; to: number }[];
-};
-
-async function validate1m(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
-  const CORRETORA = "binance";
-  const [statsRow] = await db.$queryRaw<
-    [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
-  >(
-    Prisma.sql`
-      SELECT count(*)::bigint AS count, min("openTime") AS oldest, max("openTime") AS newest
-      FROM backcrypto."BinanceKlineFast"
-      WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
-    `
-  );
-  const count = Number(statsRow?.count ?? 0);
-  const oldest = statsRow?.oldest != null ? Number(statsRow.oldest) : null;
-  const newest = statsRow?.newest != null ? Number(statsRow.newest) : null;
-  let days = 0;
-  if (oldest != null && newest != null && newest > oldest) {
-    days = (newest - oldest) / (24 * 60 * 60 * 1000);
-  }
-  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
-    Prisma.sql`
-      WITH ordered AS (
-        SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
-        FROM backcrypto."BinanceKlineFast"
-        WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
-      )
-      SELECT "openTime", next_open FROM ordered
-      WHERE next_open IS NOT NULL AND (next_open - "openTime") <> ${ONE_MINUTE_MS}
-      ORDER BY "openTime" LIMIT 500
-    `
-  );
-  let gapList = (Array.isArray(gaps) ? gaps : []).map((g) => ({
-    from: Number(g.openTime),
-    to: Number(g.next_open),
-  }));
-  const registered1m = await db.binanceKlineGap.findMany({
-    where: { symbol, interval: "1m" },
-    select: { gapFrom: true, gapTo: true },
-  });
-  const registeredSet1m = new Set(registered1m.map((r) => `${Number(r.gapFrom)}_${Number(r.gapTo)}`));
-  gapList = gapList.filter((g) => !registeredSet1m.has(`${g.from}_${g.to}`));
-  return {
-    symbol,
-    interval: "1m",
-    table: "BinanceKlineFast",
-    oldest: oldest != null ? new Date(oldest).toISOString() : null,
-    newest: newest != null ? new Date(newest).toISOString() : null,
-    count,
-    days: Math.round(days * 100) / 100,
-    ok: gapList.length === 0,
-    gaps: gapList,
-  };
-}
-
-async function validate5m(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
-  const CORRETORA = "binance";
-  const [statsRow] = await db.$queryRaw<
-    [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
-  >(
-    Prisma.sql`
-      SELECT count(*)::bigint AS count, min("openTime") AS oldest, max("openTime") AS newest
-      FROM backcrypto."BinanceKlineMonth"
-      WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '5m'
-    `
-  );
-  const count = Number(statsRow?.count ?? 0);
-  const oldest = statsRow?.oldest != null ? Number(statsRow.oldest) : null;
-  const newest = statsRow?.newest != null ? Number(statsRow.newest) : null;
-  let days = 0;
-  if (oldest != null && newest != null && newest > oldest) {
-    days = (newest - oldest) / (24 * 60 * 60 * 1000);
-  }
-  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
-    Prisma.sql`
-      WITH ordered AS (
-        SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
-        FROM backcrypto."BinanceKlineMonth"
-        WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '5m'
-      )
-      SELECT "openTime", next_open FROM ordered
-      WHERE next_open IS NOT NULL AND (next_open - "openTime") <> ${FIVE_MINUTES_MS}
-      ORDER BY "openTime" LIMIT 500
-    `
-  );
-  let gapList = (Array.isArray(gaps) ? gaps : []).map((g) => ({
-    from: Number(g.openTime),
-    to: Number(g.next_open),
-  }));
-  const registered5m = await db.binanceKlineGap.findMany({
-    where: { symbol, interval: "5m" },
-    select: { gapFrom: true, gapTo: true },
-  });
-  const registeredSet5m = new Set(registered5m.map((r) => `${Number(r.gapFrom)}_${Number(r.gapTo)}`));
-  gapList = gapList.filter((g) => !registeredSet5m.has(`${g.from}_${g.to}`));
-  return {
-    symbol,
-    interval: "5m",
-    table: "BinanceKlineMonth",
-    oldest: oldest != null ? new Date(oldest).toISOString() : null,
-    newest: newest != null ? new Date(newest).toISOString() : null,
-    count,
-    days: Math.round(days * 100) / 100,
-    ok: gapList.length === 0,
-    gaps: gapList,
-  };
-}
-
-async function validate1h(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
-  const CORRETORA = "binance";
-  const [statsRow] = await db.$queryRaw<
-    [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
-  >(
-    Prisma.sql`
-      SELECT count(*)::bigint AS count, min("openTime") AS oldest, max("openTime") AS newest
-      FROM backcrypto."BinanceKline"
-      WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1h'
-    `
-  );
-  const count = Number(statsRow?.count ?? 0);
-  const oldest = statsRow?.oldest != null ? Number(statsRow.oldest) : null;
-  const newest = statsRow?.newest != null ? Number(statsRow.newest) : null;
-  let days = 0;
-  if (oldest != null && newest != null && newest > oldest) {
-    days = (newest - oldest) / (24 * 60 * 60 * 1000);
-  }
-  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
-    Prisma.sql`
-      WITH ordered AS (
-        SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
-        FROM backcrypto."BinanceKline"
-        WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1h'
-      )
-      SELECT "openTime", next_open FROM ordered
-      WHERE next_open IS NOT NULL AND (next_open - "openTime") <> ${ONE_HOUR_MS}
-      ORDER BY "openTime" LIMIT 500
-    `
-  );
-  let gapList = (Array.isArray(gaps) ? gaps : []).map((g) => ({
-    from: Number(g.openTime),
-    to: Number(g.next_open),
-  }));
-  const registered1h = await db.binanceKlineGap.findMany({
-    where: { symbol, interval: "1h" },
-    select: { gapFrom: true, gapTo: true },
-  });
-  const registeredSet1h = new Set(registered1h.map((r) => `${Number(r.gapFrom)}_${Number(r.gapTo)}`));
-  gapList = gapList.filter((g) => !registeredSet1h.has(`${g.from}_${g.to}`));
-  return {
-    symbol,
-    interval: "1h",
-    table: "BinanceKline",
-    oldest: oldest != null ? new Date(oldest).toISOString() : null,
-    newest: newest != null ? new Date(newest).toISOString() : null,
-    count,
-    days: Math.round(days * 100) / 100,
-    ok: gapList.length === 0,
-    gaps: gapList,
-  };
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -218,37 +48,41 @@ export async function GET(request: NextRequest) {
     }
 
     const target = request.nextUrl.searchParams.get("target") === "prod" ? "prod" : "dev";
-    const db: PrismaClient =
-      target === "prod"
-        ? (() => {
-            try {
-              return getCryptoPrismaProd();
-            } catch (e) {
-              throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
-            }
-          })()
-        : cryptoPrisma;
+    const db: PrismaClient = target === "prod" ? (() => {
+      try {
+        return getCryptoPrismaProd();
+      } catch (e) {
+        throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
+      }
+    })() : getCryptoPrismaDev();
 
-    const symbolList = await getKlineSymbolsFromDb(db);
+    const symbolsWithPeriods = await getKlineSymbolsWithPeriods(db);
+    const symbolList = symbolsWithPeriods.map((s) => s.symbol);
     const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol")?.trim(), symbolList);
+    const periods = symbolsWithPeriods.find((s) => s.symbol === symbol) ?? {
+      symbol,
+      requiredDays1m: DEFAULT_REQUIRED_DAYS_1M,
+      requiredDays5m: DEFAULT_REQUIRED_DAYS_5M,
+      requiredDays1h: DEFAULT_REQUIRED_DAYS_1H,
+    };
     const intervalParam = request.nextUrl.searchParams.get("interval")?.trim().toLowerCase();
 
     if (intervalParam === "1h") {
-      const result = await validate1h(db, symbol);
+      const result = await validate1h(db, symbol, periods.requiredDays1h);
       return NextResponse.json(result);
     }
     if (intervalParam === "5m") {
-      const result = await validate5m(db, symbol);
+      const result = await validate5m(db, symbol, periods.requiredDays5m);
       return NextResponse.json(result);
     }
     if (intervalParam === "1m") {
-      const result = await validate1m(db, symbol);
+      const result = await validate1m(db, symbol, periods.requiredDays1m);
       return NextResponse.json(result);
     }
     const [result1m, result5m, result1h] = await Promise.all([
-      validate1m(db, symbol),
-      validate5m(db, symbol),
-      validate1h(db, symbol),
+      validate1m(db, symbol, periods.requiredDays1m),
+      validate5m(db, symbol, periods.requiredDays5m),
+      validate1h(db, symbol, periods.requiredDays1h),
     ]);
     return NextResponse.json({ "1m": result1m, "5m": result5m, "1h": result1h });
   } catch (e) {

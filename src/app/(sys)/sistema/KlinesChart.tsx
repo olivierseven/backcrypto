@@ -1295,6 +1295,27 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     [n, visibleCount]
   );
 
+  // displayDecimals for onPriceFormatChange: compute before any early return so the effect runs unconditionally (Rules of Hooks)
+  const windowSliceForEffect = klines.length > 0 && width >= 100 ? fullReversed.slice(startIndex, startIndex + visibleCount) : [];
+  const windowNForEffect = windowSliceForEffect.length;
+  const displayDecimalsForEffect =
+    windowNForEffect > 0
+      ? (() => {
+          const lows = windowSliceForEffect.map((k) => parseNum(k[3]));
+          const highs = windowSliceForEffect.map((k) => parseNum(k[2]));
+          const minP = lows.length ? Math.min(...lows) : 0;
+          const maxP = highs.length ? Math.max(...highs) : 0;
+          const range = maxP - minP || 1;
+          const pad = range * PAD_Y;
+          const stepBase = (range + 2 * pad) / 5;
+          const step = Math.max(stepBase, 1e-8);
+          return Math.min(8, priceAxisDecimals(step) + 1);
+        })()
+      : 2;
+  useEffect(() => {
+    onPriceFormatChange?.(displayDecimalsForEffect, yAxisAbbreviated);
+  }, [displayDecimalsForEffect, yAxisAbbreviated, onPriceFormatChange]);
+
   if (klines.length === 0 || width < 100) {
     chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
     return null;
@@ -1511,10 +1532,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const displayDecimals = Math.min(8, yAxisDecimals + 1);
   const formatYAxisResolved =
     yAxisAbbreviated ? formatUsdt : (v: number) => formatUsdtWithDecimals(v, displayDecimals);
-
-  useEffect(() => {
-    onPriceFormatChange?.(displayDecimals, yAxisAbbreviated);
-  }, [displayDecimals, yAxisAbbreviated, onPriceFormatChange]);
 
   const safeLog = (p: number) => Math.log(Math.max(p, 0.001));
   const yLogMin = logScale ? safeLog(yMin) : 0;

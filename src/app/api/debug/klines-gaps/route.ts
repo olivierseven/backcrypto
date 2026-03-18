@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
+import { cryptoPrisma, getCryptoPrismaDev, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
               throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
             }
           })()
-        : cryptoPrisma;
+        : getCryptoPrismaDev();
 
     const symbolList = await getKlineSymbolsFromDb(db);
     const symbol = resolveSymbol((body.symbol as string)?.trim(), symbolList);

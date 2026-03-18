@@ -103,6 +103,11 @@ export type BinanceKlineCache = $Result.DefaultSelection<Prisma.$BinanceKlineCac
  * 
  */
 export type BinanceKlineGap = $Result.DefaultSelection<Prisma.$BinanceKlineGapPayload>
+/**
+ * Model KlineSymbol
+ * 
+ */
+export type KlineSymbol = $Result.DefaultSelection<Prisma.$KlineSymbolPayload>
 
 /**
  * Enums
@@ -525,6 +530,16 @@ export class PrismaClient<
     * ```
     */
   get binanceKlineGap(): Prisma.BinanceKlineGapDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.klineSymbol`: Exposes CRUD operations for the **KlineSymbol** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more KlineSymbols
+    * const klineSymbols = await prisma.klineSymbol.findMany()
+    * ```
+    */
+  get klineSymbol(): Prisma.KlineSymbolDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -983,7 +998,8 @@ export namespace Prisma {
     BinanceKlineFast: 'BinanceKlineFast',
     BinanceKlineMonth: 'BinanceKlineMonth',
     BinanceKlineCache: 'BinanceKlineCache',
-    BinanceKlineGap: 'BinanceKlineGap'
+    BinanceKlineGap: 'BinanceKlineGap',
+    KlineSymbol: 'KlineSymbol'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1002,7 +1018,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineGap"
+      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineGap" | "klineSymbol"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2338,6 +2354,80 @@ export namespace Prisma {
           }
         }
       }
+      KlineSymbol: {
+        payload: Prisma.$KlineSymbolPayload<ExtArgs>
+        fields: Prisma.KlineSymbolFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.KlineSymbolFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.KlineSymbolFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          findFirst: {
+            args: Prisma.KlineSymbolFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.KlineSymbolFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          findMany: {
+            args: Prisma.KlineSymbolFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>[]
+          }
+          create: {
+            args: Prisma.KlineSymbolCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          createMany: {
+            args: Prisma.KlineSymbolCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.KlineSymbolCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>[]
+          }
+          delete: {
+            args: Prisma.KlineSymbolDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          update: {
+            args: Prisma.KlineSymbolUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          deleteMany: {
+            args: Prisma.KlineSymbolDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.KlineSymbolUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.KlineSymbolUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>[]
+          }
+          upsert: {
+            args: Prisma.KlineSymbolUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KlineSymbolPayload>
+          }
+          aggregate: {
+            args: Prisma.KlineSymbolAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateKlineSymbol>
+          }
+          groupBy: {
+            args: Prisma.KlineSymbolGroupByArgs<ExtArgs>
+            result: $Utils.Optional<KlineSymbolGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.KlineSymbolCountArgs<ExtArgs>
+            result: $Utils.Optional<KlineSymbolCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2452,6 +2542,7 @@ export namespace Prisma {
     binanceKlineMonth?: BinanceKlineMonthOmit
     binanceKlineCache?: BinanceKlineCacheOmit
     binanceKlineGap?: BinanceKlineGapOmit
+    klineSymbol?: KlineSymbolOmit
   }
 
   /* Types for Logging */
@@ -23594,6 +23685,1043 @@ export namespace Prisma {
 
 
   /**
+   * Model KlineSymbol
+   */
+
+  export type AggregateKlineSymbol = {
+    _count: KlineSymbolCountAggregateOutputType | null
+    _avg: KlineSymbolAvgAggregateOutputType | null
+    _sum: KlineSymbolSumAggregateOutputType | null
+    _min: KlineSymbolMinAggregateOutputType | null
+    _max: KlineSymbolMaxAggregateOutputType | null
+  }
+
+  export type KlineSymbolAvgAggregateOutputType = {
+    requiredDays1m: number | null
+    requiredDays5m: number | null
+    requiredDays1h: number | null
+  }
+
+  export type KlineSymbolSumAggregateOutputType = {
+    requiredDays1m: number | null
+    requiredDays5m: number | null
+    requiredDays1h: number | null
+  }
+
+  export type KlineSymbolMinAggregateOutputType = {
+    symbol: string | null
+    ativo: boolean | null
+    requiredDays1m: number | null
+    requiredDays5m: number | null
+    requiredDays1h: number | null
+  }
+
+  export type KlineSymbolMaxAggregateOutputType = {
+    symbol: string | null
+    ativo: boolean | null
+    requiredDays1m: number | null
+    requiredDays5m: number | null
+    requiredDays1h: number | null
+  }
+
+  export type KlineSymbolCountAggregateOutputType = {
+    symbol: number
+    ativo: number
+    requiredDays1m: number
+    requiredDays5m: number
+    requiredDays1h: number
+    _all: number
+  }
+
+
+  export type KlineSymbolAvgAggregateInputType = {
+    requiredDays1m?: true
+    requiredDays5m?: true
+    requiredDays1h?: true
+  }
+
+  export type KlineSymbolSumAggregateInputType = {
+    requiredDays1m?: true
+    requiredDays5m?: true
+    requiredDays1h?: true
+  }
+
+  export type KlineSymbolMinAggregateInputType = {
+    symbol?: true
+    ativo?: true
+    requiredDays1m?: true
+    requiredDays5m?: true
+    requiredDays1h?: true
+  }
+
+  export type KlineSymbolMaxAggregateInputType = {
+    symbol?: true
+    ativo?: true
+    requiredDays1m?: true
+    requiredDays5m?: true
+    requiredDays1h?: true
+  }
+
+  export type KlineSymbolCountAggregateInputType = {
+    symbol?: true
+    ativo?: true
+    requiredDays1m?: true
+    requiredDays5m?: true
+    requiredDays1h?: true
+    _all?: true
+  }
+
+  export type KlineSymbolAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which KlineSymbol to aggregate.
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of KlineSymbols to fetch.
+     */
+    orderBy?: KlineSymbolOrderByWithRelationInput | KlineSymbolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: KlineSymbolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` KlineSymbols from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` KlineSymbols.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned KlineSymbols
+    **/
+    _count?: true | KlineSymbolCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: KlineSymbolAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: KlineSymbolSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: KlineSymbolMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: KlineSymbolMaxAggregateInputType
+  }
+
+  export type GetKlineSymbolAggregateType<T extends KlineSymbolAggregateArgs> = {
+        [P in keyof T & keyof AggregateKlineSymbol]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateKlineSymbol[P]>
+      : GetScalarType<T[P], AggregateKlineSymbol[P]>
+  }
+
+
+
+
+  export type KlineSymbolGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: KlineSymbolWhereInput
+    orderBy?: KlineSymbolOrderByWithAggregationInput | KlineSymbolOrderByWithAggregationInput[]
+    by: KlineSymbolScalarFieldEnum[] | KlineSymbolScalarFieldEnum
+    having?: KlineSymbolScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: KlineSymbolCountAggregateInputType | true
+    _avg?: KlineSymbolAvgAggregateInputType
+    _sum?: KlineSymbolSumAggregateInputType
+    _min?: KlineSymbolMinAggregateInputType
+    _max?: KlineSymbolMaxAggregateInputType
+  }
+
+  export type KlineSymbolGroupByOutputType = {
+    symbol: string
+    ativo: boolean
+    requiredDays1m: number | null
+    requiredDays5m: number | null
+    requiredDays1h: number | null
+    _count: KlineSymbolCountAggregateOutputType | null
+    _avg: KlineSymbolAvgAggregateOutputType | null
+    _sum: KlineSymbolSumAggregateOutputType | null
+    _min: KlineSymbolMinAggregateOutputType | null
+    _max: KlineSymbolMaxAggregateOutputType | null
+  }
+
+  type GetKlineSymbolGroupByPayload<T extends KlineSymbolGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<KlineSymbolGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof KlineSymbolGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], KlineSymbolGroupByOutputType[P]>
+            : GetScalarType<T[P], KlineSymbolGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type KlineSymbolSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    ativo?: boolean
+    requiredDays1m?: boolean
+    requiredDays5m?: boolean
+    requiredDays1h?: boolean
+  }, ExtArgs["result"]["klineSymbol"]>
+
+  export type KlineSymbolSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    ativo?: boolean
+    requiredDays1m?: boolean
+    requiredDays5m?: boolean
+    requiredDays1h?: boolean
+  }, ExtArgs["result"]["klineSymbol"]>
+
+  export type KlineSymbolSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    ativo?: boolean
+    requiredDays1m?: boolean
+    requiredDays5m?: boolean
+    requiredDays1h?: boolean
+  }, ExtArgs["result"]["klineSymbol"]>
+
+  export type KlineSymbolSelectScalar = {
+    symbol?: boolean
+    ativo?: boolean
+    requiredDays1m?: boolean
+    requiredDays5m?: boolean
+    requiredDays1h?: boolean
+  }
+
+  export type KlineSymbolOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "ativo" | "requiredDays1m" | "requiredDays5m" | "requiredDays1h", ExtArgs["result"]["klineSymbol"]>
+
+  export type $KlineSymbolPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "KlineSymbol"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      symbol: string
+      ativo: boolean
+      requiredDays1m: number | null
+      requiredDays5m: number | null
+      requiredDays1h: number | null
+    }, ExtArgs["result"]["klineSymbol"]>
+    composites: {}
+  }
+
+  type KlineSymbolGetPayload<S extends boolean | null | undefined | KlineSymbolDefaultArgs> = $Result.GetResult<Prisma.$KlineSymbolPayload, S>
+
+  type KlineSymbolCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<KlineSymbolFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: KlineSymbolCountAggregateInputType | true
+    }
+
+  export interface KlineSymbolDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['KlineSymbol'], meta: { name: 'KlineSymbol' } }
+    /**
+     * Find zero or one KlineSymbol that matches the filter.
+     * @param {KlineSymbolFindUniqueArgs} args - Arguments to find a KlineSymbol
+     * @example
+     * // Get one KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends KlineSymbolFindUniqueArgs>(args: SelectSubset<T, KlineSymbolFindUniqueArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one KlineSymbol that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {KlineSymbolFindUniqueOrThrowArgs} args - Arguments to find a KlineSymbol
+     * @example
+     * // Get one KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends KlineSymbolFindUniqueOrThrowArgs>(args: SelectSubset<T, KlineSymbolFindUniqueOrThrowArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first KlineSymbol that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolFindFirstArgs} args - Arguments to find a KlineSymbol
+     * @example
+     * // Get one KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends KlineSymbolFindFirstArgs>(args?: SelectSubset<T, KlineSymbolFindFirstArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first KlineSymbol that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolFindFirstOrThrowArgs} args - Arguments to find a KlineSymbol
+     * @example
+     * // Get one KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends KlineSymbolFindFirstOrThrowArgs>(args?: SelectSubset<T, KlineSymbolFindFirstOrThrowArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more KlineSymbols that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all KlineSymbols
+     * const klineSymbols = await prisma.klineSymbol.findMany()
+     * 
+     * // Get first 10 KlineSymbols
+     * const klineSymbols = await prisma.klineSymbol.findMany({ take: 10 })
+     * 
+     * // Only select the `symbol`
+     * const klineSymbolWithSymbolOnly = await prisma.klineSymbol.findMany({ select: { symbol: true } })
+     * 
+     */
+    findMany<T extends KlineSymbolFindManyArgs>(args?: SelectSubset<T, KlineSymbolFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a KlineSymbol.
+     * @param {KlineSymbolCreateArgs} args - Arguments to create a KlineSymbol.
+     * @example
+     * // Create one KlineSymbol
+     * const KlineSymbol = await prisma.klineSymbol.create({
+     *   data: {
+     *     // ... data to create a KlineSymbol
+     *   }
+     * })
+     * 
+     */
+    create<T extends KlineSymbolCreateArgs>(args: SelectSubset<T, KlineSymbolCreateArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many KlineSymbols.
+     * @param {KlineSymbolCreateManyArgs} args - Arguments to create many KlineSymbols.
+     * @example
+     * // Create many KlineSymbols
+     * const klineSymbol = await prisma.klineSymbol.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends KlineSymbolCreateManyArgs>(args?: SelectSubset<T, KlineSymbolCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many KlineSymbols and returns the data saved in the database.
+     * @param {KlineSymbolCreateManyAndReturnArgs} args - Arguments to create many KlineSymbols.
+     * @example
+     * // Create many KlineSymbols
+     * const klineSymbol = await prisma.klineSymbol.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many KlineSymbols and only return the `symbol`
+     * const klineSymbolWithSymbolOnly = await prisma.klineSymbol.createManyAndReturn({
+     *   select: { symbol: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends KlineSymbolCreateManyAndReturnArgs>(args?: SelectSubset<T, KlineSymbolCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a KlineSymbol.
+     * @param {KlineSymbolDeleteArgs} args - Arguments to delete one KlineSymbol.
+     * @example
+     * // Delete one KlineSymbol
+     * const KlineSymbol = await prisma.klineSymbol.delete({
+     *   where: {
+     *     // ... filter to delete one KlineSymbol
+     *   }
+     * })
+     * 
+     */
+    delete<T extends KlineSymbolDeleteArgs>(args: SelectSubset<T, KlineSymbolDeleteArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one KlineSymbol.
+     * @param {KlineSymbolUpdateArgs} args - Arguments to update one KlineSymbol.
+     * @example
+     * // Update one KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends KlineSymbolUpdateArgs>(args: SelectSubset<T, KlineSymbolUpdateArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more KlineSymbols.
+     * @param {KlineSymbolDeleteManyArgs} args - Arguments to filter KlineSymbols to delete.
+     * @example
+     * // Delete a few KlineSymbols
+     * const { count } = await prisma.klineSymbol.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends KlineSymbolDeleteManyArgs>(args?: SelectSubset<T, KlineSymbolDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more KlineSymbols.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many KlineSymbols
+     * const klineSymbol = await prisma.klineSymbol.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends KlineSymbolUpdateManyArgs>(args: SelectSubset<T, KlineSymbolUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more KlineSymbols and returns the data updated in the database.
+     * @param {KlineSymbolUpdateManyAndReturnArgs} args - Arguments to update many KlineSymbols.
+     * @example
+     * // Update many KlineSymbols
+     * const klineSymbol = await prisma.klineSymbol.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more KlineSymbols and only return the `symbol`
+     * const klineSymbolWithSymbolOnly = await prisma.klineSymbol.updateManyAndReturn({
+     *   select: { symbol: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends KlineSymbolUpdateManyAndReturnArgs>(args: SelectSubset<T, KlineSymbolUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one KlineSymbol.
+     * @param {KlineSymbolUpsertArgs} args - Arguments to update or create a KlineSymbol.
+     * @example
+     * // Update or create a KlineSymbol
+     * const klineSymbol = await prisma.klineSymbol.upsert({
+     *   create: {
+     *     // ... data to create a KlineSymbol
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the KlineSymbol we want to update
+     *   }
+     * })
+     */
+    upsert<T extends KlineSymbolUpsertArgs>(args: SelectSubset<T, KlineSymbolUpsertArgs<ExtArgs>>): Prisma__KlineSymbolClient<$Result.GetResult<Prisma.$KlineSymbolPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of KlineSymbols.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolCountArgs} args - Arguments to filter KlineSymbols to count.
+     * @example
+     * // Count the number of KlineSymbols
+     * const count = await prisma.klineSymbol.count({
+     *   where: {
+     *     // ... the filter for the KlineSymbols we want to count
+     *   }
+     * })
+    **/
+    count<T extends KlineSymbolCountArgs>(
+      args?: Subset<T, KlineSymbolCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], KlineSymbolCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a KlineSymbol.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends KlineSymbolAggregateArgs>(args: Subset<T, KlineSymbolAggregateArgs>): Prisma.PrismaPromise<GetKlineSymbolAggregateType<T>>
+
+    /**
+     * Group by KlineSymbol.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KlineSymbolGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends KlineSymbolGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: KlineSymbolGroupByArgs['orderBy'] }
+        : { orderBy?: KlineSymbolGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, KlineSymbolGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetKlineSymbolGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the KlineSymbol model
+   */
+  readonly fields: KlineSymbolFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for KlineSymbol.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__KlineSymbolClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the KlineSymbol model
+   */
+  interface KlineSymbolFieldRefs {
+    readonly symbol: FieldRef<"KlineSymbol", 'String'>
+    readonly ativo: FieldRef<"KlineSymbol", 'Boolean'>
+    readonly requiredDays1m: FieldRef<"KlineSymbol", 'Int'>
+    readonly requiredDays5m: FieldRef<"KlineSymbol", 'Int'>
+    readonly requiredDays1h: FieldRef<"KlineSymbol", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * KlineSymbol findUnique
+   */
+  export type KlineSymbolFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter, which KlineSymbol to fetch.
+     */
+    where: KlineSymbolWhereUniqueInput
+  }
+
+  /**
+   * KlineSymbol findUniqueOrThrow
+   */
+  export type KlineSymbolFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter, which KlineSymbol to fetch.
+     */
+    where: KlineSymbolWhereUniqueInput
+  }
+
+  /**
+   * KlineSymbol findFirst
+   */
+  export type KlineSymbolFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter, which KlineSymbol to fetch.
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of KlineSymbols to fetch.
+     */
+    orderBy?: KlineSymbolOrderByWithRelationInput | KlineSymbolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for KlineSymbols.
+     */
+    cursor?: KlineSymbolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` KlineSymbols from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` KlineSymbols.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of KlineSymbols.
+     */
+    distinct?: KlineSymbolScalarFieldEnum | KlineSymbolScalarFieldEnum[]
+  }
+
+  /**
+   * KlineSymbol findFirstOrThrow
+   */
+  export type KlineSymbolFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter, which KlineSymbol to fetch.
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of KlineSymbols to fetch.
+     */
+    orderBy?: KlineSymbolOrderByWithRelationInput | KlineSymbolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for KlineSymbols.
+     */
+    cursor?: KlineSymbolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` KlineSymbols from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` KlineSymbols.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of KlineSymbols.
+     */
+    distinct?: KlineSymbolScalarFieldEnum | KlineSymbolScalarFieldEnum[]
+  }
+
+  /**
+   * KlineSymbol findMany
+   */
+  export type KlineSymbolFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter, which KlineSymbols to fetch.
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of KlineSymbols to fetch.
+     */
+    orderBy?: KlineSymbolOrderByWithRelationInput | KlineSymbolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing KlineSymbols.
+     */
+    cursor?: KlineSymbolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` KlineSymbols from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` KlineSymbols.
+     */
+    skip?: number
+    distinct?: KlineSymbolScalarFieldEnum | KlineSymbolScalarFieldEnum[]
+  }
+
+  /**
+   * KlineSymbol create
+   */
+  export type KlineSymbolCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * The data needed to create a KlineSymbol.
+     */
+    data: XOR<KlineSymbolCreateInput, KlineSymbolUncheckedCreateInput>
+  }
+
+  /**
+   * KlineSymbol createMany
+   */
+  export type KlineSymbolCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many KlineSymbols.
+     */
+    data: KlineSymbolCreateManyInput | KlineSymbolCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * KlineSymbol createManyAndReturn
+   */
+  export type KlineSymbolCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * The data used to create many KlineSymbols.
+     */
+    data: KlineSymbolCreateManyInput | KlineSymbolCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * KlineSymbol update
+   */
+  export type KlineSymbolUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * The data needed to update a KlineSymbol.
+     */
+    data: XOR<KlineSymbolUpdateInput, KlineSymbolUncheckedUpdateInput>
+    /**
+     * Choose, which KlineSymbol to update.
+     */
+    where: KlineSymbolWhereUniqueInput
+  }
+
+  /**
+   * KlineSymbol updateMany
+   */
+  export type KlineSymbolUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update KlineSymbols.
+     */
+    data: XOR<KlineSymbolUpdateManyMutationInput, KlineSymbolUncheckedUpdateManyInput>
+    /**
+     * Filter which KlineSymbols to update
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * Limit how many KlineSymbols to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * KlineSymbol updateManyAndReturn
+   */
+  export type KlineSymbolUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * The data used to update KlineSymbols.
+     */
+    data: XOR<KlineSymbolUpdateManyMutationInput, KlineSymbolUncheckedUpdateManyInput>
+    /**
+     * Filter which KlineSymbols to update
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * Limit how many KlineSymbols to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * KlineSymbol upsert
+   */
+  export type KlineSymbolUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * The filter to search for the KlineSymbol to update in case it exists.
+     */
+    where: KlineSymbolWhereUniqueInput
+    /**
+     * In case the KlineSymbol found by the `where` argument doesn't exist, create a new KlineSymbol with this data.
+     */
+    create: XOR<KlineSymbolCreateInput, KlineSymbolUncheckedCreateInput>
+    /**
+     * In case the KlineSymbol was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<KlineSymbolUpdateInput, KlineSymbolUncheckedUpdateInput>
+  }
+
+  /**
+   * KlineSymbol delete
+   */
+  export type KlineSymbolDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+    /**
+     * Filter which KlineSymbol to delete.
+     */
+    where: KlineSymbolWhereUniqueInput
+  }
+
+  /**
+   * KlineSymbol deleteMany
+   */
+  export type KlineSymbolDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which KlineSymbols to delete
+     */
+    where?: KlineSymbolWhereInput
+    /**
+     * Limit how many KlineSymbols to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * KlineSymbol without action
+   */
+  export type KlineSymbolDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KlineSymbol
+     */
+    select?: KlineSymbolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the KlineSymbol
+     */
+    omit?: KlineSymbolOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -23902,6 +25030,17 @@ export namespace Prisma {
   };
 
   export type BinanceKlineGapScalarFieldEnum = (typeof BinanceKlineGapScalarFieldEnum)[keyof typeof BinanceKlineGapScalarFieldEnum]
+
+
+  export const KlineSymbolScalarFieldEnum: {
+    symbol: 'symbol',
+    ativo: 'ativo',
+    requiredDays1m: 'requiredDays1m',
+    requiredDays5m: 'requiredDays5m',
+    requiredDays1h: 'requiredDays1h'
+  };
+
+  export type KlineSymbolScalarFieldEnum = (typeof KlineSymbolScalarFieldEnum)[keyof typeof KlineSymbolScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -25720,6 +26859,60 @@ export namespace Prisma {
     gapTo?: BigIntWithAggregatesFilter<"BinanceKlineGap"> | bigint | number
   }
 
+  export type KlineSymbolWhereInput = {
+    AND?: KlineSymbolWhereInput | KlineSymbolWhereInput[]
+    OR?: KlineSymbolWhereInput[]
+    NOT?: KlineSymbolWhereInput | KlineSymbolWhereInput[]
+    symbol?: StringFilter<"KlineSymbol"> | string
+    ativo?: BoolFilter<"KlineSymbol"> | boolean
+    requiredDays1m?: IntNullableFilter<"KlineSymbol"> | number | null
+    requiredDays5m?: IntNullableFilter<"KlineSymbol"> | number | null
+    requiredDays1h?: IntNullableFilter<"KlineSymbol"> | number | null
+  }
+
+  export type KlineSymbolOrderByWithRelationInput = {
+    symbol?: SortOrder
+    ativo?: SortOrder
+    requiredDays1m?: SortOrderInput | SortOrder
+    requiredDays5m?: SortOrderInput | SortOrder
+    requiredDays1h?: SortOrderInput | SortOrder
+  }
+
+  export type KlineSymbolWhereUniqueInput = Prisma.AtLeast<{
+    symbol?: string
+    AND?: KlineSymbolWhereInput | KlineSymbolWhereInput[]
+    OR?: KlineSymbolWhereInput[]
+    NOT?: KlineSymbolWhereInput | KlineSymbolWhereInput[]
+    ativo?: BoolFilter<"KlineSymbol"> | boolean
+    requiredDays1m?: IntNullableFilter<"KlineSymbol"> | number | null
+    requiredDays5m?: IntNullableFilter<"KlineSymbol"> | number | null
+    requiredDays1h?: IntNullableFilter<"KlineSymbol"> | number | null
+  }, "symbol">
+
+  export type KlineSymbolOrderByWithAggregationInput = {
+    symbol?: SortOrder
+    ativo?: SortOrder
+    requiredDays1m?: SortOrderInput | SortOrder
+    requiredDays5m?: SortOrderInput | SortOrder
+    requiredDays1h?: SortOrderInput | SortOrder
+    _count?: KlineSymbolCountOrderByAggregateInput
+    _avg?: KlineSymbolAvgOrderByAggregateInput
+    _max?: KlineSymbolMaxOrderByAggregateInput
+    _min?: KlineSymbolMinOrderByAggregateInput
+    _sum?: KlineSymbolSumOrderByAggregateInput
+  }
+
+  export type KlineSymbolScalarWhereWithAggregatesInput = {
+    AND?: KlineSymbolScalarWhereWithAggregatesInput | KlineSymbolScalarWhereWithAggregatesInput[]
+    OR?: KlineSymbolScalarWhereWithAggregatesInput[]
+    NOT?: KlineSymbolScalarWhereWithAggregatesInput | KlineSymbolScalarWhereWithAggregatesInput[]
+    symbol?: StringWithAggregatesFilter<"KlineSymbol"> | string
+    ativo?: BoolWithAggregatesFilter<"KlineSymbol"> | boolean
+    requiredDays1m?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
+    requiredDays5m?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
+    requiredDays1h?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
+  }
+
   export type UserCreateInput = {
     id?: string
     emailEnc: string
@@ -27460,6 +28653,62 @@ export namespace Prisma {
     gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
   }
 
+  export type KlineSymbolCreateInput = {
+    symbol: string
+    ativo?: boolean
+    requiredDays1m?: number | null
+    requiredDays5m?: number | null
+    requiredDays1h?: number | null
+  }
+
+  export type KlineSymbolUncheckedCreateInput = {
+    symbol: string
+    ativo?: boolean
+    requiredDays1m?: number | null
+    requiredDays5m?: number | null
+    requiredDays1h?: number | null
+  }
+
+  export type KlineSymbolUpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    requiredDays1m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays5m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays1h?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type KlineSymbolUncheckedUpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    requiredDays1m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays5m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays1h?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type KlineSymbolCreateManyInput = {
+    symbol: string
+    ativo?: boolean
+    requiredDays1m?: number | null
+    requiredDays5m?: number | null
+    requiredDays1h?: number | null
+  }
+
+  export type KlineSymbolUpdateManyMutationInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    requiredDays1m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays5m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays1h?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type KlineSymbolUncheckedUpdateManyInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    requiredDays1m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays5m?: NullableIntFieldUpdateOperationsInput | number | null
+    requiredDays1h?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -29025,6 +30274,42 @@ export namespace Prisma {
   export type BinanceKlineGapSumOrderByAggregateInput = {
     gapFrom?: SortOrder
     gapTo?: SortOrder
+  }
+
+  export type KlineSymbolCountOrderByAggregateInput = {
+    symbol?: SortOrder
+    ativo?: SortOrder
+    requiredDays1m?: SortOrder
+    requiredDays5m?: SortOrder
+    requiredDays1h?: SortOrder
+  }
+
+  export type KlineSymbolAvgOrderByAggregateInput = {
+    requiredDays1m?: SortOrder
+    requiredDays5m?: SortOrder
+    requiredDays1h?: SortOrder
+  }
+
+  export type KlineSymbolMaxOrderByAggregateInput = {
+    symbol?: SortOrder
+    ativo?: SortOrder
+    requiredDays1m?: SortOrder
+    requiredDays5m?: SortOrder
+    requiredDays1h?: SortOrder
+  }
+
+  export type KlineSymbolMinOrderByAggregateInput = {
+    symbol?: SortOrder
+    ativo?: SortOrder
+    requiredDays1m?: SortOrder
+    requiredDays5m?: SortOrder
+    requiredDays1h?: SortOrder
+  }
+
+  export type KlineSymbolSumOrderByAggregateInput = {
+    requiredDays1m?: SortOrder
+    requiredDays5m?: SortOrder
+    requiredDays1h?: SortOrder
   }
 
   export type AccessRequestCreateNestedManyWithoutUserInput = {

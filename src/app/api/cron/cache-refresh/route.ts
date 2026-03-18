@@ -4,7 +4,7 @@
  * - De 5m (BinanceKlineMonth): 5m, 15m, 30m, 45m
  * - De 1h (BinanceKline): 1h, 2h, 3h, 4h, 6h, 8h, 12h, 1d
  * Path: /crypto/api/cron/cache-refresh
- * Schedule: 0 0 * * * (1x ao dia). Ao final: expurgo por KLINE_*_DAYS (.env).
+ * Schedule: 0 0 * * * (1x ao dia). Ao final: expurgo por símbolo (KlineSymbol.requiredDays1m/5m/1h).
  * Protegido por CRON_SECRET.
  */
 export const dynamic = "force-dynamic";
@@ -13,25 +13,9 @@ export const maxDuration = 300;
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
-import { getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
-const KLINE_1M_DAYS = Math.max(1, parseInt(process.env.KLINE_1M_DAYS ?? "9", 10) || 9);
-const KLINE_5M_DAYS = Math.max(1, parseInt(process.env.KLINE_5M_DAYS ?? "90", 10) || 90);
-const KLINE_1H_DAYS = Math.max(1, parseInt(process.env.KLINE_1H_DAYS ?? "730", 10) || 730);
+import { getKlineSymbolsFromDb, getKlineSymbolsWithPeriods } from "@/app/lib/kline-symbols";
 const CORRETORA = "binance";
-
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-
-function getCutoff1mMs(): number {
-  return Date.now() - KLINE_1M_DAYS * ONE_DAY_MS;
-}
-
-function getCutoff5mMs(): number {
-  return Date.now() - KLINE_5M_DAYS * ONE_DAY_MS;
-}
-
-function getCutoff1hMs(): number {
-  return Date.now() - KLINE_1H_DAYS * ONE_DAY_MS;
-}
 /** Cache a partir de BinanceKlineFast (1m): 1m, 2m, 3m, 4m */
 const CACHE_INTERVALS_FROM_1M = [
   { param: "1m", minutes: 1 },
@@ -205,27 +189,29 @@ export async function GET(request: Request) {
 
     const totalRows = details.reduce((s, d) => s + d.rows, 0);
 
-    // Expurgo (1x ao dia, depois do refresh do cache): Fast > 9 dias, 1h > 5 anos, BinanceKlineMonth 5m > 90 dias
-    const cutoffFast = BigInt(getCutoff1mMs());
-    const cutoff5m = BigInt(getCutoff5mMs());
-    const cutoff1h = BigInt(getCutoff1hMs());
+    // Expurgo (1x ao dia): cutoff por símbolo (KlineSymbol.requiredDays1m/5m/1h)
+    const symbolsWithPeriods = await getKlineSymbolsWithPeriods(cryptoPrisma);
+    const now = Date.now();
     let purgedFast = 0;
     let purged5m = 0;
     let purged1h = 0;
-    for (const symbol of SYMBOLS) {
+    for (const s of symbolsWithPeriods) {
+      const cutoffFast = BigInt(now - s.requiredDays1m * ONE_DAY_MS);
+      const cutoff5m = BigInt(now - s.requiredDays5m * ONE_DAY_MS);
+      const cutoff1h = BigInt(now - s.requiredDays1h * ONE_DAY_MS);
       purgedFast += (
         await cryptoPrisma.binanceKlineFast.deleteMany({
-          where: { corretora: CORRETORA, symbol, interval: "1m", openTime: { lt: cutoffFast } },
+          where: { corretora: CORRETORA, symbol: s.symbol, interval: "1m", openTime: { lt: cutoffFast } },
         })
       ).count;
       purged5m += (
         await cryptoPrisma.binanceKlineMonth.deleteMany({
-          where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { lt: cutoff5m } },
+          where: { corretora: CORRETORA, symbol: s.symbol, interval: "5m", openTime: { lt: cutoff5m } },
         })
       ).count;
       purged1h += (
         await cryptoPrisma.binanceKline.deleteMany({
-          where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { lt: cutoff1h } },
+          where: { corretora: CORRETORA, symbol: s.symbol, interval: "1h", openTime: { lt: cutoff1h } },
         })
       ).count;
     }
