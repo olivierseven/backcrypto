@@ -36,6 +36,7 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 | **GOOGLE_CLIENT_SECRET** | `src/app/api/auth/google/callback/route.ts` — OAuth Google |
 | **SITE_MAINTENANCE** | `src/app/(auth)/login/page.tsx`, `register/page.tsx`, `reset-password/page.tsx` — quando `"1"`, exibe tela de manutenção. |
 | **MAINTENANCE_BYPASS_PASSWORD** | `src/lib/maintenance-bypass.ts`, `src/app/api/maintenance-bypass/route.ts` — senha para liberar acesso durante a manutenção (cookie 24h). Opcional. |
+| **URL_PROD** | Scripts (restore-db, etc.) e `src/lib/crypto-db.ts` — connection string do **banco** de produção. No backfill (Alvo: Prod) o dev usa este banco; não chama a API de prod. |
 | **AUTH_PUBLIC_ORIGIN** | `src/lib/redirect-origin.ts` — origem usada no OAuth quando atrás de proxy (ex.: `https://sevencoins.com.br`). Opcional; em produção evita “Connection failed” se o proxy não enviar `X-Forwarded-Host`. |
 
 **Google Cloud Console (OAuth):**

@@ -7,7 +7,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma } from "@/lib/crypto-db";
+import { PrismaClient } from "@/lib/prisma-bio-client";
+import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { getKlineSymbols, isAllowedSymbol, isBinanceInvalidSymbolError, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -80,10 +81,10 @@ function klineToRow(
 }
 
 /** Símbolos da lista env que ainda não têm nenhum dado no intervalo (para backfill "apenas novas moedas"). */
-async function getSymbolsWithNoData(interval: "1m" | "5m" | "1h"): Promise<string[]> {
+async function getSymbolsWithNoData(db: PrismaClient, interval: "1m" | "5m" | "1h"): Promise<string[]> {
   const SYMBOLS = getKlineSymbols();
   if (interval === "1m") {
-    const withData = await cryptoPrisma.binanceKlineFast.findMany({
+    const withData = await db.binanceKlineFast.findMany({
       where: { corretora: CORRETORA, interval: "1m" },
       select: { symbol: true },
       distinct: ["symbol"],
@@ -92,7 +93,7 @@ async function getSymbolsWithNoData(interval: "1m" | "5m" | "1h"): Promise<strin
     return SYMBOLS.filter((s) => !set.has(s));
   }
   if (interval === "5m") {
-    const withData = await cryptoPrisma.binanceKlineMonth.findMany({
+    const withData = await db.binanceKlineMonth.findMany({
       where: { corretora: CORRETORA, interval: "5m" },
       select: { symbol: true },
       distinct: ["symbol"],
@@ -100,7 +101,7 @@ async function getSymbolsWithNoData(interval: "1m" | "5m" | "1h"): Promise<strin
     const set = new Set(withData.map((r) => r.symbol));
     return SYMBOLS.filter((s) => !set.has(s));
   }
-  const withData = await cryptoPrisma.binanceKline.findMany({
+  const withData = await db.binanceKline.findMany({
     where: { corretora: CORRETORA, interval: "1h" },
     select: { symbol: true },
     distinct: ["symbol"],
@@ -111,6 +112,10 @@ async function getSymbolsWithNoData(interval: "1m" | "5m" | "1h"): Promise<strin
 
 export async function POST(request: NextRequest) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Backfill só disponível em desenvolvimento" }, { status: 404 });
+    }
+
     const token = request.cookies.get(COOKIE)?.value;
     if (!token) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -129,6 +134,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const target = body.target === "prod" ? "prod" : "dev";
+    const db: PrismaClient =
+      target === "prod"
+        ? (() => {
+            try {
+              return getCryptoPrismaProd();
+            } catch (e) {
+              throw new Error(
+                e instanceof Error ? e.message : "URL_PROD not set (banco de produção)"
+              );
+            }
+          })()
+        : cryptoPrisma;
+
     const symbolParam = (body.symbol as string)?.trim() || "BTCUSDT";
     const onlyMissing = body.onlyMissing === true;
     const SYMBOLS = getKlineSymbols();
@@ -169,7 +188,7 @@ export async function POST(request: NextRequest) {
     for (const gap of gaps) {
       const symbolsForGap =
         onlyMissing && symbolParam.toLowerCase() === "all"
-          ? await getSymbolsWithNoData(gap.interval)
+          ? await getSymbolsWithNoData(db, gap.interval)
           : symbolsToRun;
       if (symbolsForGap.length === 0 && onlyMissing) continue;
 
@@ -207,24 +226,24 @@ export async function POST(request: NextRequest) {
             const minOpen = rows.reduce((m, r) => (r.openTime < m ? r.openTime : m), rows[0].openTime);
             const maxOpen = rows.reduce((m, r) => (r.openTime > m ? r.openTime : m), rows[0].openTime);
             if (gap.interval === "1m") {
-              const created = await cryptoPrisma.binanceKlineFast.createMany({
+              const created = await db.binanceKlineFast.createMany({
                 data: rows,
                 skipDuplicates: true,
               });
               totalInserted1m += created.count;
               gapInserted += created.count;
             } else if (gap.interval === "5m") {
-              await cryptoPrisma.binanceKlineMonth.deleteMany({
+              await db.binanceKlineMonth.deleteMany({
                 where: { corretora: CORRETORA, symbol, interval: "5m", openTime: { gte: minOpen, lte: maxOpen } },
               });
-              const created = await cryptoPrisma.binanceKlineMonth.createMany({ data: rows });
+              const created = await db.binanceKlineMonth.createMany({ data: rows });
               totalInserted5m += created.count;
               gapInserted += created.count;
             } else {
-              await cryptoPrisma.binanceKline.deleteMany({
+              await db.binanceKline.deleteMany({
                 where: { corretora: CORRETORA, symbol, interval: "1h", openTime: { gte: minOpen, lte: maxOpen } },
               });
-              const created = await cryptoPrisma.binanceKline.createMany({ data: rows });
+              const created = await db.binanceKline.createMany({ data: rows });
               totalInserted1h += created.count;
               gapInserted += created.count;
             }

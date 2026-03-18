@@ -50,6 +50,7 @@ export default function SistemaDebugPanel() {
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
   const [backfillAllSymbols, setBackfillAllSymbols] = useState(false);
   const [backfillOnlyMissing, setBackfillOnlyMissing] = useState(false);
+  const [backfillTarget, setBackfillTarget] = useState<"dev" | "prod">("dev");
   const [chartModels, setChartModels] = useState<{ slot: number; name?: string }[]>([]);
   const [chartModelsLoading, setChartModelsLoading] = useState(false);
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
@@ -330,15 +331,17 @@ export default function SistemaDebugPanel() {
     setBackfillMessage(null);
     setBackfillLoading(interval);
     await new Promise((r) => setTimeout(r, 0));
+    const payload = {
+      symbol: symbol.trim(),
+      gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
+      ...(backfillTarget === "prod" ? { target: "prod" as const } : {}),
+    };
     try {
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          symbol: symbol.trim(),
-          gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -394,15 +397,17 @@ export default function SistemaDebugPanel() {
         from = floorToHourMs(now - KLINE_1H_DAYS_MS) - ONE_HOUR_MS;
         to = floorToHourMs(now) + ONE_HOUR_MS;
       }
+      const payload = {
+        symbol: backfillAllSymbols ? "all" : sym,
+        gaps: [{ interval, from, to }],
+        onlyMissing: backfillAllSymbols && backfillOnlyMissing,
+        ...(backfillTarget === "prod" ? { target: "prod" as const } : {}),
+      };
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          symbol: backfillAllSymbols ? "all" : sym,
-          gaps: [{ interval, from, to }],
-          onlyMissing: backfillAllSymbols && backfillOnlyMissing,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -468,7 +473,7 @@ export default function SistemaDebugPanel() {
 
   function ResultBlock({ label, res }: { label: string; res: ValidateSingleResult }) {
     const interval = res.interval as "1m" | "5m" | "1h";
-    const canBackfill = !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "5m" || interval === "1h");
+    const canBackfill = isDevHost && !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "5m" || interval === "1h");
     return (
       <div className="p-3 bg-zinc-50 rounded-md text-sm font-mono space-y-1">
         <p className="text-xs font-semibold text-zinc-600 mb-1.5">{label}</p>
@@ -777,6 +782,7 @@ export default function SistemaDebugPanel() {
                 </div>
               )}
             </section>
+            {isDevHost && (
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {(t as { backfillPast?: string }).backfillPast ?? "Backfill do passado"}
@@ -784,6 +790,29 @@ export default function SistemaDebugPanel() {
               <p className="text-xs text-zinc-500 mb-2">
                 {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima."}
               </p>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xs text-zinc-600">{(t as Record<string, string>).backfillTargetLabel ?? "Alvo:"}</span>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
+                  <input
+                    type="radio"
+                    name="backfillTarget"
+                    checked={backfillTarget === "dev"}
+                    onChange={() => setBackfillTarget("dev")}
+                    className="rounded-full border-zinc-300"
+                  />
+                  {(t as Record<string, string>).backfillTargetDev ?? "Dev"}
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
+                  <input
+                    type="radio"
+                    name="backfillTarget"
+                    checked={backfillTarget === "prod"}
+                    onChange={() => setBackfillTarget("prod")}
+                    className="rounded-full border-zinc-300"
+                  />
+                  {(t as Record<string, string>).backfillTargetProd ?? "Prod"}
+                </label>
+              </div>
               <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
                 <input
                   type="checkbox"
@@ -834,6 +863,7 @@ export default function SistemaDebugPanel() {
                 <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
               )}
             </section>
+            )}
             <section className="mt-4">
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {(t as Record<string, string>).syncKlinesTitle ?? "Sync klines"}
