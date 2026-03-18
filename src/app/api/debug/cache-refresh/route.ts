@@ -1,18 +1,41 @@
 /**
- * Em DEV: dispara o refresh do BinanceKlineCache (agregados 3m–1D).
+ * Dispara o refresh do BinanceKlineCache (1m–1d) no ambiente atual.
  * Chama /api/cron/cache-refresh usando o CRON_SECRET do servidor.
- * Em produção retorna 404 — não afeta o banco de produção.
+ * Em produção exige admin (cookie). Em dev também pode exigir admin para consistência.
  * GET /api/debug/cache-refresh
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 
+const COOKIE = process.env.JWT_COOKIE_NAME || "session";
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Only available in development" }, { status: 404 });
+  const token = request.cookies.get(COOKIE)?.value;
+  if (!token) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+  let userId: string;
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    userId = typeof payload?.sub === "string" ? payload.sub : "";
+  } catch {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+  if (!userId) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+  const user = await cryptoPrisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!user || user.role !== "admin") {
+    return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
   const secret = process.env.CRON_SECRET;
@@ -24,10 +47,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const baseUrl = process.env.SYNC_URL?.replace(/\/$/, "") ?? (() => {
-      const url = new URL(request.url);
-      return `${url.origin}${APP_CRYPTO_ROUTE_PREFIX}`;
-    })();
+    const baseUrl =
+      process.env.SYNC_URL?.replace(/\/$/, "") ??
+      (() => {
+        const url = new URL(request.url);
+        return `${url.origin}${APP_CRYPTO_ROUTE_PREFIX}`;
+      })();
     const cronUrl = `${baseUrl}/api/cron/cache-refresh`;
     const res = await fetch(cronUrl, {
       method: "GET",
