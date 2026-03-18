@@ -67,10 +67,27 @@ export default function SistemaDebugPanel() {
   const [cacheRefreshLoading, setCacheRefreshLoading] = useState(false);
   const [cacheRefreshMessage, setCacheRefreshMessage] = useState<string | null>(null);
   const [isDevHost, setIsDevHost] = useState(false);
+  const [historicoSymbolsList, setHistoricoSymbolsList] = useState<string[]>(() => getKlineSymbols());
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsDevHost(window.location.hostname === "localhost");
   }, []);
+
+  useEffect(() => {
+    if (!open || !isDevHost || debugTab !== "historico") return;
+    fetch(`${API_BASE}/debug/kline-symbols`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { symbols?: string[] }) => {
+        if (Array.isArray(data?.symbols) && data.symbols.length > 0) {
+          setHistoricoSymbolsList(data.symbols);
+          setSymbol((prev) => (data.symbols!.includes(prev) ? prev : data.symbols![0] ?? prev));
+        }
+      })
+      .catch(() => {});
+  }, [open, isDevHost, debugTab]);
+
+  const historicoSymbols = historicoSymbolsList;
+  const displaySymbol = historicoSymbols.includes(symbol) ? symbol : (historicoSymbols[0] ?? "BTCUSDT");
 
   useEffect(() => {
     setSessionDebugEnabledState(getSessionDebugEnabled());
@@ -770,18 +787,19 @@ export default function SistemaDebugPanel() {
                 <span className="text-xs text-zinc-500">— {(t as Record<string, string>).historicoTargetHint ?? "Validação, preencher e registrar gaps usam este banco."}</span>
               </div>
             )}
+            {isDevHost && (
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {t.validateKlines}
               </h4>
               <div className="flex gap-2">
                 <select
-                  value={symbol}
+                  value={displaySymbol}
                   onChange={(e) => setSymbol(e.target.value)}
                   className="flex-1 min-w-0 text-sm border border-zinc-300 rounded-md px-2.5 py-1.5 text-zinc-800 bg-white"
                   aria-label={t.symbol}
                 >
-                  {getKlineSymbols().map((s) => (
+                  {historicoSymbols.map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
@@ -817,6 +835,7 @@ export default function SistemaDebugPanel() {
                 </div>
               )}
             </section>
+            )}
             {isDevHost && (
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
@@ -832,7 +851,8 @@ export default function SistemaDebugPanel() {
                   onChange={(e) => setBackfillAllSymbols(e.target.checked)}
                   className="rounded border-zinc-300"
                 />
-                {(t as Record<string, string>).backfillAllSymbols ?? "Para todas as moedas (BTCUSDT e ETHUSDT)"}
+                {(t as Record<string, string>).backfillAllSymbols ?? "Para todas as moedas"}
+                {historicoSymbols.length > 0 && ` (${historicoSymbols.length} ${historicoSymbols.length === 1 ? ((t as Record<string, string>).backfillAllSymbolsOne ?? "moeda") : ((t as Record<string, string>).backfillAllSymbolsCount ?? "moedas")})`}
               </label>
               {backfillAllSymbols && (
                 <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
@@ -876,6 +896,8 @@ export default function SistemaDebugPanel() {
               )}
             </section>
             )}
+            {(!isDevHost || backfillTarget === "dev") && (
+            <>
             <section className="mt-4">
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {(t as Record<string, string>).syncKlinesTitle ?? "Sync klines"}
@@ -918,6 +940,8 @@ export default function SistemaDebugPanel() {
                 </pre>
               )}
             </section>
+            </>
+            )}
               </>
             )}
             {debugTab === "qa" && (

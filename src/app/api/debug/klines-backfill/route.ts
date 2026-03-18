@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
       gaps = [{ interval: body.interval, from: body.from, to: body.to }];
     } else {
       return NextResponse.json(
-        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = BTCUSDT e ETHUSDT." },
+        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = lista KLINE_SYMBOLS." },
         { status: 400 }
       );
     }
