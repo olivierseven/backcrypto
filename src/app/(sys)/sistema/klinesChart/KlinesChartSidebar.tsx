@@ -80,12 +80,20 @@ export interface KlinesChartSidebarProps {
   setFooterYAxisTextColor: (v: TextColorId) => void;
   lineTableColor: LineGridId;
   setLineTableColor: (v: LineGridId) => void;
+  lineTableStrokeWidth: "thin" | "normal" | "thick";
+  setLineTableStrokeWidth: (v: "thin" | "normal" | "thick") => void;
+  lineTableStrokeStyle: "solid" | "dotted" | "dashed";
+  setLineTableStrokeStyle: (v: "solid" | "dotted" | "dashed") => void;
   secondaryGridColor: LineGridId;
   setSecondaryGridColor: (v: LineGridId) => void;
   lastCloseLineColor: LineGridId;
   setLastCloseLineColor: (v: LineGridId) => void;
   lastCloseTextColor: LineGridId;
   setLastCloseTextColor: (v: LineGridId) => void;
+  lastCloseLineStrokeWidth: "thin" | "normal" | "thick";
+  setLastCloseLineStrokeWidth: (v: "thin" | "normal" | "thick") => void;
+  lastCloseLineStrokeStyle: "solid" | "dotted" | "dashed";
+  setLastCloseLineStrokeStyle: (v: "solid" | "dotted" | "dashed") => void;
   volumeOnPrice: boolean;
   setVolumeOnPrice: (v: boolean) => void;
   volumeOnPriceOpacity: number;
@@ -198,12 +206,20 @@ export function KlinesChartSidebar({
   setFooterYAxisTextColor,
   lineTableColor,
   setLineTableColor,
+  lineTableStrokeWidth,
+  setLineTableStrokeWidth,
+  lineTableStrokeStyle,
+  setLineTableStrokeStyle,
   secondaryGridColor,
   setSecondaryGridColor,
   lastCloseLineColor,
   setLastCloseLineColor,
   lastCloseTextColor,
   setLastCloseTextColor,
+  lastCloseLineStrokeWidth,
+  setLastCloseLineStrokeWidth,
+  lastCloseLineStrokeStyle,
+  setLastCloseLineStrokeStyle,
   volumeOnPrice,
   setVolumeOnPrice,
   volumeOnPriceOpacity,
@@ -898,6 +914,31 @@ export function KlinesChartSidebar({
                 />
               ))}
             </div>
+            <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{(t as Record<string, string>).mainLinesStroke ?? "Linhas principais"}</div>
+            <div className="flex flex-wrap gap-1 px-2">
+              {(["thin", "normal", "thick"] as const).map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setLineTableStrokeWidth(w)}
+                  className={`text-[10px] px-2 py-1 rounded border ${lineTableStrokeWidth === w ? "border-zinc-700 bg-zinc-100" : "border-zinc-300 hover:bg-zinc-50"}`}
+                >
+                  {(t as Record<string, string>)[`lineWidth${w.charAt(0).toUpperCase() + w.slice(1)}`] ?? w}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1 px-2 mt-0.5">
+              {(["solid", "dotted", "dashed"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setLineTableStrokeStyle(s)}
+                  className={`text-[10px] px-2 py-1 rounded border ${lineTableStrokeStyle === s ? "border-zinc-700 bg-zinc-100" : "border-zinc-300 hover:bg-zinc-50"}`}
+                >
+                  {(t as Record<string, string>)[`stroke${s.charAt(0).toUpperCase() + s.slice(1)}`] ?? s}
+                </button>
+              ))}
+            </div>
             <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.secondaryGrid}</div>
             <div className="flex flex-wrap gap-1 px-2">
               {LINE_GRID_PALETTE.map((bg) => (
@@ -935,6 +976,31 @@ export function KlinesChartSidebar({
                   className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
                   style={{ backgroundColor: bg.hex }}
                 />
+              ))}
+            </div>
+            <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{(t as Record<string, string>).lastCloseLineStroke ?? "Linha do fechamento"}</div>
+            <div className="flex flex-wrap gap-1 px-2">
+              {(["thin", "normal", "thick"] as const).map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setLastCloseLineStrokeWidth(w)}
+                  className={`text-[10px] px-2 py-1 rounded border ${lastCloseLineStrokeWidth === w ? "border-zinc-700 bg-zinc-100" : "border-zinc-300 hover:bg-zinc-50"}`}
+                >
+                  {(t as Record<string, string>)[`lineWidth${w.charAt(0).toUpperCase() + w.slice(1)}`] ?? w}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1 px-2 mt-0.5">
+              {(["solid", "dotted", "dashed"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setLastCloseLineStrokeStyle(s)}
+                  className={`text-[10px] px-2 py-1 rounded border ${lastCloseLineStrokeStyle === s ? "border-zinc-700 bg-zinc-100" : "border-zinc-300 hover:bg-zinc-50"}`}
+                >
+                  {(t as Record<string, string>)[`stroke${s.charAt(0).toUpperCase() + s.slice(1)}`] ?? s}
+                </button>
               ))}
             </div>
             <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textBackground}</div>
@@ -1248,6 +1314,17 @@ export function KlinesChartSidebar({
                     <button key={`lt-${bg.id}`} type="button" onClick={() => setLineTableColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lineTableColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
                   ))}
                 </div>
+                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1 pt-2 mt-1 border-t border-zinc-100">{(t as Record<string, string>).mainLinesStroke ?? "Linhas principais"}</div>
+                <div className="flex flex-wrap gap-1 px-2">
+                  {(["thin", "normal", "thick"] as const).map((w) => (
+                    <button key={w} type="button" onClick={() => setLineTableStrokeWidth(w)} className={`text-[10px] px-2 py-1 rounded border ${lineTableStrokeWidth === w ? "border-zinc-700 bg-zinc-100" : "border-zinc-300"}`}>{(t as Record<string, string>)[`lineWidth${w.charAt(0).toUpperCase() + w.slice(1)}`] ?? w}</button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1 px-2 mt-0.5">
+                  {(["solid", "dotted", "dashed"] as const).map((s) => (
+                    <button key={s} type="button" onClick={() => setLineTableStrokeStyle(s)} className={`text-[10px] px-2 py-1 rounded border ${lineTableStrokeStyle === s ? "border-zinc-700 bg-zinc-100" : "border-zinc-300"}`}>{(t as Record<string, string>)[`stroke${s.charAt(0).toUpperCase() + s.slice(1)}`] ?? s}</button>
+                  ))}
+                </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.secondaryGrid}</div>
                 <div className="flex flex-wrap gap-1 px-2">
                   {LINE_GRID_PALETTE.map((bg) => (
@@ -1262,8 +1339,19 @@ export function KlinesChartSidebar({
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseTextColor}</div>
                 <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button key={`lct-${bg.id}`} type="button" onClick={() => setLastCloseTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    {LINE_GRID_PALETTE.map((bg) => (
+                      <button key={`lct-${bg.id}`} type="button" onClick={() => setLastCloseTextColor(bg.id)} title={t[bg.labelKey]} className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1" : "border-zinc-300 hover:border-zinc-500"}`} style={{ backgroundColor: bg.hex }} />
+                    ))}
+                </div>
+                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1 pt-2 mt-1 border-t border-zinc-100">{(t as Record<string, string>).lastCloseLineStroke ?? "Linha"}</div>
+                <div className="flex flex-wrap gap-1 px-2">
+                  {(["thin", "normal", "thick"] as const).map((w) => (
+                    <button key={w} type="button" onClick={() => setLastCloseLineStrokeWidth(w)} className={`text-[10px] px-2 py-1 rounded border ${lastCloseLineStrokeWidth === w ? "border-zinc-700 bg-zinc-100" : "border-zinc-300"}`}>{(t as Record<string, string>)[`lineWidth${w.charAt(0).toUpperCase() + w.slice(1)}`] ?? w}</button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-1 px-2 mt-0.5">
+                  {(["solid", "dotted", "dashed"] as const).map((s) => (
+                    <button key={s} type="button" onClick={() => setLastCloseLineStrokeStyle(s)} className={`text-[10px] px-2 py-1 rounded border ${lastCloseLineStrokeStyle === s ? "border-zinc-700 bg-zinc-100" : "border-zinc-300"}`}>{(t as Record<string, string>)[`stroke${s.charAt(0).toUpperCase() + s.slice(1)}`] ?? s}</button>
                   ))}
                 </div>
                 <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textBackground}</div>

@@ -298,7 +298,7 @@ function SistemaHeader({
             onClick={closeSymbolPanel}
           />
           <div
-            className="absolute left-0 top-full z-[1100] mt-0 min-w-[140px] rounded-b-lg border border-t-0 border-zinc-200 bg-white shadow-lg py-1"
+            className="absolute left-0 top-full z-[1100] mt-0 w-[140px] max-w-[140px] max-h-[400px] overflow-y-auto rounded-b-lg border border-t-0 border-zinc-200 bg-white shadow-lg py-1"
             role="listbox"
             aria-label={t.symbolAria ?? "Select symbol"}
           >
@@ -312,7 +312,8 @@ function SistemaHeader({
                   setSymbol(opt);
                   closeSymbolPanel();
                 }}
-                className={`w-full text-left px-4 py-2 text-sm font-medium ${symbol === opt ? "bg-zinc-100 text-zinc-900" : "text-zinc-700 hover:bg-zinc-100"}`}
+                className={`w-full text-left px-3 py-2 text-sm font-medium truncate ${symbol === opt ? "bg-zinc-100 text-zinc-900" : "text-zinc-700 hover:bg-zinc-100"}`}
+                title={opt}
               >
                 {opt}
               </button>

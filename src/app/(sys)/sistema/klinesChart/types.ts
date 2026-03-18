@@ -258,6 +258,8 @@ export type KlinesChartProps = {
   onVolumeAtPriceColorBelowChange?: (v: string) => void;
   /** Preço ao vivo do último fechamento (ex.: WebSocket). Quando definido, a linha e o label de "último fechamento" usam este valor em vez de klines[0][4], evitando mostrar preço do par anterior após troca de símbolo. */
   liveLastClose?: number | string | null;
+  /** Chamado quando a formatação do preço do eixo Y muda (decimais + abreviado), para o header/WebSocket usar a mesma. */
+  onPriceFormatChange?: (decimals: number, abbreviated: boolean) => void;
   /** Chamado quando o layout em uso muda (nome ou slot), para exibir no container (ex.: canto esquerdo da última atualização). */
   onCurrentLayoutLabelChange?: (label: string) => void;
   /** Admin: pode renomear modelos ChartModels (slot 0) na seção Carregar. */

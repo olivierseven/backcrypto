@@ -4,6 +4,7 @@
  * SVG do gráfico de candles: faixa de indicadores, grade, candles, crosshair, tooltip OHLC, segmentos e overlay de desenho.
  */
 import { useId, useRef, useState, useEffect, type RefObject, type ReactNode } from "react";
+import { ASSET_PREFIX } from "@/app/constants";
 import { MARGIN_LEFT, MARGIN_TOP, INDICATOR_STRIP_HEIGHT, VOLUME_AT_PRICE_MAX_WIDTH_PX } from "../KlinesChartConstants";
 import { parseNum } from "../klinesFormatters";
 import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, formatAbbreviated } from "../klinesFormatters";
@@ -16,7 +17,7 @@ import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
 
 function lineWidthToStroke(w: "thin" | "normal" | "thick" | undefined): number {
-  return w === "thin" ? 1 : w === "thick" ? 3 : 2;
+  return w === "thin" ? 0.5 : w === "thick" ? 2 : 1;
 }
 
 export interface KlinesChartSvgProps {
@@ -56,8 +57,12 @@ export interface KlinesChartSvgProps {
   volumeOnPrice: boolean;
   volumeOnPriceOpacity: number;
   lineTableHex: string;
+  lineTableStrokeWidth?: "thin" | "normal" | "thick";
+  lineTableStrokeStyle?: "solid" | "dotted" | "dashed";
   secondaryGridHex: string;
   lastCloseLineHex: string;
+  lastCloseLineStrokeWidth?: "thin" | "normal" | "thick";
+  lastCloseLineStrokeStyle?: "solid" | "dotted" | "dashed";
   chartBgHex: string;
   backgroundTextHex: string;
   formatYAxis: (v: number) => string;
@@ -168,8 +173,12 @@ export function KlinesChartSvg({
   volumeOnPrice,
   volumeOnPriceOpacity,
   lineTableHex,
+  lineTableStrokeWidth = "thin",
+  lineTableStrokeStyle = "dashed",
   secondaryGridHex,
   lastCloseLineHex,
+  lastCloseLineStrokeWidth = "thin",
+  lastCloseLineStrokeStyle = "dashed",
   chartBgHex,
   backgroundTextHex,
   formatYAxis,
@@ -366,6 +375,16 @@ export function KlinesChartSvg({
         className={`flex-shrink-0 ${isDarkBg ? "text-zinc-400" : "text-zinc-700"}`}
       >
         <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} fill={chartBgHex} />
+        <image
+          href={`${ASSET_PREFIX}/assets/logo.webp`}
+          x={MARGIN_LEFT + 8}
+          y={MARGIN_TOP + 8}
+          width={100}
+          height={50}
+          opacity={0.1}
+          preserveAspectRatio="xMidYMid meet"
+          pointerEvents="none"
+        />
         <defs>
           <clipPath id={plotClipId}>
             <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} />
@@ -410,8 +429,8 @@ export function KlinesChartSvg({
             x2={MARGIN_LEFT + chartW}
             y2={lastCloseY}
             stroke={lastCloseLineHex}
-            strokeWidth={1}
-            strokeDasharray="2 4"
+            strokeWidth={lineWidthToStroke(lastCloseLineStrokeWidth)}
+            strokeDasharray={lastCloseLineStrokeStyle === "solid" ? undefined : lastCloseLineStrokeStyle === "dotted" ? "1 2" : "4 2"}
           />
         )}
         {showMainAxis &&
@@ -423,8 +442,8 @@ export function KlinesChartSvg({
               x2={cx(b.index)}
               y2={MARGIN_TOP + chartH}
               stroke={lineTableHex}
-              strokeWidth={1}
-              strokeDasharray="4 2"
+              strokeWidth={lineWidthToStroke(lineTableStrokeWidth)}
+              strokeDasharray={lineTableStrokeStyle === "solid" ? undefined : lineTableStrokeStyle === "dotted" ? "1 2" : "4 2"}
             />
           ))}
         {(() => {
@@ -1050,6 +1069,7 @@ export function KlinesChartSvg({
             </g>
           );
         })}
+        <g clipPath={`url(#${plotClipId.replace(/:/g, "\\:")})`}>
         {(chartStyle === "line" || chartStyle === "linePoints" || chartStyle === "area") ? (
           (() => {
             const linePoints = windowSlice.map((k, i) => ({ x: cx(i), y: y(parseNum(String(k[4] ?? ""))) }));
@@ -1177,6 +1197,7 @@ export function KlinesChartSvg({
             })}
           </g>
         )}
+        </g>
         {volumeAtPriceData && volumeAtPriceData.buckets.length > 0 && volumeAtPriceData.maxVolume > 0 && (() => {
           const widthPercent = Math.max(30, Math.min(100, volumeAtPriceWidthPercent ?? 100)) / 100;
           const maxWidthBase = Math.min(VOLUME_AT_PRICE_MAX_WIDTH_PX, chartW / 3);

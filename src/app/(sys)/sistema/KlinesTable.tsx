@@ -19,7 +19,7 @@ import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY, KLINE_VOL
 const SCROLLBAR_GUTTER = 17;
 /** Teto do plot em 100% (igual a KlinesChart MAX_PLOT_WIDTH_BASE). Largura máxima total = 660px (600 plot + 60 eixo). */
 const MAX_PLOT_WIDTH = 600;
-import { formatAbbreviated } from "./klinesFormatters";
+import { formatAbbreviated, formatUsdt, formatUsdtWithDecimals } from "./klinesFormatters";
 import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./IndicatorsPanel";
 import { INDICATOR_COLOR_PALETTE } from "./indicatorsPanel/index";
 import KlinesChart from "./KlinesChart";
@@ -274,6 +274,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
+  const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
+  const [priceFormatAbbreviated, setPriceFormatAbbreviated] = useState(false);
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
   const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
   const lastSpotPersistAtRef = useRef(0);
@@ -1018,6 +1020,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       ? Math.round(MAX_PLOT_WIDTH * (chartReportedSizePercent / 100))
       : chartWidth;
 
+  const formatPriceLikeChart = useCallback(
+    (value: string | number): string => {
+      const n = typeof value === "number" ? value : parseFloat(String(value));
+      if (!Number.isFinite(n)) return formatNum(String(value));
+      if (priceFormatDecimals != null) {
+        return priceFormatAbbreviated ? formatUsdt(n) : formatUsdtWithDecimals(n, priceFormatDecimals);
+      }
+      return formatNum(String(value));
+    },
+    [priceFormatDecimals, priceFormatAbbreviated]
+  );
+
   useEffect(() => {
     const current = spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
     const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
@@ -1027,15 +1041,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       : null;
     setHeaderData({
       chartContainerWidth,
-      priceText: current != null ? formatNum(String(current)) : null,
+      priceText: current != null ? formatPriceLikeChart(current) : null,
       pctText: pct != null ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : null,
-      max24h: last24h != null ? formatNum(String(last24h.max)) : null,
-      min24h: last24h != null ? formatNum(String(last24h.min)) : null,
+      max24h: last24h != null ? formatPriceLikeChart(String(last24h.max)) : null,
+      min24h: last24h != null ? formatPriceLikeChart(String(last24h.min)) : null,
       vol24hBtc: last24h != null ? formatAbbreviated(last24h.volBtc) : null,
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
     });
-  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData]);
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));
@@ -1099,6 +1113,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             isFreeUser={isFreeUser}
             klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
+            onPriceFormatChange={(d, a) => {
+              setPriceFormatDecimals(d);
+              setPriceFormatAbbreviated(a);
+            }}
             onCurrentLayoutLabelChange={setCurrentLayoutLabel}
             groupMinutes={groupMinutes}
             timezoneOffset={timezoneOffset}

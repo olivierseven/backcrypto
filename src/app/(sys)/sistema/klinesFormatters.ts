@@ -9,11 +9,37 @@ export function parseNum(s: string): number {
 export function formatUsdt(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   if (n >= 1) return n.toFixed(2);
-  return n.toFixed(4);
+  if (n >= 0.01) return n.toFixed(4);
+  if (n >= 0.0001) return n.toFixed(6);
+  return n.toFixed(8);
 }
 
 export function formatUsdtTwoDecimals(n: number): string {
   return n.toFixed(2);
+}
+
+/** Casas decimais em função da magnitude do preço (eixo Y). Mínimo 2, até 8 para valores muito pequenos (ex.: PEPE). */
+export function priceAxisDecimals(priceOrStep: number): number {
+  if (!Number.isFinite(priceOrStep) || priceOrStep <= 0) return 2;
+  const d = Math.ceil(-Math.log10(priceOrStep));
+  return Math.max(2, Math.min(8, d));
+}
+
+/** Formata preço com N casas decimais (eixo Y). Evita notação científica. */
+export function formatUsdtWithDecimals(n: number, decimals: number): string {
+  const d = Math.max(0, Math.min(20, Math.round(decimals)));
+  if (n >= 1000 && d <= 1) return `${(n / 1000).toFixed(1)}k`;
+  return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+/** Step "bonito" para o eixo Y (1, 2 ou 5 × 10^n) a partir do intervalo desejado. */
+export function niceTickStep(targetStep: number): number {
+  if (!Number.isFinite(targetStep) || targetStep <= 0) return 0.01;
+  const exp = Math.floor(Math.log10(targetStep));
+  const base = 10 ** exp;
+  const normalized = targetStep / base;
+  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+  return nice * base;
 }
 
 /** Formata número em modo abreviado: K, M, B (ex.: 1234 → 1.23K); decimal com ponto. */

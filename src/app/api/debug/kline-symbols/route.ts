@@ -1,24 +1,16 @@
 /**
- * Lista de símbolos do servidor (KLINE_SYMBOLS). Para o painel em dev usar a mesma lista que o backfill/cron.
- * GET /api/debug/kline-symbols — apenas admin, só em dev.
- * Lê KLINE_SYMBOLS diretamente do env (sem cache) para refletir o .env atual.
+ * Lista de símbolos do servidor (tabela KlineSymbol, ativo = true).
+ * GET /api/debug/kline-symbols?target=dev|prod — apenas admin, só em dev.
+ * target=prod usa banco URL_PROD; target=dev usa DATABASE_URL.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma } from "@/lib/crypto-db";
+import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
+import { getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const DEFAULT_SYMBOLS = "BTCUSDT,ETHUSDT";
-
-function readSymbolsFromEnv(): string[] {
-  const raw =
-    process.env.KLINE_SYMBOLS ?? process.env.NEXT_PUBLIC_KLINE_SYMBOLS ?? DEFAULT_SYMBOLS;
-  return raw
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
-}
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +35,18 @@ export async function GET(request: NextRequest) {
     if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
-    const symbols = readSymbolsFromEnv();
+    const target = request.nextUrl.searchParams.get("target");
+    const db =
+      target === "prod"
+        ? (() => {
+            try {
+              return getCryptoPrismaProd();
+            } catch {
+              return cryptoPrisma;
+            }
+          })()
+        : cryptoPrisma;
+    const symbols = await getKlineSymbolsFromDb(db);
     return NextResponse.json({ symbols: symbols.length > 0 ? symbols : DEFAULT_SYMBOLS.split(",") });
   } catch (e) {
     console.error("[api/debug/kline-symbols]", e);

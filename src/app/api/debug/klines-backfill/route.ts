@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@/lib/prisma-bio-client";
 import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
-import { getKlineSymbols, isAllowedSymbol, isBinanceInvalidSymbolError, resolveSymbol } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, getKlineSymbolsForBackfill, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -81,8 +81,12 @@ function klineToRow(
 }
 
 /** Símbolos da lista env que ainda não têm nenhum dado no intervalo (para backfill "apenas novas moedas"). */
-async function getSymbolsWithNoData(db: PrismaClient, interval: "1m" | "5m" | "1h"): Promise<string[]> {
-  const SYMBOLS = getKlineSymbols();
+async function getSymbolsWithNoData(
+  db: PrismaClient,
+  interval: "1m" | "5m" | "1h",
+  symbolsList: string[]
+): Promise<string[]> {
+  const SYMBOLS = symbolsList.length > 0 ? symbolsList : getKlineSymbolsForBackfill();
   if (interval === "1m") {
     const withData = await db.binanceKlineFast.findMany({
       where: { corretora: CORRETORA, interval: "1m" },
@@ -135,6 +139,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const target = body.target === "prod" ? "prod" : "dev";
+    // Um único client por request: quando target=prod escrevemos SOMENTE em URL_PROD; quando dev, SOMENTE em DATABASE_URL.
     const db: PrismaClient =
       target === "prod"
         ? (() => {
@@ -148,15 +153,25 @@ export async function POST(request: NextRequest) {
           })()
         : cryptoPrisma;
 
+    // Lista de símbolos do banco (KlineSymbol onde ativo = true), mesmo alvo onde escrevemos
+    const SYMBOLS = await getKlineSymbolsFromDb(db);
+
+    console.log(
+      "[klines-backfill] target=%s — writing ONLY to %s — symbols count: %d",
+      target,
+      target === "prod" ? "URL_PROD (produção)" : "DATABASE_URL (dev)",
+      SYMBOLS.length
+    );
+
     const symbolParam = (body.symbol as string)?.trim() || "BTCUSDT";
     const onlyMissing = body.onlyMissing === true;
-    const SYMBOLS = getKlineSymbols();
+    const symUpper = symbolParam.trim().toUpperCase();
     const symbolsToRun =
       symbolParam.toLowerCase() === "all"
         ? SYMBOLS
-        : isAllowedSymbol(symbolParam)
-          ? [symbolParam.trim().toUpperCase()]
-          : [resolveSymbol(null)];
+        : SYMBOLS.includes(symUpper)
+          ? [symUpper]
+          : [SYMBOLS[0] ?? "BTCUSDT"];
 
     type Gap = { interval: "1m" | "5m" | "1h"; from: number; to: number };
     let gaps: Gap[];
@@ -173,7 +188,7 @@ export async function POST(request: NextRequest) {
       gaps = [{ interval: body.interval, from: body.from, to: body.to }];
     } else {
       return NextResponse.json(
-        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = lista KLINE_SYMBOLS." },
+        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = lista KLINE_SYMBOLS (dev: KLINE_SYMBOLS_DEV)." },
         { status: 400 }
       );
     }
@@ -186,9 +201,9 @@ export async function POST(request: NextRequest) {
     const details: { symbol: string; interval: string; from: number; to: number; fetched: number; inserted: number }[] = [];
 
     for (const gap of gaps) {
-      const symbolsForGap =
+      const       symbolsForGap =
         onlyMissing && symbolParam.toLowerCase() === "all"
-          ? await getSymbolsWithNoData(db, gap.interval)
+          ? await getSymbolsWithNoData(db, gap.interval, SYMBOLS)
           : symbolsToRun;
       if (symbolsForGap.length === 0 && onlyMissing) continue;
 
@@ -284,6 +299,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
+      target,
       symbol: symbolParam,
       symbolsRun: symbolsToRun,
       inserted1m: totalInserted1m,

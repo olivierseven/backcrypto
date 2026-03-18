@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  */
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { getKlineSymbols, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
 
 const BINANCE_BASE = process.env.BINANCE_API_BASE_URL || "https://api.binance.com";
 const INTERVAL_1M = "1m";
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
     const startWindow1h = getCutoff5YearsMs();
     const result: { symbol: string; inserted: number; inserted5m: number; inserted1h: number }[] = [];
 
-    const SYMBOLS = getKlineSymbols();
+    const SYMBOLS = await getKlineSymbolsFromDb(cryptoPrisma);
     for (const symbol of SYMBOLS) {
       let inserted = 0;
       let inserted5m = 0;

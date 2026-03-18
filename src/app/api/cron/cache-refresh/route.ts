@@ -13,7 +13,7 @@ export const maxDuration = 300;
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
-import { getKlineSymbols } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
 const KLINE_1M_DAYS = Math.max(1, parseInt(process.env.KLINE_1M_DAYS ?? "9", 10) || 9);
 const KLINE_5M_DAYS = Math.max(1, parseInt(process.env.KLINE_5M_DAYS ?? "90", 10) || 90);
 const KLINE_1H_DAYS = Math.max(1, parseInt(process.env.KLINE_1H_DAYS ?? "730", 10) || 730);
@@ -83,8 +83,8 @@ export async function GET(request: Request) {
 
     await cryptoPrisma.$executeRaw(Prisma.sql`TRUNCATE TABLE backcrypto."BinanceKlineCache"`);
 
+    const SYMBOLS = await getKlineSymbolsFromDb(cryptoPrisma);
     const details: { symbol: string; interval: string; rows: number }[] = [];
-    const SYMBOLS = getKlineSymbols();
 
     for (const symbol of SYMBOLS) {
       for (const interval of CACHE_INTERVALS_FROM_1M) {

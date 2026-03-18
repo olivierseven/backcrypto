@@ -1,10 +1,26 @@
 /**
  * Lista de símbolos para klines: lida do env (KLINE_SYMBOLS ou NEXT_PUBLIC_KLINE_SYMBOLS).
- * Formato: "BTCUSDT,ETHUSDT" (vírgula, sem espaços ou com).
- * Símbolos inválidos ou vazios são ignorados.
+ * Em dev o backfill usa KLINE_SYMBOLS_DEV se estiver definido.
+ * Sync (cron) e cache-refresh usam a lista do banco (tabela KlineSymbol) quando disponível.
+ * Formato env: "BTCUSDT,ETHUSDT" (vírgula, sem espaços ou com).
  * Uso: cron, cache-refresh, backfill, APIs e UI (dropdown).
  */
+import type { PrismaClient } from "@/lib/prisma-bio-client";
+
 const DEFAULT_SYMBOLS = "BTCUSDT,ETHUSDT";
+
+/**
+ * Lista de símbolos a partir da tabela KlineSymbol (fonte de verdade para sync e cache-refresh).
+ * Retorna array vazio se a tabela estiver vazia.
+ */
+export async function getKlineSymbolsFromDb(db: PrismaClient): Promise<string[]> {
+  const rows = await db.klineSymbol.findMany({
+    where: { ativo: true },
+    orderBy: { symbol: "asc" },
+    select: { symbol: true },
+  });
+  return rows.map((r) => r.symbol);
+}
 
 function getEnvSymbols(): string {
   if (typeof process === "undefined" || !process.env) return DEFAULT_SYMBOLS;
@@ -15,20 +31,46 @@ function getEnvSymbols(): string {
   );
 }
 
+function parseSymbolsRaw(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+}
+
 let cached: string[] | null = null;
 
 /**
  * Retorna a lista de símbolos configurada no env (trim, sem vazios).
- * Cache na primeira leitura.
+ * Cache na primeira leitura. Uso: cron, cache-refresh.
  */
 export function getKlineSymbols(): string[] {
   if (cached !== null) return cached;
   const raw = getEnvSymbols();
-  cached = raw
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
+  cached = parseSymbolsRaw(raw);
   return cached;
+}
+
+/**
+ * Lista de símbolos para backfill/painel em dev.
+ * Em desenvolvimento usa KLINE_SYMBOLS_DEV (ou NEXT_PUBLIC_KLINE_SYMBOLS_DEV) se definido; senão KLINE_SYMBOLS.
+ * Em produção usa getKlineSymbols(). Sem cache em dev para refletir .env.
+ */
+export function getKlineSymbolsForBackfill(): string[] {
+  if (typeof process === "undefined" || !process.env) {
+    return parseSymbolsRaw(DEFAULT_SYMBOLS);
+  }
+  if (process.env.NODE_ENV === "development") {
+    const raw =
+      process.env.KLINE_SYMBOLS_DEV ??
+      process.env.NEXT_PUBLIC_KLINE_SYMBOLS_DEV ??
+      process.env.KLINE_SYMBOLS ??
+      process.env.NEXT_PUBLIC_KLINE_SYMBOLS ??
+      DEFAULT_SYMBOLS;
+    const list = parseSymbolsRaw(raw);
+    return list.length > 0 ? list : parseSymbolsRaw(DEFAULT_SYMBOLS);
+  }
+  return getKlineSymbols();
 }
 
 /**

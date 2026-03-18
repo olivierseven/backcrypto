@@ -48,6 +48,7 @@ export default function SistemaDebugPanel() {
   const [registerGapsLoading, setRegisterGapsLoading] = useState<string | null>(null);
   const [pastBackfillLoading, setPastBackfillLoading] = useState<"1m" | "5m" | "1h" | null>(null);
   const [pastBackfillMessage, setPastBackfillMessage] = useState<string | null>(null);
+  const [lastBackfillLog, setLastBackfillLog] = useState<string | null>(null);
   const [backfillAllSymbols, setBackfillAllSymbols] = useState(false);
   const [backfillOnlyMissing, setBackfillOnlyMissing] = useState(false);
   const [backfillTarget, setBackfillTarget] = useState<"dev" | "prod">("dev");
@@ -75,7 +76,8 @@ export default function SistemaDebugPanel() {
 
   useEffect(() => {
     if (!open || !isDevHost || debugTab !== "historico") return;
-    fetch(`${API_BASE}/debug/kline-symbols`, { credentials: "include" })
+    const target = backfillTarget;
+    fetch(`${API_BASE}/debug/kline-symbols?target=${target}`, { credentials: "include" })
       .then((r) => r.json())
       .then((data: { symbols?: string[] }) => {
         if (Array.isArray(data?.symbols) && data.symbols.length > 0) {
@@ -84,7 +86,7 @@ export default function SistemaDebugPanel() {
         }
       })
       .catch(() => {});
-  }, [open, isDevHost, debugTab]);
+  }, [open, isDevHost, debugTab, backfillTarget]);
 
   const historicoSymbols = historicoSymbolsList;
   const displaySymbol = historicoSymbols.includes(symbol) ? symbol : (historicoSymbols[0] ?? "BTCUSDT");
@@ -346,6 +348,42 @@ export default function SistemaDebugPanel() {
     }
   }
 
+  function formatBackfillLog(data: {
+    target?: string;
+    symbol?: string;
+    symbolsRun?: string[];
+    inserted1m?: number;
+    inserted5m?: number;
+    inserted1h?: number;
+    details?: { symbol: string; interval: string; from: number; to: number; fetched: number; inserted: number }[];
+  }): string {
+    const targetLabel = data.target === "prod" ? "Prod" : "Dev";
+    const lines: string[] = [
+      `Alvo: ${targetLabel}`,
+      `Símbolo: ${data.symbol ?? "—"}`,
+      data.symbolsRun?.length ? `Moedas: ${data.symbolsRun.length} (${data.symbolsRun.slice(0, 5).join(", ")}${data.symbolsRun.length > 5 ? "…" : ""})` : "",
+      "",
+      "1m — BinanceKlineFast",
+      `  Inseridas: ${data.inserted1m ?? 0}`,
+      "",
+      "5m — BinanceKlineMonth",
+      `  Inseridas: ${data.inserted5m ?? 0}`,
+      "",
+      "1h — BinanceKline",
+      `  Inseridas: ${data.inserted1h ?? 0}`,
+    ].filter(Boolean);
+    if (Array.isArray(data.details) && data.details.length > 0) {
+      lines.push("", "Detalhes por símbolo/intervalo:");
+      for (const d of data.details.slice(0, 30)) {
+        lines.push(`  ${d.symbol} ${d.interval}: Binance ${d.fetched} → inseridas ${d.inserted}`);
+      }
+      if (data.details.length > 30) {
+        lines.push(`  … +${data.details.length - 30} mais`);
+      }
+    }
+    return lines.join("\n");
+  }
+
   async function runBackfill(interval: "1m" | "5m" | "1h", gaps: { from: number; to: number }[]) {
     if (gaps.length === 0) return;
     setBackfillMessage(null);
@@ -354,7 +392,7 @@ export default function SistemaDebugPanel() {
     const payload = {
       symbol: symbol.trim(),
       gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
-      ...(backfillTarget === "prod" ? { target: "prod" as const } : {}),
+      target: backfillTarget,
     };
     try {
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
@@ -370,9 +408,11 @@ export default function SistemaDebugPanel() {
       }
       const inserted = interval === "1m" ? data.inserted1m : interval === "5m" ? data.inserted5m : data.inserted1h;
       const detail = Array.isArray(data.details) ? data.details.find((d: { interval: string }) => d.interval === interval) : null;
+      const targetLabel = data.target === "prod" ? (t as Record<string, string>).backfillTargetProd ?? "Prod" : (t as Record<string, string>).backfillTargetDev ?? "Dev";
       const msg = (t as { backfillSuccess?: string }).backfillSuccess?.replace("{n}", String(inserted ?? 0)) ?? `Inseridas: ${inserted ?? 0}`;
-      setBackfillMessage(detail && (detail.fetched === 0 || (detail.inserted === 0 && detail.fetched > 0)) ? `${msg} (Binance: ${detail.fetched}, inseridas: ${detail.inserted})` : msg);
-      runValidate();
+      const withTarget = `${msg} (${targetLabel})`;
+      setBackfillMessage(detail && (detail.fetched === 0 || (detail.inserted === 0 && detail.fetched > 0)) ? `${withTarget} — Binance: ${detail.fetched}, inseridas: ${detail.inserted}` : withTarget);
+      setLastBackfillLog(formatBackfillLog(data));
     } catch (e) {
       setBackfillMessage(e instanceof Error ? e.message : t.error);
     } finally {
@@ -421,7 +461,7 @@ export default function SistemaDebugPanel() {
         symbol: backfillAllSymbols ? "all" : sym,
         gaps: [{ interval, from, to }],
         onlyMissing: backfillAllSymbols && backfillOnlyMissing,
-        ...(backfillTarget === "prod" ? { target: "prod" as const } : {}),
+        target: backfillTarget,
       };
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
         method: "POST",
@@ -436,9 +476,10 @@ export default function SistemaDebugPanel() {
       }
       const inserted =
         interval === "1m" ? data.inserted1m : interval === "5m" ? data.inserted5m : data.inserted1h;
+      const targetLabel = data.target === "prod" ? (t as Record<string, string>).backfillTargetProd ?? "Prod" : (t as Record<string, string>).backfillTargetDev ?? "Dev";
       const msg = (t as { backfillPastSuccess?: string }).backfillPastSuccess?.replace("{n}", String(inserted ?? 0)) ?? `Concluído. Inseridas: ${inserted ?? 0}`;
-      setPastBackfillMessage(msg);
-      runValidate();
+      setPastBackfillMessage(`${msg} (${targetLabel})`);
+      setLastBackfillLog(formatBackfillLog(data));
     } catch (e) {
       setPastBackfillMessage(e instanceof Error ? e.message : t.error);
     } finally {
@@ -893,6 +934,11 @@ export default function SistemaDebugPanel() {
               </div>
               {pastBackfillMessage && (
                 <p className="mt-2 text-sm text-emerald-700">{pastBackfillMessage}</p>
+              )}
+              {lastBackfillLog && (
+                <pre className="mt-3 text-xs font-mono text-zinc-700 whitespace-pre-wrap bg-zinc-100 p-3 rounded border border-zinc-200 max-h-64 overflow-auto">
+                  {lastBackfillLog}
+                </pre>
               )}
             </section>
             )}

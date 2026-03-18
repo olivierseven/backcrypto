@@ -443,3 +443,11 @@ model BinanceKlineGap {
   @@index([symbol, interval])
   @@schema("backcrypto")
 }
+
+// Lista de símbolos para sync (cron) e cache-refresh. Fonte de verdade no banco.
+model KlineSymbol {
+  symbol String  @id    // ex: BTCUSDT
+  ativo  Boolean @default(true) // false = não sync/cache nem dropdown
+
+  @@schema("backcrypto")
+}
