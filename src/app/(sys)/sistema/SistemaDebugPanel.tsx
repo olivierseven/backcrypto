@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
-import { getKlineSymbols } from "@/app/lib/kline-symbols";
+import { DEFAULT_SYMBOLS_LIST } from "@/app/lib/kline-symbols";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
@@ -35,7 +35,7 @@ export default function SistemaDebugPanel() {
   const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
-  const [symbol, setSymbol] = useState(() => getKlineSymbols()[0] ?? "BTCUSDT");
+  const [symbol, setSymbol] = useState(() => DEFAULT_SYMBOLS_LIST[0] ?? "BTCUSDT");
   const [binanceSpotPrice, setBinanceSpotPrice] = useState<string | null>(null);
   const [binanceSpotLastEventAtUtc, setBinanceSpotLastEventAtUtc] = useState<number | null>(null);
   const [binanceSpotStatus, setBinanceSpotStatus] = useState<"connecting" | "open" | "closed" | "error">("closed");
@@ -68,7 +68,7 @@ export default function SistemaDebugPanel() {
   const [cacheRefreshLoading, setCacheRefreshLoading] = useState(false);
   const [cacheRefreshMessage, setCacheRefreshMessage] = useState<string | null>(null);
   const [isDevHost, setIsDevHost] = useState(false);
-  const [historicoSymbolsList, setHistoricoSymbolsList] = useState<string[]>(() => getKlineSymbols());
+  const [historicoSymbolsList, setHistoricoSymbolsList] = useState<string[]>(() => [...DEFAULT_SYMBOLS_LIST]);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsDevHost(window.location.hostname === "localhost");

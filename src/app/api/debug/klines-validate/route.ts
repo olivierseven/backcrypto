@@ -11,7 +11,7 @@ import { jwtVerify } from "jose";
 import { PrismaClient } from "@/lib/prisma-bio-client";
 import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
-import { resolveSymbol } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -229,7 +229,8 @@ export async function GET(request: NextRequest) {
           })()
         : cryptoPrisma;
 
-    const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol")?.trim());
+    const symbolList = await getKlineSymbolsFromDb(db);
+    const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol")?.trim(), symbolList);
     const intervalParam = request.nextUrl.searchParams.get("interval")?.trim().toLowerCase();
 
     if (intervalParam === "1h") {

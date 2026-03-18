@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
-import { resolveSymbol } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -47,7 +47,8 @@ export async function POST(request: NextRequest) {
           })()
         : cryptoPrisma;
 
-    const symbol = resolveSymbol((body.symbol as string)?.trim());
+    const symbolList = await getKlineSymbolsFromDb(db);
+    const symbol = resolveSymbol((body.symbol as string)?.trim(), symbolList);
     const gaps = Array.isArray(body.gaps) ? body.gaps : [];
     const valid = gaps.filter(
       (g: unknown): g is { interval: "1m" | "5m" | "1h"; from: number; to: number } =>

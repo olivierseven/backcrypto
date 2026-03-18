@@ -13,7 +13,7 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
-import { resolveSymbol } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -124,7 +124,8 @@ function applyTimezoneOffset(data: (string | number)[][], offsetHours: number): 
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const symbol = resolveSymbol(searchParams.get("symbol"));
+  const symbolList = await getKlineSymbolsFromDb(cryptoPrisma);
+  const symbol = resolveSymbol(searchParams.get("symbol"), symbolList);
   const limit = Math.min(Number(searchParams.get("limit")) || 1000, 5000);
   const groupMinutes = parseIntervalMinutes(
     searchParams.get("interval"),

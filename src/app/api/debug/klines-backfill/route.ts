@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { PrismaClient } from "@/lib/prisma-bio-client";
 import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
-import { getKlineSymbolsFromDb, getKlineSymbolsForBackfill, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
+import { DEFAULT_SYMBOLS_LIST, getKlineSymbolsFromDb, isBinanceInvalidSymbolError } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -86,7 +86,7 @@ async function getSymbolsWithNoData(
   interval: "1m" | "5m" | "1h",
   symbolsList: string[]
 ): Promise<string[]> {
-  const SYMBOLS = symbolsList.length > 0 ? symbolsList : getKlineSymbolsForBackfill();
+  const SYMBOLS = symbolsList.length > 0 ? symbolsList : [...DEFAULT_SYMBOLS_LIST];
   if (interval === "1m") {
     const withData = await db.binanceKlineFast.findMany({
       where: { corretora: CORRETORA, interval: "1m" },
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
       gaps = [{ interval: body.interval, from: body.from, to: body.to }];
     } else {
       return NextResponse.json(
-        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = lista KLINE_SYMBOLS (dev: KLINE_SYMBOLS_DEV)." },
+        { error: "Body: { interval: '1m'|'5m'|'1h', from: number, to: number } ou { gaps: [...] }. symbol: 'all' = lista do banco (KlineSymbol)." },
         { status: 400 }
       );
     }

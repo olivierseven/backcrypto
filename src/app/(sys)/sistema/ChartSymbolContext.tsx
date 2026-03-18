@@ -1,26 +1,22 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useMemo, useLayoutEffect, type ReactNode } from "react";
-import { getKlineSymbols } from "@/app/lib/kline-symbols";
+import { createContext, useContext, useState, useCallback, useMemo, useLayoutEffect, useEffect, type ReactNode } from "react";
+import { DEFAULT_SYMBOLS_LIST } from "@/app/lib/kline-symbols";
+import { API_BASE } from "@/app/constants";
 import { KLINE_SYMBOL_KEY } from "./KlinesChartConstants";
 
 const DEFAULT_SYMBOL = "BTCUSDT";
-
-function getSymbolOptions(): string[] {
-  const list = getKlineSymbols();
-  return list.length > 0 ? list : [DEFAULT_SYMBOL, "ETHUSDT"];
-}
+const FALLBACK_OPTIONS = [...DEFAULT_SYMBOLS_LIST] as readonly string[];
 
 export function getSymbolOptionsExport(): string[] {
-  return getSymbolOptions();
+  return [...FALLBACK_OPTIONS];
 }
 
-export const SYMBOL_OPTIONS = getSymbolOptions() as readonly string[];
+export const SYMBOL_OPTIONS = FALLBACK_OPTIONS;
 export type SymbolOption = (typeof SYMBOL_OPTIONS)[number];
 
-function getStoredSymbol(): string {
-  if (typeof window === "undefined") return getSymbolOptions()[0] ?? DEFAULT_SYMBOL;
-  const options = getSymbolOptions();
+function getStoredSymbol(options: readonly string[]): string {
+  if (typeof window === "undefined") return options[0] ?? DEFAULT_SYMBOL;
   const stored = window.localStorage.getItem(KLINE_SYMBOL_KEY);
   return stored && options.includes(stored) ? stored : (options[0] ?? DEFAULT_SYMBOL);
 }
@@ -37,23 +33,36 @@ interface ChartSymbolContextValue {
 const ChartSymbolContext = createContext<ChartSymbolContextValue | null>(null);
 
 export function ChartSymbolProvider({ children }: { children: ReactNode }) {
-  const [symbol, setSymbolState] = useState<string>(() => getSymbolOptions()[0] ?? DEFAULT_SYMBOL);
+  const [symbolOptions, setSymbolOptions] = useState<readonly string[]>(FALLBACK_OPTIONS);
+  const [symbol, setSymbolState] = useState<string>(DEFAULT_SYMBOL);
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false);
 
-  useLayoutEffect(() => {
-    const stored = getStoredSymbol();
-    setSymbolState(stored);
+  useEffect(() => {
+    fetch(`${API_BASE}/klines/symbols`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { symbols?: string[] }) => {
+        const list = Array.isArray(data?.symbols) && data.symbols.length > 0 ? data.symbols : [...FALLBACK_OPTIONS];
+        setSymbolOptions(list);
+        setSymbolState((prev) => (list.includes(prev) ? prev : list[0] ?? DEFAULT_SYMBOL));
+      })
+      .catch(() => {});
   }, []);
 
+  useLayoutEffect(() => {
+    setSymbolState((prev) => getStoredSymbol(symbolOptions).trim() || prev);
+  }, [symbolOptions]);
+
   const setSymbol = useCallback((s: string) => {
-    const options = getSymbolOptions();
-    if (!options.includes(s)) return;
-    setSymbolState(s);
-    try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_SYMBOL_KEY, s);
-    } catch {
-      /* ignore */
-    }
+    setSymbolOptions((opts) => {
+      if (!opts.includes(s)) return opts;
+      setSymbolState(s);
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_SYMBOL_KEY, s);
+      } catch {
+        /* ignore */
+      }
+      return opts;
+    });
   }, []);
 
   const openSymbolPanel = useCallback(() => setSymbolPanelOpen(true), []);
@@ -63,12 +72,12 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
     () => ({
       symbol,
       setSymbol,
-      symbolOptions: getSymbolOptions(),
+      symbolOptions,
       symbolPanelOpen,
       openSymbolPanel,
       closeSymbolPanel,
     }),
-    [symbol, setSymbol, symbolPanelOpen, openSymbolPanel, closeSymbolPanel]
+    [symbol, setSymbol, symbolOptions, symbolPanelOpen, openSymbolPanel, closeSymbolPanel]
   );
 
   return (
@@ -82,9 +91,9 @@ export function useChartSymbol(): ChartSymbolContextValue {
   const ctx = useContext(ChartSymbolContext);
   if (!ctx) {
     return {
-      symbol: getSymbolOptions()[0] ?? DEFAULT_SYMBOL,
+      symbol: DEFAULT_SYMBOL,
       setSymbol: () => {},
-      symbolOptions: getSymbolOptions(),
+      symbolOptions: FALLBACK_OPTIONS,
       symbolPanelOpen: false,
       openSymbolPanel: () => {},
       closeSymbolPanel: () => {},

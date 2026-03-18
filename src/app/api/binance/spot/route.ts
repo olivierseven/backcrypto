@@ -5,7 +5,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { resolveSymbol } from "@/app/lib/kline-symbols";
+import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -23,7 +23,8 @@ function startOfTodayUtcMs(): number {
 }
 
 export async function GET(request: NextRequest) {
-  const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol"));
+  const symbolList = await getKlineSymbolsFromDb(cryptoPrisma);
+  const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol"), symbolList);
   try {
     const startOfToday = startOfTodayUtcMs();
     const lastHourPrevDayOpen = startOfToday - ONE_HOUR_MS; // 23:00 UTC do dia anterior

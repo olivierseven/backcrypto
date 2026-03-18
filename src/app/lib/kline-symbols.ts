@@ -1,16 +1,14 @@
 /**
- * Lista de símbolos para klines: lida do env (KLINE_SYMBOLS ou NEXT_PUBLIC_KLINE_SYMBOLS).
- * Em dev o backfill usa KLINE_SYMBOLS_DEV se estiver definido.
- * Sync (cron) e cache-refresh usam a lista do banco (tabela KlineSymbol) quando disponível.
- * Formato env: "BTCUSDT,ETHUSDT" (vírgula, sem espaços ou com).
- * Uso: cron, cache-refresh, backfill, APIs e UI (dropdown).
+ * Lista de símbolos: só do banco (KlineSymbol). Fallback BTCUSDT, ETHUSDT.
+ * Sync, cache-refresh, backfill e APIs usam getKlineSymbolsFromDb; dropdown usa GET /api/klines/symbols.
  */
 import type { PrismaClient } from "@/lib/prisma-bio-client";
 
-const DEFAULT_SYMBOLS = "BTCUSDT,ETHUSDT";
+/** Fallback quando o banco está vazio ou indisponível. */
+export const DEFAULT_SYMBOLS_LIST: readonly string[] = ["BTCUSDT", "ETHUSDT"];
 
 /**
- * Lista de símbolos a partir da tabela KlineSymbol (fonte de verdade para sync e cache-refresh).
+ * Lista de símbolos a partir da tabela KlineSymbol (ativo = true).
  * Retorna array vazio se a tabela estiver vazia.
  */
 export async function getKlineSymbolsFromDb(db: PrismaClient): Promise<string[]> {
@@ -22,77 +20,31 @@ export async function getKlineSymbolsFromDb(db: PrismaClient): Promise<string[]>
   return rows.map((r) => r.symbol);
 }
 
-function getEnvSymbols(): string {
-  if (typeof process === "undefined" || !process.env) return DEFAULT_SYMBOLS;
-  return (
-    process.env.NEXT_PUBLIC_KLINE_SYMBOLS ??
-    process.env.KLINE_SYMBOLS ??
-    DEFAULT_SYMBOLS
-  );
-}
-
-function parseSymbolsRaw(raw: string): string[] {
-  return raw
-    .split(",")
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
-}
-
-let cached: string[] | null = null;
-
-/**
- * Retorna a lista de símbolos configurada no env (trim, sem vazios).
- * Cache na primeira leitura. Uso: cron, cache-refresh.
- */
+/** Fallback: lista fixa (não usa mais env). */
 export function getKlineSymbols(): string[] {
-  if (cached !== null) return cached;
-  const raw = getEnvSymbols();
-  cached = parseSymbolsRaw(raw);
-  return cached;
+  return [...DEFAULT_SYMBOLS_LIST];
 }
 
 /**
- * Lista de símbolos para backfill/painel em dev.
- * Em desenvolvimento usa KLINE_SYMBOLS_DEV (ou NEXT_PUBLIC_KLINE_SYMBOLS_DEV) se definido; senão KLINE_SYMBOLS.
- * Em produção usa getKlineSymbols(). Sem cache em dev para refletir .env.
+ * Verifica se o símbolo está na lista. Opcional: passar lista do banco; senão usa fallback.
  */
-export function getKlineSymbolsForBackfill(): string[] {
-  if (typeof process === "undefined" || !process.env) {
-    return parseSymbolsRaw(DEFAULT_SYMBOLS);
-  }
-  if (process.env.NODE_ENV === "development") {
-    const raw =
-      process.env.KLINE_SYMBOLS_DEV ??
-      process.env.NEXT_PUBLIC_KLINE_SYMBOLS_DEV ??
-      process.env.KLINE_SYMBOLS ??
-      process.env.NEXT_PUBLIC_KLINE_SYMBOLS ??
-      DEFAULT_SYMBOLS;
-    const list = parseSymbolsRaw(raw);
-    return list.length > 0 ? list : parseSymbolsRaw(DEFAULT_SYMBOLS);
-  }
-  return getKlineSymbols();
-}
-
-/**
- * Verifica se o símbolo está na lista permitida. Case-insensitive.
- * Se a lista estiver vazia após parse, considera apenas DEFAULT_SYMBOLS.
- */
-export function isAllowedSymbol(symbol: string | null | undefined): boolean {
+export function isAllowedSymbol(symbol: string | null | undefined, list?: string[]): boolean {
   if (!symbol || typeof symbol !== "string") return false;
-  const list = getKlineSymbols();
-  if (list.length === 0) return ["BTCUSDT", "ETHUSDT"].includes(symbol.toUpperCase());
-  return list.includes(symbol.trim().toUpperCase());
+  const L = list ?? DEFAULT_SYMBOLS_LIST;
+  return L.length === 0
+    ? DEFAULT_SYMBOLS_LIST.includes(symbol.trim().toUpperCase())
+    : L.includes(symbol.trim().toUpperCase());
 }
 
 /**
- * Retorna o símbolo se válido, senão o primeiro da lista.
+ * Retorna o símbolo se válido na lista, senão o primeiro da lista. Opcional: passar lista do banco.
  */
-export function resolveSymbol(symbol: string | null | undefined): string {
-  const list = getKlineSymbols();
-  const first = list[0] ?? "BTCUSDT";
+export function resolveSymbol(symbol: string | null | undefined, list?: string[]): string {
+  const L = list ?? DEFAULT_SYMBOLS_LIST;
+  const first = L[0] ?? "BTCUSDT";
   if (!symbol || typeof symbol !== "string") return first;
   const s = symbol.trim().toUpperCase();
-  return list.includes(s) ? s : first;
+  return L.includes(s) ? s : first;
 }
 
 /** Verifica se o erro da Binance é "símbolo inválido" (-1121). Assim podemos ignorar o símbolo em vez de falhar. */
