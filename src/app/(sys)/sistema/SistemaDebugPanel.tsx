@@ -275,8 +275,9 @@ export default function SistemaDebugPanel() {
     setRegisterGapsLoading(null);
     setLoading(true);
     try {
+      const targetParam = isDevHost && backfillTarget === "prod" ? "&target=prod" : "";
       const res = await fetch(
-        `${API_BASE}/debug/klines-validate?symbol=${encodeURIComponent(symbol.trim())}`,
+        `${API_BASE}/debug/klines-validate?symbol=${encodeURIComponent(symbol.trim())}${targetParam}`,
         { credentials: "include" }
       );
       const data = await res.json();
@@ -302,14 +303,16 @@ export default function SistemaDebugPanel() {
     setRegisterGapsLoading(interval);
     await new Promise((r) => setTimeout(r, 0));
     try {
+      const gapPayload = {
+        symbol: symbol.trim(),
+        gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
+        ...(isDevHost && backfillTarget === "prod" ? { target: "prod" as const } : {}),
+      };
       const res = await fetch(`${API_BASE}/debug/klines-gaps`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          symbol: symbol.trim(),
-          gaps: gaps.map((g) => ({ interval, from: g.from, to: g.to })),
-        }),
+        body: JSON.stringify(gapPayload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -735,6 +738,38 @@ export default function SistemaDebugPanel() {
             )}
             {debugTab === "historico" && (
               <>
+            <p className="text-xs text-zinc-500 mb-3">
+              {(t as Record<string, string>).ambienteLabel ?? "Ambiente:"}{" "}
+              <span className="font-medium text-zinc-700">{isDevHost ? ((t as Record<string, string>).ambienteDev ?? "Dev") : ((t as Record<string, string>).ambienteProd ?? "Prod")}</span>
+              {" — "}
+              {isDevHost ? ((t as Record<string, string>).ambienteHintDev ?? "Validação, sync e cache usam o banco do .env local.") : ((t as Record<string, string>).ambienteHintProd ?? "Validação, sync e cache usam o banco de produção (CRON atualiza cache).")}
+            </p>
+            {isDevHost && (
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-xs text-zinc-600">{(t as Record<string, string>).backfillTargetLabel ?? "Alvo:"}</span>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
+                  <input
+                    type="radio"
+                    name="historicoTarget"
+                    checked={backfillTarget === "dev"}
+                    onChange={() => setBackfillTarget("dev")}
+                    className="rounded-full border-zinc-300"
+                  />
+                  {(t as Record<string, string>).backfillTargetDev ?? "Dev"}
+                </label>
+                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
+                  <input
+                    type="radio"
+                    name="historicoTarget"
+                    checked={backfillTarget === "prod"}
+                    onChange={() => setBackfillTarget("prod")}
+                    className="rounded-full border-zinc-300"
+                  />
+                  {(t as Record<string, string>).backfillTargetProd ?? "Prod"}
+                </label>
+                <span className="text-xs text-zinc-500">— {(t as Record<string, string>).historicoTargetHint ?? "Validação, preencher e registrar gaps usam este banco."}</span>
+              </div>
+            )}
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
                 {t.validateKlines}
@@ -788,31 +823,8 @@ export default function SistemaDebugPanel() {
                 {(t as { backfillPast?: string }).backfillPast ?? "Backfill do passado"}
               </h4>
               <p className="text-xs text-zinc-500 mb-2">
-                {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima."}
+                {(t as Record<string, string>).backfillPastHint ?? "Usa o símbolo do campo acima. Usa o Alvo (Dev/Prod) do topo."}
               </p>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs text-zinc-600">{(t as Record<string, string>).backfillTargetLabel ?? "Alvo:"}</span>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
-                  <input
-                    type="radio"
-                    name="backfillTarget"
-                    checked={backfillTarget === "dev"}
-                    onChange={() => setBackfillTarget("dev")}
-                    className="rounded-full border-zinc-300"
-                  />
-                  {(t as Record<string, string>).backfillTargetDev ?? "Dev"}
-                </label>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-700">
-                  <input
-                    type="radio"
-                    name="backfillTarget"
-                    checked={backfillTarget === "prod"}
-                    onChange={() => setBackfillTarget("prod")}
-                    className="rounded-full border-zinc-300"
-                  />
-                  {(t as Record<string, string>).backfillTargetProd ?? "Prod"}
-                </label>
-              </div>
               <label className="flex items-center gap-2 mb-2 text-xs text-zinc-700">
                 <input
                   type="checkbox"

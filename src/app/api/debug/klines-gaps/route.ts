@@ -1,11 +1,11 @@
 /**
  * Registrar gaps conhecidos (sem dado na Binance). Validação passa a ignorá-los.
- * Apenas admin. POST /api/debug/klines-gaps
- * Body: { symbol?: string, gaps: { interval: "1m"|"5m"|"1h", from: number, to: number }[] }
+ * Apenas admin. Só em dev. POST /api/debug/klines-gaps
+ * Body: { symbol?: string, target?: "dev"|"prod", gaps: [...] }. target=prod usa URL_PROD.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma } from "@/lib/crypto-db";
+import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { resolveSymbol } from "@/app/lib/kline-symbols";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -13,6 +13,10 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(request: NextRequest) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Registro de gaps só disponível em desenvolvimento" }, { status: 404 });
+    }
+
     const token = request.cookies.get(COOKIE)?.value;
     if (!token) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -31,6 +35,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const target = body.target === "prod" ? "prod" : "dev";
+    const db =
+      target === "prod"
+        ? (() => {
+            try {
+              return getCryptoPrismaProd();
+            } catch (e) {
+              throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
+            }
+          })()
+        : cryptoPrisma;
+
     const symbol = resolveSymbol((body.symbol as string)?.trim());
     const gaps = Array.isArray(body.gaps) ? body.gaps : [];
     const valid = gaps.filter(
@@ -49,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     type GapItem = { interval: "1m" | "5m" | "1h"; from: number; to: number };
-    const created = await cryptoPrisma.binanceKlineGap.createMany({
+    const created = await db.binanceKlineGap.createMany({
       data: valid.map((g: GapItem) => ({
         symbol,
         interval: g.interval,

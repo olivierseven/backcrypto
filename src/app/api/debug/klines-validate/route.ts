@@ -3,12 +3,13 @@
  * - 1m: BinanceKlineFast
  * - 5m: BinanceKlineMonth
  * - 1h: BinanceKline
- * Apenas admin. GET /api/debug/klines-validate?symbol=BTCUSDT
- * Opcional: interval=1m | 5m | 1h — se omitido, valida as três tabelas.
+ * Apenas admin. Só em dev. GET /api/debug/klines-validate?symbol=BTCUSDT&target=dev|prod
+ * Opcional: interval=1m | 5m | 1h — se omitido, valida as três tabelas. target=prod usa URL_PROD.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { cryptoPrisma } from "@/lib/crypto-db";
+import { PrismaClient } from "@/lib/prisma-bio-client";
+import { cryptoPrisma, getCryptoPrismaProd } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
 import { resolveSymbol } from "@/app/lib/kline-symbols";
 
@@ -32,9 +33,9 @@ type ValidateSingleResult = {
   gaps: { from: number; to: number }[];
 };
 
-async function validate1m(symbol: string): Promise<ValidateSingleResult> {
+async function validate1m(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
   const CORRETORA = "binance";
-  const [statsRow] = await cryptoPrisma.$queryRaw<
+  const [statsRow] = await db.$queryRaw<
     [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
   >(
     Prisma.sql`
@@ -50,7 +51,7 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
   if (oldest != null && newest != null && newest > oldest) {
     days = (newest - oldest) / (24 * 60 * 60 * 1000);
   }
-  const gaps = await cryptoPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
+  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
     Prisma.sql`
       WITH ordered AS (
         SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
@@ -66,7 +67,7 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
     from: Number(g.openTime),
     to: Number(g.next_open),
   }));
-  const registered1m = await cryptoPrisma.binanceKlineGap.findMany({
+  const registered1m = await db.binanceKlineGap.findMany({
     where: { symbol, interval: "1m" },
     select: { gapFrom: true, gapTo: true },
   });
@@ -85,9 +86,9 @@ async function validate1m(symbol: string): Promise<ValidateSingleResult> {
   };
 }
 
-async function validate5m(symbol: string): Promise<ValidateSingleResult> {
+async function validate5m(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
   const CORRETORA = "binance";
-  const [statsRow] = await cryptoPrisma.$queryRaw<
+  const [statsRow] = await db.$queryRaw<
     [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
   >(
     Prisma.sql`
@@ -103,7 +104,7 @@ async function validate5m(symbol: string): Promise<ValidateSingleResult> {
   if (oldest != null && newest != null && newest > oldest) {
     days = (newest - oldest) / (24 * 60 * 60 * 1000);
   }
-  const gaps = await cryptoPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
+  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
     Prisma.sql`
       WITH ordered AS (
         SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
@@ -119,7 +120,7 @@ async function validate5m(symbol: string): Promise<ValidateSingleResult> {
     from: Number(g.openTime),
     to: Number(g.next_open),
   }));
-  const registered5m = await cryptoPrisma.binanceKlineGap.findMany({
+  const registered5m = await db.binanceKlineGap.findMany({
     where: { symbol, interval: "5m" },
     select: { gapFrom: true, gapTo: true },
   });
@@ -138,9 +139,9 @@ async function validate5m(symbol: string): Promise<ValidateSingleResult> {
   };
 }
 
-async function validate1h(symbol: string): Promise<ValidateSingleResult> {
+async function validate1h(db: PrismaClient, symbol: string): Promise<ValidateSingleResult> {
   const CORRETORA = "binance";
-  const [statsRow] = await cryptoPrisma.$queryRaw<
+  const [statsRow] = await db.$queryRaw<
     [{ count: bigint; oldest: bigint | null; newest: bigint | null }]
   >(
     Prisma.sql`
@@ -156,7 +157,7 @@ async function validate1h(symbol: string): Promise<ValidateSingleResult> {
   if (oldest != null && newest != null && newest > oldest) {
     days = (newest - oldest) / (24 * 60 * 60 * 1000);
   }
-  const gaps = await cryptoPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
+  const gaps = await db.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
     Prisma.sql`
       WITH ordered AS (
         SELECT "openTime", lead("openTime") OVER (ORDER BY "openTime") AS next_open
@@ -172,7 +173,7 @@ async function validate1h(symbol: string): Promise<ValidateSingleResult> {
     from: Number(g.openTime),
     to: Number(g.next_open),
   }));
-  const registered1h = await cryptoPrisma.binanceKlineGap.findMany({
+  const registered1h = await db.binanceKlineGap.findMany({
     where: { symbol, interval: "1h" },
     select: { gapFrom: true, gapTo: true },
   });
@@ -193,6 +194,10 @@ async function validate1h(symbol: string): Promise<ValidateSingleResult> {
 
 export async function GET(request: NextRequest) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Validação só disponível em desenvolvimento" }, { status: 404 });
+    }
+
     const token = request.cookies.get(COOKIE)?.value;
     if (!token) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -212,25 +217,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    const target = request.nextUrl.searchParams.get("target") === "prod" ? "prod" : "dev";
+    const db: PrismaClient =
+      target === "prod"
+        ? (() => {
+            try {
+              return getCryptoPrismaProd();
+            } catch (e) {
+              throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
+            }
+          })()
+        : cryptoPrisma;
+
     const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol")?.trim());
     const intervalParam = request.nextUrl.searchParams.get("interval")?.trim().toLowerCase();
 
     if (intervalParam === "1h") {
-      const result = await validate1h(symbol);
+      const result = await validate1h(db, symbol);
       return NextResponse.json(result);
     }
     if (intervalParam === "5m") {
-      const result = await validate5m(symbol);
+      const result = await validate5m(db, symbol);
       return NextResponse.json(result);
     }
     if (intervalParam === "1m") {
-      const result = await validate1m(symbol);
+      const result = await validate1m(db, symbol);
       return NextResponse.json(result);
     }
     const [result1m, result5m, result1h] = await Promise.all([
-      validate1m(symbol),
-      validate5m(symbol),
-      validate1h(symbol),
+      validate1m(db, symbol),
+      validate5m(db, symbol),
+      validate1h(db, symbol),
     ]);
     return NextResponse.json({ "1m": result1m, "5m": result5m, "1h": result1h });
   } catch (e) {
