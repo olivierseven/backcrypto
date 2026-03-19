@@ -455,6 +455,19 @@ export function KlinesChartSidebar({
                       : candleBodyStyle === "hollow"
                         ? ((t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias")
                         : ((t as Record<string, string>).chartTypeCandles ?? "Candles");
+            const chartTypeThumbSrc = heikinAshi
+              ? `${ASSET_PREFIX}/assets/charts/heikin_ashi.webp`
+              : chartStyle === "bars"
+                ? `${ASSET_PREFIX}/assets/charts/barras.webp`
+                : chartStyle === "line"
+                  ? `${ASSET_PREFIX}/assets/charts/linhas.webp`
+                  : chartStyle === "linePoints"
+                    ? `${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`
+                    : chartStyle === "area"
+                      ? `${ASSET_PREFIX}/assets/charts/area.webp`
+                      : candleBodyStyle === "hollow"
+                        ? `${ASSET_PREFIX}/assets/charts/candles_vazias.webp`
+                        : `${ASSET_PREFIX}/assets/charts/candles.webp`;
             return (
               <>
                 <button
@@ -476,7 +489,12 @@ export function KlinesChartSidebar({
                       : "w-full flex items-center justify-center py-2 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
                   }
                 >
-                  6
+                  <img
+                    src={chartTypeThumbSrc}
+                    alt=""
+                    className="w-6 h-6 object-contain"
+                    aria-hidden
+                  />
                 </button>
               </>
             );
@@ -1099,13 +1117,44 @@ export function KlinesChartSidebar({
               <>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).chartTypeLabel ?? "Tipo de gráfico"}</p>
                 <div className="grid grid-cols-1 gap-1 mb-2">
-                  <button type="button" onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{(t as Record<string, string>).chartTypeCandles ?? "Candles"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeBars ?? "Barras"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeLine ?? "Linhas"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeArea ?? "Área"}</button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>{isDefaultModel ? "🔒 " : ""}{(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}</button>
+                  <button
+                    type="button"
+                    onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                  >
+                    <img src={`${ASSET_PREFIX}/assets/charts/candles.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/candles_vazias.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/barras.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeBars ?? "Barras"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/linhas.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/area.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeArea ?? "Área"}
+                  </button>
+                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/heikin_ashi.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
+                  </button>
                 </div>
               </>
             )}

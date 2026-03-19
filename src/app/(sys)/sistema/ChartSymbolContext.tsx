@@ -61,7 +61,8 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
-      return opts;
+      // Faz o símbolo clicado aparecer no topo da lista do header.
+      return [s, ...opts.filter((o) => o !== s)];
     });
   }, []);
 

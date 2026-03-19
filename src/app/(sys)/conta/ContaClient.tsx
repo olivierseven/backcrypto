@@ -204,7 +204,7 @@ export default function BioContaClient({
     <>
     <div className="space-y-6">
       {/* Card: Informações de Perfil */}
-      <div className="card-crypto-generator crypto-card">
+      <div className="card-crypto-generator crypto-card hidden">
         <h2 className="text-base font-semibold mb-3 text-zinc-900">{t.conta.profileInfo}</h2>
         <div className="crypto-form">
           <div>

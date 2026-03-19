@@ -302,7 +302,7 @@ function SistemaHeader({
             role="listbox"
             aria-label={t.symbolAria ?? "Select symbol"}
           >
-            {symbolOptions.map((opt) => (
+            {symbolOptions.map((opt, idx) => (
               <button
                 key={opt}
                 type="button"
@@ -315,6 +315,9 @@ function SistemaHeader({
                 className={`w-full text-left px-3 py-2 text-sm font-medium truncate ${symbol === opt ? "bg-zinc-100 text-zinc-900" : "text-zinc-700 hover:bg-zinc-100"}`}
                 title={opt}
               >
+                <span className="inline-block w-4 text-xs font-mono text-zinc-500 mr-2 align-middle" aria-hidden>
+                  {idx + 1}
+                </span>
                 {opt}
               </button>
             ))}

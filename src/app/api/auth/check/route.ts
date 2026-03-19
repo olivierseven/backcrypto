@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { syncUserTierFromCredits } from "@/lib/user-tier";
+import { isFirstLoginCryptoLiteTrial, createCryptoLiteTrialPackage } from "@/lib/crypto-bonus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,11 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
+    }
+
+    // Se for o primeiro crédito do usuário (primeiro login real), simula o pacote lite (1 coin / 1 dia).
+    if (await isFirstLoginCryptoLiteTrial(userId)) {
+      await createCryptoLiteTrialPackage(userId);
     }
 
     const user = await cryptoPrisma.user.findUnique({

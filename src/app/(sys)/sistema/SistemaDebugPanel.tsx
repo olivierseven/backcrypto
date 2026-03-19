@@ -85,6 +85,26 @@ export default function SistemaDebugPanel() {
   const [validadorIncomplete, setValidadorIncomplete] = useState<string[]>([]);
   const [validadorWithGaps, setValidadorWithGaps] = useState<string[]>([]);
 
+  type ProdConfirmKind =
+    | "pastBackfill"
+    | "syncKlines"
+    | "cacheRefresh"
+    | "validateKlines"
+    | "backfill"
+    | "registerGaps"
+    | "validateAll";
+
+  type ProdConfirmState =
+    | { kind: "pastBackfill"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h" }
+    | { kind: "syncKlines"; target: "dev" | "prod" }
+    | { kind: "cacheRefresh"; target: "dev" | "prod" }
+    | { kind: "validateKlines"; target: "dev" | "prod" }
+    | { kind: "backfill"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h"; gaps: { from: number; to: number }[] }
+    | { kind: "registerGaps"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h"; gaps: { from: number; to: number }[] }
+    | { kind: "validateAll"; target: "dev" | "prod" };
+
+  const [prodConfirm, setProdConfirm] = useState<ProdConfirmState | null>(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") setIsDevHost(window.location.hostname === "localhost");
   }, []);
@@ -109,6 +129,25 @@ export default function SistemaDebugPanel() {
   const historicoTarget: "dev" | "prod" = debugTab === "historico-prod" ? "prod" : "dev";
   const isValidadorTab = debugTab === "validador-dev" || debugTab === "validador-prod";
   const validadorTarget: "dev" | "prod" = debugTab === "validador-prod" ? "prod" : "dev";
+
+  const confirmProdSymbol = symbol.trim();
+  const confirmProdCoinsCountLabel =
+    historicoSymbols.length > 0
+      ? `${historicoSymbols.length} ${historicoSymbols.length === 1 ? (t as Record<string, string>).backfillAllSymbolsOne ?? "moeda" : (t as Record<string, string>).backfillAllSymbolsCount ?? "moedas"}`
+      : (t as Record<string, string>).backfillAllSymbols ?? "Para todas as moedas";
+  const confirmProdCoinsLabel =
+    backfillAllSymbols && backfillOnlyMissing
+      ? `${confirmProdCoinsCountLabel} — ${(t as Record<string, string>).backfillOnlyMissing ?? "Apenas moedas sem histórico (novas)"}`
+      : confirmProdCoinsCountLabel;
+
+  const prodConfirmBusy =
+    loading ||
+    backfillLoading !== null ||
+    registerGapsLoading !== null ||
+    pastBackfillLoading !== null ||
+    syncKlinesLoading ||
+    cacheRefreshLoading ||
+    validadorLoading;
 
   useEffect(() => {
     setSessionDebugEnabledState(getSessionDebugEnabled());
@@ -574,6 +613,40 @@ export default function SistemaDebugPanel() {
     }
   }
 
+  async function performProdAction(action: ProdConfirmState) {
+    switch (action.kind) {
+      case "pastBackfill":
+        return runPastBackfill(action.interval, action.target);
+      case "syncKlines":
+        return runSyncKlines(action.target);
+      case "cacheRefresh":
+        return runCacheRefresh(action.target);
+      case "validateKlines":
+        return runValidate(action.target);
+      case "backfill":
+        return runBackfill(action.interval, action.gaps, action.target);
+      case "registerGaps":
+        return runRegisterGaps(action.interval, action.gaps, action.target);
+      case "validateAll":
+        return runValidador(action.target);
+    }
+  }
+
+  function requestProdConfirm(action: ProdConfirmState) {
+    if (action.target !== "prod") {
+      void performProdAction(action);
+      return;
+    }
+    setProdConfirm(action);
+  }
+
+  function confirmProdNow() {
+    if (!prodConfirm) return;
+    const action = prodConfirm;
+    setProdConfirm(null);
+    void performProdAction(action);
+  }
+
   function ResultBlock({ label, res, target }: { label: string; res: ValidateSingleResult; target: "dev" | "prod" }) {
     const interval = res.interval as "1m" | "5m" | "1h";
     const canBackfill = isDevHost && !res.ok && res.gaps.length > 0 && (interval === "1m" || interval === "5m" || interval === "1h");
@@ -604,7 +677,14 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={backfillLoading !== null || registerGapsLoading !== null}
-                  onClick={() => runBackfill(interval, res.gaps, target)}
+                  onClick={() =>
+                    requestProdConfirm({
+                      kind: "backfill",
+                      interval,
+                      gaps: res.gaps,
+                      target,
+                    })
+                  }
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {backfillLoading === interval ? (t as { backfillLoading?: string }).backfillLoading ?? "Preenchendo…" : (t as { backfill?: string }).backfill ?? "Preencher gaps"}
@@ -612,7 +692,14 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={backfillLoading !== null || registerGapsLoading !== null}
-                  onClick={() => runRegisterGaps(interval, res.gaps, target)}
+                  onClick={() =>
+                    requestProdConfirm({
+                      kind: "registerGaps",
+                      interval,
+                      gaps: res.gaps,
+                      target,
+                    })
+                  }
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-zinc-600 text-white hover:bg-zinc-700 disabled:opacity-50"
                 >
                   {registerGapsLoading === interval ? (t as { registerGapsLoading?: string }).registerGapsLoading ?? "Registrando…" : (t as { registerGaps?: string }).registerGaps ?? "Registrar gaps"}
@@ -882,7 +969,7 @@ export default function SistemaDebugPanel() {
                 </select>
                 <button
                   type="button"
-                  onClick={() => runValidate(historicoTarget)}
+                  onClick={() => requestProdConfirm({ kind: "validateKlines", target: historicoTarget })}
                   disabled={loading}
                   className="text-sm font-medium px-3 py-1.5 rounded-md bg-zinc-800 text-white hover:bg-zinc-700 disabled:opacity-50"
                 >
@@ -947,7 +1034,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("1m", historicoTarget)}
+                  onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "1m", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (9 dias)"}
@@ -955,7 +1042,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("5m", historicoTarget)}
+                  onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "5m", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "5m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast5m?: string }).backfillPast5m ?? "Backfill 5m (90 dias)"}
@@ -963,7 +1050,7 @@ export default function SistemaDebugPanel() {
                 <button
                   type="button"
                   disabled={pastBackfillLoading !== null || loading}
-                  onClick={() => runPastBackfill("1h", historicoTarget)}
+                  onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "1h", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
                   {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (730 dias)"}
@@ -991,7 +1078,7 @@ export default function SistemaDebugPanel() {
               <button
                 type="button"
                 disabled={syncKlinesLoading}
-                onClick={() => runSyncKlines(historicoTarget)}
+                onClick={() => requestProdConfirm({ kind: "syncKlines", target: historicoTarget })}
                 className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
               >
                 {syncKlinesLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).syncKlinesRun ?? "Executar sync agora")}
@@ -1012,7 +1099,7 @@ export default function SistemaDebugPanel() {
               <button
                 type="button"
                 disabled={cacheRefreshLoading}
-                onClick={() => runCacheRefresh(historicoTarget)}
+                onClick={() => requestProdConfirm({ kind: "cacheRefresh", target: historicoTarget })}
                 className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
               >
                 {cacheRefreshLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).cacheRefreshRun ?? "Executar refresh agora")}
@@ -1129,7 +1216,7 @@ export default function SistemaDebugPanel() {
                   <button
                     type="button"
                     disabled={validadorLoading}
-                    onClick={() => runValidador(validadorTarget)}
+                  onClick={() => requestProdConfirm({ kind: "validateAll", target: validadorTarget })}
                     className="text-xs font-medium px-2.5 py-1.5 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
                   >
                     {validadorLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).validadorRun ?? "Executar validação")}
@@ -1365,6 +1452,85 @@ export default function SistemaDebugPanel() {
         </div>
       )}
 
+      {prodConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setProdConfirm(null)} />
+          <div
+            className="relative w-full max-w-md bg-white border border-zinc-200 rounded-lg shadow-lg p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold text-zinc-900">
+              {(t as Record<string, string>).confirmProdTitle ?? "Confirmar ação em produção"}
+            </h3>
+            <p className="text-xs text-zinc-600 mt-1">
+              {(t as Record<string, string>).confirmProdDesc ?? "Esta ação será executada no banco de produção. Deseja continuar?"}
+            </p>
+
+            <div className="mt-3 rounded-md bg-zinc-50 border border-zinc-200 p-3">
+              <p className="text-xs font-medium text-zinc-800">
+                {(() => {
+                  switch (prodConfirm.kind) {
+                    case "pastBackfill":
+                      return ((t as Record<string, string>).confirmProdPastBackfill ?? "Backfill do passado ({interval})").replace("{interval}", prodConfirm.interval);
+                    case "validateKlines":
+                      return (t as Record<string, string>).confirmProdValidateKlines ?? "Validar klines (histórico)";
+                    case "syncKlines":
+                      return (t as Record<string, string>).confirmProdSyncKlines ?? "Sync klines";
+                    case "cacheRefresh":
+                      return (t as Record<string, string>).confirmProdCacheRefresh ?? "Refresh cache";
+                    case "backfill":
+                      return ((t as Record<string, string>).confirmProdBackfill ?? "Preencher gaps ({interval})").replace("{interval}", prodConfirm.interval);
+                    case "registerGaps":
+                      return ((t as Record<string, string>).confirmProdRegisterGaps ?? "Registrar gaps ({interval})").replace("{interval}", prodConfirm.interval);
+                    case "validateAll":
+                      return (t as Record<string, string>).confirmProdValidateAll ?? "Validador de tempo (todas as moedas)";
+                    default:
+                      return "";
+                  }
+                })()}
+              </p>
+
+              {(prodConfirm.kind === "pastBackfill" || prodConfirm.kind === "validateKlines" || prodConfirm.kind === "backfill" || prodConfirm.kind === "registerGaps") && (
+                <div className="mt-2 space-y-1">
+                  {prodConfirm.kind === "pastBackfill" ? (
+                    backfillAllSymbols ? (
+                      <p className="text-xs text-zinc-600">
+                        {(t as Record<string, string>).confirmProdCoinsLabel?.replace("{coins}", confirmProdCoinsLabel) ?? `Moedas: ${confirmProdCoinsLabel}`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-zinc-600">
+                        {(t as Record<string, string>).confirmProdSymbolLabel?.replace("{symbol}", confirmProdSymbol) ?? `Símbolo: ${confirmProdSymbol}`}
+                      </p>
+                    )
+                  ) : (
+                    <p className="text-xs text-zinc-600">
+                      {(t as Record<string, string>).confirmProdSymbolLabel?.replace("{symbol}", confirmProdSymbol) ?? `Símbolo: ${confirmProdSymbol}`}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => setProdConfirm(null)}
+                className="text-xs px-3 py-2 rounded-md border border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+              >
+                {(t as Record<string, string>).confirmProdCancel ?? "Cancelar"}
+              </button>
+              <button
+                type="button"
+                onClick={confirmProdNow}
+                disabled={prodConfirmBusy}
+                className="text-xs px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {(t as Record<string, string>).confirmProdConfirm ?? "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {open && (
         <button
           type="button"
