@@ -328,6 +328,7 @@ export function KlinesChartSidebar({
   const chartTypeTriggerRef = useRef<HTMLDivElement>(null);
   const settingsTriggerRef = useRef<HTMLDivElement>(null);
   const [portalStyle, setPortalStyle] = useState<{ top: number; left: number } | null>(null);
+  const portalContentRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const anyOpen = chartTypeOpen || intervalsOpen || settingsOpen || colorsOpen || (drawOpen && drawPanelSide === "left");
@@ -354,8 +355,17 @@ export function KlinesChartSidebar({
     const updatePosition = () => {
       const r = el.getBoundingClientRect();
       if (isHorizontal) {
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+        const panelW = portalContentRef.current?.offsetWidth ?? 260;
+        const panelH = portalContentRef.current?.offsetHeight ?? 360;
+        const pad = 8;
+        const belowTop = r.bottom + 4;
+        const aboveTop = r.top - panelH - 4;
+        const top = belowTop + panelH <= viewportH - pad ? belowTop : Math.max(pad, aboveTop);
+        const left = Math.max(pad, Math.min(r.left, viewportW - panelW - pad));
         setPortalStyle((prev) => {
-          const next = { top: r.bottom + 4, left: r.left };
+          const next = { top, left };
           if (prev && prev.top === next.top && prev.left === next.left) return prev;
           return next;
         });
@@ -1109,8 +1119,9 @@ export function KlinesChartSidebar({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            ref={portalContentRef}
             className="fixed z-[100] w-max min-w-[7.5rem] combobox-dropdown-max rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-            style={{ top: portalStyle.top, left: portalStyle.left }}
+            style={{ top: portalStyle.top, left: portalStyle.left, maxHeight: "min(70vh, 420px)", overflowY: "auto" }}
             onClick={(e) => e.stopPropagation()}
           >
             {chartTypeOpen && (
