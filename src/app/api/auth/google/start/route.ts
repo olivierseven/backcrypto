@@ -26,7 +26,9 @@ export async function GET(req: Request) {
   const fromAppParam = url.searchParams.get("from_app") === "1";
   const ua = req.headers.get("user-agent") || "";
   const isMobile = /android|iphone|ipad|mobile/i.test(ua);
-  const fromApp = fromAppParam || isMobile;
+  // Fluxo app apenas quando informado explicitamente.
+  // Em web mobile, precisamos manter o callback padrão para setar cookie de sessão e redirecionar ao sistema.
+  const fromApp = fromAppParam;
 
   if (!CID) {
     dbg("[crypto/auth/google/start] GOOGLE_CLIENT_ID not configured");

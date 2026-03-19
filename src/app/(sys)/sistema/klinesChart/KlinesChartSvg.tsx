@@ -356,6 +356,11 @@ export function KlinesChartSvg({
   );
 
   const mainLines = indicatorLines.filter((ind) => getPanel(ind) === "main");
+  // Watermark responsivo ao tamanho do plot (mantém proporção 2:1).
+  const logoW = Math.max(64, Math.min(120, chartW * 0.18));
+  const logoH = logoW / 2;
+  const logoX = MARGIN_LEFT + (chartW - logoW) / 2;
+  const logoY = MARGIN_TOP + Math.max(6, chartH * 0.02);
 
   return (
     <div className="flex flex-shrink-0 relative" style={{ width }}>
@@ -377,10 +382,10 @@ export function KlinesChartSvg({
         <rect x={MARGIN_LEFT} y={MARGIN_TOP} width={chartW} height={chartH} fill={chartBgHex} />
         <image
           href={`${ASSET_PREFIX}/assets/logo.webp`}
-          x={MARGIN_LEFT + 8}
-          y={MARGIN_TOP + 8}
-          width={100}
-          height={50}
+          x={logoX}
+          y={logoY}
+          width={logoW}
+          height={logoH}
           opacity={0.1}
           preserveAspectRatio="xMidYMid meet"
           pointerEvents="none"

@@ -264,6 +264,7 @@ export default function BioContaClient({
           <div className="flex justify-between"><dt className="text-zinc-700">{t.conta.role}</dt><dd>{user.role}</dd></div>
           <div className="flex justify-between"><dt className="text-zinc-700">{t.conta.verification}</dt><dd className={user.emailVerifiedAt ? "text-emerald-600" : "text-amber-600"}>{user.emailVerifiedAt ? t.conta.verified : t.conta.pending}</dd></div>
           <div className="flex justify-between"><dt className="text-zinc-700">{t.conta.memberSince}</dt><dd>{new Date(user.createdAt).toLocaleDateString(language === "en" ? "en-US" : "pt-BR")}</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-zinc-700">{t.conta.userId}</dt><dd className="font-mono text-xs text-right break-all">{user.id}</dd></div>
           <div className="flex justify-between"><dt className="text-zinc-700">{t.conta.email}</dt><dd>{email || "—"}</dd></div>
           <div className="flex justify-between items-center">
             <dt className="text-zinc-700">{t.conta.coinBalance}</dt>

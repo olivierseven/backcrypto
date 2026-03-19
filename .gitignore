@@ -16,3 +16,4 @@ android/.idea/
 
 logs/*
 !logs/.gitkeep
+dump.sql
