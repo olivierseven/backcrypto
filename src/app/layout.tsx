@@ -44,11 +44,11 @@ const SHARED_META: Metadata = {
   openGraph: {
     siteName: "Crypto Strategy",
     type: "website",
-    images: [{ url: `${BASE_PATH}/bio_banner_x.png` }],
+    images: [{ url: `${BASE_PATH}/crypto_banner_x.png` }],
   },
   twitter: {
     card: "summary_large_image",
-    images: [`${BASE_PATH}/bio_banner_x.png`],
+    images: [`${BASE_PATH}/crypto_banner_x.png`],
   },
 };
 

@@ -44,13 +44,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: t.title,
       description: t.description,
       url: `${BASE_URL}${BASE_PATH}/funcionalidade`,
-      images: [{ url: `${BASE_PATH}/bio_banner_x.png` }],
+      images: [{ url: `${BASE_PATH}/crypto_banner_x.png` }],
     },
     twitter: {
       card: "summary_large_image",
       title: t.title,
       description: t.description,
-      images: [`${BASE_PATH}/bio_banner_x.png`],
+      images: [`${BASE_PATH}/crypto_banner_x.png`],
     },
   };
 }
