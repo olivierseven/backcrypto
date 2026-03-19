@@ -148,6 +148,9 @@ export const cryptoTranslations = {
     },
     plans: {
       title: "Buy coins",
+      betaPromoBadge: "Beta Promo",
+      betaPromoTitle: "Special launch offer — 50% OFF",
+      betaPromoText: "Limited beta pricing with up to 50% discount. Get your coins now at promotional values.",
       balanceLimitReached: "You already have the maximum limit of coins. Cannot purchase more.",
       alreadyHasActivePlan: "You already have active credits. Use them or wait until they expire before purchasing again.",
       back: "Back",
@@ -1409,6 +1412,9 @@ export const cryptoTranslations = {
     },
     plans: {
       title: "Comprar coins",
+      betaPromoBadge: "Beta promocional",
+      betaPromoTitle: "Oferta especial de lançamento — 50% OFF",
+      betaPromoText: "Valores promocionais por tempo limitado na fase beta, com até 50% de desconto. Garanta seus coins agora.",
       balanceLimitReached: "Você já possui o limite máximo de coins. Não é possível comprar mais.",
       alreadyHasActivePlan: "Você já possui créditos ativos. Use-os ou aguarde o vencimento antes de comprar novamente.",
       back: "Voltar",

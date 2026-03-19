@@ -290,6 +290,19 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
     <>
     <div className="card-crypto-generator crypto-card shadow-lg">
       <div className="relative z-10">
+                  <div className="mb-4 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                        {(p as { betaPromoBadge?: string }).betaPromoBadge ?? "Beta promocional"}
+                      </span>
+                      <span className="text-sm font-semibold text-amber-900">
+                        {(p as { betaPromoTitle?: string }).betaPromoTitle ?? "Oferta especial de lançamento"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-amber-800">
+                      {(p as { betaPromoText?: string }).betaPromoText ?? "Valores promocionais por tempo limitado na fase beta. Garanta seus coins agora."}
+                    </p>
+                  </div>
                   <p className="text-sm text-zinc-700 mb-4">
                     {p.choosePlan}
                   </p>
