@@ -57,7 +57,7 @@ export default function SistemaDebugPanel() {
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
-  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod">("main");
+  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod" | "acesso">("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
@@ -84,6 +84,10 @@ export default function SistemaDebugPanel() {
   }[]>([]);
   const [validadorIncomplete, setValidadorIncomplete] = useState<string[]>([]);
   const [validadorWithGaps, setValidadorWithGaps] = useState<string[]>([]);
+  const [accessUserId, setAccessUserId] = useState("");
+  const [accessDays, setAccessDays] = useState(1);
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
   type ProdConfirmKind =
     | "pastBackfill"
@@ -831,6 +835,13 @@ export default function SistemaDebugPanel() {
             >
               {(t as Record<string, string>).tabValidadorProd ?? "Val (prod)"}
             </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("acesso")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "acesso" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabAcesso ?? "Acesso"}
+            </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {debugTab === "main" && (
@@ -1332,6 +1343,84 @@ export default function SistemaDebugPanel() {
                   <p className="text-sm text-zinc-500">{(t as Record<string, string>).validadorRunFirst ?? "Clique em Executar validação para preencher a tabela."}</p>
                 )}
               </section>
+              </div>
+            )}
+            {debugTab === "acesso" && (
+              <div className="space-y-4">
+                <section>
+                  <h4 className="text-sm font-medium text-zinc-800 mb-2">
+                    {(t as Record<string, string>).accessTitle ?? "Conceder acesso (lite)"}
+                  </h4>
+                  <p className="text-xs text-zinc-600 mb-3">
+                    {(t as Record<string, string>).accessDaysMax ?? "1–365, padrão 1"}
+                  </p>
+                  <div className="flex flex-col gap-3 max-w-sm">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).accessUserIdLabel ?? "User ID"}</span>
+                      <input
+                        type="text"
+                        value={accessUserId}
+                        onChange={(e) => {
+                          setAccessUserId(e.target.value);
+                          setAccessMessage(null);
+                        }}
+                        placeholder={(t as Record<string, string>).accessUserIdPlaceholder ?? "Cole ou digite o ID do usuário"}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm font-mono"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).accessDaysLabel ?? "Tempo máximo de acesso (dias)"}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={accessDays}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value, 10);
+                          if (!Number.isNaN(n)) setAccessDays(Math.max(1, Math.min(365, n)));
+                          setAccessMessage(null);
+                        }}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm w-24"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={accessLoading || !accessUserId.trim()}
+                      onClick={async () => {
+                        setAccessMessage(null);
+                        setAccessLoading(true);
+                        try {
+                          const res = await fetch(`${API_BASE}/debug/access`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId: accessUserId.trim(), days: accessDays }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok && data.ok) {
+                            setAccessMessage(((t as Record<string, string>).accessSuccess ?? "Acesso concedido: 1 coin, {days} dia(s).").replace("{days}", String(data.days ?? accessDays)));
+                            setAccessUserId("");
+                            setAccessDays(1);
+                          } else {
+                            setAccessMessage(`${(t as Record<string, string>).accessError ?? "Erro"}: ${data.error ?? res.statusText}`);
+                          }
+                        } catch (err) {
+                          setAccessMessage(`${(t as Record<string, string>).accessError ?? "Erro"}: ${err instanceof Error ? err.message : String(err)}`);
+                        } finally {
+                          setAccessLoading(false);
+                        }
+                      }}
+                      className="px-3 py-2 bg-zinc-800 text-white text-sm rounded hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {accessLoading ? ((t as { loading?: string }).loading ?? "Executando…") : ((t as Record<string, string>).accessGrant ?? "Conceder acesso")}
+                    </button>
+                  </div>
+                  {accessMessage && (
+                    <p className={`mt-3 text-sm ${accessMessage.startsWith((t as Record<string, string>).accessError ?? "Erro") ? "text-red-700" : "text-emerald-700"}`}>
+                      {accessMessage}
+                    </p>
+                  )}
+                </section>
               </div>
             )}
             {debugTab === "inspect" && (

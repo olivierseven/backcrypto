@@ -127,7 +127,10 @@ export default async function BioHistoricoPage({
                           </tr>
                         );
                       }
-                      const positive = e.amount > 0;
+                      const isTrialOrAdminAccess =
+                        meta?.reason === "lite_trial_first_login" || meta?.reason === "admin_access";
+                      const displayAmount = isTrialOrAdminAccess ? 0 : e.amount;
+                      const positive = displayAmount > 0;
                       const sign = positive ? "+" : "";
                       return (
                         <tr key={e.id}>
@@ -135,7 +138,7 @@ export default async function BioHistoricoPage({
                           <td className="py-2 text-purple-900 font-medium">{e.type}</td>
                           <td className="py-2 text-purple-800">{sourceLabel(String(e.source), t.historico.sources)}</td>
                           <td className={"py-2 text-right font-semibold " + (positive ? "text-emerald-700" : "text-amber-700")}>
-                            {sign}{e.amount.toLocaleString(locale)}
+                            {sign}{displayAmount.toLocaleString(locale)}
                           </td>
                         </tr>
                       );

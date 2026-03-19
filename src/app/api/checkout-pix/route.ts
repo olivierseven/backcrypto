@@ -9,7 +9,7 @@ import { decryptEmail } from "@/lib/crypto";
 import { dbg, warn, error } from "@/lib/logger";
 import { getUsdToBrlRate } from "@/lib/usd-brl-rate";
 import { getBalance } from "@/lib/spend-coins";
-import { hasActiveCredits } from "@/lib/user-tier";
+import { hasActivePaidCredits } from "@/lib/user-tier";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -115,8 +115,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const hasActive = await hasActiveCredits(userId);
-  if (hasActive) {
+  const hasActivePaid = await hasActivePaidCredits(userId);
+  if (hasActivePaid) {
     return NextResponse.json(
       { error: "already_has_active_plan", message: "Você já possui créditos ativos. Use-os ou aguarde o vencimento antes de comprar novamente." },
       { status: 409 }

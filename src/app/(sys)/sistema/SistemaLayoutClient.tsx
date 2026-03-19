@@ -27,6 +27,7 @@ import { ChartSaveLoadProvider, useChartSaveLoad } from "./ChartSaveLoadContext"
 import SaveLoadPanel from "./SaveLoadPanel";
 import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
 import SingleTabGuard from "./SingleTabGuard";
+import TrialNotificationModal from "./TrialNotificationModal";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -405,6 +406,7 @@ export default function SistemaLayoutClient({
 
   return (
     <CryptoLangProvider lang={lang}>
+      <TrialNotificationModal />
       <SingleTabGuard>
         <KlinesIndicatorsProvider>
           <StrategiesProvider>

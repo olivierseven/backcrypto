@@ -231,3 +231,102 @@ export async function createCryptoLiteTrialPackage(userId: string): Promise<{
     return { success: false, error: msg };
   }
 }
+
+const ADMIN_ACCESS_COINS = 1;
+const MIN_ACCESS_DAYS = 1;
+const MAX_ACCESS_DAYS = 365;
+
+/**
+ * Concede acesso lite por N dias (admin). 1 coin, tier lite, expira em durationDays.
+ */
+export async function createAdminAccessPackage(
+  userId: string,
+  durationDays: number
+): Promise<{ success: boolean; coins?: number; error?: string }> {
+  const days = Math.max(MIN_ACCESS_DAYS, Math.min(MAX_ACCESS_DAYS, Math.floor(durationDays)));
+  try {
+    const refId = `admin_access_${userId}_${Date.now()}`;
+    dbg(`[crypto-bonus] creating admin access package userId=${userId.slice(0, 8)}... days=${days}`);
+
+    const result = await cryptoPrisma.$transaction(async (tx) => {
+      const wallet = await tx.userCoinWallet.upsert({
+        where: { userId },
+        create: { userId, balance: 0 },
+        update: {},
+        select: { id: true },
+      });
+
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + days);
+      expiresAt.setHours(23, 59, 59, 999);
+
+      const entry = await tx.coinLedgerEntry.create({
+        data: {
+          userId,
+          walletId: wallet.id,
+          type: TxType.CREDIT,
+          source: TxSource.BONUS,
+          amount: ADMIN_ACCESS_COINS,
+          refId,
+          meta: { reason: "admin_access", durationDays: days, coins: ADMIN_ACCESS_COINS },
+          createdAt: now,
+        },
+        select: { id: true },
+      });
+
+      await tx.userCoinWallet.update({
+        where: { userId },
+        data: { balance: { increment: ADMIN_ACCESS_COINS } },
+      });
+
+      await tx.walletCredit.create({
+        data: {
+          userId,
+          entryId: entry.id,
+          amount: ADMIN_ACCESS_COINS,
+          consumed: 0,
+          expiresAt,
+        },
+      });
+
+      await tx.user.updateMany({
+        where: { id: userId },
+        data: { tier: Tier.lite },
+      });
+
+      return { entryId: entry.id };
+    });
+
+    const user = await cryptoPrisma.user.findUnique({
+      where: { id: userId },
+      select: { language: true },
+    });
+    const lang = user?.language ?? "pt";
+    const message =
+      lang === "pt"
+        ? `Acesso concedido: 1 coin, válido por ${days} dia(s).`
+        : `Access granted: 1 coin, valid for ${days} day(s).`;
+    const expiredDate = new Date();
+    expiredDate.setDate(expiredDate.getDate() + days);
+
+    await cryptoPrisma.userNotification.create({
+      data: {
+        senderType: "system",
+        userId,
+        notification: message,
+        keySystem: "admin_access",
+        expiredDate,
+      },
+    });
+
+    vLog(`[crypto-bonus] admin access created userId=${userId.slice(0, 8)}... days=${days} entryId=${result.entryId}`);
+    return { success: true, coins: ADMIN_ACCESS_COINS };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    error(`[crypto-bonus] admin access failed userId=${userId.slice(0, 8)}... error=${msg}`);
+    return { success: false, error: msg };
+  }
+}
+
+export { MIN_ACCESS_DAYS, MAX_ACCESS_DAYS, ADMIN_ACCESS_COINS };

@@ -79,6 +79,29 @@ export async function hasActiveCredits(userId: string): Promise<boolean> {
 }
 
 /**
+ * Verifica se o usuário tem créditos ativos de compra (pagos), excluindo trial (lite_trial_first_login) e acesso admin.
+ * Usado no checkout: trial pode comprar; só bloqueia se tiver créditos de Stripe/PIX pagos ativos.
+ */
+export async function hasActivePaidCredits(userId: string): Promise<boolean> {
+  const nowDate = now();
+  const credits = await cryptoPrisma.walletCredit.findMany({
+    where: { userId, expiresAt: { gt: nowDate } },
+    select: { amount: true, consumed: true, entry: { select: { source: true, meta: true } } },
+  });
+  for (const c of credits) {
+    if ((c.amount - c.consumed) <= 0) continue;
+    const meta = c.entry?.meta as { reason?: string } | null;
+    const reason = meta?.reason;
+    const source = c.entry?.source;
+    const isTrialOrAdmin =
+      (source === TxSource.PAGARME && reason === "lite_trial_first_login") ||
+      (source === TxSource.BONUS && reason === "admin_access");
+    if (!isTrialOrAdmin) return true;
+  }
+  return false;
+}
+
+/**
  * Calcula o tier efetivo a partir dos créditos e atualiza user.tier se estiver desatualizado.
  * Antes, aplica a expiração dos créditos vencidos (reduz saldo da carteira).
  * Chamar no login ou em /api/auth/check para que, quando todos os créditos expirarem, o usuário volte a free.
