@@ -3,6 +3,8 @@ import BioLandingPage from "@/app/BioLandingPage";
 import { getLocaleFromRequest } from "@/lib/get-locale-server";
 
 export const dynamic = "force-dynamic";
+const BASE_PATH = "/crypto";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br";
 
 const PAGE_META = {
   pt: {
@@ -29,6 +31,27 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t.description,
     keywords: t.keywords,
     robots: { index: true, follow: true },
+    alternates: {
+      canonical: `${BASE_URL}${BASE_PATH}/`,
+      languages: {
+        "pt-BR": `${BASE_URL}${BASE_PATH}/`,
+        en: `${BASE_URL}${BASE_PATH}/?lang=en`,
+        "x-default": `${BASE_URL}${BASE_PATH}/`,
+      },
+    },
+    openGraph: {
+      type: "website",
+      title: t.title,
+      description: t.description,
+      url: `${BASE_URL}${BASE_PATH}/`,
+      images: [{ url: `${BASE_PATH}/bio_banner_x.png` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.title,
+      description: t.description,
+      images: [`${BASE_PATH}/bio_banner_x.png`],
+    },
   };
 }
 

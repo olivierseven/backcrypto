@@ -1,18 +1,13 @@
 import Link from "next/link";
-import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { jwtVerify } from "jose";
 import CryptoActiveCredits from "./CryptoActiveCredits";
 import { APP_CRYPTO_ROUTE_PREFIX, APP_CRYPTO_SISTEMA_PATH, SISTEMA_PATH } from "@/app/constants";
-import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
+import { requireSysUserId } from "../require-sys-user";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const COOKIE = process.env.JWT_COOKIE_NAME || "session";
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const PAGE_SIZE = 6;
 
 function fmtDate(d: Date, locale: string) {
@@ -37,24 +32,7 @@ export default async function BioHistoricoPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
-  const headersList = await headers();
-  const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_CRYPTO_ROUTE_PREFIX}/login` : `${APP_CRYPTO_ROUTE_PREFIX}/login`;
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${APP_CRYPTO_ROUTE_PREFIX}/historico`);
-
-  let payload: { sub?: string };
-  try {
-    const result = await jwtVerify(token, JWT_SECRET);
-    payload = result.payload as { sub?: string };
-  } catch {
-    redirect(loginUrl);
-  }
-
-  const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
-  if (!userId) redirect(loginUrl);
+  const userId = await requireSysUserId(`${APP_CRYPTO_ROUTE_PREFIX}/historico`);
 
   const sp = await searchParams;
   const rawPage = Number(sp?.page ?? 1);

@@ -1,42 +1,20 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { jwtVerify } from "jose";
 import { decryptEmail } from "@/lib/crypto";
 import BioContaClient from "./ContaClient";
 import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
-import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
+import { requireSysUserId } from "../require-sys-user";
 
 export const metadata: Metadata = {
   title: "Minha Conta | Crypto",
   description: "Gerencie suas informações e preferências.",
 };
 
-const COOKIE = process.env.JWT_COOKIE_NAME || "session";
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-
 export const dynamic = "force-dynamic";
 
 export default async function BioContaPage() {
-  const headersList = await headers();
-  const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_CRYPTO_ROUTE_PREFIX}/login` : `${APP_CRYPTO_ROUTE_PREFIX}/login`;
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${APP_CRYPTO_ROUTE_PREFIX}/conta`);
-
-  let payload: { sub?: string };
-  try {
-    const result = await jwtVerify(token, JWT_SECRET);
-    payload = result.payload as { sub?: string };
-  } catch {
-    redirect(loginUrl);
-  }
-
-  const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
-  if (!userId) redirect(loginUrl);
+  const userId = await requireSysUserId(`${APP_CRYPTO_ROUTE_PREFIX}/conta`);
 
   const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
@@ -59,7 +37,7 @@ export default async function BioContaPage() {
     },
   });
 
-  if (!user) redirect(loginUrl);
+  if (!user) redirect(`${APP_CRYPTO_ROUTE_PREFIX}/login`);
 
   const wallet = await cryptoPrisma.userCoinWallet.findUnique({
     where: { userId },

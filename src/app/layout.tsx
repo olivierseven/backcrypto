@@ -44,7 +44,7 @@ const SHARED_META: Metadata = {
   openGraph: {
     siteName: "Crypto Strategy",
     type: "website",
-    images: [{ url: `${BASE_PATH}/icon.png` }],
+    images: [{ url: `${BASE_PATH}/bio_banner_x.png` }],
   },
   twitter: {
     card: "summary_large_image",
@@ -114,9 +114,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 name: "SevenCoins",
                 url: "https://sevencoins.com.br",
               },
-              sameAs: [
-                "https://play.google.com/store/apps/details?id=com.sevencoins.biogenerator",
-              ],
             }),
           }}
         />

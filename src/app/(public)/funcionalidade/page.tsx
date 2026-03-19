@@ -3,21 +3,23 @@ import BioFuncionalidadePage from "./BioFuncionalidadePage";
 import { getLocaleFromRequest } from "@/lib/get-locale-server";
 
 export const dynamic = "force-dynamic";
+const BASE_PATH = "/crypto";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br";
 
 const PAGE_META = {
   pt: {
     title: "Funcionalidades | Crypto",
     description:
-      "Conheça as funcionalidades do Crypto: menu lateral, exibição de gráficos, mapa interativo e gráficos de análise.",
+      "Conheça as funcionalidades do Crypto Strategy: construtor de estratégias, indicadores técnicos, sinais no gráfico e backtest com dados históricos.",
     keywords:
-      "Crypto, funcionalidades, simulador populacional, painéis de configuração, gráficos de análise, SevenCoins",
+      "crypto strategy, funcionalidades, construtor de estratégias, indicadores técnicos, sinais, backtest, SevenCoins",
   },
   en: {
     title: "Features | Crypto",
     description:
-      "Discover Crypto features: sidebar menu, chart display, interactive map and analysis charts.",
+      "Discover Crypto Strategy features: strategy builder, technical indicators, chart signals and historical backtesting.",
     keywords:
-      "Crypto, features, population simulator, configuration panels, analysis charts, SevenCoins",
+      "crypto strategy, features, strategy builder, technical indicators, chart signals, backtesting, SevenCoins",
   },
 } as const;
 
@@ -29,6 +31,27 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t.description,
     keywords: t.keywords,
     robots: { index: true, follow: true },
+    alternates: {
+      canonical: `${BASE_URL}${BASE_PATH}/funcionalidade`,
+      languages: {
+        "pt-BR": `${BASE_URL}${BASE_PATH}/funcionalidade`,
+        en: `${BASE_URL}${BASE_PATH}/funcionalidade?lang=en`,
+        "x-default": `${BASE_URL}${BASE_PATH}/funcionalidade`,
+      },
+    },
+    openGraph: {
+      type: "website",
+      title: t.title,
+      description: t.description,
+      url: `${BASE_URL}${BASE_PATH}/funcionalidade`,
+      images: [{ url: `${BASE_PATH}/bio_banner_x.png` }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.title,
+      description: t.description,
+      images: [`${BASE_PATH}/bio_banner_x.png`],
+    },
   };
 }
 
