@@ -59,8 +59,16 @@ export default function BioLandingPage() {
                 decoding="async"
               />
               <div className="flex flex-col items-center">
-                <h1 className="text-4xl font-bold text-zinc-900">{t.title}</h1>
-                <p className="text-lg text-zinc-500">{t.subtitle}</p>
+                <div className="relative inline-block text-center">
+                  <span
+                    className="absolute -top-1.5 right-0 rounded-sm border border-amber-200 bg-amber-100 px-1 py-0.4 text-[10px] font-semibold uppercase tracking-wider text-amber-800"
+                    aria-label="Versão beta"
+                  >
+                    Beta
+                  </span>
+                  <h1 className="text-4xl font-bold text-zinc-900">{t.title}</h1>
+                  <p className="text-lg text-zinc-500 mt-0.5">{t.subtitle}</p>
+                </div>
               </div>
             </div>
             <p className="text-lg text-[#0a1628] mb-4 text-center">{t.tagline}</p>

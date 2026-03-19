@@ -204,10 +204,18 @@ export default function BioLoginForm({
             </div>
           </div>
           <header className="crypto-login-header w-full text-center">
-            <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Crypto Strategy
-            </h1>
-            <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
+            <div className="relative inline-block">
+              <span
+                className="absolute -top-1.5 right-0 rounded-sm border border-amber-200 bg-amber-100 px-1 py-0.4 text-[10px] font-semibold uppercase tracking-wider text-amber-800"
+                aria-label="Versão beta"
+              >
+                Beta
+              </span>
+              <h1 className="text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
+                Crypto Strategy
+              </h1>
+              <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
+            </div>
           </header>
         </div>
 
