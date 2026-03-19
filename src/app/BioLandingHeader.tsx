@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ASSET_PREFIX } from "./constants";
@@ -8,11 +8,6 @@ import LanguageSwitcher from "./components/LanguageSwitcher";
 import { getCryptoT, type CryptoLang } from "./lib/translations";
 
 const SC_BASE = "https://sevencoins.com.br";
-const navLinks = [
-  { href: "/", key: "home" as const, external: false }, // página própria (landing)
-  { href: SC_BASE, key: "sevencoins" as const, external: true },
-  { href: "/funcionalidade", key: "functionality" as const, external: false },
-] as const;
 
 type Props = {
   lang: CryptoLang;
@@ -25,12 +20,22 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
   const t = getCryptoT(lang).landing;
   const nav = t.nav;
 
+  const navLinks = useMemo(
+    () =>
+      [
+        { href: `/${lang}`, key: "home" as const, external: false },
+        { href: SC_BASE, key: "sevencoins" as const, external: true },
+        { href: `/${lang}/funcionalidade`, key: "functionality" as const, external: false },
+      ] as const,
+    [lang],
+  );
+
   const linkClass = "px-3 py-1.5 rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700";
   const linkClassActive = "px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50";
 
   const isActive = (key: (typeof navLinks)[number]["key"]) => {
-    if (key === "home") return pathname === "/";
-    if (key === "functionality") return pathname === "/funcionalidade";
+    if (key === "home") return pathname === `/${lang}`;
+    if (key === "functionality") return pathname === `/${lang}/funcionalidade`;
     return false;
   };
 
@@ -40,7 +45,7 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={`/${lang}`} className="flex items-center gap-2">
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
                 alt="Crypto"

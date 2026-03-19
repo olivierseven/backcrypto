@@ -6,7 +6,7 @@ const LANG_COOKIE_NAME = "sevencoins-lang";
 
 /**
  * Lê o idioma preferido no servidor:
- * 1) header x-lang (se middleware injetar)
+ * 1) header x-lang — path /crypto/pt|en (middleware) ou ?lang=pt|en
  * 2) cookie sevencoins-lang
  * 3) fallback "pt"
  */

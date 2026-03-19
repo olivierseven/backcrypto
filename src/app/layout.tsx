@@ -86,13 +86,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const lang = await getLocaleFromRequest();
-  const ptHref = `${BASE_URL}${BASE_PATH}/`;
-  const enHref = `${BASE_URL}${BASE_PATH}/?lang=en`;
+  const ptHref = `${BASE_URL}${BASE_PATH}/pt`;
+  const enHref = `${BASE_URL}${BASE_PATH}/en`;
 
   return (
     <html lang={lang === "pt" ? "pt-BR" : "en"}>
       <head>
-        {/* hreflang: pt-BR padrão, en = ?lang=en */}
         <link rel="alternate" hrefLang="pt-BR" href={ptHref} />
         <link rel="alternate" hrefLang="en" href={enHref} />
         <link rel="alternate" hrefLang="x-default" href={ptHref} />
@@ -108,7 +107,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               applicationCategory: "EducationalApplication",
               operatingSystem: "Web",
               description: ROOT_META[lang].description,
-              url: `${BASE_URL}${BASE_PATH}/`,
+              url: `${BASE_URL}${BASE_PATH}/pt`,
               publisher: {
                 "@type": "Organization",
                 name: "SevenCoins",

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import BioLandingHeader from "@/app/BioLandingHeader";
 import BioLandingFooter from "@/app/BioLandingFooter";
@@ -31,13 +32,23 @@ function getInitialLang(): CryptoLang {
   return m?.[1] === "en" ? "en" : "pt";
 }
 
-export default function BioFuncionalidadePage() {
-  const [lang, setLang] = useState<CryptoLang>("pt");
+type Props = { initialLocale: CryptoLang };
+
+export default function BioFuncionalidadePage({ initialLocale }: Props) {
+  const pathname = usePathname();
+  const [lang, setLang] = useState<CryptoLang>(initialLocale);
+
   useEffect(() => {
+    const parts = pathname.split("/").filter(Boolean);
+    const seg = parts[0];
+    if (seg === "en" || seg === "pt") {
+      setLang(seg);
+      return;
+    }
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (urlLang === "en" || urlLang === "pt") setLang(urlLang);
     else setLang(getInitialLang());
-  }, []);
+  }, [pathname]);
   const t = getCryptoT(lang).landing.funcPage;
 
   return (
