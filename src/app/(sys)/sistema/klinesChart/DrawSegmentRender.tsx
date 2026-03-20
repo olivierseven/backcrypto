@@ -4,6 +4,7 @@
  * Render de um único segmento de desenho (fibonacci, channel, rectangle, horizontalLine, segment).
  * Extraído de KlinesChartSvg para reduzir tamanho e isolar responsabilidade.
  */
+import React, { useId } from "react";
 import { DEFAULT_SEGMENT_COLOR, DEFAULT_TEXT_COLOR, FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, ARROW_OPACITY, getTextSegmentBox, type DrawSegment, type FibStrokeWidth, type ArrowSize, type TextSize } from "../KlinesChartDrawing";
 const ARROW_EDIT_EXTEND_PX = 600;
 import { MS_PER_DAY } from "../KlinesChartConstants";
@@ -39,6 +40,8 @@ export function DrawSegmentRender({
   mainChartTopY = 0,
   mainChartBottomY = 0,
 }: DrawSegmentRenderProps) {
+  /** ID estável por instância para clipPath do texto (evita colisão entre vários gráficos). */
+  const textClipId = `dtxt-${useId().replace(/:/g, "")}`;
   const p1 = segmentToPixel(seg.index1, seg.price1);
   const p2 = segmentToPixel(seg.index2, seg.price2);
   const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
@@ -357,7 +360,12 @@ export function DrawSegmentRender({
     const textColor = seg.color ?? DEFAULT_TEXT_COLOR;
     const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
     const sizeKey = (seg.textSize as TextSize) ?? "small";
-    const { wrappedLines, boxW, boxH, lineHeight, textFontSize } = getTextSegmentBox(lines, sizeKey, fontSize);
+    const { wrappedLines, boxW, boxH, lineHeight, textFontSize } = getTextSegmentBox(
+      lines,
+      sizeKey,
+      fontSize,
+      seg.textBold === true
+    );
     const padX = 4;
     const padY = 4;
     const textX = p1.x + padX;
@@ -365,10 +373,26 @@ export function DrawSegmentRender({
     const fontWeight = seg.textBold ? "bold" : "normal";
     return (
       <g key={idx}>
+        <defs>
+          <clipPath id={textClipId}>
+            <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} />
+          </clipPath>
+        </defs>
         <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
-        <text x={textX} y={firstLineY} textAnchor="start" fill={textColor} className="select-none" style={{ fontSize: textFontSize, fontWeight }} dominantBaseline="middle">
+        <text
+          x={textX}
+          y={firstLineY}
+          textAnchor="start"
+          fill={textColor}
+          className="select-none"
+          style={{ fontSize: textFontSize, fontWeight }}
+          dominantBaseline="middle"
+          clipPath={`url(#${textClipId})`}
+        >
           {wrappedLines.map((line, i) => (
-            <tspan key={i} x={textX} dy={i === 0 ? 0 : lineHeight}>{line}</tspan>
+            <tspan key={i} x={textX} dy={i === 0 ? 0 : lineHeight}>
+              {line}
+            </tspan>
           ))}
         </text>
       </g>

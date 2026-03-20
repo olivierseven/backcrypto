@@ -1,11 +1,11 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
-const LOGIN_PATH = '/biogenerator/login';
+const LOGIN_PATH = '/crypto/login';
 
 /**
  * Determina a URL base do app. O app sempre abre na página de login.
- * Em produção: https://sevencoins.com.br/biogenerator/login
- * Para desenvolvimento: NEXT_PUBLIC_APP_URL ou APP_URL + /biogenerator/login
+ * Em produção: https://sevencoins.com.br/crypto/login (basePath /crypto)
+ * Para desenvolvimento: NEXT_PUBLIC_APP_URL ou APP_URL + /crypto/login
  */
 const getAppUrl = (): string => {
   let base = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -19,7 +19,7 @@ const isDev = appUrl.startsWith('http://');
 
 const config: CapacitorConfig = {
   appId: 'com.sevencoins.biogenerator',
-  appName: 'BioGenerator',
+  appName: 'Crypto Strategy',
   webDir: 'public',
   server: {
     url: appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl,

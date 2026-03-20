@@ -439,7 +439,7 @@ export function DrawOverlay({
               if (seg.type === "text") {
                 const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
                 const sizeKey = (seg.textSize as TextSize) ?? "small";
-                const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10);
+                const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10, seg.textBold === true);
                 const hitPadding = 14;
                 const left = p1.x - hitPadding;
                 const right = p1.x + boxW + hitPadding;

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">BioGenerator</string>
-    <string name="title_activity_main">BioGenerator</string>
+    <string name="app_name">Crypto Strategy</string>
+    <string name="title_activity_main">Crypto Strategy</string>
     <string name="package_name">com.sevencoins.biogenerator</string>
     <string name="custom_url_scheme">com.sevencoins.biogenerator</string>
 </resources>

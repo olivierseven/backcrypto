@@ -162,7 +162,7 @@ export function DrawSegmentHandles({
       {isText && (() => {
         const lines = (seg.textContent ?? "").split("\n").filter(Boolean);
         const sizeKey = (seg.textSize as TextSize) ?? "small";
-        const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10);
+        const { boxW, boxH } = getTextSegmentBox(lines, sizeKey, 10, seg.textBold === true);
         return (
           <>
             <rect

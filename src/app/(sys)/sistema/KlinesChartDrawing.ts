@@ -169,14 +169,29 @@ export const DEFAULT_TEXT_COLOR = "#1a1a1a";
 const TEXT_PAD_X = 4;
 const TEXT_PAD_Y = 4;
 
+/** Largura estimada por linha: média por carácter + pequeno ajuste por glifos tipicamente largos (sem inflar a caixa toda). */
+function estimateLineContentWidthPx(line: string, approxCharWidth: number): number {
+  if (!line.length) return approxCharWidth * 0.35;
+  let wideCount = 0;
+  for (let i = 0; i < line.length; i++) {
+    const c = line.charCodeAt(i);
+    // Dígitos, @, %; letras tipicamente largas (M, W, m, w)
+    if ((c >= 0x30 && c <= 0x39) || c === 0x25 || c === 0x40) wideCount += 1;
+    else if (c === 77 || c === 87 || c === 109 || c === 119) wideCount += 0.65;
+    else if (c > 0xff) wideCount += 0.5; // latinos estendidos / CJK
+  }
+  return line.length * approxCharWidth + wideCount * approxCharWidth * 0.22;
+}
+
 /**
- * Calcula dimensões da caixa de texto de forma compacta ao redor do conteúdo (sem limite de largura).
- * baseFontSize: tamanho base da fonte (ex.: 10).
+ * Calcula dimensões da caixa de texto ao redor do conteúdo (sem wrap por palavra).
+ * Largura ≈ a linha mais larga (estimativa ajustada); margem mínima + clipPath no SVG cobre picos.
  */
 export function getTextSegmentBox(
   lines: string[],
   textSize: TextSize,
-  baseFontSize: number
+  baseFontSize: number,
+  textBold?: boolean
 ): {
   wrappedLines: string[];
   boxW: number;
@@ -187,12 +202,16 @@ export function getTextSegmentBox(
   textFontSize: number;
 } {
   const textFontSize = baseFontSize * TEXT_SIZE_FACTOR[textSize];
-  const charWidthFactor = textSize === "small" ? 0.42 : textSize === "medium" ? 0.46 : 0.54;
+  /** Largura média por carácter (UI sans-serif), ligeiramente acima do mínimo para não ficar folga enorme à direita. */
+  const charWidthFactor = textSize === "small" ? 0.45 : textSize === "medium" ? 0.49 : 0.56;
   const approxCharWidth = textFontSize * charWidthFactor;
   const lineHeight = textFontSize * 1.35;
   const wrappedLines = lines.length ? lines : [""];
-  const maxLineLen = Math.max(1, ...wrappedLines.map((l) => l.length));
-  const contentW = maxLineLen * approxCharWidth;
+  const lineContentWidths = wrappedLines.map((l) => estimateLineContentWidthPx(l, approxCharWidth));
+  const widest = Math.max(approxCharWidth, ...lineContentWidths);
+  /** Pouca folga: negrito um pouco mais; o clipPath no render corta overflow residual. */
+  const widthSafety = textBold ? 1.04 : 1.02;
+  const contentW = widest * widthSafety;
   const boxW = Math.ceil(contentW) + TEXT_PAD_X * 2;
   const boxH = Math.ceil(wrappedLines.length * lineHeight) + TEXT_PAD_Y * 2;
   return { wrappedLines, boxW, boxH, contentW, lineHeight, approxCharWidth, textFontSize };
