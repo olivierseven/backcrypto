@@ -105,6 +105,8 @@ export type DrawSegment = {
   textBold?: boolean;
   /** Tamanho da fonte do texto. Só text. Default: medium */
   textSize?: TextSize;
+  /** Sem fundo nem borda: só o texto (âncora igual à caixa). Só text. Default: false */
+  textHideBox?: boolean;
   /** Pontos do traço livre (índice + preço). Só pencil. index1/price1 e index2/price2 = primeiro e último. */
   pencilPoints?: { index: number; price: number }[];
   /** Espessura do traço do lápis: fina, média ou grossa. Só pencil. Default: medium */
@@ -148,7 +150,7 @@ export type DrawDefaults = {
   horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;
   verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;
   arrow: Partial<Pick<DrawSegment, "color" | "arrowSize" | "arrowAngle">>;
-  text: Partial<Pick<DrawSegment, "color" | "textBold" | "textSize">>;
+  text: Partial<Pick<DrawSegment, "color" | "textBold" | "textSize" | "textHideBox">>;
   pencil: Partial<Pick<DrawSegment, "color" | "pencilStrokeWidth">>;
 };
 

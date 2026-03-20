@@ -371,14 +371,19 @@ export function DrawSegmentRender({
     const textX = p1.x + padX;
     const firstLineY = p1.y - boxH + padY + lineHeight / 2;
     const fontWeight = seg.textBold ? "bold" : "normal";
+    const hideBox = seg.textHideBox === true;
     return (
       <g key={idx}>
-        <defs>
-          <clipPath id={textClipId}>
-            <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} />
-          </clipPath>
-        </defs>
-        <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
+        {!hideBox && (
+          <>
+            <defs>
+              <clipPath id={textClipId}>
+                <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} />
+              </clipPath>
+            </defs>
+            <rect x={p1.x} y={p1.y - boxH} width={boxW} height={boxH} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
+          </>
+        )}
         <text
           x={textX}
           y={firstLineY}
@@ -387,7 +392,7 @@ export function DrawSegmentRender({
           className="select-none"
           style={{ fontSize: textFontSize, fontWeight }}
           dominantBaseline="middle"
-          clipPath={`url(#${textClipId})`}
+          clipPath={hideBox ? undefined : `url(#${textClipId})`}
         >
           {wrappedLines.map((line, i) => (
             <tspan key={i} x={textX} dy={i === 0 ? 0 : lineHeight}>

@@ -488,6 +488,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         color: df?.color ?? DEFAULT_DRAW_TEXT_COLOR,
         textBold: df?.textBold ?? false,
         textSize: df?.textSize ?? "small",
+        textHideBox: df?.textHideBox === true,
       };
       let newIndex = 0;
       flushSync(() => {

@@ -1325,6 +1325,24 @@ export function KlinesChartSegmentOptions({
               />
               <span>{tAs.textBold ?? "Bold"}</span>
             </label>
+            <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
+              <input
+                type="checkbox"
+                checked={drawSegments[selectedSegmentIndex]?.textHideBox === true}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setDrawSegments((prev) => {
+                    const next = [...prev];
+                    const seg = next[selectedSegmentIndex];
+                    if (seg) next[selectedSegmentIndex] = { ...seg, textHideBox: checked };
+                    return next;
+                  });
+                  persistDrawDefault("text", { textHideBox: checked });
+                }}
+                className="rounded border-zinc-300"
+              />
+              <span>{tAs.textHideBox ?? "Text only (no box)"}</span>
+            </label>
           </>
         )}
         <div className="flex items-center gap-1.5 w-full">
