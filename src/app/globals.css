@@ -350,7 +350,7 @@
   min-height: 1.5rem;
 }
 
-/* BioGenerator: sempre tema claro (ignora dark mode do sistema) */
+/* Crypto Strategy (sistema): sempre tema claro (ignora dark mode do sistema) */
 [data-app="crypto"],
 [data-app="crypto"] .crypto-generator-app {
   color-scheme: light;

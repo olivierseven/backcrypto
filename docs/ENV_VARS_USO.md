@@ -1,4 +1,4 @@
-# Variáveis de ambiente — uso no projeto BioGenerator
+# Variáveis de ambiente — uso no projeto Crypto (backcrypto)
 
 Arquivo de referência: quais variáveis estão em uso no código e quais não aparecem.
 
@@ -41,19 +41,16 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 
 **Google Cloud Console (OAuth):**
 
-- **Redirect URI autorizado:** cadastre exatamente a URL de callback, por exemplo:
-  - `https://sevencoins.com.br/biogenerator/api/auth/google/callback` (acesso pelo domínio customizado)
-  - e/ou `https://biogenerator-three.vercel.app/biogenerator/api/auth/google/callback` (acesso direto na Vercel)
-- **Domínios autorizados** (tela de consentimento): inclua todos os domínios em que o app é acessado, por exemplo:
-  - `sevencoins.com.br`
-  - `biogenerator-three.vercel.app`
-  - `sevencoins.vercel.app` (se usar)
+- **Redirect URI autorizado:** cadastre exatamente a URL de callback (com **basePath `/crypto`**), por exemplo:
+  - `https://sevencoins.com.br/crypto/api/auth/google/callback`
+  - e/ou a URL do deploy na Vercel, ex.: `https://<seu-projeto>.vercel.app/crypto/api/auth/google/callback`
+- **Domínios autorizados** (tela de consentimento): inclua todos os domínios em que o app é acessado (ex.: `sevencoins.com.br`, domínio Vercel).
 - Configuração: [Google Cloud Console → APIs e serviços → Credenciais → cliente OAuth 2.0](https://console.cloud.google.com/apis/credentials)
 
 ---
 
 
-## Não usadas no código do BioGenerator
+## Não usadas no código (revisar conforme schema)
 
 - **DATABASE_URL** — o projeto usa apenas **BG_DATABASE_URL**
 - **RESEND_API_KEY**, **MAIL_FROM**, **MAIL_REPLY_TO**, **MAIL_CONTACT**

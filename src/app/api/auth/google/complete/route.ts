@@ -1,5 +1,5 @@
 // GET /api/auth/google/complete — finaliza OAuth no app (WebView recebe cookie e redireciona)
-// Chamado pelo app via biogenerator://oauth?url=... quando o usuário retorna do Chrome
+// Chamado pelo app via cryptostrategy://oauth?url=... quando o usuário retorna do Chrome
 import { NextResponse } from "next/server";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { verifyCompleteToken } from "@/lib/oauth-complete-token";

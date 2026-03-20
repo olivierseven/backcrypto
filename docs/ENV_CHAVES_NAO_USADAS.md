@@ -1,4 +1,4 @@
-# Chaves do .env — uso no BioGenerator
+# Chaves do .env — referência Crypto (backcrypto)
 
 Verificação feita por busca em `src/` e `prisma/`.
 

@@ -1,4 +1,4 @@
-// GET /api/biogenerator/bio-policies?type=terms|privacy|refund-policy|contato&lang=pt|en
+// GET …/api/bio-policies — políticas SevenCoins (terms, privacy, …) para o app Crypto
 // Busca o HTML de sevencoins.com.br (terms, privacy, refund-policy, contato) no servidor.
 // Envia cookie sevencoins-lang (mesmo nome do usePreferredLang no SevenCoins) para o servidor devolver no idioma escolhido.
 import { NextResponse } from "next/server";

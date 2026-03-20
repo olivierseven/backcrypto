@@ -8,6 +8,7 @@
  */
 import React, { useEffect, useState, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
+import { androidGoogleOAuthDeepLink, androidGoogleOAuthIntentUrl } from "@/app/lib/cryptoNativeApp";
 
 export default function OAuthReturnPage() {
   const [msg, setMsg] = useState<string>("Redirecionando…");
@@ -46,11 +47,9 @@ export default function OAuthReturnPage() {
     if (!completeUrl) return;
     const isAndroid = /android/i.test(navigator.userAgent);
     if (isAndroid) {
-      const intentUrl = `intent://oauth#Intent;scheme=biogenerator;package=com.sevencoins.biogenerator;S.url=${encodeURIComponent(completeUrl)};S.browser_fallback_url=${encodeURIComponent(completeUrl)};end`;
-      window.location.href = intentUrl;
+      window.location.href = androidGoogleOAuthIntentUrl(completeUrl);
     } else {
-      const deepLink = `biogenerator://oauth?url=${encodeURIComponent(completeUrl)}`;
-      window.location.href = deepLink;
+      window.location.href = androidGoogleOAuthDeepLink(completeUrl);
     }
     setTimeout(() => {
       window.location.href = completeUrl;

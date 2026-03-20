@@ -1,4 +1,4 @@
-// GET /api/auth/google/callback — callback OAuth Google (Bio)
+// GET /api/auth/google/callback — callback OAuth Google (Crypto)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { cryptoPrisma } from "@/lib/crypto-db";
@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { createCompleteToken } from "@/lib/oauth-complete-token";
+import { androidGoogleOAuthDeepLink, androidGoogleOAuthIntentUrl } from "@/app/lib/cryptoNativeApp";
 
 const BASE_PATH = "/crypto";
 const LOGIN_PAGE = `${BASE_PATH}/login`;
@@ -218,8 +219,8 @@ export async function GET(req: Request) {
       const isAndroid = /android/i.test(ua);
       // HTML com meta refresh para intent:// — Chrome segue 303 mas App Links não intercepta; intent abre o app
       const intentUrl = isAndroid
-        ? `intent://oauth#Intent;scheme=biogenerator;package=com.sevencoins.biogenerator;S.url=${encodeURIComponent(completeUrl)};S.browser_fallback_url=${encodeURIComponent(completeUrl)};end`
-        : `biogenerator://oauth?url=${encodeURIComponent(completeUrl)}&next=${encodeURIComponent(redirectPath)}`;
+        ? androidGoogleOAuthIntentUrl(completeUrl)
+        : androidGoogleOAuthDeepLink(completeUrl, redirectPath);
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${esc(intentUrl)}"></head><body><p>Redirecionando…</p></body></html>`;
       vLog(`[crypto/auth/google/callback] from_app=1 HTML intent (android=${isAndroid}) userId=${user.id.slice(0, 8)}... took=${Date.now() - start}ms`);

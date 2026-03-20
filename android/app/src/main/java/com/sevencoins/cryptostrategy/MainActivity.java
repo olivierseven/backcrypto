@@ -1,4 +1,4 @@
-package com.sevencoins.biogenerator;
+package com.sevencoins.cryptostrategy;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -11,8 +11,77 @@ import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    private static final String OAUTH_SCHEME = "cryptostrategy";
+    private static final String PATH_SISTEMA = "/crypto/sistema";
+    private static final String BASE = "/crypto";
+
     private boolean isProcessingOAuth = false;
     private boolean isClosingApp = false;
+
+    /**
+     * Só (auth) + (sys) + API Next + assets estáticos. Bloqueia landing pública (/crypto/pt, /en, /funcionalidade, …).
+     */
+    private static boolean isAllowedInAppWebView(String url) {
+        if (url == null || url.isEmpty()) return false;
+        try {
+            Uri uri = Uri.parse(url);
+            String scheme = uri.getScheme();
+            if (scheme != null && (scheme.equals("file") || scheme.equals("data"))) return true;
+            if (scheme != null && scheme.equals(OAUTH_SCHEME)) return true;
+            String host = uri.getHost();
+            if (host == null) return false;
+            boolean dev = host.contains("localhost") || host.equals("10.0.2.2") || host.startsWith("192.168.");
+            boolean prod = host.contains("sevencoins.com.br");
+            if (!dev && !prod) return false;
+            String path = uri.getPath();
+            if (path == null) path = "";
+            if (prod && !path.startsWith(BASE)) return false;
+            if (dev && !path.startsWith(BASE) && !path.startsWith("/api")) return false;
+            String rest = path.startsWith(BASE) ? path.substring(BASE.length()) : path;
+            if (rest.isEmpty()) rest = "/";
+            if (rest.equals("/")) return false;
+            if (rest.startsWith("/api/")) return true;
+            if (rest.startsWith("/_next/")) return true;
+            if (rest.startsWith("/assets/")) return true;
+            if (rest.startsWith("/manifest.json")) return true;
+            if (rest.startsWith("/favicon")) return true;
+            if (rest.startsWith("/icon") || rest.startsWith("/apple-icon")) return true;
+            if (rest.startsWith("/robots.txt")) return true;
+            // (auth)
+            if (rest.startsWith("/login")) return true;
+            if (rest.startsWith("/register")) return true;
+            if (rest.startsWith("/reset-password")) return true;
+            if (rest.startsWith("/oauth-return")) return true;
+            if (rest.startsWith("/reativar")) return true;
+            // (sys)
+            if (rest.startsWith("/sistema")) return true;
+            if (rest.startsWith("/conta")) return true;
+            if (rest.startsWith("/plans")) return true;
+            if (rest.startsWith("/historico")) return true;
+            if (rest.startsWith("/admin")) return true;
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void loadLoginOrServerFallback(WebView view) {
+        String serverUrl = getBridge().getServerUrl();
+        if (serverUrl == null) {
+            view.loadUrl("https://sevencoins.com.br/crypto/login");
+            return;
+        }
+        String u = serverUrl.replaceAll("/$", "");
+        if (u.contains("/login")) {
+            view.loadUrl(u);
+            return;
+        }
+        if (u.endsWith("/crypto")) {
+            view.loadUrl(u + "/login");
+        } else {
+            view.loadUrl(u + "/crypto/login");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +99,7 @@ public class MainActivity extends BridgeActivity {
                     return;
                 }
                 String currentUrl = webView.getUrl();
-                boolean isOnSistema = currentUrl != null && currentUrl.contains("/biogenerator/sistema");
+                boolean isOnSistema = currentUrl != null && currentUrl.contains(PATH_SISTEMA);
                 if (isOnSistema) {
                     return;
                 }
@@ -59,7 +128,7 @@ public class MainActivity extends BridgeActivity {
             String url = data.toString();
             String oauthRedirectUrl = data.getQueryParameter("url");
             boolean isOAuthDeepLink = url.contains("/api/auth/google/complete") ||
-                    (data.getScheme() != null && data.getScheme().equals("biogenerator") &&
+                    (data.getScheme() != null && data.getScheme().equals(OAUTH_SCHEME) &&
                      data.getHost() != null && data.getHost().equals("oauth") &&
                      oauthRedirectUrl != null && oauthRedirectUrl.contains("/api/auth/google/complete"));
             if (isOAuthDeepLink) {
@@ -111,7 +180,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    if (isProcessingOAuth && url != null && url.contains("/biogenerator/sistema")) {
+                    if (isProcessingOAuth && url != null && url.contains(PATH_SISTEMA)) {
                         isProcessingOAuth = false;
                     }
                 }
@@ -120,7 +189,7 @@ public class MainActivity extends BridgeActivity {
                 public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
                     if (isClosingApp) return true;
                     String url = request.getUrl().toString();
-                    if (url.startsWith("biogenerator://oauth")) {
+                    if (url.startsWith(OAUTH_SCHEME + "://oauth")) {
                         Uri uri = Uri.parse(url);
                         String redirectUrl = uri.getQueryParameter("url");
                         WebView wv = getBridge().getWebView();
@@ -141,9 +210,13 @@ public class MainActivity extends BridgeActivity {
                         return true;
                     }
                     if (isProcessingOAuth && url.contains("/login")) return true;
-                    if (isProcessingOAuth && url.contains("/biogenerator/sistema")) isProcessingOAuth = false;
-                    if (url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2")) {
-                        view.loadUrl(url);
+                    if (isProcessingOAuth && url.contains(PATH_SISTEMA)) isProcessingOAuth = false;
+                    if (url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2") || url.contains("192.168.")) {
+                        if (isAllowedInAppWebView(url)) {
+                            view.loadUrl(url);
+                            return true;
+                        }
+                        loadLoginOrServerFallback(view);
                         return true;
                     }
                     return false;
@@ -153,7 +226,7 @@ public class MainActivity extends BridgeActivity {
                 public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
                     super.onReceivedError(view, request, error);
                     String url = request.getUrl().toString();
-                    boolean isMainDomain = url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2");
+                    boolean isMainDomain = url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2") || url.contains("192.168.");
                     if (isMainDomain && (error.getErrorCode() == android.webkit.WebViewClient.ERROR_HOST_LOOKUP ||
                         error.getErrorCode() == android.webkit.WebViewClient.ERROR_CONNECT ||
                         error.getErrorCode() == android.webkit.WebViewClient.ERROR_TIMEOUT)) {
@@ -171,7 +244,7 @@ public class MainActivity extends BridgeActivity {
         Uri data = intent.getData();
         if (data == null) return;
         String url = data.toString();
-        if (data.getScheme() != null && data.getScheme().equals("biogenerator")) {
+        if (data.getScheme() != null && data.getScheme().equals(OAUTH_SCHEME)) {
             if (data.getHost() != null && data.getHost().equals("oauth")) {
                 String redirectUrl = data.getQueryParameter("url");
                 if (redirectUrl == null && intent.getExtras() != null) {
@@ -187,20 +260,18 @@ public class MainActivity extends BridgeActivity {
                         webView.loadDataWithBaseURL(null, whiteScreen, "text/html", "UTF-8", null);
                         final String finalUrl = redirectUrl;
                         webView.postDelayed(() -> webView.loadUrl(finalUrl), 100);
-                    } else if (redirectUrl != null) {
+                    } else if (redirectUrl != null && isAllowedInAppWebView(redirectUrl)) {
                         webView.loadUrl(redirectUrl);
                     } else {
-                        String serverUrl = getBridge().getServerUrl();
-                        if (serverUrl == null) serverUrl = "https://sevencoins.com.br/biogenerator";
-                        webView.loadUrl(serverUrl.replaceAll("/$", "") + "/");
+                        loadLoginOrServerFallback(webView);
                     }
                 }
                 return;
             }
         }
-        if (url.contains("sevencoins.com.br") && url.contains("/biogenerator")) {
+        if (url.contains("sevencoins.com.br") && url.contains("/crypto/")) {
             WebView webView = getBridge().getWebView();
-            if (webView != null) {
+            if (webView != null && isAllowedInAppWebView(url)) {
                 if (url.contains("/api/auth/google/complete")) {
                     isProcessingOAuth = true;
                     webView.stopLoading();

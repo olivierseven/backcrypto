@@ -18,7 +18,7 @@ const appUrl = getAppUrl();
 const isDev = appUrl.startsWith('http://');
 
 const config: CapacitorConfig = {
-  appId: 'com.sevencoins.biogenerator',
+  appId: 'com.sevencoins.cryptostrategy',
   appName: 'Crypto Strategy',
   webDir: 'public',
   server: {

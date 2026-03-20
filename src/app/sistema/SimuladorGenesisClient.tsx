@@ -243,7 +243,7 @@ const SCRIPTS: ScriptDef[] = [
       { key: "x0_v2", label: `x vector2 (0–${REGIAO_KM} km)`, default: 23440, step: 0.01 },
       { key: "y0_v2", label: `y vector2 (0–${REGIAO_KM} km)`, default: 14970, step: 0.01 },
     ],
-    run: () => undefined, // Execução via API POST /api/biogenerator/simulacao/run
+    run: () => undefined, // Execução via API POST /crypto/api/.../simulacao/run
   },
 ];
 

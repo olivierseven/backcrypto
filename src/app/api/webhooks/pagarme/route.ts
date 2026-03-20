@@ -1,4 +1,4 @@
-// POST /api/biogenerator/webhooks/pagarme — Webhook Pagar.me para Crypto (auth: PAGARME_WEBHOOK_*)
+// POST …/api/webhooks/pagarme — Pagar.me (Crypto; PAGARME_WEBHOOK_*)
 // Crédito de coins e e-mail de recibo quando o webhook é chamado. Em localhost use URL pública (ex.: ngrok) ou teste em deploy.
 import { NextResponse } from "next/server";
 import { cryptoPrisma } from "@/lib/crypto-db";

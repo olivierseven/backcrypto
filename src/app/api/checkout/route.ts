@@ -1,4 +1,4 @@
-// POST /api/biogenerator/checkout — cria sessão Stripe Checkout (Crypto)
+// POST …/api/checkout — Stripe Checkout (Crypto; basePath /crypto)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import Stripe from "stripe";

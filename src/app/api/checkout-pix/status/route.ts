@@ -1,4 +1,4 @@
-// GET /api/biogenerator/checkout-pix/status — Status do pedido PIX (Crypto)
+// GET …/api/checkout-pix/status — status PIX (Crypto)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";

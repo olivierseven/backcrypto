@@ -1,4 +1,4 @@
-// POST /api/biogenerator/checkout-pix — Cria pedido PIX via Pagar.me (Crypto, salva em cryptoPrisma)
+// POST …/api/checkout-pix — PIX Pagar.me (Crypto, cryptoPrisma)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";

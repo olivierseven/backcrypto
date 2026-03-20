@@ -37,12 +37,12 @@
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/admin" />
             </intent-filter>
 
-            <!-- Deep link OAuth (Chrome → app); scheme mantém biogenerator para compatibilidade com intent URLs no código -->
+            <!-- Deep link OAuth (Chrome → app): cryptostrategy://oauth -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="biogenerator" android:host="oauth" />
+                <data android:scheme="cryptostrategy" android:host="oauth" />
             </intent-filter>
         </activity>
 

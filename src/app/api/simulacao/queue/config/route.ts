@@ -1,4 +1,4 @@
-// GET /api/biogenerator/simulacao/queue/config — variáveis da fila (poll, max wait, use_queue por fila) para o cliente. Lido do banco.
+// GET …/api/simulacao/queue/config — fila de simulação (poll, max wait, use_queue). Lido do banco.
 import { NextResponse } from "next/server";
 import { getCryptoQueueConfigMap, getCryptoQueueConfigNumber, getUseQueueFromMap } from "@/lib/crypto-app-config";
 
