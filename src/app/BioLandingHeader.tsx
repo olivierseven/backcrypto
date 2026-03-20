@@ -26,6 +26,7 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
         { href: `/${lang}`, key: "home" as const, external: false },
         { href: SC_BASE, key: "sevencoins" as const, external: true },
         { href: `/${lang}/funcionalidade`, key: "functionality" as const, external: false },
+        { href: "/comunidade", key: "community" as const, external: false },
       ] as const,
     [lang],
   );
@@ -36,6 +37,7 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
   const isActive = (key: (typeof navLinks)[number]["key"]) => {
     if (key === "home") return pathname === `/${lang}`;
     if (key === "functionality") return pathname === `/${lang}/funcionalidade`;
+    if (key === "community") return pathname === "/comunidade";
     return false;
   };
 
