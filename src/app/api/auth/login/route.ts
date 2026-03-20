@@ -7,6 +7,7 @@ import { normalizeEmail, emailSearchHash, decryptEmail } from "@/lib/crypto";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { dbg, warn, error, log as vLog } from "@/lib/logger";
+import { safeCryptoNext, CRYPTO_LOGIN_PAGE, CRYPTO_DEFAULT_NEXT } from "@/lib/crypto-auth-next";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,8 +16,8 @@ const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const COOKIE_LAST = `${COOKIE}_last`;
 const COOKIE_IAT = `${COOKIE}_iat`;
 
-const LOGIN_PAGE = "/crypto/login";
-const DEFAULT_NEXT = "/crypto/sistema";
+const LOGIN_PAGE = CRYPTO_LOGIN_PAGE;
+const DEFAULT_NEXT = CRYPTO_DEFAULT_NEXT;
 
 const MAX_LOGIN_ATTEMPTS = 10;
 const LOGIN_WINDOW_MS = 60_000;
@@ -149,8 +150,7 @@ export async function POST(req: Request) {
       .setExpirationTime("24h")
       .sign(JWT_SECRET);
 
-    const safeNext =
-      rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : DEFAULT_NEXT;
+    const safeNext = safeCryptoNext(rawNext || undefined);
 
     vLog(`[auth/login] success redirect=${safeNext}`);
 

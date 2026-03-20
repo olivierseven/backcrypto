@@ -10,10 +10,10 @@ import crypto from "crypto";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { createCompleteToken } from "@/lib/oauth-complete-token";
 import { androidGoogleOAuthDeepLink, androidGoogleOAuthIntentUrl } from "@/app/lib/cryptoNativeApp";
+import { safeCryptoNext, CRYPTO_LOGIN_PAGE } from "@/lib/crypto-auth-next";
 
 const BASE_PATH = "/crypto";
-const LOGIN_PAGE = `${BASE_PATH}/login`;
-const DEFAULT_NEXT = `${BASE_PATH}/sistema`;
+const LOGIN_PAGE = CRYPTO_LOGIN_PAGE;
 
 const CID = process.env.GOOGLE_CLIENT_ID;
 const CSECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -64,7 +64,7 @@ export async function GET(req: Request) {
 
   const parts = stateRaw.split("~");
   const [signedState, nextRaw, fromAppFlag] = parts;
-  const next = nextRaw?.startsWith("/") ? nextRaw : DEFAULT_NEXT;
+  const next = safeCryptoNext(nextRaw);
   const fromApp = fromAppFlag === "app";
 
   const redirectUri = `${origin}${BASE_PATH}/api/auth/google/callback`;
@@ -210,17 +210,15 @@ export async function GET(req: Request) {
       .setExpirationTime("24h")
       .sign(JWT_SECRET);
 
-    const redirectPath = next.startsWith("/") ? next : DEFAULT_NEXT;
-
     if (fromApp) {
       const completeToken = createCompleteToken(jwt);
-      const completeUrl = `${origin}${BASE_PATH}/api/auth/google/complete?token=${encodeURIComponent(completeToken)}&next=${encodeURIComponent(redirectPath)}`;
+      const completeUrl = `${origin}${BASE_PATH}/api/auth/google/complete?token=${encodeURIComponent(completeToken)}&next=${encodeURIComponent(next)}`;
       const ua = req.headers.get("user-agent") || "";
       const isAndroid = /android/i.test(ua);
       // HTML com meta refresh para intent:// — Chrome segue 303 mas App Links não intercepta; intent abre o app
       const intentUrl = isAndroid
         ? androidGoogleOAuthIntentUrl(completeUrl)
-        : androidGoogleOAuthDeepLink(completeUrl, redirectPath);
+        : androidGoogleOAuthDeepLink(completeUrl, next);
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=${esc(intentUrl)}"></head><body><p>Redirecionando…</p></body></html>`;
       vLog(`[crypto/auth/google/callback] from_app=1 HTML intent (android=${isAndroid}) userId=${user.id.slice(0, 8)}... took=${Date.now() - start}ms`);
@@ -230,7 +228,7 @@ export async function GET(req: Request) {
       });
     }
 
-    const r = redirectTo(redirectPath);
+    const r = redirectTo(next);
     const baseCookie = {
       httpOnly: true as const,
       secure: process.env.NODE_ENV === "production",
@@ -245,7 +243,7 @@ export async function GET(req: Request) {
     r.cookies.set("oauth_state", "", { ...baseCookie, maxAge: 0 });
     r.cookies.set("oauth_nonce", "", { ...baseCookie, maxAge: 0 });
 
-    vLog(`[crypto/auth/google/callback] success userId=${user.id.slice(0, 8)}... next=${redirectPath} took=${Date.now() - start}ms`);
+    vLog(`[crypto/auth/google/callback] success userId=${user.id.slice(0, 8)}... next=${next} took=${Date.now() - start}ms`);
     return r;
   } catch (e) {
     error(`[crypto/auth/google/callback] internal error: ${e instanceof Error ? e.message : e}`);

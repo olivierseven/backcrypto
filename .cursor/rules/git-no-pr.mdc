@@ -1,0 +1,10 @@
+---
+description: Não sugerir Pull Request; merge direto na master para Vercel
+alwaysApply: true
+---
+
+# Git / deploy (este repositório)
+
+- **Não sugerir** abrir **Pull Request (PR)** no GitHub nem enviar links do tipo “Create a pull request”.
+- **Não descrever** o fluxo de trabalho como “abre um PR” — o utilizador **faz merge direto na `master`** e a **Vercel** faz deploy sozinha.
+- Após `git push` de uma branch, **não** recomendar PR como passo seguinte.

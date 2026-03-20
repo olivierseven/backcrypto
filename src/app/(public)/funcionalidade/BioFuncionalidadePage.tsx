@@ -79,6 +79,11 @@ export default function BioFuncionalidadePage({ initialLocale }: Props) {
                   </p>
                 </section>
               ))}
+              {(t as Record<string, string>).closingCta ? (
+                <p className="text-sm font-medium text-zinc-800 leading-relaxed pt-2 border-t border-zinc-100">
+                  {(t as Record<string, string>).closingCta}
+                </p>
+              ) : null}
             </div>
 
             {/* Card: Funcionalidades Planejadas */}

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Crypto Strategy</string>
-    <string name="title_activity_main">Crypto Strategy</string>
+    <string name="app_name">CryptoStrategy</string>
+    <string name="title_activity_main">CryptoStrategy</string>
     <string name="package_name">com.sevencoins.cryptostrategy</string>
     <string name="custom_url_scheme">cryptostrategy</string>
 </resources>

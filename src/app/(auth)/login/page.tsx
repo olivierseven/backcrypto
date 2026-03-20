@@ -10,18 +10,13 @@ import {
   verifyBypassCookie,
   isBypassConfigured,
 } from "@/lib/maintenance-bypass";
+import { safeCryptoNext } from "@/lib/crypto-auth-next";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const BIO_NEXT = "/crypto/sistema";
-
-function safeNext(raw: string | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return BIO_NEXT;
-  return raw;
-}
 
 export default async function LoginPage({
   searchParams,
@@ -29,7 +24,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const sp = await searchParams;
-  const nextPath = safeNext(sp?.next);
+  const nextPath = safeCryptoNext(sp?.next);
 
   const store = await cookies();
   const token = store.get(COOKIE)?.value;

@@ -121,6 +121,13 @@ function useFormLock() {
   return { locked, onSubmit };
 }
 
+function shouldSendFromApp(): boolean {
+  if (typeof Capacitor !== "undefined" && Capacitor.isNativePlatform?.()) return true;
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /; wv\)|WebView|Capacitor/i.test(ua);
+}
+
 export default function BioLoginForm({
   nextPath,
   loginPagePath,
@@ -286,7 +293,7 @@ export default function BioLoginForm({
               </div>
               <div className="mb-3 flex justify-center">
                 <a
-                  href={`${API_BASE}/auth/google/start?next=${encodeURIComponent(nextPath)}${Capacitor?.isNativePlatform?.() ? "&from_app=1" : ""}`}
+                  href={`${API_BASE}/auth/google/start?next=${encodeURIComponent(nextPath)}${shouldSendFromApp() ? "&from_app=1" : ""}`}
                   aria-label="Sign in with Google"
                   className="inline-block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >

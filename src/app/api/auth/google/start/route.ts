@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { dbg, log as vLog } from "@/lib/logger";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
+import { safeCryptoNext } from "@/lib/crypto-auth-next";
 
 const BASE_PATH = "/crypto";
 const CID = process.env.GOOGLE_CLIENT_ID;
@@ -22,13 +23,12 @@ function signState(state: string): string {
 export async function GET(req: Request) {
   const start = Date.now();
   const url = new URL(req.url);
-  const next = url.searchParams.get("next") || `${BASE_PATH}/sistema`;
+  const next = safeCryptoNext(url.searchParams.get("next"));
   const fromAppParam = url.searchParams.get("from_app") === "1";
   const ua = req.headers.get("user-agent") || "";
   const isMobile = /android|iphone|ipad|mobile/i.test(ua);
-  // Fluxo app apenas quando informado explicitamente.
-  // Em web mobile, precisamos manter o callback padrão para setar cookie de sessão e redirecionar ao sistema.
-  const fromApp = fromAppParam;
+  /** Igual BioGenerator: app / WebView mobile → state ~app → callback devolve intent/deep link para /google/complete no app. */
+  const fromApp = fromAppParam || isMobile;
 
   if (!CID) {
     dbg("[crypto/auth/google/start] GOOGLE_CLIENT_ID not configured");

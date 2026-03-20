@@ -4,10 +4,9 @@ import { NextResponse } from "next/server";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { verifyCompleteToken } from "@/lib/oauth-complete-token";
 import { log as vLog, warn, error, dbg } from "@/lib/logger";
+import { safeCryptoNext, CRYPTO_LOGIN_PAGE } from "@/lib/crypto-auth-next";
 
-const BASE_PATH = "/crypto";
-const LOGIN_PAGE = `${BASE_PATH}/login`;
-const DEFAULT_NEXT = `${BASE_PATH}/sistema`;
+const LOGIN_PAGE = CRYPTO_LOGIN_PAGE;
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const COOKIE_LAST = `${COOKIE}_last`;
@@ -16,7 +15,7 @@ const COOKIE_IAT = `${COOKIE}_iat`;
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
-  const next = url.searchParams.get("next") || DEFAULT_NEXT;
+  const next = safeCryptoNext(url.searchParams.get("next"));
 
   const origin = getRedirectOrigin(req);
 
@@ -36,12 +35,11 @@ export async function GET(req: Request) {
     return redirectTo(`${LOGIN_PAGE}?login=server`);
   }
 
-  const redirectPath = next.startsWith("/") ? next : DEFAULT_NEXT;
   const ua = req.headers.get("user-agent") || "";
-  vLog(`[crypto/auth/google/complete] success redirect=${redirectPath} ua=${ua.slice(0, 60)}...`);
+  vLog(`[crypto/auth/google/complete] success redirect=${next} ua=${ua.slice(0, 60)}...`);
   dbg(`[crypto/auth/google/complete] referer=${req.headers.get("referer") || "(none)"}`);
 
-  const r = redirectTo(redirectPath);
+  const r = redirectTo(next);
 
   const baseCookie = {
     httpOnly: true as const,

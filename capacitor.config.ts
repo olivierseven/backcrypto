@@ -19,7 +19,7 @@ const isDev = appUrl.startsWith('http://');
 
 const config: CapacitorConfig = {
   appId: 'com.sevencoins.cryptostrategy',
-  appName: 'Crypto Strategy',
+  appName: 'CryptoStrategy',
   webDir: 'public',
   server: {
     url: appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl,
