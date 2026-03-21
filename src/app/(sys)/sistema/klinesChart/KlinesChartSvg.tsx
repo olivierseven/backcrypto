@@ -121,6 +121,8 @@ export interface KlinesChartSvgProps {
   setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
+  /** Clique no número (2)(3)… na faixa de indicadores: permuta painéis secundários adjacentes. */
+  onSwapSecondaryPanel?: (panel: "panel2" | "panel3" | "panel4" | "panel5") => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
   onChartDrawClick?: () => void;
   /** Chamado quando um novo segmento é criado (segundo clique). Recebe o índice do novo segmento para selecioná-lo e abrir opções. */
@@ -236,6 +238,7 @@ export function KlinesChartSvg({
   drawTool,
   setDrawDragging,
   onSelectToolPan,
+  onSwapSecondaryPanel,
   onChartDrawClick,
   onSegmentCreated,
   t,
@@ -343,19 +346,44 @@ export function KlinesChartSvg({
       role="list"
       aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
     >
-      {panelKey !== "main" && (
-        <span
-          className="font-medium text-zinc-500 px-1 py-0 rounded shrink-0 leading-tight"
-          style={{
-            fontSize: `${fontSize}px`,
-            backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
-            boxShadow: "0 0 3px rgba(0,0,0,0.12)",
-          }}
-          aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : panelKey === "panel4" ? "Panel 4" : "Panel 5"}
-        >
-          ({panelKey.replace("panel", "")})
-        </span>
-      )}
+      {panelKey !== "main" && (() => {
+        const num = panelKey.replace("panel", "");
+        const otherNum = panelKey === "panel5" ? "4" : String(Number(num) + 1);
+        const ariaTpl = t.swapSecondaryPanelAria ?? "Swap panel {a} with panel {b}";
+        const ariaLabel = ariaTpl.replace("{a}", num).replace("{b}", otherNum);
+        const chipStyle = {
+          fontSize: `${fontSize}px`,
+          backgroundColor: isDarkBg ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.7)",
+          boxShadow: "0 0 3px rgba(0,0,0,0.12)",
+        } as const;
+        if (onSwapSecondaryPanel) {
+          return (
+            <button
+              type="button"
+              className="font-medium text-zinc-500 px-1 py-0 rounded shrink-0 leading-tight pointer-events-auto cursor-pointer hover:text-zinc-800 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              style={chipStyle}
+              title={t.swapSecondaryPanelHint}
+              aria-label={ariaLabel}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onSwapSecondaryPanel(panelKey);
+              }}
+            >
+              ({num})
+            </button>
+          );
+        }
+        return (
+          <span
+            className="font-medium text-zinc-500 px-1 py-0 rounded shrink-0 leading-tight"
+            style={chipStyle}
+            aria-label={panelKey === "panel2" ? "Panel 2" : panelKey === "panel3" ? "Panel 3" : panelKey === "panel4" ? "Panel 4" : "Panel 5"}
+          >
+            ({num})
+          </span>
+        );
+      })()}
       {lines.map((ind, idx) => {
         const crosshairVal =
           showCrosshairValues && crosshairPoint

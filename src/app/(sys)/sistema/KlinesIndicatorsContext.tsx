@@ -578,6 +578,42 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
   });
 }
 
+const SECONDARY_PANEL_ORDER = ["panel2", "panel3", "panel4", "panel5"] as const;
+
+/** Painéis secundários do gráfico (faixas 2–5). */
+export type SecondaryPanelSlot = (typeof SECONDARY_PANEL_ORDER)[number];
+
+const TYPES_DEFAULT_SECONDARY: ReadonlySet<UserIndicatorType> = new Set([
+  "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "AD", "ATR", "ADX", "CCI", "CMF", "Volume",
+]);
+
+/** Painel efetivo para permutar (alinha a IndicatorsPanel / layout). */
+function effectivePanelForSwap(u: UserIndicatorConfig): IndicatorPanel {
+  if (u.type === "SAR" || u.type === "VWAP" || u.type === "Ichimoku") return "main";
+  const p = u.panel;
+  if (p === "main" || p === "panel2" || p === "panel3" || p === "panel4" || p === "panel5") return p;
+  return TYPES_DEFAULT_SECONDARY.has(u.type) ? "panel2" : "main";
+}
+
+function adjacentSecondaryPair(clicked: SecondaryPanelSlot): [IndicatorPanel, IndicatorPanel] | null {
+  const idx = SECONDARY_PANEL_ORDER.indexOf(clicked);
+  if (idx < 0) return null;
+  if (clicked === "panel5") return ["panel5", "panel4"];
+  return [SECONDARY_PANEL_ORDER[idx], SECONDARY_PANEL_ORDER[idx + 1]];
+}
+
+function applySwapAdjacentSecondaryPanels(prev: UserIndicatorConfig[], clicked: SecondaryPanelSlot): UserIndicatorConfig[] {
+  const pair = adjacentSecondaryPair(clicked);
+  if (!pair) return prev;
+  const [a, b] = pair;
+  return prev.map((u) => {
+    const ep = effectivePanelForSwap(u);
+    if (ep === a) return { ...u, panel: b };
+    if (ep === b) return { ...u, panel: a };
+    return u;
+  });
+}
+
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
@@ -594,6 +630,8 @@ interface ContextValue {
   updateIndicatorIntervals: (id: string, intervals: number[]) => void;
   /** Restaura a lista de indicadores a partir de um layout (ex.: ao carregar layout salvo). */
   replaceUserIndicatorsFromLayout: (raw: unknown) => void;
+  /** Troca indicadores entre este painel e o adjacente (2↔3, 3↔4, 4↔5; no 5 troca com 4). */
+  swapAdjacentSecondaryPanels: (clicked: SecondaryPanelSlot, onAfter?: (next: UserIndicatorConfig[]) => void) => void;
 }
 
 const KlinesIndicatorsContext = createContext<ContextValue | null>(null);
@@ -630,6 +668,17 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
     setUserIndicators(normalized);
   }, []);
 
+  const swapAdjacentSecondaryPanels = useCallback(
+    (clicked: SecondaryPanelSlot, onAfter?: (next: UserIndicatorConfig[]) => void) => {
+      setUserIndicators((prev) => {
+        const next = applySwapAdjacentSecondaryPanels(prev, clicked);
+        if (onAfter) queueMicrotask(() => onAfter(next));
+        return next;
+      });
+    },
+    []
+  );
+
   const value = useMemo<ContextValue>(
     () => ({
       userIndicators,
@@ -640,8 +689,9 @@ export function KlinesIndicatorsProvider({ children }: { children: ReactNode }) 
       updateIndicator,
       updateIndicatorIntervals,
       replaceUserIndicatorsFromLayout,
+      swapAdjacentSecondaryPanels,
     }),
-    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout]
+    [userIndicators, currentGroupMinutes, addIndicator, removeIndicator, updateIndicator, updateIndicatorIntervals, replaceUserIndicatorsFromLayout, swapAdjacentSecondaryPanels]
   );
 
   return (

@@ -117,6 +117,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
+  const { swapAdjacentSecondaryPanels } = useKlinesIndicators();
   const [visibleCount, setVisibleCountState] = useState<number>(DEFAULT_VISIBLE);
   const setVisibleCount = useCallback((v: number | ((prev: number) => number)) => {
     setVisibleCountState((prev) => {
@@ -1064,6 +1065,13 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const saveVolumePrefsToLayout = useCallback(() => {
     chartLayoutSave?.saveLayoutNow("layout");
   }, [chartLayoutSave]);
+
+  const onSwapSecondaryPanel = useCallback(
+    (panel: "panel2" | "panel3" | "panel4" | "panel5") => {
+      swapAdjacentSecondaryPanels(panel, (next) => chartLayoutSave?.saveLayoutNow("indicators", next));
+    },
+    [swapAdjacentSecondaryPanels, chartLayoutSave]
+  );
 
   useEffect(() => {
     if (!chartLayoutSave) return;
@@ -2256,6 +2264,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               drawTool={drawTool}
               setDrawDragging={setDrawDragging}
               onSelectToolPan={onSelectToolPan}
+              onSwapSecondaryPanel={onSwapSecondaryPanel}
               onChartDrawClick={() => {
                 setSegmentToolboxCollapsed(true);
                 // Não fechar a caixa de desenho ao clicar no gráfico; reabrir após criar fica a cargo de onSegmentCreated/handleCreateTextSegment
