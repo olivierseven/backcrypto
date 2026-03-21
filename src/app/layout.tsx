@@ -10,18 +10,18 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br"
 
 const ROOT_META = {
   pt: {
-    title: "Crypto Strategy | Simulador de Estratégias para Criptomoedas",
+    title: "Crypto Strategy | Construtor de Estratégias para Criptomoedas",
     description:
-      "Simulador avançado de estratégias para criptomoedas com modelagem estatística aplicada a dados históricos. Teste indicadores técnicos, MACD, RSI e compare com Buy & Hold.",
+      "Crie e combine estratégias com um construtor visual baseado em regras: indicadores técnicos, condições de mercado e sinais no gráfico usando dados históricos. Explore vários ativos e cenários — simulação educacional, sem execução de ordens.",
     keywords:
-      "backtest criptomoedas, simulador estratégias, MACD, RSI, médias móveis, Bitcoin, SevenCoins, análise técnica",
+      "construtor de estratégias cripto, crypto strategy builder, regras de trading, indicadores técnicos, sinais no gráfico, Bitcoin, Ethereum, SevenCoins, análise técnica",
   },
   en: {
-    title: "Crypto Strategy | Strategy Simulator",
+    title: "Crypto Strategy | Visual Strategy Builder for Crypto",
     description:
-      "Advanced crypto strategy simulator with statistical modeling applied to historical data. Test technical indicators, MACD, RSI and compare with Buy & Hold.",
+      "Build and combine strategies with a visual, rule-based builder: technical indicators, market conditions and on-chart signals using historical data. Explore multiple assets and scenarios — educational simulation, no order execution.",
     keywords:
-      "crypto backtest, strategy simulator, MACD, RSI, moving averages, Bitcoin, SevenCoins, technical analysis",
+      "crypto strategy builder, visual rule builder, trading rules, technical indicators, chart signals, Bitcoin, Ethereum, SevenCoins, technical analysis",
   },
 } as const;
 

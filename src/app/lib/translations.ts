@@ -242,8 +242,9 @@ export const cryptoTranslations = {
       feature2Desc: "Use indicators such as moving averages, MACD, RSI, ATR, stochastic and many others to create custom strategies and explore different combinations.",
       feature3Title: "Signals and Chart Markings",
       feature3Desc: "See your rules in action with visual markings on the chart: candle coloring, buy and sell arrows and event indicators defined by the strategy.",
-      feature4Title: "Backtest on Real Historical Data",
-      feature4Desc: "Run strategies on real market historical data to see how they would have behaved over time across different market phases.",
+      feature4Title: "Evaluate your strategies on historical data",
+      feature4Desc:
+        "Using real historical market data, see how the strategies you built would have behaved over time across different phases — you explore manually on the chart.",
       feature5Title: "Explore and Validate Ideas",
       feature5Desc: "Ideal environment to test hypotheses, adjust parameters and understand how different rule combinations can impact results.",
       feature6Title: "Modern, Fluid Interface",
@@ -1513,8 +1514,9 @@ export const cryptoTranslations = {
       feature2Desc: "Utilize indicadores como médias móveis, MACD, RSI, ATR, estocástico e muitos outros para criar estratégias personalizadas e explorar diferentes combinações.",
       feature3Title: "Sinais e Marcação no Gráfico",
       feature3Desc: "Veja suas regras em ação com marcações visuais no gráfico: pintura de candles, setas de compra e venda e indicadores de eventos definidos pela estratégia.",
-      feature4Title: "Teste em Dados Históricos Reais",
-      feature4Desc: "Execute estratégias utilizando dados históricos do mercado para observar como elas se comportariam ao longo do tempo em diferentes fases do mercado.",
+      feature4Title: "Avalie suas estratégias em dados históricos",
+      feature4Desc:
+        "Use dados históricos reais de mercado para observar como as regras que você montou se comportariam ao longo do tempo em diferentes fases — exploração manual no gráfico.",
       feature5Title: "Exploração e Validação de Ideias",
       feature5Desc: "Ambiente ideal para testar hipóteses, ajustar parâmetros e entender como diferentes combinações de regras podem impactar os resultados.",
       feature6Title: "Interface Moderna e Fluida",

@@ -16,11 +16,7 @@ Quando o prefixo das URLs foi alterado de `/backcrypto` para `/crypto`, estes po
    - `backcrypto-drawings-edit`  
    - (e demais eventos com prefixo `backcrypto`)
 
-4. **Variável de ambiente e export**  
-   - `BACKCRYPTO_CHAT_API_KEY` (env)  
-   - `BACKCRYPTO_CHAT_PROMPT` (export em `backcrypto-chat-personality.ts`)
-
-5. **Prisma / client gerado**  
+4. **Prisma / client gerado**  
    - Referências ao schema e paths em código gerado (ex.: `prisma-bio-client`).
 
 ---

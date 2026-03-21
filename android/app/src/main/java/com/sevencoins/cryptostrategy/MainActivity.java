@@ -1,5 +1,6 @@
 package com.sevencoins.cryptostrategy;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -67,6 +68,82 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Play Store e outros sites redirecionam para {@code intent://} para abrir a app da loja.
+     * O WebView não carrega esse esquema — trata aqui com {@link Intent#parseUri}.
+     */
+    private boolean tryStartIntentOrMarketUrl(String url) {
+        if (url == null || url.isEmpty()) return false;
+        if (url.startsWith("intent:")) {
+            try {
+                Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (ActivityNotFoundException e) {
+                try {
+                    Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                    String fallback = intent.getStringExtra("browser_fallback_url");
+                    if (fallback != null && !fallback.isEmpty()) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(fallback))
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        return true;
+                    }
+                } catch (Exception ignored) {
+                }
+                return true;
+            } catch (Exception e) {
+                return true;
+            }
+        }
+        if (url.startsWith("market:")) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (Exception ignored) {
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /** Navegação do WebView: OAuth, domínio permitido, intent/market (Play Store). */
+    private boolean bridgeShouldOverrideUrlLoading(WebView view, String url) {
+        if (isClosingApp) return true;
+        if (tryStartIntentOrMarketUrl(url)) return true;
+        if (url.startsWith(OAUTH_SCHEME + "://oauth")) {
+            Uri uri = Uri.parse(url);
+            String redirectUrl = uri.getQueryParameter("url");
+            WebView wv = getBridge().getWebView();
+            if (wv != null && redirectUrl != null && redirectUrl.contains("/api/auth/google/complete")) {
+                isProcessingOAuth = true;
+                wv.stopLoading();
+                wv.clearCache(true);
+                wv.loadDataWithBaseURL(null, "<!DOCTYPE html><html><body></body></html>", "text/html", "UTF-8", null);
+                wv.postDelayed(() -> wv.loadUrl(redirectUrl), 100);
+            }
+            return true;
+        }
+        if (url.contains("accounts.google.com") || url.contains("oauth2.googleapis.com")) {
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(i);
+            return true;
+        }
+        if (isProcessingOAuth && url.contains("/login")) return true;
+        if (isProcessingOAuth && url.contains(PATH_SISTEMA)) isProcessingOAuth = false;
+        if (url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2") || url.contains("192.168.")) {
+            if (isAllowedInAppWebView(url)) {
+                view.loadUrl(url);
+                return true;
+            }
+            loadLoginOrServerFallback(view);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -228,39 +305,13 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
-                    if (isClosingApp) return true;
-                    String url = request.getUrl().toString();
-                    if (url.startsWith(OAUTH_SCHEME + "://oauth")) {
-                        Uri uri = Uri.parse(url);
-                        String redirectUrl = uri.getQueryParameter("url");
-                        WebView wv = getBridge().getWebView();
-                        if (wv != null && redirectUrl != null && redirectUrl.contains("/api/auth/google/complete")) {
-                            isProcessingOAuth = true;
-                            wv.stopLoading();
-                            wv.clearCache(true);
-                            wv.loadDataWithBaseURL(null, "<!DOCTYPE html><html><body></body></html>", "text/html", "UTF-8", null);
-                            wv.postDelayed(() -> wv.loadUrl(redirectUrl), 100);
-                        }
-                        return true;
-                    }
-                    if (url.contains("accounts.google.com") || url.contains("oauth2.googleapis.com")) {
-                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(i);
-                        return true;
-                    }
-                    if (isProcessingOAuth && url.contains("/login")) return true;
-                    if (isProcessingOAuth && url.contains(PATH_SISTEMA)) isProcessingOAuth = false;
-                    if (url.contains("sevencoins.com.br") || url.contains("localhost") || url.contains("10.0.2.2") || url.contains("192.168.")) {
-                        if (isAllowedInAppWebView(url)) {
-                            view.loadUrl(url);
-                            return true;
-                        }
-                        loadLoginOrServerFallback(view);
-                        return true;
-                    }
-                    return false;
+                    return bridgeShouldOverrideUrlLoading(view, request.getUrl().toString());
+                }
+
+                @SuppressWarnings("deprecation")
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    return bridgeShouldOverrideUrlLoading(view, url);
                 }
 
                 @Override
