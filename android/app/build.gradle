@@ -13,8 +13,8 @@ android {
         applicationId "com.sevencoins.cryptostrategy"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "v1.72"
+        versionCode 8
+        versionName "v1.73"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

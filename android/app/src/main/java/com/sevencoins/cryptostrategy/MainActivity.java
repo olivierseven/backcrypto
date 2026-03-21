@@ -11,6 +11,7 @@ import android.webkit.WebView;
 import android.webkit.WebSettings;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -117,6 +118,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        /* Obrigatório antes de super: assim postSplashScreenTheme (styles.xml) aplica AppTheme.NoActionBar. */
+        SplashScreen.installSplashScreen(this);
         /* Android 15+ (SDK 35+): ponta a ponta por defeito; compatível com versões anteriores. */
         EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
