@@ -254,24 +254,62 @@ export function KlinesChartSvg({
 
   useEffect(() => {
     if (!selectPanActive || !onSelectToolPan) return;
-    const PIXELS_PER_CANDLE = 5;
-    const MAX_DELTA_PER_MOVE = 14;
+
+    /** Toque: menos eventos por frame — coalesced + 1 atualização/frame + pixels/candle menor. */
+    let pointerKind: "mouse" | "pen" | "touch" = "mouse";
+    let pendingCandles = 0;
+    let rafScheduled = false;
+    let rafId: number | null = null;
+
+    const pixelsPerCandle = () => (pointerKind === "touch" ? 3 : 5);
+
+    const flushPending = () => {
+      rafScheduled = false;
+      rafId = null;
+      if (pendingCandles === 0) return;
+      const d = pendingCandles;
+      pendingCandles = 0;
+      onSelectToolPan(d);
+    };
+
+    const scheduleFlush = () => {
+      if (rafScheduled) return;
+      rafScheduled = true;
+      rafId = window.requestAnimationFrame(flushPending);
+    };
+
     const onMove = (e: PointerEvent) => {
       e.preventDefault();
-      const deltaX = e.clientX - selectPanLastClientX.current;
-      selectPanLastClientX.current = e.clientX;
-      let deltaCandles = -Math.round(deltaX / PIXELS_PER_CANDLE);
-      deltaCandles = Math.max(-MAX_DELTA_PER_MOVE, Math.min(MAX_DELTA_PER_MOVE, deltaCandles));
-      if (deltaCandles !== 0) onSelectToolPan(deltaCandles);
+      if (e.pointerType === "touch" || e.pointerType === "pen" || e.pointerType === "mouse") {
+        pointerKind = e.pointerType;
+      }
+      const ppc = pixelsPerCandle();
+      const coalesced = typeof e.getCoalescedEvents === "function" ? e.getCoalescedEvents() : [];
+      const events: PointerEvent[] = coalesced.length > 0 ? [...coalesced, e] : [e];
+      for (const ev of events) {
+        const deltaX = ev.clientX - selectPanLastClientX.current;
+        selectPanLastClientX.current = ev.clientX;
+        pendingCandles += -Math.round(deltaX / ppc);
+      }
+      scheduleFlush();
     };
+
     const onUp = () => {
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      rafScheduled = false;
+      flushPending();
       setSelectPanActive(false);
       justPannedRef.current = true;
     };
+
     document.addEventListener("pointermove", onMove, { passive: false });
     document.addEventListener("pointerup", onUp);
     document.addEventListener("pointercancel", onUp);
     return () => {
+      if (rafId != null) window.cancelAnimationFrame(rafId);
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       document.removeEventListener("pointercancel", onUp);

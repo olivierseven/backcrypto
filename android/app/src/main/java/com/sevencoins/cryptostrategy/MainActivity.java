@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.WebView;
 import android.webkit.WebSettings;
 import androidx.activity.OnBackPressedCallback;
@@ -63,6 +66,35 @@ public class MainActivity extends BridgeActivity {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Oculta a status bar de sistema (relógio, bateria, etc.). Com edge-to-edge,
+     * o plugin Capacitor StatusBar nem sempre esconde os ícones — aqui usamos API 30+ ou flags imersivas.
+     */
+    @SuppressWarnings("deprecation")
+    private void applyStatusBarVisibility(boolean hidden) {
+        runOnUiThread(() -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                WindowInsetsController controller = getWindow().getInsetsController();
+                if (controller != null) {
+                    if (hidden) {
+                        controller.hide(WindowInsets.Type.statusBars());
+                        controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                    } else {
+                        controller.show(WindowInsets.Type.statusBars());
+                    }
+                    return;
+                }
+            }
+            View decor = getWindow().getDecorView();
+            int flags = View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+            if (hidden) {
+                flags |= View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+            }
+            decor.setSystemUiVisibility(flags);
+        });
     }
 
     private void loadLoginOrServerFallback(WebView view) {
@@ -175,6 +207,13 @@ public class MainActivity extends BridgeActivity {
                     });
                 }
             }, "AndroidForceExit");
+
+            webView.addJavascriptInterface(new Object() {
+                @android.webkit.JavascriptInterface
+                public void setStatusBarHidden(boolean hidden) {
+                    applyStatusBarVisibility(hidden);
+                }
+            }, "AndroidStatusBar");
 
             webView.setWebViewClient(new android.webkit.WebViewClient() {
                 @Override

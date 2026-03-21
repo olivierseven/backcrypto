@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { validateNickname } from "@/lib/validate-nickname";
 import { APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
 import { getCryptoT, translateValidationError, type CryptoLang } from "@/app/lib/translations";
+import { applyNativeStatusBarHidden } from "@/app/lib/applyNativeStatusBar";
 
 interface UserData {
   id: string;
@@ -60,10 +61,7 @@ export default function BioContaClient({
     if (typeof window === "undefined") return;
     const cap = (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
     if (!cap?.isNativePlatform?.()) return;
-    import("@capacitor/status-bar").then(({ StatusBar }) => {
-      if (hideStatusBar) StatusBar.hide().catch(() => {});
-      else StatusBar.show().catch(() => {});
-    });
+    void applyNativeStatusBarHidden(hideStatusBar);
   }, [hideStatusBar]);
 
   function handleNicknameChange(value: string) {
@@ -163,9 +161,7 @@ export default function BioContaClient({
         throw new Error(t.conta.errorUpdate);
       }
       if (typeof window !== "undefined" && (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) {
-        const { StatusBar } = await import("@capacitor/status-bar");
-        if (value) StatusBar.hide().catch(() => {});
-        else StatusBar.show().catch(() => {});
+        await applyNativeStatusBarHidden(value);
       }
       router.refresh();
     } catch {

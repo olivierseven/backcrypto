@@ -458,6 +458,8 @@ export function DrawOverlay({
               }
             });
             if (bestIdx < 0) {
+              if (e.cancelable) e.preventDefault();
+              e.currentTarget.setPointerCapture(e.pointerId);
               selectPanLastClientXRef.current = e.clientX;
               setSelectPanActive(true);
             }
@@ -497,6 +499,9 @@ export function DrawOverlay({
             else if (drawTool === "verticalLine") setDrawPending({ index1: d.index, price1: drawPending.price1 });
           }}
           onPointerUp={(e) => {
+            if (drawTool === "select" && typeof e.currentTarget.hasPointerCapture === "function" && e.currentTarget.hasPointerCapture(e.pointerId)) {
+              e.currentTarget.releasePointerCapture(e.pointerId);
+            }
             if (drawTool === "pencil" && drawPendingPencil !== null && drawPendingPencil.length >= 2) {
               e.currentTarget.releasePointerCapture(e.pointerId);
               const first = drawPendingPencil[0];

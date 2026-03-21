@@ -8,6 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { CryptoLangProvider } from "@/app/contexts/CryptoLangContext";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { API_BASE } from "@/app/constants";
+import { applyNativeStatusBarHidden } from "@/app/lib/applyNativeStatusBar";
 import { getCryptoT } from "@/app/lib/translations";
 import type { CryptoLang } from "@/app/lib/translations";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
@@ -354,10 +355,7 @@ export default function SistemaLayoutClient({
 
   useEffect(() => {
     if (Capacitor?.isNativePlatform?.()) {
-      import("@capacitor/status-bar").then(({ StatusBar }) => {
-        if (hideStatusBar) StatusBar.hide().catch(() => { });
-        else StatusBar.show().catch(() => { });
-      });
+      void applyNativeStatusBarHidden(hideStatusBar);
     }
   }, [hideStatusBar]);
 

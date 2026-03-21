@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Capacitor } from "@capacitor/core";
 import { API_BASE } from "./constants";
 import { useAppBarSafe } from "./AppBarSafeContext";
+import { applyNativeStatusBarHidden } from "@/app/lib/applyNativeStatusBar";
 
 const APP_ROUTES = ["/sistema", "/conta", "/historico", "/plans", "/admin", "/oauth-return", "/reativar"];
 
@@ -32,9 +33,7 @@ export default function StatusBarPref() {
         if (Capacitor?.isNativePlatform?.()) {
           if (appliedRef.current !== hide) {
             appliedRef.current = hide;
-            const { StatusBar } = await import("@capacitor/status-bar");
-            if (hide) StatusBar.hide().catch(() => {});
-            else StatusBar.show().catch(() => {});
+            await applyNativeStatusBarHidden(hide);
           }
         }
       } catch {
@@ -60,9 +59,7 @@ export default function StatusBarPref() {
         const hide = data?.hideStatusBar === true;
         setAppBarSafe({ hideStatusBar: hide });
         appliedRef.current = hide;
-        const { StatusBar } = await import("@capacitor/status-bar");
-        if (hide) StatusBar.hide().catch(() => {});
-        else StatusBar.show().catch(() => {});
+        await applyNativeStatusBarHidden(hide);
       } catch {
         appliedRef.current = null;
       }

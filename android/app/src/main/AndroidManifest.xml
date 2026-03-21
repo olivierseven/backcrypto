@@ -27,8 +27,16 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/login" />
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/register" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/reset-password" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/oauth-return" />
+                <data
+                    android:scheme="https"
+                    android:host="sevencoins.com.br"
+                    android:pathPrefix="/crypto/reset-password"
+                />
+                <data
+                    android:scheme="https"
+                    android:host="sevencoins.com.br"
+                    android:pathPrefix="/crypto/oauth-return"
+                />
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/reativar" />
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/sistema" />
                 <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/conta" />
