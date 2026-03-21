@@ -9,3 +9,7 @@ export const ASSET_PREFIX = APP_CRYPTO_ROUTE_PREFIX;
 
 /** Base das rotas de API (basePath + /api); usar em fetch(). */
 export const API_BASE = `${APP_CRYPTO_ROUTE_PREFIX}/api`;
+
+/** Lista do app na Google Play (avaliação / comentário). */
+export const APP_PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.sevencoins.cryptostrategy";
