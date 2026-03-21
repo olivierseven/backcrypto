@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { validateNickname } from "@/lib/validate-nickname";
 import { APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, API_BASE } from "@/app/constants";
 import { getCryptoT, translateValidationError, type CryptoLang } from "@/app/lib/translations";
+import { Capacitor } from "@capacitor/core";
 import { applyNativeStatusBarHidden } from "@/app/lib/applyNativeStatusBar";
+import { useAppBarSafe } from "@/app/AppBarSafeContext";
 
 interface UserData {
   id: string;
@@ -42,6 +44,7 @@ export default function BioContaClient({
   timezoneOffset: initialTimezoneOffset = 0,
 }: Props) {
   const router = useRouter();
+  const { setAppBarSafe } = useAppBarSafe();
   const [nickname, setNickname] = useState(user.nickname || "");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -58,9 +61,7 @@ export default function BioContaClient({
   const [savingTimezone, setSavingTimezone] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const cap = (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
-    if (!cap?.isNativePlatform?.()) return;
+    if (typeof window === "undefined" || !Capacitor.isNativePlatform()) return;
     void applyNativeStatusBarHidden(hideStatusBar);
   }, [hideStatusBar]);
 
@@ -111,6 +112,7 @@ export default function BioContaClient({
       const res = await fetch(`${API_PREFIX}/notification-preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ timezoneOffset: next }),
       });
       if (!res.ok) throw new Error(t.conta.errorUpdate);
@@ -131,6 +133,7 @@ export default function BioContaClient({
       const res = await fetch(`${API_PREFIX}/notification-preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ language: value }),
       });
       if (!res.ok) {
@@ -149,19 +152,29 @@ export default function BioContaClient({
     if (savingPref) return;
     setSavingPref(true);
     const prev = hideStatusBar;
-    setHideStatusBar(value);
     try {
       const res = await fetch(`${API_PREFIX}/notification-preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ hideStatusBar: value }),
       });
       if (!res.ok) {
-        setHideStatusBar(prev);
         throw new Error(t.conta.errorUpdate);
       }
-      if (typeof window !== "undefined" && (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()) {
-        await applyNativeStatusBarHidden(value);
+      setHideStatusBar(value);
+      setAppBarSafe({ hideStatusBar: value });
+
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await applyNativeStatusBarHidden(value);
+        } catch {
+          /* bridge opcional; reload ainda aplica layout */
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 0);
+        return;
       }
       router.refresh();
     } catch {

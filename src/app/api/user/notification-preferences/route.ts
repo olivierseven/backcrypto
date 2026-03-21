@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { z } from "zod";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -60,6 +62,8 @@ export async function PUT(request: NextRequest) {
     }
 
     await cryptoPrisma.user.update({ where: { id: userId }, data: updateData });
+    /* Evita RSC/router.refresh com hideStatusBar (e resto) desatualizado — o toggle na Conta voltava ao estado inicial. */
+    revalidatePath(`${APP_CRYPTO_ROUTE_PREFIX}/conta`, "layout");
     return NextResponse.json({ success: true, message: "Preferências atualizadas com sucesso" });
   } catch (error) {
     console.error("[backcrypto/notification-preferences]", error);
