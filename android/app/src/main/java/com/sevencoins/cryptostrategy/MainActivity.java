@@ -9,8 +9,8 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.WebView;
 import android.webkit.WebSettings;
+import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -117,10 +117,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        /* Android 15+ (SDK 35+): ponta a ponta por defeito; compatível com versões anteriores. */
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
-        if (Build.VERSION.SDK_INT >= 35) {
-            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-        }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
