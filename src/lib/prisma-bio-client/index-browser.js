@@ -171,6 +171,7 @@ exports.Prisma.ChartLayoutScalarFieldEnum = {
   layout: 'layout',
   indicators: 'indicators',
   strategies: 'strategies',
+  regressions: 'regressions',
   others: 'others',
   name: 'name',
   updatedAt: 'updatedAt'
@@ -182,6 +183,7 @@ exports.Prisma.ChartModelScalarFieldEnum = {
   layout: 'layout',
   indicators: 'indicators',
   strategies: 'strategies',
+  regressions: 'regressions',
   others: 'others',
   name: 'name',
   updatedAt: 'updatedAt'

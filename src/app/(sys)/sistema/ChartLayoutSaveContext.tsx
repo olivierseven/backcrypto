@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useRef, useCallback, useMemo, type ReactNode } from "react";
 
-export type LayoutSavePart = "layout" | "indicators" | "strategies";
+export type LayoutSavePart = "layout" | "indicators" | "strategies" | "regressions";
 
 export type ChartLayoutSaveContextValue = {
-  /** Persiste no servidor (slot 1–7). part = só essa coluna; sem part = full. Para part "indicators", payload = array de indicadores a gravar na coluna indicators. */
+  /** Persiste no servidor (slot 1–7). part = só essa coluna; sem part = full. Para "indicators" / "regressions", payload = array a gravar nessa coluna. */
   saveLayoutNow: (part?: LayoutSavePart, payload?: unknown) => void;
   /** Ref para o gráfico registrar a função de save. Uso interno (KlinesChart). */
   registerSaveLayout: (fn: ((part?: LayoutSavePart, payload?: unknown) => void) | null) => void;

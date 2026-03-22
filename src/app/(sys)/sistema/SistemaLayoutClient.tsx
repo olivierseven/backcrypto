@@ -16,6 +16,8 @@ import { useChartHeader } from "./ChartHeaderContext";
 
 const SistemaDebugPanel = dynamic(() => import("./SistemaDebugPanel"), { ssr: false });
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
+import { KlinesRegressionsProvider } from "./regression/KlinesRegressionsContext";
+import RegressionsPanel from "./RegressionsPanel";
 import { SistemaDebugProvider } from "./SistemaDebugContext";
 import { ChartHeaderProvider } from "./ChartHeaderContext";
 import { ChartSymbolProvider, useChartSymbol } from "./ChartSymbolContext";
@@ -103,6 +105,8 @@ function SistemaHeader({
   onMyStrategiesClick,
   onAddStrategyClick,
   onDrawingsClick,
+  onMyRegressionsClick,
+  onAddRegressionClick,
   addStrategyDisabled = false,
   topBarGapClass = "",
 }: {
@@ -113,6 +117,8 @@ function SistemaHeader({
   onMyStrategiesClick: () => void;
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
+  onMyRegressionsClick: () => void;
+  onAddRegressionClick: () => void;
   addStrategyDisabled?: boolean;
   topBarGapClass?: string;
 }) {
@@ -335,6 +341,20 @@ function SistemaHeader({
             </button>
             <button
               type="button"
+              onClick={onMyRegressionsClick}
+              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              {(t as Record<string, string>).menuMyRegressions ?? "My regressions"}
+            </button>
+            <button
+              type="button"
+              onClick={onAddRegressionClick}
+              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              {(t as Record<string, string>).menuAddRegression ?? "Add regression"}
+            </button>
+            <button
+              type="button"
               onClick={onMyStrategiesClick}
               className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
             >
@@ -450,6 +470,8 @@ export default function SistemaLayoutClient({
   const [strategiesPanelOpen, setStrategiesPanelOpen] = useState(false);
   const [strategiesPanelInitialView, setStrategiesPanelInitialView] = useState<"list" | "add">("list");
   const [drawingsPanelOpen, setDrawingsPanelOpen] = useState(false);
+  const [regressionsPanelOpen, setRegressionsPanelOpen] = useState(false);
+  const [regressionsPanelInitialView, setRegressionsPanelInitialView] = useState<"list" | "add">("list");
 
   useEffect(() => {
     if (Capacitor?.isNativePlatform?.()) {
@@ -489,10 +511,22 @@ export default function SistemaLayoutClient({
     setMenuOpen(false);
   };
 
+  const openMyRegressions = () => {
+    setRegressionsPanelInitialView("list");
+    setRegressionsPanelOpen(true);
+    setMenuOpen(false);
+  };
+  const openAddRegression = () => {
+    setRegressionsPanelInitialView("add");
+    setRegressionsPanelOpen(true);
+    setMenuOpen(false);
+  };
+
   const handleMenuToggle = (open: boolean) => {
     setIndicatorsPanelOpen(false);
     setStrategiesPanelOpen(false);
     setDrawingsPanelOpen(false);
+    setRegressionsPanelOpen(false);
     setMenuOpen(open);
   };
 
@@ -505,6 +539,7 @@ export default function SistemaLayoutClient({
       <TrialNotificationModal />
       <SingleTabGuard>
         <KlinesIndicatorsProvider>
+          <KlinesRegressionsProvider>
           <StrategiesProvider>
             <SistemaLayoutInner
             menuOpen={menuOpen}
@@ -514,14 +549,19 @@ export default function SistemaLayoutClient({
             onMyStrategiesClick={openMyStrategies}
             onAddStrategyClick={openAddStrategy}
             onDrawingsClick={openDrawings}
+            onMyRegressionsClick={openMyRegressions}
+            onAddRegressionClick={openAddRegression}
             indicatorsPanelOpen={indicatorsPanelOpen}
             setIndicatorsPanelOpen={setIndicatorsPanelOpen}
             strategiesPanelOpen={strategiesPanelOpen}
             setStrategiesPanelOpen={setStrategiesPanelOpen}
             drawingsPanelOpen={drawingsPanelOpen}
             setDrawingsPanelOpen={setDrawingsPanelOpen}
+            regressionsPanelOpen={regressionsPanelOpen}
+            setRegressionsPanelOpen={setRegressionsPanelOpen}
             indicatorsPanelInitialView={indicatorsPanelInitialView}
             strategiesPanelInitialView={strategiesPanelInitialView}
+            regressionsPanelInitialView={regressionsPanelInitialView}
             isSistemaChartPage={isSistemaChartPage}
             scrollContainerRef={scrollContainerRef}
             topBarGapClass={topBarGapClass}
@@ -531,6 +571,7 @@ export default function SistemaLayoutClient({
             {children}
           </SistemaLayoutInner>
           </StrategiesProvider>
+          </KlinesRegressionsProvider>
         </KlinesIndicatorsProvider>
       </SingleTabGuard>
     </CryptoLangProvider>
@@ -545,14 +586,19 @@ function SistemaLayoutInner({
   onMyStrategiesClick,
   onAddStrategyClick,
   onDrawingsClick,
+  onMyRegressionsClick,
+  onAddRegressionClick,
   indicatorsPanelOpen,
   setIndicatorsPanelOpen,
   strategiesPanelOpen,
   setStrategiesPanelOpen,
   drawingsPanelOpen,
   setDrawingsPanelOpen,
+  regressionsPanelOpen,
+  setRegressionsPanelOpen,
   indicatorsPanelInitialView,
   strategiesPanelInitialView,
+  regressionsPanelInitialView,
   isSistemaChartPage,
   scrollContainerRef,
   topBarGapClass,
@@ -567,14 +613,19 @@ function SistemaLayoutInner({
   onMyStrategiesClick: () => void;
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
+  onMyRegressionsClick: () => void;
+  onAddRegressionClick: () => void;
   indicatorsPanelOpen: boolean;
   setIndicatorsPanelOpen: (v: boolean) => void;
   strategiesPanelOpen: boolean;
   setStrategiesPanelOpen: (v: boolean) => void;
   drawingsPanelOpen: boolean;
   setDrawingsPanelOpen: (v: boolean) => void;
+  regressionsPanelOpen: boolean;
+  setRegressionsPanelOpen: (v: boolean) => void;
   indicatorsPanelInitialView: "list" | "add";
   strategiesPanelInitialView: "list" | "add";
+  regressionsPanelInitialView: "list" | "add";
   isSistemaChartPage: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   topBarGapClass: string;
@@ -601,6 +652,8 @@ function SistemaLayoutInner({
               onMyStrategiesClick={onMyStrategiesClick}
               onAddStrategyClick={onAddStrategyClick}
               onDrawingsClick={onDrawingsClick}
+              onMyRegressionsClick={onMyRegressionsClick}
+              onAddRegressionClick={onAddRegressionClick}
               addStrategyDisabled={addStrategyDisabled}
               topBarGapClass={topBarGapClass}
               indicatorsPanelOpen={indicatorsPanelOpen}
@@ -609,8 +662,11 @@ function SistemaLayoutInner({
               setStrategiesPanelOpen={setStrategiesPanelOpen}
               drawingsPanelOpen={drawingsPanelOpen}
               setDrawingsPanelOpen={setDrawingsPanelOpen}
+              regressionsPanelOpen={regressionsPanelOpen}
+              setRegressionsPanelOpen={setRegressionsPanelOpen}
               indicatorsPanelInitialView={indicatorsPanelInitialView}
               strategiesPanelInitialView={strategiesPanelInitialView}
+              regressionsPanelInitialView={regressionsPanelInitialView}
               isSistemaChartPage={isSistemaChartPage}
               scrollContainerRef={scrollContainerRef}
               isAdmin={isAdmin}
@@ -633,6 +689,8 @@ function SistemaLayoutContent({
   onMyStrategiesClick,
   onAddStrategyClick,
   onDrawingsClick,
+  onMyRegressionsClick,
+  onAddRegressionClick,
   addStrategyDisabled,
   topBarGapClass,
   indicatorsPanelOpen,
@@ -641,8 +699,11 @@ function SistemaLayoutContent({
   setStrategiesPanelOpen,
   drawingsPanelOpen,
   setDrawingsPanelOpen,
+  regressionsPanelOpen,
+  setRegressionsPanelOpen,
   indicatorsPanelInitialView,
   strategiesPanelInitialView,
+  regressionsPanelInitialView,
   isSistemaChartPage,
   scrollContainerRef,
   isAdmin,
@@ -656,6 +717,8 @@ function SistemaLayoutContent({
   onMyStrategiesClick: () => void;
   onAddStrategyClick: () => void;
   onDrawingsClick: () => void;
+  onMyRegressionsClick: () => void;
+  onAddRegressionClick: () => void;
   addStrategyDisabled: boolean;
   topBarGapClass: string;
   indicatorsPanelOpen: boolean;
@@ -664,8 +727,11 @@ function SistemaLayoutContent({
   setStrategiesPanelOpen: (v: boolean) => void;
   drawingsPanelOpen: boolean;
   setDrawingsPanelOpen: (v: boolean) => void;
+  regressionsPanelOpen: boolean;
+  setRegressionsPanelOpen: (v: boolean) => void;
   indicatorsPanelInitialView: "list" | "add";
   strategiesPanelInitialView: "list" | "add";
+  regressionsPanelInitialView: "list" | "add";
   isSistemaChartPage: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   isAdmin: boolean;
@@ -685,6 +751,8 @@ function SistemaLayoutContent({
                 onMyStrategiesClick={onMyStrategiesClick}
                 onAddStrategyClick={onAddStrategyClick}
                 onDrawingsClick={onDrawingsClick}
+                onMyRegressionsClick={onMyRegressionsClick}
+                onAddRegressionClick={onAddRegressionClick}
                 addStrategyDisabled={addStrategyDisabled}
                 topBarGapClass={topBarGapClass}
               />
@@ -726,6 +794,16 @@ function SistemaLayoutContent({
                     onClick={() => setDrawingsPanelOpen(false)}
                   />
                   <DrawingsPanel onClose={() => setDrawingsPanelOpen(false)} />
+                </>
+              )}
+              {regressionsPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[1300]"
+                    aria-hidden
+                    onClick={() => setRegressionsPanelOpen(false)}
+                  />
+                  <RegressionsPanel initialView={regressionsPanelInitialView} onClose={() => setRegressionsPanelOpen(false)} isFreeUser={isFreeUser} />
                 </>
               )}
               {panelView && (

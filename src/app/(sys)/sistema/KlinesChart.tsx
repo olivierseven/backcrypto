@@ -79,6 +79,8 @@ import {
 import { flushSync } from "react-dom";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
+import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
+import { computeRegressionOverlayPaths } from "./regression/regressionChart";
 import type { Kline, KlinesChartProps } from "./klinesChart/types";
 import {
   CANDLE_COLOR_PRESETS,
@@ -125,7 +127,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
-  const { swapAdjacentSecondaryPanels } = useKlinesIndicators();
+  const { swapAdjacentSecondaryPanels, userIndicators } = useKlinesIndicators();
+  const { userRegressions } = useKlinesRegressions();
+  const maxRegForecastBars = useMemo(() => {
+    let m = 0;
+    for (const r of userRegressions) {
+      if (r.groupMinutes !== groupMinutes) continue;
+      if (r.forecastBars > m) m = r.forecastBars;
+    }
+    return m;
+  }, [userRegressions, groupMinutes]);
   const [visibleCount, setVisibleCountState] = useState<number>(DEFAULT_VISIBLE);
   const setVisibleCount = useCallback((v: number | ((prev: number) => number)) => {
     setVisibleCountState((prev) => {
@@ -937,7 +948,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => window.removeEventListener("chart-layout-get-config", handler);
   }, []);
 
-  /** Monta as 3 colunas a partir do estado atual (chart + extra do KlinesTable). Desenhos ficam só no localStorage, não vão no layout do servidor. */
+  /** Monta layout, indicators, strategies e regressions a partir do estado atual (chart + extra do KlinesTable). Desenhos ficam só no localStorage. */
   const buildLayoutColumns = useCallback(() => {
     const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
     const extra = getLayoutExtraConfig?.() ?? {} as Record<string, unknown>;
@@ -953,11 +964,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       volumeAtPriceColorBelow: extra.volumeAtPriceColorBelow,
     };
     const indicators = Array.isArray(extra.userIndicators) ? extra.userIndicators : [];
+    const regressions = Array.isArray(extra.userRegressions) ? extra.userRegressions : [];
     const strategiesPayload = {
       strategies: Array.isArray(extra.strategies) ? extra.strategies : [],
       appliedStrategyIds: Array.isArray(extra.appliedStrategyIds) ? extra.appliedStrategyIds : [],
     };
-    return { layout, indicators, strategies: strategiesPayload };
+    return { layout, indicators, strategies: strategiesPayload, regressions };
   }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle, getLayoutExtraConfig]);
 
   /** Chaves do eixo Y (para debug save/load). */
@@ -982,7 +994,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       }
       return;
     }
-    const { layout, indicators, strategies } = buildLayoutColumns();
+    const { layout, indicators, strategies, regressions } = buildLayoutColumns();
     if (layoutSaveLoadDebugEnabled) {
       const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout[k], [`${k}_typeof`]: typeof layout[k] }), {} as Record<string, unknown>);
       const msg = `[layout save] slot=${slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
@@ -993,7 +1005,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
       credentials: "include",
-      body: JSON.stringify({ slot, layout, indicators, strategies }),
+      body: JSON.stringify({ slot, layout, indicators, strategies, regressions }),
     });
     if (!res.ok) {
       setSavedLayoutsError((t as Record<string, string>).saveError ?? t.loadError);
@@ -1055,8 +1067,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     }
   };
 
-  /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = para "indicators" array, para "strategies" { strategies, appliedStrategyIds }. */
-  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies", payload?: unknown) => {
+  /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = "indicators" | "regressions" (array), "strategies" { strategies, appliedStrategyIds }. */
+  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies" | "regressions", payload?: unknown) => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
       if (!raw || raw === "default") return;
@@ -1065,9 +1077,17 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
       if (part) {
         const indicatorsPayload = part === "indicators" && Array.isArray(payload) ? payload : null;
+        const regressionsPayload = part === "regressions" && Array.isArray(payload) ? payload : null;
         const strategiesPayload = part === "strategies" && payload != null && typeof payload === "object" && "strategies" in payload && "appliedStrategyIds" in payload ? (payload as { strategies: unknown[]; appliedStrategyIds: string[] }) : null;
-        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
-        const body = part === "layout" ? { slot, layout: layoutCol } : part === "indicators" ? { slot, indicators: indicatorsPayload ?? indicatorsCol } : { slot, strategies: strategiesPayload ?? strategiesCol };
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol } = buildLayoutColumns();
+        const body =
+          part === "layout"
+            ? { slot, layout: layoutCol }
+            : part === "indicators"
+              ? { slot, indicators: indicatorsPayload ?? indicatorsCol }
+              : part === "regressions"
+                ? { slot, regressions: regressionsPayload ?? regressionsCol }
+                : { slot, strategies: strategiesPayload ?? strategiesCol };
         await fetch(`${API_BASE}/chart-layouts`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
@@ -1075,12 +1095,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           body: JSON.stringify(body),
         }).catch(() => {});
       } else {
-        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol } = buildLayoutColumns();
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol } = buildLayoutColumns();
         await fetch(`${API_BASE}/chart-layouts`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
-          body: JSON.stringify({ slot, layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol }),
+          body: JSON.stringify({ slot, layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol }),
         }).catch(() => {});
       }
     } catch {
@@ -1515,7 +1535,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const yRsiPanel5 = (rsi: number) => yValInPanel(rsi, panel5Top, panel5Height, panelExtents.panel5.min, panelExtents.panel5.max);
   const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4" | "panel5") =>
     panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : panel === "panel4" ? yRsiPanel4(rsi) : yRsiPanel5(rsi);
-  const totalSlots = windowN + invisibleCandlesEnd;
+  const invisibleEndEffective = Math.max(invisibleCandlesEnd, maxRegForecastBars);
+  const totalSlots = windowN + invisibleEndEffective;
   const gap = chartW / totalSlots;
   const candleW = Math.max(2, gap * BODY_WIDTH_RATIO);
   const cx = (i: number) => MARGIN_LEFT + (i + 0.5) * gap;
@@ -1540,6 +1561,18 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       }
     }
   }
+  const regressionFilteredForExtents = userRegressions.filter((r) => r.groupMinutes === groupMinutes);
+  const { extentYs: regressionExtentYs } = computeRegressionOverlayPaths({
+    regressions: regressionFilteredForExtents,
+    groupMinutes,
+    userIndicators,
+    windowSlice,
+    windowN,
+    totalSlots,
+    logScale,
+  });
+  for (const v of regressionExtentYs) priceExtents.push(v);
+
   const minPrice = priceExtents.length > 0 ? Math.min(...priceExtents) : Math.min(...lows);
   const maxPrice = priceExtents.length > 0 ? Math.max(...priceExtents) : Math.max(...highs);
   const range = maxPrice - minPrice || 1;
@@ -1585,7 +1618,19 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return MARGIN_TOP + chartH - ((price - yMin) / yRange) * chartH;
   };
 
-  const maxDrawIndex = startIndex + windowN + invisibleCandlesEnd - 1;
+  const { paths: regressionOverlayPaths } = computeRegressionOverlayPaths({
+    regressions: regressionFilteredForExtents,
+    groupMinutes,
+    userIndicators,
+    windowSlice,
+    windowN,
+    totalSlots,
+    logScale,
+    cx,
+    y,
+  });
+
+  const maxDrawIndex = startIndex + windowN + invisibleEndEffective - 1;
 
   // Parâmetros para converter pixel <-> dados (segmentos ficam fixos ao rolar)
   drawConversionRef.current = {
@@ -2390,6 +2435,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               t={t}
               textScale={textScale}
               strategyCandleOverlays={strategyCandleOverlays}
+              regressionOverlayPaths={regressionOverlayPaths}
             />
             {/* Overlay só no modo crosshair (!drawMode). Em modo desenho o rect do SVG cuida de select (pan + grab) e de desenho (line/rect/fib). */}
             {!drawMode && (

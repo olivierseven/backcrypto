@@ -1,6 +1,7 @@
 /**
- * Helpers para o esquema de 4 colunas (layout, indicators, strategies, others).
+ * Helpers para o esquema de colunas: layout, indicators, strategies, regressions, others.
  * others = configs rápidas (visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset).
+ * Regressões do utilizador ficam na coluna `regressions` (array), não no JSON `layout`.
  * Desenhos (draw-segments) ficam só no localStorage, não vão no layout.
  */
 
@@ -22,31 +23,39 @@ export function mergeColumnsToConfig(
   layout: JsonValue,
   indicators: JsonValue,
   strategies: JsonValue,
-  others?: JsonValue
+  others?: JsonValue,
+  regressions?: JsonValue
 ): Record<string, unknown> {
   const layoutObj = layout != null && typeof layout === "object" && !Array.isArray(layout) ? (layout as Record<string, unknown>) : {};
+  const { userRegressions: legacyRegressions, ...layoutRest } = layoutObj;
+  const fromRegressionsCol = regressions != null && Array.isArray(regressions) ? regressions : null;
+  const userRegressions =
+    fromRegressionsCol != null ? fromRegressionsCol : Array.isArray(legacyRegressions) ? legacyRegressions : [];
+
   const indicatorsArr = Array.isArray(indicators) ? indicators : [];
   const strategiesObj = strategies != null && typeof strategies === "object" && !Array.isArray(strategies) ? (strategies as Record<string, unknown>) : {};
   const strategiesList = Array.isArray(strategiesObj.strategies) ? strategiesObj.strategies : [];
   const appliedIds = Array.isArray(strategiesObj.appliedStrategyIds) ? strategiesObj.appliedStrategyIds : [];
   const othersObj = others != null && typeof others === "object" && !Array.isArray(others) ? (others as Record<string, unknown>) : {};
   return {
-    ...layoutObj,
+    ...layoutRest,
     userIndicators: indicatorsArr,
+    userRegressions,
     strategies: strategiesList,
     appliedStrategyIds: appliedIds,
     ...othersObj,
   };
 }
 
-/** Extrai layout, indicators, strategies e others a partir do config único. */
+/** Extrai colunas a partir do config único (POST legado com `config` único). */
 export function splitConfigToColumns(config: Record<string, unknown>): {
   layout: Record<string, unknown>;
   indicators: unknown[];
   strategies: { strategies: unknown[]; appliedStrategyIds: string[] };
+  regressions: unknown[];
   others: Record<string, unknown>;
 } {
-  const { userIndicators, strategies: strategiesList, appliedStrategyIds, ...rest } = config;
+  const { userIndicators, userRegressions, strategies: strategiesList, appliedStrategyIds, ...rest } = config;
   const others: Record<string, unknown> = {};
   const layout: Record<string, unknown> = {};
   for (const key of Object.keys(rest)) {
@@ -63,6 +72,7 @@ export function splitConfigToColumns(config: Record<string, unknown>): {
       strategies: Array.isArray(strategiesList) ? strategiesList : [],
       appliedStrategyIds: Array.isArray(appliedStrategyIds) ? appliedStrategyIds.filter((id): id is string => typeof id === "string") : [],
     },
+    regressions: Array.isArray(userRegressions) ? userRegressions : [],
     others,
   };
 }

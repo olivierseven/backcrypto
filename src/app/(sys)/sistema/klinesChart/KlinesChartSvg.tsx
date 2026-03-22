@@ -14,7 +14,7 @@ import { DrawOverlay } from "./DrawOverlay";
 import { DrawSegmentHandles, type DrawDraggingPoint } from "./DrawSegmentHandles";
 import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
 import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
-import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
+import type { ChartIndicatorLine, RegressionOverlayPath, StrategyCandleOverlay } from "./types";
 
 function lineWidthToStroke(w: "thin" | "normal" | "thick" | undefined): number {
   return w === "thin" ? 0.5 : w === "thick" ? 2 : 1;
@@ -145,6 +145,8 @@ export interface KlinesChartSvgProps {
   textScale?: number;
   /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
   strategyCandleOverlays?: StrategyCandleOverlay[];
+  /** Regressões (linear/quadrática) sobre série de indicador no painel principal. */
+  regressionOverlayPaths?: RegressionOverlayPath[];
 }
 
 export function KlinesChartSvg({
@@ -253,6 +255,7 @@ export function KlinesChartSvg({
   t,
   textScale = 1,
   strategyCandleOverlays = [],
+  regressionOverlayPaths = [],
   volumeAtPriceData = null,
   volumeAtPriceOpacity = 40,
   volumeAtPriceWidthPercent = 100,
@@ -1678,6 +1681,22 @@ export function KlinesChartSvg({
           );
         })}
         </g>
+        {regressionOverlayPaths.length > 0 && (
+          <g clipPath={`url(#${plotClipId.replace(/:/g, "\\:")})`} pointerEvents="none">
+            {regressionOverlayPaths.map((p) => (
+              <path
+                key={p.id}
+                d={p.d}
+                fill="none"
+                stroke={p.color}
+                strokeWidth={p.strokeWidth}
+                strokeDasharray={p.strokeDasharray}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ))}
+          </g>
+        )}
         {volumeOnPrice && (() => {
           const volTop = MARGIN_TOP + (chartH * 2) / 3;
           const volH = chartH / 3;

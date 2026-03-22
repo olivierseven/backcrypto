@@ -7,6 +7,7 @@ import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
+import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
 import { useChartSymbol } from "./ChartSymbolContext";
@@ -255,6 +256,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
+  const { userRegressions, replaceUserRegressionsFromLayout } = useKlinesRegressions();
   const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
   const intervalOptions = getIntervalOptions(isAdmin);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
@@ -1339,6 +1341,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             strategyCandleOverlays={strategyCandleOverlays}
             getLayoutExtraConfig={() => ({
               userIndicators,
+              userRegressions,
               strategies,
               appliedStrategyIds,
               volumeAtPriceEnabled,
@@ -1379,6 +1382,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 flushSync(() => {});
               } else {
                 addLayoutLoadLog(`layout sem userIndicators válido (array): skip replace`);
+              }
+
+              if (Object.prototype.hasOwnProperty.call(config, "userRegressions")) {
+                replaceUserRegressionsFromLayout(config.userRegressions);
+                flushSync(() => {});
               }
 
               // Estratégias do layout (precisamos da lista para validar e aplicar os IDs)

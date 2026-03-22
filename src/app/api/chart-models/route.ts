@@ -37,13 +37,13 @@ export async function GET() {
 
   const rows = await cryptoPrisma.chartModel.findMany({
     where: { userId: ADMIN_USER_ID },
-    select: { slot: true, name: true, layout: true, indicators: true, strategies: true, others: true },
+    select: { slot: true, name: true, layout: true, indicators: true, strategies: true, regressions: true, others: true },
     orderBy: { slot: "asc" },
   });
 
   const models = rows.map((r) => ({
     slot: r.slot,
-    config: mergeColumnsToConfig(r.layout, r.indicators, r.strategies, r.others ?? undefined),
+    config: mergeColumnsToConfig(r.layout, r.indicators, r.strategies, r.others ?? undefined, r.regressions ?? undefined),
     name: r.name ?? undefined,
   }));
 
@@ -64,6 +64,7 @@ export async function POST(req: Request) {
     layout?: unknown;
     indicators?: unknown;
     strategies?: unknown;
+    regressions?: unknown;
     others?: unknown;
   } = {};
   try {
@@ -86,7 +87,8 @@ export async function POST(req: Request) {
     const config = body.config as Record<string, unknown>;
     const configStr = JSON.stringify(config);
     if (configStr.length > CONFIG_MAX_BYTES) return NextResponse.json({ error: "config_too_large" }, { status: 400 });
-    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, others: othersCol } = splitConfigToColumns(config);
+    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol, others: othersCol } =
+      splitConfigToColumns(config);
     const othersVal = Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : Prisma.DbNull;
     await cryptoPrisma.chartModel.upsert({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
@@ -96,6 +98,7 @@ export async function POST(req: Request) {
         layout: layoutCol as Prisma.InputJsonValue,
         indicators: indicatorsCol as Prisma.InputJsonValue,
         strategies: strategiesCol as Prisma.InputJsonValue,
+        regressions: regressionsCol as Prisma.InputJsonValue,
         others: othersVal,
         name: name ?? null,
       },
@@ -103,6 +106,7 @@ export async function POST(req: Request) {
         layout: layoutCol as Prisma.InputJsonValue,
         indicators: indicatorsCol as Prisma.InputJsonValue,
         strategies: strategiesCol as Prisma.InputJsonValue,
+        regressions: regressionsCol as Prisma.InputJsonValue,
         others: othersVal,
         ...(name !== undefined && { name }),
       },
@@ -110,19 +114,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, slot });
   }
 
-  if (body.layout !== undefined || body.indicators !== undefined || body.strategies !== undefined || body.others !== undefined) {
+  if (
+    body.layout !== undefined ||
+    body.indicators !== undefined ||
+    body.strategies !== undefined ||
+    body.regressions !== undefined ||
+    body.others !== undefined
+  ) {
     const existing = await cryptoPrisma.chartModel.findUnique({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
-      select: { layout: true, indicators: true, strategies: true, others: true },
+      select: { layout: true, indicators: true, strategies: true, regressions: true, others: true },
     });
     const layout = body.layout !== undefined ? body.layout : (existing?.layout ?? null);
     const indicators = body.indicators !== undefined ? body.indicators : (existing?.indicators ?? null);
     const strategies = body.strategies !== undefined ? body.strategies : (existing?.strategies ?? null);
+    const regressions = body.regressions !== undefined ? body.regressions : (existing?.regressions ?? null);
     const others = body.others !== undefined ? body.others : (existing?.others ?? null);
     for (const [label, val] of [
       ["layout", layout],
       ["indicators", indicators],
       ["strategies", strategies],
+      ["regressions", regressions],
       ["others", others],
     ] as const) {
       if (JSON.stringify(val).length > CONFIG_MAX_BYTES) {
@@ -138,6 +150,7 @@ export async function POST(req: Request) {
         layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue),
         indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue),
         strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue),
+        regressions: regressions == null ? Prisma.DbNull : (regressions as Prisma.InputJsonValue),
         others: othersVal,
         name: name ?? null,
       },
@@ -145,6 +158,7 @@ export async function POST(req: Request) {
         ...(body.layout !== undefined && { layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue) }),
         ...(body.indicators !== undefined && { indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue) }),
         ...(body.strategies !== undefined && { strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue) }),
+        ...(body.regressions !== undefined && { regressions: regressions == null ? Prisma.DbNull : (regressions as Prisma.InputJsonValue) }),
         ...(body.others !== undefined && { others: othersVal }),
         ...(name !== undefined && { name }),
       },
@@ -152,5 +166,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, slot });
   }
 
-  return NextResponse.json({ error: "invalid_body", message: "Send config or at least one of layout, indicators, strategies, others" }, { status: 400 });
+  return NextResponse.json({
+    error: "invalid_body",
+    message: "Send config or at least one of layout, indicators, strategies, regressions, others",
+  }, { status: 400 });
 }

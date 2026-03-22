@@ -1,6 +1,6 @@
 // GET: lista layouts do usuário (slots 1–7; ChartLayout). defaultLayout vem de ChartModels (slot 0). canSaveDefault só para admin.
 // POST: salva layout em um slot (1–7). Body: { slot, config } (legado) ou { slot, layout?, indicators?, strategies?, name? }.
-// PATCH: atualiza só colunas enviadas. Body: { slot, appliedStrategyIds? | layout? | indicators? | strategies? }.
+// PATCH: atualiza só colunas enviadas. Body: { slot, appliedStrategyIds? | layout? | indicators? | strategies? | regressions? | others? }.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
@@ -44,16 +44,16 @@ export async function GET(request: Request) {
     cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
     cryptoPrisma.chartLayout.findMany({
       where: { userId, slot: { in: [...USER_SLOTS] } },
-      select: { slot: true, name: true, layout: true, indicators: true, strategies: true, others: true },
+      select: { slot: true, name: true, layout: true, indicators: true, strategies: true, regressions: true, others: true },
     }),
     cryptoPrisma.chartModel.findUnique({
       where: { userId_slot: { userId: ADMIN_USER_ID, slot: 0 } },
-      select: { name: true, layout: true, indicators: true, strategies: true, others: true },
+      select: { name: true, layout: true, indicators: true, strategies: true, regressions: true, others: true },
     }),
   ]);
 
   const layouts = rows.map((r) => {
-    const config = mergeColumnsToConfig(r.layout, r.indicators, r.strategies, r.others ?? undefined);
+    const config = mergeColumnsToConfig(r.layout, r.indicators, r.strategies, r.others ?? undefined, r.regressions ?? undefined);
     return {
       slot: r.slot,
       config,
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     layout?: unknown;
     indicators?: unknown;
     strategies?: unknown;
+    regressions?: unknown;
     others?: unknown;
   } = {};
   try {
@@ -120,12 +121,14 @@ export async function POST(req: Request) {
     if (configStr.length > CONFIG_MAX_BYTES) {
       return NextResponse.json({ error: "config_too_large", message: "Config exceeds max size" }, { status: 400 });
     }
-    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, others: othersCol } = splitConfigToColumns(config);
+    const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol, others: othersCol } =
+      splitConfigToColumns(config);
     const layoutStr = JSON.stringify(layoutCol);
     const indicatorsStr = JSON.stringify(indicatorsCol);
     const strategiesStr = JSON.stringify(strategiesCol);
+    const regressionsStr = JSON.stringify(regressionsCol);
     const othersStr = JSON.stringify(othersCol);
-    if ([layoutStr.length, indicatorsStr.length, strategiesStr.length, othersStr.length].some((n) => n > CONFIG_MAX_BYTES)) {
+    if ([layoutStr.length, indicatorsStr.length, strategiesStr.length, regressionsStr.length, othersStr.length].some((n) => n > CONFIG_MAX_BYTES)) {
       return NextResponse.json({ error: "config_too_large", message: "Config exceeds max size" }, { status: 400 });
     }
     await cryptoPrisma.chartLayout.upsert({
@@ -136,6 +139,7 @@ export async function POST(req: Request) {
         layout: layoutCol as Prisma.InputJsonValue,
         indicators: indicatorsCol as Prisma.InputJsonValue,
         strategies: strategiesCol as Prisma.InputJsonValue,
+        regressions: regressionsCol as Prisma.InputJsonValue,
         others: Object.keys(othersCol).length > 0 ? (othersCol as Prisma.InputJsonValue) : Prisma.DbNull,
         name: name ?? null,
       },
@@ -143,6 +147,7 @@ export async function POST(req: Request) {
         layout: layoutCol as Prisma.InputJsonValue,
         indicators: indicatorsCol as Prisma.InputJsonValue,
         strategies: strategiesCol as Prisma.InputJsonValue,
+        regressions: regressionsCol as Prisma.InputJsonValue,
         others: othersCol as Prisma.InputJsonValue,
         ...(name !== undefined && { name }),
       },
@@ -150,19 +155,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, slot });
   }
 
-  if (body.layout !== undefined || body.indicators !== undefined || body.strategies !== undefined || body.others !== undefined) {
+  if (
+    body.layout !== undefined ||
+    body.indicators !== undefined ||
+    body.strategies !== undefined ||
+    body.regressions !== undefined ||
+    body.others !== undefined
+  ) {
     const existing = await cryptoPrisma.chartLayout.findUnique({
       where: { userId_slot: { userId: targetUserId, slot } },
-      select: { layout: true, indicators: true, strategies: true, others: true },
+      select: { layout: true, indicators: true, strategies: true, regressions: true, others: true },
     });
     const layout = body.layout !== undefined ? body.layout : (existing?.layout ?? null);
     const indicators = body.indicators !== undefined ? body.indicators : (existing?.indicators ?? null);
     const strategies = body.strategies !== undefined ? body.strategies : (existing?.strategies ?? null);
+    const regressions = body.regressions !== undefined ? body.regressions : (existing?.regressions ?? null);
     const others = body.others !== undefined ? body.others : (existing?.others ?? null);
     for (const [label, val] of [
       ["layout", layout],
       ["indicators", indicators],
       ["strategies", strategies],
+      ["regressions", regressions],
       ["others", others],
     ] as const) {
       const str = JSON.stringify(val);
@@ -178,6 +191,7 @@ export async function POST(req: Request) {
         layout: layout ?? undefined,
         indicators: indicators ?? undefined,
         strategies: strategies ?? undefined,
+        regressions: regressions ?? undefined,
         others: others != null && typeof others === "object" && Object.keys(others as object).length > 0 ? (others as Prisma.InputJsonValue) : Prisma.DbNull,
         name: name ?? null,
       },
@@ -185,6 +199,7 @@ export async function POST(req: Request) {
         ...(body.layout !== undefined && { layout: layout == null ? Prisma.DbNull : (layout as Prisma.InputJsonValue) }),
         ...(body.indicators !== undefined && { indicators: indicators == null ? Prisma.DbNull : (indicators as Prisma.InputJsonValue) }),
         ...(body.strategies !== undefined && { strategies: strategies == null ? Prisma.DbNull : (strategies as Prisma.InputJsonValue) }),
+        ...(body.regressions !== undefined && { regressions: regressions == null ? Prisma.DbNull : (regressions as Prisma.InputJsonValue) }),
         ...(body.others !== undefined && { others: others == null || typeof others !== "object" ? Prisma.DbNull : (others as Prisma.InputJsonValue) }),
         ...(name !== undefined && { name }),
       },
@@ -192,7 +207,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, slot });
   }
 
-  return NextResponse.json({ error: "invalid_body", message: "Either config or at least one of layout, indicators, strategies, others is required" }, { status: 400 });
+  return NextResponse.json({
+    error: "invalid_body",
+    message: "Either config or at least one of layout, indicators, strategies, regressions, others is required",
+  }, { status: 400 });
 }
 
 /** PATCH: atualiza só as colunas enviadas. Body: { slot, appliedStrategyIds? } (legado) ou { slot, layout? | indicators? | strategies? }. */
@@ -210,6 +228,7 @@ export async function PATCH(req: Request) {
     layout?: unknown;
     indicators?: unknown;
     strategies?: unknown;
+    regressions?: unknown;
     others?: unknown;
   } = {};
   try {
@@ -225,10 +244,10 @@ export async function PATCH(req: Request) {
 
   const existing = await cryptoPrisma.chartLayout.findUnique({
     where: { userId_slot: { userId, slot } },
-    select: { layout: true, indicators: true, strategies: true, others: true },
+    select: { layout: true, indicators: true, strategies: true, regressions: true, others: true },
   });
 
-  const update: { layout?: unknown; indicators?: unknown; strategies?: unknown; others?: unknown } = {};
+  const update: { layout?: unknown; indicators?: unknown; strategies?: unknown; regressions?: unknown; others?: unknown } = {};
 
   function toJsonInput(v: unknown): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue {
     return v == null ? Prisma.DbNull : (v as Prisma.InputJsonValue);
@@ -274,6 +293,28 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "config_too_large", message: "strategies exceeds max size" }, { status: 400 });
     }
   }
+  if (body.regressions !== undefined) {
+    update.regressions = body.regressions;
+    if (JSON.stringify(body.regressions).length > CONFIG_MAX_BYTES) {
+      return NextResponse.json({ error: "config_too_large", message: "regressions exceeds max size" }, { status: 400 });
+    }
+    /** Fonte de verdade passa a ser a coluna `regressions`; remove legado embutido no JSON `layout`. */
+    if (body.layout === undefined) {
+      const layoutRaw = existing?.layout;
+      if (
+        layoutRaw != null &&
+        typeof layoutRaw === "object" &&
+        !Array.isArray(layoutRaw) &&
+        Object.prototype.hasOwnProperty.call(layoutRaw as object, "userRegressions")
+      ) {
+        const { userRegressions: _legacy, ...layoutRest } = layoutRaw as Record<string, unknown>;
+        update.layout = layoutRest;
+        if (JSON.stringify(layoutRest).length > CONFIG_MAX_BYTES) {
+          return NextResponse.json({ error: "config_too_large", message: "layout exceeds max size" }, { status: 400 });
+        }
+      }
+    }
+  }
   if (body.others !== undefined) {
     update.others = body.others;
     if (JSON.stringify(body.others).length > CONFIG_MAX_BYTES) {
@@ -282,18 +323,23 @@ export async function PATCH(req: Request) {
   }
 
   if (Object.keys(update).length === 0) {
-    return NextResponse.json({ error: "invalid_body", message: "Send appliedStrategyIds, layout, indicators, strategies or others" }, { status: 400 });
+    return NextResponse.json({
+      error: "invalid_body",
+      message: "Send appliedStrategyIds, layout, indicators, strategies, regressions or others",
+    }, { status: 400 });
   }
 
   const updatePayload: {
     layout?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     indicators?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     strategies?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+    regressions?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     others?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
   } = {};
   if (update.layout !== undefined) updatePayload.layout = toJsonInput(update.layout);
   if (update.indicators !== undefined) updatePayload.indicators = toJsonInput(update.indicators);
   if (update.strategies !== undefined) updatePayload.strategies = toJsonInput(update.strategies);
+  if (update.regressions !== undefined) updatePayload.regressions = toJsonInput(update.regressions);
   if (update.others !== undefined) updatePayload.others = toJsonInput(update.others);
 
   await cryptoPrisma.chartLayout.upsert({
@@ -304,6 +350,7 @@ export async function PATCH(req: Request) {
       layout: update.layout !== undefined ? toJsonInput(update.layout) : undefined,
       indicators: update.indicators !== undefined ? toJsonInput(update.indicators) : undefined,
       strategies: update.strategies !== undefined ? toJsonInput(update.strategies) : undefined,
+      regressions: update.regressions !== undefined ? toJsonInput(update.regressions) : undefined,
       others: update.others !== undefined ? toJsonInput(update.others) : undefined,
       name: null,
     },
