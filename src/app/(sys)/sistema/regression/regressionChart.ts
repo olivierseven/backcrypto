@@ -106,7 +106,13 @@ export function computeRegressionOverlayPaths(args: {
       reg.model === "quartic" ? 5 : reg.model === "cubic" ? 4 : reg.model === "quadratic" ? 3 : 2;
     let samples: { wi: number; y: number }[];
     if (reg.sourceIndicatorId === CANDLE_REGRESSION_SOURCE_ID) {
-      samples = collectSamplesFromOhlcWindow(windowSlice, reg.sourceToken as RegressionSourceToken, reg.lookback, logScale);
+      samples = collectSamplesFromOhlcWindow(
+        windowSlice,
+        reg.sourceToken as RegressionSourceToken,
+        reg.lookback,
+        logScale,
+        reg.pastEndOffsetBars
+      );
     } else {
       const u = userIndicators.findIndex((i) => i.id === reg.sourceIndicatorId);
       if (u < 0) continue;
