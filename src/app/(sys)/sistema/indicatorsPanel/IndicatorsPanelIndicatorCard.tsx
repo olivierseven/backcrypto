@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { UserIndicatorConfig, IndicatorPanel, IndicatorFieldKey, IndicatorLineWidth, IndicatorLineStyle } from "../KlinesIndicatorsContext";
+import type { UserIndicatorConfig, Wma2TimeUnit, IndicatorPanel, IndicatorFieldKey, IndicatorLineWidth, IndicatorLineStyle } from "../KlinesIndicatorsContext";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { StepperButton } from "../components/StepperButton";
 import { useIndicatorsPanelContext } from "./IndicatorsPanelContext";
+import {
+  clampMa2TimeWindowUserValue,
+  defaultMa2TimeValueForUnit,
+  isTimeWindowMa2Type,
+  MA2_MAX_WINDOW_VALUE,
+  normalizeMa2TimeValueForUnit,
+} from "./wma2Period";
 
 interface IndicatorsPanelIndicatorCardProps {
   ind: UserIndicatorConfig;
@@ -66,6 +73,14 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     { value: "EMA", label: "EMA" },
     { value: "WMA", label: "WMA" },
   ], []);
+  const wma2UnitOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "days", label: tRecord.wma2TimeUnitDays ?? "Days" },
+      { value: "hours", label: tRecord.wma2TimeUnitHours ?? "Hours" },
+      { value: "minutes", label: tRecord.wma2TimeUnitMinutes ?? "Minutes" },
+    ],
+    [tRecord]
+  );
   const editPanelOptions: ComboboxOption[] = useMemo(() => {
     const p2 = tRecord.chartOptionPanel2 ?? "Panel 2";
     const p3 = tRecord.chartOptionPanel3 ?? "Panel 3";
@@ -130,44 +145,48 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             />
             <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
           </label>
-          <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-            <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="text-[10px] text-zinc-600 hover:underline">
-              {t.allIntervals}
-            </button>
-            <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [0] } : f))} className="text-[10px] text-zinc-600 hover:underline">
-              {(t as Record<string, string>).noIntervals ?? "Nenhum"}
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {INTERVAL_OPTIONS.map((opt) => {
-              const formIntervals = editForm.intervals ?? [];
-              const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
-              const isAll = formIntervals.length === 0;
-              const checked = isAll || (!isNone && formIntervals.includes(opt.value));
-              return (
-                <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => {
-                      setEditForm((f) => {
-                        if (!f) return f;
-                        const fi = f.intervals ?? [];
-                        const fIsNone = fi.length === 1 && fi[0] === 0;
-                        const fIsAll = fi.length === 0;
-                        const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
-                        const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
-                        return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
-                      });
-                    }}
-                    className="rounded border-zinc-300"
-                  />
-                  {opt.label}
-                </label>
-              );
-            })}
-          </div>
+          {!isTimeWindowMa2Type(ind.type) && (
+            <>
+              <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+                  {t.allIntervals}
+                </button>
+                <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [0] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+                  {(t as Record<string, string>).noIntervals ?? "Nenhum"}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {INTERVAL_OPTIONS.map((opt) => {
+                  const formIntervals = editForm.intervals ?? [];
+                  const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
+                  const isAll = formIntervals.length === 0;
+                  const checked = isAll || (!isNone && formIntervals.includes(opt.value));
+                  return (
+                    <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setEditForm((f) => {
+                            if (!f) return f;
+                            const fi = f.intervals ?? [];
+                            const fIsNone = fi.length === 1 && fi[0] === 0;
+                            const fIsAll = fi.length === 0;
+                            const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
+                            const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
+                            return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
+                          });
+                        }}
+                        className="rounded border-zinc-300"
+                      />
+                      {opt.label}
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
             {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
@@ -503,6 +522,86 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, period: Math.max(1, f.period - 1), periodText: String(Math.max(1, f.period - 1)) } : f))} className="stepper-btn">−</StepperButton>
                   <input type="text" inputMode="numeric" value={editForm.periodText} onChange={(e) => setEditForm((f) => (f ? { ...f, periodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.periodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 14; setEditForm((f) => (f ? { ...f, period: v, periodText: String(v) } : f)); }} className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1" />
                   <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, period: Math.min(500, f.period + 1), periodText: String(Math.min(500, f.period + 1)) } : f))} className="stepper-btn">+</StepperButton>
+                </div>
+              </div>
+            </>
+          ) : isTimeWindowMa2Type(ind.type) ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
+                <Combobox
+                  value={editFieldValue}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, fieldKey: v as IndicatorFieldKey } : f))}
+                  options={visibleForEdit.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={t.field}
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.wma2WindowLabel ?? "Averaging window"}</span>
+                  <Combobox
+                    value={editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes" ? editForm.wma2TimeUnit : "hours"}
+                    onChange={(v) => {
+                      const u = v as Wma2TimeUnit;
+                      const d = defaultMa2TimeValueForUnit(u);
+                      setEditForm((f) => (f ? { ...f, wma2TimeUnit: u, wma2TimeValue: d, wma2TimeValueText: String(d) } : f));
+                    }}
+                    options={wma2UnitOptions}
+                    className="w-28 shrink-0"
+                    size="md"
+                    aria-label={tRecord.wma2WindowLabel ?? "Window unit"}
+                  />
+                  <div className="flex items-center gap-1">
+                    <StepperButton
+                      onStep={() => {
+                        const u =
+                          editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes"
+                            ? editForm.wma2TimeUnit
+                            : "hours";
+                        const next = Math.max(1, (editForm.wma2TimeValue ?? defaultMa2TimeValueForUnit(u)) - 1);
+                        setEditForm((f) => (f ? { ...f, wma2TimeValue: next, wma2TimeValueText: String(next) } : f));
+                      }}
+                      className="stepper-btn"
+                    >
+                      −
+                    </StepperButton>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editForm.wma2TimeValueText}
+                      onFocus={(e) => {
+                        queueMicrotask(() => e.currentTarget?.select());
+                      }}
+                      onChange={(e) => setEditForm((f) => (f ? { ...f, wma2TimeValueText: e.target.value.replace(/[^\d]/g, "") } : f))}
+                      onBlur={() => {
+                        const n = Number(editForm.wma2TimeValueText);
+                        const u =
+                          editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes"
+                            ? editForm.wma2TimeUnit
+                            : "hours";
+                        const def = defaultMa2TimeValueForUnit(u);
+                        const raw = Number.isFinite(n) && n > 0 ? clampMa2TimeWindowUserValue(n) : editForm.wma2TimeValue ?? def;
+                        const next = normalizeMa2TimeValueForUnit(u, raw);
+                        setEditForm((f) => (f ? { ...f, wma2TimeValue: next, wma2TimeValueText: String(next) } : f));
+                      }}
+                      className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1"
+                    />
+                    <StepperButton
+                      onStep={() => {
+                        const u =
+                          editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes"
+                            ? editForm.wma2TimeUnit
+                            : "hours";
+                        const next = Math.min(MA2_MAX_WINDOW_VALUE, (editForm.wma2TimeValue ?? defaultMa2TimeValueForUnit(u)) + 1);
+                        setEditForm((f) => (f ? { ...f, wma2TimeValue: next, wma2TimeValueText: String(next) } : f));
+                      }}
+                      className="stepper-btn"
+                    >
+                      +
+                    </StepperButton>
+                  </div>
                 </div>
               </div>
             </>

@@ -63,6 +63,12 @@ export const KLINE_DRAW_VISIBLE_KEY = "backcrypto-klines-draw-visible";
 export function getDrawStorageKey(symbol: string | null | undefined, groupMinutes: number): string {
   return symbol ? `${String(symbol)}|${groupMinutes}` : String(groupMinutes);
 }
+
+/** Retas H/V com "todos os períodos" por símbolo (mesmo símbolo, qualquer intervalo). Só com símbolo definido. */
+export function getDrawSharedIntervalsKey(symbol: string | null | undefined): string | null {
+  if (symbol == null || symbol === "") return null;
+  return `${String(symbol)}|__allIntervals__`;
+}
 export const KLINE_DRAW_MAGNETIC_KEY = "backcrypto-klines-draw-magnetic";
 export const KLINE_DRAW_DEFAULTS_KEY = "backcrypto-klines-draw-defaults";
 /** Preferência do usuário: opções do segmento recolhidas (true) ou expandidas (false). */

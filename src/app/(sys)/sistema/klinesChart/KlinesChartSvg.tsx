@@ -11,7 +11,7 @@ import { formatTimeLabel, formatDateLabel, formatDateYyyyMmDd, formatMonthOnly, 
 import { FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, type DrawSegment, type DrawDefaults } from "../KlinesChartDrawing";
 import { DrawSegmentRender } from "./DrawSegmentRender";
 import { DrawOverlay } from "./DrawOverlay";
-import { DrawSegmentHandles } from "./DrawSegmentHandles";
+import { DrawSegmentHandles, type DrawDraggingPoint } from "./DrawSegmentHandles";
 import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
 import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
 import type { ChartIndicatorLine, StrategyCandleOverlay } from "./types";
@@ -47,8 +47,14 @@ export interface KlinesChartSvgProps {
   candleColors: { bull: string; bear: string };
   yTickValues: number[];
   verticalIndicesFiltered: number[];
+  /** Mesma âncora que a principal; passo mais curto (~dobro de colunas tracejadas). */
+  secondaryVerticalIndicesFiltered: number[];
+  /** Posições X (px) dos marcadores de meia-noite no fuso UTC da conta (interpoladas entre velas). */
+  utcDayStartMarkerXs?: number[];
+  /** Texto para tooltip dos marcadores (ex.: início do dia + UTC±N). */
+  utcDayStartMarkerTitle?: string;
   dateBreaksFiltered: { index: number; dateStr: string; openTime?: number }[];
-  dayBreaksFiltered: { index: number; label: string; openTime?: number }[];
+  dayBreaksFiltered: { index: number; label: string; openTime?: number; mainAxisKind?: "month" | "day" | "hour" }[];
   showMainAxis: boolean;
   showSecondaryAxis: boolean;
   showLastCloseLine: boolean;
@@ -118,7 +124,7 @@ export interface KlinesChartSvgProps {
   setSelectedSegmentIndex: (i: number | null) => void;
   drawMode: boolean;
   drawTool: "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: DrawDraggingPoint } | null>>;
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Clique no número (2)(3)… na faixa de indicadores: permuta painéis secundários adjacentes. */
@@ -165,6 +171,9 @@ export function KlinesChartSvg({
   candleColors,
   yTickValues,
   verticalIndicesFiltered,
+  secondaryVerticalIndicesFiltered,
+  utcDayStartMarkerXs = [],
+  utcDayStartMarkerTitle = "",
   dateBreaksFiltered,
   dayBreaksFiltered,
   showMainAxis,
@@ -320,7 +329,6 @@ export function KlinesChartSvg({
   }, [selectPanActive, onSelectToolPan]);
 
   const fontSize = Math.round(10 * textScale);
-  const fontSizeSmall = Math.round(9 * textScale);
   const fontSizeAxis = Math.round(12 * textScale);
   const volumeOnPriceClipId = useId();
   const plotClipId = useId();
@@ -467,7 +475,7 @@ export function KlinesChartSvg({
         </defs>
         {showSecondaryAxis && (
           <>
-            {verticalIndicesFiltered.map((idx) => (
+            {secondaryVerticalIndicesFiltered.map((idx) => (
               <line
                 key={`dash-${idx}`}
                 x1={cx(idx)}
@@ -522,15 +530,14 @@ export function KlinesChartSvg({
           const rowH = 12;
           const labelOffsetDown = 4;
           const yRow1 = tableTop + rowH - 2 + labelOffsetDown;
-          const yRow2 = tableTop + rowH + rowH - 2 + labelOffsetDown;
           return (
             <>
               <g className="text-[12px] font-mono" fill={backgroundTextHex}>
                 {dayBreaksFiltered.map((b) => {
-                  const isDay01 = b.label === "01";
                   const openTimeMs = b.openTime ?? (b.index < windowN ? (windowSlice[b.index][0] as number) : 0);
                   const x = cx(b.index);
-                  if (isDay01) {
+                  const mainKind = b.mainAxisKind ?? (b.label === "01" ? "month" : "day");
+                  if (mainKind === "month") {
                     return (
                       <text
                         key={b.index}
@@ -553,17 +560,6 @@ export function KlinesChartSvg({
                   );
                 })}
               </g>
-              {showSecondaryAxis && (
-                <g className="font-mono" style={{ fontSize: fontSizeSmall }} fill={secondaryGridHex}>
-                  {verticalIndicesFiltered.map((idx) => (
-                    idx < windowN
-                      ? <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
-                          {formatTimeLabel(windowSlice[idx][0] as number)}
-                        </text>
-                      : <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle" />
-                  ))}
-                </g>
-              )}
             </>
           );
         })()}
@@ -582,7 +578,7 @@ export function KlinesChartSvg({
               <rect x={MARGIN_LEFT} y={top} width={chartW} height={h} fill={chartBgHex} />
               {showSecondaryAxis && (
                 <>
-                  {verticalIndicesFiltered.map((idx) => (
+                  {secondaryVerticalIndicesFiltered.map((idx) => (
                     <line
                       key={`${panelId}-dash-${idx}`}
                       x1={cx(idx)}
@@ -1269,6 +1265,28 @@ export function KlinesChartSvg({
           </g>
         )}
         </g>
+        {utcDayStartMarkerXs.length > 0 && (
+          <g pointerEvents="none">
+            {utcDayStartMarkerXs.map((px, mi) => {
+              const bottomY = MARGIN_TOP + chartH;
+              const tickH = Math.max(3, Math.min(6, 4 * textScale));
+              return (
+                <g key={`utc-day-start-${mi}-${px}`}>
+                  {utcDayStartMarkerTitle ? <title>{utcDayStartMarkerTitle}</title> : null}
+                  <line
+                    x1={px}
+                    x2={px}
+                    y1={bottomY - tickH}
+                    y2={bottomY}
+                    stroke={secondaryGridHex}
+                    strokeOpacity={0.85}
+                    strokeWidth={1}
+                  />
+                </g>
+              );
+            })}
+          </g>
+        )}
         {volumeAtPriceData && volumeAtPriceData.buckets.length > 0 && volumeAtPriceData.maxVolume > 0 && (() => {
           const widthPercent = Math.max(30, Math.min(100, volumeAtPriceWidthPercent ?? 100)) / 100;
           const maxWidthBase = Math.min(VOLUME_AT_PRICE_MAX_WIDTH_PX, chartW / 3);

@@ -47,6 +47,7 @@ import {
   KLINE_DRAW_VISIBLE_KEY,
   KLINE_DRAW_DEFAULTS_KEY,
   getDrawStorageKey,
+  getDrawSharedIntervalsKey,
   MS_PER_DAY,
 } from "./KlinesChartConstants";
 import {
@@ -55,19 +56,26 @@ import {
   formatUsdtTwoDecimals,
   formatUsdtWithDecimals,
   priceAxisDecimals,
-  formatTimeLabel,
   formatDateLabel,
+  formatTimeLabel,
   formatDateYyyyMmDd,
   formatAbbreviated,
   formatObvYAxis,
-  dayKey,
   monthKey,
   formatDayOnly,
-  formatMonthOnly,
   formatMonthYearShort,
+  enumerateLocalMidnightUtcMs,
+  isFirstDayOfMonthInOffsetZone,
   isStartOfDay,
 } from "./klinesFormatters";
-import { DEFAULT_SEGMENT_COLOR, DEFAULT_TEXT_COLOR as DEFAULT_DRAW_TEXT_COLOR, type DrawSegment, type DrawDefaults } from "./KlinesChartDrawing";
+import {
+  DEFAULT_SEGMENT_COLOR,
+  DEFAULT_TEXT_COLOR as DEFAULT_DRAW_TEXT_COLOR,
+  mergeDrawSegmentsForChartLoad,
+  splitDrawSegmentsForPersistence,
+  type DrawSegment,
+  type DrawDefaults,
+} from "./KlinesChartDrawing";
 import { flushSync } from "react-dom";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
@@ -104,9 +112,9 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   freeRetracement: { color: SEGMENT_COLOR_PALETTE[0], freeRetracementLevelPct1: 25, freeRetracementLevelPct: 75, freeRetracementLevelPctExt: 100, freeRetracementShowValuesOnYAxis: false, freeRetracementExtensionIndices: 0, fibStrokeWidth: "medium", showPercent: true, showValues: false },
   channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
   stopGain: { stopGainRatioUp: 1, stopGainRatioDown: 1, stopGainFillOpacity: 0.5, stopGainShowPercent: false, stopGainShowValuesOnYAxis: false, stopGainStrokeWidth: "medium" },
-  rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false },
-  horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid" },
-  verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid" },
+  rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false, lineShowOnAllIntervals: false },
+  horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid", lineShowOnAllIntervals: false },
+  verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid", lineShowOnAllIntervals: false },
   arrow: { color: SEGMENT_COLOR_PALETTE[0], arrowSize: "medium" },
   text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
   pencil: { color: SEGMENT_COLOR_PALETTE[0], pencilStrokeWidth: "medium" },
@@ -275,6 +283,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     selectRectangleTool,
     selectSelectTool,
     clearAllDrawing,
+    clearDrawingsForCurrentInterval,
     drawPendingHorizontalSecond,
     setDrawPendingHorizontalSecond,
     drawPendingArrow,
@@ -347,7 +356,13 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         setDrawPending(null);
       } else {
         const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-        const loaded = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : (Array.isArray(data[String(groupMinutes)]) ? data[String(groupMinutes)] : []);
+        const rawLocal = Array.isArray(data[drawStorageKey])
+          ? data[drawStorageKey]
+          : Array.isArray(data[String(groupMinutes)])
+            ? data[String(groupMinutes)]
+            : [];
+        const mergedData = { ...data, [drawStorageKey]: rawLocal };
+        const loaded = mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbolProp ?? null));
         setDrawSegments(loaded);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
@@ -389,7 +404,13 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           return;
         }
         const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-        const loaded = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
+        const rawLocal = Array.isArray(data[drawStorageKey])
+          ? data[drawStorageKey]
+          : Array.isArray(data[String(groupMinutes)])
+            ? data[String(groupMinutes)]
+            : [];
+        const mergedData = { ...data, [drawStorageKey]: rawLocal };
+        const loaded = mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbolProp ?? null));
         setDrawSegments(loaded);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
@@ -536,12 +557,22 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     try {
       const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
       const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
-      data[drawStorageKey] = drawSegments;
+      const sharedKey = getDrawSharedIntervalsKey(symbolProp ?? null);
+      const { sharedOut, localOut } = splitDrawSegmentsForPersistence(drawSegments);
+      if (sharedKey) {
+        data[drawStorageKey] = localOut;
+        data[sharedKey] = sharedOut;
+      } else {
+        data[drawStorageKey] =
+          sharedOut.length > 0
+            ? [...localOut, ...sharedOut.map((s) => ({ ...s, lineShowOnAllIntervals: false }))]
+            : localOut;
+      }
       window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
     } catch {
       /* ignore */
     }
-  }, [drawStorageKey, drawSegments, segmentsApplied]);
+  }, [drawStorageKey, drawSegments, segmentsApplied, symbolProp]);
 
   const candleColors = CANDLE_COLOR_PRESETS.find((p) => p.id === candleColorPreset) ?? CANDLE_COLOR_PRESETS[0];
 
@@ -1628,25 +1659,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     yTickValues.push(roundToDecimals(v, yAxisDecimals));
   }
 
-  // Data no subeixo: por dia (mudança de data) ou, no diário/semanal, a cada 7 candles
-  const isDailyOrWeekly = groupMinutes === 1440 || groupMinutes === 10080;
-  const dateBreaks: { index: number; dateStr: string; openTime?: number }[] = [];
-  if (isDailyOrWeekly) {
-    for (let i = 0; i < windowN; i += 7) {
-      dateBreaks.push({ index: i, dateStr: formatDateLabel(windowSlice[i][0]) });
-    }
-  } else {
-    let lastDay = "";
-    for (let i = 0; i < windowN; i++) {
-      const day = dayKey(windowSlice[i][0]);
-      if (day !== lastDay) {
-        lastDay = day;
-        dateBreaks.push({ index: i, dateStr: formatDateLabel(windowSlice[i][0]) });
-      }
-    }
-  }
-
-  // Verticais: quantidade 30→6, 50→6, 100→8, 150→12; primeira vertical sempre no início do dia (meia-noite UTC)
+  // Verticais principais: 30→6, 50→6, 100→8, 150→12; âncora na meia-noite UTC; mesmo passo até totalSlots (velas invisíveis)
   const numVerticals =
     windowN <= 30 ? 6
       : windowN <= 50 ? 6
@@ -1654,41 +1667,136 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           : 12;
   const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
   const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
-  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : (dateBreaks[0]?.index ?? 0);
+  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : 0;
   const verticalIndices: number[] = [];
   for (let i = anchorIndex; i >= 0; i -= verticalEvery) verticalIndices.push(i);
   for (let i = anchorIndex + verticalEvery; i < totalSlots; i += verticalEvery) verticalIndices.push(i);
   verticalIndices.sort((a, b) => a - b);
   const verticalIndicesFiltered = [...new Set(verticalIndices)].filter((i) => i >= 0 && i < totalSlots);
 
-  // Quebras de data no futuro (velas invisíveis) para desenhar a grade vertical de dias
-  if (invisibleCandlesEnd > 0 && windowN > 0) {
-    const lastOpenTime = Number(windowSlice[windowN - 1][0]);
-    const intervalMs = groupMinutes * 60 * 1000;
-    if (Number.isFinite(lastOpenTime) && Number.isFinite(intervalMs)) {
-      for (let i = windowN; i < totalSlots; i += verticalEvery) {
-        const fakeOpenTime = lastOpenTime + (i - windowN + 1) * intervalMs;
-        dateBreaks.push({ index: i, dateStr: formatDateLabel(fakeOpenTime), openTime: fakeOpenTime });
+  // Secundária: mesma âncora, passo ~metade → cerca do dobro de linhas verticais
+  const secondaryVerticalEvery = Math.max(1, Math.floor(verticalEvery / 2));
+  const secondaryVerticalIndices: number[] = [];
+  for (let i = anchorIndex; i >= 0; i -= secondaryVerticalEvery) secondaryVerticalIndices.push(i);
+  for (let i = anchorIndex + secondaryVerticalEvery; i < totalSlots; i += secondaryVerticalEvery) secondaryVerticalIndices.push(i);
+  secondaryVerticalIndices.sort((a, b) => a - b);
+  const secondaryVerticalIndicesFiltered = [...new Set(secondaryVerticalIndices)].filter((i) => i >= 0 && i < totalSlots);
+
+  const intervalMsForSlots = groupMinutes * 60 * 1000;
+  const lastVisibleOpen = windowN > 0 ? Number(windowSlice[windowN - 1][0]) : NaN;
+  const openTimeForWindowSlot = (i: number): number | undefined => {
+    if (i < 0 || i >= totalSlots) return undefined;
+    if (i < windowN) {
+      const t = windowSlice[i]?.[0];
+      const v = typeof t === "number" ? t : Number(t);
+      return Number.isFinite(v) ? v : undefined;
+    }
+    if (!Number.isFinite(lastVisibleOpen) || !Number.isFinite(intervalMsForSlots)) return undefined;
+    return lastVisibleOpen + (i - windowN + 1) * intervalMsForSlots;
+  };
+
+  const utcDayStartMarkerXs: number[] = [];
+  // Risquinhos: <1D todas as meia-noites locais; ≥8h só dia 1 do mês; inclui 1D/3D/1S; 1M (43200) sem marcador.
+  if (groupMinutes < 43200 && totalSlots > 0 && windowN > 0) {
+    const t0 = openTimeForWindowSlot(0);
+    const tLast = openTimeForWindowSlot(totalSlots - 1);
+    if (
+      t0 != null &&
+      tLast != null &&
+      Number.isFinite(t0) &&
+      Number.isFinite(tLast) &&
+      Number.isFinite(intervalMsForSlots)
+    ) {
+      const tEnd = tLast + intervalMsForSlots;
+      // openTime das klines já vem com timezoneOffset da API; enumerateLocalMidnightUtcMs usa UTC “real”.
+      const tzOffsetMs = timezoneOffset * 60 * 60 * 1000;
+      const t0Real = t0 - tzOffsetMs;
+      const tEndReal = tEnd - tzOffsetMs;
+      const midnightsReal = enumerateLocalMidnightUtcMs(t0Real, tEndReal, timezoneOffset);
+      const markersMonthStartOnly = groupMinutes >= 8 * 60;
+      for (const Mreal of midnightsReal) {
+        if (markersMonthStartOnly && !isFirstDayOfMonthInOffsetZone(Mreal, timezoneOffset)) continue;
+        const M = Mreal + tzOffsetMs;
+        if (M < t0 || M >= tEnd) continue;
+        let px: number | null = null;
+        for (let i = 0; i < totalSlots - 1; i++) {
+          const ti = openTimeForWindowSlot(i);
+          const tj = openTimeForWindowSlot(i + 1);
+          if (ti == null || tj == null) continue;
+          if (M >= ti && M < tj) {
+            const denom = tj - ti;
+            const f = denom > 0 ? (M - ti) / denom : 0;
+            px = MARGIN_LEFT + gap * (i + 0.5 + f);
+            break;
+          }
+        }
+        if (px == null && M >= tLast && M < tEnd) {
+          const f = (M - tLast) / intervalMsForSlots;
+          px = MARGIN_LEFT + gap * (totalSlots - 1 + 0.5 + f);
+        }
+        if (px != null && Number.isFinite(px)) utcDayStartMarkerXs.push(px);
       }
     }
   }
+  const utcOffsetStr = timezoneOffset >= 0 ? `+${timezoneOffset}` : String(timezoneOffset);
+  const utcDayStartMarkerTitle = t.utcDayStartMarkerTitle.replace("{offset}", utcOffsetStr);
 
-  // Evitar sobreposição de datas: só mostrar data se distância da última exibida for >= minGapCandles
-  const minGapCandlesForDate = 10;
+  // Eixo principal (linhas fortes + linha 1): mesmos índices que a cadência temporal; contínuo nas velas invisíveis
   const dateBreaksFiltered: { index: number; dateStr: string; openTime?: number }[] = [];
-  for (const b of dateBreaks) {
-    if (dateBreaksFiltered.length === 0 || b.index - dateBreaksFiltered[dateBreaksFiltered.length - 1].index >= minGapCandlesForDate) {
-      dateBreaksFiltered.push({ index: b.index, dateStr: b.dateStr, openTime: b.openTime });
-    }
+  for (const idx of verticalIndicesFiltered) {
+    const openTime = openTimeForWindowSlot(idx);
+    if (openTime == null || !Number.isFinite(openTime)) continue;
+    dateBreaksFiltered.push({ index: idx, dateStr: formatDateLabel(openTime), openTime });
   }
+  const openTimeIsChartMidnight = (ms: number): boolean => {
+    const d = new Date(Math.trunc(Number(ms)));
+    return (
+      Number.isFinite(ms) &&
+      d.getUTCHours() === 0 &&
+      d.getUTCMinutes() === 0 &&
+      d.getUTCSeconds() === 0 &&
+      d.getUTCMilliseconds() === 0
+    );
+  };
 
-  // Dia (dd) em cada quebra de data (usado em 2h+ linha 1; 1h usa em linha 2)
-  const dayBreaksFiltered: { index: number; label: string; openTime?: number }[] = [];
-  for (const b of dateBreaksFiltered) {
-    const openTime = b.openTime ?? (b.index < windowN ? (windowSlice[b.index][0] as number) : undefined);
-    const label = openTime != null ? formatDayOnly(openTime) : "";
-    dayBreaksFiltered.push({ index: b.index, label, openTime });
-  }
+  const dayBreaksFiltered: {
+    index: number;
+    label: string;
+    openTime?: number;
+    mainAxisKind?: "month" | "day" | "hour";
+  }[] = dateBreaksFiltered.map((b) => {
+    const openTime = b.openTime as number;
+    if (openTime == null || !Number.isFinite(openTime)) {
+      return { index: b.index, label: "", openTime: b.openTime, mainAxisKind: "day" as const };
+    }
+
+    if (groupMinutes >= 60) {
+      const dayLabel = formatDayOnly(openTime);
+      return {
+        index: b.index,
+        label: dayLabel,
+        openTime: b.openTime,
+        mainAxisKind: dayLabel === "01" ? ("month" as const) : ("day" as const),
+      };
+    }
+
+    if (!openTimeIsChartMidnight(openTime)) {
+      return {
+        index: b.index,
+        label: formatTimeLabel(openTime),
+        openTime: b.openTime,
+        mainAxisKind: "hour" as const,
+      };
+    }
+
+    const dayLabel = formatDayOnly(openTime);
+    return {
+      index: b.index,
+      label: dayLabel,
+      openTime: b.openTime,
+      mainAxisKind: dayLabel === "01" ? ("month" as const) : ("day" as const),
+    };
+  });
 
   // Mês/ano uma vez por mês, centralizado (mesmo mecanismo para 1h e 2h+)
   const monthYearCentered: { centerIndex: number; label: string }[] = [];
@@ -2133,7 +2241,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     <button
                       type="button"
                       onClick={() => {
-                        clearAllDrawing();
+                        clearDrawingsForCurrentInterval();
                         setShowClearDrawConfirm(false);
                       }}
                       className="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
@@ -2159,6 +2267,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 pixelToData={pixelToData}
                 t={t}
                 segmentToolboxCollapsed={segmentToolboxCollapsed}
+                sharedIntervalsDrawingsEnabled={Boolean(symbolProp)}
               />
             )}
             <KlinesChartSvg
@@ -2185,6 +2294,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               candleColors={candleColors}
               yTickValues={yTickValues}
               verticalIndicesFiltered={verticalIndicesFiltered}
+              secondaryVerticalIndicesFiltered={secondaryVerticalIndicesFiltered}
+              utcDayStartMarkerXs={utcDayStartMarkerXs}
+              utcDayStartMarkerTitle={utcDayStartMarkerTitle}
               dateBreaksFiltered={dateBreaksFiltered}
               dayBreaksFiltered={dayBreaksFiltered}
               showMainAxis={showMainAxis}

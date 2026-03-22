@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import type { UserIndicatorType, IndicatorPanel, IndicatorFieldKey, IndicatorLineWidth, IndicatorLineStyle } from "../KlinesIndicatorsContext";
+import type { UserIndicatorType, Wma2TimeUnit, IndicatorPanel, IndicatorFieldKey, IndicatorLineWidth, IndicatorLineStyle } from "../KlinesIndicatorsContext";
 import { DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES } from "../KlinesChartConstants";
+import {
+  clampMa2TimeWindowUserValue,
+  defaultMa2TimeValueForUnit,
+  isTimeWindowMa2Type,
+  MA2_MAX_WINDOW_VALUE,
+  normalizeMa2TimeValueForUnit,
+} from "./wma2Period";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { StepperButton } from "../components/StepperButton";
@@ -18,7 +25,7 @@ type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 
 /** Grupos e tipos para o combobox de tipo de indicador (mesma ordem e labels do select antigo). */
 const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
-  { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "EMA", labelEn: "EMA" }, { value: "WMA", labelEn: "WMA" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
+  { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
   { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
   { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }] },
   { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
@@ -137,6 +144,14 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     { value: "base", label: tRecord.volumeBaseLabel ?? "Vol (base)" },
     { value: "usdt", label: tRecord.volumeUsdtLabel ?? "Vol (USDT)" },
   ], [tRecord]);
+  const wma2UnitOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "days", label: tRecord.wma2TimeUnitDays ?? "Days" },
+      { value: "hours", label: tRecord.wma2TimeUnitHours ?? "Hours" },
+      { value: "minutes", label: tRecord.wma2TimeUnitMinutes ?? "Minutes" },
+    ],
+    [tRecord]
+  );
 
   const chartOptionValue: string =
     form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
@@ -514,6 +529,19 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           chartOption: "main",
         };
       }
+      if (isTimeWindowMa2Type(newType)) {
+        return {
+          ...prev,
+          indicatorType: newType,
+          period: 1,
+          periodText: "1",
+          fieldKey: "close",
+          chartOption: "main",
+          wma2TimeUnit: "hours",
+          wma2TimeValue: 168,
+          wma2TimeValueText: "168",
+        };
+      }
       if (newType === "Volume") {
         const emptyPanel: IndicatorPanel = indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2";
         return {
@@ -679,7 +707,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku") && (
+      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku" || isTimeWindowMa2Type(form.indicatorType)) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
           <Combobox
@@ -707,6 +735,80 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
+      {isTimeWindowMa2Type(form.indicatorType) && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{tRecord.wma2WindowLabel ?? "Averaging window"}</span>
+            <Combobox
+              value={form.wma2TimeUnit === "days" || form.wma2TimeUnit === "hours" || form.wma2TimeUnit === "minutes" ? form.wma2TimeUnit : "hours"}
+              onChange={(v) => {
+                const u = v as Wma2TimeUnit;
+                const d = defaultMa2TimeValueForUnit(u);
+                setForm((prev) => ({ ...prev, wma2TimeUnit: u, wma2TimeValue: d, wma2TimeValueText: String(d) }));
+              }}
+              options={wma2UnitOptions}
+              className="w-32 shrink-0"
+              size="lg"
+              aria-label={tRecord.wma2WindowLabel ?? "Window unit"}
+            />
+            <div className="flex items-center gap-1">
+              <StepperButton
+                onStep={() => {
+                  const u =
+                    form.wma2TimeUnit === "days" || form.wma2TimeUnit === "hours" || form.wma2TimeUnit === "minutes"
+                      ? form.wma2TimeUnit
+                      : "hours";
+                  const next = Math.max(1, (form.wma2TimeValue ?? defaultMa2TimeValueForUnit(u)) - 1);
+                  setForm((prev) => ({ ...prev, wma2TimeValue: next, wma2TimeValueText: String(next) }));
+                }}
+                className="stepper-btn"
+                aria-label="−"
+              >
+                −
+              </StepperButton>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.wma2TimeValueText}
+                onFocus={(e) => {
+                  const el = e.currentTarget;
+                  queueMicrotask(() => el?.select());
+                }}
+                onChange={(e) => setForm((prev) => ({ ...prev, wma2TimeValueText: e.target.value.replace(/[^\d]/g, "") }))}
+                onBlur={() => {
+                  const n = Number(form.wma2TimeValueText);
+                  const u =
+                    form.wma2TimeUnit === "days" || form.wma2TimeUnit === "hours" || form.wma2TimeUnit === "minutes"
+                      ? form.wma2TimeUnit
+                      : "hours";
+                  const def = defaultMa2TimeValueForUnit(u);
+                  const raw = Number.isFinite(n) && n > 0 ? clampMa2TimeWindowUserValue(n) : def;
+                  const next = normalizeMa2TimeValueForUnit(u, raw);
+                  setForm((prev) => ({ ...prev, wma2TimeValue: next, wma2TimeValueText: String(next) }));
+                }}
+                className="w-16 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
+                aria-label={tRecord.wma2WindowLabel ?? "Window value"}
+              />
+              <StepperButton
+                onStep={() => {
+                  const u =
+                    form.wma2TimeUnit === "days" || form.wma2TimeUnit === "hours" || form.wma2TimeUnit === "minutes"
+                      ? form.wma2TimeUnit
+                      : "hours";
+                  const next = Math.min(MA2_MAX_WINDOW_VALUE, (form.wma2TimeValue ?? defaultMa2TimeValueForUnit(u)) + 1);
+                  setForm((prev) => ({ ...prev, wma2TimeValue: next, wma2TimeValueText: String(next) }));
+                }}
+                className="stepper-btn"
+                aria-label="+"
+              >
+                +
+              </StepperButton>
+            </div>
+          </div>
+        </div>
+      )}
+
       {(form.indicatorType === "OBV" || form.indicatorType === "AD") && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).volumeSourceLabel ?? "Fonte de volume"}</span>
@@ -721,7 +823,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && !isTimeWindowMa2Type(form.indicatorType) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
           <div className="flex items-center gap-1">

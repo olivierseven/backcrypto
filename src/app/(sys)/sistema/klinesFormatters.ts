@@ -125,7 +125,78 @@ export function formatMonthYearShort(ms: number): string {
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_HOUR = 60 * 60 * 1000;
 
 export function isStartOfDay(openTime: number): boolean {
   return openTime % MS_PER_DAY === 0;
+}
+
+/**
+ * Meia-noite 00:00 no fuso `offsetHours` em relação à UTC (ex.: -3 → início do dia em Brasília).
+ * `ms` é o open time UTC da vela (ms desde epoch).
+ */
+export function isMidnightInOffsetZone(ms: number, offsetHours: number): boolean {
+  const t = Math.trunc(Number(ms));
+  if (!Number.isFinite(t)) return false;
+  const oh = Math.max(-12, Math.min(12, offsetHours));
+  const shifted = t + oh * MS_PER_HOUR;
+  const d = new Date(shifted);
+  return (
+    d.getUTCHours() === 0 &&
+    d.getUTCMinutes() === 0 &&
+    d.getUTCSeconds() === 0 &&
+    d.getUTCMilliseconds() === 0
+  );
+}
+
+/** Instant UTC em que é 00:00:00 no calendário local (offsetHours vs UTC). */
+function utcMsAtLocalCalendarMidnight(y: number, month0: number, day: number, offsetHours: number): number {
+  const oh = Math.max(-12, Math.min(12, offsetHours));
+  const shifted = Date.UTC(y, month0, day, 0, 0, 0, 0);
+  return shifted - oh * MS_PER_HOUR;
+}
+
+function localCalendarFromUtcMs(ms: number, offsetHours: number): { y: number; m0: number; d: number } {
+  const oh = Math.max(-12, Math.min(12, offsetHours));
+  const shifted = Math.trunc(Number(ms)) + oh * MS_PER_HOUR;
+  const d = new Date(shifted);
+  return { y: d.getUTCFullYear(), m0: d.getUTCMonth(), d: d.getUTCDate() };
+}
+
+/** `ms` = instante UTC real; dia 1 do mês no calendário local (`offsetHours`). Usado p.ex. em meia-noites de enumerateLocalMidnightUtcMs. */
+export function isFirstDayOfMonthInOffsetZone(ms: number, offsetHours: number): boolean {
+  const oh = Math.max(-12, Math.min(12, offsetHours));
+  const t = Math.trunc(Number(ms));
+  if (!Number.isFinite(t)) return false;
+  return localCalendarFromUtcMs(t, oh).d === 1;
+}
+
+/** Primeira meia-noite local ≥ tMinUtc (ms). */
+function firstLocalMidnightAtOrAfterUtc(tMinUtc: number, offsetHours: number): number {
+  const oh = Math.max(-12, Math.min(12, offsetHours));
+  const t = Math.trunc(Number(tMinUtc));
+  if (!Number.isFinite(t)) return NaN;
+  const { y, m0, d } = localCalendarFromUtcMs(t, oh);
+  let M = utcMsAtLocalCalendarMidnight(y, m0, d, oh);
+  if (M < t) M += MS_PER_DAY;
+  while (M < t) M += MS_PER_DAY;
+  return M;
+}
+
+/**
+ * Todas as meia-noites locais (fuso `offsetHours`) com instante UTC em [tMinUtc, tMaxUtc).
+ * `tMinUtc`/`tMaxUtc` devem ser tempos UTC reais (epoch), não openTime já deslocado pela API.
+ */
+export function enumerateLocalMidnightUtcMs(tMinUtc: number, tMaxUtc: number, offsetHours: number): number[] {
+  const tMin = Math.trunc(Number(tMinUtc));
+  const tMax = Math.trunc(Number(tMaxUtc));
+  if (!Number.isFinite(tMin) || !Number.isFinite(tMax) || tMax <= tMin) return [];
+  let M = firstLocalMidnightAtOrAfterUtc(tMin, offsetHours);
+  if (!Number.isFinite(M)) return [];
+  const out: number[] = [];
+  while (M < tMax) {
+    out.push(M);
+    M += MS_PER_DAY;
+  }
+  return out;
 }

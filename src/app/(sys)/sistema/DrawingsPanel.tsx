@@ -6,8 +6,8 @@ import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { useChartSymbol } from "./ChartSymbolContext";
-import { KLINE_DRAW_SEGMENTS_KEY, getDrawStorageKey } from "./KlinesChartConstants";
-import { DEFAULT_SEGMENT_COLOR, type DrawSegment } from "./KlinesChartDrawing";
+import { KLINE_DRAW_SEGMENTS_KEY, getDrawStorageKey, getDrawSharedIntervalsKey } from "./KlinesChartConstants";
+import { DEFAULT_SEGMENT_COLOR, isDrawSegmentSharedAcrossIntervals, mergeDrawSegmentsForChartLoad, type DrawSegment } from "./KlinesChartDrawing";
 
 interface DrawingsPanelProps {
   onClose?: () => void;
@@ -45,12 +45,14 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
         return;
       }
       const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-      const list = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
+      const rawLocal = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
+      const mergedData = { ...data, [drawStorageKey]: rawLocal };
+      const list = mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbol ?? null));
       setSavedDrawingsList(list);
     } catch {
       setSavedDrawingsList([]);
     }
-  }, [drawStorageKey]);
+  }, [drawStorageKey, symbol]);
 
   useEffect(() => {
     if (drawStorageKey == null) return;
@@ -62,14 +64,18 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
           return;
         }
         const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-        setSavedDrawingsList(Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : []);
+        const rawLocal = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
+        const mergedData = { ...data, [drawStorageKey]: rawLocal };
+        setSavedDrawingsList(
+          mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbol ?? null))
+        );
       } catch {
         setSavedDrawingsList([]);
       }
     };
     window.addEventListener("backcrypto-drawings-updated", handler);
     return () => window.removeEventListener("backcrypto-drawings-updated", handler);
-  }, [drawStorageKey]);
+  }, [drawStorageKey, symbol]);
 
   const drawingTypeLabel = (seg: DrawSegment) => {
     const type = seg.type ?? "segment";
@@ -103,11 +109,23 @@ export default function DrawingsPanel({ onClose }: DrawingsPanelProps) {
     try {
       const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
       const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
-      const list = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
-      const next = list.filter((_, i) => i !== index);
-      data[drawStorageKey] = next;
+      const sharedKey = getDrawSharedIntervalsKey(symbol ?? null);
+      const sharedArr =
+        sharedKey && Array.isArray(data[sharedKey]) ? data[sharedKey].filter(isDrawSegmentSharedAcrossIntervals) : [];
+      const localArr = (Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : []).filter(
+        (s) => !isDrawSegmentSharedAcrossIntervals(s)
+      );
+      const nShared = sharedArr.length;
+      if (index < nShared) {
+        const newShared = sharedArr.filter((_, j) => j !== index);
+        if (sharedKey) data[sharedKey] = newShared;
+      } else {
+        const li = index - nShared;
+        data[drawStorageKey] = localArr.filter((_, j) => j !== li);
+      }
       window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
-      setSavedDrawingsList(next);
+      const mergedData = { ...data, [drawStorageKey]: data[drawStorageKey] ?? [] };
+      setSavedDrawingsList(mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, sharedKey));
       window.dispatchEvent(new CustomEvent("backcrypto-drawings-updated"));
     } catch {
       /* ignore */

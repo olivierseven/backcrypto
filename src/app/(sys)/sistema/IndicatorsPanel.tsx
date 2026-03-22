@@ -27,6 +27,12 @@ import { IndicatorsPanelContext } from "./indicatorsPanel/IndicatorsPanelContext
 import { IndicatorsPanelAddForm } from "./indicatorsPanel/IndicatorsPanelAddForm";
 import { IndicatorsPanelIndicatorCard } from "./indicatorsPanel/IndicatorsPanelIndicatorCard";
 import type { AddFormState, EditFormState, IndicatorsPanelContextValue } from "./indicatorsPanel/indicatorsPanelTypes";
+import {
+  clampMa2TimeWindowUserValue,
+  defaultMa2TimeValueForUnit,
+  isTimeWindowMa2Type,
+  normalizeMa2TimeValueForUnit,
+} from "./indicatorsPanel/wma2Period";
 
 /** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
 export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./indicatorsPanel/index";
@@ -219,6 +225,9 @@ const INITIAL_ADD_FORM: AddFormState = {
   ichimokuShowSpanA: true,
   ichimokuShowSpanB: true,
   ichimokuShowChikou: false,
+  wma2TimeUnit: "hours",
+  wma2TimeValue: 168,
+  wma2TimeValueText: "168",
 };
 
 interface IndicatorsPanelProps {
@@ -377,9 +386,28 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       const n = parseFloat(s);
       return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : def;
     };
+    const addMa2Unit =
+      addForm.wma2TimeUnit === "days" || addForm.wma2TimeUnit === "hours" || addForm.wma2TimeUnit === "minutes"
+        ? addForm.wma2TimeUnit
+        : "hours";
+    const wma2AddVal = (() => {
+      const n = Number(addForm.wma2TimeValueText);
+      const raw =
+        Number.isFinite(n) && n > 0
+          ? clampMa2TimeWindowUserValue(n)
+          : addForm.wma2TimeValue ?? defaultMa2TimeValueForUnit(addMa2Unit);
+      return normalizeMa2TimeValueForUnit(addMa2Unit, raw);
+    })();
     const newInd = addIndicator({
       type: addForm.indicatorType,
-      period: addForm.indicatorType === "MACD" ? fastP : addForm.indicatorType === "Ichimoku" ? (parseInt(addForm.ichimokuKijunPeriodText, 10) || 26) : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" ? 1 : periodNum,
+      period:
+        addForm.indicatorType === "MACD"
+          ? fastP
+          : addForm.indicatorType === "Ichimoku"
+            ? (parseInt(addForm.ichimokuKijunPeriodText, 10) || 26)
+            : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" || isTimeWindowMa2Type(addForm.indicatorType)
+              ? 1
+              : periodNum,
       fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Ichimoku" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
@@ -410,7 +438,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         keltnerMiddleLineWidth: addForm.lineWidth,
       } : {}),
       color: addForm.color,
-      intervals: currentGroupMinutes != null ? [currentGroupMinutes] : [],
+      intervals: isTimeWindowMa2Type(addForm.indicatorType) ? [] : currentGroupMinutes != null ? [currentGroupMinutes] : [],
       panel: effectivePanel,
       lineWidth: addForm.lineWidth,
       lineStyle: addForm.lineStyle,
@@ -547,6 +575,13 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         volumeColorAbove: addForm.volumeColorAbove ?? "#10b981",
         volumeColorBelow: addForm.volumeColorBelow ?? "#ef4444",
       } : {}),
+      ...(isTimeWindowMa2Type(addForm.indicatorType) ? {
+        wma2TimeUnit:
+          addForm.wma2TimeUnit === "days" || addForm.wma2TimeUnit === "hours" || addForm.wma2TimeUnit === "minutes"
+            ? addForm.wma2TimeUnit
+            : "hours",
+        wma2TimeValue: wma2AddVal,
+      } : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
     if (newInd) chartLayoutSave?.saveLayoutNow("indicators", [...userIndicators, newInd]);
@@ -574,7 +609,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
 
   const toggleInterval = useCallback((id: string, groupMinutes: number) => {
     const ind = userIndicators.find((u) => u.id === id);
-    if (!ind) return;
+    if (!ind || isTimeWindowMa2Type(ind.type)) return;
     const isNone = ind.intervals.length === 1 && ind.intervals[0] === 0;
     const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : isNone ? [] : [...ind.intervals];
     const idx = current.indexOf(groupMinutes);
@@ -583,7 +618,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     updateIndicatorIntervalsWithStrategyReset(id, next);
   }, [userIndicators, updateIndicatorIntervalsWithStrategyReset]);
 
-  const setAllIntervals = useCallback((id: string) => updateIndicatorIntervalsWithStrategyReset(id, []), [updateIndicatorIntervalsWithStrategyReset]);
+  const setAllIntervals = useCallback(
+    (id: string) => {
+      const ind = userIndicators.find((u) => u.id === id);
+      if (ind != null && isTimeWindowMa2Type(ind.type)) return;
+      updateIndicatorIntervalsWithStrategyReset(id, []);
+    },
+    [userIndicators, updateIndicatorIntervalsWithStrategyReset]
+  );
 
   const isIntervalChecked = useCallback((ind: UserIndicatorConfig, value: number) => {
     if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
@@ -598,8 +640,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
     setEditForm({
-      period: ind.type === "VWAP" ? 1 : ind.period,
-      periodText: ind.type === "VWAP" ? "1" : String(ind.period),
+      period: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? 1 : ind.period,
+      periodText: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? "1" : String(ind.period),
       fieldKey: ind.type === "VWAP" ? "close" : fieldKey,
       color: ind.color,
       panel,
@@ -780,7 +822,33 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       volumeColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : "#10b981",
       volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
       showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-      intervals: [...(ind.intervals || [])],
+      wma2TimeUnit:
+        isTimeWindowMa2Type(ind.type)
+          ? (ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours")
+          : "hours",
+      wma2TimeValue: (() => {
+        const u =
+          ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
+        const def = defaultMa2TimeValueForUnit(u);
+        if (!isTimeWindowMa2Type(ind.type)) return def;
+        const raw =
+          typeof ind.wma2TimeValue === "number" && Number.isFinite(ind.wma2TimeValue)
+            ? clampMa2TimeWindowUserValue(ind.wma2TimeValue)
+            : def;
+        return normalizeMa2TimeValueForUnit(u, raw);
+      })(),
+      wma2TimeValueText: (() => {
+        const u =
+          ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
+        const def = defaultMa2TimeValueForUnit(u);
+        if (!isTimeWindowMa2Type(ind.type)) return String(def);
+        const raw =
+          typeof ind.wma2TimeValue === "number" && Number.isFinite(ind.wma2TimeValue)
+            ? clampMa2TimeWindowUserValue(ind.wma2TimeValue)
+            : def;
+        return String(normalizeMa2TimeValueForUnit(u, raw));
+      })(),
+      intervals: isTimeWindowMa2Type(ind.type) ? [] : [...(ind.intervals || [])],
     } as EditFormState);
   }, []);
 
@@ -793,12 +861,27 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     })();
     const fastP = ind?.type === "MACD" ? (Number(editForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
+    const wma2Parsed =
+      ind != null && isTimeWindowMa2Type(ind.type)
+        ? (() => {
+            const n = Number(editForm.wma2TimeValueText);
+            const u =
+              editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes"
+                ? editForm.wma2TimeUnit
+                : "hours";
+            const raw =
+              Number.isFinite(n) && n > 0
+                ? clampMa2TimeWindowUserValue(n)
+                : editForm.wma2TimeValue ?? defaultMa2TimeValueForUnit(u);
+            return normalizeMa2TimeValueForUnit(u, raw);
+          })()
+        : undefined;
     const updates = {
-      period: ind?.type === "MACD" ? fastP : periodNum,
+      period: ind != null && isTimeWindowMa2Type(ind.type) ? 1 : ind?.type === "MACD" ? fastP : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : editForm.fieldKey,
       color: editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" || ind?.type === "Ichimoku" ? "main" : editForm.panel,
-      intervals: editForm.intervals ?? [],
+      intervals: ind != null && isTimeWindowMa2Type(ind.type) ? [] : (editForm.intervals ?? []),
       showLastValueOnYAxis: editForm.showLastValueOnYAxis,
       ...(ind?.type === "Volume" ? {
         volumeInUsdt: editForm.volumeInUsdt === true,
@@ -963,6 +1046,15 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         keltnerMiddleLineStyle: editForm.lineStyle,
         keltnerMiddleLineWidth: editForm.lineWidth,
       } : {}),
+      ...(ind != null && isTimeWindowMa2Type(ind.type) && wma2Parsed != null
+        ? {
+            wma2TimeUnit:
+              editForm.wma2TimeUnit === "days" || editForm.wma2TimeUnit === "hours" || editForm.wma2TimeUnit === "minutes"
+                ? editForm.wma2TimeUnit
+                : "hours",
+            wma2TimeValue: wma2Parsed,
+          }
+        : {}),
     };
     updateIndicatorWithStrategyReset(editingId, updates);
     const nextIndicators = userIndicators.map((u) => (u.id === editingId ? { ...u, ...updates } : u));

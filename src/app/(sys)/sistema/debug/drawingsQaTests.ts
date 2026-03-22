@@ -1,9 +1,10 @@
 /**
  * Testes QA dos desenhos — executáveis no browser (aba Debug > QA).
+ * Inclui merge retas H/V “todos os períodos” (1h vê o mesmo que 4h na chave partilhada).
  * Um fluxo por tipo: criar (todas as opções) → salvar → lista → timeframe → mover → redimensionar/opções → cor → deletar.
  */
-import { getDrawStorageKey, KLINE_DRAW_SEGMENTS_KEY } from "../KlinesChartConstants";
-import type { DrawSegment } from "../KlinesChartDrawing";
+import { getDrawStorageKey, getDrawSharedIntervalsKey, KLINE_DRAW_SEGMENTS_KEY } from "../KlinesChartConstants";
+import { mergeDrawSegmentsForChartLoad, type DrawSegment } from "../KlinesChartDrawing";
 
 export type QaTestResult = { name: string; pass: boolean; message?: string; evidence?: string };
 
@@ -511,8 +512,137 @@ function runPencilFullFlowTests(): QaTestResult[] {
   return [result];
 }
 
+/**
+ * Desenhos com "todos os períodos" (H, V, retângulo): merge igual ao KlinesChart — 1h vê entradas na chave partilhada gravadas no contexto de outro TF (ex. 4h).
+ */
+function runCrossIntervalSharedDrawingsQaTests(): QaTestResult[] {
+  if (typeof window === "undefined") {
+    return [{ name: "Desenhos — partilha entre intervalos (Debug QA)", pass: true, evidence: "Ignorado fora do browser." }];
+  }
+  const sym = "BTCUSDT";
+  const key60 = getDrawStorageKey(sym, 60);
+  const key240 = getDrawStorageKey(sym, 240);
+  const sharedKey = getDrawSharedIntervalsKey(sym);
+  if (!sharedKey) {
+    return [{ name: "Desenhos — chave partilhada", pass: false, message: "getDrawSharedIntervalsKey devolveu null." }];
+  }
+
+  const out: QaTestResult[] = [];
+
+  const hShared: DrawSegment = {
+    index1: 10,
+    price1: 50_000,
+    index2: 90,
+    price2: 50_000,
+    type: "horizontalLine",
+    color: "#111111",
+    lineShowOnAllIntervals: true,
+  };
+  const mergedH1h = mergeDrawSegmentsForChartLoad({ [sharedKey]: [hShared], [key60]: [], [key240]: [] }, key60, sharedKey);
+  const mergedH4h = mergeDrawSegmentsForChartLoad({ [sharedKey]: [hShared], [key60]: [], [key240]: [] }, key240, sharedKey);
+  const passH =
+    mergedH1h.length === 1 &&
+    mergedH1h[0]?.type === "horizontalLine" &&
+    mergedH1h[0]?.lineShowOnAllIntervals === true &&
+    mergedH4h.length === 1;
+  out.push({
+    name: "Desenhos — horizontal com “todos os períodos”: aparece no 1h e no 4h (merge)",
+    pass: passH,
+    message: passH ? undefined : `Esperado 1 segmento em cada TF; 1h tem ${mergedH1h.length}, 4h tem ${mergedH4h.length}.`,
+    evidence: [
+      `Chave partilhada: ${sharedKey}`,
+      `merge(1h): ${mergedH1h.length} item(s), tipo=${mergedH1h[0]?.type ?? "—"}, allIntervals=${String(mergedH1h[0]?.lineShowOnAllIntervals)}`,
+      `merge(4h): ${mergedH4h.length} item(s)`,
+    ].join("\n"),
+  });
+
+  const vShared: DrawSegment = {
+    index1: 42,
+    price1: 49_000,
+    index2: 42,
+    price2: 49_000,
+    type: "verticalLine",
+    color: "#222222",
+    lineShowOnAllIntervals: true,
+  };
+  const mergedV1h = mergeDrawSegmentsForChartLoad({ [sharedKey]: [vShared], [key60]: [] }, key60, sharedKey);
+  const passV = mergedV1h.length === 1 && mergedV1h[0]?.type === "verticalLine" && mergedV1h[0]?.index1 === 42;
+  out.push({
+    name: "Desenhos — vertical com “todos os períodos”: aparece no 1h (merge)",
+    pass: passV,
+    message: passV ? undefined : `Esperado 1 vertical no 1h; obtido ${mergedV1h.length}.`,
+    evidence: [`merge(1h): ${mergedV1h.length} item(s), index1=${mergedV1h[0]?.index1 ?? "—"}`].join("\n"),
+  });
+
+  const hLocalOnly: DrawSegment = {
+    index1: 5,
+    price1: 48_000,
+    index2: 80,
+    price2: 48_000,
+    type: "horizontalLine",
+    color: "#333333",
+  };
+  const mergedNoShare = mergeDrawSegmentsForChartLoad({ [key240]: [hLocalOnly], [key60]: [] }, key60, sharedKey);
+  const passIsolate = mergedNoShare.length === 0;
+  out.push({
+    name: "Desenhos — horizontal só no 4h (sem “todos os períodos”) não entra no merge do 1h",
+    pass: passIsolate,
+    message: passIsolate ? undefined : `Esperado 0 no 1h; obtido ${mergedNoShare.length}.`,
+    evidence: `Só chave ${key240} com 1 horizontal sem lineShowOnAllIntervals → merge(1h) = ${mergedNoShare.length} item(s).`,
+  });
+
+  const rectShared: DrawSegment = {
+    index1: 12,
+    price1: 47_000,
+    index2: 88,
+    price2: 52_000,
+    type: "rectangle",
+    color: "#444444",
+    rectangleStrokeWidth: "medium",
+    rectangleFilled: false,
+    lineShowOnAllIntervals: true,
+  };
+  const mergedRect1h = mergeDrawSegmentsForChartLoad({ [sharedKey]: [rectShared], [key60]: [], [key240]: [] }, key60, sharedKey);
+  const mergedRect4h = mergeDrawSegmentsForChartLoad({ [sharedKey]: [rectShared], [key60]: [], [key240]: [] }, key240, sharedKey);
+  const passRect =
+    mergedRect1h.length === 1 &&
+    mergedRect1h[0]?.type === "rectangle" &&
+    mergedRect1h[0]?.lineShowOnAllIntervals === true &&
+    mergedRect4h.length === 1;
+  out.push({
+    name: "Desenhos — retângulo com “todos os períodos”: aparece no 1h e no 4h (merge)",
+    pass: passRect,
+    message: passRect ? undefined : `Esperado 1 retângulo em cada TF; 1h=${mergedRect1h.length}, 4h=${mergedRect4h.length}.`,
+    evidence: [
+      `merge(1h): tipo=${mergedRect1h[0]?.type ?? "—"}, filled=${String(mergedRect1h[0]?.rectangleFilled)}, allIntervals=${String(mergedRect1h[0]?.lineShowOnAllIntervals)}`,
+      `merge(4h): ${mergedRect4h.length} item(s)`,
+    ].join("\n"),
+  });
+
+  const rectLocalOnly: DrawSegment = {
+    index1: 1,
+    price1: 46_000,
+    index2: 50,
+    price2: 51_000,
+    type: "rectangle",
+    color: "#555555",
+    rectangleStrokeWidth: "thin",
+  };
+  const mergedRectIsolate = mergeDrawSegmentsForChartLoad({ [key240]: [rectLocalOnly], [key60]: [] }, key60, sharedKey);
+  const passRectIsolate = mergedRectIsolate.length === 0;
+  out.push({
+    name: "Desenhos — retângulo só no 4h (sem “todos os períodos”) não entra no merge do 1h",
+    pass: passRectIsolate,
+    message: passRectIsolate ? undefined : `Esperado 0 no 1h; obtido ${mergedRectIsolate.length}.`,
+    evidence: `Só ${key240} com retângulo sem lineShowOnAllIntervals → merge(1h) = ${mergedRectIsolate.length} item(s).`,
+  });
+
+  return out;
+}
+
 export function runDrawingsQaTests(): QaTestResult[] {
   return [
+    ...runCrossIntervalSharedDrawingsQaTests(),
     ...runHorizontalLineFullFlowTests(),
     ...runVerticalLineFullFlowTests(),
     ...runSegmentFullFlowTests(),

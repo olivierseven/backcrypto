@@ -567,7 +567,17 @@ export function DrawOverlay({
               }
               const d = snapToCandlePoint(point.px, point.py);
               const dfRect = drawDefaults.rectangle;
-              const newSeg: DrawSegment = { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, type: "rectangle", color: dfRect?.color ?? DEFAULT_SEGMENT_COLOR, rectangleStrokeWidth: dfRect?.rectangleStrokeWidth ?? "medium", rectangleFilled: dfRect?.rectangleFilled ?? false };
+              const newSeg: DrawSegment = {
+                index1: drawPending.index1,
+                price1: drawPending.price1,
+                index2: d.index,
+                price2: d.price,
+                type: "rectangle",
+                color: dfRect?.color ?? DEFAULT_SEGMENT_COLOR,
+                rectangleStrokeWidth: dfRect?.rectangleStrokeWidth ?? "medium",
+                rectangleFilled: dfRect?.rectangleFilled ?? false,
+                ...(dfRect?.lineShowOnAllIntervals === true ? { lineShowOnAllIntervals: true as const } : {}),
+              };
               let newIndex = 0;
               flushSync(() => {
                 setDrawSegments((seg) => {
@@ -688,7 +698,17 @@ export function DrawOverlay({
               const i1 = Math.min(drawPending.index1, d.index);
               const i2 = Math.max(drawPending.index1, d.index);
               const dfH = drawDefaults.horizontalLine;
-              const newSeg: DrawSegment = { index1: i1, price1: price, index2: i2, price2: price, type: "horizontalLine", color: dfH?.color ?? DEFAULT_SEGMENT_COLOR, horizontalLineStrokeWidth: dfH?.horizontalLineStrokeWidth ?? "medium", horizontalLineStrokeStyle: dfH?.horizontalLineStrokeStyle ?? "solid" };
+              const newSeg: DrawSegment = {
+                index1: i1,
+                price1: price,
+                index2: i2,
+                price2: price,
+                type: "horizontalLine",
+                color: dfH?.color ?? DEFAULT_SEGMENT_COLOR,
+                horizontalLineStrokeWidth: dfH?.horizontalLineStrokeWidth ?? "medium",
+                horizontalLineStrokeStyle: dfH?.horizontalLineStrokeStyle ?? "solid",
+                ...(dfH?.lineShowOnAllIntervals === true ? { lineShowOnAllIntervals: true as const } : {}),
+              };
               let newIndex = 0;
               flushSync(() => {
                 setDrawSegments((seg) => {
@@ -706,7 +726,17 @@ export function DrawOverlay({
               const idx = drawPending.index1;
               const price = drawPending.price1;
               const dfV = drawDefaults.verticalLine;
-              const newSeg: DrawSegment = { index1: idx, price1: price, index2: idx, price2: price, type: "verticalLine", color: dfV?.color ?? DEFAULT_SEGMENT_COLOR, verticalLineStrokeWidth: dfV?.verticalLineStrokeWidth ?? "medium", verticalLineStrokeStyle: dfV?.verticalLineStrokeStyle ?? "solid" };
+              const newSeg: DrawSegment = {
+                index1: idx,
+                price1: price,
+                index2: idx,
+                price2: price,
+                type: "verticalLine",
+                color: dfV?.color ?? DEFAULT_SEGMENT_COLOR,
+                verticalLineStrokeWidth: dfV?.verticalLineStrokeWidth ?? "medium",
+                verticalLineStrokeStyle: dfV?.verticalLineStrokeStyle ?? "solid",
+                ...(dfV?.lineShowOnAllIntervals === true ? { lineShowOnAllIntervals: true as const } : {}),
+              };
               let newIndex = 0;
               flushSync(() => {
                 setDrawSegments((seg) => {

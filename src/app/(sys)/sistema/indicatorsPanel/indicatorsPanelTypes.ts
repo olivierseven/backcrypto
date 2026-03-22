@@ -1,5 +1,6 @@
 import type {
   UserIndicatorType,
+  Wma2TimeUnit,
   IndicatorPanel,
   IndicatorFieldKey,
   IndicatorLineWidth,
@@ -195,6 +196,9 @@ export interface AddFormState {
   ichimokuShowSpanA: boolean;
   ichimokuShowSpanB: boolean;
   ichimokuShowChikou: boolean;
+  wma2TimeUnit: Wma2TimeUnit;
+  wma2TimeValue: number;
+  wma2TimeValueText: string;
 }
 
 export interface EditFormState {
@@ -380,6 +384,9 @@ export interface EditFormState {
   ichimokuShowSpanA: boolean;
   ichimokuShowSpanB: boolean;
   ichimokuShowChikou: boolean;
+  wma2TimeUnit: Wma2TimeUnit;
+  wma2TimeValue: number;
+  wma2TimeValueText: string;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

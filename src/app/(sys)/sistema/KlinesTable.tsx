@@ -22,6 +22,13 @@ const MAX_PLOT_WIDTH = 600;
 import { formatAbbreviated, formatUsdt, formatUsdtWithDecimals } from "./klinesFormatters";
 import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./IndicatorsPanel";
 import { INDICATOR_COLOR_PALETTE } from "./indicatorsPanel/index";
+import {
+  wma2RequestedPeriodCandles,
+  wma2ShouldOmitSeries,
+  isTimeWindowMa2Type,
+  ma2NullIndicesBeyondFullWindow,
+  defaultMa2TimeValueForUnit,
+} from "./indicatorsPanel/wma2Period";
 import KlinesChart from "./KlinesChart";
 
 /**
@@ -455,7 +462,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const ind = userIndicators[u];
       if (ind.type === "Volume") continue;
       const { data: dataForInd, valueIndex } = getDataAndValueIndexForIndicator(data, ind.fieldKey, userIndicators);
-      const period = Math.max(1, Math.min(500, ind.period));
+      const groupMinutesSafe = Math.max(1, Math.floor(Number(groupMinutes)) || 1);
+      const ma2Unit =
+        ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
+      const period =
+        isTimeWindowMa2Type(ind.type)
+          ? wma2RequestedPeriodCandles(
+              groupMinutesSafe,
+              ma2Unit,
+              ind.wma2TimeValue ?? defaultMa2TimeValueForUnit(ma2Unit)
+            )
+          : Math.max(1, Math.min(500, ind.period));
       if (ind.type === "MACD") {
         const col = computeMacdColumn(
           dataForInd,
@@ -582,23 +599,44 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const col = computeMfiColumn(data, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else {
-        const col =
-          ind.type === "EMA"
-            ? computeEmaColumn(dataForInd, valueIndex, period)
-            : ind.type === "WMA"
-              ? computeWmaColumn(dataForInd, valueIndex, period)
-              : ind.type === "HMA"
-                ? computeHmaColumn(dataForInd, valueIndex, period)
-                : ind.type === "VWMA"
-                  ? computeVwmaColumn(dataForInd, valueIndex, period)
-                  : ind.type === "RSI"
-                    ? computeRsiColumn(dataForInd, valueIndex, period)
-                    : computeSmaColumn(dataForInd, valueIndex, period);
+        const twMa2 = isTimeWindowMa2Type(ind.type);
+        const twSkip = twMa2 && wma2ShouldOmitSeries(data.length, period);
+        const col = twSkip
+          ? (new Array(out.length).fill(null) as (number | null)[])
+          : ind.type === "SMA2"
+            ? (() => {
+                const c = computeSmaColumn(dataForInd, valueIndex, period);
+                ma2NullIndicesBeyondFullWindow(c, data.length, period);
+                return c;
+              })()
+            : ind.type === "EMA2"
+              ? (() => {
+                  const c = computeEmaColumn(dataForInd, valueIndex, period);
+                  ma2NullIndicesBeyondFullWindow(c, data.length, period);
+                  return c;
+                })()
+              : ind.type === "WMA2"
+                ? (() => {
+                    const c = computeWmaColumn(dataForInd, valueIndex, period);
+                    ma2NullIndicesBeyondFullWindow(c, data.length, period);
+                    return c;
+                  })()
+                : ind.type === "EMA"
+                  ? computeEmaColumn(dataForInd, valueIndex, period)
+                  : ind.type === "WMA"
+                    ? computeWmaColumn(dataForInd, valueIndex, period)
+                    : ind.type === "HMA"
+                      ? computeHmaColumn(dataForInd, valueIndex, period)
+                      : ind.type === "VWMA"
+                        ? computeVwmaColumn(dataForInd, valueIndex, period)
+                        : ind.type === "RSI"
+                          ? computeRsiColumn(dataForInd, valueIndex, period)
+                          : computeSmaColumn(dataForInd, valueIndex, period);
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       }
     }
     return out as Kline[];
-  }, [baseForIndicators, userIndicators]);
+  }, [baseForIndicators, userIndicators, groupMinutes]);
 
   /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {

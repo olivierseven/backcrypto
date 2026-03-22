@@ -26,6 +26,8 @@ export interface KlinesChartSegmentOptionsProps {
   t: Record<string, string>;
   /** Quando true, fecha os listboxes (ex.: ao recolher a toolbox no sidebar). */
   segmentToolboxCollapsed?: boolean;
+  /** Com símbolo no gráfico: permite gravar reta H/V em todos os intervalos. */
+  sharedIntervalsDrawingsEnabled?: boolean;
 }
 
 export function KlinesChartSegmentOptions({
@@ -42,6 +44,7 @@ export function KlinesChartSegmentOptions({
   pixelToData,
   t,
   segmentToolboxCollapsed = false,
+  sharedIntervalsDrawingsEnabled = false,
 }: KlinesChartSegmentOptionsProps) {
   const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
   const [fibLevel618ColorListboxOpen, setFibLevel618ColorListboxOpen] = useState(false);
@@ -338,6 +341,27 @@ export function KlinesChartSegmentOptions({
               />
               <span className="text-xs text-zinc-700">{tAs.horizontalLineShowOnYAxis ?? "Marcar no eixo Y"}</span>
             </label>
+            {sharedIntervalsDrawingsEnabled && (
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { lineShowOnAllIntervals?: boolean })?.lineShowOnAllIntervals === true}
+                  onChange={(e) => {
+                    const v = e.target.checked;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const seg = next[selectedSegmentIndex];
+                      if (seg) next[selectedSegmentIndex] = { ...seg, lineShowOnAllIntervals: v };
+                      return next;
+                    });
+                    persistDrawDefault("horizontalLine", { lineShowOnAllIntervals: v });
+                  }}
+                  className="rounded border-zinc-300"
+                  aria-label={tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}
+                />
+                <span className="text-xs text-zinc-700">{tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}</span>
+              </label>
+            )}
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "pencil" && (
@@ -453,6 +477,27 @@ export function KlinesChartSegmentOptions({
               />
               <span className="text-xs text-zinc-700">{tAs.verticalLineExtendToPanels ?? "Estender nos painéis"}</span>
             </label>
+            {sharedIntervalsDrawingsEnabled && (
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { lineShowOnAllIntervals?: boolean })?.lineShowOnAllIntervals === true}
+                  onChange={(e) => {
+                    const v = e.target.checked;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const seg = next[selectedSegmentIndex];
+                      if (seg) next[selectedSegmentIndex] = { ...seg, lineShowOnAllIntervals: v };
+                      return next;
+                    });
+                    persistDrawDefault("verticalLine", { lineShowOnAllIntervals: v });
+                  }}
+                  className="rounded border-zinc-300"
+                  aria-label={tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}
+                />
+                <span className="text-xs text-zinc-700">{tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}</span>
+              </label>
+            )}
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "arrow" && (() => {
@@ -827,6 +872,27 @@ export function KlinesChartSegmentOptions({
               />
               <span>{tAs.rectangleFill ?? "Preenchimento"}</span>
             </label>
+            {sharedIntervalsDrawingsEnabled && (
+              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={(drawSegments[selectedSegmentIndex] as DrawSegment & { lineShowOnAllIntervals?: boolean })?.lineShowOnAllIntervals === true}
+                  onChange={(e) => {
+                    const v = e.target.checked;
+                    setDrawSegments((prev) => {
+                      const next = [...prev];
+                      const seg = next[selectedSegmentIndex];
+                      if (seg) next[selectedSegmentIndex] = { ...seg, lineShowOnAllIntervals: v };
+                      return next;
+                    });
+                    persistDrawDefault("rectangle", { lineShowOnAllIntervals: v });
+                  }}
+                  className="rounded border-zinc-300"
+                  aria-label={tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}
+                />
+                <span>{tAs.drawLineShowOnAllIntervals ?? "Show on all timeframes"}</span>
+              </label>
+            )}
           </>
         )}
         {drawSegments[selectedSegmentIndex]?.type === "fibonacci" && (

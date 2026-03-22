@@ -8,13 +8,14 @@ import React, { useId } from "react";
 import { DEFAULT_SEGMENT_COLOR, DEFAULT_TEXT_COLOR, FIB_STROKE_WIDTH_VALUES, HORIZONTAL_LINE_STROKE_STYLE_DASH, ARROW_OPACITY, getTextSegmentBox, type DrawSegment, type FibStrokeWidth, type ArrowSize, type TextSize } from "../KlinesChartDrawing";
 const ARROW_EDIT_EXTEND_PX = 600;
 import { MS_PER_DAY } from "../KlinesChartConstants";
+import type { DrawDraggingPoint } from "./DrawSegmentHandles";
 
 export interface DrawSegmentRenderProps {
   segment: DrawSegment;
   index: number;
   segmentToPixel: (index: number, price: number) => { x: number; y: number };
   isSelected: boolean;
-  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>>;
+  setDrawDragging: React.Dispatch<React.SetStateAction<{ segmentIndex: number; point: DrawDraggingPoint } | null>>;
   formatYAxis: (v: number) => string;
   fullReversed: (number | string | null)[][];
   n: number;

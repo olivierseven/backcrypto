@@ -87,6 +87,8 @@ export type DrawSegment = {
   horizontalLineExtendToEnd?: boolean;
   /** Indicar o valor no eixo Y. Só reta horizontal. Default: false */
   horizontalLineShowOnYAxis?: boolean;
+  /** Horizontal, vertical e retângulo: exibir em todos os intervalos do mesmo símbolo. Só com símbolo no gráfico. Default: false */
+  lineShowOnAllIntervals?: boolean;
   /** Espessura do traço. Só reta vertical. */
   verticalLineStrokeWidth?: FibStrokeWidth;
   /** Tipo de traço: contínuo, tracejado ou pontilhado. Só reta vertical. */
@@ -146,9 +148,9 @@ export type DrawDefaults = {
   freeRetracement: Partial<Pick<DrawSegment, "color" | "freeRetracementLevelPct1" | "freeRetracementLevelPct" | "freeRetracementLevelPctExt" | "freeRetracementShowValuesOnYAxis" | "freeRetracementExtensionIndices" | "fibStrokeWidth" | "showPercent" | "showValues">>;
   channel: Partial<Pick<DrawSegment, "color" | "channelExtremityColor" | "channelMidStrokeWidth" | "channelExtremityStrokeWidth" | "showValues">>;
   stopGain: Partial<Pick<DrawSegment, "stopGainRatioUp" | "stopGainRatioDown" | "stopGainFillOpacity" | "stopGainShowPercent" | "stopGainShowValuesOnYAxis" | "stopGainStrokeWidth">>;
-  rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled">>;
-  horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis">>;
-  verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels">>;
+  rectangle: Partial<Pick<DrawSegment, "color" | "rectangleStrokeWidth" | "rectangleFilled" | "lineShowOnAllIntervals">>;
+  horizontalLine: Partial<Pick<DrawSegment, "color" | "horizontalLineStrokeWidth" | "horizontalLineStrokeStyle" | "horizontalLineShowValue" | "horizontalLineExtendToEnd" | "horizontalLineShowOnYAxis" | "lineShowOnAllIntervals">>;
+  verticalLine: Partial<Pick<DrawSegment, "color" | "verticalLineStrokeWidth" | "verticalLineStrokeStyle" | "verticalLineShowDateTimeOnXAxis" | "verticalLineExtendToPanels" | "lineShowOnAllIntervals">>;
   arrow: Partial<Pick<DrawSegment, "color" | "arrowSize" | "arrowAngle">>;
   text: Partial<Pick<DrawSegment, "color" | "textBold" | "textSize" | "textHideBox">>;
   pencil: Partial<Pick<DrawSegment, "color" | "pencilStrokeWidth">>;
@@ -278,4 +280,35 @@ export function distanceToPencilPath(
     if (d < minD) minD = d;
   }
   return minD;
+}
+
+/** Retângulo e retas H/V gravados na chave partilhada do símbolo (visíveis em todos os intervalos). */
+export function isDrawSegmentSharedAcrossIntervals(seg: DrawSegment): boolean {
+  return (
+    (seg.type === "horizontalLine" || seg.type === "verticalLine" || seg.type === "rectangle") &&
+    seg.lineShowOnAllIntervals === true
+  );
+}
+
+/** Junta desenhos do intervalo atual com desenhos partilhados do símbolo (`sharedKey` = null → só local). */
+export function mergeDrawSegmentsForChartLoad(
+  data: Record<string, DrawSegment[]>,
+  drawStorageKey: string,
+  sharedKey: string | null
+): DrawSegment[] {
+  const rawLocal = Array.isArray(data[drawStorageKey]) ? data[drawStorageKey] : [];
+  const localOut = rawLocal.filter((s) => !isDrawSegmentSharedAcrossIntervals(s));
+  if (!sharedKey) return localOut;
+  const rawShared = Array.isArray(data[sharedKey]) ? data[sharedKey] : [];
+  const sharedOut = rawShared.filter(isDrawSegmentSharedAcrossIntervals);
+  return [...sharedOut, ...localOut];
+}
+
+export function splitDrawSegmentsForPersistence(drawSegments: DrawSegment[]): {
+  sharedOut: DrawSegment[];
+  localOut: DrawSegment[];
+} {
+  const sharedOut = drawSegments.filter(isDrawSegmentSharedAcrossIntervals);
+  const localOut = drawSegments.filter((s) => !isDrawSegmentSharedAcrossIntervals(s));
+  return { sharedOut, localOut };
 }

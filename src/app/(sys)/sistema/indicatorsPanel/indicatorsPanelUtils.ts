@@ -1,7 +1,34 @@
 import { getCryptoT } from "@/app/lib/translations";
-import type { UserIndicatorConfig, IndicatorFieldKey } from "../KlinesIndicatorsContext";
+import type { UserIndicatorConfig, IndicatorFieldKey, Wma2TimeUnit } from "../KlinesIndicatorsContext";
+import { clampMa2TimeWindowUserValue, defaultMa2TimeValueForUnit, isTimeWindowMa2Type, normalizeMa2TimeValueForUnit } from "./wma2Period";
 
 export type KlinesT = ReturnType<typeof getCryptoT>["sistema"]["klines"];
+
+function wma2WindowValue(ind: UserIndicatorConfig): { unit: Wma2TimeUnit; value: number } {
+  const unit: Wma2TimeUnit =
+    ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
+  const raw =
+    typeof ind.wma2TimeValue === "number" && Number.isFinite(ind.wma2TimeValue)
+      ? clampMa2TimeWindowUserValue(ind.wma2TimeValue)
+      : defaultMa2TimeValueForUnit(unit);
+  const value = normalizeMa2TimeValueForUnit(unit, raw);
+  return { unit, value };
+}
+
+function formatWma2WindowLong(ind: UserIndicatorConfig, t: KlinesT): string {
+  const { unit, value } = wma2WindowValue(ind);
+  const k = t as Record<string, string>;
+  if (unit === "days") return (k.wma2WindowDays ?? "{n} days").replace("{n}", String(value));
+  if (unit === "hours") return (k.wma2WindowHours ?? "{n} hours").replace("{n}", String(value));
+  return (k.wma2WindowMinutes ?? "{n} minutes").replace("{n}", String(value));
+}
+
+function formatWma2WindowCompact(ind: UserIndicatorConfig): string {
+  const { unit, value } = wma2WindowValue(ind);
+  if (unit === "days") return `${value}d`;
+  if (unit === "hours") return `${value}h`;
+  return `${value}m`;
+}
 
 export function getFieldLabel(
   fieldKey: IndicatorFieldKey,
@@ -20,7 +47,10 @@ export function getFieldLabel(
   if (fieldKey === "HLCC4") return k.fieldHLCC4 ?? "HLCC4";
   if (fieldKey.startsWith("user_")) {
     const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
-    if (u) return `${u.type}(${u.period}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
+    if (u) {
+      const p = isTimeWindowMa2Type(u.type) ? formatWma2WindowLong(u, t) : String(u.period);
+      return `${u.type}(${p}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
+    }
   }
   return String(fieldKey);
 }
@@ -91,6 +121,9 @@ export function getIndicatorLabel(
   }
   if (ind.type === "MFI") {
     return `MFI(${ind.period})`;
+  }
+  if (isTimeWindowMa2Type(ind.type)) {
+    return `${ind.type}(${formatWma2WindowLong(ind, t)}) ${fieldLabel}`;
   }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
@@ -176,6 +209,9 @@ export function getIndicatorLabelShort(
   if (ind.type === "MFI") {
     return `MFI(${ind.period})`;
   }
+  if (isTimeWindowMa2Type(ind.type)) {
+    return `${ind.type}(${formatWma2WindowCompact(ind)}) ${letter}`;
+  }
   return `${ind.type}(${ind.period}) ${letter}`;
 }
 
@@ -211,5 +247,5 @@ export function getIndicatorLabelShortStochD(ind: UserIndicatorConfig): string {
 }
 
 export function isMovingAverageType(type: string): boolean {
-  return type === "SMA" || type === "EMA" || type === "WMA";
+  return type === "SMA" || type === "SMA2" || type === "EMA" || type === "EMA2" || type === "WMA" || type === "WMA2";
 }

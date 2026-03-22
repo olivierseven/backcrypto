@@ -20,16 +20,20 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: getAppVersion(),
   },
-  assetPrefix: '/crypto',
+  // Não duplicar com basePath: o Next já serve `_next/static` em `/crypto/_next/...`.
+  // assetPrefix igual ao basePath em dev costuma agravar ChunkLoadError/timeout ao pedir chunks.
   outputFileTracingRoot: projectRoot,
   experimental: {
     serverActions: {
       bodySizeLimit: '20mb',
     },
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
     config.resolve.symlinks = false;
     config.context = projectRoot;
+    if (dev && !isServer && config.output) {
+      config.output.chunkLoadTimeout = 120000;
+    }
     return config;
   },
 }

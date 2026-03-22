@@ -1,6 +1,7 @@
 /**
  * Testes QA do fluxo de indicadores — executáveis no browser (aba Debug > QA > Indicadores).
  * Médias móveis (SMA, EMA, WMA, HMA, VWMA): período, fonte, painel, intervalos, cor, espessura, tipo de linha, séries em estratégia, excluir.
+ * SMA2 / EMA2 / WMA2: janela em tempo (intervals=[]), mesmo fluxo QA que WMA2.
  * Canais (Bollinger, Keltner, Donchian): período, 3 linhas (upper/middle/lower) em estratégia, cor/espessura/estilo, excluir.
  * Momentum (RSI, MACD, MFI, Stochastic, CCI, Williams %R): RSI/MFI/CCI/Williams 1 série; MACD 3 funções; Stochastic 2 (%K e %D) em estratégia; cor/espessura/estilo, excluir.
  * Volatilidade (ATR): 1 série em estratégia, cor/espessura/estilo, excluir.
@@ -9,7 +10,14 @@
  * Tendência (ADX, SAR, Ichimoku): ADX 3 séries (+DI, -DI, ADX); SAR 1 série; Ichimoku 5 séries (Tenkan, Kijun, Span A/B, Chikou); cor/espessura/estilo, excluir.
  * Nota: indicadores são do layout (não por moeda); em qualquer símbolo aparecem conforme tempos selecionados.
  */
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn } from "@/app/api/binance/klines/indicators";
 import { INTERVAL_OPTIONS } from "../indicatorsPanel/indicatorsPanelConstants";
+import {
+  ma2NullIndicesBeyondFullWindow,
+  normalizeMa2TimeValueForUnit,
+  wma2RequestedPeriodCandles,
+  wma2WindowTotalMinutes,
+} from "../indicatorsPanel/wma2Period";
 
 export type IndicatorsQaTestResult = { name: string; pass: boolean; message?: string; evidence?: string };
 
@@ -18,8 +26,15 @@ const INTERVAL_1H = 60;
 const INTERVAL_2H = 120;
 const INTERVAL_4H = 240;
 
+/** Nome do cartão QA (equivalência de janela MA2); referenciado nos fluxos WMA2/SMA2/EMA2. */
+const MA2_WINDOW_EQUIVALENCE_QA_NAME =
+  "MA2 — equivalência (7d≡168h; no gráfico 4h 1d≡24h≡1440m e SMA/EMA/WMA iguais)";
+
 /** Tipos de média móvel com mesmo fluxo (período, fonte, painel, intervalos, cor, espessura, tipo de linha). */
 const MOVING_AVERAGE_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA"] as const;
+
+/** SMA2 / EMA2 / WMA2: janela temporal; em estratégias a série é `ind_<id>:<fieldKey>` como as MA clássicas. */
+const MA2_TIME_WINDOW_TYPES = ["WMA2", "SMA2", "EMA2"] as const;
 
 /** Tipos de canal: três linhas (upper, middle, lower) em criar estratégia. */
 const CHANNEL_TYPES = ["Bollinger", "Keltner", "Donchian"] as const;
@@ -40,6 +55,8 @@ type IndicatorLike = {
   color?: string;
   lineWidth?: string;
   lineStyle?: string;
+  wma2TimeUnit?: "days" | "hours" | "minutes";
+  wma2TimeValue?: number;
 };
 
 /** Canal: em estratégias aparecem 3 séries (upper, middle, lower). */
@@ -140,6 +157,10 @@ function isMovingAverageType(t: string): boolean {
   return (MOVING_AVERAGE_TYPES as readonly string[]).includes(t);
 }
 
+function usesIndIdFieldKeySeries(t: string): boolean {
+  return isMovingAverageType(t) || (MA2_TIME_WINDOW_TYPES as readonly string[]).includes(t);
+}
+
 function isIndicatorVisibleForInterval(ind: IndicatorLike, effectiveIntervalMinutes: number): boolean {
   if (ind.intervals.length === 1 && ind.intervals[0] === INTERVALS_NONE) return false;
   if (ind.intervals.length === 0) return true;
@@ -169,13 +190,216 @@ function buildSeriesKeysForInterval(
       indKeys.push(`ind_${i.id}:plusDi`, `ind_${i.id}:minusDi`, `ind_${i.id}:adx`);
     } else if (i.type === "Ichimoku") {
       indKeys.push(`ind_${i.id}:tenkan`, `ind_${i.id}:kijun`, `ind_${i.id}:spanA`, `ind_${i.id}:spanB`, `ind_${i.id}:chikou`);
-    } else if (isMovingAverageType(i.type)) {
+    } else if (usesIndIdFieldKeySeries(i.type)) {
       indKeys.push(`ind_${i.id}:${i.fieldKey}`);
     } else {
       indKeys.push(`ind_${i.id}`);
     }
   }
   return [...base, ...indKeys];
+}
+
+function runMa2TimeWindowFlow(type: (typeof MA2_TIME_WINDOW_TYPES)[number], label: string): IndicatorsQaTestResult {
+  const evidence: string[] = [];
+  let pass = true;
+  let message: string | undefined;
+  try {
+    const indId = `ui_qa_${type.toLowerCase()}_${Date.now()}`;
+    const list: IndicatorLike[] = [];
+    const ind: IndicatorLike = {
+      id: indId,
+      type,
+      period: 1,
+      fieldKey: "close",
+      panel: "main",
+      intervals: [],
+      wma2TimeUnit: "hours",
+      wma2TimeValue: 24,
+      color: "#3b82f6",
+      lineWidth: "normal",
+      lineStyle: "solid",
+    };
+    list.push(ind);
+    evidence.push(`1. ${label} adicionado: janela 24h, Close, main, intervals=[] (todos os tempos).`);
+
+    const visible2h = isIndicatorVisibleForInterval(ind, INTERVAL_2H);
+    evidence.push(`2. Visível em 2h com todos os tempos: ${visible2h} (true esperado).`);
+    if (!visible2h) {
+      pass = false;
+      message = `${label} com intervals=[] deve aparecer em qualquer timeframe.`;
+    }
+
+    const idx = list.findIndex((i) => i.id === indId);
+    if (idx >= 0) list[idx] = { ...list[idx]!, wma2TimeValue: 48, fieldKey: "open" };
+    const after = list.find((i) => i.id === indId);
+    const editOk = after?.wma2TimeValue === 48 && after?.fieldKey === "open";
+    evidence.push(`3. Editado janela 24→48h e Close→Open: ${editOk ? "✓" : "falhou"}.`);
+    if (!editOk) {
+      pass = false;
+      message = message ?? `Edição ${label} falhou.`;
+    }
+
+    if (idx >= 0) list[idx] = { ...list[idx]!, color: "#ef4444", lineWidth: "thin", lineStyle: "dashed" };
+    const afterStyle = list.find((i) => i.id === indId);
+    const styleOk = afterStyle?.color === "#ef4444" && afterStyle?.lineWidth === "thin" && afterStyle?.lineStyle === "dashed";
+    evidence.push(`4. Cor/espessura/estilo: ${styleOk ? "✓" : "falhou"}.`);
+
+    const removed = list.filter((i) => i.id !== indId);
+    list.length = 0;
+    list.push(...removed);
+    if (list.length !== 0) {
+      pass = false;
+      message = message ?? "Exclusão falhou.";
+    }
+    evidence.push(
+      `5. Excluído. ${label}: período em candles = ceil(janela min ÷ min do candle); sem candles suficientes, série fica vazia (sem linha).`
+    );
+    evidence.push(
+      `6. Equivalência de janela (7d≡168h; gráfico 4h 1d≡24h≡1440m; séries SMA/EMA/WMA): ver o cartão «${MA2_WINDOW_EQUIVALENCE_QA_NAME}» na lista QA (fica antes de WMA2 / SMA2 / EMA2).`
+    );
+  } catch (e) {
+    pass = false;
+    message = String(e);
+    evidence.push(`Erro: ${message}`);
+  }
+  return {
+    name: `${label} — janela em tempo (todos os timeframes), editar janela/fonte, cor/espessura/estilo, excluir`,
+    pass,
+    message,
+    evidence: evidence.join("\n"),
+  };
+}
+
+/** Garante equivalências: 7d≡168h (período candles em 1h, 4h, 1d); no gráfico 4h, 1d≡24h≡1440m e SMA/EMA/WMA idênticas. */
+function runMa2WindowEquivalenceFlow(): IndicatorsQaTestResult {
+  const evidence: string[] = [];
+  let pass = true;
+  let message: string | undefined;
+  try {
+    const min7d = wma2WindowTotalMinutes("days", 7);
+    const min168h = wma2WindowTotalMinutes("hours", 168);
+    const eqMin = min7d === min168h;
+    evidence.push(`1. Minutos totais: 7d=${min7d}, 168h=${min168h} → ${eqMin ? "iguais ✓" : "diferentes ✗"}.`);
+    if (!eqMin) {
+      pass = false;
+      message = "wma2WindowTotalMinutes(7d) deve igualar wma2WindowTotalMinutes(168h).";
+    }
+
+    const norm = normalizeMa2TimeValueForUnit("days", 168);
+    evidence.push(`2. normalize(days, 168)=${norm} (esperado 7, equivale a 168 h).`);
+    if (norm !== 7) {
+      pass = false;
+      message = message ?? "normalizeMa2TimeValueForUnit(days,168) deve ser 7.";
+    }
+
+    const minAfterNorm = wma2WindowTotalMinutes("days", norm);
+    evidence.push(`3. wma2WindowTotalMinutes(days, normalize(days,168))=${minAfterNorm} (deve ser ${min168h} como 168h).`);
+    if (minAfterNorm !== min168h) {
+      pass = false;
+      message = message ?? "Após normalizar days+168→7, minutos totais devem igualar 168 h.";
+    }
+
+    for (const gm of [60, INTERVAL_4H, 1440]) {
+      const p7 = wma2RequestedPeriodCandles(gm, "days", 7);
+      const p168 = wma2RequestedPeriodCandles(gm, "hours", 168);
+      const ok = p7 === p168;
+      evidence.push(`4. TF ${gm}m — período candles: 7d=${p7}, 168h=${p168} ${ok ? "✓" : "✗"}.`);
+      if (!ok) {
+        pass = false;
+        message = message ?? `Período em candles difere no TF ${gm}m.`;
+      }
+    }
+
+    const min1d = wma2WindowTotalMinutes("days", 1);
+    const min24h = wma2WindowTotalMinutes("hours", 24);
+    const min1440m = wma2WindowTotalMinutes("minutes", 1440);
+    const eq1d = min1d === min24h && min24h === min1440m && min1d === 1440;
+    evidence.push(
+      `5. 1 dia ≡ 24 h ≡ 1440 min — minutos totais: 1d=${min1d}, 24h=${min24h}, 1440m=${min1440m} → ${eq1d ? "iguais ✓" : "diferentes ✗"}.`
+    );
+    if (!eq1d) {
+      pass = false;
+      message = message ?? "wma2WindowTotalMinutes(1d), (24h) e (1440m) devem ser todos 1440.";
+    }
+
+    const gm4h = INTERVAL_4H;
+    const p1d = wma2RequestedPeriodCandles(gm4h, "days", 1);
+    const p24h = wma2RequestedPeriodCandles(gm4h, "hours", 24);
+    const p1440m = wma2RequestedPeriodCandles(gm4h, "minutes", 1440);
+    const periodsMatch = p1d === p24h && p24h === p1440m;
+    evidence.push(
+      `6. Gráfico 4h (${gm4h}m) — período em candles: 1d=${p1d}, 24h=${p24h}, 1440m=${p1440m} ${periodsMatch ? "✓" : "✗"}.`
+    );
+    if (!periodsMatch) {
+      pass = false;
+      message = message ?? `No TF 4h, 1d / 24h / 1440m devem dar o mesmo período em candles.`;
+    } else {
+      const nRows = 50;
+      const closeIdx = 4;
+      const klines: (string | number | null)[][] = [];
+      for (let i = 0; i < nRows; i++) {
+        const t = 1_700_000_000_000 - i * gm4h * 60_000;
+        const close = 100 + i * 0.13 + (i % 11) * 0.02;
+        klines.push([t, "1", "1", "1", String(close), "1"]);
+      }
+
+      const colsCloseEnough = (a: (number | null)[], b: (number | null)[]): boolean => {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+          const x = a[i];
+          const y = b[i];
+          if (x === null && y === null) continue;
+          if (x === null || y === null) return false;
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+          if (Math.abs(x - y) > 1e-9) return false;
+        }
+        return true;
+      };
+
+      let maStep = 7;
+      const assertMa2TripleSeries = (label: string, compute: (d: (string | number | null)[][], vi: number, p: number) => (number | null)[]) => {
+        const cD = compute(klines, closeIdx, p1d);
+        const cH = compute(klines, closeIdx, p24h);
+        const cM = compute(klines, closeIdx, p1440m);
+        ma2NullIndicesBeyondFullWindow(cD, nRows, p1d);
+        ma2NullIndicesBeyondFullWindow(cH, nRows, p24h);
+        ma2NullIndicesBeyondFullWindow(cM, nRows, p1440m);
+        const ok = colsCloseEnough(cD, cH) && colsCloseEnough(cH, cM);
+        evidence.push(`${maStep}. TF 4h — ${label} (1d vs 24h vs 1440m): séries ${ok ? "iguais ✓" : "diferentes ✗"}.`);
+        maStep += 1;
+        if (!ok) {
+          pass = false;
+          message = message ?? `No TF 4h, ${label} deve coincidir ao trocar unidade da mesma janela (1d/24h/1440m).`;
+        }
+      };
+
+      assertMa2TripleSeries("SMA2 (computeSmaColumn)", computeSmaColumn);
+      assertMa2TripleSeries("EMA2 (computeEmaColumn)", computeEmaColumn);
+      assertMa2TripleSeries("WMA2 (computeWmaColumn)", computeWmaColumn);
+    }
+  } catch (e) {
+    pass = false;
+    message = String(e);
+    evidence.push(`Erro: ${message}`);
+  }
+  return {
+    name: MA2_WINDOW_EQUIVALENCE_QA_NAME,
+    pass,
+    message,
+    evidence: evidence.join("\n"),
+  };
+}
+
+function runWma2Flow(): IndicatorsQaTestResult {
+  return runMa2TimeWindowFlow("WMA2", "WMA2");
+}
+
+function runSma2Flow(): IndicatorsQaTestResult {
+  return runMa2TimeWindowFlow("SMA2", "SMA2");
+}
+
+function runEma2Flow(): IndicatorsQaTestResult {
+  return runMa2TimeWindowFlow("EMA2", "EMA2");
 }
 
 function runMovingAverageFlow(maType: string): IndicatorsQaTestResult {
@@ -863,6 +1087,10 @@ export function runIndicatorsQaTests(): IndicatorsQaTestResult[] {
   for (const maType of MOVING_AVERAGE_TYPES) {
     results.push(runMovingAverageFlow(maType));
   }
+  results.push(runMa2WindowEquivalenceFlow());
+  results.push(runWma2Flow());
+  results.push(runSma2Flow());
+  results.push(runEma2Flow());
   for (const chType of CHANNEL_TYPES) {
     results.push(runChannelFlow(chType));
   }

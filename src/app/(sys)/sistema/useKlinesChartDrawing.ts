@@ -5,8 +5,9 @@
  * O chart preenche drawConversionRef e drawSnapPointsRef a cada render.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { DrawSegment, DrawConversionParams } from "./KlinesChartDrawing";
+import { isDrawSegmentSharedAcrossIntervals, type DrawSegment, type DrawConversionParams } from "./KlinesChartDrawing";
 import { KLINE_DRAW_MAGNETIC_KEY } from "./KlinesChartConstants";
+import type { DrawDraggingPoint } from "./klinesChart/DrawSegmentHandles";
 
 export type DrawTool = "line" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "ruler" | "select" | "pencil";
 
@@ -40,7 +41,7 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
   const [drawPendingPencil, setDrawPendingPencil] = useState<{ index: number; price: number }[] | null>(null);
   const [drawTool, setDrawTool] = useState<DrawTool>("line");
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd" } | null>(null);
+  const [drawDragging, setDrawDragging] = useState<{ segmentIndex: number; point: DrawDraggingPoint } | null>(null);
   const pencilDragStartRef = useRef<{ index: number; price: number } | null>(null);
 
   const drawRef = useRef<HTMLDivElement>(null);
@@ -229,8 +230,9 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
           const newIndex = Math.max(0, Math.min(c.maxDrawIndex, idx));
           s.index1 = newIndex;
           s.index2 = newIndex;
-        } else if (drawDragging.point === "arrowMove") {
-          if (s.type !== "arrow") return prev;
+        } else if (drawDragging.point === "arrowMove" || drawDragging.point === "rectangleMove") {
+          if (drawDragging.point === "arrowMove" && s.type !== "arrow") return prev;
+          if (drawDragging.point === "rectangleMove" && s.type !== "rectangle") return prev;
           const centerIdx = (s.index1 + s.index2) / 2;
           const centerPrice = (s.price1 + s.price2) / 2;
           const deltaIdx = idx - centerIdx;
@@ -564,6 +566,24 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     setDrawDragging(null);
   }, []);
 
+  /** Remove só desenhos do intervalo atual; mantém retas H/V marcadas para todos os períodos. */
+  const clearDrawingsForCurrentInterval = useCallback(() => {
+    setDrawSegments((prev) => prev.filter(isDrawSegmentSharedAcrossIntervals));
+    setDrawPending(null);
+    setDrawPendingRectSecond(null);
+    setDrawPendingFibSecond(null);
+    setDrawPendingFreeRetraceSecond(null);
+    setDrawPendingLineSecond(null);
+    setDrawPendingChannelSecond(null);
+    setDrawPendingStopGainSecond(null);
+    setDrawPendingHorizontalSecond(null);
+    setDrawPendingArrow(null);
+    setDrawPendingText(null);
+    setDrawPendingPencil(null);
+    setSelectedSegmentIndex(null);
+    setDrawDragging(null);
+  }, []);
+
   const closeDrawMode = useCallback(() => setDrawMode(false), []);
 
   return {
@@ -622,5 +642,6 @@ export function useKlinesChartDrawing(chartSvgRef: React.RefObject<SVGSVGElement
     selectPencilTool,
     selectSelectTool,
     clearAllDrawing,
+    clearDrawingsForCurrentInterval,
   };
 }

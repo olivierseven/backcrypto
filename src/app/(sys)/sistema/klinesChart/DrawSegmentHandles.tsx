@@ -7,7 +7,28 @@
  */
 import { DEFAULT_SEGMENT_COLOR, getTextSegmentBox, type DrawSegment, type TextSize } from "../KlinesChartDrawing";
 
-export type DrawDraggingPoint = 0 | 1 | "extension" | "fibLevel1" | "freeRetracementLevel1" | "freeRetracementLevel" | "freeRetracementLevelExt" | "channelMid" | "channelExtension" | "stopGainMid" | "stopGainMove" | "stopGainGainLine" | "stopGainStopLine" | "horizontalLineMove" | "verticalLineMove" | "arrowMove" | "textMove" | "pencilMove" | "pencilStart" | "pencilEnd";
+export type DrawDraggingPoint =
+  | 0
+  | 1
+  | "extension"
+  | "fibLevel1"
+  | "freeRetracementLevel1"
+  | "freeRetracementLevel"
+  | "freeRetracementLevelExt"
+  | "channelMid"
+  | "channelExtension"
+  | "stopGainMid"
+  | "stopGainMove"
+  | "stopGainGainLine"
+  | "stopGainStopLine"
+  | "horizontalLineMove"
+  | "verticalLineMove"
+  | "arrowMove"
+  | "rectangleMove"
+  | "textMove"
+  | "pencilMove"
+  | "pencilStart"
+  | "pencilEnd";
 
 export interface DrawSegmentHandlesProps {
   segment: DrawSegment;
@@ -41,7 +62,9 @@ export function DrawSegmentHandles({
   const isArrow = seg.type === "arrow";
   const isText = seg.type === "text";
   const isPencil = seg.type === "pencil";
+  const isRectangle = seg.type === "rectangle";
   const channelMidPos = isChannel ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
+  const rectangleMidPos = isRectangle ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const stopGainMidPos = isStopGain ? { x: (h1.x + h2.x) / 2, y: (h1.y + h2.y) / 2 } : { x: 0, y: 0 };
   const fibExtendPx = isFib ? segmentToPixel(seg.index2 + Math.max(0, seg.fibExtensionIndices ?? 0), seg.price2).x : 0;
   const fibMidY = isFib ? (segmentToPixel(seg.index1, Math.max(seg.price1, seg.price2)).y + segmentToPixel(seg.index1, Math.min(seg.price1, seg.price2)).y) / 2 : 0;
@@ -244,6 +267,29 @@ export function DrawSegmentHandles({
             onClick={(e) => e.stopPropagation()}
           />
           {!isChannel && <circle cx={h2.x} cy={h2.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />}
+        </>
+      )}
+      {isRectangle && (
+        <>
+          <circle
+            cx={rectangleMidPos.x}
+            cy={rectangleMidPos.y}
+            r={5}
+            fill="transparent"
+            stroke="none"
+            style={{ cursor: "grab" }}
+            aria-label={(t as Record<string, string>).rectangleMove ?? "Arrastar para mover"}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "rectangleMove" });
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              setDrawDragging({ segmentIndex: selectedSegmentIndex, point: "rectangleMove" });
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <circle cx={rectangleMidPos.x} cy={rectangleMidPos.y} r={3} fill={handleColor} stroke={handleColor} strokeWidth={1} pointerEvents="none" />
         </>
       )}
       {isStopGain && (() => {
