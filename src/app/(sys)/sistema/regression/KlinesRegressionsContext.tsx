@@ -17,7 +17,11 @@ export interface UserRegressionConfig {
   sourceToken: RegressionSourceToken;
   /** Barras à frente do último ponto (1–REGRESSION_FORECAST_BARS_MAX). */
   forecastBars: number;
-  /** Desloca o fim da amostra para o passado (0 = barra mais recente da janela; até REGRESSION_PAST_OFFSET_MAX). */
+  /**
+   * Magnitude do deslocamento do fim da amostra para o passado (0..REGRESSION_PAST_OFFSET_MAX).
+   * Na UI é exibido como `-N`. Também define quantas barras pode fazer pan para o passado sem ocultar a regressão
+   * (0 = só com a vela mais recente à direita; 50 = até 50 barras de pan).
+   */
   pastEndOffsetBars: number;
   lineStyle: RegressionLineStyle;
   lineWidth: "thin" | "normal" | "thick";
@@ -61,12 +65,14 @@ export function maxForecastBarsForModel(_model: RegressionModel): number {
 
 export const REGRESSION_LOOKBACK_MIN = 2;
 export const REGRESSION_LOOKBACK_MAX = 50;
-/** Quantas barras o fim da amostra pode recuar no tempo (dados mais antigos). */
+/** Limite máximo do deslocamento do fim da amostra para o passado. */
 export const REGRESSION_PAST_OFFSET_MAX = 50;
+
+export const REGRESSION_PAST_OFFSET_MIN = 0;
 
 function clampPastEndOffset(n: number): number {
   if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(REGRESSION_PAST_OFFSET_MAX, Math.round(n)));
+  return Math.max(REGRESSION_PAST_OFFSET_MIN, Math.min(REGRESSION_PAST_OFFSET_MAX, Math.abs(Math.round(n))));
 }
 
 function clampLookback(n: number): number {

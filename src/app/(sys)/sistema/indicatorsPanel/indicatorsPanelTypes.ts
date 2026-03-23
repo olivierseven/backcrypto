@@ -199,6 +199,15 @@ export interface AddFormState {
   wma2TimeUnit: Wma2TimeUnit;
   wma2TimeValue: number;
   wma2TimeValueText: string;
+  hmaCustomLongPeriod: number;
+  hmaCustomLongPeriodText: string;
+  hmaCustomFastPeriod: number;
+  hmaCustomFastPeriodText: string;
+  hmaCustomSmoothPeriod: number;
+  hmaCustomSmoothPeriodText: string;
+  hmaCustomLongMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomFastMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
 }
 
 export interface EditFormState {
@@ -387,6 +396,15 @@ export interface EditFormState {
   wma2TimeUnit: Wma2TimeUnit;
   wma2TimeValue: number;
   wma2TimeValueText: string;
+  hmaCustomLongPeriod: number;
+  hmaCustomLongPeriodText: string;
+  hmaCustomFastPeriod: number;
+  hmaCustomFastPeriodText: string;
+  hmaCustomSmoothPeriod: number;
+  hmaCustomSmoothPeriodText: string;
+  hmaCustomLongMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomFastMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

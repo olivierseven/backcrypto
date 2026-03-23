@@ -1,7 +1,8 @@
 /**
  * Testes QA do fluxo de indicadores — executáveis no browser (aba Debug > QA > Indicadores).
  * Médias móveis (SMA, EMA, WMA, HMA, VWMA): período, fonte, painel, intervalos, cor, espessura, tipo de linha, séries em estratégia, excluir.
- * SMA2 / EMA2 / WMA2: janela em tempo (intervals=[]), mesmo fluxo QA que WMA2.
+ * Hull MA (Custom): três períodos + tipo de média (SMA/EMA/WMA) por perna; mesmo fluxo de painel/intervalos/série em estratégia; cálculo em computeHmaCustomColumn.
+ * SMA2 / EMA2 / WMA2: (1) janela em tempo com intervals=[] (todos os TF); (2) cartão separado — mesmo fluxo de timeframes que SMA/EMA/WMA (1h/4h vs 2h, editar janela/fonte, todos os tempos, cor/espessura/estilo).
  * Canais (Bollinger, Keltner, Donchian): período, 3 linhas (upper/middle/lower) em estratégia, cor/espessura/estilo, excluir.
  * Momentum (RSI, MACD, MFI, Stochastic, CCI, Williams %R): RSI/MFI/CCI/Williams 1 série; MACD 3 funções; Stochastic 2 (%K e %D) em estratégia; cor/espessura/estilo, excluir.
  * Volatilidade (ATR): 1 série em estratégia, cor/espessura/estilo, excluir.
@@ -10,7 +11,7 @@
  * Tendência (ADX, SAR, Ichimoku): ADX 3 séries (+DI, -DI, ADX); SAR 1 série; Ichimoku 5 séries (Tenkan, Kijun, Span A/B, Chikou); cor/espessura/estilo, excluir.
  * Nota: indicadores são do layout (não por moeda); em qualquer símbolo aparecem conforme tempos selecionados.
  */
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeHmaCustomColumn } from "@/app/api/binance/klines/indicators";
 import { INTERVAL_OPTIONS } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
   ma2NullIndicesBeyondFullWindow,
@@ -57,6 +58,13 @@ type IndicatorLike = {
   lineStyle?: string;
   wma2TimeUnit?: "days" | "hours" | "minutes";
   wma2TimeValue?: number;
+  /** Hull MA (Custom): períodos e tipo de média por etapa (rápida / longa / suavização). */
+  hmaCustomLongPeriod?: number;
+  hmaCustomFastPeriod?: number;
+  hmaCustomSmoothPeriod?: number;
+  hmaCustomLongMaType?: "SMA" | "EMA" | "WMA";
+  hmaCustomFastMaType?: "SMA" | "EMA" | "WMA";
+  hmaCustomSmoothMaType?: "SMA" | "EMA" | "WMA";
 };
 
 /** Canal: em estratégias aparecem 3 séries (upper, middle, lower). */
@@ -158,7 +166,7 @@ function isMovingAverageType(t: string): boolean {
 }
 
 function usesIndIdFieldKeySeries(t: string): boolean {
-  return isMovingAverageType(t) || (MA2_TIME_WINDOW_TYPES as readonly string[]).includes(t);
+  return isMovingAverageType(t) || (MA2_TIME_WINDOW_TYPES as readonly string[]).includes(t) || t === "HMA_CUSTOM";
 }
 
 function isIndicatorVisibleForInterval(ind: IndicatorLike, effectiveIntervalMinutes: number): boolean {
@@ -402,6 +410,128 @@ function runEma2Flow(): IndicatorsQaTestResult {
   return runMa2TimeWindowFlow("EMA2", "EMA2");
 }
 
+/**
+ * SMA2/EMA2/WMA2 com intervalos [1h,4h] como as médias clássicas: visibilidade por TF, lista de estratégia, editar janela+fonte,
+ * depois intervals=[] (todos os tempos), aparecer em 2h, estilo, excluir.
+ */
+function runMa2TimeframeIntervalsFlow(type: (typeof MA2_TIME_WINDOW_TYPES)[number], label: string): IndicatorsQaTestResult {
+  const evidence: string[] = [];
+  let pass = true;
+  let message: string | undefined;
+  try {
+    const indId = `ui_qa_${type.toLowerCase()}_tf_${Date.now()}`;
+    const list: IndicatorLike[] = [];
+    const ind: IndicatorLike = {
+      id: indId,
+      type,
+      period: 1,
+      fieldKey: "close",
+      panel: "main",
+      intervals: [INTERVAL_1H, INTERVAL_4H],
+      wma2TimeUnit: "hours",
+      wma2TimeValue: 24,
+      color: "#3b82f6",
+      lineWidth: "normal",
+      lineStyle: "solid",
+    };
+    list.push(ind);
+    evidence.push(
+      `1. ${label}: janela 24h, Close, main, intervalos 1h e 4h (não «todos os tempos»), cor #3b82f6, normal, solid.`
+    );
+
+    const visible1h = isIndicatorVisibleForInterval(ind, INTERVAL_1H);
+    const visible4h = isIndicatorVisibleForInterval(ind, INTERVAL_4H);
+    const visible2hBefore = isIndicatorVisibleForInterval(ind, INTERVAL_2H);
+    evidence.push(`2. Visibilidade: 1h=${visible1h}, 4h=${visible4h}, 2h=${visible2hBefore} (2h deve ser false).`);
+    if (!visible1h || !visible4h || visible2hBefore) {
+      pass = false;
+      message = `${label} com [1h,4h] deve aparecer em 1h e 4h e não em 2h.`;
+    }
+
+    const meus1h = filterIndicatorsForInterval(list, INTERVAL_1H);
+    const meus4h = filterIndicatorsForInterval(list, INTERVAL_4H);
+    const meus2h = filterIndicatorsForInterval(list, INTERVAL_2H);
+    evidence.push(`3. Meus indicadores: em 1h ${meus1h.length}, em 4h ${meus4h.length}, em 2h ${meus2h.length} (0 no 2h esperado).`);
+    if (meus1h.length !== 1 || meus4h.length !== 1 || meus2h.length !== 0) {
+      pass = false;
+      message = message ?? "Filtro por timeframe incorreto.";
+    }
+
+    const seriesKeys1h = buildSeriesKeysForInterval(list, INTERVAL_1H);
+    const seriesKeys2h = buildSeriesKeysForInterval(list, INTERVAL_2H);
+    const keyClose = `ind_${indId}:close`;
+    const in1h = seriesKeys1h.includes(keyClose);
+    const not2h = !seriesKeys2h.includes(keyClose);
+    evidence.push(`4. Criar estratégia: 1h contém "${keyClose}"? ${in1h}. 2h não contém? ${not2h}.`);
+    if (!in1h || !not2h) {
+      pass = false;
+      message = message ?? "Série ind_<id>:close em 1h e não em 2h.";
+    }
+
+    const idx = list.findIndex((i) => i.id === indId);
+    if (idx >= 0) list[idx] = { ...list[idx]!, wma2TimeValue: 48, fieldKey: "open" };
+    const afterWindow = list.find((i) => i.id === indId);
+    const windowOk = afterWindow?.wma2TimeValue === 48 && afterWindow?.fieldKey === "open";
+    evidence.push(`5a. Editado janela 24→48h e Close→Open. Verificado: ${windowOk ? "✓" : "falhou"}.`);
+    if (!windowOk) {
+      pass = false;
+      message = message ?? "Edição janela/fonte falhou.";
+    }
+
+    if (idx >= 0) list[idx] = { ...list[idx]!, intervals: [] };
+    const afterAll = list.find((i) => i.id === indId);
+    const vis2h = afterAll ? isIndicatorVisibleForInterval(afterAll, INTERVAL_2H) : false;
+    evidence.push(`5b. intervals=[] (todos os tempos). Visível em 2h? ${vis2h} (true esperado).`);
+    if (!vis2h) {
+      pass = false;
+      message = message ?? "Com todos os tempos, deve aparecer em 2h.";
+    }
+
+    const meus2hAfter = filterIndicatorsForInterval(list, INTERVAL_2H);
+    const seriesKeys2hAfter = buildSeriesKeysForInterval(list, INTERVAL_2H);
+    const keyOpen = `ind_${indId}:open`;
+    const in2hAfter = seriesKeys2hAfter.includes(keyOpen);
+    evidence.push(`6. Meus indicadores em 2h: ${meus2hAfter.length}. Lista em criar estratégia (2h) contém "${keyOpen}"? ${in2hAfter}.`);
+    if (meus2hAfter.length !== 1 || !in2hAfter) {
+      pass = false;
+      message = message ?? "Após todos os tempos, 1 item em 2h e série em criar estratégia.";
+    }
+
+    if (idx >= 0) list[idx] = { ...list[idx]!, color: "#ef4444", lineWidth: "thin", lineStyle: "dashed" };
+    const afterStyle = list.find((i) => i.id === indId);
+    const styleOk = afterStyle?.color === "#ef4444" && afterStyle?.lineWidth === "thin" && afterStyle?.lineStyle === "dashed";
+    evidence.push(`7. Cor #ef4444, espessura thin, tipo dashed. Verificado: ${styleOk ? "✓" : "falhou"}.`);
+    if (!styleOk) {
+      pass = false;
+      message = message ?? "Edição de cor/espessura/estilo falhou.";
+    }
+
+    const beforeDelete = list.length;
+    const removed = list.filter((i) => i.id !== indId);
+    list.length = 0;
+    list.push(...removed);
+    evidence.push(`8. Excluído. Lista antes=${beforeDelete}, depois=${list.length} (0 esperado).`);
+    if (list.length !== 0) {
+      pass = false;
+      message = message ?? "Exclusão falhou.";
+    }
+
+    evidence.push(`9. ${label}: janela temporal + ind_<id>:<fieldKey>; intervalos como nas MA clássicas.`);
+    evidence.push(`10. INTERVAL_OPTIONS: 1h=${INTERVAL_OPTIONS.find((o) => o.value === 60)?.label ?? "?"}, 2h=${INTERVAL_OPTIONS.find((o) => o.value === 120)?.label ?? "?"}, 4h=${INTERVAL_OPTIONS.find((o) => o.value === 240)?.label ?? "?"}.`);
+  } catch (e) {
+    pass = false;
+    message = String(e);
+    evidence.push(`Erro: ${message}`);
+  }
+
+  return {
+    name: `${label} — timeframes (1h/4h vs 2h, janela+fonte, todos os tempos, cor/espessura/estilo, excluir)`,
+    pass,
+    message,
+    evidence: evidence.join("\n"),
+  };
+}
+
 function runMovingAverageFlow(maType: string): IndicatorsQaTestResult {
   const evidence: string[] = [];
   let pass = true;
@@ -513,6 +643,184 @@ function runMovingAverageFlow(maType: string): IndicatorsQaTestResult {
 
   return {
     name: `${maType} — fluxo completo (período, fonte, painel, 1h/4h, 2h, editar período/fonte, todos os tempos, cor/espessura/tipo de linha, excluir)`,
+    pass,
+    message,
+    evidence: evidence.join("\n"),
+  };
+}
+
+/** Hull MA (Custom): três períodos, SMA/EMA/WMA por perna, série ind_<id>:fieldKey; valida computeHmaCustomColumn com tipos mistos. */
+function runHmaCustomFlow(): IndicatorsQaTestResult {
+  const evidence: string[] = [];
+  let pass = true;
+  let message: string | undefined;
+
+  try {
+    const indId = `ui_qa_hma_custom_${Date.now()}`;
+    const list: IndicatorLike[] = [];
+    const ind: IndicatorLike = {
+      id: indId,
+      type: "HMA_CUSTOM",
+      period: 20,
+      hmaCustomLongPeriod: 20,
+      hmaCustomFastPeriod: 10,
+      hmaCustomSmoothPeriod: 4,
+      hmaCustomLongMaType: "WMA",
+      hmaCustomFastMaType: "WMA",
+      hmaCustomSmoothMaType: "WMA",
+      fieldKey: "close",
+      panel: "main",
+      intervals: [INTERVAL_1H, INTERVAL_4H],
+      color: "#3b82f6",
+      lineWidth: "normal",
+      lineStyle: "solid",
+    };
+    list.push(ind);
+    evidence.push(
+      "1. Adicionado HMA_CUSTOM: longa 20 / rápida 10 / suavização 4, todas WMA, Close, main, 1h e 4h, cor #3b82f6, normal, solid."
+    );
+
+    const visible1h = isIndicatorVisibleForInterval(ind, INTERVAL_1H);
+    const visible4h = isIndicatorVisibleForInterval(ind, INTERVAL_4H);
+    const visible2hBefore = isIndicatorVisibleForInterval(ind, INTERVAL_2H);
+    evidence.push(`2. Visibilidade: 1h=${visible1h}, 4h=${visible4h}, 2h=${visible2hBefore} (2h deve ser false).`);
+    if (!visible1h || !visible4h || visible2hBefore) {
+      pass = false;
+      message = "HMA_CUSTOM com [1h,4h] deve aparecer em 1h e 4h e não em 2h.";
+    }
+
+    const seriesKeys1h = buildSeriesKeysForInterval(list, INTERVAL_1H);
+    const seriesKeys2h = buildSeriesKeysForInterval(list, INTERVAL_2H);
+    const indKeyClose = `ind_${indId}:close`;
+    const inList1h = seriesKeys1h.includes(indKeyClose);
+    const notInList2h = !seriesKeys2h.includes(indKeyClose);
+    evidence.push(`3. Criar estratégia: 1h contém "${indKeyClose}"? ${inList1h}. 2h não contém? ${notInList2h}.`);
+    if (!inList1h || !notInList2h) {
+      pass = false;
+      message = message ?? "HMA_CUSTOM deve listar ind_<id>:close em 1h e não em 2h.";
+    }
+
+    const idx = list.findIndex((i) => i.id === indId);
+    if (idx >= 0) {
+      list[idx] = {
+        ...list[idx]!,
+        period: 24,
+        hmaCustomLongPeriod: 24,
+        hmaCustomFastPeriod: 11,
+        hmaCustomSmoothPeriod: 5,
+        fieldKey: "open",
+      };
+    }
+    const afterPeriod = list.find((i) => i.id === indId);
+    const periodOk =
+      afterPeriod?.period === 24 &&
+      afterPeriod?.hmaCustomLongPeriod === 24 &&
+      afterPeriod?.hmaCustomFastPeriod === 11 &&
+      afterPeriod?.hmaCustomSmoothPeriod === 5 &&
+      afterPeriod?.fieldKey === "open";
+    evidence.push(`4a. Editado períodos longa 20→24, rápida 10→11, suavização 4→5; Close→Open. Verificado: ${periodOk ? "✓" : "falhou"}.`);
+    if (!periodOk) {
+      pass = false;
+      message = message ?? "Edição de períodos triplos ou fonte falhou.";
+    }
+
+    if (idx >= 0) {
+      list[idx] = {
+        ...list[idx]!,
+        hmaCustomLongMaType: "SMA",
+        hmaCustomFastMaType: "EMA",
+        hmaCustomSmoothMaType: "WMA",
+      };
+    }
+    const afterMa = list.find((i) => i.id === indId);
+    const maTypesOk =
+      afterMa?.hmaCustomLongMaType === "SMA" &&
+      afterMa?.hmaCustomFastMaType === "EMA" &&
+      afterMa?.hmaCustomSmoothMaType === "WMA";
+    evidence.push(`4b. Tipos de média: longa SMA, rápida EMA, suavização WMA. Verificado: ${maTypesOk ? "✓" : "falhou"}.`);
+    if (!maTypesOk) {
+      pass = false;
+      message = message ?? "Edição dos tipos SMA/EMA/WMA por perna falhou.";
+    }
+
+    if (idx >= 0) list[idx] = { ...list[idx]!, intervals: [] };
+    const afterEdit = list.find((i) => i.id === indId);
+    const visible2hAfter = afterEdit ? isIndicatorVisibleForInterval(afterEdit, INTERVAL_2H) : false;
+    evidence.push(`5. Todos os tempos (intervals=[]). Visível em 2h? ${visible2hAfter} (true esperado).`);
+    if (!visible2hAfter) {
+      pass = false;
+      message = message ?? "Após todos os tempos, HMA_CUSTOM deve aparecer em 2h.";
+    }
+
+    const seriesKeys2hAfter = buildSeriesKeysForInterval(list, INTERVAL_2H);
+    const indKeyOpen = `ind_${indId}:open`;
+    const inList2hAfter = seriesKeys2hAfter.includes(indKeyOpen);
+    evidence.push(`6. Lista de séries em 2h contém "${indKeyOpen}"? ${inList2hAfter}.`);
+    if (!inList2hAfter) {
+      pass = false;
+      message = message ?? "Com todos os tempos, série deve aparecer em criar estratégia (2h).";
+    }
+
+    if (idx >= 0) list[idx] = { ...list[idx]!, color: "#ef4444", lineWidth: "thin", lineStyle: "dashed" };
+    const afterStyle = list.find((i) => i.id === indId);
+    const styleOk = afterStyle?.color === "#ef4444" && afterStyle?.lineWidth === "thin" && afterStyle?.lineStyle === "dashed";
+    evidence.push(`7. Cor/espessura/estilo: ${styleOk ? "✓" : "falhou"}.`);
+    if (!styleOk) {
+      pass = false;
+      message = message ?? "Edição de estilo falhou.";
+    }
+
+    const nRows = 80;
+    const closeIdx = 4;
+    const klines: (string | number | null)[][] = [];
+    for (let i = 0; i < nRows; i++) {
+      const t = 1_700_000_000_000 - i * 60_000;
+      const close = 100 + i * 0.11 + Math.sin(i * 0.07) * 1.5;
+      klines.push([t, "1", "1", "1", String(close), "1"]);
+    }
+    const colClassic = computeHmaCustomColumn(klines, closeIdx, 4, 10, 20, "WMA", "WMA", "WMA");
+    const colMixed = computeHmaCustomColumn(klines, closeIdx, 4, 10, 20, "EMA", "SMA", "WMA");
+    const lenOk = colClassic.length === nRows && colMixed.length === nRows;
+    const hasFinite = colMixed.some((v) => v != null && Number.isFinite(v));
+    let differs = false;
+    for (let i = 0; i < nRows; i++) {
+      const a = colClassic[i];
+      const b = colMixed[i];
+      if (a != null && b != null && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) > 1e-9) {
+        differs = true;
+        break;
+      }
+    }
+    evidence.push(
+      `8. computeHmaCustomColumn: comprimento=${lenOk ? "ok" : "falhou"}, valores finitos=${hasFinite ? "sim" : "não"}, WMA/WMA/WMA ≠ EMA/SMA/WMA em algum índice=${differs ? "sim ✓" : "não"}`
+    );
+    if (!lenOk || !hasFinite) {
+      pass = false;
+      message = message ?? "computeHmaCustomColumn deve retornar série do tamanho dos klines e pelo menos um valor finito.";
+    }
+    if (!differs && lenOk && hasFinite) {
+      pass = false;
+      message = message ?? "Série com tipos mistos (EMA/SMA/WMA) deve diferir da Hull clássica (WMA/WMA/WMA) nos dados de teste.";
+    }
+
+    const removed = list.filter((i) => i.id !== indId);
+    list.length = 0;
+    list.push(...removed);
+    evidence.push(`9. Excluído. Lista depois=${list.length} (0 esperado).`);
+    if (list.length !== 0) {
+      pass = false;
+      message = message ?? "Exclusão falhou.";
+    }
+
+    evidence.push("Nota: HMA_CUSTOM → ind_<id>:<fieldKey>; período principal espelha a MA longa; cada perna pode ser SMA, EMA ou WMA.");
+  } catch (e) {
+    pass = false;
+    message = String(e);
+    evidence.push(`Erro: ${message}`);
+  }
+
+  return {
+    name: "Hull MA (Custom) — fluxo (3 períodos + SMA/EMA/WMA por perna, painel/intervalos/série em estratégia, computeHmaCustomColumn, excluir)",
     pass,
     message,
     evidence: evidence.join("\n"),
@@ -1087,10 +1395,14 @@ export function runIndicatorsQaTests(): IndicatorsQaTestResult[] {
   for (const maType of MOVING_AVERAGE_TYPES) {
     results.push(runMovingAverageFlow(maType));
   }
+  results.push(runHmaCustomFlow());
   results.push(runMa2WindowEquivalenceFlow());
   results.push(runWma2Flow());
   results.push(runSma2Flow());
   results.push(runEma2Flow());
+  for (const ma2Type of MA2_TIME_WINDOW_TYPES) {
+    results.push(runMa2TimeframeIntervalsFlow(ma2Type, ma2Type));
+  }
   for (const chType of CHANNEL_TYPES) {
     results.push(runChannelFlow(chType));
   }

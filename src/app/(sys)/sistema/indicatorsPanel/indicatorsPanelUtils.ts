@@ -48,7 +48,11 @@ export function getFieldLabel(
   if (fieldKey.startsWith("user_")) {
     const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
     if (u) {
-      const p = isTimeWindowMa2Type(u.type) ? formatWma2WindowLong(u, t) : String(u.period);
+      const p = isTimeWindowMa2Type(u.type)
+        ? formatWma2WindowLong(u, t)
+        : u.type === "HMA_CUSTOM"
+          ? `${u.hmaCustomFastPeriod ?? 10},${u.hmaCustomLongPeriod ?? u.period ?? 20},${u.hmaCustomSmoothPeriod ?? 4},${u.hmaCustomFastMaType ?? "WMA"},${u.hmaCustomLongMaType ?? "WMA"},${u.hmaCustomSmoothMaType ?? "WMA"}`
+          : String(u.period);
       return `${u.type}(${p}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
     }
   }
@@ -121,6 +125,17 @@ export function getIndicatorLabel(
   }
   if (ind.type === "MFI") {
     return `MFI(${ind.period})`;
+  }
+  if (ind.type === "HMA_CUSTOM") {
+    const sm = ind.hmaCustomSmoothPeriod ?? 4;
+    const fa = ind.hmaCustomFastPeriod ?? 10;
+    const lo = ind.hmaCustomLongPeriod ?? ind.period ?? 20;
+    const short = (t as Record<string, string>).hmaCustomShortLabel ?? "HMA*";
+    const ft = ind.hmaCustomFastMaType ?? "WMA";
+    const lt = ind.hmaCustomLongMaType ?? "WMA";
+    const st = ind.hmaCustomSmoothMaType ?? "WMA";
+    const typesExtra = ft === "WMA" && lt === "WMA" && st === "WMA" ? "" : ` · ${ft}/${lt}/${st}`;
+    return `${short}(${fa},${lo},${sm})${typesExtra} ${fieldLabel}`;
   }
   if (isTimeWindowMa2Type(ind.type)) {
     return `${ind.type}(${formatWma2WindowLong(ind, t)}) ${fieldLabel}`;
@@ -209,6 +224,16 @@ export function getIndicatorLabelShort(
   if (ind.type === "MFI") {
     return `MFI(${ind.period})`;
   }
+  if (ind.type === "HMA_CUSTOM") {
+    const sm = ind.hmaCustomSmoothPeriod ?? 4;
+    const fa = ind.hmaCustomFastPeriod ?? 10;
+    const lo = ind.hmaCustomLongPeriod ?? ind.period ?? 20;
+    const ft = ind.hmaCustomFastMaType ?? "WMA";
+    const lt = ind.hmaCustomLongMaType ?? "WMA";
+    const st = ind.hmaCustomSmoothMaType ?? "WMA";
+    const typesExtra = ft === "WMA" && lt === "WMA" && st === "WMA" ? "" : ` · ${ft}/${lt}/${st}`;
+    return `HMA*(${fa},${lo},${sm})${typesExtra} ${letter}`;
+  }
   if (isTimeWindowMa2Type(ind.type)) {
     return `${ind.type}(${formatWma2WindowCompact(ind)}) ${letter}`;
   }
@@ -247,5 +272,15 @@ export function getIndicatorLabelShortStochD(ind: UserIndicatorConfig): string {
 }
 
 export function isMovingAverageType(type: string): boolean {
-  return type === "SMA" || type === "SMA2" || type === "EMA" || type === "EMA2" || type === "WMA" || type === "WMA2";
+  return (
+    type === "SMA" ||
+    type === "SMA2" ||
+    type === "EMA" ||
+    type === "EMA2" ||
+    type === "WMA" ||
+    type === "WMA2" ||
+    type === "HMA" ||
+    type === "HMA_CUSTOM" ||
+    type === "VWMA"
+  );
 }

@@ -15,6 +15,7 @@ import {
   REGRESSION_LOOKBACK_MAX,
   REGRESSION_LOOKBACK_MIN,
   REGRESSION_PAST_OFFSET_MAX,
+  REGRESSION_PAST_OFFSET_MIN,
   useKlinesRegressions,
   type RegressionLineStyle,
   type RegressionModel,
@@ -25,6 +26,10 @@ import {
   type RegressionSourceOption,
   type RegressionSourceToken,
 } from "./regression/regressionSource";
+
+function formatPastEndOffsetAsNegative(n: number): string {
+  return n <= 0 ? "0" : `-${n}`;
+}
 
 function regressionModelFromSelectValue(v: string): RegressionModel {
   if (v === "quartic") return "quartic";
@@ -119,6 +124,7 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; label: string } | null>(null);
   const [editDraft, setEditDraft] = useState<UserRegressionConfig | null>(null);
+  const [listTab, setListTab] = useState<"current" | "all">("current");
 
   const addFormForecastMax = useMemo(() => maxForecastBarsForModel(model), [model]);
 
@@ -205,6 +211,10 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
 
   const tfLabel =
     currentGroupMinutes != null ? (INTERVAL_OPTIONS.find((o) => o.value === currentGroupMinutes)?.label ?? String(currentGroupMinutes)) : "—";
+
+  const regressionTimeframeLabel = useCallback((groupMinutes: number) => {
+    return INTERVAL_OPTIONS.find((o) => o.value === groupMinutes)?.label ?? String(groupMinutes);
+  }, []);
 
   const addBlocked = isDefaultModel || isFreeUser || currentGroupMinutes == null || sourceOptions.length === 0 || !parsedSource;
 
@@ -352,13 +362,13 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
               <div className="flex items-center gap-2">
                 <input
                   type="range"
-                  min={0}
+                  min={REGRESSION_PAST_OFFSET_MIN}
                   max={REGRESSION_PAST_OFFSET_MAX}
                   value={pastEndOffsetBars}
                   onChange={(e) => setPastEndOffsetBars(Number(e.target.value))}
                   className="flex-1"
                 />
-                <span className="text-sm font-mono w-9 text-right tabular-nums">{pastEndOffsetBars === 0 ? "0" : `−${pastEndOffsetBars}`}</span>
+                <span className="text-sm font-mono w-11 text-right tabular-nums shrink-0">{formatPastEndOffsetAsNegative(pastEndOffsetBars)}</span>
               </div>
               <p className="text-xs text-zinc-500">{tx.regressionPastEndOffsetHint ?? ""}</p>
             </div>
@@ -410,21 +420,49 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
 
         {initialView === "list" && (
           <>
+            <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+              <button
+                type="button"
+                onClick={() => setListTab("current")}
+                className={`px-2.5 py-1 text-xs rounded-md ${listTab === "current" ? "bg-white border border-zinc-300 text-zinc-900" : "text-zinc-600 hover:text-zinc-800"}`}
+              >
+                {tx.regressionsTabCurrent ?? "Current"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setListTab("all")}
+                className={`px-2.5 py-1 text-xs rounded-md ${listTab === "all" ? "bg-white border border-zinc-300 text-zinc-900" : "text-zinc-600 hover:text-zinc-800"}`}
+              >
+                {tx.regressionsTabAll ?? "All"} ({userRegressions.length})
+              </button>
+            </div>
             <p className="text-xs text-zinc-500">
-              {(tx.regressionsListHint ?? "Regressions for this chart interval ({interval}).").replace("{interval}", tfLabel)}
+              {listTab === "current"
+                ? (tx.regressionsListHint ?? "Regressions for this chart interval ({interval}).").replace("{interval}", tfLabel)
+                : (tx.regressionsAllListHint ?? "Regressions from all timeframes.")}
             </p>
-            {regressionsForTf.length === 0 ? (
-              <p className="text-sm text-zinc-500 py-2">{tx.noRegressionsYet ?? "No regressions for this timeframe. Use \"Add regression\" in the menu."}</p>
+            {(listTab === "current" ? regressionsForTf : userRegressions).length === 0 ? (
+              <p className="text-sm text-zinc-500 py-2">
+                {listTab === "current"
+                  ? (tx.noRegressionsYet ?? "No regressions for this timeframe. Use \"Add regression\" in the menu.")
+                  : (tx.noRegressionsAtAll ?? "No regressions yet. Use \"Add regression\" in the menu.")}
+              </p>
             ) : (
               <ul className="space-y-2">
-                {regressionsForTf.map((r) => (
+                {(listTab === "current" ? regressionsForTf : userRegressions).map((r) => (
                   <li key={r.id} className="border border-zinc-200 rounded-lg p-2 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
+                        <div className="text-[11px] text-zinc-500 mb-0.5">
+                          {(tx.regressionBelongsToTimeframe ?? "Timeframe: {interval}").replace(
+                            "{interval}",
+                            regressionTimeframeLabel(r.groupMinutes)
+                          )}
+                        </div>
                         <div className="text-sm font-medium text-zinc-800">
                           {regressionModelShortLabel(r.model, tx)}{" "}
                           · {r.lookback} · +{r.forecastBars}
-                          {r.pastEndOffsetBars > 0 ? ` · ${(tx.regressionPastEndOffsetShort ?? "past {n}").replace("{n}", String(r.pastEndOffsetBars))}` : ""}
+                          {r.pastEndOffsetBars !== 0 ? ` · ${formatPastEndOffsetAsNegative(r.pastEndOffsetBars)}` : ""}
                         </div>
                         <RegressionListItemSubtitle r={r} sourceOptions={sourceOptions} tx={tx} />
                       </div>
@@ -535,7 +573,7 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
                           <div className="flex items-center gap-2">
                             <input
                               type="range"
-                              min={0}
+                              min={REGRESSION_PAST_OFFSET_MIN}
                               max={REGRESSION_PAST_OFFSET_MAX}
                               value={editDraft.pastEndOffsetBars}
                               onChange={(e) =>
@@ -543,8 +581,8 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
                               }
                               className="flex-1"
                             />
-                            <span className="text-sm font-mono w-9 text-right tabular-nums">
-                              {editDraft.pastEndOffsetBars === 0 ? "0" : `−${editDraft.pastEndOffsetBars}`}
+                            <span className="text-sm font-mono w-11 text-right tabular-nums shrink-0">
+                              {formatPastEndOffsetAsNegative(editDraft.pastEndOffsetBars)}
                             </span>
                           </div>
                           <p className="text-xs text-zinc-500">{tx.regressionPastEndOffsetHint ?? ""}</p>
@@ -601,7 +639,7 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
                 ))}
               </ul>
             )}
-            {regressionsOtherTf.length > 0 && (
+            {listTab === "current" && regressionsOtherTf.length > 0 && (
               <div className="pt-2 border-t border-zinc-100">
                 <p className="text-xs font-medium text-zinc-600 mb-1">{tx.regressionsOtherIntervals ?? "Other timeframes"}</p>
                 <p className="text-xs text-zinc-500">

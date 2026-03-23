@@ -1570,6 +1570,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     windowN,
     totalSlots,
     logScale,
+    maxBarNum: n,
+    startIndex,
   });
   for (const v of regressionExtentYs) priceExtents.push(v);
 
@@ -1626,6 +1628,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     windowN,
     totalSlots,
     logScale,
+    maxBarNum: n,
+    startIndex,
     cx,
     y,
   });

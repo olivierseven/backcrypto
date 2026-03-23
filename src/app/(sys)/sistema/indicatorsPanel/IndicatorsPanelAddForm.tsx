@@ -10,6 +10,7 @@ import {
   MA2_MAX_WINDOW_VALUE,
   normalizeMa2TimeValueForUnit,
 } from "./wma2Period";
+import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 import { Combobox, type ComboboxOption } from "../components/Combobox";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { StepperButton } from "../components/StepperButton";
@@ -25,7 +26,7 @@ type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 
 /** Grupos e tipos para o combobox de tipo de indicador (mesma ordem e labels do select antigo). */
 const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
-  { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
+  { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "HMA_CUSTOM", labelKey: "hmaCustomLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
   { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
   { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }] },
   { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
@@ -67,6 +68,23 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   }, [typeDropdownOpen]);
 
   const tRecord = t as Record<string, string>;
+  const commitHmaAddForm = (p: AddFormState, long?: number, fast?: number, smooth?: number): AddFormState => {
+    const lo = long ?? p.hmaCustomLongPeriod ?? 20;
+    const fa = fast ?? p.hmaCustomFastPeriod ?? 10;
+    const sm = smooth ?? p.hmaCustomSmoothPeriod ?? 4;
+    const o = normalizeHmaCustomPeriods(sm, fa, lo);
+    return {
+      ...p,
+      hmaCustomLongPeriod: o.hmaCustomLongPeriod,
+      hmaCustomFastPeriod: o.hmaCustomFastPeriod,
+      hmaCustomSmoothPeriod: o.hmaCustomSmoothPeriod,
+      hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+      hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+      hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+      period: o.hmaCustomLongPeriod,
+      periodText: String(o.hmaCustomLongPeriod),
+    };
+  };
   const getTypeLabel = (value: UserIndicatorType, item: { labelKey?: string; labelEn?: string }) =>
     item.labelKey ? (tRecord[item.labelKey] ?? value) : (item.labelEn ?? value);
   const currentTypeLabel = (() => {
@@ -154,7 +172,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   );
 
   const chartOptionValue: string =
-    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA"
+    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA"
       ? "main"
       : form.indicatorType === "Volume"
         ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
@@ -519,6 +537,25 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           chartOption: "main",
         };
       }
+      if (newType === "HMA_CUSTOM") {
+        return {
+          ...prev,
+          indicatorType: "HMA_CUSTOM",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+          hmaCustomLongPeriod: 20,
+          hmaCustomLongPeriodText: "20",
+          hmaCustomFastPeriod: 10,
+          hmaCustomFastPeriodText: "10",
+          hmaCustomSmoothPeriod: 4,
+          hmaCustomSmoothPeriodText: "4",
+          hmaCustomLongMaType: "WMA",
+          hmaCustomFastMaType: "WMA",
+          hmaCustomSmoothMaType: "WMA",
+        };
+      }
       if (newType === "VWMA") {
         return {
           ...prev,
@@ -707,7 +744,133 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku" || isTimeWindowMa2Type(form.indicatorType)) && (
+      {form.indicatorType === "HMA_CUSTOM" && (
+        <div className="space-y-2">
+          <p className="text-[11px] text-zinc-500">{tRecord.hmaCustomHint ?? ""}</p>
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-zinc-600 sm:w-28 shrink-0">{tRecord.hmaCustomLongPeriod ?? "Long MA"}</span>
+            <Combobox
+              value={form.hmaCustomLongMaType}
+              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomLongMaType: v as "SMA" | "EMA" | "WMA" }))}
+              options={maTypeOptions}
+              className="w-full sm:w-[5.5rem] shrink-0"
+              size="lg"
+              aria-label={`${tRecord.hmaCustomLongPeriod ?? "Long MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+            />
+            <div className="flex items-center gap-1">
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, Math.max(3, (p.hmaCustomLongPeriod ?? 20) - 1)))}
+                disabled={(form.hmaCustomLongPeriod ?? 20) <= 3}
+                className="stepper-btn"
+              >
+                −
+              </StepperButton>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.hmaCustomLongPeriodText}
+                onChange={(e) => setForm((prev) => ({ ...prev, hmaCustomLongPeriodText: e.target.value.replace(/[^\d]/g, "") }))}
+                onBlur={() =>
+                  setForm((p) => {
+                    const n = parseInt(p.hmaCustomLongPeriodText, 10);
+                    return commitHmaAddForm(p, Number.isFinite(n) ? n : p.hmaCustomLongPeriod);
+                  })
+                }
+                className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
+              />
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, Math.min(500, (p.hmaCustomLongPeriod ?? 20) + 1)))}
+                disabled={(form.hmaCustomLongPeriod ?? 20) >= 500}
+                className="stepper-btn"
+              >
+                +
+              </StepperButton>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-zinc-600 sm:w-28 shrink-0">{tRecord.hmaCustomFastPeriod ?? "Fast MA"}</span>
+            <Combobox
+              value={form.hmaCustomFastMaType}
+              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomFastMaType: v as "SMA" | "EMA" | "WMA" }))}
+              options={maTypeOptions}
+              className="w-full sm:w-[5.5rem] shrink-0"
+              size="lg"
+              aria-label={`${tRecord.hmaCustomFastPeriod ?? "Fast MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+            />
+            <div className="flex items-center gap-1">
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, undefined, Math.max(2, (p.hmaCustomFastPeriod ?? 10) - 1)))}
+                disabled={(form.hmaCustomFastPeriod ?? 10) <= 2}
+                className="stepper-btn"
+              >
+                −
+              </StepperButton>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.hmaCustomFastPeriodText}
+                onChange={(e) => setForm((prev) => ({ ...prev, hmaCustomFastPeriodText: e.target.value.replace(/[^\d]/g, "") }))}
+                onBlur={() =>
+                  setForm((p) => {
+                    const n = parseInt(p.hmaCustomFastPeriodText, 10);
+                    return commitHmaAddForm(p, undefined, Number.isFinite(n) ? n : p.hmaCustomFastPeriod);
+                  })
+                }
+                className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
+              />
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, undefined, Math.min(499, (p.hmaCustomFastPeriod ?? 10) + 1)))}
+                disabled={(form.hmaCustomFastPeriod ?? 10) >= 499}
+                className="stepper-btn"
+              >
+                +
+              </StepperButton>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+            <span className="text-xs font-medium text-zinc-600 sm:w-28 shrink-0">{tRecord.hmaCustomSmoothPeriod ?? "Smoothing"}</span>
+            <Combobox
+              value={form.hmaCustomSmoothMaType}
+              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomSmoothMaType: v as "SMA" | "EMA" | "WMA" }))}
+              options={maTypeOptions}
+              className="w-full sm:w-[5.5rem] shrink-0"
+              size="lg"
+              aria-label={`${tRecord.hmaCustomSmoothPeriod ?? "Smoothing"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+            />
+            <div className="flex items-center gap-1">
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, undefined, undefined, Math.max(1, (p.hmaCustomSmoothPeriod ?? 4) - 1)))}
+                disabled={(form.hmaCustomSmoothPeriod ?? 4) <= 1}
+                className="stepper-btn"
+              >
+                −
+              </StepperButton>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.hmaCustomSmoothPeriodText}
+                onChange={(e) => setForm((prev) => ({ ...prev, hmaCustomSmoothPeriodText: e.target.value.replace(/[^\d]/g, "") }))}
+                onBlur={() =>
+                  setForm((p) => {
+                    const n = parseInt(p.hmaCustomSmoothPeriodText, 10);
+                    return commitHmaAddForm(p, undefined, undefined, Number.isFinite(n) ? n : p.hmaCustomSmoothPeriod);
+                  })
+                }
+                className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
+              />
+              <StepperButton
+                onStep={() => setForm((p) => commitHmaAddForm(p, undefined, undefined, Math.min(498, (p.hmaCustomSmoothPeriod ?? 4) + 1)))}
+                disabled={(form.hmaCustomSmoothPeriod ?? 4) >= 498}
+                className="stepper-btn"
+              >
+                +
+              </StepperButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku" || isTimeWindowMa2Type(form.indicatorType)) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
           <Combobox
@@ -823,7 +986,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && !isTimeWindowMa2Type(form.indicatorType) && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "HMA_CUSTOM" && !isTimeWindowMa2Type(form.indicatorType) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
           <div className="flex items-center gap-1">

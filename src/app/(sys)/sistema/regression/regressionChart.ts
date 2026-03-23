@@ -4,6 +4,7 @@ import {
   REGRESSION_LOOKBACK_MAX,
   REGRESSION_LOOKBACK_MIN,
   REGRESSION_PAST_OFFSET_MAX,
+  REGRESSION_PAST_OFFSET_MIN,
   type UserRegressionConfig,
 } from "./KlinesRegressionsContext";
 import { getIndicatorColumnStart } from "./indicatorsColumnStart";
@@ -34,20 +35,26 @@ function parseCell(v: number | string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Índice local `wi` do fim da amostra (âncora), com deslocamento para o passado (0..max) e clamp à janela. */
+export function regressionSampleEndWi(windowLen: number, pastEndOffsetBars: number): number {
+  if (windowLen <= 0) return -1;
+  const off = Math.max(REGRESSION_PAST_OFFSET_MIN, Math.min(REGRESSION_PAST_OFFSET_MAX, Math.round(pastEndOffsetBars)));
+  const raw = windowLen - 1 - off;
+  return Math.max(0, Math.min(windowLen - 1, raw));
+}
+
 /** Últimos `lookback` pontos válidos a partir do índice `endWi` (fim da amostra), indo para a esquerda. */
 function collectSamplesFromWindow(
   windowSlice: (number | string | null)[][],
   col: number,
   lookback: number,
   logScale: boolean,
-  pastEndOffsetBars: number
+  sampleEndWi: number
 ): { wi: number; y: number }[] {
   const cap = Math.max(REGRESSION_LOOKBACK_MIN, Math.min(REGRESSION_LOOKBACK_MAX, lookback));
-  const off = Math.max(0, Math.min(REGRESSION_PAST_OFFSET_MAX, Math.round(pastEndOffsetBars)));
   const acc: { wi: number; y: number }[] = [];
-  const endWi = windowSlice.length - 1 - off;
-  if (endWi < 0) return [];
-  for (let wi = endWi; wi >= 0 && acc.length < cap; wi--) {
+  if (sampleEndWi < 0 || sampleEndWi >= windowSlice.length) return [];
+  for (let wi = sampleEndWi; wi >= 0 && acc.length < cap; wi--) {
     const row = windowSlice[wi];
     if (!row) continue;
     const yv = parseCell(row[col] as number | string | null);
@@ -64,14 +71,12 @@ function collectSamplesFromOhlcWindow(
   token: RegressionSourceToken,
   lookback: number,
   logScale: boolean,
-  pastEndOffsetBars: number
+  sampleEndWi: number
 ): { wi: number; y: number }[] {
   const cap = Math.max(REGRESSION_LOOKBACK_MIN, Math.min(REGRESSION_LOOKBACK_MAX, lookback));
-  const off = Math.max(0, Math.min(REGRESSION_PAST_OFFSET_MAX, Math.round(pastEndOffsetBars)));
   const acc: { wi: number; y: number }[] = [];
-  const endWi = windowSlice.length - 1 - off;
-  if (endWi < 0) return [];
-  for (let wi = endWi; wi >= 0 && acc.length < cap; wi--) {
+  if (sampleEndWi < 0 || sampleEndWi >= windowSlice.length) return [];
+  for (let wi = sampleEndWi; wi >= 0 && acc.length < cap; wi--) {
     const row = windowSlice[wi];
     const yv = ohlcRegressionValueFromRow(row, token);
     if (yv == null) continue;
@@ -90,17 +95,51 @@ export function computeRegressionOverlayPaths(args: {
   windowN: number;
   totalSlots: number;
   logScale: boolean;
+  /**
+   * N.º da vela mais recente (= maior número na coluna “Barra” da tabela, 1…maxBarNum).
+   * Coincide com `fullReversed.length`. Usado no filtro âncora vs fim da série só quando a janela termina nessa vela.
+   */
+  maxBarNum: number;
+  /** Índice global na série reversa (0 = mais antiga) do primeiro slot da `windowSlice`. */
+  startIndex: number;
   /** Se omitido, só preenche `extentYs` (para eixo Y); com cx+y gera também `paths`. */
   cx?: (i: number) => number;
   y?: (price: number) => number;
 }): { paths: RegressionOverlayPath[]; extentYs: number[] } {
-  const { regressions, groupMinutes, userIndicators, windowSlice, totalSlots, logScale, cx, y } = args;
+  const { regressions, groupMinutes, userIndicators, windowSlice, totalSlots, logScale, maxBarNum, startIndex, cx, y } = args;
   const paths: RegressionOverlayPath[] = [];
   const extentYs: number[] = [];
   const drawPaths = cx != null && y != null;
 
+  const L = windowSlice.length;
+  if (L === 0) {
+    return { paths: [], extentYs: [] };
+  }
+  /**
+   * Quantas barras a vela mais recente da série está à frente da vela mais à direita visível.
+   * 0 = janela colada ao fim; ao fazer pan para o passado aumenta (1, 2, …).
+   */
+  const panBarsFromLiveEnd = Math.max(0, maxBarNum - startIndex - L);
+  /** Só com a janela colada à vela mais recente aplicamos o filtro global âncora vs última barra. */
+  const windowAtSeriesEnd = panBarsFromLiveEnd === 0;
+
   for (const reg of regressions) {
     if (reg.groupMinutes !== groupMinutes) continue;
+    // Past bars (0..50): quanto maior, mais pan para o passado é permitido antes de ocultar esta regressão.
+    if (panBarsFromLiveEnd > reg.pastEndOffsetBars) continue;
+    // Âncora fixa no índice global: nMaxBar - pastBars.
+    const anchorGlobalIndex = Math.max(0, maxBarNum - 1 - reg.pastEndOffsetBars);
+    const sampleEndWi = anchorGlobalIndex - startIndex;
+    if (sampleEndWi < 0 || sampleEndWi >= L) continue;
+    const anchorBarNum = anchorGlobalIndex + 1;
+    const effectiveSpan = reg.lookback + Math.abs(reg.pastEndOffsetBars);
+    if (
+      windowAtSeriesEnd &&
+      maxBarNum > effectiveSpan &&
+      anchorBarNum < maxBarNum - effectiveSpan
+    ) {
+      continue;
+    }
 
     const minPts =
       reg.model === "quartic" ? 5 : reg.model === "cubic" ? 4 : reg.model === "quadratic" ? 3 : 2;
@@ -111,7 +150,7 @@ export function computeRegressionOverlayPaths(args: {
         reg.sourceToken as RegressionSourceToken,
         reg.lookback,
         logScale,
-        reg.pastEndOffsetBars
+        sampleEndWi
       );
     } else {
       const u = userIndicators.findIndex((i) => i.id === reg.sourceIndicatorId);
@@ -120,7 +159,7 @@ export function computeRegressionOverlayPaths(args: {
       const start = getIndicatorColumnStart(userIndicators, u);
       const col = resolveRegressionSourceColumn(ind, reg.sourceToken as RegressionSourceToken, start);
       if (col == null) continue;
-      samples = collectSamplesFromWindow(windowSlice, col, reg.lookback, logScale, reg.pastEndOffsetBars);
+      samples = collectSamplesFromWindow(windowSlice, col, reg.lookback, logScale, sampleEndWi);
     }
     if (samples.length < minPts) continue;
 

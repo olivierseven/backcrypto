@@ -9,9 +9,10 @@ import {
   type ReactNode,
 } from "react";
 
+import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 import { defaultMa2TimeValueForUnit, isTimeWindowMa2Type, normalizeMa2TimeValueForUnit } from "./indicatorsPanel/wma2Period";
 
-export type UserIndicatorType = "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF" | "Ichimoku";
+export type UserIndicatorType = "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF" | "Ichimoku";
 
 /** Unidade da janela temporal para SMA2 / EMA2 / WMA2 (campos `wma2TimeUnit` / `wma2TimeValue`). */
 export type Wma2TimeUnit = "days" | "hours" | "minutes";
@@ -303,6 +304,18 @@ export interface UserIndicatorConfig {
   cmfAsHistogram?: boolean;
   cmfHistogramColorAbove?: string;
   cmfHistogramColorBelow?: string;
+  /** Só para HMA_CUSTOM: período da MA longa (maior); `period` espelha este valor. */
+  hmaCustomLongPeriod?: number;
+  /** Só para HMA_CUSTOM: período da MA rápida (menor que longa). */
+  hmaCustomFastPeriod?: number;
+  /** Só para HMA_CUSTOM: período da MA de suavização (menor que a rápida). */
+  hmaCustomSmoothPeriod?: number;
+  /** Só para HMA_CUSTOM: tipo da MA na etapa rápida (SMA | EMA | WMA). */
+  hmaCustomFastMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para HMA_CUSTOM: tipo da MA na etapa longa. */
+  hmaCustomLongMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para HMA_CUSTOM: tipo da MA na suavização final. */
+  hmaCustomSmoothMaType?: "SMA" | "EMA" | "WMA";
 }
 
 const FIELD_KEY_TO_INDEX: Record<string, number> = {
@@ -368,7 +381,7 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
-const VALID_INDICATOR_TYPES = ["SMA", "SMA2", "EMA", "EMA2", "WMA", "WMA2", "HMA", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "AD", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI", "CMF", "Ichimoku"] as const;
+const VALID_INDICATOR_TYPES = ["SMA", "SMA2", "EMA", "EMA2", "WMA", "WMA2", "HMA", "HMA_CUSTOM", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "AD", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI", "CMF", "Ichimoku"] as const;
 
 function safePeriod(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
@@ -415,14 +428,32 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     }
   ).map((u) => {
     const isMa2Tw = isTimeWindowMa2Type(u.type);
+    const ru = u as Record<string, unknown>;
+    const hmaCustomNorm =
+      u.type === "HMA_CUSTOM"
+        ? normalizeHmaCustomPeriods(
+            typeof ru.hmaCustomSmoothPeriod === "number" && Number.isFinite(ru.hmaCustomSmoothPeriod)
+              ? Math.round(ru.hmaCustomSmoothPeriod as number)
+              : 4,
+            typeof ru.hmaCustomFastPeriod === "number" && Number.isFinite(ru.hmaCustomFastPeriod)
+              ? Math.round(ru.hmaCustomFastPeriod as number)
+              : 10,
+            typeof ru.hmaCustomLongPeriod === "number" && Number.isFinite(ru.hmaCustomLongPeriod)
+              ? Math.round(ru.hmaCustomLongPeriod as number)
+              : (safePeriod(u.period) ?? 20)
+          )
+        : null;
     const period =
       u.type === "Ichimoku"
         ? (safePeriod((u as Record<string, unknown>).ichimokuKijunPeriod) ?? 26)
-        : isMa2Tw
-          ? (safePeriod(u.period) ?? 1)
-          : (safePeriod(u.period) ?? 14);
+        : hmaCustomNorm
+          ? hmaCustomNorm.hmaCustomLongPeriod
+          : isMa2Tw
+            ? (safePeriod(u.period) ?? 1)
+            : (safePeriod(u.period) ?? 14);
     const intervalsRaw = safeIntervals(u.intervals) ?? []; // [] = "Todos os tempos" (layout antigo sem intervals)
-    const intervals = isMa2Tw ? [] : intervalsRaw;
+    /** SMA2/EMA2/WMA2: mesmo modelo que WMA — intervalos persistidos; [] = todos os timeframes (default típico ao adicionar). */
+    const intervals = intervalsRaw;
     const ma2ResolvedUnit: Wma2TimeUnit = isMa2Tw
       ? (u.wma2TimeUnit === "days" || u.wma2TimeUnit === "hours" || u.wma2TimeUnit === "minutes" ? u.wma2TimeUnit : "hours")
       : "hours";
@@ -592,6 +623,27 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     ichimokuShowSpanA: u.type === "Ichimoku" ? (u.ichimokuShowSpanA !== false) : undefined,
     ichimokuShowSpanB: u.type === "Ichimoku" ? (u.ichimokuShowSpanB !== false) : undefined,
     ichimokuShowChikou: u.type === "Ichimoku" ? (u.ichimokuShowChikou === true) : undefined,
+    hmaCustomLongPeriod: hmaCustomNorm ? hmaCustomNorm.hmaCustomLongPeriod : undefined,
+    hmaCustomFastPeriod: hmaCustomNorm ? hmaCustomNorm.hmaCustomFastPeriod : undefined,
+    hmaCustomSmoothPeriod: hmaCustomNorm ? hmaCustomNorm.hmaCustomSmoothPeriod : undefined,
+    hmaCustomFastMaType:
+      u.type === "HMA_CUSTOM"
+        ? ru.hmaCustomFastMaType === "SMA" || ru.hmaCustomFastMaType === "EMA" || ru.hmaCustomFastMaType === "WMA"
+          ? ru.hmaCustomFastMaType
+          : "WMA"
+        : undefined,
+    hmaCustomLongMaType:
+      u.type === "HMA_CUSTOM"
+        ? ru.hmaCustomLongMaType === "SMA" || ru.hmaCustomLongMaType === "EMA" || ru.hmaCustomLongMaType === "WMA"
+          ? ru.hmaCustomLongMaType
+          : "WMA"
+        : undefined,
+    hmaCustomSmoothMaType:
+      u.type === "HMA_CUSTOM"
+        ? ru.hmaCustomSmoothMaType === "SMA" || ru.hmaCustomSmoothMaType === "EMA" || ru.hmaCustomSmoothMaType === "WMA"
+          ? ru.hmaCustomSmoothMaType
+          : "WMA"
+        : undefined,
     wma2TimeUnit: isMa2Tw ? ma2ResolvedUnit : undefined,
     wma2TimeValue:
       isMa2Tw
@@ -646,7 +698,7 @@ function applySwapAdjacentSecondaryPanels(prev: UserIndicatorConfig[], clicked: 
 /** Campos editáveis de um indicador (sem id). */
 export type UserIndicatorEditable = Pick<
   UserIndicatorConfig,
-  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "keltnerMaType" | "keltnerMultiplier" | "keltnerShowUpper" | "keltnerShowLower" | "keltnerShowMiddle" | "keltnerBandOpacity" | "keltnerLimitsColor" | "keltnerLimitsLineStyle" | "keltnerLimitsLineWidth" | "keltnerMiddleColor" | "keltnerMiddleLineStyle" | "keltnerMiddleLineWidth" | "obvVolumeSource" | "adVolumeSource" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow" | "cmfFixedScale" | "cmfLimits" | "cmfLimitUpper" | "cmfLimitLower" | "cmfLimitColor" | "cmfLimitLineWidth" | "cmfLimitLineStyle" | "cmfAsHistogram" | "cmfHistogramColorAbove" | "cmfHistogramColorBelow" | "ichimokuTenkanPeriod" | "ichimokuKijunPeriod" | "ichimokuSpanBPeriod" | "ichimokuDisplacement" | "ichimokuTenkanColor" | "ichimokuTenkanLineWidth" | "ichimokuTenkanLineStyle" | "ichimokuKijunColor" | "ichimokuKijunLineWidth" | "ichimokuKijunLineStyle" | "ichimokuSpanAColor" | "ichimokuSpanALineWidth" | "ichimokuSpanALineStyle" | "ichimokuSpanBColor" | "ichimokuSpanBLineWidth" | "ichimokuSpanBLineStyle" | "ichimokuChikouColor" | "ichimokuChikouLineWidth" | "ichimokuChikouLineStyle" | "ichimokuCloudOpacity" |   "ichimokuShowTenkan" | "ichimokuShowKijun" | "ichimokuShowSpanA" | "ichimokuShowSpanB" | "ichimokuShowChikou" | "wma2TimeUnit" | "wma2TimeValue"
+  "period" | "fieldKey" | "color" | "panel" | "intervals" | "lineWidth" | "lineStyle" | "rsiFixedScale" | "rsiCenterLine" | "rsiCenterLineColor" | "rsiCenterLineWidth" | "rsiCenterLineStyle" | "rsiLimits" | "rsiLimitUpper" | "rsiLimitLower" | "rsiLimitColor" | "rsiLimitLineWidth" | "rsiLimitLineStyle" | "macdFastMaType" | "macdFastPeriod" | "macdSlowMaType" | "macdSlowPeriod" | "macdSignalLine" | "macdSignalMaType" | "macdSignalPeriod" | "macdSignalColor" | "macdSignalLineWidth" | "macdSignalLineStyle" | "macdHistogram" | "macdHistogramColorAbove" | "macdHistogramColorBelow" | "stochLimits" | "stochLimitUpper" | "stochLimitLower" | "stochLimitColor" | "stochLimitLineWidth" | "stochLimitLineStyle" | "stochDLine" | "stochDMaType" | "stochDPeriod" | "stochDColor" | "stochDLineWidth" | "stochDLineStyle" | "williamsRLimits" | "williamsRLimitUpper" | "williamsRLimitLower" | "williamsRLimitColor" | "williamsRLimitLineWidth" | "williamsRLimitLineStyle" | "sarStart" | "sarIncrement" | "sarMax" | "sarPointSize" | "bollingerMaType" | "bollingerZ" | "bollingerShowUpper" | "bollingerShowLower" | "bollingerShowMiddle" | "bollingerBandOpacity" | "bollingerLimitsColor" | "bollingerLimitsLineStyle" | "bollingerLimitsLineWidth" | "bollingerMiddleColor" | "bollingerMiddleLineStyle" | "bollingerMiddleLineWidth" | "donchianShowUpper" | "donchianShowLower" | "donchianShowMiddle" | "donchianBandOpacity" | "donchianLimitsColor" | "donchianLimitsLineStyle" | "donchianLimitsLineWidth" | "donchianMiddleColor" | "donchianMiddleLineStyle" | "donchianMiddleLineWidth" | "keltnerMaType" | "keltnerMultiplier" | "keltnerShowUpper" | "keltnerShowLower" | "keltnerShowMiddle" | "keltnerBandOpacity" | "keltnerLimitsColor" | "keltnerLimitsLineStyle" | "keltnerLimitsLineWidth" | "keltnerMiddleColor" | "keltnerMiddleLineStyle" | "keltnerMiddleLineWidth" | "obvVolumeSource" | "adVolumeSource" | "volumeInUsdt" | "volumeColorAbove" | "volumeColorBelow" | "showLastValueOnYAxis" | "adxPlusDiColor" | "adxPlusDiLineWidth" | "adxPlusDiLineStyle" | "adxMinusDiColor" | "adxMinusDiLineWidth" | "adxMinusDiLineStyle" | "adxAdxColor" | "adxAdxLineWidth" | "adxAdxLineStyle" | "adxFixedScale" | "adxLimits" | "adxLimitUpper" | "adxLimitLower" | "adxLimitColor" | "adxLimitLineWidth" | "adxLimitLineStyle" | "cciFixedScale" | "cciLimits" | "cciLimitUpper" | "cciLimitLower" | "cciLimitColor" | "cciLimitLineWidth" | "cciLimitLineStyle" | "cciAsHistogram" | "cciHistogramColorAbove" | "cciHistogramColorBelow" | "cmfFixedScale" | "cmfLimits" | "cmfLimitUpper" | "cmfLimitLower" | "cmfLimitColor" | "cmfLimitLineWidth" | "cmfLimitLineStyle" | "cmfAsHistogram" | "cmfHistogramColorAbove" | "cmfHistogramColorBelow" | "ichimokuTenkanPeriod" | "ichimokuKijunPeriod" | "ichimokuSpanBPeriod" | "ichimokuDisplacement" | "ichimokuTenkanColor" | "ichimokuTenkanLineWidth" | "ichimokuTenkanLineStyle" | "ichimokuKijunColor" | "ichimokuKijunLineWidth" | "ichimokuKijunLineStyle" | "ichimokuSpanAColor" | "ichimokuSpanALineWidth" | "ichimokuSpanALineStyle" | "ichimokuSpanBColor" | "ichimokuSpanBLineWidth" | "ichimokuSpanBLineStyle" | "ichimokuChikouColor" | "ichimokuChikouLineWidth" | "ichimokuChikouLineStyle" | "ichimokuCloudOpacity" |   "ichimokuShowTenkan" | "ichimokuShowKijun" | "ichimokuShowSpanA" | "ichimokuShowSpanB" | "ichimokuShowChikou" | "hmaCustomLongPeriod" | "hmaCustomFastPeriod" | "hmaCustomSmoothPeriod" | "hmaCustomFastMaType" | "hmaCustomLongMaType" | "hmaCustomSmoothMaType" | "wma2TimeUnit" | "wma2TimeValue"
 >;
 
 interface ContextValue {

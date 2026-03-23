@@ -325,50 +325,52 @@ function SistemaHeader({
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={onMyIndicatorsClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuMyIndicators ?? "My indicators"}
-            </button>
-            <button
-              type="button"
-              onClick={onAddIndicatorClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuAddIndicator ?? "Add indicator"}
-            </button>
-            <button
-              type="button"
-              onClick={onMyRegressionsClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuMyRegressions ?? "My regressions"}
-            </button>
-            <button
-              type="button"
-              onClick={onAddRegressionClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuAddRegression ?? "Add regression"}
-            </button>
-            <button
-              type="button"
-              onClick={onMyStrategiesClick}
-              className="w-full text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-            >
-              {(t as Record<string, string>).menuMyStrategies ?? "My strategies"}
-            </button>
-            <button
-              type="button"
-              onClick={addStrategyDisabled ? undefined : onAddStrategyClick}
-              disabled={addStrategyDisabled}
-              className={`w-full text-left px-4 py-2 text-sm font-medium ${addStrategyDisabled ? "text-zinc-400 cursor-not-allowed" : "text-zinc-700 hover:bg-zinc-100"}`}
-              title={addStrategyDisabled ? ((t as Record<string, string>).defaultModelMaxStrategies ?? "") : undefined}
-            >
-              {(t as Record<string, string>).menuAddStrategy ?? "Create strategy"}
-            </button>
+            <div className="grid grid-cols-2 gap-1 px-2 py-1">
+              <button
+                type="button"
+                onClick={onMyIndicatorsClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuMyIndicators ?? "My indicators"}
+              </button>
+              <button
+                type="button"
+                onClick={onAddIndicatorClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuAddIndicator ?? "Add indicator"}
+              </button>
+              <button
+                type="button"
+                onClick={onMyRegressionsClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuMyRegressions ?? "My regressions"}
+              </button>
+              <button
+                type="button"
+                onClick={onAddRegressionClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuAddRegression ?? "Add regression"}
+              </button>
+              <button
+                type="button"
+                onClick={onMyStrategiesClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuMyStrategies ?? "My strategies"}
+              </button>
+              <button
+                type="button"
+                onClick={addStrategyDisabled ? undefined : onAddStrategyClick}
+                disabled={addStrategyDisabled}
+                className={`w-full text-left px-2 py-2 text-sm font-medium rounded ${addStrategyDisabled ? "text-zinc-400 cursor-not-allowed" : "text-zinc-700 hover:bg-zinc-100"}`}
+                title={addStrategyDisabled ? ((t as Record<string, string>).defaultModelMaxStrategies ?? "") : undefined}
+              >
+                {(t as Record<string, string>).menuAddStrategy ?? "Create strategy"}
+              </button>
+            </div>
             <button
               type="button"
               onClick={onDrawingsClick}

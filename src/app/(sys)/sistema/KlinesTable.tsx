@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -252,6 +252,7 @@ function dayKeyUtc(ms: number): string {
 export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { isAdmin?: boolean; isFreeUser?: boolean }) {
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
+  const tk = t as Record<string, string>;
   const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
   const { setHeaderData } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
@@ -629,6 +630,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                     ? computeWmaColumn(dataForInd, valueIndex, period)
                     : ind.type === "HMA"
                       ? computeHmaColumn(dataForInd, valueIndex, period)
+                      : ind.type === "HMA_CUSTOM"
+                        ? computeHmaCustomColumn(
+                            dataForInd,
+                            valueIndex,
+                            ind.hmaCustomSmoothPeriod ?? 4,
+                            ind.hmaCustomFastPeriod ?? 10,
+                            ind.hmaCustomLongPeriod ?? period,
+                            ind.hmaCustomFastMaType ?? "WMA",
+                            ind.hmaCustomLongMaType ?? "WMA",
+                            ind.hmaCustomSmoothMaType ?? "WMA"
+                          )
                       : ind.type === "VWMA"
                         ? computeVwmaColumn(dataForInd, valueIndex, period)
                         : ind.type === "RSI"
@@ -1484,6 +1496,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-zinc-100 text-zinc-700 text-left">
             <tr>
+              <th
+                className="px-3 py-2 font-medium text-right w-12"
+                title={tk.barNumberHint}
+              >
+                {tk.barNumber ?? "Bar"}
+              </th>
               <th className="px-3 py-2 font-medium">{t.openTime}</th>
               <th className="px-3 py-2 font-medium text-right">{t.open}</th>
               <th className="px-3 py-2 font-medium text-right">{t.high}</th>
@@ -1520,8 +1538,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           </thead>
           <tbody>
             {extendedKlines.map((k, i) => {
+              const barNum = extendedKlines.length - i;
               const baseCols = (
                 <>
+                  <td
+                    className="px-3 py-1.5 text-right font-mono text-zinc-500 tabular-nums"
+                    title={tk.barNumberHint}
+                  >
+                    {barNum}
+                  </td>
                   <td className="px-3 py-1.5 text-zinc-600 whitespace-nowrap">{formatTime(Number(k[0]))}</td>
                   <td className="px-3 py-1.5 text-right font-mono">{formatNum(String(k[1]))}</td>
                   <td className="px-3 py-1.5 text-right font-mono text-emerald-600">{formatNum(String(k[2]))}</td>

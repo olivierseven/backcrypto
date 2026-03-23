@@ -33,6 +33,7 @@ import {
   isTimeWindowMa2Type,
   normalizeMa2TimeValueForUnit,
 } from "./indicatorsPanel/wma2Period";
+import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 
 /** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
 export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./indicatorsPanel/index";
@@ -228,6 +229,15 @@ const INITIAL_ADD_FORM: AddFormState = {
   wma2TimeUnit: "hours",
   wma2TimeValue: 168,
   wma2TimeValueText: "168",
+  hmaCustomLongPeriod: 20,
+  hmaCustomLongPeriodText: "20",
+  hmaCustomFastPeriod: 10,
+  hmaCustomFastPeriodText: "10",
+  hmaCustomSmoothPeriod: 4,
+  hmaCustomSmoothPeriodText: "4",
+  hmaCustomLongMaType: "WMA",
+  hmaCustomFastMaType: "WMA",
+  hmaCustomSmoothMaType: "WMA",
 };
 
 interface IndicatorsPanelProps {
@@ -382,6 +392,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       : (addForm.chartOption === "panel2" && !panelsWithSecondary.panel2) || (addForm.chartOption === "panel3" && !panelsWithSecondary.panel3) || (addForm.chartOption === "panel4" && !panelsWithSecondary.panel4) || (addForm.chartOption === "panel5" && !panelsWithSecondary.panel5)
         ? addForm.chartOption
         : (addForm.chartOption === "panel2" || addForm.chartOption === "panel3" || addForm.chartOption === "panel4" || addForm.chartOption === "panel5" ? addForm.chartOption : "main");
+    const hmaParsed =
+      addForm.indicatorType === "HMA_CUSTOM"
+        ? normalizeHmaCustomPeriods(
+            Number(addForm.hmaCustomSmoothPeriodText) || 4,
+            Number(addForm.hmaCustomFastPeriodText) || 10,
+            Number(addForm.hmaCustomLongPeriodText) || periodNum || 20
+          )
+        : null;
     const parseSar = (s: string, def: number, min: number, max: number) => {
       const n = parseFloat(s);
       return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : def;
@@ -403,11 +421,13 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       period:
         addForm.indicatorType === "MACD"
           ? fastP
-          : addForm.indicatorType === "Ichimoku"
-            ? (parseInt(addForm.ichimokuKijunPeriodText, 10) || 26)
-            : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" || isTimeWindowMa2Type(addForm.indicatorType)
-              ? 1
-              : periodNum,
+          : addForm.indicatorType === "HMA_CUSTOM" && hmaParsed
+            ? hmaParsed.hmaCustomLongPeriod
+            : addForm.indicatorType === "Ichimoku"
+              ? (parseInt(addForm.ichimokuKijunPeriodText, 10) || 26)
+              : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" || isTimeWindowMa2Type(addForm.indicatorType)
+                ? 1
+                : periodNum,
       fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Ichimoku" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
@@ -582,6 +602,25 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
             : "hours",
         wma2TimeValue: wma2AddVal,
       } : {}),
+      ...(addForm.indicatorType === "HMA_CUSTOM" && hmaParsed
+        ? {
+            hmaCustomLongPeriod: hmaParsed.hmaCustomLongPeriod,
+            hmaCustomFastPeriod: hmaParsed.hmaCustomFastPeriod,
+            hmaCustomSmoothPeriod: hmaParsed.hmaCustomSmoothPeriod,
+            hmaCustomLongMaType:
+              addForm.hmaCustomLongMaType === "SMA" || addForm.hmaCustomLongMaType === "EMA" || addForm.hmaCustomLongMaType === "WMA"
+                ? addForm.hmaCustomLongMaType
+                : "WMA",
+            hmaCustomFastMaType:
+              addForm.hmaCustomFastMaType === "SMA" || addForm.hmaCustomFastMaType === "EMA" || addForm.hmaCustomFastMaType === "WMA"
+                ? addForm.hmaCustomFastMaType
+                : "WMA",
+            hmaCustomSmoothMaType:
+              addForm.hmaCustomSmoothMaType === "SMA" || addForm.hmaCustomSmoothMaType === "EMA" || addForm.hmaCustomSmoothMaType === "WMA"
+                ? addForm.hmaCustomSmoothMaType
+                : "WMA",
+          }
+        : {}),
       ...(addForm.indicatorType === "Bollinger" ? {} : {}),
     });
     if (newInd) chartLayoutSave?.saveLayoutNow("indicators", [...userIndicators, newInd]);
@@ -609,7 +648,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
 
   const toggleInterval = useCallback((id: string, groupMinutes: number) => {
     const ind = userIndicators.find((u) => u.id === id);
-    if (!ind || isTimeWindowMa2Type(ind.type)) return;
+    if (!ind) return;
     const isNone = ind.intervals.length === 1 && ind.intervals[0] === 0;
     const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : isNone ? [] : [...ind.intervals];
     const idx = current.indexOf(groupMinutes);
@@ -621,7 +660,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   const setAllIntervals = useCallback(
     (id: string) => {
       const ind = userIndicators.find((u) => u.id === id);
-      if (ind != null && isTimeWindowMa2Type(ind.type)) return;
+      if (ind == null) return;
       updateIndicatorIntervalsWithStrategyReset(id, []);
     },
     [userIndicators, updateIndicatorIntervalsWithStrategyReset]
@@ -639,6 +678,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const fieldKey = ind.type === "WilliamsR" ? "close" : ind.fieldKey;
     const fastP = ind.type === "MACD" ? (ind.macdFastPeriod ?? 12) : ind.period;
     const slowP = ind.type === "MACD" ? (ind.macdSlowPeriod ?? 26) : ind.period;
+    const hmaForEdit =
+      ind.type === "HMA_CUSTOM"
+        ? normalizeHmaCustomPeriods(
+            ind.hmaCustomSmoothPeriod ?? 4,
+            ind.hmaCustomFastPeriod ?? 10,
+            ind.hmaCustomLongPeriod ?? ind.period ?? 20
+          )
+        : null;
     setEditForm({
       period: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? 1 : ind.period,
       periodText: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? "1" : String(ind.period),
@@ -848,7 +895,31 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
             : def;
         return String(normalizeMa2TimeValueForUnit(u, raw));
       })(),
-      intervals: isTimeWindowMa2Type(ind.type) ? [] : [...(ind.intervals || [])],
+      hmaCustomLongPeriod: hmaForEdit ? hmaForEdit.hmaCustomLongPeriod : 20,
+      hmaCustomLongPeriodText: String(hmaForEdit ? hmaForEdit.hmaCustomLongPeriod : 20),
+      hmaCustomFastPeriod: hmaForEdit ? hmaForEdit.hmaCustomFastPeriod : 10,
+      hmaCustomFastPeriodText: String(hmaForEdit ? hmaForEdit.hmaCustomFastPeriod : 10),
+      hmaCustomSmoothPeriod: hmaForEdit ? hmaForEdit.hmaCustomSmoothPeriod : 4,
+      hmaCustomSmoothPeriodText: String(hmaForEdit ? hmaForEdit.hmaCustomSmoothPeriod : 4),
+      hmaCustomLongMaType:
+        ind.type === "HMA_CUSTOM"
+          ? ind.hmaCustomLongMaType === "SMA" || ind.hmaCustomLongMaType === "EMA" || ind.hmaCustomLongMaType === "WMA"
+            ? ind.hmaCustomLongMaType
+            : "WMA"
+          : "WMA",
+      hmaCustomFastMaType:
+        ind.type === "HMA_CUSTOM"
+          ? ind.hmaCustomFastMaType === "SMA" || ind.hmaCustomFastMaType === "EMA" || ind.hmaCustomFastMaType === "WMA"
+            ? ind.hmaCustomFastMaType
+            : "WMA"
+          : "WMA",
+      hmaCustomSmoothMaType:
+        ind.type === "HMA_CUSTOM"
+          ? ind.hmaCustomSmoothMaType === "SMA" || ind.hmaCustomSmoothMaType === "EMA" || ind.hmaCustomSmoothMaType === "WMA"
+            ? ind.hmaCustomSmoothMaType
+            : "WMA"
+          : "WMA",
+      intervals: [...(ind.intervals || [])],
     } as EditFormState);
   }, []);
 
@@ -859,6 +930,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       const n = Number(editForm.periodText);
       return Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : editForm.period;
     })();
+    const hmaEditParsed =
+      ind?.type === "HMA_CUSTOM"
+        ? normalizeHmaCustomPeriods(
+            Number(editForm.hmaCustomSmoothPeriodText) || 4,
+            Number(editForm.hmaCustomFastPeriodText) || 10,
+            Number(editForm.hmaCustomLongPeriodText) || 20
+          )
+        : null;
     const fastP = ind?.type === "MACD" ? (Number(editForm.macdFastPeriodText) || 12) : periodNum;
     const slowP = ind?.type === "MACD" ? (Number(editForm.macdSlowPeriodText) || 26) : periodNum;
     const wma2Parsed =
@@ -877,11 +956,18 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
           })()
         : undefined;
     const updates = {
-      period: ind != null && isTimeWindowMa2Type(ind.type) ? 1 : ind?.type === "MACD" ? fastP : periodNum,
+      period:
+        ind != null && isTimeWindowMa2Type(ind.type)
+          ? 1
+          : ind?.type === "MACD"
+            ? fastP
+            : ind?.type === "HMA_CUSTOM" && hmaEditParsed
+              ? hmaEditParsed.hmaCustomLongPeriod
+              : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : editForm.fieldKey,
       color: editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" || ind?.type === "Ichimoku" ? "main" : editForm.panel,
-      intervals: ind != null && isTimeWindowMa2Type(ind.type) ? [] : (editForm.intervals ?? []),
+      intervals: editForm.intervals ?? [],
       showLastValueOnYAxis: editForm.showLastValueOnYAxis,
       ...(ind?.type === "Volume" ? {
         volumeInUsdt: editForm.volumeInUsdt === true,
@@ -1053,6 +1139,25 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
                 ? editForm.wma2TimeUnit
                 : "hours",
             wma2TimeValue: wma2Parsed,
+          }
+        : {}),
+      ...(ind?.type === "HMA_CUSTOM" && hmaEditParsed
+        ? {
+            hmaCustomLongPeriod: hmaEditParsed.hmaCustomLongPeriod,
+            hmaCustomFastPeriod: hmaEditParsed.hmaCustomFastPeriod,
+            hmaCustomSmoothPeriod: hmaEditParsed.hmaCustomSmoothPeriod,
+            hmaCustomLongMaType:
+              editForm.hmaCustomLongMaType === "SMA" || editForm.hmaCustomLongMaType === "EMA" || editForm.hmaCustomLongMaType === "WMA"
+                ? editForm.hmaCustomLongMaType
+                : "WMA",
+            hmaCustomFastMaType:
+              editForm.hmaCustomFastMaType === "SMA" || editForm.hmaCustomFastMaType === "EMA" || editForm.hmaCustomFastMaType === "WMA"
+                ? editForm.hmaCustomFastMaType
+                : "WMA",
+            hmaCustomSmoothMaType:
+              editForm.hmaCustomSmoothMaType === "SMA" || editForm.hmaCustomSmoothMaType === "EMA" || editForm.hmaCustomSmoothMaType === "WMA"
+                ? editForm.hmaCustomSmoothMaType
+                : "WMA",
           }
         : {}),
     };

@@ -31,7 +31,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
+  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */

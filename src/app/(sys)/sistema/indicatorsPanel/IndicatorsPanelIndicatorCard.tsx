@@ -13,6 +13,7 @@ import {
   MA2_MAX_WINDOW_VALUE,
   normalizeMa2TimeValueForUnit,
 } from "./wma2Period";
+import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 
 interface IndicatorsPanelIndicatorCardProps {
   ind: UserIndicatorConfig;
@@ -145,51 +146,49 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             />
             <span>{(t as Record<string, string>).showIndicatorLastValueOnYAxis ?? "Valor no eixo Y"}</span>
           </label>
-          {!isTimeWindowMa2Type(ind.type) && (
-            <>
-              <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
-              <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="text-[10px] text-zinc-600 hover:underline">
-                  {t.allIntervals}
-                </button>
-                <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [0] } : f))} className="text-[10px] text-zinc-600 hover:underline">
-                  {(t as Record<string, string>).noIntervals ?? "Nenhum"}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {INTERVAL_OPTIONS.map((opt) => {
-                  const formIntervals = editForm.intervals ?? [];
-                  const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
-                  const isAll = formIntervals.length === 0;
-                  const checked = isAll || (!isNone && formIntervals.includes(opt.value));
-                  return (
-                    <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          setEditForm((f) => {
-                            if (!f) return f;
-                            const fi = f.intervals ?? [];
-                            const fIsNone = fi.length === 1 && fi[0] === 0;
-                            const fIsAll = fi.length === 0;
-                            const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
-                            const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
-                            return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
-                          });
-                        }}
-                        className="rounded border-zinc-300"
-                      />
-                      {opt.label}
-                    </label>
-                  );
-                })}
-              </div>
-            </>
-          )}
+          <>
+            <div className="text-[10px] font-medium text-zinc-600">{t.showOn}</div>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+              <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+                {t.allIntervals}
+              </button>
+              <button type="button" onClick={() => setEditForm((f) => (f ? { ...f, intervals: [0] } : f))} className="text-[10px] text-zinc-600 hover:underline">
+                {(t as Record<string, string>).noIntervals ?? "Nenhum"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {INTERVAL_OPTIONS.map((opt) => {
+                const formIntervals = editForm.intervals ?? [];
+                const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
+                const isAll = formIntervals.length === 0;
+                const checked = isAll || (!isNone && formIntervals.includes(opt.value));
+                return (
+                  <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setEditForm((f) => {
+                          if (!f) return f;
+                          const fi = f.intervals ?? [];
+                          const fIsNone = fi.length === 1 && fi[0] === 0;
+                          const fIsAll = fi.length === 0;
+                          const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
+                          const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
+                          return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
+                        });
+                      }}
+                      className="rounded border-zinc-300"
+                    />
+                    {opt.label}
+                  </label>
+                );
+              })}
+            </div>
+          </>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <Combobox value={editForm.panel} onChange={(v) => setEditForm((f) => (f ? { ...f, panel: v as IndicatorPanel } : f))} options={editPanelOptions} className="flex-1 min-w-0" size="md" aria-label={t.chartOption} />
@@ -525,6 +524,280 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 </div>
               </div>
             </>
+          ) : ind.type === "HMA_CUSTOM" ? (
+            <>
+              <p className="text-[10px] text-zinc-500">{tRecord.hmaCustomHint ?? ""}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.hmaCustomLongPeriod ?? "Long MA"}</span>
+                <Combobox
+                  value={editForm.hmaCustomLongMaType ?? "WMA"}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomLongMaType: v as "SMA" | "EMA" | "WMA" } : f))}
+                  options={maTypeOptions}
+                  className="w-[4.75rem] shrink-0"
+                  size="md"
+                  aria-label={`${tRecord.hmaCustomLongPeriod ?? "Long MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+                />
+                <div className="flex items-center gap-1">
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          f.hmaCustomFastPeriod ?? 10,
+                          Math.max(3, (f.hmaCustomLongPeriod ?? 20) - 1)
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomLongPeriod ?? 20) <= 3}
+                    className="stepper-btn"
+                  >
+                    −
+                  </StepperButton>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.hmaCustomLongPeriodText}
+                    onChange={(e) => setEditForm((f) => (f ? { ...f, hmaCustomLongPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))}
+                    onBlur={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const n = parseInt(f.hmaCustomLongPeriodText, 10);
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          f.hmaCustomFastPeriod ?? 10,
+                          Number.isFinite(n) ? n : f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1"
+                  />
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          f.hmaCustomFastPeriod ?? 10,
+                          Math.min(500, (f.hmaCustomLongPeriod ?? 20) + 1)
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomLongPeriod ?? 20) >= 500}
+                    className="stepper-btn"
+                  >
+                    +
+                  </StepperButton>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.hmaCustomFastPeriod ?? "Fast MA"}</span>
+                <Combobox
+                  value={editForm.hmaCustomFastMaType ?? "WMA"}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomFastMaType: v as "SMA" | "EMA" | "WMA" } : f))}
+                  options={maTypeOptions}
+                  className="w-[4.75rem] shrink-0"
+                  size="md"
+                  aria-label={`${tRecord.hmaCustomFastPeriod ?? "Fast MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+                />
+                <div className="flex items-center gap-1">
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          Math.max(2, (f.hmaCustomFastPeriod ?? 10) - 1),
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomFastPeriod ?? 10) <= 2}
+                    className="stepper-btn"
+                  >
+                    −
+                  </StepperButton>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.hmaCustomFastPeriodText}
+                    onChange={(e) => setEditForm((f) => (f ? { ...f, hmaCustomFastPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))}
+                    onBlur={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const n = parseInt(f.hmaCustomFastPeriodText, 10);
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          Number.isFinite(n) ? n : f.hmaCustomFastPeriod ?? 10,
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1"
+                  />
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          f.hmaCustomSmoothPeriod ?? 4,
+                          Math.min(499, (f.hmaCustomFastPeriod ?? 10) + 1),
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomFastPeriod ?? 10) >= 499}
+                    className="stepper-btn"
+                  >
+                    +
+                  </StepperButton>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.hmaCustomSmoothPeriod ?? "Smoothing"}</span>
+                <Combobox
+                  value={editForm.hmaCustomSmoothMaType ?? "WMA"}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomSmoothMaType: v as "SMA" | "EMA" | "WMA" } : f))}
+                  options={maTypeOptions}
+                  className="w-[4.75rem] shrink-0"
+                  size="md"
+                  aria-label={`${tRecord.hmaCustomSmoothPeriod ?? "Smoothing"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
+                />
+                <div className="flex items-center gap-1">
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          Math.max(1, (f.hmaCustomSmoothPeriod ?? 4) - 1),
+                          f.hmaCustomFastPeriod ?? 10,
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomSmoothPeriod ?? 4) <= 1}
+                    className="stepper-btn"
+                  >
+                    −
+                  </StepperButton>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.hmaCustomSmoothPeriodText}
+                    onChange={(e) => setEditForm((f) => (f ? { ...f, hmaCustomSmoothPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))}
+                    onBlur={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const n = parseInt(f.hmaCustomSmoothPeriodText, 10);
+                        const o = normalizeHmaCustomPeriods(
+                          Number.isFinite(n) ? n : f.hmaCustomSmoothPeriod ?? 4,
+                          f.hmaCustomFastPeriod ?? 10,
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1"
+                  />
+                  <StepperButton
+                    onStep={() =>
+                      setEditForm((f) => {
+                        if (!f) return f;
+                        const o = normalizeHmaCustomPeriods(
+                          Math.min(498, (f.hmaCustomSmoothPeriod ?? 4) + 1),
+                          f.hmaCustomFastPeriod ?? 10,
+                          f.hmaCustomLongPeriod ?? 20
+                        );
+                        return {
+                          ...f,
+                          ...o,
+                          hmaCustomLongPeriodText: String(o.hmaCustomLongPeriod),
+                          hmaCustomFastPeriodText: String(o.hmaCustomFastPeriod),
+                          hmaCustomSmoothPeriodText: String(o.hmaCustomSmoothPeriod),
+                          period: o.hmaCustomLongPeriod,
+                          periodText: String(o.hmaCustomLongPeriod),
+                        };
+                      })
+                    }
+                    disabled={(editForm.hmaCustomSmoothPeriod ?? 4) >= 498}
+                    className="stepper-btn"
+                  >
+                    +
+                  </StepperButton>
+                </div>
+              </div>
+            </>
           ) : isTimeWindowMa2Type(ind.type) ? (
             <>
               <div className="flex items-center gap-2">
@@ -655,7 +928,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             <ColorPaletteCombobox value={editForm.color} onChange={(hex) => setEditForm((f) => (f ? { ...f, color: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
           </div>
           )}
-          {!(ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "VWMA" || ind.type === "Ichimoku") && (
+          {!(ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "Ichimoku") && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
             {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? (

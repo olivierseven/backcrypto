@@ -157,6 +157,143 @@ function computeWmaFromValues(
   return out;
 }
 
+/** SMA sobre série escalar (índice 0 = mais recente); só valor com janela completa. */
+function computeSmaFromValues(values: (number | null)[], period: number): (number | null)[] {
+  const n = values.length;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let k = 0; k < period && i + k < n; k++) {
+      const v = values[i + k];
+      if (v != null && Number.isFinite(v)) {
+        sum += v;
+        count += 1;
+      }
+    }
+    out.push(count === period ? sum / period : null);
+  }
+  return out;
+}
+
+/** EMA sobre série escalar (mesma convenção que `computeEmaColumn`). */
+function computeEmaFromValues(values: (number | null)[], period: number): (number | null)[] {
+  const n = values.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  if (period < 1 || n < period) return out;
+  const alpha = 2 / (period + 1);
+  const startIdx = n - period;
+  let sum = 0;
+  let count = 0;
+  for (let j = startIdx; j < n; j++) {
+    const v = values[j];
+    if (v != null && Number.isFinite(v)) {
+      sum += v;
+      count += 1;
+    }
+  }
+  const initial = count > 0 ? sum / count : null;
+  if (initial == null) return out;
+  out[startIdx] = initial;
+  for (let j = startIdx - 1; j >= 0; j--) {
+    const v = values[j];
+    if (v != null && Number.isFinite(v) && out[j + 1] != null) {
+      out[j] = alpha * v + (1 - alpha) * (out[j + 1] as number);
+    } else {
+      out[j] = out[j + 1];
+    }
+  }
+  for (let j = startIdx + 1; j < n; j++) out[j] = null;
+  return out;
+}
+
+/** Tipo de média para cada etapa do Hull MA (Custom). */
+export type HmaCustomMaType = "SMA" | "EMA" | "WMA";
+
+function computeHmaCustomLegColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  period: number,
+  maType: HmaCustomMaType
+): (number | null)[] {
+  if (maType === "SMA") return computeSmaColumn(data, valueIndex, period);
+  if (maType === "EMA") return computeEmaColumn(data, valueIndex, period);
+  return computeWmaColumn(data, valueIndex, period);
+}
+
+function computeHmaCustomSmoothFromRaw(
+  raw: (number | null)[],
+  period: number,
+  maType: HmaCustomMaType
+): (number | null)[] {
+  if (maType === "SMA") return computeSmaFromValues(raw, period);
+  if (maType === "EMA") return computeEmaFromValues(raw, period);
+  return computeWmaFromValues(raw, period);
+}
+
+/**
+ * Hull MA (Custom): MA(suavização) de [2×MA(rápida) − MA(longa)]; cada etapa pode ser SMA, EMA ou WMA.
+ * Períodos: smooth < fast < long.
+ */
+export function normalizeHmaCustomPeriods(
+  smoothIn: number,
+  fastIn: number,
+  longIn: number
+): { hmaCustomSmoothPeriod: number; hmaCustomFastPeriod: number; hmaCustomLongPeriod: number } {
+  let l = Math.max(3, Math.min(500, Math.round(longIn)));
+  let f = Math.max(2, Math.min(499, Math.round(fastIn)));
+  let s = Math.max(1, Math.min(498, Math.round(smoothIn)));
+  if (f >= l) f = l - 1;
+  if (f < 2) f = 2;
+  if (l <= f) l = Math.min(500, f + 1);
+  if (s >= f) s = f - 1;
+  if (s < 1) {
+    s = 1;
+    if (f <= s) f = Math.min(l - 1, s + 1);
+    if (f < 2) f = 2;
+    if (l <= f) l = Math.min(500, f + 1);
+  }
+  if (l <= f) l = Math.min(500, f + 1);
+  if (f <= s) f = Math.min(l - 1, s + 1);
+  if (s >= f) s = Math.max(1, f - 1);
+  return { hmaCustomSmoothPeriod: s, hmaCustomFastPeriod: f, hmaCustomLongPeriod: l };
+}
+
+/**
+ * Hull MA (Custom): MA de suavização aplicada a (2×MA(fast) − MA(long));
+ * cada perna e a suavização podem ser SMA, EMA ou WMA (default WMA = Hull clássico).
+ */
+export function computeHmaCustomColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  smoothPeriod: number,
+  fastPeriod: number,
+  longPeriod: number,
+  fastMaType: HmaCustomMaType = "WMA",
+  longMaType: HmaCustomMaType = "WMA",
+  smoothMaType: HmaCustomMaType = "WMA"
+): (number | null)[] {
+  const { hmaCustomSmoothPeriod, hmaCustomFastPeriod, hmaCustomLongPeriod } = normalizeHmaCustomPeriods(
+    smoothPeriod,
+    fastPeriod,
+    longPeriod
+  );
+  const legFast = computeHmaCustomLegColumn(data, valueIndex, hmaCustomFastPeriod, fastMaType);
+  const legLong = computeHmaCustomLegColumn(data, valueIndex, hmaCustomLongPeriod, longMaType);
+  const n = data.length;
+  const raw: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = legFast[i];
+    const b = legLong[i];
+    if (a != null && b != null && Number.isFinite(a) && Number.isFinite(b)) {
+      raw.push(2 * a - b);
+    } else {
+      raw.push(null);
+    }
+  }
+  return computeHmaCustomSmoothFromRaw(raw, hmaCustomSmoothPeriod, smoothMaType);
+}
+
 /**
  * Hull Moving Average: HMA(n) = WMA(√n) de [2×WMA(n/2) − WMA(n)].
  * Períodos fracionários são arredondados (n/2 e √n pelo menos 1).
