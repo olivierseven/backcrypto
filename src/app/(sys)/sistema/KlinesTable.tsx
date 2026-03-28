@@ -79,6 +79,9 @@ type Kline = [
 
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
 
+/** Alinhado ao `limit` do GET kline-cache2 e ao `maxBars` do merge agg; acima disto refetch do cache. */
+const AGG_KLINE_CACHE_LIMIT = 1000;
+
 const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] = [
   { value: 1, label: "1m", param: "1m" },
   { value: 3, label: "3m", param: "3m" },
@@ -360,6 +363,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   timezoneOffsetRef.current = timezoneOffset;
   /** Cache GET agg-fast (Renko/Range/Kagi); barras ao vivo fundem-se em memória sem POST. */
   const serverAggKlinesRef = useRef<Kline[]>([]);
+  /** Para refetch ao cache só ao cruzar o limite de barras (modo atemporal). */
+  const prevAggKlineCountForLimitRef = useRef<number | null>(null);
+  /** Topo do último GET kline-cache2 (só servidor); âncora de fecho/open para o aggTrade ao vivo. */
+  const [serverNewestKlineFromCache, setServerNewestKlineFromCache] = useState<(string | number)[] | null>(null);
   const liveAggRowsByOpenTimeRef = useRef<Map<number, AggFastBarRowPayload>>(new Map());
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
@@ -1005,6 +1012,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const tzForMerge =
           typeof body.timezoneOffset === "number" ? Math.max(-12, Math.min(12, body.timezoneOffset)) : timezoneOffset;
         serverAggKlinesRef.current = list as Kline[];
+        setServerNewestKlineFromCache(list.length > 0 ? (list[0] as (string | number)[]) : null);
         const aggLive = isAggFastGroupMinutes(groupMinutes);
         if (!aggLive) {
           liveAggRowsByOpenTimeRef.current.clear();
@@ -1047,6 +1055,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (symbolRef.current !== requestedSymbol) return;
         lastKlinesFetchSymbolRef.current = requestedSymbol;
         serverAggKlinesRef.current = [];
+        setServerNewestKlineFromCache(null);
         liveAggRowsByOpenTimeRef.current.clear();
         setKlines(list);
         setKlinesDataSymbol(requestedSymbol);
@@ -1072,6 +1081,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       setKlines([]);
       setKlinesDataSymbol(null);
       serverAggKlinesRef.current = [];
+      setServerNewestKlineFromCache(null);
       liveAggRowsByOpenTimeRef.current.clear();
       setNeedsRefresh(false);
     } finally {
@@ -1089,6 +1099,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     klinesSourceSymbol: klinesDataSymbol,
     timezoneOffsetHours: timezoneOffset,
     klines,
+    serverNewestKlineFromCache,
     onLiveFlush: (rows) => {
       if (groupMinutesToAggKind(groupMinutes) == null) return;
       const gmNorm = normalizeAggGroupMinutes(groupMinutes);
@@ -1164,6 +1175,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setKlines([]);
     setKlinesDataSymbol(null);
     serverAggKlinesRef.current = [];
+    setServerNewestKlineFromCache(null);
+    prevAggKlineCountForLimitRef.current = null;
     liveAggRowsByOpenTimeRef.current.clear();
     pendingAggPersistRef.current = [];
     setSpot({ currentClose: null, prevDayClose: null });
@@ -1171,9 +1184,26 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setSpotWsHigh(null);
     setSpotWsLow(null);
     fetchKlines();
-    const interval = setInterval(fetchKlines, REFRESH_MS);
-    return () => clearInterval(interval);
+    /** Gráficos temporais: refresh periódico. Atemporais (agg): barras vêm do WS; só refetch ao limite ou visibilidade/VPS. */
+    const aggAtemporal = isAggFastGroupMinutes(groupMinutes);
+    const interval = aggAtemporal ? null : window.setInterval(fetchKlines, REFRESH_MS);
+    return () => {
+      if (interval != null) window.clearInterval(interval);
+    };
   }, [groupMinutes, symbol, timeframeRestored]);
+
+  /** Modo agg: quando o número de barras fundidas atinge o limite do cache, recuperar do servidor (persistência + ordenação). */
+  useEffect(() => {
+    if (!timeframeRestored) return;
+    if (!isAggFastGroupMinutes(groupMinutes)) return;
+    const n = klines.length;
+    const prev = prevAggKlineCountForLimitRef.current;
+    prevAggKlineCountForLimitRef.current = n;
+    if (prev == null) return;
+    if (n >= AGG_KLINE_CACHE_LIMIT && prev < AGG_KLINE_CACHE_LIMIT) {
+      void fetchKlinesRef.current();
+    }
+  }, [klines.length, groupMinutes, timeframeRestored]);
 
   const fetchVapCacheKlines = async () => {
     if (!volumeAtPriceEnabled) {

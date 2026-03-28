@@ -36,6 +36,31 @@ export type AggFastWsKind = "renko" | "range" | "kagi" | "renko2x" | "trades500"
 
 type KlineLike = (string | number | null)[];
 
+/**
+ * Fecho a usar para sincronizar refs agg (Renko/Range/Kagi/…): o merge pode pôr no topo uma linha ao vivo
+ * com openTime **anterior** ao da última barra do cache (ex.: bug de tempo); nesse caso a âncora deve ser
+ * o fecho da barra mais recente do GET, não o [0] fundido.
+ */
+function syncCloseFromMergedAndServer(
+  klinesOk: boolean,
+  merged0: KlineLike | undefined,
+  serverNewest: KlineLike | null
+): number | null {
+  if (!klinesOk || merged0 == null || merged0[4] == null) return null;
+  const mc = Number(merged0[4]);
+  if (!Number.isFinite(mc)) return null;
+  if (serverNewest == null || serverNewest.length === 0 || serverNewest[0] == null || serverNewest[4] == null) {
+    return mc;
+  }
+  const mot = Number(merged0[0]);
+  const sc = Number(serverNewest[4]);
+  const sot = Number(serverNewest[0]);
+  if (!Number.isFinite(sc) || !Number.isFinite(sot)) return mc;
+  if (!Number.isFinite(mot)) return mc;
+  if (mot >= sot) return mc;
+  return sc;
+}
+
 function inferRenkoDirectionFromKlines(klines: KlineLike[]): boolean | null {
   if (klines.length < 2) return null;
   const latest = Number(klines[0]?.[4]);
@@ -61,11 +86,23 @@ export function useAggFastTradeLive(opts: {
   klinesSourceSymbol: string | null;
   timezoneOffsetHours: number;
   klines: KlineLike[];
+  /** Primeira linha do último GET kline-cache2 (só servidor); usada como âncora de fecho quando o merge [0] está desalinhado. */
+  serverNewestKlineFromCache: KlineLike | null;
   onLiveFlush: (rows: AggFastBarRowPayload[]) => void;
   /** Chamado quando chega aggTrade válido (atemporal vivo); throttle interno — p.ex. “Última atualização” / bolinha. */
   onLiveAggActivity?: () => void;
 }) {
-  const { enabled, aggKind, symbol, klinesSourceSymbol, timezoneOffsetHours, klines, onLiveFlush, onLiveAggActivity } = opts;
+  const {
+    enabled,
+    aggKind,
+    symbol,
+    klinesSourceSymbol,
+    timezoneOffsetHours,
+    klines,
+    serverNewestKlineFromCache,
+    onLiveFlush,
+    onLiveAggActivity,
+  } = opts;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
   const rangeRef = useRef<RangeRef>(emptyRangeRef());
@@ -88,6 +125,8 @@ export function useAggFastTradeLive(opts: {
   klinesSourceRef.current = klinesSourceSymbol;
   tzRef.current = timezoneOffsetHours;
   aggKindRef.current = aggKind;
+  const serverNewestFromCacheRef = useRef(serverNewestKlineFromCache);
+  serverNewestFromCacheRef.current = serverNewestKlineFromCache;
 
   const [tickSize, setTickSize] = useState<number | null>(null);
 
@@ -125,7 +164,8 @@ export function useAggFastTradeLive(opts: {
   useEffect(() => {
     if (!enabled || !sym) return;
     const klinesOk = klinesSourceSymbol != null && klinesSourceSymbol.trim().toUpperCase() === sym;
-    const close = klinesOk && klines.length > 0 && klines[0][4] != null ? Number(klines[0][4]) : null;
+    const merged0 = klines.length > 0 ? klines[0] : undefined;
+    const close = syncCloseFromMergedAndServer(klinesOk, merged0, serverNewestKlineFromCache);
     const c = close != null && Number.isFinite(close) ? close : null;
     if (aggKind === "renko") {
       syncRenkoRefFromLatestDbClose(renkoRef.current, c);
@@ -140,7 +180,7 @@ export function useAggFastTradeLive(opts: {
     } else {
       syncTradeCountRefFromLatestDbClose(tradeCountRef.current, c);
     }
-  }, [enabled, sym, klines, klinesSourceSymbol, aggKind]);
+  }, [enabled, sym, klines, klinesSourceSymbol, aggKind, serverNewestKlineFromCache]);
 
   useEffect(() => {
     if (!enabled || !sym || tickSize == null || !(tickSize > 0)) return;
@@ -149,8 +189,17 @@ export function useAggFastTradeLive(opts: {
       const s = symRef.current;
       const k = klinesRef.current;
       const sourceOk = klinesSourceRef.current != null && klinesSourceRef.current.trim().toUpperCase() === s;
-      const dispOpen =
-        sourceOk && k.length > 0 && k[0][0] != null ? Number(k[0][0]) : null;
+      const mergedOt = sourceOk && k.length > 0 && k[0][0] != null ? Number(k[0][0]) : null;
+      const srv = serverNewestFromCacheRef.current;
+      const srvOt = srv != null && srv.length > 0 && srv[0] != null ? Number(srv[0]) : null;
+      let dispOpen: number | null = null;
+      if (mergedOt != null && Number.isFinite(mergedOt) && srvOt != null && Number.isFinite(srvOt)) {
+        dispOpen = Math.max(mergedOt, srvOt);
+      } else if (mergedOt != null && Number.isFinite(mergedOt)) {
+        dispOpen = mergedOt;
+      } else if (srvOt != null && Number.isFinite(srvOt)) {
+        dispOpen = srvOt;
+      }
       streamMinTradeMsRef.current = streamMinTradeMsUtc({
         nowMs: Date.now(),
         timezoneOffsetHours: tzRef.current,
