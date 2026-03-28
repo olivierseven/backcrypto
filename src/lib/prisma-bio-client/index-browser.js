@@ -326,6 +326,125 @@ exports.Prisma.BinanceKlineFastScalarFieldEnum = {
   takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
 };
 
+exports.Prisma.BinanceRenkoFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceRangeFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceKagiFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceRenko2xFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceTradeCountFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl500trades: 'k2Incl500trades',
+  k2Incl1000trades: 'k2Incl1000trades',
+  k2Incl2500trades: 'k2Incl2500trades',
+  k2Incl5000trades: 'k2Incl5000trades',
+  k2Incl7500trades: 'k2Incl7500trades',
+  k2Incl10000trades: 'k2Incl10000trades'
+};
+
 exports.Prisma.BinanceKlineMonthScalarFieldEnum = {
   corretora: 'corretora',
   symbol: 'symbol',
@@ -346,6 +465,24 @@ exports.Prisma.BinanceKlineMonthScalarFieldEnum = {
 exports.Prisma.BinanceKlineCacheScalarFieldEnum = {
   symbol: 'symbol',
   interval: 'interval',
+  chartKind: 'chartKind',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+};
+
+exports.Prisma.BinanceKlineCache2ScalarFieldEnum = {
+  symbol: 'symbol',
+  chartKind: 'chartKind',
+  interval: 'interval',
   openTime: 'openTime',
   open: 'open',
   high: 'high',
@@ -364,6 +501,14 @@ exports.Prisma.BinanceKlineGapScalarFieldEnum = {
   interval: 'interval',
   gapFrom: 'gapFrom',
   gapTo: 'gapTo'
+};
+
+exports.Prisma.AppConfigScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.KlineSymbolScalarFieldEnum = {
@@ -482,9 +627,16 @@ exports.Prisma.ModelName = {
   PagarMeOrder: 'PagarMeOrder',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
+  BinanceRenkoFast: 'BinanceRenkoFast',
+  BinanceRangeFast: 'BinanceRangeFast',
+  BinanceKagiFast: 'BinanceKagiFast',
+  BinanceRenko2xFast: 'BinanceRenko2xFast',
+  BinanceTradeCountFast: 'BinanceTradeCountFast',
   BinanceKlineMonth: 'BinanceKlineMonth',
   BinanceKlineCache: 'BinanceKlineCache',
+  BinanceKlineCache2: 'BinanceKlineCache2',
   BinanceKlineGap: 'BinanceKlineGap',
+  AppConfig: 'AppConfig',
   KlineSymbol: 'KlineSymbol'
 };
 

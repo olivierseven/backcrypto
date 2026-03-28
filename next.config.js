@@ -31,7 +31,9 @@ const nextConfig = {
   webpack: (config, { dev, isServer }) => {
     config.resolve.symlinks = false;
     config.context = projectRoot;
-    if (dev && !isServer && config.output) {
+    // Dev: evita ChunkLoadError por timeout ao pedir chunks (rotas com (group), HMR, basePath).
+    if (dev && !isServer) {
+      config.output = config.output ?? {};
       config.output.chunkLoadTimeout = 120000;
     }
     return config;

@@ -3,7 +3,6 @@
     { "source": "/", "destination": "/crypto", "permanent": false }
   ],
   "crons": [
-    { "path": "/crypto/api/cron", "schedule": "* * * * *" },
     { "path": "/crypto/api/cron/cache-refresh", "schedule": "0 0 * * *" }
   ],
   "functions": {

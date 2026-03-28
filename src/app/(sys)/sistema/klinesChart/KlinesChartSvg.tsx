@@ -14,7 +14,7 @@ import { DrawOverlay } from "./DrawOverlay";
 import { DrawSegmentHandles, type DrawDraggingPoint } from "./DrawSegmentHandles";
 import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
 import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
-import type { ChartIndicatorLine, RegressionOverlayPath, StrategyCandleOverlay } from "./types";
+import type { ChartIndicatorLine, ChartStyle, RegressionOverlayPath, StrategyCandleOverlay } from "./types";
 
 function lineWidthToStroke(w: "thin" | "normal" | "thick" | undefined): number {
   return w === "thin" ? 0.5 : w === "thick" ? 2 : 1;
@@ -29,8 +29,10 @@ export interface KlinesChartSvgProps {
   chartH: number;
   gap: number;
   candleW: number;
-  /** "candles" = candle sticks; "bars" = OHLC bar; "line" = close line only; "linePoints" = close line with points; "area" = line with area below filled (70% opacity). */
-  chartStyle?: "candles" | "bars" | "line" | "linePoints" | "area";
+  /** "candles" = candle sticks; "bars" = OHLC bar; "line" = close line only; "linePoints" = close line with points; "area" = line with area below filled (70% opacity); "kagiClassic" = Kagi ortogonal com cores de reversão. */
+  chartStyle?: ChartStyle;
+  /** Se true: liga fechos em caminho ortogonal (H depois V), estilo próximo ao Kagi clássico. Só aplica a line/linePoints/area. */
+  closeLineStepPath?: boolean;
   /** When "hollow": candle de alta = vazio (só contorno), de baixa = preenchido. */
   candleBodyStyle?: "filled" | "hollow";
   y: (price: number) => number;
@@ -159,6 +161,7 @@ export function KlinesChartSvg({
   gap,
   candleW,
   chartStyle = "candles",
+  closeLineStepPath = false,
   candleBodyStyle = "filled",
   y,
   cx,
@@ -1140,15 +1143,81 @@ export function KlinesChartSvg({
           );
         })}
         <g clipPath={`url(#${plotClipId.replace(/:/g, "\\:")})`}>
-        {(chartStyle === "line" || chartStyle === "linePoints" || chartStyle === "area") ? (
+        {(chartStyle === "line" || chartStyle === "linePoints" || chartStyle === "area" || chartStyle === "kagiClassic") ? (
+          chartStyle === "kagiClassic" ? (
+            (() => {
+              const closes = windowSlice.map((k) => parseNum(String(k[4] ?? "")));
+              const linePoints = windowSlice.map((k, i) => ({ x: cx(i), y: y(closes[i]) }));
+              const bullHex = candleColors.bull === "#f5f5f5" ? "#171717" : candleColors.bull;
+              const bearHex = candleColors.bear === "#f5f5f5" ? "#171717" : candleColors.bear;
+              const neutralHex = isDarkBg ? "#94a3b8" : "#64748b";
+              const segments: { d: string; stroke: string; strokeWidth: number }[] = [];
+              for (let i = 1; i < linePoints.length; i++) {
+                const prev = linePoints[i - 1];
+                const cur = linePoints[i];
+                const dc = closes[i] - closes[i - 1];
+                const dPrev = i >= 2 ? closes[i - 1] - closes[i - 2] : NaN;
+                const sign = dc === 0 ? 0 : dc > 0 ? 1 : -1;
+                const prevSign = !Number.isFinite(dPrev) || dPrev === 0 ? 0 : dPrev > 0 ? 1 : -1;
+                const reversal = i >= 2 && prevSign !== 0 && sign !== 0 && sign !== prevSign;
+                const stroke = dc > 0 ? bullHex : dc < 0 ? bearHex : neutralHex;
+                const strokeWidth = reversal ? 1.15 : 2.35;
+                segments.push({
+                  d: `M ${prev.x} ${prev.y} L ${cur.x} ${prev.y} L ${cur.x} ${cur.y}`,
+                  stroke,
+                  strokeWidth,
+                });
+              }
+              return (
+                <g key="kagi-classic">
+                  {segments.map((s, idx) => (
+                    <path
+                      key={idx}
+                      d={s.d}
+                      stroke={s.stroke}
+                      strokeWidth={s.strokeWidth}
+                      fill="none"
+                      strokeLinecap="butt"
+                      strokeLinejoin="miter"
+                    />
+                  ))}
+                  {linePoints.map((p, i) => {
+                    const dc = i === 0 ? 0 : closes[i] - closes[i - 1];
+                    const fill = dc > 0 ? bullHex : dc < 0 ? bearHex : neutralHex;
+                    return (
+                      <circle key={`kagi-pt-${i}`} cx={p.x} cy={p.y} r={2.25} fill={fill} stroke={chartBgHex} strokeWidth={0.75} />
+                    );
+                  })}
+                </g>
+              );
+            })()
+          ) : (
           (() => {
             const linePoints = windowSlice.map((k, i) => ({ x: cx(i), y: y(parseNum(String(k[4] ?? ""))) }));
             const lineColor = candleColors.bull === "#f5f5f5" ? "#171717" : candleColors.bull;
-            const d = linePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+            const d =
+              closeLineStepPath && linePoints.length > 0
+                ? (() => {
+                    let s = `M ${linePoints[0].x} ${linePoints[0].y}`;
+                    for (let i = 1; i < linePoints.length; i++) {
+                      const prev = linePoints[i - 1];
+                      const cur = linePoints[i];
+                      s += ` L ${cur.x} ${prev.y} L ${cur.x} ${cur.y}`;
+                    }
+                    return s;
+                  })()
+                : linePoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
             const bottomY = MARGIN_TOP + chartH;
-            const areaD = linePoints.length > 0
-              ? `${d} L ${linePoints[linePoints.length - 1].x} ${bottomY} L ${linePoints[0].x} ${bottomY} Z`
-              : "";
+            const areaD =
+              linePoints.length > 0 && chartStyle === "area"
+                ? closeLineStepPath
+                  ? (() => {
+                      let s = d;
+                      s += ` L ${linePoints[linePoints.length - 1].x} ${bottomY} L ${linePoints[0].x} ${bottomY} Z`;
+                      return s;
+                    })()
+                  : `${d} L ${linePoints[linePoints.length - 1].x} ${bottomY} L ${linePoints[0].x} ${bottomY} Z`
+                : "";
             return (
               <g key="close-line">
                 {chartStyle === "area" && areaD ? (
@@ -1161,6 +1230,7 @@ export function KlinesChartSvg({
               </g>
             );
           })()
+          )
         ) : windowSlice.map((k, i) => {
           const openP = parseNum(String(k[1] ?? ""));
           const highP = parseNum(String(k[2] ?? ""));

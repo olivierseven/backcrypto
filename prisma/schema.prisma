@@ -388,6 +388,160 @@ model BinanceKlineFast {
   @@schema("backcrypto")
 }
 
+// Barras Renko sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceRenkoFast {
+  corretora                String
+  symbol                   String
+  interval                 String   // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+  /** Renko 1× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos). */
+  k2Incl5ticks   Boolean @default(false)
+  k2Incl15ticks  Boolean @default(false)
+  k2Incl25ticks  Boolean @default(false)
+  k2Incl50ticks  Boolean @default(false)
+  k2Incl100ticks Boolean @default(false)
+  k2Incl150ticks Boolean @default(false)
+  k2Incl200ticks Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRenkoFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Barras Range sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceRangeFast {
+  corretora                String
+  symbol                   String
+  interval                 String   // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+  /** Range → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos). */
+  k2Incl5ticks   Boolean @default(false)
+  k2Incl15ticks  Boolean @default(false)
+  k2Incl25ticks  Boolean @default(false)
+  k2Incl50ticks  Boolean @default(false)
+  k2Incl100ticks Boolean @default(false)
+  k2Incl150ticks Boolean @default(false)
+  k2Incl200ticks Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRangeFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Barras Kagi sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceKagiFast {
+  corretora                String
+  symbol                   String
+  interval                 String   // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+  /** Kagi → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos). */
+  k2Incl5ticks   Boolean @default(false)
+  k2Incl15ticks  Boolean @default(false)
+  k2Incl25ticks  Boolean @default(false)
+  k2Incl50ticks  Boolean @default(false)
+  k2Incl100ticks Boolean @default(false)
+  k2Incl150ticks Boolean @default(false)
+  k2Incl200ticks Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKagiFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Renko clássico 2× (continuação H=B/2). Mesma estrutura; interval típico "5ticks" (distingue da tabela Renko normal).
+model BinanceRenko2xFast {
+  corretora                String
+  symbol                   String
+  interval                 String   // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+  /** Renko2× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos). */
+  k2Incl5ticks   Boolean @default(false)
+  k2Incl15ticks  Boolean @default(false)
+  k2Incl25ticks  Boolean @default(false)
+  k2Incl50ticks  Boolean @default(false)
+  k2Incl100ticks Boolean @default(false)
+  k2Incl150ticks Boolean @default(false)
+  k2Incl200ticks Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRenko2xFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// OHLC por contagem de trades (ex.: 500 eventos aggTrade = 1 vela). Interval típico "500trades".
+model BinanceTradeCountFast {
+  corretora                String
+  symbol                   String
+  interval                 String   // ex.: 500trades
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+  /** trades500 → BinanceKlineCache2: linha 500trades já contabilizada neste tier (6 intervalos). */
+  k2Incl500trades   Boolean @default(false)
+  k2Incl1000trades  Boolean @default(false)
+  k2Incl2500trades  Boolean @default(false)
+  k2Incl5000trades  Boolean @default(false)
+  k2Incl7500trades  Boolean @default(false)
+  k2Incl10000trades Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceTradeCountFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
 // Velas 5m (sync da API Binance); mesma estrutura que BinanceKline. Nome histórico "Month"; expurgo 90 dias.
 model BinanceKlineMonth {
   corretora                String
@@ -416,6 +570,8 @@ model BinanceKlineMonth {
 model BinanceKlineCache {
   symbol                   String
   interval                 String   // 1m | 2m | 3m | 4m | 5m | 15m | 30m | 45m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  /** Tipo de gráfico: interval (OHLC) | renko | range | kagi | renko2x | trades500 — padrão interval. */
+  chartKind                String   @default("interval") @db.VarChar(32)
   openTime                 BigInt
   open                     Decimal  @db.Decimal(32, 8)
   high                     Decimal  @db.Decimal(32, 8)
@@ -434,6 +590,31 @@ model BinanceKlineCache {
   @@schema("backcrypto")
 }
 
+// Cache histórico para gráficos atemporais (Renko 1×, Range, Kagi, Renko 2×, velas por contagem de trades).
+// Paralelo a `BinanceKlineCache` (só OHLC por intervalo). PK inclui `chartKind` para separar séries no mesmo símbolo.
+// Preenchimento futuro (cron / job): copiar de Binance*Fast com openTime antes do início do dia UTC (mesma regra que o cache OHLC).
+model BinanceKlineCache2 {
+  symbol                   String
+  chartKind                String   @db.VarChar(32) // renko | range | kagi | renko2x | trades500
+  interval                 String   // ex.: 5ticks | 15ticks | 25ticks | … | 500trades
+  openTime                 BigInt
+  open                     Decimal  @db.Decimal(32, 8)
+  high                     Decimal  @db.Decimal(32, 8)
+  low                      Decimal  @db.Decimal(32, 8)
+  close                    Decimal  @db.Decimal(32, 8)
+  volume                   Decimal  @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal  @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal  @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal  @db.Decimal(32, 8)
+
+  @@id([symbol, chartKind, interval, openTime])
+  @@index([symbol, chartKind, interval, openTime])
+  @@index([symbol, chartKind, interval, openTime(sort: Desc)], map: "BinanceKlineCache2_symbol_chartKind_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
 // Gaps conhecidos (sem dado na Binance): ao validar, estes intervalos são ignorados.
 model BinanceKlineGap {
   symbol   String
@@ -443,6 +624,18 @@ model BinanceKlineGap {
 
   @@id([symbol, interval, gapFrom, gapTo])
   @@index([symbol, interval])
+  @@schema("backcrypto")
+}
+
+// Chave/valor de configuração da app (Neon / Postgres).
+model AppConfig {
+  key         String   @id
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("AppConfig")
   @@schema("backcrypto")
 }
 

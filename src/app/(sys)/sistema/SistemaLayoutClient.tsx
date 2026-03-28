@@ -20,6 +20,7 @@ import { KlinesRegressionsProvider } from "./regression/KlinesRegressionsContext
 import RegressionsPanel from "./RegressionsPanel";
 import { SistemaDebugProvider } from "./SistemaDebugContext";
 import { ChartHeaderProvider } from "./ChartHeaderContext";
+import HeaderIntervalDropdown from "./HeaderIntervalDropdown";
 import { ChartSymbolProvider, useChartSymbol } from "./ChartSymbolContext";
 import IndicatorsPanel from "./IndicatorsPanel";
 import DrawingsPanel from "./DrawingsPanel";
@@ -128,7 +129,7 @@ function SistemaHeader({
   const isSistemaChartPage = pathname === "/sistema" || pathname?.endsWith("/sistema") === true;
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
-  const { data: headerData } = useChartHeader();
+  const { data: headerData, intervalPicker } = useChartHeader();
   const { symbol, setSymbol, symbolOptions, symbolPanelOpen, openSymbolPanel, closeSymbolPanel } = useChartSymbol();
   const { openSavePanel, openLoadPanel } = useChartSaveLoad();
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -189,10 +190,10 @@ function SistemaHeader({
           aria-label={t.symbolAria ?? "Select symbol"}
         >
           {symbol}
-          {headerData.intervalLabel != null && headerData.intervalLabel !== "" && (
-            <span className="font-normal text-zinc-600"> ({headerData.intervalLabel})</span>
-          )}
         </button>
+        {isSistemaChartPage && intervalPicker != null && (
+          <HeaderIntervalDropdown picker={intervalPicker} />
+        )}
         <Link
           href="/sistema"
           className="p-1.5 sm:p-2 text-zinc-700 hover:bg-zinc-100 rounded shrink-0"

@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { API_BASE } from "@/app/constants";
+import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
@@ -14,7 +14,28 @@ import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, collectSeriesKeys, type Strategy } from "./strategies/strategiesTypes";
 import { evaluateNode } from "./strategies/strategyEvaluator";
-import { Y_AXIS_WIDTH, KLINE_GROUP_MINUTES_KEY, KLINE_HEIKIN_ASHI_KEY, KLINE_VOLUME_AT_PRICE_KEY } from "./KlinesChartConstants";
+import {
+  Y_AXIS_WIDTH,
+  KLINE_GROUP_MINUTES_KEY,
+  KLINE_HEIKIN_ASHI_KEY,
+  KLINE_VOLUME_AT_PRICE_KEY,
+  KLINE_AGG_SERIES_KEY,
+  CACHE2_TICK_KIND_STRIDE,
+  GROUP_MINUTES_CACHE2_BASE,
+  GROUP_MINUTES_CACHE2_TRADES_BASE,
+  chartMinutesForTimeWindowMa2,
+  formatCache2IntervalShortLabel,
+  groupMinutesToAggKind,
+  groupMinutesToCache2Params,
+  isAggCache2BaseTierForLiveMerge,
+  isAggFastGroupMinutes,
+  normalizeAggGroupMinutes,
+} from "./KlinesChartConstants";
+import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
+import { type AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
+import { mergeAggFastServerAndLive } from "./aggFastKlineMerge";
+import { useAggFastTradeLive, type AggFastWsKind } from "./useAggFastTradeLive";
+import { useVpsFlushNotify } from "./useVpsFlushNotify";
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -57,6 +78,7 @@ type Kline = [
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
 
 const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] = [
+  { value: 1, label: "1m", param: "1m" },
   { value: 3, label: "3m", param: "3m" },
   { value: 5, label: "5m", param: "5m" },
   { value: 15, label: "15m", param: "15m" },
@@ -78,19 +100,49 @@ const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] =
 /** Timeframe padrão quando não definido no localStorage: 1 dia. */
 const DEFAULT_GROUP_MINUTES_FIRST_LOAD = 1440; // 1D (1 dia)
 
-/** Opções de intervalo: admin vê também 1m. */
-function getIntervalOptions(isAdmin: boolean): { value: number; label: string; param: string }[] {
-  if (!isAdmin) return INTERVAL_OPTIONS_BASE;
-  return [{ value: 1, label: "1m", param: "1m" }, ...INTERVAL_OPTIONS_BASE];
+function getIntervalOptions(): { value: number; label: string; param: string }[] {
+  return INTERVAL_OPTIONS_BASE;
 }
 
-function getStoredGroupMinutes(isAdmin: boolean): number {
+function isValidStoredGroupMinutes(n: number): boolean {
+  if (!Number.isFinite(n)) return false;
+  if (isAggFastGroupMinutes(n)) return true;
+  return getIntervalOptions().some((o) => o.value === n);
+}
+
+function getStoredGroupMinutes(): number {
   if (typeof window === "undefined") return DEFAULT_GROUP_MINUTES_FIRST_LOAD;
   try {
+    const aggRaw = window.localStorage.getItem(KLINE_AGG_SERIES_KEY);
+    if (aggRaw === "renko") {
+      const v = GROUP_MINUTES_CACHE2_BASE + 0 * CACHE2_TICK_KIND_STRIDE;
+      window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(v));
+      window.localStorage.removeItem(KLINE_AGG_SERIES_KEY);
+      return v;
+    }
+    if (aggRaw === "range") {
+      const v = GROUP_MINUTES_CACHE2_BASE + 1 * CACHE2_TICK_KIND_STRIDE;
+      window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(v));
+      window.localStorage.removeItem(KLINE_AGG_SERIES_KEY);
+      return v;
+    }
+    if (aggRaw === "kagi") {
+      const v = GROUP_MINUTES_CACHE2_BASE + 2 * CACHE2_TICK_KIND_STRIDE;
+      window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(v));
+      window.localStorage.removeItem(KLINE_AGG_SERIES_KEY);
+      return v;
+    }
     const raw = window.localStorage.getItem(KLINE_GROUP_MINUTES_KEY);
     const n = Number(raw);
-    const opts = getIntervalOptions(isAdmin);
-    if (Number.isFinite(n) && opts.some((o) => o.value === n)) return n;
+    const normalized = normalizeAggGroupMinutes(n);
+    if (Number.isFinite(n) && normalized !== n) {
+      try {
+        window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(normalized));
+      } catch {
+        /* ignore */
+      }
+    }
+    if (isValidStoredGroupMinutes(normalized)) return normalized;
   } catch {
     /* ignore */
   }
@@ -124,6 +176,9 @@ const VOLUME_AT_PRICE_PERCENT_DEFAULT = 100;
 
 /** Config do cache VAP por intervalo do gráfico: param (API), maxCandles, label para exibição, minutos do candle do cache. */
 export function getVapCacheConfig(groupMinutes: number): { param: string; maxCandles: number; paramLabel: string; paramMinutes: number } {
+  if (groupMinutesToAggKind(groupMinutes) != null) {
+    return { param: "1m", maxCandles: 750, paramLabel: "1m", paramMinutes: 1 };
+  }
   const map: Record<number, { param: string; maxCandles: number; paramLabel: string; paramMinutes: number }> = {
     1: { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 },
     3: { param: "1m", maxCandles: 450, paramLabel: "1m", paramMinutes: 1 },
@@ -254,23 +309,42 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const t = getCryptoT(lang).sistema.klines;
   const tk = t as Record<string, string>;
   const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
-  const { setHeaderData } = useChartHeader();
+  const { setHeaderData, setIntervalPicker } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { userRegressions, replaceUserRegressionsFromLayout } = useKlinesRegressions();
   const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
-  const intervalOptions = getIntervalOptions(isAdmin);
+  const intervalOptions = useMemo(() => getIntervalOptions(), []);
+  const aggIntervalPicker = useMemo(() => {
+    const tickSection = (kindIdx: 0 | 1 | 2 | 3, ck: "renko" | "range" | "kagi" | "renko2x") =>
+      RENKO_CACHE_TICK_INTERVALS.map((ticks, i) => ({
+        value: GROUP_MINUTES_CACHE2_BASE + kindIdx * CACHE2_TICK_KIND_STRIDE + i,
+        label: formatCache2IntervalShortLabel(ck, `${ticks}ticks`),
+      }));
+    return {
+      renko: tickSection(0, "renko"),
+      range: tickSection(1, "range"),
+      kagi: tickSection(2, "kagi"),
+      renko2x: tickSection(3, "renko2x"),
+      trades500: TRADE_CACHE_TRADE_INTERVALS.map((tr, i) => ({
+        value: GROUP_MINUTES_CACHE2_TRADES_BASE + i,
+        label: formatCache2IntervalShortLabel("trades500", `${tr}trades`),
+      })),
+    };
+  }, []);
   const [groupMinutes, setGroupMinutes] = useState(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
   /** Incrementa ao aplicar layout (carregar da API) para forçar gráfico a receber strategyCandleOverlays. */
   const [layoutAppliedTick, setLayoutAppliedTick] = useState(0);
   /** Só true após restaurar do localStorage no cliente; evita fetch com 1M antes de aplicar o timeframe salvo. */
   const [timeframeRestored, setTimeframeRestored] = useState(false);
   useLayoutEffect(() => {
-    const stored = getStoredGroupMinutes(isAdmin);
+    const stored = getStoredGroupMinutes();
     setGroupMinutes(stored);
     setTimeframeRestored(true);
-  }, [isAdmin]);
+  }, []);
   const [klines, setKlines] = useState<Kline[]>([]);
+  /** Par a que `klines` correspondem (só após GET aplicar); evita Renko/WS usar velas do par anterior ao trocar moeda. */
+  const [klinesDataSymbol, setKlinesDataSymbol] = useState<string | null>(null);
   const [vapCacheKlines, setVapCacheKlines] = useState<Kline[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -282,6 +356,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [, setStatusTick] = useState(0);
   /** Fuso do utilizador (API aplica a openTime/closeTime); usado para contar fechamento do candle em UTC. */
   const [timezoneOffset, setTimezoneOffset] = useState(0);
+  const timezoneOffsetRef = useRef(0);
+  timezoneOffsetRef.current = timezoneOffset;
+  /** Cache GET agg-fast (Renko/Range/Kagi); barras ao vivo fundem-se em memória sem POST. */
+  const serverAggKlinesRef = useRef<Kline[]>([]);
+  const liveAggRowsByOpenTimeRef = useRef<Map<number, AggFastBarRowPayload>>(new Map());
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
@@ -291,6 +370,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const lastSpotPersistAtRef = useRef(0);
   const symbolRef = useRef(symbol);
   const lastKlinesFetchSymbolRef = useRef<string | null>(null);
+  const fetchKlinesRef = useRef<() => Promise<void>>(async () => {});
   symbolRef.current = symbol;
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
@@ -299,9 +379,21 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [chartReportedSizePercent, setChartReportedSizePercent] = useState(100);
   const [currentLayoutLabel, setCurrentLayoutLabel] = useState<string | null>(null);
   const [heikinAshiEnabled, setHeikinAshiEnabled] = useState(false);
+  const aggSeriesKind = useMemo(() => groupMinutesToAggKind(groupMinutes) ?? "ohlc", [groupMinutes]);
   useLayoutEffect(() => {
     setHeikinAshiEnabled(getStoredHeikinAshi());
   }, []);
+
+  useEffect(() => {
+    if (isAggFastGroupMinutes(groupMinutes) && heikinAshiEnabled) {
+      setHeikinAshiEnabled(false);
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_HEIKIN_ASHI_KEY, "0");
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [groupMinutes, heikinAshiEnabled]);
 
   const [volumeAtPriceEnabled, setVolumeAtPriceEnabled] = useState(false);
   const [volumeAtPriceBuckets, setVolumeAtPriceBuckets] = useState(20);
@@ -423,6 +515,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   }, [groupMinutes, symbol, klines]);
 
   const klinesWithSpot = useMemo((): Kline[] => {
+    // Renko / Range / Kagi: não substituir OHLC pelo spot — evita distorcer o que veio do modelo (brick/amplitude). No mercado real podem existir gaps; aqui só preservamos a série agregada tal como calculada.
+    if (aggSeriesKind !== "ohlc") return klines;
     if (spotWsPrice == null || klines.length === 0) return klines;
     const p = Number(spotWsPrice);
     if (!Number.isFinite(p)) return klines;
@@ -440,10 +534,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     next0[3] = String(lo);
     out[0] = next0;
     return out as unknown as Kline[];
-  }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol]);
+  }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol, aggSeriesKind]);
 
   const heikinAshiKlines = useMemo(() => computeHeikinAshi(klinesWithSpot), [klinesWithSpot]);
-  const baseForIndicators = heikinAshiEnabled ? heikinAshiKlines : klinesWithSpot;
+  const baseForIndicators = heikinAshiEnabled && aggSeriesKind === "ohlc" ? heikinAshiKlines : klinesWithSpot;
 
   const visibleUserIndicators = useMemo(
     () =>
@@ -465,13 +559,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const ind = userIndicators[u];
       if (ind.type === "Volume") continue;
       const { data: dataForInd, valueIndex } = getDataAndValueIndexForIndicator(data, ind.fieldKey, userIndicators);
-      const groupMinutesSafe = Math.max(1, Math.floor(Number(groupMinutes)) || 1);
+      const ma2ChartMinutes = chartMinutesForTimeWindowMa2(groupMinutes);
       const ma2Unit =
         ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
       const period =
         isTimeWindowMa2Type(ind.type)
           ? wma2RequestedPeriodCandles(
-              groupMinutesSafe,
+              ma2ChartMinutes,
               ma2Unit,
               ind.wma2TimeValue ?? defaultMa2TimeValueForUnit(ma2Unit)
             )
@@ -652,6 +746,41 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return out as Kline[];
   }, [baseForIndicators, userIndicators, groupMinutes]);
 
+  /**
+   * Renko/Range/Kagi: o último tijolo **fechado** não deve ser alterado pelo spot (integridade OHLC).
+   * Para o gráfico ao vivo, antecede-se uma linha só de exibição: open = close do último fechado, close = spot.
+   * High/low = só entre open e preço atual (não usar spotWsHigh/Low: são extremos de sessão e geram pavio falso no tijolo “em formação”).
+   * openTime = último openTime + 1 ms (sempre mais recente na ordenação). Tabela/indicadores/estratégias continuam a usar `extendedKlines`.
+   */
+  const chartKlines = useMemo((): Kline[] => {
+    if (!isAggFastGroupMinutes(groupMinutes) || spotWsPrice == null || extendedKlines.length === 0) return extendedKlines;
+    const p = Number(spotWsPrice);
+    if (!Number.isFinite(p)) return extendedKlines;
+    const newest = extendedKlines[0] as (string | number | null)[];
+    const baseOt = Number(newest[0]);
+    const lastClosedClose = Number(newest[4]);
+    if (!Number.isFinite(baseOt) || !Number.isFinite(lastClosedClose)) return extendedKlines;
+    const o = lastClosedClose;
+    const hi = Math.max(o, p);
+    const lo = Math.min(o, p);
+    const displayOt = baseOt + 1;
+    const forming = newest.slice() as (string | number | null)[];
+    for (let i = 12; i < forming.length; i++) forming[i] = null;
+    forming[0] = displayOt;
+    forming[1] = String(o);
+    forming[2] = String(hi);
+    forming[3] = String(lo);
+    forming[4] = spotWsPrice;
+    forming[5] = "0";
+    forming[6] = displayOt;
+    forming[7] = "0";
+    forming[8] = 0;
+    forming[9] = "0";
+    forming[10] = "0";
+    forming[11] = 0;
+    return [forming as Kline, ...extendedKlines];
+  }, [groupMinutes, spotWsPrice, extendedKlines]);
+
   /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
     let col = 12;
@@ -740,6 +869,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       signalPosition: s.signalPosition ?? "below",
     }));
   }, [visibleStrategies, strategyResults, layoutAppliedTick]);
+
+  /** Alinha `results` ao eixo do gráfico quando há candle sintético “em formação” em `chartKlines`. */
+  const strategyCandleOverlaysForChart = useMemo(() => {
+    if (chartKlines.length <= extendedKlines.length) return strategyCandleOverlays;
+    return strategyCandleOverlays.map((o) => ({
+      ...o,
+      results: [false, ...o.results],
+    }));
+  }, [chartKlines, extendedKlines.length, strategyCandleOverlays]);
 
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   type IchimokuPart = "tenkan" | "kijun" | "spanA" | "spanB" | "chikou";
@@ -842,48 +980,125 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   const fetchKlines = async () => {
     const requestedSymbol = symbolRef.current;
+    const gmNorm = normalizeAggGroupMinutes(groupMinutes);
+    const cache2 = groupMinutesToCache2Params(gmNorm);
     try {
       setError(null);
       setNeedsRefresh(false);
-      const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
-      const res = await fetch(
-        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.details || err.error || `HTTP ${res.status}`);
-      }
-      const body = await res.json();
-      const list = Array.isArray(body) ? body : (body.klines ?? []);
-      if (symbolRef.current !== requestedSymbol) return;
-      lastKlinesFetchSymbolRef.current = requestedSymbol;
-      setKlines(list);
-      if (list.length > 0) {
-        const row0 = list[0] as (string | number)[];
-        const h = Number(row0[2]);
-        const l = Number(row0[3]);
-        if (Number.isFinite(h) && Number.isFinite(l)) {
-          setSpotWsHigh(h);
-          setSpotWsLow(l);
+      if (cache2 != null) {
+        const { chartKind, interval } = cache2;
+        const res = await fetch(
+          `${API_BASE}/binance/kline-cache2-bars?symbol=${encodeURIComponent(requestedSymbol)}&chartKind=${encodeURIComponent(chartKind)}&interval=${encodeURIComponent(interval)}&limit=1000`,
+          { cache: "no-store", credentials: "include" }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as { error?: string }).error || `HTTP ${res.status}`);
         }
+        const body = await res.json();
+        const list = Array.isArray(body.klines) ? body.klines : [];
+        if (symbolRef.current !== requestedSymbol) return;
+        lastKlinesFetchSymbolRef.current = requestedSymbol;
+        const tzForMerge =
+          typeof body.timezoneOffset === "number" ? Math.max(-12, Math.min(12, body.timezoneOffset)) : timezoneOffset;
+        serverAggKlinesRef.current = list as Kline[];
+        const baseLive = isAggCache2BaseTierForLiveMerge(groupMinutes);
+        if (!baseLive) {
+          liveAggRowsByOpenTimeRef.current.clear();
+          setKlines(list as Kline[]);
+        } else {
+          setKlines(mergeAggFastServerAndLive(list, liveAggRowsByOpenTimeRef.current.values(), tzForMerge) as Kline[]);
+        }
+        setKlinesDataSymbol(requestedSymbol);
+        if (list.length > 0) {
+          const row0 = list[0] as (string | number)[];
+          const h = Number(row0[2]);
+          const l = Number(row0[3]);
+          if (Number.isFinite(h) && Number.isFinite(l)) {
+            setSpotWsHigh(h);
+            setSpotWsLow(l);
+          }
+        }
+        setNeedsRefresh(false);
+        if (typeof body.timezoneOffset === "number") {
+          setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
+        }
+        const lastUtc = list.length > 0 && list[0][0] != null ? Number(list[0][0]) : null;
+        setLastUpdate(lastUtc != null ? new Date(lastUtc) : new Date());
+      } else {
+        const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
+        const res = await fetch(
+          `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.details || err.error || `HTTP ${res.status}`);
+        }
+        const body = await res.json();
+        const list = Array.isArray(body) ? body : (body.klines ?? []);
+        if (symbolRef.current !== requestedSymbol) return;
+        lastKlinesFetchSymbolRef.current = requestedSymbol;
+        serverAggKlinesRef.current = [];
+        liveAggRowsByOpenTimeRef.current.clear();
+        setKlines(list);
+        setKlinesDataSymbol(requestedSymbol);
+        if (list.length > 0) {
+          const row0 = list[0] as (string | number)[];
+          const h = Number(row0[2]);
+          const l = Number(row0[3]);
+          if (Number.isFinite(h) && Number.isFinite(l)) {
+            setSpotWsHigh(h);
+            setSpotWsLow(l);
+          }
+        }
+        const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
+        setNeedsRefresh(refreshFlag);
+        if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
+          setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
+        }
+        const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
+        setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
       }
-      const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
-      setNeedsRefresh(refreshFlag);
-      if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
-        setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
-      }
-      // Última atualização sempre da BinanceKlineFast (1m), vinda da API (lastUpdateUtc)
-      const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
-      setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
     } catch (e) {
       setError(e instanceof Error ? e.message : t.errorLoad);
       setKlines([]);
+      setKlinesDataSymbol(null);
+      serverAggKlinesRef.current = [];
+      liveAggRowsByOpenTimeRef.current.clear();
       setNeedsRefresh(false);
     } finally {
       setLoading(false);
     }
   };
+
+  fetchKlinesRef.current = fetchKlines;
+
+  const aggWsKind = groupMinutesToAggKind(groupMinutes);
+  useAggFastTradeLive({
+    enabled: aggWsKind != null && timeframeRestored && isAggCache2BaseTierForLiveMerge(groupMinutes),
+    aggKind: (aggWsKind ?? "renko") as AggFastWsKind,
+    symbol,
+    klinesSourceSymbol: klinesDataSymbol,
+    timezoneOffsetHours: timezoneOffset,
+    klines,
+    onLiveFlush: (rows) => {
+      if (groupMinutesToAggKind(groupMinutes) == null) return;
+      for (const r of rows) liveAggRowsByOpenTimeRef.current.set(r.openTime, r);
+      setKlines(
+        mergeAggFastServerAndLive(serverAggKlinesRef.current, liveAggRowsByOpenTimeRef.current.values(), timezoneOffsetRef.current) as Kline[]
+      );
+    },
+  });
+
+  useVpsFlushNotify({
+    enabled: aggWsKind != null && timeframeRestored && VPS_FLUSH_WS_URL.length > 0,
+    wsUrl: VPS_FLUSH_WS_URL || undefined,
+    symbol,
+    onFlush: () => {
+      void fetchKlinesRef.current();
+    },
+  });
 
   const fetchSpot = async () => {
     try {
@@ -903,6 +1118,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     if (!timeframeRestored) return;
     setLoading(true);
     setKlines([]);
+    setKlinesDataSymbol(null);
+    serverAggKlinesRef.current = [];
+    liveAggRowsByOpenTimeRef.current.clear();
     setSpot({ currentClose: null, prevDayClose: null });
     setSpotWsPrice(null);
     setSpotWsHigh(null);
@@ -1033,7 +1251,22 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [groupMinutes, symbol]);
 
-  const intervalLabel = intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1M";
+  const intervalLabel = useMemo(() => {
+    const p = groupMinutesToCache2Params(normalizeAggGroupMinutes(groupMinutes));
+    if (p) return formatCache2IntervalShortLabel(p.chartKind, p.interval);
+    return intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1M";
+  }, [groupMinutes, intervalOptions]);
+
+  useEffect(() => {
+    setIntervalPicker({
+      groupMinutes,
+      intervalLabel,
+      onIntervalChange: handleIntervalChange,
+      intervalOptions,
+      aggIntervalPicker,
+    });
+    return () => setIntervalPicker(null);
+  }, [groupMinutes, intervalLabel, handleIntervalChange, intervalOptions, aggIntervalPicker, setIntervalPicker]);
 
   const last24h = (() => {
     if (extendedKlines.length === 0) return null;
@@ -1163,7 +1396,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           <KlinesChart
             isAdmin={isAdmin}
             isFreeUser={isFreeUser}
-            klines={extendedKlines}
+            klines={chartKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
             onPriceFormatChange={(d, a) => {
               setPriceFormatDecimals(d);
@@ -1175,6 +1408,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             layoutAppliedTick={layoutAppliedTick}
             intervalLabel={intervalLabel}
             intervalOptions={intervalOptions}
+            aggIntervalPicker={aggIntervalPicker}
             onIntervalChange={handleIntervalChange}
             width={chartWidthToUse}
             onChartDimensionsChange={onChartDimensionsChange}
@@ -1190,6 +1424,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 /* ignore */
               }
             }}
+            aggSeriesKind={aggSeriesKind}
             volumeAtPriceEnabled={volumeAtPriceEnabled}
             volumeAtPriceKlines={volumeAtPriceEnabled ? vapCacheKlines : []}
             volumeAtPriceBuckets={volumeAtPriceBuckets}
@@ -1350,7 +1585,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               cmfLimitLineStyle: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineStyle ?? "dotted") : undefined,
             };
             })}
-            strategyCandleOverlays={strategyCandleOverlays}
+            strategyCandleOverlays={strategyCandleOverlaysForChart}
             getLayoutExtraConfig={() => ({
               userIndicators,
               userRegressions,

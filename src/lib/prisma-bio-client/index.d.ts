@@ -89,6 +89,31 @@ export type BinanceKline = $Result.DefaultSelection<Prisma.$BinanceKlinePayload>
  */
 export type BinanceKlineFast = $Result.DefaultSelection<Prisma.$BinanceKlineFastPayload>
 /**
+ * Model BinanceRenkoFast
+ * 
+ */
+export type BinanceRenkoFast = $Result.DefaultSelection<Prisma.$BinanceRenkoFastPayload>
+/**
+ * Model BinanceRangeFast
+ * 
+ */
+export type BinanceRangeFast = $Result.DefaultSelection<Prisma.$BinanceRangeFastPayload>
+/**
+ * Model BinanceKagiFast
+ * 
+ */
+export type BinanceKagiFast = $Result.DefaultSelection<Prisma.$BinanceKagiFastPayload>
+/**
+ * Model BinanceRenko2xFast
+ * 
+ */
+export type BinanceRenko2xFast = $Result.DefaultSelection<Prisma.$BinanceRenko2xFastPayload>
+/**
+ * Model BinanceTradeCountFast
+ * 
+ */
+export type BinanceTradeCountFast = $Result.DefaultSelection<Prisma.$BinanceTradeCountFastPayload>
+/**
  * Model BinanceKlineMonth
  * 
  */
@@ -99,10 +124,20 @@ export type BinanceKlineMonth = $Result.DefaultSelection<Prisma.$BinanceKlineMon
  */
 export type BinanceKlineCache = $Result.DefaultSelection<Prisma.$BinanceKlineCachePayload>
 /**
+ * Model BinanceKlineCache2
+ * 
+ */
+export type BinanceKlineCache2 = $Result.DefaultSelection<Prisma.$BinanceKlineCache2Payload>
+/**
  * Model BinanceKlineGap
  * 
  */
 export type BinanceKlineGap = $Result.DefaultSelection<Prisma.$BinanceKlineGapPayload>
+/**
+ * Model AppConfig
+ * 
+ */
+export type AppConfig = $Result.DefaultSelection<Prisma.$AppConfigPayload>
 /**
  * Model KlineSymbol
  * 
@@ -502,6 +537,56 @@ export class PrismaClient<
   get binanceKlineFast(): Prisma.BinanceKlineFastDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.binanceRenkoFast`: Exposes CRUD operations for the **BinanceRenkoFast** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceRenkoFasts
+    * const binanceRenkoFasts = await prisma.binanceRenkoFast.findMany()
+    * ```
+    */
+  get binanceRenkoFast(): Prisma.BinanceRenkoFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceRangeFast`: Exposes CRUD operations for the **BinanceRangeFast** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceRangeFasts
+    * const binanceRangeFasts = await prisma.binanceRangeFast.findMany()
+    * ```
+    */
+  get binanceRangeFast(): Prisma.BinanceRangeFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceKagiFast`: Exposes CRUD operations for the **BinanceKagiFast** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceKagiFasts
+    * const binanceKagiFasts = await prisma.binanceKagiFast.findMany()
+    * ```
+    */
+  get binanceKagiFast(): Prisma.BinanceKagiFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceRenko2xFast`: Exposes CRUD operations for the **BinanceRenko2xFast** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceRenko2xFasts
+    * const binanceRenko2xFasts = await prisma.binanceRenko2xFast.findMany()
+    * ```
+    */
+  get binanceRenko2xFast(): Prisma.BinanceRenko2xFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.binanceTradeCountFast`: Exposes CRUD operations for the **BinanceTradeCountFast** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceTradeCountFasts
+    * const binanceTradeCountFasts = await prisma.binanceTradeCountFast.findMany()
+    * ```
+    */
+  get binanceTradeCountFast(): Prisma.BinanceTradeCountFastDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.binanceKlineMonth`: Exposes CRUD operations for the **BinanceKlineMonth** model.
     * Example usage:
     * ```ts
@@ -522,6 +607,16 @@ export class PrismaClient<
   get binanceKlineCache(): Prisma.BinanceKlineCacheDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.binanceKlineCache2`: Exposes CRUD operations for the **BinanceKlineCache2** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BinanceKlineCache2s
+    * const binanceKlineCache2s = await prisma.binanceKlineCache2.findMany()
+    * ```
+    */
+  get binanceKlineCache2(): Prisma.BinanceKlineCache2Delegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.binanceKlineGap`: Exposes CRUD operations for the **BinanceKlineGap** model.
     * Example usage:
     * ```ts
@@ -530,6 +625,16 @@ export class PrismaClient<
     * ```
     */
   get binanceKlineGap(): Prisma.BinanceKlineGapDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.appConfig`: Exposes CRUD operations for the **AppConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AppConfigs
+    * const appConfigs = await prisma.appConfig.findMany()
+    * ```
+    */
+  get appConfig(): Prisma.AppConfigDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.klineSymbol`: Exposes CRUD operations for the **KlineSymbol** model.
@@ -996,9 +1101,16 @@ export namespace Prisma {
     PagarMeOrder: 'PagarMeOrder',
     BinanceKline: 'BinanceKline',
     BinanceKlineFast: 'BinanceKlineFast',
+    BinanceRenkoFast: 'BinanceRenkoFast',
+    BinanceRangeFast: 'BinanceRangeFast',
+    BinanceKagiFast: 'BinanceKagiFast',
+    BinanceRenko2xFast: 'BinanceRenko2xFast',
+    BinanceTradeCountFast: 'BinanceTradeCountFast',
     BinanceKlineMonth: 'BinanceKlineMonth',
     BinanceKlineCache: 'BinanceKlineCache',
+    BinanceKlineCache2: 'BinanceKlineCache2',
     BinanceKlineGap: 'BinanceKlineGap',
+    AppConfig: 'AppConfig',
     KlineSymbol: 'KlineSymbol'
   };
 
@@ -1018,7 +1130,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineGap" | "klineSymbol"
+      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "klineSymbol"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2132,6 +2244,376 @@ export namespace Prisma {
           }
         }
       }
+      BinanceRenkoFast: {
+        payload: Prisma.$BinanceRenkoFastPayload<ExtArgs>
+        fields: Prisma.BinanceRenkoFastFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceRenkoFastFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceRenkoFastFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceRenkoFastFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceRenkoFastFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceRenkoFastFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceRenkoFastCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceRenkoFastCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceRenkoFastCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceRenkoFastDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          update: {
+            args: Prisma.BinanceRenkoFastUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceRenkoFastDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceRenkoFastUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceRenkoFastUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceRenkoFastUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenkoFastPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceRenkoFastAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceRenkoFast>
+          }
+          groupBy: {
+            args: Prisma.BinanceRenkoFastGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRenkoFastGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceRenkoFastCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRenkoFastCountAggregateOutputType> | number
+          }
+        }
+      }
+      BinanceRangeFast: {
+        payload: Prisma.$BinanceRangeFastPayload<ExtArgs>
+        fields: Prisma.BinanceRangeFastFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceRangeFastFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceRangeFastFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceRangeFastFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceRangeFastFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceRangeFastFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceRangeFastCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceRangeFastCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceRangeFastCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceRangeFastDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          update: {
+            args: Prisma.BinanceRangeFastUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceRangeFastDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceRangeFastUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceRangeFastUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceRangeFastUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRangeFastPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceRangeFastAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceRangeFast>
+          }
+          groupBy: {
+            args: Prisma.BinanceRangeFastGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRangeFastGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceRangeFastCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRangeFastCountAggregateOutputType> | number
+          }
+        }
+      }
+      BinanceKagiFast: {
+        payload: Prisma.$BinanceKagiFastPayload<ExtArgs>
+        fields: Prisma.BinanceKagiFastFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceKagiFastFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceKagiFastFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceKagiFastFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceKagiFastFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceKagiFastFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceKagiFastCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceKagiFastCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceKagiFastCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceKagiFastDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          update: {
+            args: Prisma.BinanceKagiFastUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceKagiFastDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceKagiFastUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceKagiFastUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceKagiFastUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKagiFastPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceKagiFastAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceKagiFast>
+          }
+          groupBy: {
+            args: Prisma.BinanceKagiFastGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKagiFastGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceKagiFastCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKagiFastCountAggregateOutputType> | number
+          }
+        }
+      }
+      BinanceRenko2xFast: {
+        payload: Prisma.$BinanceRenko2xFastPayload<ExtArgs>
+        fields: Prisma.BinanceRenko2xFastFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceRenko2xFastFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceRenko2xFastFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceRenko2xFastFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceRenko2xFastFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceRenko2xFastFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceRenko2xFastCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceRenko2xFastCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceRenko2xFastCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceRenko2xFastDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          update: {
+            args: Prisma.BinanceRenko2xFastUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceRenko2xFastDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceRenko2xFastUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceRenko2xFastUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceRenko2xFastUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceRenko2xFastPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceRenko2xFastAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceRenko2xFast>
+          }
+          groupBy: {
+            args: Prisma.BinanceRenko2xFastGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRenko2xFastGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceRenko2xFastCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceRenko2xFastCountAggregateOutputType> | number
+          }
+        }
+      }
+      BinanceTradeCountFast: {
+        payload: Prisma.$BinanceTradeCountFastPayload<ExtArgs>
+        fields: Prisma.BinanceTradeCountFastFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceTradeCountFastFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceTradeCountFastFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          findFirst: {
+            args: Prisma.BinanceTradeCountFastFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceTradeCountFastFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          findMany: {
+            args: Prisma.BinanceTradeCountFastFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>[]
+          }
+          create: {
+            args: Prisma.BinanceTradeCountFastCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          createMany: {
+            args: Prisma.BinanceTradeCountFastCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceTradeCountFastCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>[]
+          }
+          delete: {
+            args: Prisma.BinanceTradeCountFastDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          update: {
+            args: Prisma.BinanceTradeCountFastUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceTradeCountFastDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceTradeCountFastUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceTradeCountFastUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceTradeCountFastUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceTradeCountFastPayload>
+          }
+          aggregate: {
+            args: Prisma.BinanceTradeCountFastAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceTradeCountFast>
+          }
+          groupBy: {
+            args: Prisma.BinanceTradeCountFastGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceTradeCountFastGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceTradeCountFastCountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceTradeCountFastCountAggregateOutputType> | number
+          }
+        }
+      }
       BinanceKlineMonth: {
         payload: Prisma.$BinanceKlineMonthPayload<ExtArgs>
         fields: Prisma.BinanceKlineMonthFieldRefs
@@ -2280,6 +2762,80 @@ export namespace Prisma {
           }
         }
       }
+      BinanceKlineCache2: {
+        payload: Prisma.$BinanceKlineCache2Payload<ExtArgs>
+        fields: Prisma.BinanceKlineCache2FieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BinanceKlineCache2FindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BinanceKlineCache2FindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          findFirst: {
+            args: Prisma.BinanceKlineCache2FindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BinanceKlineCache2FindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          findMany: {
+            args: Prisma.BinanceKlineCache2FindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>[]
+          }
+          create: {
+            args: Prisma.BinanceKlineCache2CreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          createMany: {
+            args: Prisma.BinanceKlineCache2CreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BinanceKlineCache2CreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>[]
+          }
+          delete: {
+            args: Prisma.BinanceKlineCache2DeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          update: {
+            args: Prisma.BinanceKlineCache2UpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          deleteMany: {
+            args: Prisma.BinanceKlineCache2DeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BinanceKlineCache2UpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BinanceKlineCache2UpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>[]
+          }
+          upsert: {
+            args: Prisma.BinanceKlineCache2UpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BinanceKlineCache2Payload>
+          }
+          aggregate: {
+            args: Prisma.BinanceKlineCache2AggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBinanceKlineCache2>
+          }
+          groupBy: {
+            args: Prisma.BinanceKlineCache2GroupByArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineCache2GroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BinanceKlineCache2CountArgs<ExtArgs>
+            result: $Utils.Optional<BinanceKlineCache2CountAggregateOutputType> | number
+          }
+        }
+      }
       BinanceKlineGap: {
         payload: Prisma.$BinanceKlineGapPayload<ExtArgs>
         fields: Prisma.BinanceKlineGapFieldRefs
@@ -2351,6 +2907,80 @@ export namespace Prisma {
           count: {
             args: Prisma.BinanceKlineGapCountArgs<ExtArgs>
             result: $Utils.Optional<BinanceKlineGapCountAggregateOutputType> | number
+          }
+        }
+      }
+      AppConfig: {
+        payload: Prisma.$AppConfigPayload<ExtArgs>
+        fields: Prisma.AppConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AppConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AppConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.AppConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AppConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          findMany: {
+            args: Prisma.AppConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
+          }
+          create: {
+            args: Prisma.AppConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          createMany: {
+            args: Prisma.AppConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AppConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.AppConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          update: {
+            args: Prisma.AppConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.AppConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AppConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AppConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.AppConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AppConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.AppConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAppConfig>
+          }
+          groupBy: {
+            args: Prisma.AppConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AppConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AppConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<AppConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -2539,9 +3169,16 @@ export namespace Prisma {
     pagarMeOrder?: PagarMeOrderOmit
     binanceKline?: BinanceKlineOmit
     binanceKlineFast?: BinanceKlineFastOmit
+    binanceRenkoFast?: BinanceRenkoFastOmit
+    binanceRangeFast?: BinanceRangeFastOmit
+    binanceKagiFast?: BinanceKagiFastOmit
+    binanceRenko2xFast?: BinanceRenko2xFastOmit
+    binanceTradeCountFast?: BinanceTradeCountFastOmit
     binanceKlineMonth?: BinanceKlineMonthOmit
     binanceKlineCache?: BinanceKlineCacheOmit
+    binanceKlineCache2?: BinanceKlineCache2Omit
     binanceKlineGap?: BinanceKlineGapOmit
+    appConfig?: AppConfigOmit
     klineSymbol?: KlineSymbolOmit
   }
 
@@ -20324,6 +20961,6393 @@ export namespace Prisma {
 
 
   /**
+   * Model BinanceRenkoFast
+   */
+
+  export type AggregateBinanceRenkoFast = {
+    _count: BinanceRenkoFastCountAggregateOutputType | null
+    _avg: BinanceRenkoFastAvgAggregateOutputType | null
+    _sum: BinanceRenkoFastSumAggregateOutputType | null
+    _min: BinanceRenkoFastMinAggregateOutputType | null
+    _max: BinanceRenkoFastMaxAggregateOutputType | null
+  }
+
+  export type BinanceRenkoFastAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRenkoFastSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRenkoFastMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRenkoFastMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRenkoFastCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    k2Incl5ticks: number
+    k2Incl15ticks: number
+    k2Incl25ticks: number
+    k2Incl50ticks: number
+    k2Incl100ticks: number
+    k2Incl150ticks: number
+    k2Incl200ticks: number
+    _all: number
+  }
+
+
+  export type BinanceRenkoFastAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRenkoFastSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRenkoFastMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRenkoFastMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRenkoFastCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+    _all?: true
+  }
+
+  export type BinanceRenkoFastAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRenkoFast to aggregate.
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenkoFasts to fetch.
+     */
+    orderBy?: BinanceRenkoFastOrderByWithRelationInput | BinanceRenkoFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceRenkoFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenkoFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenkoFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceRenkoFasts
+    **/
+    _count?: true | BinanceRenkoFastCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceRenkoFastAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceRenkoFastSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceRenkoFastMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceRenkoFastMaxAggregateInputType
+  }
+
+  export type GetBinanceRenkoFastAggregateType<T extends BinanceRenkoFastAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceRenkoFast]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceRenkoFast[P]>
+      : GetScalarType<T[P], AggregateBinanceRenkoFast[P]>
+  }
+
+
+
+
+  export type BinanceRenkoFastGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceRenkoFastWhereInput
+    orderBy?: BinanceRenkoFastOrderByWithAggregationInput | BinanceRenkoFastOrderByWithAggregationInput[]
+    by: BinanceRenkoFastScalarFieldEnum[] | BinanceRenkoFastScalarFieldEnum
+    having?: BinanceRenkoFastScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceRenkoFastCountAggregateInputType | true
+    _avg?: BinanceRenkoFastAvgAggregateInputType
+    _sum?: BinanceRenkoFastSumAggregateInputType
+    _min?: BinanceRenkoFastMinAggregateInputType
+    _max?: BinanceRenkoFastMaxAggregateInputType
+  }
+
+  export type BinanceRenkoFastGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    k2Incl5ticks: boolean
+    k2Incl15ticks: boolean
+    k2Incl25ticks: boolean
+    k2Incl50ticks: boolean
+    k2Incl100ticks: boolean
+    k2Incl150ticks: boolean
+    k2Incl200ticks: boolean
+    _count: BinanceRenkoFastCountAggregateOutputType | null
+    _avg: BinanceRenkoFastAvgAggregateOutputType | null
+    _sum: BinanceRenkoFastSumAggregateOutputType | null
+    _min: BinanceRenkoFastMinAggregateOutputType | null
+    _max: BinanceRenkoFastMaxAggregateOutputType | null
+  }
+
+  type GetBinanceRenkoFastGroupByPayload<T extends BinanceRenkoFastGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceRenkoFastGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceRenkoFastGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceRenkoFastGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceRenkoFastGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceRenkoFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenkoFast"]>
+
+  export type BinanceRenkoFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenkoFast"]>
+
+  export type BinanceRenkoFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenkoFast"]>
+
+  export type BinanceRenkoFastSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenkoFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume" | "k2Incl5ticks" | "k2Incl15ticks" | "k2Incl25ticks" | "k2Incl50ticks" | "k2Incl100ticks" | "k2Incl150ticks" | "k2Incl200ticks", ExtArgs["result"]["binanceRenkoFast"]>
+
+  export type $BinanceRenkoFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceRenkoFast"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+      /**
+       * * Renko 1× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+       */
+      k2Incl5ticks: boolean
+      k2Incl15ticks: boolean
+      k2Incl25ticks: boolean
+      k2Incl50ticks: boolean
+      k2Incl100ticks: boolean
+      k2Incl150ticks: boolean
+      k2Incl200ticks: boolean
+    }, ExtArgs["result"]["binanceRenkoFast"]>
+    composites: {}
+  }
+
+  type BinanceRenkoFastGetPayload<S extends boolean | null | undefined | BinanceRenkoFastDefaultArgs> = $Result.GetResult<Prisma.$BinanceRenkoFastPayload, S>
+
+  type BinanceRenkoFastCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceRenkoFastFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceRenkoFastCountAggregateInputType | true
+    }
+
+  export interface BinanceRenkoFastDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceRenkoFast'], meta: { name: 'BinanceRenkoFast' } }
+    /**
+     * Find zero or one BinanceRenkoFast that matches the filter.
+     * @param {BinanceRenkoFastFindUniqueArgs} args - Arguments to find a BinanceRenkoFast
+     * @example
+     * // Get one BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceRenkoFastFindUniqueArgs>(args: SelectSubset<T, BinanceRenkoFastFindUniqueArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceRenkoFast that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceRenkoFastFindUniqueOrThrowArgs} args - Arguments to find a BinanceRenkoFast
+     * @example
+     * // Get one BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceRenkoFastFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceRenkoFastFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRenkoFast that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastFindFirstArgs} args - Arguments to find a BinanceRenkoFast
+     * @example
+     * // Get one BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceRenkoFastFindFirstArgs>(args?: SelectSubset<T, BinanceRenkoFastFindFirstArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRenkoFast that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastFindFirstOrThrowArgs} args - Arguments to find a BinanceRenkoFast
+     * @example
+     * // Get one BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceRenkoFastFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceRenkoFastFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceRenkoFasts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceRenkoFasts
+     * const binanceRenkoFasts = await prisma.binanceRenkoFast.findMany()
+     * 
+     * // Get first 10 BinanceRenkoFasts
+     * const binanceRenkoFasts = await prisma.binanceRenkoFast.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceRenkoFastWithCorretoraOnly = await prisma.binanceRenkoFast.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceRenkoFastFindManyArgs>(args?: SelectSubset<T, BinanceRenkoFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceRenkoFast.
+     * @param {BinanceRenkoFastCreateArgs} args - Arguments to create a BinanceRenkoFast.
+     * @example
+     * // Create one BinanceRenkoFast
+     * const BinanceRenkoFast = await prisma.binanceRenkoFast.create({
+     *   data: {
+     *     // ... data to create a BinanceRenkoFast
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceRenkoFastCreateArgs>(args: SelectSubset<T, BinanceRenkoFastCreateArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceRenkoFasts.
+     * @param {BinanceRenkoFastCreateManyArgs} args - Arguments to create many BinanceRenkoFasts.
+     * @example
+     * // Create many BinanceRenkoFasts
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceRenkoFastCreateManyArgs>(args?: SelectSubset<T, BinanceRenkoFastCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceRenkoFasts and returns the data saved in the database.
+     * @param {BinanceRenkoFastCreateManyAndReturnArgs} args - Arguments to create many BinanceRenkoFasts.
+     * @example
+     * // Create many BinanceRenkoFasts
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceRenkoFasts and only return the `corretora`
+     * const binanceRenkoFastWithCorretoraOnly = await prisma.binanceRenkoFast.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceRenkoFastCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceRenkoFastCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceRenkoFast.
+     * @param {BinanceRenkoFastDeleteArgs} args - Arguments to delete one BinanceRenkoFast.
+     * @example
+     * // Delete one BinanceRenkoFast
+     * const BinanceRenkoFast = await prisma.binanceRenkoFast.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceRenkoFast
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceRenkoFastDeleteArgs>(args: SelectSubset<T, BinanceRenkoFastDeleteArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceRenkoFast.
+     * @param {BinanceRenkoFastUpdateArgs} args - Arguments to update one BinanceRenkoFast.
+     * @example
+     * // Update one BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceRenkoFastUpdateArgs>(args: SelectSubset<T, BinanceRenkoFastUpdateArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceRenkoFasts.
+     * @param {BinanceRenkoFastDeleteManyArgs} args - Arguments to filter BinanceRenkoFasts to delete.
+     * @example
+     * // Delete a few BinanceRenkoFasts
+     * const { count } = await prisma.binanceRenkoFast.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceRenkoFastDeleteManyArgs>(args?: SelectSubset<T, BinanceRenkoFastDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRenkoFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceRenkoFasts
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceRenkoFastUpdateManyArgs>(args: SelectSubset<T, BinanceRenkoFastUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRenkoFasts and returns the data updated in the database.
+     * @param {BinanceRenkoFastUpdateManyAndReturnArgs} args - Arguments to update many BinanceRenkoFasts.
+     * @example
+     * // Update many BinanceRenkoFasts
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceRenkoFasts and only return the `corretora`
+     * const binanceRenkoFastWithCorretoraOnly = await prisma.binanceRenkoFast.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceRenkoFastUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceRenkoFastUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceRenkoFast.
+     * @param {BinanceRenkoFastUpsertArgs} args - Arguments to update or create a BinanceRenkoFast.
+     * @example
+     * // Update or create a BinanceRenkoFast
+     * const binanceRenkoFast = await prisma.binanceRenkoFast.upsert({
+     *   create: {
+     *     // ... data to create a BinanceRenkoFast
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceRenkoFast we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceRenkoFastUpsertArgs>(args: SelectSubset<T, BinanceRenkoFastUpsertArgs<ExtArgs>>): Prisma__BinanceRenkoFastClient<$Result.GetResult<Prisma.$BinanceRenkoFastPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceRenkoFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastCountArgs} args - Arguments to filter BinanceRenkoFasts to count.
+     * @example
+     * // Count the number of BinanceRenkoFasts
+     * const count = await prisma.binanceRenkoFast.count({
+     *   where: {
+     *     // ... the filter for the BinanceRenkoFasts we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceRenkoFastCountArgs>(
+      args?: Subset<T, BinanceRenkoFastCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceRenkoFastCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceRenkoFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceRenkoFastAggregateArgs>(args: Subset<T, BinanceRenkoFastAggregateArgs>): Prisma.PrismaPromise<GetBinanceRenkoFastAggregateType<T>>
+
+    /**
+     * Group by BinanceRenkoFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenkoFastGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceRenkoFastGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceRenkoFastGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceRenkoFastGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceRenkoFastGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceRenkoFastGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceRenkoFast model
+   */
+  readonly fields: BinanceRenkoFastFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceRenkoFast.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceRenkoFastClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceRenkoFast model
+   */
+  interface BinanceRenkoFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceRenkoFast", 'String'>
+    readonly symbol: FieldRef<"BinanceRenkoFast", 'String'>
+    readonly interval: FieldRef<"BinanceRenkoFast", 'String'>
+    readonly openTime: FieldRef<"BinanceRenkoFast", 'BigInt'>
+    readonly open: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly high: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly low: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly close: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly volume: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceRenkoFast", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceRenkoFast", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceRenkoFast", 'Decimal'>
+    readonly k2Incl5ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl15ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl25ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl50ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl100ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl150ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+    readonly k2Incl200ticks: FieldRef<"BinanceRenkoFast", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceRenkoFast findUnique
+   */
+  export type BinanceRenkoFastFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenkoFast to fetch.
+     */
+    where: BinanceRenkoFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenkoFast findUniqueOrThrow
+   */
+  export type BinanceRenkoFastFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenkoFast to fetch.
+     */
+    where: BinanceRenkoFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenkoFast findFirst
+   */
+  export type BinanceRenkoFastFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenkoFast to fetch.
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenkoFasts to fetch.
+     */
+    orderBy?: BinanceRenkoFastOrderByWithRelationInput | BinanceRenkoFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRenkoFasts.
+     */
+    cursor?: BinanceRenkoFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenkoFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenkoFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRenkoFasts.
+     */
+    distinct?: BinanceRenkoFastScalarFieldEnum | BinanceRenkoFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenkoFast findFirstOrThrow
+   */
+  export type BinanceRenkoFastFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenkoFast to fetch.
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenkoFasts to fetch.
+     */
+    orderBy?: BinanceRenkoFastOrderByWithRelationInput | BinanceRenkoFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRenkoFasts.
+     */
+    cursor?: BinanceRenkoFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenkoFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenkoFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRenkoFasts.
+     */
+    distinct?: BinanceRenkoFastScalarFieldEnum | BinanceRenkoFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenkoFast findMany
+   */
+  export type BinanceRenkoFastFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenkoFasts to fetch.
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenkoFasts to fetch.
+     */
+    orderBy?: BinanceRenkoFastOrderByWithRelationInput | BinanceRenkoFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceRenkoFasts.
+     */
+    cursor?: BinanceRenkoFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenkoFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenkoFasts.
+     */
+    skip?: number
+    distinct?: BinanceRenkoFastScalarFieldEnum | BinanceRenkoFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenkoFast create
+   */
+  export type BinanceRenkoFastCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceRenkoFast.
+     */
+    data: XOR<BinanceRenkoFastCreateInput, BinanceRenkoFastUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceRenkoFast createMany
+   */
+  export type BinanceRenkoFastCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceRenkoFasts.
+     */
+    data: BinanceRenkoFastCreateManyInput | BinanceRenkoFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRenkoFast createManyAndReturn
+   */
+  export type BinanceRenkoFastCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceRenkoFasts.
+     */
+    data: BinanceRenkoFastCreateManyInput | BinanceRenkoFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRenkoFast update
+   */
+  export type BinanceRenkoFastUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceRenkoFast.
+     */
+    data: XOR<BinanceRenkoFastUpdateInput, BinanceRenkoFastUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceRenkoFast to update.
+     */
+    where: BinanceRenkoFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenkoFast updateMany
+   */
+  export type BinanceRenkoFastUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceRenkoFasts.
+     */
+    data: XOR<BinanceRenkoFastUpdateManyMutationInput, BinanceRenkoFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRenkoFasts to update
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * Limit how many BinanceRenkoFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenkoFast updateManyAndReturn
+   */
+  export type BinanceRenkoFastUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceRenkoFasts.
+     */
+    data: XOR<BinanceRenkoFastUpdateManyMutationInput, BinanceRenkoFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRenkoFasts to update
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * Limit how many BinanceRenkoFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenkoFast upsert
+   */
+  export type BinanceRenkoFastUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceRenkoFast to update in case it exists.
+     */
+    where: BinanceRenkoFastWhereUniqueInput
+    /**
+     * In case the BinanceRenkoFast found by the `where` argument doesn't exist, create a new BinanceRenkoFast with this data.
+     */
+    create: XOR<BinanceRenkoFastCreateInput, BinanceRenkoFastUncheckedCreateInput>
+    /**
+     * In case the BinanceRenkoFast was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceRenkoFastUpdateInput, BinanceRenkoFastUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceRenkoFast delete
+   */
+  export type BinanceRenkoFastDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceRenkoFast to delete.
+     */
+    where: BinanceRenkoFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenkoFast deleteMany
+   */
+  export type BinanceRenkoFastDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRenkoFasts to delete
+     */
+    where?: BinanceRenkoFastWhereInput
+    /**
+     * Limit how many BinanceRenkoFasts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenkoFast without action
+   */
+  export type BinanceRenkoFastDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenkoFast
+     */
+    select?: BinanceRenkoFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenkoFast
+     */
+    omit?: BinanceRenkoFastOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceRangeFast
+   */
+
+  export type AggregateBinanceRangeFast = {
+    _count: BinanceRangeFastCountAggregateOutputType | null
+    _avg: BinanceRangeFastAvgAggregateOutputType | null
+    _sum: BinanceRangeFastSumAggregateOutputType | null
+    _min: BinanceRangeFastMinAggregateOutputType | null
+    _max: BinanceRangeFastMaxAggregateOutputType | null
+  }
+
+  export type BinanceRangeFastAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRangeFastSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRangeFastMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRangeFastMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRangeFastCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    k2Incl5ticks: number
+    k2Incl15ticks: number
+    k2Incl25ticks: number
+    k2Incl50ticks: number
+    k2Incl100ticks: number
+    k2Incl150ticks: number
+    k2Incl200ticks: number
+    _all: number
+  }
+
+
+  export type BinanceRangeFastAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRangeFastSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRangeFastMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRangeFastMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRangeFastCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+    _all?: true
+  }
+
+  export type BinanceRangeFastAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRangeFast to aggregate.
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRangeFasts to fetch.
+     */
+    orderBy?: BinanceRangeFastOrderByWithRelationInput | BinanceRangeFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceRangeFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRangeFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRangeFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceRangeFasts
+    **/
+    _count?: true | BinanceRangeFastCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceRangeFastAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceRangeFastSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceRangeFastMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceRangeFastMaxAggregateInputType
+  }
+
+  export type GetBinanceRangeFastAggregateType<T extends BinanceRangeFastAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceRangeFast]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceRangeFast[P]>
+      : GetScalarType<T[P], AggregateBinanceRangeFast[P]>
+  }
+
+
+
+
+  export type BinanceRangeFastGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceRangeFastWhereInput
+    orderBy?: BinanceRangeFastOrderByWithAggregationInput | BinanceRangeFastOrderByWithAggregationInput[]
+    by: BinanceRangeFastScalarFieldEnum[] | BinanceRangeFastScalarFieldEnum
+    having?: BinanceRangeFastScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceRangeFastCountAggregateInputType | true
+    _avg?: BinanceRangeFastAvgAggregateInputType
+    _sum?: BinanceRangeFastSumAggregateInputType
+    _min?: BinanceRangeFastMinAggregateInputType
+    _max?: BinanceRangeFastMaxAggregateInputType
+  }
+
+  export type BinanceRangeFastGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    k2Incl5ticks: boolean
+    k2Incl15ticks: boolean
+    k2Incl25ticks: boolean
+    k2Incl50ticks: boolean
+    k2Incl100ticks: boolean
+    k2Incl150ticks: boolean
+    k2Incl200ticks: boolean
+    _count: BinanceRangeFastCountAggregateOutputType | null
+    _avg: BinanceRangeFastAvgAggregateOutputType | null
+    _sum: BinanceRangeFastSumAggregateOutputType | null
+    _min: BinanceRangeFastMinAggregateOutputType | null
+    _max: BinanceRangeFastMaxAggregateOutputType | null
+  }
+
+  type GetBinanceRangeFastGroupByPayload<T extends BinanceRangeFastGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceRangeFastGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceRangeFastGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceRangeFastGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceRangeFastGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceRangeFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRangeFast"]>
+
+  export type BinanceRangeFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRangeFast"]>
+
+  export type BinanceRangeFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRangeFast"]>
+
+  export type BinanceRangeFastSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRangeFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume" | "k2Incl5ticks" | "k2Incl15ticks" | "k2Incl25ticks" | "k2Incl50ticks" | "k2Incl100ticks" | "k2Incl150ticks" | "k2Incl200ticks", ExtArgs["result"]["binanceRangeFast"]>
+
+  export type $BinanceRangeFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceRangeFast"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+      /**
+       * * Range → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+       */
+      k2Incl5ticks: boolean
+      k2Incl15ticks: boolean
+      k2Incl25ticks: boolean
+      k2Incl50ticks: boolean
+      k2Incl100ticks: boolean
+      k2Incl150ticks: boolean
+      k2Incl200ticks: boolean
+    }, ExtArgs["result"]["binanceRangeFast"]>
+    composites: {}
+  }
+
+  type BinanceRangeFastGetPayload<S extends boolean | null | undefined | BinanceRangeFastDefaultArgs> = $Result.GetResult<Prisma.$BinanceRangeFastPayload, S>
+
+  type BinanceRangeFastCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceRangeFastFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceRangeFastCountAggregateInputType | true
+    }
+
+  export interface BinanceRangeFastDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceRangeFast'], meta: { name: 'BinanceRangeFast' } }
+    /**
+     * Find zero or one BinanceRangeFast that matches the filter.
+     * @param {BinanceRangeFastFindUniqueArgs} args - Arguments to find a BinanceRangeFast
+     * @example
+     * // Get one BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceRangeFastFindUniqueArgs>(args: SelectSubset<T, BinanceRangeFastFindUniqueArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceRangeFast that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceRangeFastFindUniqueOrThrowArgs} args - Arguments to find a BinanceRangeFast
+     * @example
+     * // Get one BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceRangeFastFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceRangeFastFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRangeFast that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastFindFirstArgs} args - Arguments to find a BinanceRangeFast
+     * @example
+     * // Get one BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceRangeFastFindFirstArgs>(args?: SelectSubset<T, BinanceRangeFastFindFirstArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRangeFast that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastFindFirstOrThrowArgs} args - Arguments to find a BinanceRangeFast
+     * @example
+     * // Get one BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceRangeFastFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceRangeFastFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceRangeFasts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceRangeFasts
+     * const binanceRangeFasts = await prisma.binanceRangeFast.findMany()
+     * 
+     * // Get first 10 BinanceRangeFasts
+     * const binanceRangeFasts = await prisma.binanceRangeFast.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceRangeFastWithCorretoraOnly = await prisma.binanceRangeFast.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceRangeFastFindManyArgs>(args?: SelectSubset<T, BinanceRangeFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceRangeFast.
+     * @param {BinanceRangeFastCreateArgs} args - Arguments to create a BinanceRangeFast.
+     * @example
+     * // Create one BinanceRangeFast
+     * const BinanceRangeFast = await prisma.binanceRangeFast.create({
+     *   data: {
+     *     // ... data to create a BinanceRangeFast
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceRangeFastCreateArgs>(args: SelectSubset<T, BinanceRangeFastCreateArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceRangeFasts.
+     * @param {BinanceRangeFastCreateManyArgs} args - Arguments to create many BinanceRangeFasts.
+     * @example
+     * // Create many BinanceRangeFasts
+     * const binanceRangeFast = await prisma.binanceRangeFast.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceRangeFastCreateManyArgs>(args?: SelectSubset<T, BinanceRangeFastCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceRangeFasts and returns the data saved in the database.
+     * @param {BinanceRangeFastCreateManyAndReturnArgs} args - Arguments to create many BinanceRangeFasts.
+     * @example
+     * // Create many BinanceRangeFasts
+     * const binanceRangeFast = await prisma.binanceRangeFast.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceRangeFasts and only return the `corretora`
+     * const binanceRangeFastWithCorretoraOnly = await prisma.binanceRangeFast.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceRangeFastCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceRangeFastCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceRangeFast.
+     * @param {BinanceRangeFastDeleteArgs} args - Arguments to delete one BinanceRangeFast.
+     * @example
+     * // Delete one BinanceRangeFast
+     * const BinanceRangeFast = await prisma.binanceRangeFast.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceRangeFast
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceRangeFastDeleteArgs>(args: SelectSubset<T, BinanceRangeFastDeleteArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceRangeFast.
+     * @param {BinanceRangeFastUpdateArgs} args - Arguments to update one BinanceRangeFast.
+     * @example
+     * // Update one BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceRangeFastUpdateArgs>(args: SelectSubset<T, BinanceRangeFastUpdateArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceRangeFasts.
+     * @param {BinanceRangeFastDeleteManyArgs} args - Arguments to filter BinanceRangeFasts to delete.
+     * @example
+     * // Delete a few BinanceRangeFasts
+     * const { count } = await prisma.binanceRangeFast.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceRangeFastDeleteManyArgs>(args?: SelectSubset<T, BinanceRangeFastDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRangeFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceRangeFasts
+     * const binanceRangeFast = await prisma.binanceRangeFast.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceRangeFastUpdateManyArgs>(args: SelectSubset<T, BinanceRangeFastUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRangeFasts and returns the data updated in the database.
+     * @param {BinanceRangeFastUpdateManyAndReturnArgs} args - Arguments to update many BinanceRangeFasts.
+     * @example
+     * // Update many BinanceRangeFasts
+     * const binanceRangeFast = await prisma.binanceRangeFast.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceRangeFasts and only return the `corretora`
+     * const binanceRangeFastWithCorretoraOnly = await prisma.binanceRangeFast.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceRangeFastUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceRangeFastUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceRangeFast.
+     * @param {BinanceRangeFastUpsertArgs} args - Arguments to update or create a BinanceRangeFast.
+     * @example
+     * // Update or create a BinanceRangeFast
+     * const binanceRangeFast = await prisma.binanceRangeFast.upsert({
+     *   create: {
+     *     // ... data to create a BinanceRangeFast
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceRangeFast we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceRangeFastUpsertArgs>(args: SelectSubset<T, BinanceRangeFastUpsertArgs<ExtArgs>>): Prisma__BinanceRangeFastClient<$Result.GetResult<Prisma.$BinanceRangeFastPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceRangeFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastCountArgs} args - Arguments to filter BinanceRangeFasts to count.
+     * @example
+     * // Count the number of BinanceRangeFasts
+     * const count = await prisma.binanceRangeFast.count({
+     *   where: {
+     *     // ... the filter for the BinanceRangeFasts we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceRangeFastCountArgs>(
+      args?: Subset<T, BinanceRangeFastCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceRangeFastCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceRangeFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceRangeFastAggregateArgs>(args: Subset<T, BinanceRangeFastAggregateArgs>): Prisma.PrismaPromise<GetBinanceRangeFastAggregateType<T>>
+
+    /**
+     * Group by BinanceRangeFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRangeFastGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceRangeFastGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceRangeFastGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceRangeFastGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceRangeFastGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceRangeFastGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceRangeFast model
+   */
+  readonly fields: BinanceRangeFastFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceRangeFast.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceRangeFastClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceRangeFast model
+   */
+  interface BinanceRangeFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceRangeFast", 'String'>
+    readonly symbol: FieldRef<"BinanceRangeFast", 'String'>
+    readonly interval: FieldRef<"BinanceRangeFast", 'String'>
+    readonly openTime: FieldRef<"BinanceRangeFast", 'BigInt'>
+    readonly open: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly high: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly low: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly close: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly volume: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceRangeFast", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceRangeFast", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceRangeFast", 'Decimal'>
+    readonly k2Incl5ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl15ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl25ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl50ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl100ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl150ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+    readonly k2Incl200ticks: FieldRef<"BinanceRangeFast", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceRangeFast findUnique
+   */
+  export type BinanceRangeFastFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRangeFast to fetch.
+     */
+    where: BinanceRangeFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRangeFast findUniqueOrThrow
+   */
+  export type BinanceRangeFastFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRangeFast to fetch.
+     */
+    where: BinanceRangeFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRangeFast findFirst
+   */
+  export type BinanceRangeFastFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRangeFast to fetch.
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRangeFasts to fetch.
+     */
+    orderBy?: BinanceRangeFastOrderByWithRelationInput | BinanceRangeFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRangeFasts.
+     */
+    cursor?: BinanceRangeFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRangeFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRangeFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRangeFasts.
+     */
+    distinct?: BinanceRangeFastScalarFieldEnum | BinanceRangeFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRangeFast findFirstOrThrow
+   */
+  export type BinanceRangeFastFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRangeFast to fetch.
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRangeFasts to fetch.
+     */
+    orderBy?: BinanceRangeFastOrderByWithRelationInput | BinanceRangeFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRangeFasts.
+     */
+    cursor?: BinanceRangeFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRangeFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRangeFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRangeFasts.
+     */
+    distinct?: BinanceRangeFastScalarFieldEnum | BinanceRangeFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRangeFast findMany
+   */
+  export type BinanceRangeFastFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRangeFasts to fetch.
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRangeFasts to fetch.
+     */
+    orderBy?: BinanceRangeFastOrderByWithRelationInput | BinanceRangeFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceRangeFasts.
+     */
+    cursor?: BinanceRangeFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRangeFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRangeFasts.
+     */
+    skip?: number
+    distinct?: BinanceRangeFastScalarFieldEnum | BinanceRangeFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRangeFast create
+   */
+  export type BinanceRangeFastCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceRangeFast.
+     */
+    data: XOR<BinanceRangeFastCreateInput, BinanceRangeFastUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceRangeFast createMany
+   */
+  export type BinanceRangeFastCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceRangeFasts.
+     */
+    data: BinanceRangeFastCreateManyInput | BinanceRangeFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRangeFast createManyAndReturn
+   */
+  export type BinanceRangeFastCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceRangeFasts.
+     */
+    data: BinanceRangeFastCreateManyInput | BinanceRangeFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRangeFast update
+   */
+  export type BinanceRangeFastUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceRangeFast.
+     */
+    data: XOR<BinanceRangeFastUpdateInput, BinanceRangeFastUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceRangeFast to update.
+     */
+    where: BinanceRangeFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRangeFast updateMany
+   */
+  export type BinanceRangeFastUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceRangeFasts.
+     */
+    data: XOR<BinanceRangeFastUpdateManyMutationInput, BinanceRangeFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRangeFasts to update
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * Limit how many BinanceRangeFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRangeFast updateManyAndReturn
+   */
+  export type BinanceRangeFastUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceRangeFasts.
+     */
+    data: XOR<BinanceRangeFastUpdateManyMutationInput, BinanceRangeFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRangeFasts to update
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * Limit how many BinanceRangeFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRangeFast upsert
+   */
+  export type BinanceRangeFastUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceRangeFast to update in case it exists.
+     */
+    where: BinanceRangeFastWhereUniqueInput
+    /**
+     * In case the BinanceRangeFast found by the `where` argument doesn't exist, create a new BinanceRangeFast with this data.
+     */
+    create: XOR<BinanceRangeFastCreateInput, BinanceRangeFastUncheckedCreateInput>
+    /**
+     * In case the BinanceRangeFast was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceRangeFastUpdateInput, BinanceRangeFastUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceRangeFast delete
+   */
+  export type BinanceRangeFastDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceRangeFast to delete.
+     */
+    where: BinanceRangeFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRangeFast deleteMany
+   */
+  export type BinanceRangeFastDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRangeFasts to delete
+     */
+    where?: BinanceRangeFastWhereInput
+    /**
+     * Limit how many BinanceRangeFasts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRangeFast without action
+   */
+  export type BinanceRangeFastDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRangeFast
+     */
+    select?: BinanceRangeFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRangeFast
+     */
+    omit?: BinanceRangeFastOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceKagiFast
+   */
+
+  export type AggregateBinanceKagiFast = {
+    _count: BinanceKagiFastCountAggregateOutputType | null
+    _avg: BinanceKagiFastAvgAggregateOutputType | null
+    _sum: BinanceKagiFastSumAggregateOutputType | null
+    _min: BinanceKagiFastMinAggregateOutputType | null
+    _max: BinanceKagiFastMaxAggregateOutputType | null
+  }
+
+  export type BinanceKagiFastAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKagiFastSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKagiFastMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceKagiFastMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceKagiFastCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    k2Incl5ticks: number
+    k2Incl15ticks: number
+    k2Incl25ticks: number
+    k2Incl50ticks: number
+    k2Incl100ticks: number
+    k2Incl150ticks: number
+    k2Incl200ticks: number
+    _all: number
+  }
+
+
+  export type BinanceKagiFastAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKagiFastSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKagiFastMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceKagiFastMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceKagiFastCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+    _all?: true
+  }
+
+  export type BinanceKagiFastAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKagiFast to aggregate.
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKagiFasts to fetch.
+     */
+    orderBy?: BinanceKagiFastOrderByWithRelationInput | BinanceKagiFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceKagiFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKagiFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKagiFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceKagiFasts
+    **/
+    _count?: true | BinanceKagiFastCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceKagiFastAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceKagiFastSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceKagiFastMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceKagiFastMaxAggregateInputType
+  }
+
+  export type GetBinanceKagiFastAggregateType<T extends BinanceKagiFastAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceKagiFast]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceKagiFast[P]>
+      : GetScalarType<T[P], AggregateBinanceKagiFast[P]>
+  }
+
+
+
+
+  export type BinanceKagiFastGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceKagiFastWhereInput
+    orderBy?: BinanceKagiFastOrderByWithAggregationInput | BinanceKagiFastOrderByWithAggregationInput[]
+    by: BinanceKagiFastScalarFieldEnum[] | BinanceKagiFastScalarFieldEnum
+    having?: BinanceKagiFastScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceKagiFastCountAggregateInputType | true
+    _avg?: BinanceKagiFastAvgAggregateInputType
+    _sum?: BinanceKagiFastSumAggregateInputType
+    _min?: BinanceKagiFastMinAggregateInputType
+    _max?: BinanceKagiFastMaxAggregateInputType
+  }
+
+  export type BinanceKagiFastGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    k2Incl5ticks: boolean
+    k2Incl15ticks: boolean
+    k2Incl25ticks: boolean
+    k2Incl50ticks: boolean
+    k2Incl100ticks: boolean
+    k2Incl150ticks: boolean
+    k2Incl200ticks: boolean
+    _count: BinanceKagiFastCountAggregateOutputType | null
+    _avg: BinanceKagiFastAvgAggregateOutputType | null
+    _sum: BinanceKagiFastSumAggregateOutputType | null
+    _min: BinanceKagiFastMinAggregateOutputType | null
+    _max: BinanceKagiFastMaxAggregateOutputType | null
+  }
+
+  type GetBinanceKagiFastGroupByPayload<T extends BinanceKagiFastGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceKagiFastGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceKagiFastGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceKagiFastGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceKagiFastGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceKagiFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceKagiFast"]>
+
+  export type BinanceKagiFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceKagiFast"]>
+
+  export type BinanceKagiFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceKagiFast"]>
+
+  export type BinanceKagiFastSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceKagiFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume" | "k2Incl5ticks" | "k2Incl15ticks" | "k2Incl25ticks" | "k2Incl50ticks" | "k2Incl100ticks" | "k2Incl150ticks" | "k2Incl200ticks", ExtArgs["result"]["binanceKagiFast"]>
+
+  export type $BinanceKagiFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceKagiFast"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+      /**
+       * * Kagi → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+       */
+      k2Incl5ticks: boolean
+      k2Incl15ticks: boolean
+      k2Incl25ticks: boolean
+      k2Incl50ticks: boolean
+      k2Incl100ticks: boolean
+      k2Incl150ticks: boolean
+      k2Incl200ticks: boolean
+    }, ExtArgs["result"]["binanceKagiFast"]>
+    composites: {}
+  }
+
+  type BinanceKagiFastGetPayload<S extends boolean | null | undefined | BinanceKagiFastDefaultArgs> = $Result.GetResult<Prisma.$BinanceKagiFastPayload, S>
+
+  type BinanceKagiFastCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceKagiFastFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceKagiFastCountAggregateInputType | true
+    }
+
+  export interface BinanceKagiFastDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceKagiFast'], meta: { name: 'BinanceKagiFast' } }
+    /**
+     * Find zero or one BinanceKagiFast that matches the filter.
+     * @param {BinanceKagiFastFindUniqueArgs} args - Arguments to find a BinanceKagiFast
+     * @example
+     * // Get one BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceKagiFastFindUniqueArgs>(args: SelectSubset<T, BinanceKagiFastFindUniqueArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceKagiFast that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceKagiFastFindUniqueOrThrowArgs} args - Arguments to find a BinanceKagiFast
+     * @example
+     * // Get one BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceKagiFastFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceKagiFastFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKagiFast that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastFindFirstArgs} args - Arguments to find a BinanceKagiFast
+     * @example
+     * // Get one BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceKagiFastFindFirstArgs>(args?: SelectSubset<T, BinanceKagiFastFindFirstArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKagiFast that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastFindFirstOrThrowArgs} args - Arguments to find a BinanceKagiFast
+     * @example
+     * // Get one BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceKagiFastFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceKagiFastFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceKagiFasts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceKagiFasts
+     * const binanceKagiFasts = await prisma.binanceKagiFast.findMany()
+     * 
+     * // Get first 10 BinanceKagiFasts
+     * const binanceKagiFasts = await prisma.binanceKagiFast.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceKagiFastWithCorretoraOnly = await prisma.binanceKagiFast.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceKagiFastFindManyArgs>(args?: SelectSubset<T, BinanceKagiFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceKagiFast.
+     * @param {BinanceKagiFastCreateArgs} args - Arguments to create a BinanceKagiFast.
+     * @example
+     * // Create one BinanceKagiFast
+     * const BinanceKagiFast = await prisma.binanceKagiFast.create({
+     *   data: {
+     *     // ... data to create a BinanceKagiFast
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceKagiFastCreateArgs>(args: SelectSubset<T, BinanceKagiFastCreateArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceKagiFasts.
+     * @param {BinanceKagiFastCreateManyArgs} args - Arguments to create many BinanceKagiFasts.
+     * @example
+     * // Create many BinanceKagiFasts
+     * const binanceKagiFast = await prisma.binanceKagiFast.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceKagiFastCreateManyArgs>(args?: SelectSubset<T, BinanceKagiFastCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceKagiFasts and returns the data saved in the database.
+     * @param {BinanceKagiFastCreateManyAndReturnArgs} args - Arguments to create many BinanceKagiFasts.
+     * @example
+     * // Create many BinanceKagiFasts
+     * const binanceKagiFast = await prisma.binanceKagiFast.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceKagiFasts and only return the `corretora`
+     * const binanceKagiFastWithCorretoraOnly = await prisma.binanceKagiFast.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceKagiFastCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceKagiFastCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceKagiFast.
+     * @param {BinanceKagiFastDeleteArgs} args - Arguments to delete one BinanceKagiFast.
+     * @example
+     * // Delete one BinanceKagiFast
+     * const BinanceKagiFast = await prisma.binanceKagiFast.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceKagiFast
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceKagiFastDeleteArgs>(args: SelectSubset<T, BinanceKagiFastDeleteArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceKagiFast.
+     * @param {BinanceKagiFastUpdateArgs} args - Arguments to update one BinanceKagiFast.
+     * @example
+     * // Update one BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceKagiFastUpdateArgs>(args: SelectSubset<T, BinanceKagiFastUpdateArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceKagiFasts.
+     * @param {BinanceKagiFastDeleteManyArgs} args - Arguments to filter BinanceKagiFasts to delete.
+     * @example
+     * // Delete a few BinanceKagiFasts
+     * const { count } = await prisma.binanceKagiFast.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceKagiFastDeleteManyArgs>(args?: SelectSubset<T, BinanceKagiFastDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKagiFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceKagiFasts
+     * const binanceKagiFast = await prisma.binanceKagiFast.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceKagiFastUpdateManyArgs>(args: SelectSubset<T, BinanceKagiFastUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKagiFasts and returns the data updated in the database.
+     * @param {BinanceKagiFastUpdateManyAndReturnArgs} args - Arguments to update many BinanceKagiFasts.
+     * @example
+     * // Update many BinanceKagiFasts
+     * const binanceKagiFast = await prisma.binanceKagiFast.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceKagiFasts and only return the `corretora`
+     * const binanceKagiFastWithCorretoraOnly = await prisma.binanceKagiFast.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceKagiFastUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceKagiFastUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceKagiFast.
+     * @param {BinanceKagiFastUpsertArgs} args - Arguments to update or create a BinanceKagiFast.
+     * @example
+     * // Update or create a BinanceKagiFast
+     * const binanceKagiFast = await prisma.binanceKagiFast.upsert({
+     *   create: {
+     *     // ... data to create a BinanceKagiFast
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceKagiFast we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceKagiFastUpsertArgs>(args: SelectSubset<T, BinanceKagiFastUpsertArgs<ExtArgs>>): Prisma__BinanceKagiFastClient<$Result.GetResult<Prisma.$BinanceKagiFastPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceKagiFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastCountArgs} args - Arguments to filter BinanceKagiFasts to count.
+     * @example
+     * // Count the number of BinanceKagiFasts
+     * const count = await prisma.binanceKagiFast.count({
+     *   where: {
+     *     // ... the filter for the BinanceKagiFasts we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceKagiFastCountArgs>(
+      args?: Subset<T, BinanceKagiFastCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceKagiFastCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceKagiFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceKagiFastAggregateArgs>(args: Subset<T, BinanceKagiFastAggregateArgs>): Prisma.PrismaPromise<GetBinanceKagiFastAggregateType<T>>
+
+    /**
+     * Group by BinanceKagiFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKagiFastGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceKagiFastGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceKagiFastGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceKagiFastGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceKagiFastGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceKagiFastGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceKagiFast model
+   */
+  readonly fields: BinanceKagiFastFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceKagiFast.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceKagiFastClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceKagiFast model
+   */
+  interface BinanceKagiFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceKagiFast", 'String'>
+    readonly symbol: FieldRef<"BinanceKagiFast", 'String'>
+    readonly interval: FieldRef<"BinanceKagiFast", 'String'>
+    readonly openTime: FieldRef<"BinanceKagiFast", 'BigInt'>
+    readonly open: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly high: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly low: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly close: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly volume: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceKagiFast", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceKagiFast", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceKagiFast", 'Decimal'>
+    readonly k2Incl5ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl15ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl25ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl50ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl100ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl150ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+    readonly k2Incl200ticks: FieldRef<"BinanceKagiFast", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceKagiFast findUnique
+   */
+  export type BinanceKagiFastFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKagiFast to fetch.
+     */
+    where: BinanceKagiFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceKagiFast findUniqueOrThrow
+   */
+  export type BinanceKagiFastFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKagiFast to fetch.
+     */
+    where: BinanceKagiFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceKagiFast findFirst
+   */
+  export type BinanceKagiFastFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKagiFast to fetch.
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKagiFasts to fetch.
+     */
+    orderBy?: BinanceKagiFastOrderByWithRelationInput | BinanceKagiFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKagiFasts.
+     */
+    cursor?: BinanceKagiFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKagiFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKagiFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKagiFasts.
+     */
+    distinct?: BinanceKagiFastScalarFieldEnum | BinanceKagiFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKagiFast findFirstOrThrow
+   */
+  export type BinanceKagiFastFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKagiFast to fetch.
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKagiFasts to fetch.
+     */
+    orderBy?: BinanceKagiFastOrderByWithRelationInput | BinanceKagiFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKagiFasts.
+     */
+    cursor?: BinanceKagiFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKagiFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKagiFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKagiFasts.
+     */
+    distinct?: BinanceKagiFastScalarFieldEnum | BinanceKagiFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKagiFast findMany
+   */
+  export type BinanceKagiFastFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKagiFasts to fetch.
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKagiFasts to fetch.
+     */
+    orderBy?: BinanceKagiFastOrderByWithRelationInput | BinanceKagiFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceKagiFasts.
+     */
+    cursor?: BinanceKagiFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKagiFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKagiFasts.
+     */
+    skip?: number
+    distinct?: BinanceKagiFastScalarFieldEnum | BinanceKagiFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKagiFast create
+   */
+  export type BinanceKagiFastCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceKagiFast.
+     */
+    data: XOR<BinanceKagiFastCreateInput, BinanceKagiFastUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceKagiFast createMany
+   */
+  export type BinanceKagiFastCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceKagiFasts.
+     */
+    data: BinanceKagiFastCreateManyInput | BinanceKagiFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKagiFast createManyAndReturn
+   */
+  export type BinanceKagiFastCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceKagiFasts.
+     */
+    data: BinanceKagiFastCreateManyInput | BinanceKagiFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKagiFast update
+   */
+  export type BinanceKagiFastUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceKagiFast.
+     */
+    data: XOR<BinanceKagiFastUpdateInput, BinanceKagiFastUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceKagiFast to update.
+     */
+    where: BinanceKagiFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceKagiFast updateMany
+   */
+  export type BinanceKagiFastUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceKagiFasts.
+     */
+    data: XOR<BinanceKagiFastUpdateManyMutationInput, BinanceKagiFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKagiFasts to update
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * Limit how many BinanceKagiFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKagiFast updateManyAndReturn
+   */
+  export type BinanceKagiFastUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceKagiFasts.
+     */
+    data: XOR<BinanceKagiFastUpdateManyMutationInput, BinanceKagiFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKagiFasts to update
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * Limit how many BinanceKagiFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKagiFast upsert
+   */
+  export type BinanceKagiFastUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceKagiFast to update in case it exists.
+     */
+    where: BinanceKagiFastWhereUniqueInput
+    /**
+     * In case the BinanceKagiFast found by the `where` argument doesn't exist, create a new BinanceKagiFast with this data.
+     */
+    create: XOR<BinanceKagiFastCreateInput, BinanceKagiFastUncheckedCreateInput>
+    /**
+     * In case the BinanceKagiFast was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceKagiFastUpdateInput, BinanceKagiFastUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceKagiFast delete
+   */
+  export type BinanceKagiFastDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceKagiFast to delete.
+     */
+    where: BinanceKagiFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceKagiFast deleteMany
+   */
+  export type BinanceKagiFastDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKagiFasts to delete
+     */
+    where?: BinanceKagiFastWhereInput
+    /**
+     * Limit how many BinanceKagiFasts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKagiFast without action
+   */
+  export type BinanceKagiFastDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKagiFast
+     */
+    select?: BinanceKagiFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKagiFast
+     */
+    omit?: BinanceKagiFastOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceRenko2xFast
+   */
+
+  export type AggregateBinanceRenko2xFast = {
+    _count: BinanceRenko2xFastCountAggregateOutputType | null
+    _avg: BinanceRenko2xFastAvgAggregateOutputType | null
+    _sum: BinanceRenko2xFastSumAggregateOutputType | null
+    _min: BinanceRenko2xFastMinAggregateOutputType | null
+    _max: BinanceRenko2xFastMaxAggregateOutputType | null
+  }
+
+  export type BinanceRenko2xFastAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRenko2xFastSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceRenko2xFastMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRenko2xFastMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl5ticks: boolean | null
+    k2Incl15ticks: boolean | null
+    k2Incl25ticks: boolean | null
+    k2Incl50ticks: boolean | null
+    k2Incl100ticks: boolean | null
+    k2Incl150ticks: boolean | null
+    k2Incl200ticks: boolean | null
+  }
+
+  export type BinanceRenko2xFastCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    k2Incl5ticks: number
+    k2Incl15ticks: number
+    k2Incl25ticks: number
+    k2Incl50ticks: number
+    k2Incl100ticks: number
+    k2Incl150ticks: number
+    k2Incl200ticks: number
+    _all: number
+  }
+
+
+  export type BinanceRenko2xFastAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRenko2xFastSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceRenko2xFastMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRenko2xFastMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+  }
+
+  export type BinanceRenko2xFastCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl5ticks?: true
+    k2Incl15ticks?: true
+    k2Incl25ticks?: true
+    k2Incl50ticks?: true
+    k2Incl100ticks?: true
+    k2Incl150ticks?: true
+    k2Incl200ticks?: true
+    _all?: true
+  }
+
+  export type BinanceRenko2xFastAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRenko2xFast to aggregate.
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenko2xFasts to fetch.
+     */
+    orderBy?: BinanceRenko2xFastOrderByWithRelationInput | BinanceRenko2xFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceRenko2xFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenko2xFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenko2xFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceRenko2xFasts
+    **/
+    _count?: true | BinanceRenko2xFastCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceRenko2xFastAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceRenko2xFastSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceRenko2xFastMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceRenko2xFastMaxAggregateInputType
+  }
+
+  export type GetBinanceRenko2xFastAggregateType<T extends BinanceRenko2xFastAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceRenko2xFast]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceRenko2xFast[P]>
+      : GetScalarType<T[P], AggregateBinanceRenko2xFast[P]>
+  }
+
+
+
+
+  export type BinanceRenko2xFastGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceRenko2xFastWhereInput
+    orderBy?: BinanceRenko2xFastOrderByWithAggregationInput | BinanceRenko2xFastOrderByWithAggregationInput[]
+    by: BinanceRenko2xFastScalarFieldEnum[] | BinanceRenko2xFastScalarFieldEnum
+    having?: BinanceRenko2xFastScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceRenko2xFastCountAggregateInputType | true
+    _avg?: BinanceRenko2xFastAvgAggregateInputType
+    _sum?: BinanceRenko2xFastSumAggregateInputType
+    _min?: BinanceRenko2xFastMinAggregateInputType
+    _max?: BinanceRenko2xFastMaxAggregateInputType
+  }
+
+  export type BinanceRenko2xFastGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    k2Incl5ticks: boolean
+    k2Incl15ticks: boolean
+    k2Incl25ticks: boolean
+    k2Incl50ticks: boolean
+    k2Incl100ticks: boolean
+    k2Incl150ticks: boolean
+    k2Incl200ticks: boolean
+    _count: BinanceRenko2xFastCountAggregateOutputType | null
+    _avg: BinanceRenko2xFastAvgAggregateOutputType | null
+    _sum: BinanceRenko2xFastSumAggregateOutputType | null
+    _min: BinanceRenko2xFastMinAggregateOutputType | null
+    _max: BinanceRenko2xFastMaxAggregateOutputType | null
+  }
+
+  type GetBinanceRenko2xFastGroupByPayload<T extends BinanceRenko2xFastGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceRenko2xFastGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceRenko2xFastGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceRenko2xFastGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceRenko2xFastGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceRenko2xFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenko2xFast"]>
+
+  export type BinanceRenko2xFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenko2xFast"]>
+
+  export type BinanceRenko2xFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }, ExtArgs["result"]["binanceRenko2xFast"]>
+
+  export type BinanceRenko2xFastSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenko2xFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume" | "k2Incl5ticks" | "k2Incl15ticks" | "k2Incl25ticks" | "k2Incl50ticks" | "k2Incl100ticks" | "k2Incl150ticks" | "k2Incl200ticks", ExtArgs["result"]["binanceRenko2xFast"]>
+
+  export type $BinanceRenko2xFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceRenko2xFast"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+      /**
+       * * Renko2× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+       */
+      k2Incl5ticks: boolean
+      k2Incl15ticks: boolean
+      k2Incl25ticks: boolean
+      k2Incl50ticks: boolean
+      k2Incl100ticks: boolean
+      k2Incl150ticks: boolean
+      k2Incl200ticks: boolean
+    }, ExtArgs["result"]["binanceRenko2xFast"]>
+    composites: {}
+  }
+
+  type BinanceRenko2xFastGetPayload<S extends boolean | null | undefined | BinanceRenko2xFastDefaultArgs> = $Result.GetResult<Prisma.$BinanceRenko2xFastPayload, S>
+
+  type BinanceRenko2xFastCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceRenko2xFastFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceRenko2xFastCountAggregateInputType | true
+    }
+
+  export interface BinanceRenko2xFastDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceRenko2xFast'], meta: { name: 'BinanceRenko2xFast' } }
+    /**
+     * Find zero or one BinanceRenko2xFast that matches the filter.
+     * @param {BinanceRenko2xFastFindUniqueArgs} args - Arguments to find a BinanceRenko2xFast
+     * @example
+     * // Get one BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceRenko2xFastFindUniqueArgs>(args: SelectSubset<T, BinanceRenko2xFastFindUniqueArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceRenko2xFast that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceRenko2xFastFindUniqueOrThrowArgs} args - Arguments to find a BinanceRenko2xFast
+     * @example
+     * // Get one BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceRenko2xFastFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceRenko2xFastFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRenko2xFast that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastFindFirstArgs} args - Arguments to find a BinanceRenko2xFast
+     * @example
+     * // Get one BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceRenko2xFastFindFirstArgs>(args?: SelectSubset<T, BinanceRenko2xFastFindFirstArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceRenko2xFast that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastFindFirstOrThrowArgs} args - Arguments to find a BinanceRenko2xFast
+     * @example
+     * // Get one BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceRenko2xFastFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceRenko2xFastFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceRenko2xFasts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceRenko2xFasts
+     * const binanceRenko2xFasts = await prisma.binanceRenko2xFast.findMany()
+     * 
+     * // Get first 10 BinanceRenko2xFasts
+     * const binanceRenko2xFasts = await prisma.binanceRenko2xFast.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceRenko2xFastWithCorretoraOnly = await prisma.binanceRenko2xFast.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceRenko2xFastFindManyArgs>(args?: SelectSubset<T, BinanceRenko2xFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceRenko2xFast.
+     * @param {BinanceRenko2xFastCreateArgs} args - Arguments to create a BinanceRenko2xFast.
+     * @example
+     * // Create one BinanceRenko2xFast
+     * const BinanceRenko2xFast = await prisma.binanceRenko2xFast.create({
+     *   data: {
+     *     // ... data to create a BinanceRenko2xFast
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceRenko2xFastCreateArgs>(args: SelectSubset<T, BinanceRenko2xFastCreateArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceRenko2xFasts.
+     * @param {BinanceRenko2xFastCreateManyArgs} args - Arguments to create many BinanceRenko2xFasts.
+     * @example
+     * // Create many BinanceRenko2xFasts
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceRenko2xFastCreateManyArgs>(args?: SelectSubset<T, BinanceRenko2xFastCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceRenko2xFasts and returns the data saved in the database.
+     * @param {BinanceRenko2xFastCreateManyAndReturnArgs} args - Arguments to create many BinanceRenko2xFasts.
+     * @example
+     * // Create many BinanceRenko2xFasts
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceRenko2xFasts and only return the `corretora`
+     * const binanceRenko2xFastWithCorretoraOnly = await prisma.binanceRenko2xFast.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceRenko2xFastCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceRenko2xFastCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceRenko2xFast.
+     * @param {BinanceRenko2xFastDeleteArgs} args - Arguments to delete one BinanceRenko2xFast.
+     * @example
+     * // Delete one BinanceRenko2xFast
+     * const BinanceRenko2xFast = await prisma.binanceRenko2xFast.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceRenko2xFast
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceRenko2xFastDeleteArgs>(args: SelectSubset<T, BinanceRenko2xFastDeleteArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceRenko2xFast.
+     * @param {BinanceRenko2xFastUpdateArgs} args - Arguments to update one BinanceRenko2xFast.
+     * @example
+     * // Update one BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceRenko2xFastUpdateArgs>(args: SelectSubset<T, BinanceRenko2xFastUpdateArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceRenko2xFasts.
+     * @param {BinanceRenko2xFastDeleteManyArgs} args - Arguments to filter BinanceRenko2xFasts to delete.
+     * @example
+     * // Delete a few BinanceRenko2xFasts
+     * const { count } = await prisma.binanceRenko2xFast.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceRenko2xFastDeleteManyArgs>(args?: SelectSubset<T, BinanceRenko2xFastDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRenko2xFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceRenko2xFasts
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceRenko2xFastUpdateManyArgs>(args: SelectSubset<T, BinanceRenko2xFastUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceRenko2xFasts and returns the data updated in the database.
+     * @param {BinanceRenko2xFastUpdateManyAndReturnArgs} args - Arguments to update many BinanceRenko2xFasts.
+     * @example
+     * // Update many BinanceRenko2xFasts
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceRenko2xFasts and only return the `corretora`
+     * const binanceRenko2xFastWithCorretoraOnly = await prisma.binanceRenko2xFast.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceRenko2xFastUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceRenko2xFastUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceRenko2xFast.
+     * @param {BinanceRenko2xFastUpsertArgs} args - Arguments to update or create a BinanceRenko2xFast.
+     * @example
+     * // Update or create a BinanceRenko2xFast
+     * const binanceRenko2xFast = await prisma.binanceRenko2xFast.upsert({
+     *   create: {
+     *     // ... data to create a BinanceRenko2xFast
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceRenko2xFast we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceRenko2xFastUpsertArgs>(args: SelectSubset<T, BinanceRenko2xFastUpsertArgs<ExtArgs>>): Prisma__BinanceRenko2xFastClient<$Result.GetResult<Prisma.$BinanceRenko2xFastPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceRenko2xFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastCountArgs} args - Arguments to filter BinanceRenko2xFasts to count.
+     * @example
+     * // Count the number of BinanceRenko2xFasts
+     * const count = await prisma.binanceRenko2xFast.count({
+     *   where: {
+     *     // ... the filter for the BinanceRenko2xFasts we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceRenko2xFastCountArgs>(
+      args?: Subset<T, BinanceRenko2xFastCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceRenko2xFastCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceRenko2xFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceRenko2xFastAggregateArgs>(args: Subset<T, BinanceRenko2xFastAggregateArgs>): Prisma.PrismaPromise<GetBinanceRenko2xFastAggregateType<T>>
+
+    /**
+     * Group by BinanceRenko2xFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceRenko2xFastGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceRenko2xFastGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceRenko2xFastGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceRenko2xFastGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceRenko2xFastGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceRenko2xFastGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceRenko2xFast model
+   */
+  readonly fields: BinanceRenko2xFastFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceRenko2xFast.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceRenko2xFastClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceRenko2xFast model
+   */
+  interface BinanceRenko2xFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceRenko2xFast", 'String'>
+    readonly symbol: FieldRef<"BinanceRenko2xFast", 'String'>
+    readonly interval: FieldRef<"BinanceRenko2xFast", 'String'>
+    readonly openTime: FieldRef<"BinanceRenko2xFast", 'BigInt'>
+    readonly open: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly high: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly low: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly close: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly volume: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceRenko2xFast", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceRenko2xFast", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceRenko2xFast", 'Decimal'>
+    readonly k2Incl5ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl15ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl25ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl50ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl100ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl150ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+    readonly k2Incl200ticks: FieldRef<"BinanceRenko2xFast", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceRenko2xFast findUnique
+   */
+  export type BinanceRenko2xFastFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenko2xFast to fetch.
+     */
+    where: BinanceRenko2xFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenko2xFast findUniqueOrThrow
+   */
+  export type BinanceRenko2xFastFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenko2xFast to fetch.
+     */
+    where: BinanceRenko2xFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenko2xFast findFirst
+   */
+  export type BinanceRenko2xFastFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenko2xFast to fetch.
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenko2xFasts to fetch.
+     */
+    orderBy?: BinanceRenko2xFastOrderByWithRelationInput | BinanceRenko2xFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRenko2xFasts.
+     */
+    cursor?: BinanceRenko2xFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenko2xFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenko2xFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRenko2xFasts.
+     */
+    distinct?: BinanceRenko2xFastScalarFieldEnum | BinanceRenko2xFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenko2xFast findFirstOrThrow
+   */
+  export type BinanceRenko2xFastFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenko2xFast to fetch.
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenko2xFasts to fetch.
+     */
+    orderBy?: BinanceRenko2xFastOrderByWithRelationInput | BinanceRenko2xFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceRenko2xFasts.
+     */
+    cursor?: BinanceRenko2xFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenko2xFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenko2xFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceRenko2xFasts.
+     */
+    distinct?: BinanceRenko2xFastScalarFieldEnum | BinanceRenko2xFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenko2xFast findMany
+   */
+  export type BinanceRenko2xFastFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceRenko2xFasts to fetch.
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceRenko2xFasts to fetch.
+     */
+    orderBy?: BinanceRenko2xFastOrderByWithRelationInput | BinanceRenko2xFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceRenko2xFasts.
+     */
+    cursor?: BinanceRenko2xFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceRenko2xFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceRenko2xFasts.
+     */
+    skip?: number
+    distinct?: BinanceRenko2xFastScalarFieldEnum | BinanceRenko2xFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceRenko2xFast create
+   */
+  export type BinanceRenko2xFastCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceRenko2xFast.
+     */
+    data: XOR<BinanceRenko2xFastCreateInput, BinanceRenko2xFastUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceRenko2xFast createMany
+   */
+  export type BinanceRenko2xFastCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceRenko2xFasts.
+     */
+    data: BinanceRenko2xFastCreateManyInput | BinanceRenko2xFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRenko2xFast createManyAndReturn
+   */
+  export type BinanceRenko2xFastCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceRenko2xFasts.
+     */
+    data: BinanceRenko2xFastCreateManyInput | BinanceRenko2xFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceRenko2xFast update
+   */
+  export type BinanceRenko2xFastUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceRenko2xFast.
+     */
+    data: XOR<BinanceRenko2xFastUpdateInput, BinanceRenko2xFastUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceRenko2xFast to update.
+     */
+    where: BinanceRenko2xFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenko2xFast updateMany
+   */
+  export type BinanceRenko2xFastUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceRenko2xFasts.
+     */
+    data: XOR<BinanceRenko2xFastUpdateManyMutationInput, BinanceRenko2xFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRenko2xFasts to update
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * Limit how many BinanceRenko2xFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenko2xFast updateManyAndReturn
+   */
+  export type BinanceRenko2xFastUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceRenko2xFasts.
+     */
+    data: XOR<BinanceRenko2xFastUpdateManyMutationInput, BinanceRenko2xFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceRenko2xFasts to update
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * Limit how many BinanceRenko2xFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenko2xFast upsert
+   */
+  export type BinanceRenko2xFastUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceRenko2xFast to update in case it exists.
+     */
+    where: BinanceRenko2xFastWhereUniqueInput
+    /**
+     * In case the BinanceRenko2xFast found by the `where` argument doesn't exist, create a new BinanceRenko2xFast with this data.
+     */
+    create: XOR<BinanceRenko2xFastCreateInput, BinanceRenko2xFastUncheckedCreateInput>
+    /**
+     * In case the BinanceRenko2xFast was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceRenko2xFastUpdateInput, BinanceRenko2xFastUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceRenko2xFast delete
+   */
+  export type BinanceRenko2xFastDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceRenko2xFast to delete.
+     */
+    where: BinanceRenko2xFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceRenko2xFast deleteMany
+   */
+  export type BinanceRenko2xFastDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceRenko2xFasts to delete
+     */
+    where?: BinanceRenko2xFastWhereInput
+    /**
+     * Limit how many BinanceRenko2xFasts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceRenko2xFast without action
+   */
+  export type BinanceRenko2xFastDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceRenko2xFast
+     */
+    select?: BinanceRenko2xFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceRenko2xFast
+     */
+    omit?: BinanceRenko2xFastOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceTradeCountFast
+   */
+
+  export type AggregateBinanceTradeCountFast = {
+    _count: BinanceTradeCountFastCountAggregateOutputType | null
+    _avg: BinanceTradeCountFastAvgAggregateOutputType | null
+    _sum: BinanceTradeCountFastSumAggregateOutputType | null
+    _min: BinanceTradeCountFastMinAggregateOutputType | null
+    _max: BinanceTradeCountFastMaxAggregateOutputType | null
+  }
+
+  export type BinanceTradeCountFastAvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceTradeCountFastSumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceTradeCountFastMinAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl500trades: boolean | null
+    k2Incl1000trades: boolean | null
+    k2Incl2500trades: boolean | null
+    k2Incl5000trades: boolean | null
+    k2Incl7500trades: boolean | null
+    k2Incl10000trades: boolean | null
+  }
+
+  export type BinanceTradeCountFastMaxAggregateOutputType = {
+    corretora: string | null
+    symbol: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+    k2Incl500trades: boolean | null
+    k2Incl1000trades: boolean | null
+    k2Incl2500trades: boolean | null
+    k2Incl5000trades: boolean | null
+    k2Incl7500trades: boolean | null
+    k2Incl10000trades: boolean | null
+  }
+
+  export type BinanceTradeCountFastCountAggregateOutputType = {
+    corretora: number
+    symbol: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    k2Incl500trades: number
+    k2Incl1000trades: number
+    k2Incl2500trades: number
+    k2Incl5000trades: number
+    k2Incl7500trades: number
+    k2Incl10000trades: number
+    _all: number
+  }
+
+
+  export type BinanceTradeCountFastAvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceTradeCountFastSumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceTradeCountFastMinAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl500trades?: true
+    k2Incl1000trades?: true
+    k2Incl2500trades?: true
+    k2Incl5000trades?: true
+    k2Incl7500trades?: true
+    k2Incl10000trades?: true
+  }
+
+  export type BinanceTradeCountFastMaxAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl500trades?: true
+    k2Incl1000trades?: true
+    k2Incl2500trades?: true
+    k2Incl5000trades?: true
+    k2Incl7500trades?: true
+    k2Incl10000trades?: true
+  }
+
+  export type BinanceTradeCountFastCountAggregateInputType = {
+    corretora?: true
+    symbol?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    k2Incl500trades?: true
+    k2Incl1000trades?: true
+    k2Incl2500trades?: true
+    k2Incl5000trades?: true
+    k2Incl7500trades?: true
+    k2Incl10000trades?: true
+    _all?: true
+  }
+
+  export type BinanceTradeCountFastAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceTradeCountFast to aggregate.
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceTradeCountFasts to fetch.
+     */
+    orderBy?: BinanceTradeCountFastOrderByWithRelationInput | BinanceTradeCountFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceTradeCountFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceTradeCountFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceTradeCountFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceTradeCountFasts
+    **/
+    _count?: true | BinanceTradeCountFastCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceTradeCountFastAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceTradeCountFastSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceTradeCountFastMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceTradeCountFastMaxAggregateInputType
+  }
+
+  export type GetBinanceTradeCountFastAggregateType<T extends BinanceTradeCountFastAggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceTradeCountFast]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceTradeCountFast[P]>
+      : GetScalarType<T[P], AggregateBinanceTradeCountFast[P]>
+  }
+
+
+
+
+  export type BinanceTradeCountFastGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceTradeCountFastWhereInput
+    orderBy?: BinanceTradeCountFastOrderByWithAggregationInput | BinanceTradeCountFastOrderByWithAggregationInput[]
+    by: BinanceTradeCountFastScalarFieldEnum[] | BinanceTradeCountFastScalarFieldEnum
+    having?: BinanceTradeCountFastScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceTradeCountFastCountAggregateInputType | true
+    _avg?: BinanceTradeCountFastAvgAggregateInputType
+    _sum?: BinanceTradeCountFastSumAggregateInputType
+    _min?: BinanceTradeCountFastMinAggregateInputType
+    _max?: BinanceTradeCountFastMaxAggregateInputType
+  }
+
+  export type BinanceTradeCountFastGroupByOutputType = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    k2Incl500trades: boolean
+    k2Incl1000trades: boolean
+    k2Incl2500trades: boolean
+    k2Incl5000trades: boolean
+    k2Incl7500trades: boolean
+    k2Incl10000trades: boolean
+    _count: BinanceTradeCountFastCountAggregateOutputType | null
+    _avg: BinanceTradeCountFastAvgAggregateOutputType | null
+    _sum: BinanceTradeCountFastSumAggregateOutputType | null
+    _min: BinanceTradeCountFastMinAggregateOutputType | null
+    _max: BinanceTradeCountFastMaxAggregateOutputType | null
+  }
+
+  type GetBinanceTradeCountFastGroupByPayload<T extends BinanceTradeCountFastGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceTradeCountFastGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceTradeCountFastGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceTradeCountFastGroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceTradeCountFastGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceTradeCountFastSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }, ExtArgs["result"]["binanceTradeCountFast"]>
+
+  export type BinanceTradeCountFastSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }, ExtArgs["result"]["binanceTradeCountFast"]>
+
+  export type BinanceTradeCountFastSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }, ExtArgs["result"]["binanceTradeCountFast"]>
+
+  export type BinanceTradeCountFastSelectScalar = {
+    corretora?: boolean
+    symbol?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }
+
+  export type BinanceTradeCountFastOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"corretora" | "symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume" | "k2Incl500trades" | "k2Incl1000trades" | "k2Incl2500trades" | "k2Incl5000trades" | "k2Incl7500trades" | "k2Incl10000trades", ExtArgs["result"]["binanceTradeCountFast"]>
+
+  export type $BinanceTradeCountFastPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceTradeCountFast"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      corretora: string
+      symbol: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+      /**
+       * * trades500 → BinanceKlineCache2: linha 500trades já contabilizada neste tier (6 intervalos).
+       */
+      k2Incl500trades: boolean
+      k2Incl1000trades: boolean
+      k2Incl2500trades: boolean
+      k2Incl5000trades: boolean
+      k2Incl7500trades: boolean
+      k2Incl10000trades: boolean
+    }, ExtArgs["result"]["binanceTradeCountFast"]>
+    composites: {}
+  }
+
+  type BinanceTradeCountFastGetPayload<S extends boolean | null | undefined | BinanceTradeCountFastDefaultArgs> = $Result.GetResult<Prisma.$BinanceTradeCountFastPayload, S>
+
+  type BinanceTradeCountFastCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceTradeCountFastFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceTradeCountFastCountAggregateInputType | true
+    }
+
+  export interface BinanceTradeCountFastDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceTradeCountFast'], meta: { name: 'BinanceTradeCountFast' } }
+    /**
+     * Find zero or one BinanceTradeCountFast that matches the filter.
+     * @param {BinanceTradeCountFastFindUniqueArgs} args - Arguments to find a BinanceTradeCountFast
+     * @example
+     * // Get one BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceTradeCountFastFindUniqueArgs>(args: SelectSubset<T, BinanceTradeCountFastFindUniqueArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceTradeCountFast that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceTradeCountFastFindUniqueOrThrowArgs} args - Arguments to find a BinanceTradeCountFast
+     * @example
+     * // Get one BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceTradeCountFastFindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceTradeCountFastFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceTradeCountFast that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastFindFirstArgs} args - Arguments to find a BinanceTradeCountFast
+     * @example
+     * // Get one BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceTradeCountFastFindFirstArgs>(args?: SelectSubset<T, BinanceTradeCountFastFindFirstArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceTradeCountFast that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastFindFirstOrThrowArgs} args - Arguments to find a BinanceTradeCountFast
+     * @example
+     * // Get one BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceTradeCountFastFindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceTradeCountFastFindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceTradeCountFasts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceTradeCountFasts
+     * const binanceTradeCountFasts = await prisma.binanceTradeCountFast.findMany()
+     * 
+     * // Get first 10 BinanceTradeCountFasts
+     * const binanceTradeCountFasts = await prisma.binanceTradeCountFast.findMany({ take: 10 })
+     * 
+     * // Only select the `corretora`
+     * const binanceTradeCountFastWithCorretoraOnly = await prisma.binanceTradeCountFast.findMany({ select: { corretora: true } })
+     * 
+     */
+    findMany<T extends BinanceTradeCountFastFindManyArgs>(args?: SelectSubset<T, BinanceTradeCountFastFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceTradeCountFast.
+     * @param {BinanceTradeCountFastCreateArgs} args - Arguments to create a BinanceTradeCountFast.
+     * @example
+     * // Create one BinanceTradeCountFast
+     * const BinanceTradeCountFast = await prisma.binanceTradeCountFast.create({
+     *   data: {
+     *     // ... data to create a BinanceTradeCountFast
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceTradeCountFastCreateArgs>(args: SelectSubset<T, BinanceTradeCountFastCreateArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceTradeCountFasts.
+     * @param {BinanceTradeCountFastCreateManyArgs} args - Arguments to create many BinanceTradeCountFasts.
+     * @example
+     * // Create many BinanceTradeCountFasts
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceTradeCountFastCreateManyArgs>(args?: SelectSubset<T, BinanceTradeCountFastCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceTradeCountFasts and returns the data saved in the database.
+     * @param {BinanceTradeCountFastCreateManyAndReturnArgs} args - Arguments to create many BinanceTradeCountFasts.
+     * @example
+     * // Create many BinanceTradeCountFasts
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceTradeCountFasts and only return the `corretora`
+     * const binanceTradeCountFastWithCorretoraOnly = await prisma.binanceTradeCountFast.createManyAndReturn({
+     *   select: { corretora: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceTradeCountFastCreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceTradeCountFastCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceTradeCountFast.
+     * @param {BinanceTradeCountFastDeleteArgs} args - Arguments to delete one BinanceTradeCountFast.
+     * @example
+     * // Delete one BinanceTradeCountFast
+     * const BinanceTradeCountFast = await prisma.binanceTradeCountFast.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceTradeCountFast
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceTradeCountFastDeleteArgs>(args: SelectSubset<T, BinanceTradeCountFastDeleteArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceTradeCountFast.
+     * @param {BinanceTradeCountFastUpdateArgs} args - Arguments to update one BinanceTradeCountFast.
+     * @example
+     * // Update one BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceTradeCountFastUpdateArgs>(args: SelectSubset<T, BinanceTradeCountFastUpdateArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceTradeCountFasts.
+     * @param {BinanceTradeCountFastDeleteManyArgs} args - Arguments to filter BinanceTradeCountFasts to delete.
+     * @example
+     * // Delete a few BinanceTradeCountFasts
+     * const { count } = await prisma.binanceTradeCountFast.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceTradeCountFastDeleteManyArgs>(args?: SelectSubset<T, BinanceTradeCountFastDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceTradeCountFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceTradeCountFasts
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceTradeCountFastUpdateManyArgs>(args: SelectSubset<T, BinanceTradeCountFastUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceTradeCountFasts and returns the data updated in the database.
+     * @param {BinanceTradeCountFastUpdateManyAndReturnArgs} args - Arguments to update many BinanceTradeCountFasts.
+     * @example
+     * // Update many BinanceTradeCountFasts
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceTradeCountFasts and only return the `corretora`
+     * const binanceTradeCountFastWithCorretoraOnly = await prisma.binanceTradeCountFast.updateManyAndReturn({
+     *   select: { corretora: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceTradeCountFastUpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceTradeCountFastUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceTradeCountFast.
+     * @param {BinanceTradeCountFastUpsertArgs} args - Arguments to update or create a BinanceTradeCountFast.
+     * @example
+     * // Update or create a BinanceTradeCountFast
+     * const binanceTradeCountFast = await prisma.binanceTradeCountFast.upsert({
+     *   create: {
+     *     // ... data to create a BinanceTradeCountFast
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceTradeCountFast we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceTradeCountFastUpsertArgs>(args: SelectSubset<T, BinanceTradeCountFastUpsertArgs<ExtArgs>>): Prisma__BinanceTradeCountFastClient<$Result.GetResult<Prisma.$BinanceTradeCountFastPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceTradeCountFasts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastCountArgs} args - Arguments to filter BinanceTradeCountFasts to count.
+     * @example
+     * // Count the number of BinanceTradeCountFasts
+     * const count = await prisma.binanceTradeCountFast.count({
+     *   where: {
+     *     // ... the filter for the BinanceTradeCountFasts we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceTradeCountFastCountArgs>(
+      args?: Subset<T, BinanceTradeCountFastCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceTradeCountFastCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceTradeCountFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceTradeCountFastAggregateArgs>(args: Subset<T, BinanceTradeCountFastAggregateArgs>): Prisma.PrismaPromise<GetBinanceTradeCountFastAggregateType<T>>
+
+    /**
+     * Group by BinanceTradeCountFast.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceTradeCountFastGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceTradeCountFastGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceTradeCountFastGroupByArgs['orderBy'] }
+        : { orderBy?: BinanceTradeCountFastGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceTradeCountFastGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceTradeCountFastGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceTradeCountFast model
+   */
+  readonly fields: BinanceTradeCountFastFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceTradeCountFast.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceTradeCountFastClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceTradeCountFast model
+   */
+  interface BinanceTradeCountFastFieldRefs {
+    readonly corretora: FieldRef<"BinanceTradeCountFast", 'String'>
+    readonly symbol: FieldRef<"BinanceTradeCountFast", 'String'>
+    readonly interval: FieldRef<"BinanceTradeCountFast", 'String'>
+    readonly openTime: FieldRef<"BinanceTradeCountFast", 'BigInt'>
+    readonly open: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly high: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly low: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly close: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly volume: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceTradeCountFast", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceTradeCountFast", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceTradeCountFast", 'Decimal'>
+    readonly k2Incl500trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+    readonly k2Incl1000trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+    readonly k2Incl2500trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+    readonly k2Incl5000trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+    readonly k2Incl7500trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+    readonly k2Incl10000trades: FieldRef<"BinanceTradeCountFast", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceTradeCountFast findUnique
+   */
+  export type BinanceTradeCountFastFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceTradeCountFast to fetch.
+     */
+    where: BinanceTradeCountFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceTradeCountFast findUniqueOrThrow
+   */
+  export type BinanceTradeCountFastFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceTradeCountFast to fetch.
+     */
+    where: BinanceTradeCountFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceTradeCountFast findFirst
+   */
+  export type BinanceTradeCountFastFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceTradeCountFast to fetch.
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceTradeCountFasts to fetch.
+     */
+    orderBy?: BinanceTradeCountFastOrderByWithRelationInput | BinanceTradeCountFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceTradeCountFasts.
+     */
+    cursor?: BinanceTradeCountFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceTradeCountFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceTradeCountFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceTradeCountFasts.
+     */
+    distinct?: BinanceTradeCountFastScalarFieldEnum | BinanceTradeCountFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceTradeCountFast findFirstOrThrow
+   */
+  export type BinanceTradeCountFastFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceTradeCountFast to fetch.
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceTradeCountFasts to fetch.
+     */
+    orderBy?: BinanceTradeCountFastOrderByWithRelationInput | BinanceTradeCountFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceTradeCountFasts.
+     */
+    cursor?: BinanceTradeCountFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceTradeCountFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceTradeCountFasts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceTradeCountFasts.
+     */
+    distinct?: BinanceTradeCountFastScalarFieldEnum | BinanceTradeCountFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceTradeCountFast findMany
+   */
+  export type BinanceTradeCountFastFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter, which BinanceTradeCountFasts to fetch.
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceTradeCountFasts to fetch.
+     */
+    orderBy?: BinanceTradeCountFastOrderByWithRelationInput | BinanceTradeCountFastOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceTradeCountFasts.
+     */
+    cursor?: BinanceTradeCountFastWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceTradeCountFasts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceTradeCountFasts.
+     */
+    skip?: number
+    distinct?: BinanceTradeCountFastScalarFieldEnum | BinanceTradeCountFastScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceTradeCountFast create
+   */
+  export type BinanceTradeCountFastCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceTradeCountFast.
+     */
+    data: XOR<BinanceTradeCountFastCreateInput, BinanceTradeCountFastUncheckedCreateInput>
+  }
+
+  /**
+   * BinanceTradeCountFast createMany
+   */
+  export type BinanceTradeCountFastCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceTradeCountFasts.
+     */
+    data: BinanceTradeCountFastCreateManyInput | BinanceTradeCountFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceTradeCountFast createManyAndReturn
+   */
+  export type BinanceTradeCountFastCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceTradeCountFasts.
+     */
+    data: BinanceTradeCountFastCreateManyInput | BinanceTradeCountFastCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceTradeCountFast update
+   */
+  export type BinanceTradeCountFastUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceTradeCountFast.
+     */
+    data: XOR<BinanceTradeCountFastUpdateInput, BinanceTradeCountFastUncheckedUpdateInput>
+    /**
+     * Choose, which BinanceTradeCountFast to update.
+     */
+    where: BinanceTradeCountFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceTradeCountFast updateMany
+   */
+  export type BinanceTradeCountFastUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceTradeCountFasts.
+     */
+    data: XOR<BinanceTradeCountFastUpdateManyMutationInput, BinanceTradeCountFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceTradeCountFasts to update
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * Limit how many BinanceTradeCountFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceTradeCountFast updateManyAndReturn
+   */
+  export type BinanceTradeCountFastUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * The data used to update BinanceTradeCountFasts.
+     */
+    data: XOR<BinanceTradeCountFastUpdateManyMutationInput, BinanceTradeCountFastUncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceTradeCountFasts to update
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * Limit how many BinanceTradeCountFasts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceTradeCountFast upsert
+   */
+  export type BinanceTradeCountFastUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceTradeCountFast to update in case it exists.
+     */
+    where: BinanceTradeCountFastWhereUniqueInput
+    /**
+     * In case the BinanceTradeCountFast found by the `where` argument doesn't exist, create a new BinanceTradeCountFast with this data.
+     */
+    create: XOR<BinanceTradeCountFastCreateInput, BinanceTradeCountFastUncheckedCreateInput>
+    /**
+     * In case the BinanceTradeCountFast was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceTradeCountFastUpdateInput, BinanceTradeCountFastUncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceTradeCountFast delete
+   */
+  export type BinanceTradeCountFastDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+    /**
+     * Filter which BinanceTradeCountFast to delete.
+     */
+    where: BinanceTradeCountFastWhereUniqueInput
+  }
+
+  /**
+   * BinanceTradeCountFast deleteMany
+   */
+  export type BinanceTradeCountFastDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceTradeCountFasts to delete
+     */
+    where?: BinanceTradeCountFastWhereInput
+    /**
+     * Limit how many BinanceTradeCountFasts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceTradeCountFast without action
+   */
+  export type BinanceTradeCountFastDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceTradeCountFast
+     */
+    select?: BinanceTradeCountFastSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceTradeCountFast
+     */
+    omit?: BinanceTradeCountFastOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model BinanceKlineMonth
    */
 
@@ -21552,6 +28576,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMinAggregateOutputType = {
     symbol: string | null
     interval: string | null
+    chartKind: string | null
     openTime: bigint | null
     open: Decimal | null
     high: Decimal | null
@@ -21568,6 +28593,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMaxAggregateOutputType = {
     symbol: string | null
     interval: string | null
+    chartKind: string | null
     openTime: bigint | null
     open: Decimal | null
     high: Decimal | null
@@ -21584,6 +28610,7 @@ export namespace Prisma {
   export type BinanceKlineCacheCountAggregateOutputType = {
     symbol: number
     interval: number
+    chartKind: number
     openTime: number
     open: number
     high: number
@@ -21630,6 +28657,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMinAggregateInputType = {
     symbol?: true
     interval?: true
+    chartKind?: true
     openTime?: true
     open?: true
     high?: true
@@ -21646,6 +28674,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMaxAggregateInputType = {
     symbol?: true
     interval?: true
+    chartKind?: true
     openTime?: true
     open?: true
     high?: true
@@ -21662,6 +28691,7 @@ export namespace Prisma {
   export type BinanceKlineCacheCountAggregateInputType = {
     symbol?: true
     interval?: true
+    chartKind?: true
     openTime?: true
     open?: true
     high?: true
@@ -21765,6 +28795,7 @@ export namespace Prisma {
   export type BinanceKlineCacheGroupByOutputType = {
     symbol: string
     interval: string
+    chartKind: string
     openTime: bigint
     open: Decimal
     high: Decimal
@@ -21800,6 +28831,7 @@ export namespace Prisma {
   export type BinanceKlineCacheSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     symbol?: boolean
     interval?: boolean
+    chartKind?: boolean
     openTime?: boolean
     open?: boolean
     high?: boolean
@@ -21816,6 +28848,7 @@ export namespace Prisma {
   export type BinanceKlineCacheSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     symbol?: boolean
     interval?: boolean
+    chartKind?: boolean
     openTime?: boolean
     open?: boolean
     high?: boolean
@@ -21832,6 +28865,7 @@ export namespace Prisma {
   export type BinanceKlineCacheSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     symbol?: boolean
     interval?: boolean
+    chartKind?: boolean
     openTime?: boolean
     open?: boolean
     high?: boolean
@@ -21848,6 +28882,7 @@ export namespace Prisma {
   export type BinanceKlineCacheSelectScalar = {
     symbol?: boolean
     interval?: boolean
+    chartKind?: boolean
     openTime?: boolean
     open?: boolean
     high?: boolean
@@ -21861,7 +28896,7 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: boolean
   }
 
-  export type BinanceKlineCacheOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineCache"]>
+  export type BinanceKlineCacheOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "interval" | "chartKind" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineCache"]>
 
   export type $BinanceKlineCachePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BinanceKlineCache"
@@ -21869,6 +28904,10 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       symbol: string
       interval: string
+      /**
+       * * Tipo de gráfico: interval (OHLC) | renko | range | kagi | renko2x | trades500 — padrão interval.
+       */
+      chartKind: string
       openTime: bigint
       open: Prisma.Decimal
       high: Prisma.Decimal
@@ -22305,6 +29344,7 @@ export namespace Prisma {
   interface BinanceKlineCacheFieldRefs {
     readonly symbol: FieldRef<"BinanceKlineCache", 'String'>
     readonly interval: FieldRef<"BinanceKlineCache", 'String'>
+    readonly chartKind: FieldRef<"BinanceKlineCache", 'String'>
     readonly openTime: FieldRef<"BinanceKlineCache", 'BigInt'>
     readonly open: FieldRef<"BinanceKlineCache", 'Decimal'>
     readonly high: FieldRef<"BinanceKlineCache", 'Decimal'>
@@ -22679,6 +29719,1192 @@ export namespace Prisma {
      * Omit specific fields from the BinanceKlineCache
      */
     omit?: BinanceKlineCacheOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BinanceKlineCache2
+   */
+
+  export type AggregateBinanceKlineCache2 = {
+    _count: BinanceKlineCache2CountAggregateOutputType | null
+    _avg: BinanceKlineCache2AvgAggregateOutputType | null
+    _sum: BinanceKlineCache2SumAggregateOutputType | null
+    _min: BinanceKlineCache2MinAggregateOutputType | null
+    _max: BinanceKlineCache2MaxAggregateOutputType | null
+  }
+
+  export type BinanceKlineCache2AvgAggregateOutputType = {
+    openTime: number | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: number | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineCache2SumAggregateOutputType = {
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineCache2MinAggregateOutputType = {
+    symbol: string | null
+    chartKind: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineCache2MaxAggregateOutputType = {
+    symbol: string | null
+    chartKind: string | null
+    interval: string | null
+    openTime: bigint | null
+    open: Decimal | null
+    high: Decimal | null
+    low: Decimal | null
+    close: Decimal | null
+    volume: Decimal | null
+    closeTime: bigint | null
+    quoteAssetVolume: Decimal | null
+    numberOfTrades: number | null
+    takerBuyBaseAssetVolume: Decimal | null
+    takerBuyQuoteAssetVolume: Decimal | null
+  }
+
+  export type BinanceKlineCache2CountAggregateOutputType = {
+    symbol: number
+    chartKind: number
+    interval: number
+    openTime: number
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+    closeTime: number
+    quoteAssetVolume: number
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: number
+    takerBuyQuoteAssetVolume: number
+    _all: number
+  }
+
+
+  export type BinanceKlineCache2AvgAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineCache2SumAggregateInputType = {
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineCache2MinAggregateInputType = {
+    symbol?: true
+    chartKind?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineCache2MaxAggregateInputType = {
+    symbol?: true
+    chartKind?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+  }
+
+  export type BinanceKlineCache2CountAggregateInputType = {
+    symbol?: true
+    chartKind?: true
+    interval?: true
+    openTime?: true
+    open?: true
+    high?: true
+    low?: true
+    close?: true
+    volume?: true
+    closeTime?: true
+    quoteAssetVolume?: true
+    numberOfTrades?: true
+    takerBuyBaseAssetVolume?: true
+    takerBuyQuoteAssetVolume?: true
+    _all?: true
+  }
+
+  export type BinanceKlineCache2AggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineCache2 to aggregate.
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineCache2s to fetch.
+     */
+    orderBy?: BinanceKlineCache2OrderByWithRelationInput | BinanceKlineCache2OrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BinanceKlineCache2WhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineCache2s from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineCache2s.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BinanceKlineCache2s
+    **/
+    _count?: true | BinanceKlineCache2CountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BinanceKlineCache2AvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BinanceKlineCache2SumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BinanceKlineCache2MinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BinanceKlineCache2MaxAggregateInputType
+  }
+
+  export type GetBinanceKlineCache2AggregateType<T extends BinanceKlineCache2AggregateArgs> = {
+        [P in keyof T & keyof AggregateBinanceKlineCache2]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBinanceKlineCache2[P]>
+      : GetScalarType<T[P], AggregateBinanceKlineCache2[P]>
+  }
+
+
+
+
+  export type BinanceKlineCache2GroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BinanceKlineCache2WhereInput
+    orderBy?: BinanceKlineCache2OrderByWithAggregationInput | BinanceKlineCache2OrderByWithAggregationInput[]
+    by: BinanceKlineCache2ScalarFieldEnum[] | BinanceKlineCache2ScalarFieldEnum
+    having?: BinanceKlineCache2ScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BinanceKlineCache2CountAggregateInputType | true
+    _avg?: BinanceKlineCache2AvgAggregateInputType
+    _sum?: BinanceKlineCache2SumAggregateInputType
+    _min?: BinanceKlineCache2MinAggregateInputType
+    _max?: BinanceKlineCache2MaxAggregateInputType
+  }
+
+  export type BinanceKlineCache2GroupByOutputType = {
+    symbol: string
+    chartKind: string
+    interval: string
+    openTime: bigint
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    closeTime: bigint
+    quoteAssetVolume: Decimal
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal
+    takerBuyQuoteAssetVolume: Decimal
+    _count: BinanceKlineCache2CountAggregateOutputType | null
+    _avg: BinanceKlineCache2AvgAggregateOutputType | null
+    _sum: BinanceKlineCache2SumAggregateOutputType | null
+    _min: BinanceKlineCache2MinAggregateOutputType | null
+    _max: BinanceKlineCache2MaxAggregateOutputType | null
+  }
+
+  type GetBinanceKlineCache2GroupByPayload<T extends BinanceKlineCache2GroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BinanceKlineCache2GroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BinanceKlineCache2GroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BinanceKlineCache2GroupByOutputType[P]>
+            : GetScalarType<T[P], BinanceKlineCache2GroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BinanceKlineCache2Select<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    chartKind?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineCache2"]>
+
+  export type BinanceKlineCache2SelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    chartKind?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineCache2"]>
+
+  export type BinanceKlineCache2SelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    symbol?: boolean
+    chartKind?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }, ExtArgs["result"]["binanceKlineCache2"]>
+
+  export type BinanceKlineCache2SelectScalar = {
+    symbol?: boolean
+    chartKind?: boolean
+    interval?: boolean
+    openTime?: boolean
+    open?: boolean
+    high?: boolean
+    low?: boolean
+    close?: boolean
+    volume?: boolean
+    closeTime?: boolean
+    quoteAssetVolume?: boolean
+    numberOfTrades?: boolean
+    takerBuyBaseAssetVolume?: boolean
+    takerBuyQuoteAssetVolume?: boolean
+  }
+
+  export type BinanceKlineCache2Omit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"symbol" | "chartKind" | "interval" | "openTime" | "open" | "high" | "low" | "close" | "volume" | "closeTime" | "quoteAssetVolume" | "numberOfTrades" | "takerBuyBaseAssetVolume" | "takerBuyQuoteAssetVolume", ExtArgs["result"]["binanceKlineCache2"]>
+
+  export type $BinanceKlineCache2Payload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BinanceKlineCache2"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      symbol: string
+      chartKind: string
+      interval: string
+      openTime: bigint
+      open: Prisma.Decimal
+      high: Prisma.Decimal
+      low: Prisma.Decimal
+      close: Prisma.Decimal
+      volume: Prisma.Decimal
+      closeTime: bigint
+      quoteAssetVolume: Prisma.Decimal
+      numberOfTrades: number
+      takerBuyBaseAssetVolume: Prisma.Decimal
+      takerBuyQuoteAssetVolume: Prisma.Decimal
+    }, ExtArgs["result"]["binanceKlineCache2"]>
+    composites: {}
+  }
+
+  type BinanceKlineCache2GetPayload<S extends boolean | null | undefined | BinanceKlineCache2DefaultArgs> = $Result.GetResult<Prisma.$BinanceKlineCache2Payload, S>
+
+  type BinanceKlineCache2CountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BinanceKlineCache2FindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BinanceKlineCache2CountAggregateInputType | true
+    }
+
+  export interface BinanceKlineCache2Delegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BinanceKlineCache2'], meta: { name: 'BinanceKlineCache2' } }
+    /**
+     * Find zero or one BinanceKlineCache2 that matches the filter.
+     * @param {BinanceKlineCache2FindUniqueArgs} args - Arguments to find a BinanceKlineCache2
+     * @example
+     * // Get one BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BinanceKlineCache2FindUniqueArgs>(args: SelectSubset<T, BinanceKlineCache2FindUniqueArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BinanceKlineCache2 that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BinanceKlineCache2FindUniqueOrThrowArgs} args - Arguments to find a BinanceKlineCache2
+     * @example
+     * // Get one BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BinanceKlineCache2FindUniqueOrThrowArgs>(args: SelectSubset<T, BinanceKlineCache2FindUniqueOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineCache2 that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2FindFirstArgs} args - Arguments to find a BinanceKlineCache2
+     * @example
+     * // Get one BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BinanceKlineCache2FindFirstArgs>(args?: SelectSubset<T, BinanceKlineCache2FindFirstArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BinanceKlineCache2 that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2FindFirstOrThrowArgs} args - Arguments to find a BinanceKlineCache2
+     * @example
+     * // Get one BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BinanceKlineCache2FindFirstOrThrowArgs>(args?: SelectSubset<T, BinanceKlineCache2FindFirstOrThrowArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BinanceKlineCache2s that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2FindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BinanceKlineCache2s
+     * const binanceKlineCache2s = await prisma.binanceKlineCache2.findMany()
+     * 
+     * // Get first 10 BinanceKlineCache2s
+     * const binanceKlineCache2s = await prisma.binanceKlineCache2.findMany({ take: 10 })
+     * 
+     * // Only select the `symbol`
+     * const binanceKlineCache2WithSymbolOnly = await prisma.binanceKlineCache2.findMany({ select: { symbol: true } })
+     * 
+     */
+    findMany<T extends BinanceKlineCache2FindManyArgs>(args?: SelectSubset<T, BinanceKlineCache2FindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BinanceKlineCache2.
+     * @param {BinanceKlineCache2CreateArgs} args - Arguments to create a BinanceKlineCache2.
+     * @example
+     * // Create one BinanceKlineCache2
+     * const BinanceKlineCache2 = await prisma.binanceKlineCache2.create({
+     *   data: {
+     *     // ... data to create a BinanceKlineCache2
+     *   }
+     * })
+     * 
+     */
+    create<T extends BinanceKlineCache2CreateArgs>(args: SelectSubset<T, BinanceKlineCache2CreateArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BinanceKlineCache2s.
+     * @param {BinanceKlineCache2CreateManyArgs} args - Arguments to create many BinanceKlineCache2s.
+     * @example
+     * // Create many BinanceKlineCache2s
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BinanceKlineCache2CreateManyArgs>(args?: SelectSubset<T, BinanceKlineCache2CreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BinanceKlineCache2s and returns the data saved in the database.
+     * @param {BinanceKlineCache2CreateManyAndReturnArgs} args - Arguments to create many BinanceKlineCache2s.
+     * @example
+     * // Create many BinanceKlineCache2s
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BinanceKlineCache2s and only return the `symbol`
+     * const binanceKlineCache2WithSymbolOnly = await prisma.binanceKlineCache2.createManyAndReturn({
+     *   select: { symbol: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BinanceKlineCache2CreateManyAndReturnArgs>(args?: SelectSubset<T, BinanceKlineCache2CreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BinanceKlineCache2.
+     * @param {BinanceKlineCache2DeleteArgs} args - Arguments to delete one BinanceKlineCache2.
+     * @example
+     * // Delete one BinanceKlineCache2
+     * const BinanceKlineCache2 = await prisma.binanceKlineCache2.delete({
+     *   where: {
+     *     // ... filter to delete one BinanceKlineCache2
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BinanceKlineCache2DeleteArgs>(args: SelectSubset<T, BinanceKlineCache2DeleteArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BinanceKlineCache2.
+     * @param {BinanceKlineCache2UpdateArgs} args - Arguments to update one BinanceKlineCache2.
+     * @example
+     * // Update one BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BinanceKlineCache2UpdateArgs>(args: SelectSubset<T, BinanceKlineCache2UpdateArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BinanceKlineCache2s.
+     * @param {BinanceKlineCache2DeleteManyArgs} args - Arguments to filter BinanceKlineCache2s to delete.
+     * @example
+     * // Delete a few BinanceKlineCache2s
+     * const { count } = await prisma.binanceKlineCache2.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BinanceKlineCache2DeleteManyArgs>(args?: SelectSubset<T, BinanceKlineCache2DeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineCache2s.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2UpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BinanceKlineCache2s
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BinanceKlineCache2UpdateManyArgs>(args: SelectSubset<T, BinanceKlineCache2UpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BinanceKlineCache2s and returns the data updated in the database.
+     * @param {BinanceKlineCache2UpdateManyAndReturnArgs} args - Arguments to update many BinanceKlineCache2s.
+     * @example
+     * // Update many BinanceKlineCache2s
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BinanceKlineCache2s and only return the `symbol`
+     * const binanceKlineCache2WithSymbolOnly = await prisma.binanceKlineCache2.updateManyAndReturn({
+     *   select: { symbol: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BinanceKlineCache2UpdateManyAndReturnArgs>(args: SelectSubset<T, BinanceKlineCache2UpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BinanceKlineCache2.
+     * @param {BinanceKlineCache2UpsertArgs} args - Arguments to update or create a BinanceKlineCache2.
+     * @example
+     * // Update or create a BinanceKlineCache2
+     * const binanceKlineCache2 = await prisma.binanceKlineCache2.upsert({
+     *   create: {
+     *     // ... data to create a BinanceKlineCache2
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BinanceKlineCache2 we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BinanceKlineCache2UpsertArgs>(args: SelectSubset<T, BinanceKlineCache2UpsertArgs<ExtArgs>>): Prisma__BinanceKlineCache2Client<$Result.GetResult<Prisma.$BinanceKlineCache2Payload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BinanceKlineCache2s.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2CountArgs} args - Arguments to filter BinanceKlineCache2s to count.
+     * @example
+     * // Count the number of BinanceKlineCache2s
+     * const count = await prisma.binanceKlineCache2.count({
+     *   where: {
+     *     // ... the filter for the BinanceKlineCache2s we want to count
+     *   }
+     * })
+    **/
+    count<T extends BinanceKlineCache2CountArgs>(
+      args?: Subset<T, BinanceKlineCache2CountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BinanceKlineCache2CountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BinanceKlineCache2.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2AggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BinanceKlineCache2AggregateArgs>(args: Subset<T, BinanceKlineCache2AggregateArgs>): Prisma.PrismaPromise<GetBinanceKlineCache2AggregateType<T>>
+
+    /**
+     * Group by BinanceKlineCache2.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BinanceKlineCache2GroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BinanceKlineCache2GroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BinanceKlineCache2GroupByArgs['orderBy'] }
+        : { orderBy?: BinanceKlineCache2GroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BinanceKlineCache2GroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBinanceKlineCache2GroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BinanceKlineCache2 model
+   */
+  readonly fields: BinanceKlineCache2FieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BinanceKlineCache2.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BinanceKlineCache2Client<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BinanceKlineCache2 model
+   */
+  interface BinanceKlineCache2FieldRefs {
+    readonly symbol: FieldRef<"BinanceKlineCache2", 'String'>
+    readonly chartKind: FieldRef<"BinanceKlineCache2", 'String'>
+    readonly interval: FieldRef<"BinanceKlineCache2", 'String'>
+    readonly openTime: FieldRef<"BinanceKlineCache2", 'BigInt'>
+    readonly open: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly high: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly low: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly close: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly volume: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly closeTime: FieldRef<"BinanceKlineCache2", 'BigInt'>
+    readonly quoteAssetVolume: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly numberOfTrades: FieldRef<"BinanceKlineCache2", 'Int'>
+    readonly takerBuyBaseAssetVolume: FieldRef<"BinanceKlineCache2", 'Decimal'>
+    readonly takerBuyQuoteAssetVolume: FieldRef<"BinanceKlineCache2", 'Decimal'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BinanceKlineCache2 findUnique
+   */
+  export type BinanceKlineCache2FindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineCache2 to fetch.
+     */
+    where: BinanceKlineCache2WhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineCache2 findUniqueOrThrow
+   */
+  export type BinanceKlineCache2FindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineCache2 to fetch.
+     */
+    where: BinanceKlineCache2WhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineCache2 findFirst
+   */
+  export type BinanceKlineCache2FindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineCache2 to fetch.
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineCache2s to fetch.
+     */
+    orderBy?: BinanceKlineCache2OrderByWithRelationInput | BinanceKlineCache2OrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineCache2s.
+     */
+    cursor?: BinanceKlineCache2WhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineCache2s from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineCache2s.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineCache2s.
+     */
+    distinct?: BinanceKlineCache2ScalarFieldEnum | BinanceKlineCache2ScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineCache2 findFirstOrThrow
+   */
+  export type BinanceKlineCache2FindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineCache2 to fetch.
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineCache2s to fetch.
+     */
+    orderBy?: BinanceKlineCache2OrderByWithRelationInput | BinanceKlineCache2OrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BinanceKlineCache2s.
+     */
+    cursor?: BinanceKlineCache2WhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineCache2s from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineCache2s.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BinanceKlineCache2s.
+     */
+    distinct?: BinanceKlineCache2ScalarFieldEnum | BinanceKlineCache2ScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineCache2 findMany
+   */
+  export type BinanceKlineCache2FindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter, which BinanceKlineCache2s to fetch.
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BinanceKlineCache2s to fetch.
+     */
+    orderBy?: BinanceKlineCache2OrderByWithRelationInput | BinanceKlineCache2OrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BinanceKlineCache2s.
+     */
+    cursor?: BinanceKlineCache2WhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BinanceKlineCache2s from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BinanceKlineCache2s.
+     */
+    skip?: number
+    distinct?: BinanceKlineCache2ScalarFieldEnum | BinanceKlineCache2ScalarFieldEnum[]
+  }
+
+  /**
+   * BinanceKlineCache2 create
+   */
+  export type BinanceKlineCache2CreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * The data needed to create a BinanceKlineCache2.
+     */
+    data: XOR<BinanceKlineCache2CreateInput, BinanceKlineCache2UncheckedCreateInput>
+  }
+
+  /**
+   * BinanceKlineCache2 createMany
+   */
+  export type BinanceKlineCache2CreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BinanceKlineCache2s.
+     */
+    data: BinanceKlineCache2CreateManyInput | BinanceKlineCache2CreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineCache2 createManyAndReturn
+   */
+  export type BinanceKlineCache2CreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2SelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * The data used to create many BinanceKlineCache2s.
+     */
+    data: BinanceKlineCache2CreateManyInput | BinanceKlineCache2CreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BinanceKlineCache2 update
+   */
+  export type BinanceKlineCache2UpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * The data needed to update a BinanceKlineCache2.
+     */
+    data: XOR<BinanceKlineCache2UpdateInput, BinanceKlineCache2UncheckedUpdateInput>
+    /**
+     * Choose, which BinanceKlineCache2 to update.
+     */
+    where: BinanceKlineCache2WhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineCache2 updateMany
+   */
+  export type BinanceKlineCache2UpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BinanceKlineCache2s.
+     */
+    data: XOR<BinanceKlineCache2UpdateManyMutationInput, BinanceKlineCache2UncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineCache2s to update
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * Limit how many BinanceKlineCache2s to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineCache2 updateManyAndReturn
+   */
+  export type BinanceKlineCache2UpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2SelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * The data used to update BinanceKlineCache2s.
+     */
+    data: XOR<BinanceKlineCache2UpdateManyMutationInput, BinanceKlineCache2UncheckedUpdateManyInput>
+    /**
+     * Filter which BinanceKlineCache2s to update
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * Limit how many BinanceKlineCache2s to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineCache2 upsert
+   */
+  export type BinanceKlineCache2UpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * The filter to search for the BinanceKlineCache2 to update in case it exists.
+     */
+    where: BinanceKlineCache2WhereUniqueInput
+    /**
+     * In case the BinanceKlineCache2 found by the `where` argument doesn't exist, create a new BinanceKlineCache2 with this data.
+     */
+    create: XOR<BinanceKlineCache2CreateInput, BinanceKlineCache2UncheckedCreateInput>
+    /**
+     * In case the BinanceKlineCache2 was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BinanceKlineCache2UpdateInput, BinanceKlineCache2UncheckedUpdateInput>
+  }
+
+  /**
+   * BinanceKlineCache2 delete
+   */
+  export type BinanceKlineCache2DeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
+    /**
+     * Filter which BinanceKlineCache2 to delete.
+     */
+    where: BinanceKlineCache2WhereUniqueInput
+  }
+
+  /**
+   * BinanceKlineCache2 deleteMany
+   */
+  export type BinanceKlineCache2DeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BinanceKlineCache2s to delete
+     */
+    where?: BinanceKlineCache2WhereInput
+    /**
+     * Limit how many BinanceKlineCache2s to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BinanceKlineCache2 without action
+   */
+  export type BinanceKlineCache2DefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BinanceKlineCache2
+     */
+    select?: BinanceKlineCache2Select<ExtArgs> | null
+    /**
+     * Omit specific fields from the BinanceKlineCache2
+     */
+    omit?: BinanceKlineCache2Omit<ExtArgs> | null
   }
 
 
@@ -23699,6 +31925,1001 @@ export namespace Prisma {
      * Omit specific fields from the BinanceKlineGap
      */
     omit?: BinanceKlineGapOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AppConfig
+   */
+
+  export type AggregateAppConfig = {
+    _count: AppConfigCountAggregateOutputType | null
+    _min: AppConfigMinAggregateOutputType | null
+    _max: AppConfigMaxAggregateOutputType | null
+  }
+
+  export type AppConfigMinAggregateOutputType = {
+    key: string | null
+    value: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AppConfigMaxAggregateOutputType = {
+    key: string | null
+    value: string | null
+    description: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AppConfigCountAggregateOutputType = {
+    key: number
+    value: number
+    description: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AppConfigMinAggregateInputType = {
+    key?: true
+    value?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AppConfigMaxAggregateInputType = {
+    key?: true
+    value?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AppConfigCountAggregateInputType = {
+    key?: true
+    value?: true
+    description?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AppConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AppConfig to aggregate.
+     */
+    where?: AppConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppConfigs to fetch.
+     */
+    orderBy?: AppConfigOrderByWithRelationInput | AppConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AppConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AppConfigs
+    **/
+    _count?: true | AppConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AppConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AppConfigMaxAggregateInputType
+  }
+
+  export type GetAppConfigAggregateType<T extends AppConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateAppConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAppConfig[P]>
+      : GetScalarType<T[P], AggregateAppConfig[P]>
+  }
+
+
+
+
+  export type AppConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AppConfigWhereInput
+    orderBy?: AppConfigOrderByWithAggregationInput | AppConfigOrderByWithAggregationInput[]
+    by: AppConfigScalarFieldEnum[] | AppConfigScalarFieldEnum
+    having?: AppConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AppConfigCountAggregateInputType | true
+    _min?: AppConfigMinAggregateInputType
+    _max?: AppConfigMaxAggregateInputType
+  }
+
+  export type AppConfigGroupByOutputType = {
+    key: string
+    value: string
+    description: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AppConfigCountAggregateOutputType | null
+    _min: AppConfigMinAggregateOutputType | null
+    _max: AppConfigMaxAggregateOutputType | null
+  }
+
+  type GetAppConfigGroupByPayload<T extends AppConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AppConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AppConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AppConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], AppConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AppConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appConfig"]>
+
+  export type AppConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appConfig"]>
+
+  export type AppConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    key?: boolean
+    value?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["appConfig"]>
+
+  export type AppConfigSelectScalar = {
+    key?: boolean
+    value?: boolean
+    description?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AppConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "value" | "description" | "createdAt" | "updatedAt", ExtArgs["result"]["appConfig"]>
+
+  export type $AppConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AppConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      key: string
+      value: string
+      description: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["appConfig"]>
+    composites: {}
+  }
+
+  type AppConfigGetPayload<S extends boolean | null | undefined | AppConfigDefaultArgs> = $Result.GetResult<Prisma.$AppConfigPayload, S>
+
+  type AppConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AppConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AppConfigCountAggregateInputType | true
+    }
+
+  export interface AppConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AppConfig'], meta: { name: 'AppConfig' } }
+    /**
+     * Find zero or one AppConfig that matches the filter.
+     * @param {AppConfigFindUniqueArgs} args - Arguments to find a AppConfig
+     * @example
+     * // Get one AppConfig
+     * const appConfig = await prisma.appConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AppConfigFindUniqueArgs>(args: SelectSubset<T, AppConfigFindUniqueArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AppConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AppConfigFindUniqueOrThrowArgs} args - Arguments to find a AppConfig
+     * @example
+     * // Get one AppConfig
+     * const appConfig = await prisma.appConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AppConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, AppConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AppConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigFindFirstArgs} args - Arguments to find a AppConfig
+     * @example
+     * // Get one AppConfig
+     * const appConfig = await prisma.appConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AppConfigFindFirstArgs>(args?: SelectSubset<T, AppConfigFindFirstArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AppConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigFindFirstOrThrowArgs} args - Arguments to find a AppConfig
+     * @example
+     * // Get one AppConfig
+     * const appConfig = await prisma.appConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AppConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, AppConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AppConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AppConfigs
+     * const appConfigs = await prisma.appConfig.findMany()
+     * 
+     * // Get first 10 AppConfigs
+     * const appConfigs = await prisma.appConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `key`
+     * const appConfigWithKeyOnly = await prisma.appConfig.findMany({ select: { key: true } })
+     * 
+     */
+    findMany<T extends AppConfigFindManyArgs>(args?: SelectSubset<T, AppConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AppConfig.
+     * @param {AppConfigCreateArgs} args - Arguments to create a AppConfig.
+     * @example
+     * // Create one AppConfig
+     * const AppConfig = await prisma.appConfig.create({
+     *   data: {
+     *     // ... data to create a AppConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends AppConfigCreateArgs>(args: SelectSubset<T, AppConfigCreateArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AppConfigs.
+     * @param {AppConfigCreateManyArgs} args - Arguments to create many AppConfigs.
+     * @example
+     * // Create many AppConfigs
+     * const appConfig = await prisma.appConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AppConfigCreateManyArgs>(args?: SelectSubset<T, AppConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AppConfigs and returns the data saved in the database.
+     * @param {AppConfigCreateManyAndReturnArgs} args - Arguments to create many AppConfigs.
+     * @example
+     * // Create many AppConfigs
+     * const appConfig = await prisma.appConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AppConfigs and only return the `key`
+     * const appConfigWithKeyOnly = await prisma.appConfig.createManyAndReturn({
+     *   select: { key: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AppConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, AppConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AppConfig.
+     * @param {AppConfigDeleteArgs} args - Arguments to delete one AppConfig.
+     * @example
+     * // Delete one AppConfig
+     * const AppConfig = await prisma.appConfig.delete({
+     *   where: {
+     *     // ... filter to delete one AppConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AppConfigDeleteArgs>(args: SelectSubset<T, AppConfigDeleteArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AppConfig.
+     * @param {AppConfigUpdateArgs} args - Arguments to update one AppConfig.
+     * @example
+     * // Update one AppConfig
+     * const appConfig = await prisma.appConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AppConfigUpdateArgs>(args: SelectSubset<T, AppConfigUpdateArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AppConfigs.
+     * @param {AppConfigDeleteManyArgs} args - Arguments to filter AppConfigs to delete.
+     * @example
+     * // Delete a few AppConfigs
+     * const { count } = await prisma.appConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AppConfigDeleteManyArgs>(args?: SelectSubset<T, AppConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AppConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AppConfigs
+     * const appConfig = await prisma.appConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AppConfigUpdateManyArgs>(args: SelectSubset<T, AppConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AppConfigs and returns the data updated in the database.
+     * @param {AppConfigUpdateManyAndReturnArgs} args - Arguments to update many AppConfigs.
+     * @example
+     * // Update many AppConfigs
+     * const appConfig = await prisma.appConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AppConfigs and only return the `key`
+     * const appConfigWithKeyOnly = await prisma.appConfig.updateManyAndReturn({
+     *   select: { key: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AppConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, AppConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AppConfig.
+     * @param {AppConfigUpsertArgs} args - Arguments to update or create a AppConfig.
+     * @example
+     * // Update or create a AppConfig
+     * const appConfig = await prisma.appConfig.upsert({
+     *   create: {
+     *     // ... data to create a AppConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AppConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AppConfigUpsertArgs>(args: SelectSubset<T, AppConfigUpsertArgs<ExtArgs>>): Prisma__AppConfigClient<$Result.GetResult<Prisma.$AppConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AppConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigCountArgs} args - Arguments to filter AppConfigs to count.
+     * @example
+     * // Count the number of AppConfigs
+     * const count = await prisma.appConfig.count({
+     *   where: {
+     *     // ... the filter for the AppConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends AppConfigCountArgs>(
+      args?: Subset<T, AppConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AppConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AppConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AppConfigAggregateArgs>(args: Subset<T, AppConfigAggregateArgs>): Prisma.PrismaPromise<GetAppConfigAggregateType<T>>
+
+    /**
+     * Group by AppConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AppConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AppConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AppConfigGroupByArgs['orderBy'] }
+        : { orderBy?: AppConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AppConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAppConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AppConfig model
+   */
+  readonly fields: AppConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AppConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AppConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AppConfig model
+   */
+  interface AppConfigFieldRefs {
+    readonly key: FieldRef<"AppConfig", 'String'>
+    readonly value: FieldRef<"AppConfig", 'String'>
+    readonly description: FieldRef<"AppConfig", 'String'>
+    readonly createdAt: FieldRef<"AppConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"AppConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AppConfig findUnique
+   */
+  export type AppConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which AppConfig to fetch.
+     */
+    where: AppConfigWhereUniqueInput
+  }
+
+  /**
+   * AppConfig findUniqueOrThrow
+   */
+  export type AppConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which AppConfig to fetch.
+     */
+    where: AppConfigWhereUniqueInput
+  }
+
+  /**
+   * AppConfig findFirst
+   */
+  export type AppConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which AppConfig to fetch.
+     */
+    where?: AppConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppConfigs to fetch.
+     */
+    orderBy?: AppConfigOrderByWithRelationInput | AppConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AppConfigs.
+     */
+    cursor?: AppConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AppConfigs.
+     */
+    distinct?: AppConfigScalarFieldEnum | AppConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AppConfig findFirstOrThrow
+   */
+  export type AppConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which AppConfig to fetch.
+     */
+    where?: AppConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppConfigs to fetch.
+     */
+    orderBy?: AppConfigOrderByWithRelationInput | AppConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AppConfigs.
+     */
+    cursor?: AppConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AppConfigs.
+     */
+    distinct?: AppConfigScalarFieldEnum | AppConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AppConfig findMany
+   */
+  export type AppConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which AppConfigs to fetch.
+     */
+    where?: AppConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AppConfigs to fetch.
+     */
+    orderBy?: AppConfigOrderByWithRelationInput | AppConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AppConfigs.
+     */
+    cursor?: AppConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AppConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AppConfigs.
+     */
+    skip?: number
+    distinct?: AppConfigScalarFieldEnum | AppConfigScalarFieldEnum[]
+  }
+
+  /**
+   * AppConfig create
+   */
+  export type AppConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to create a AppConfig.
+     */
+    data: XOR<AppConfigCreateInput, AppConfigUncheckedCreateInput>
+  }
+
+  /**
+   * AppConfig createMany
+   */
+  export type AppConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AppConfigs.
+     */
+    data: AppConfigCreateManyInput | AppConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AppConfig createManyAndReturn
+   */
+  export type AppConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many AppConfigs.
+     */
+    data: AppConfigCreateManyInput | AppConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AppConfig update
+   */
+  export type AppConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to update a AppConfig.
+     */
+    data: XOR<AppConfigUpdateInput, AppConfigUncheckedUpdateInput>
+    /**
+     * Choose, which AppConfig to update.
+     */
+    where: AppConfigWhereUniqueInput
+  }
+
+  /**
+   * AppConfig updateMany
+   */
+  export type AppConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AppConfigs.
+     */
+    data: XOR<AppConfigUpdateManyMutationInput, AppConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which AppConfigs to update
+     */
+    where?: AppConfigWhereInput
+    /**
+     * Limit how many AppConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppConfig updateManyAndReturn
+   */
+  export type AppConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update AppConfigs.
+     */
+    data: XOR<AppConfigUpdateManyMutationInput, AppConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which AppConfigs to update
+     */
+    where?: AppConfigWhereInput
+    /**
+     * Limit how many AppConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppConfig upsert
+   */
+  export type AppConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * The filter to search for the AppConfig to update in case it exists.
+     */
+    where: AppConfigWhereUniqueInput
+    /**
+     * In case the AppConfig found by the `where` argument doesn't exist, create a new AppConfig with this data.
+     */
+    create: XOR<AppConfigCreateInput, AppConfigUncheckedCreateInput>
+    /**
+     * In case the AppConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AppConfigUpdateInput, AppConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * AppConfig delete
+   */
+  export type AppConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
+    /**
+     * Filter which AppConfig to delete.
+     */
+    where: AppConfigWhereUniqueInput
+  }
+
+  /**
+   * AppConfig deleteMany
+   */
+  export type AppConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AppConfigs to delete
+     */
+    where?: AppConfigWhereInput
+    /**
+     * Limit how many AppConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AppConfig without action
+   */
+  export type AppConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AppConfig
+     */
+    select?: AppConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AppConfig
+     */
+    omit?: AppConfigOmit<ExtArgs> | null
   }
 
 
@@ -25003,6 +34224,140 @@ export namespace Prisma {
   export type BinanceKlineFastScalarFieldEnum = (typeof BinanceKlineFastScalarFieldEnum)[keyof typeof BinanceKlineFastScalarFieldEnum]
 
 
+  export const BinanceRenkoFastScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+    k2Incl5ticks: 'k2Incl5ticks',
+    k2Incl15ticks: 'k2Incl15ticks',
+    k2Incl25ticks: 'k2Incl25ticks',
+    k2Incl50ticks: 'k2Incl50ticks',
+    k2Incl100ticks: 'k2Incl100ticks',
+    k2Incl150ticks: 'k2Incl150ticks',
+    k2Incl200ticks: 'k2Incl200ticks'
+  };
+
+  export type BinanceRenkoFastScalarFieldEnum = (typeof BinanceRenkoFastScalarFieldEnum)[keyof typeof BinanceRenkoFastScalarFieldEnum]
+
+
+  export const BinanceRangeFastScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+    k2Incl5ticks: 'k2Incl5ticks',
+    k2Incl15ticks: 'k2Incl15ticks',
+    k2Incl25ticks: 'k2Incl25ticks',
+    k2Incl50ticks: 'k2Incl50ticks',
+    k2Incl100ticks: 'k2Incl100ticks',
+    k2Incl150ticks: 'k2Incl150ticks',
+    k2Incl200ticks: 'k2Incl200ticks'
+  };
+
+  export type BinanceRangeFastScalarFieldEnum = (typeof BinanceRangeFastScalarFieldEnum)[keyof typeof BinanceRangeFastScalarFieldEnum]
+
+
+  export const BinanceKagiFastScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+    k2Incl5ticks: 'k2Incl5ticks',
+    k2Incl15ticks: 'k2Incl15ticks',
+    k2Incl25ticks: 'k2Incl25ticks',
+    k2Incl50ticks: 'k2Incl50ticks',
+    k2Incl100ticks: 'k2Incl100ticks',
+    k2Incl150ticks: 'k2Incl150ticks',
+    k2Incl200ticks: 'k2Incl200ticks'
+  };
+
+  export type BinanceKagiFastScalarFieldEnum = (typeof BinanceKagiFastScalarFieldEnum)[keyof typeof BinanceKagiFastScalarFieldEnum]
+
+
+  export const BinanceRenko2xFastScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+    k2Incl5ticks: 'k2Incl5ticks',
+    k2Incl15ticks: 'k2Incl15ticks',
+    k2Incl25ticks: 'k2Incl25ticks',
+    k2Incl50ticks: 'k2Incl50ticks',
+    k2Incl100ticks: 'k2Incl100ticks',
+    k2Incl150ticks: 'k2Incl150ticks',
+    k2Incl200ticks: 'k2Incl200ticks'
+  };
+
+  export type BinanceRenko2xFastScalarFieldEnum = (typeof BinanceRenko2xFastScalarFieldEnum)[keyof typeof BinanceRenko2xFastScalarFieldEnum]
+
+
+  export const BinanceTradeCountFastScalarFieldEnum: {
+    corretora: 'corretora',
+    symbol: 'symbol',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+    k2Incl500trades: 'k2Incl500trades',
+    k2Incl1000trades: 'k2Incl1000trades',
+    k2Incl2500trades: 'k2Incl2500trades',
+    k2Incl5000trades: 'k2Incl5000trades',
+    k2Incl7500trades: 'k2Incl7500trades',
+    k2Incl10000trades: 'k2Incl10000trades'
+  };
+
+  export type BinanceTradeCountFastScalarFieldEnum = (typeof BinanceTradeCountFastScalarFieldEnum)[keyof typeof BinanceTradeCountFastScalarFieldEnum]
+
+
   export const BinanceKlineMonthScalarFieldEnum: {
     corretora: 'corretora',
     symbol: 'symbol',
@@ -25026,6 +34381,7 @@ export namespace Prisma {
   export const BinanceKlineCacheScalarFieldEnum: {
     symbol: 'symbol',
     interval: 'interval',
+    chartKind: 'chartKind',
     openTime: 'openTime',
     open: 'open',
     high: 'high',
@@ -25042,6 +34398,26 @@ export namespace Prisma {
   export type BinanceKlineCacheScalarFieldEnum = (typeof BinanceKlineCacheScalarFieldEnum)[keyof typeof BinanceKlineCacheScalarFieldEnum]
 
 
+  export const BinanceKlineCache2ScalarFieldEnum: {
+    symbol: 'symbol',
+    chartKind: 'chartKind',
+    interval: 'interval',
+    openTime: 'openTime',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    closeTime: 'closeTime',
+    quoteAssetVolume: 'quoteAssetVolume',
+    numberOfTrades: 'numberOfTrades',
+    takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+    takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+  };
+
+  export type BinanceKlineCache2ScalarFieldEnum = (typeof BinanceKlineCache2ScalarFieldEnum)[keyof typeof BinanceKlineCache2ScalarFieldEnum]
+
+
   export const BinanceKlineGapScalarFieldEnum: {
     symbol: 'symbol',
     interval: 'interval',
@@ -25050,6 +34426,17 @@ export namespace Prisma {
   };
 
   export type BinanceKlineGapScalarFieldEnum = (typeof BinanceKlineGapScalarFieldEnum)[keyof typeof BinanceKlineGapScalarFieldEnum]
+
+
+  export const AppConfigScalarFieldEnum: {
+    key: 'key',
+    value: 'value',
+    description: 'description',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
   export const KlineSymbolScalarFieldEnum: {
@@ -26644,6 +36031,676 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineFast"> | Decimal | DecimalJsLike | number | string
   }
 
+  export type BinanceRenkoFastWhereInput = {
+    AND?: BinanceRenkoFastWhereInput | BinanceRenkoFastWhereInput[]
+    OR?: BinanceRenkoFastWhereInput[]
+    NOT?: BinanceRenkoFastWhereInput | BinanceRenkoFastWhereInput[]
+    corretora?: StringFilter<"BinanceRenkoFast"> | string
+    symbol?: StringFilter<"BinanceRenkoFast"> | string
+    interval?: StringFilter<"BinanceRenkoFast"> | string
+    openTime?: BigIntFilter<"BinanceRenkoFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRenkoFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRenkoFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+  }
+
+  export type BinanceRenkoFastOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenkoFastWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceRenkoFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceRenkoFastWhereInput | BinanceRenkoFastWhereInput[]
+    OR?: BinanceRenkoFastWhereInput[]
+    NOT?: BinanceRenkoFastWhereInput | BinanceRenkoFastWhereInput[]
+    corretora?: StringFilter<"BinanceRenkoFast"> | string
+    symbol?: StringFilter<"BinanceRenkoFast"> | string
+    interval?: StringFilter<"BinanceRenkoFast"> | string
+    openTime?: BigIntFilter<"BinanceRenkoFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRenkoFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRenkoFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRenkoFast"> | boolean
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceRenkoFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+    _count?: BinanceRenkoFastCountOrderByAggregateInput
+    _avg?: BinanceRenkoFastAvgOrderByAggregateInput
+    _max?: BinanceRenkoFastMaxOrderByAggregateInput
+    _min?: BinanceRenkoFastMinOrderByAggregateInput
+    _sum?: BinanceRenkoFastSumOrderByAggregateInput
+  }
+
+  export type BinanceRenkoFastScalarWhereWithAggregatesInput = {
+    AND?: BinanceRenkoFastScalarWhereWithAggregatesInput | BinanceRenkoFastScalarWhereWithAggregatesInput[]
+    OR?: BinanceRenkoFastScalarWhereWithAggregatesInput[]
+    NOT?: BinanceRenkoFastScalarWhereWithAggregatesInput | BinanceRenkoFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceRenkoFast"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceRenkoFast"> | string
+    interval?: StringWithAggregatesFilter<"BinanceRenkoFast"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceRenkoFast"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceRenkoFast"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceRenkoFast"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenkoFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl15ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl25ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl50ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl100ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl150ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+    k2Incl200ticks?: BoolWithAggregatesFilter<"BinanceRenkoFast"> | boolean
+  }
+
+  export type BinanceRangeFastWhereInput = {
+    AND?: BinanceRangeFastWhereInput | BinanceRangeFastWhereInput[]
+    OR?: BinanceRangeFastWhereInput[]
+    NOT?: BinanceRangeFastWhereInput | BinanceRangeFastWhereInput[]
+    corretora?: StringFilter<"BinanceRangeFast"> | string
+    symbol?: StringFilter<"BinanceRangeFast"> | string
+    interval?: StringFilter<"BinanceRangeFast"> | string
+    openTime?: BigIntFilter<"BinanceRangeFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRangeFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRangeFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+  }
+
+  export type BinanceRangeFastOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRangeFastWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceRangeFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceRangeFastWhereInput | BinanceRangeFastWhereInput[]
+    OR?: BinanceRangeFastWhereInput[]
+    NOT?: BinanceRangeFastWhereInput | BinanceRangeFastWhereInput[]
+    corretora?: StringFilter<"BinanceRangeFast"> | string
+    symbol?: StringFilter<"BinanceRangeFast"> | string
+    interval?: StringFilter<"BinanceRangeFast"> | string
+    openTime?: BigIntFilter<"BinanceRangeFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRangeFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRangeFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRangeFast"> | boolean
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceRangeFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+    _count?: BinanceRangeFastCountOrderByAggregateInput
+    _avg?: BinanceRangeFastAvgOrderByAggregateInput
+    _max?: BinanceRangeFastMaxOrderByAggregateInput
+    _min?: BinanceRangeFastMinOrderByAggregateInput
+    _sum?: BinanceRangeFastSumOrderByAggregateInput
+  }
+
+  export type BinanceRangeFastScalarWhereWithAggregatesInput = {
+    AND?: BinanceRangeFastScalarWhereWithAggregatesInput | BinanceRangeFastScalarWhereWithAggregatesInput[]
+    OR?: BinanceRangeFastScalarWhereWithAggregatesInput[]
+    NOT?: BinanceRangeFastScalarWhereWithAggregatesInput | BinanceRangeFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceRangeFast"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceRangeFast"> | string
+    interval?: StringWithAggregatesFilter<"BinanceRangeFast"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceRangeFast"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceRangeFast"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceRangeFast"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRangeFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl15ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl25ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl50ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl100ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl150ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+    k2Incl200ticks?: BoolWithAggregatesFilter<"BinanceRangeFast"> | boolean
+  }
+
+  export type BinanceKagiFastWhereInput = {
+    AND?: BinanceKagiFastWhereInput | BinanceKagiFastWhereInput[]
+    OR?: BinanceKagiFastWhereInput[]
+    NOT?: BinanceKagiFastWhereInput | BinanceKagiFastWhereInput[]
+    corretora?: StringFilter<"BinanceKagiFast"> | string
+    symbol?: StringFilter<"BinanceKagiFast"> | string
+    interval?: StringFilter<"BinanceKagiFast"> | string
+    openTime?: BigIntFilter<"BinanceKagiFast"> | bigint | number
+    open?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKagiFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKagiFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+  }
+
+  export type BinanceKagiFastOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceKagiFastWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceKagiFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceKagiFastWhereInput | BinanceKagiFastWhereInput[]
+    OR?: BinanceKagiFastWhereInput[]
+    NOT?: BinanceKagiFastWhereInput | BinanceKagiFastWhereInput[]
+    corretora?: StringFilter<"BinanceKagiFast"> | string
+    symbol?: StringFilter<"BinanceKagiFast"> | string
+    interval?: StringFilter<"BinanceKagiFast"> | string
+    openTime?: BigIntFilter<"BinanceKagiFast"> | bigint | number
+    open?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKagiFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKagiFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceKagiFast"> | boolean
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceKagiFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+    _count?: BinanceKagiFastCountOrderByAggregateInput
+    _avg?: BinanceKagiFastAvgOrderByAggregateInput
+    _max?: BinanceKagiFastMaxOrderByAggregateInput
+    _min?: BinanceKagiFastMinOrderByAggregateInput
+    _sum?: BinanceKagiFastSumOrderByAggregateInput
+  }
+
+  export type BinanceKagiFastScalarWhereWithAggregatesInput = {
+    AND?: BinanceKagiFastScalarWhereWithAggregatesInput | BinanceKagiFastScalarWhereWithAggregatesInput[]
+    OR?: BinanceKagiFastScalarWhereWithAggregatesInput[]
+    NOT?: BinanceKagiFastScalarWhereWithAggregatesInput | BinanceKagiFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceKagiFast"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceKagiFast"> | string
+    interval?: StringWithAggregatesFilter<"BinanceKagiFast"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceKagiFast"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceKagiFast"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceKagiFast"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKagiFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl15ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl25ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl50ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl100ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl150ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+    k2Incl200ticks?: BoolWithAggregatesFilter<"BinanceKagiFast"> | boolean
+  }
+
+  export type BinanceRenko2xFastWhereInput = {
+    AND?: BinanceRenko2xFastWhereInput | BinanceRenko2xFastWhereInput[]
+    OR?: BinanceRenko2xFastWhereInput[]
+    NOT?: BinanceRenko2xFastWhereInput | BinanceRenko2xFastWhereInput[]
+    corretora?: StringFilter<"BinanceRenko2xFast"> | string
+    symbol?: StringFilter<"BinanceRenko2xFast"> | string
+    interval?: StringFilter<"BinanceRenko2xFast"> | string
+    openTime?: BigIntFilter<"BinanceRenko2xFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRenko2xFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRenko2xFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+  }
+
+  export type BinanceRenko2xFastOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenko2xFastWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceRenko2xFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceRenko2xFastWhereInput | BinanceRenko2xFastWhereInput[]
+    OR?: BinanceRenko2xFastWhereInput[]
+    NOT?: BinanceRenko2xFastWhereInput | BinanceRenko2xFastWhereInput[]
+    corretora?: StringFilter<"BinanceRenko2xFast"> | string
+    symbol?: StringFilter<"BinanceRenko2xFast"> | string
+    interval?: StringFilter<"BinanceRenko2xFast"> | string
+    openTime?: BigIntFilter<"BinanceRenko2xFast"> | bigint | number
+    open?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceRenko2xFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceRenko2xFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl15ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl25ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl50ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl100ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl150ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl200ticks?: BoolFilter<"BinanceRenko2xFast"> | boolean
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceRenko2xFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+    _count?: BinanceRenko2xFastCountOrderByAggregateInput
+    _avg?: BinanceRenko2xFastAvgOrderByAggregateInput
+    _max?: BinanceRenko2xFastMaxOrderByAggregateInput
+    _min?: BinanceRenko2xFastMinOrderByAggregateInput
+    _sum?: BinanceRenko2xFastSumOrderByAggregateInput
+  }
+
+  export type BinanceRenko2xFastScalarWhereWithAggregatesInput = {
+    AND?: BinanceRenko2xFastScalarWhereWithAggregatesInput | BinanceRenko2xFastScalarWhereWithAggregatesInput[]
+    OR?: BinanceRenko2xFastScalarWhereWithAggregatesInput[]
+    NOT?: BinanceRenko2xFastScalarWhereWithAggregatesInput | BinanceRenko2xFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceRenko2xFast"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceRenko2xFast"> | string
+    interval?: StringWithAggregatesFilter<"BinanceRenko2xFast"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceRenko2xFast"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceRenko2xFast"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceRenko2xFast"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceRenko2xFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl15ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl25ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl50ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl100ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl150ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+    k2Incl200ticks?: BoolWithAggregatesFilter<"BinanceRenko2xFast"> | boolean
+  }
+
+  export type BinanceTradeCountFastWhereInput = {
+    AND?: BinanceTradeCountFastWhereInput | BinanceTradeCountFastWhereInput[]
+    OR?: BinanceTradeCountFastWhereInput[]
+    NOT?: BinanceTradeCountFastWhereInput | BinanceTradeCountFastWhereInput[]
+    corretora?: StringFilter<"BinanceTradeCountFast"> | string
+    symbol?: StringFilter<"BinanceTradeCountFast"> | string
+    interval?: StringFilter<"BinanceTradeCountFast"> | string
+    openTime?: BigIntFilter<"BinanceTradeCountFast"> | bigint | number
+    open?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceTradeCountFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceTradeCountFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl1000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl2500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl5000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl7500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl10000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+  }
+
+  export type BinanceTradeCountFastOrderByWithRelationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl500trades?: SortOrder
+    k2Incl1000trades?: SortOrder
+    k2Incl2500trades?: SortOrder
+    k2Incl5000trades?: SortOrder
+    k2Incl7500trades?: SortOrder
+    k2Incl10000trades?: SortOrder
+  }
+
+  export type BinanceTradeCountFastWhereUniqueInput = Prisma.AtLeast<{
+    corretora_symbol_interval_openTime?: BinanceTradeCountFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceTradeCountFastWhereInput | BinanceTradeCountFastWhereInput[]
+    OR?: BinanceTradeCountFastWhereInput[]
+    NOT?: BinanceTradeCountFastWhereInput | BinanceTradeCountFastWhereInput[]
+    corretora?: StringFilter<"BinanceTradeCountFast"> | string
+    symbol?: StringFilter<"BinanceTradeCountFast"> | string
+    interval?: StringFilter<"BinanceTradeCountFast"> | string
+    openTime?: BigIntFilter<"BinanceTradeCountFast"> | bigint | number
+    open?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceTradeCountFast"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceTradeCountFast"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl1000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl2500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl5000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl7500trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl10000trades?: BoolFilter<"BinanceTradeCountFast"> | boolean
+  }, "corretora_symbol_interval_openTime">
+
+  export type BinanceTradeCountFastOrderByWithAggregationInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl500trades?: SortOrder
+    k2Incl1000trades?: SortOrder
+    k2Incl2500trades?: SortOrder
+    k2Incl5000trades?: SortOrder
+    k2Incl7500trades?: SortOrder
+    k2Incl10000trades?: SortOrder
+    _count?: BinanceTradeCountFastCountOrderByAggregateInput
+    _avg?: BinanceTradeCountFastAvgOrderByAggregateInput
+    _max?: BinanceTradeCountFastMaxOrderByAggregateInput
+    _min?: BinanceTradeCountFastMinOrderByAggregateInput
+    _sum?: BinanceTradeCountFastSumOrderByAggregateInput
+  }
+
+  export type BinanceTradeCountFastScalarWhereWithAggregatesInput = {
+    AND?: BinanceTradeCountFastScalarWhereWithAggregatesInput | BinanceTradeCountFastScalarWhereWithAggregatesInput[]
+    OR?: BinanceTradeCountFastScalarWhereWithAggregatesInput[]
+    NOT?: BinanceTradeCountFastScalarWhereWithAggregatesInput | BinanceTradeCountFastScalarWhereWithAggregatesInput[]
+    corretora?: StringWithAggregatesFilter<"BinanceTradeCountFast"> | string
+    symbol?: StringWithAggregatesFilter<"BinanceTradeCountFast"> | string
+    interval?: StringWithAggregatesFilter<"BinanceTradeCountFast"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceTradeCountFast"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceTradeCountFast"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceTradeCountFast"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceTradeCountFast"> | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl1000trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl2500trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl5000trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl7500trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+    k2Incl10000trades?: BoolWithAggregatesFilter<"BinanceTradeCountFast"> | boolean
+  }
+
   export type BinanceKlineMonthWhereInput = {
     AND?: BinanceKlineMonthWhereInput | BinanceKlineMonthWhereInput[]
     OR?: BinanceKlineMonthWhereInput[]
@@ -26750,6 +36807,7 @@ export namespace Prisma {
     NOT?: BinanceKlineCacheWhereInput | BinanceKlineCacheWhereInput[]
     symbol?: StringFilter<"BinanceKlineCache"> | string
     interval?: StringFilter<"BinanceKlineCache"> | string
+    chartKind?: StringFilter<"BinanceKlineCache"> | string
     openTime?: BigIntFilter<"BinanceKlineCache"> | bigint | number
     open?: DecimalFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
     high?: DecimalFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
@@ -26766,6 +36824,7 @@ export namespace Prisma {
   export type BinanceKlineCacheOrderByWithRelationInput = {
     symbol?: SortOrder
     interval?: SortOrder
+    chartKind?: SortOrder
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -26786,6 +36845,7 @@ export namespace Prisma {
     NOT?: BinanceKlineCacheWhereInput | BinanceKlineCacheWhereInput[]
     symbol?: StringFilter<"BinanceKlineCache"> | string
     interval?: StringFilter<"BinanceKlineCache"> | string
+    chartKind?: StringFilter<"BinanceKlineCache"> | string
     openTime?: BigIntFilter<"BinanceKlineCache"> | bigint | number
     open?: DecimalFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
     high?: DecimalFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
@@ -26802,6 +36862,7 @@ export namespace Prisma {
   export type BinanceKlineCacheOrderByWithAggregationInput = {
     symbol?: SortOrder
     interval?: SortOrder
+    chartKind?: SortOrder
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -26826,6 +36887,7 @@ export namespace Prisma {
     NOT?: BinanceKlineCacheScalarWhereWithAggregatesInput | BinanceKlineCacheScalarWhereWithAggregatesInput[]
     symbol?: StringWithAggregatesFilter<"BinanceKlineCache"> | string
     interval?: StringWithAggregatesFilter<"BinanceKlineCache"> | string
+    chartKind?: StringWithAggregatesFilter<"BinanceKlineCache"> | string
     openTime?: BigIntWithAggregatesFilter<"BinanceKlineCache"> | bigint | number
     open?: DecimalWithAggregatesFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
     high?: DecimalWithAggregatesFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
@@ -26837,6 +36899,106 @@ export namespace Prisma {
     numberOfTrades?: IntWithAggregatesFilter<"BinanceKlineCache"> | number
     takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
     takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2WhereInput = {
+    AND?: BinanceKlineCache2WhereInput | BinanceKlineCache2WhereInput[]
+    OR?: BinanceKlineCache2WhereInput[]
+    NOT?: BinanceKlineCache2WhereInput | BinanceKlineCache2WhereInput[]
+    symbol?: StringFilter<"BinanceKlineCache2"> | string
+    chartKind?: StringFilter<"BinanceKlineCache2"> | string
+    interval?: StringFilter<"BinanceKlineCache2"> | string
+    openTime?: BigIntFilter<"BinanceKlineCache2"> | bigint | number
+    open?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKlineCache2"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKlineCache2"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2OrderByWithRelationInput = {
+    symbol?: SortOrder
+    chartKind?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2WhereUniqueInput = Prisma.AtLeast<{
+    symbol_chartKind_interval_openTime?: BinanceKlineCache2SymbolChartKindIntervalOpenTimeCompoundUniqueInput
+    AND?: BinanceKlineCache2WhereInput | BinanceKlineCache2WhereInput[]
+    OR?: BinanceKlineCache2WhereInput[]
+    NOT?: BinanceKlineCache2WhereInput | BinanceKlineCache2WhereInput[]
+    symbol?: StringFilter<"BinanceKlineCache2"> | string
+    chartKind?: StringFilter<"BinanceKlineCache2"> | string
+    interval?: StringFilter<"BinanceKlineCache2"> | string
+    openTime?: BigIntFilter<"BinanceKlineCache2"> | bigint | number
+    open?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFilter<"BinanceKlineCache2"> | bigint | number
+    quoteAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFilter<"BinanceKlineCache2"> | number
+    takerBuyBaseAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+  }, "symbol_chartKind_interval_openTime">
+
+  export type BinanceKlineCache2OrderByWithAggregationInput = {
+    symbol?: SortOrder
+    chartKind?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    _count?: BinanceKlineCache2CountOrderByAggregateInput
+    _avg?: BinanceKlineCache2AvgOrderByAggregateInput
+    _max?: BinanceKlineCache2MaxOrderByAggregateInput
+    _min?: BinanceKlineCache2MinOrderByAggregateInput
+    _sum?: BinanceKlineCache2SumOrderByAggregateInput
+  }
+
+  export type BinanceKlineCache2ScalarWhereWithAggregatesInput = {
+    AND?: BinanceKlineCache2ScalarWhereWithAggregatesInput | BinanceKlineCache2ScalarWhereWithAggregatesInput[]
+    OR?: BinanceKlineCache2ScalarWhereWithAggregatesInput[]
+    NOT?: BinanceKlineCache2ScalarWhereWithAggregatesInput | BinanceKlineCache2ScalarWhereWithAggregatesInput[]
+    symbol?: StringWithAggregatesFilter<"BinanceKlineCache2"> | string
+    chartKind?: StringWithAggregatesFilter<"BinanceKlineCache2"> | string
+    interval?: StringWithAggregatesFilter<"BinanceKlineCache2"> | string
+    openTime?: BigIntWithAggregatesFilter<"BinanceKlineCache2"> | bigint | number
+    open?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    high?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    low?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    close?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    volume?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntWithAggregatesFilter<"BinanceKlineCache2"> | bigint | number
+    quoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntWithAggregatesFilter<"BinanceKlineCache2"> | number
+    takerBuyBaseAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalWithAggregatesFilter<"BinanceKlineCache2"> | Decimal | DecimalJsLike | number | string
   }
 
   export type BinanceKlineGapWhereInput = {
@@ -26887,6 +37049,58 @@ export namespace Prisma {
     interval?: StringWithAggregatesFilter<"BinanceKlineGap"> | string
     gapFrom?: BigIntWithAggregatesFilter<"BinanceKlineGap"> | bigint | number
     gapTo?: BigIntWithAggregatesFilter<"BinanceKlineGap"> | bigint | number
+  }
+
+  export type AppConfigWhereInput = {
+    AND?: AppConfigWhereInput | AppConfigWhereInput[]
+    OR?: AppConfigWhereInput[]
+    NOT?: AppConfigWhereInput | AppConfigWhereInput[]
+    key?: StringFilter<"AppConfig"> | string
+    value?: StringFilter<"AppConfig"> | string
+    description?: StringNullableFilter<"AppConfig"> | string | null
+    createdAt?: DateTimeFilter<"AppConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"AppConfig"> | Date | string
+  }
+
+  export type AppConfigOrderByWithRelationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppConfigWhereUniqueInput = Prisma.AtLeast<{
+    key?: string
+    AND?: AppConfigWhereInput | AppConfigWhereInput[]
+    OR?: AppConfigWhereInput[]
+    NOT?: AppConfigWhereInput | AppConfigWhereInput[]
+    value?: StringFilter<"AppConfig"> | string
+    description?: StringNullableFilter<"AppConfig"> | string | null
+    createdAt?: DateTimeFilter<"AppConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"AppConfig"> | Date | string
+  }, "key">
+
+  export type AppConfigOrderByWithAggregationInput = {
+    key?: SortOrder
+    value?: SortOrder
+    description?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AppConfigCountOrderByAggregateInput
+    _max?: AppConfigMaxOrderByAggregateInput
+    _min?: AppConfigMinOrderByAggregateInput
+  }
+
+  export type AppConfigScalarWhereWithAggregatesInput = {
+    AND?: AppConfigScalarWhereWithAggregatesInput | AppConfigScalarWhereWithAggregatesInput[]
+    OR?: AppConfigScalarWhereWithAggregatesInput[]
+    NOT?: AppConfigScalarWhereWithAggregatesInput | AppConfigScalarWhereWithAggregatesInput[]
+    key?: StringWithAggregatesFilter<"AppConfig"> | string
+    value?: StringWithAggregatesFilter<"AppConfig"> | string
+    description?: StringNullableWithAggregatesFilter<"AppConfig"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AppConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AppConfig"> | Date | string
   }
 
   export type KlineSymbolWhereInput = {
@@ -28417,6 +38631,839 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
 
+  export type BinanceRenkoFastCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenkoFastUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenkoFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenkoFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenkoFastCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenkoFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenkoFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRangeFastCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRangeFastUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRangeFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRangeFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRangeFastCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRangeFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRangeFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceKagiFastCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceKagiFastUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceKagiFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceKagiFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceKagiFastCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceKagiFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceKagiFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenko2xFastCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenko2xFastUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenko2xFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenko2xFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenko2xFastCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: boolean
+    k2Incl15ticks?: boolean
+    k2Incl25ticks?: boolean
+    k2Incl50ticks?: boolean
+    k2Incl100ticks?: boolean
+    k2Incl150ticks?: boolean
+    k2Incl200ticks?: boolean
+  }
+
+  export type BinanceRenko2xFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceRenko2xFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl5ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl15ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl25ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl50ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl100ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl150ticks?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl200ticks?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceTradeCountFastCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }
+
+  export type BinanceTradeCountFastUncheckedCreateInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }
+
+  export type BinanceTradeCountFastUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl1000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl2500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl5000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl7500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl10000trades?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceTradeCountFastUncheckedUpdateInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl1000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl2500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl5000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl7500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl10000trades?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceTradeCountFastCreateManyInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: boolean
+    k2Incl1000trades?: boolean
+    k2Incl2500trades?: boolean
+    k2Incl5000trades?: boolean
+    k2Incl7500trades?: boolean
+    k2Incl10000trades?: boolean
+  }
+
+  export type BinanceTradeCountFastUpdateManyMutationInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl1000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl2500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl5000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl7500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl10000trades?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type BinanceTradeCountFastUncheckedUpdateManyInput = {
+    corretora?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    k2Incl500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl1000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl2500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl5000trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl7500trades?: BoolFieldUpdateOperationsInput | boolean
+    k2Incl10000trades?: BoolFieldUpdateOperationsInput | boolean
+  }
+
   export type BinanceKlineMonthCreateInput = {
     corretora: string
     symbol: string
@@ -28539,6 +39586,7 @@ export namespace Prisma {
   export type BinanceKlineCacheCreateInput = {
     symbol: string
     interval: string
+    chartKind?: string
     openTime: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
@@ -28555,6 +39603,7 @@ export namespace Prisma {
   export type BinanceKlineCacheUncheckedCreateInput = {
     symbol: string
     interval: string
+    chartKind?: string
     openTime: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
@@ -28571,6 +39620,7 @@ export namespace Prisma {
   export type BinanceKlineCacheUpdateInput = {
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28587,6 +39637,7 @@ export namespace Prisma {
   export type BinanceKlineCacheUncheckedUpdateInput = {
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28603,6 +39654,7 @@ export namespace Prisma {
   export type BinanceKlineCacheCreateManyInput = {
     symbol: string
     interval: string
+    chartKind?: string
     openTime: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
@@ -28619,6 +39671,7 @@ export namespace Prisma {
   export type BinanceKlineCacheUpdateManyMutationInput = {
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28634,6 +39687,126 @@ export namespace Prisma {
 
   export type BinanceKlineCacheUncheckedUpdateManyInput = {
     symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2CreateInput = {
+    symbol: string
+    chartKind: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2UncheckedCreateInput = {
+    symbol: string
+    chartKind: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2UpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2UncheckedUpdateInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2CreateManyInput = {
+    symbol: string
+    chartKind: string
+    interval: string
+    openTime: bigint | number
+    open: Decimal | DecimalJsLike | number | string
+    high: Decimal | DecimalJsLike | number | string
+    low: Decimal | DecimalJsLike | number | string
+    close: Decimal | DecimalJsLike | number | string
+    volume: Decimal | DecimalJsLike | number | string
+    closeTime: bigint | number
+    quoteAssetVolume: Decimal | DecimalJsLike | number | string
+    numberOfTrades: number
+    takerBuyBaseAssetVolume: Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2UpdateManyMutationInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    openTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    closeTime?: BigIntFieldUpdateOperationsInput | bigint | number
+    quoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    numberOfTrades?: IntFieldUpdateOperationsInput | number
+    takerBuyBaseAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    takerBuyQuoteAssetVolume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BinanceKlineCache2UncheckedUpdateManyInput = {
+    symbol?: StringFieldUpdateOperationsInput | string
+    chartKind?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
     openTime?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -28695,6 +39868,62 @@ export namespace Prisma {
     interval?: StringFieldUpdateOperationsInput | string
     gapFrom?: BigIntFieldUpdateOperationsInput | bigint | number
     gapTo?: BigIntFieldUpdateOperationsInput | bigint | number
+  }
+
+  export type AppConfigCreateInput = {
+    key: string
+    value: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AppConfigUncheckedCreateInput = {
+    key: string
+    value: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AppConfigUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppConfigUncheckedUpdateInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppConfigCreateManyInput = {
+    key: string
+    value: string
+    description?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AppConfigUpdateManyMutationInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AppConfigUncheckedUpdateManyInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    value?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type KlineSymbolCreateInput = {
@@ -30116,6 +41345,538 @@ export namespace Prisma {
     takerBuyQuoteAssetVolume?: SortOrder
   }
 
+  export type BinanceRenkoFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceRenkoFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenkoFastAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceRenkoFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenkoFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenkoFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceRangeFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceRangeFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRangeFastAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceRangeFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRangeFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRangeFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKagiFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceKagiFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceKagiFastAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKagiFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceKagiFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceKagiFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceRenko2xFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceRenko2xFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenko2xFastAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceRenko2xFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenko2xFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl5ticks?: SortOrder
+    k2Incl15ticks?: SortOrder
+    k2Incl25ticks?: SortOrder
+    k2Incl50ticks?: SortOrder
+    k2Incl100ticks?: SortOrder
+    k2Incl150ticks?: SortOrder
+    k2Incl200ticks?: SortOrder
+  }
+
+  export type BinanceRenko2xFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceTradeCountFastCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
+    corretora: string
+    symbol: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceTradeCountFastCountOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl500trades?: SortOrder
+    k2Incl1000trades?: SortOrder
+    k2Incl2500trades?: SortOrder
+    k2Incl5000trades?: SortOrder
+    k2Incl7500trades?: SortOrder
+    k2Incl10000trades?: SortOrder
+  }
+
+  export type BinanceTradeCountFastAvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceTradeCountFastMaxOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl500trades?: SortOrder
+    k2Incl1000trades?: SortOrder
+    k2Incl2500trades?: SortOrder
+    k2Incl5000trades?: SortOrder
+    k2Incl7500trades?: SortOrder
+    k2Incl10000trades?: SortOrder
+  }
+
+  export type BinanceTradeCountFastMinOrderByAggregateInput = {
+    corretora?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+    k2Incl500trades?: SortOrder
+    k2Incl1000trades?: SortOrder
+    k2Incl2500trades?: SortOrder
+    k2Incl5000trades?: SortOrder
+    k2Incl7500trades?: SortOrder
+    k2Incl10000trades?: SortOrder
+  }
+
+  export type BinanceTradeCountFastSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
   export type BinanceKlineMonthCorretoraSymbolIntervalOpenTimeCompoundUniqueInput = {
     corretora: string
     symbol: string
@@ -30211,6 +41972,7 @@ export namespace Prisma {
   export type BinanceKlineCacheCountOrderByAggregateInput = {
     symbol?: SortOrder
     interval?: SortOrder
+    chartKind?: SortOrder
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -30241,6 +42003,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMaxOrderByAggregateInput = {
     symbol?: SortOrder
     interval?: SortOrder
+    chartKind?: SortOrder
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -30257,6 +42020,7 @@ export namespace Prisma {
   export type BinanceKlineCacheMinOrderByAggregateInput = {
     symbol?: SortOrder
     interval?: SortOrder
+    chartKind?: SortOrder
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -30271,6 +42035,92 @@ export namespace Prisma {
   }
 
   export type BinanceKlineCacheSumOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2SymbolChartKindIntervalOpenTimeCompoundUniqueInput = {
+    symbol: string
+    chartKind: string
+    interval: string
+    openTime: bigint | number
+  }
+
+  export type BinanceKlineCache2CountOrderByAggregateInput = {
+    symbol?: SortOrder
+    chartKind?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2AvgOrderByAggregateInput = {
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2MaxOrderByAggregateInput = {
+    symbol?: SortOrder
+    chartKind?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2MinOrderByAggregateInput = {
+    symbol?: SortOrder
+    chartKind?: SortOrder
+    interval?: SortOrder
+    openTime?: SortOrder
+    open?: SortOrder
+    high?: SortOrder
+    low?: SortOrder
+    close?: SortOrder
+    volume?: SortOrder
+    closeTime?: SortOrder
+    quoteAssetVolume?: SortOrder
+    numberOfTrades?: SortOrder
+    takerBuyBaseAssetVolume?: SortOrder
+    takerBuyQuoteAssetVolume?: SortOrder
+  }
+
+  export type BinanceKlineCache2SumOrderByAggregateInput = {
     openTime?: SortOrder
     open?: SortOrder
     high?: SortOrder
@@ -30320,6 +42170,30 @@ export namespace Prisma {
   export type BinanceKlineGapSumOrderByAggregateInput = {
     gapFrom?: SortOrder
     gapTo?: SortOrder
+  }
+
+  export type AppConfigCountOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppConfigMaxOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AppConfigMinOrderByAggregateInput = {
+    key?: SortOrder
+    value?: SortOrder
+    description?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type KlineSymbolCountOrderByAggregateInput = {

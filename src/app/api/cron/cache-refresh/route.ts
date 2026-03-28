@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         const intervalLabel = interval.param;
         const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
           INSERT INTO backcrypto."BinanceKlineCache" (
-            "symbol", "interval", "openTime", "open", "high", "low", "close",
+            "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
             "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
             "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           )
@@ -93,6 +93,7 @@ export async function GET(request: Request) {
           SELECT
             ${symbol},
             ${intervalLabel},
+            'interval'::text,
             k.bucket,
             (array_agg(k."open" ORDER BY k."openTime"))[1],
             max(k."high"),
@@ -114,7 +115,7 @@ export async function GET(request: Request) {
         const intervalLabel = interval.param;
         const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
           INSERT INTO backcrypto."BinanceKlineCache" (
-            "symbol", "interval", "openTime", "open", "high", "low", "close",
+            "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
             "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
             "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           )
@@ -131,6 +132,7 @@ export async function GET(request: Request) {
           SELECT
             ${symbol},
             ${intervalLabel},
+            'interval'::text,
             k.bucket,
             (array_agg(k."open" ORDER BY k."openTime"))[1],
             max(k."high"),
@@ -152,7 +154,7 @@ export async function GET(request: Request) {
         const intervalLabel = interval.param;
         const rows = await cryptoPrisma.$executeRaw(Prisma.sql`
           INSERT INTO backcrypto."BinanceKlineCache" (
-            "symbol", "interval", "openTime", "open", "high", "low", "close",
+            "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
             "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
             "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           )
@@ -169,6 +171,7 @@ export async function GET(request: Request) {
           SELECT
             ${symbol},
             ${intervalLabel},
+            'interval'::text,
             k.bucket,
             (array_agg(k."open" ORDER BY k."openTime"))[1],
             max(k."high"),

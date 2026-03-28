@@ -2,6 +2,20 @@
  * Tipos do gráfico de candles (OHLC).
  */
 
+/** Estilo do preço no gráfico principal (persistido em layout / localStorage). */
+export type ChartStyle = "candles" | "bars" | "line" | "linePoints" | "area" | "kagiClassic";
+
+export function isPersistedChartStyle(s: string | undefined | null): s is ChartStyle {
+  return (
+    s === "candles" ||
+    s === "bars" ||
+    s === "line" ||
+    s === "linePoints" ||
+    s === "area" ||
+    s === "kagiClassic"
+  );
+}
+
 export type Kline = [
   number,
   string,
@@ -191,6 +205,18 @@ export interface ChartIndicatorLine {
 
 export type IntervalOption = { value: number; label: string; param: string };
 
+/** Uma opção por tier (ticks/trades) nas secções Renko / Range / Kagi / Renko2× / trades. */
+export type AggIntervalTierOption = { value: number; label: string };
+
+/** Secções Renko / Range / Kagi / Renko2× / trades no painel de intervalos (rótulos curtos, ex. P5, 500T). */
+export type AggIntervalPickerConfig = {
+  renko: AggIntervalTierOption[];
+  range: AggIntervalTierOption[];
+  kagi: AggIntervalTierOption[];
+  renko2x: AggIntervalTierOption[];
+  trades500: AggIntervalTierOption[];
+};
+
 /** Overlay de estratégia: pinta o candle com a cor ou desenha sinal quando a condição é verdadeira. results[i] = true para klines[i] (klines[0] = mais recente). */
 /** Traço SVG de regressão sobre o preço (painel principal). */
 export interface RegressionOverlayPath {
@@ -220,6 +246,8 @@ export type KlinesChartProps = {
   intervalLabel?: string;
   /** Opções de tempo (ex.: 1m, 5m, 4h) para o seletor na sidebar. */
   intervalOptions?: IntervalOption[];
+  /** Renko / Range / Kagi em secções próprias (rótulos curtos no botão, ex. R5). */
+  aggIntervalPicker?: AggIntervalPickerConfig;
   onIntervalChange?: (value: number) => void;
   width: number;
   indicatorLines?: ChartIndicatorLine[];
@@ -242,6 +270,8 @@ export type KlinesChartProps = {
   heikinAshi?: boolean;
   /** Alterna modo Heikin Ashi; ao ativar, a tabela e o gráfico passam a usar OHLC Heikin Ashi. */
   onHeikinAshiChange?: (enabled: boolean) => void;
+  /** OHLC clássico ou barras agregadas (derivado do `groupMinutes` sentinel *Fast). */
+  aggSeriesKind?: "ohlc" | "renko" | "range" | "kagi" | "renko2x" | "trades500";
   /** Indicador vertical "volume no preço": usa cache do intervalo mapeado (ex.: 1h → 15m). */
   volumeAtPriceEnabled?: boolean;
   /** Klines do intervalo de cache para VAP (mesma moeda, tempo menor); quando definido, usa em vez de klines. */

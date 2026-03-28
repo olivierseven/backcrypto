@@ -60,7 +60,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
       const intervalLabel = interval.param;
       const rows = await db.$executeRaw(Prisma.sql`
         INSERT INTO backcrypto."BinanceKlineCache" (
-          "symbol", "interval", "openTime", "open", "high", "low", "close",
+          "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
           "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
           "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
         )
@@ -77,6 +77,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
         SELECT
           ${symbol},
           ${intervalLabel},
+          'interval'::text,
           k.bucket,
           (array_agg(k."open" ORDER BY k."openTime"))[1],
           max(k."high"),
@@ -98,7 +99,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
       const intervalLabel = interval.param;
       const rows = await db.$executeRaw(Prisma.sql`
         INSERT INTO backcrypto."BinanceKlineCache" (
-          "symbol", "interval", "openTime", "open", "high", "low", "close",
+          "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
           "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
           "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
         )
@@ -115,6 +116,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
         SELECT
           ${symbol},
           ${intervalLabel},
+          'interval'::text,
           k.bucket,
           (array_agg(k."open" ORDER BY k."openTime"))[1],
           max(k."high"),
@@ -136,7 +138,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
       const intervalLabel = interval.param;
       const rows = await db.$executeRaw(Prisma.sql`
         INSERT INTO backcrypto."BinanceKlineCache" (
-          "symbol", "interval", "openTime", "open", "high", "low", "close",
+          "symbol", "interval", "chartKind", "openTime", "open", "high", "low", "close",
           "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
           "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
         )
@@ -153,6 +155,7 @@ async function runCacheRefreshOnDb(db: PrismaClient) {
         SELECT
           ${symbol},
           ${intervalLabel},
+          'interval'::text,
           k.bucket,
           (array_agg(k."open" ORDER BY k."openTime"))[1],
           max(k."high"),

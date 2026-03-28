@@ -88,15 +88,14 @@ export default function SistemaDebugPanel() {
   const [accessDays, setAccessDays] = useState(1);
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
-
-  type ProdConfirmKind =
-    | "pastBackfill"
-    | "syncKlines"
-    | "cacheRefresh"
-    | "validateKlines"
-    | "backfill"
-    | "registerGaps"
-    | "validateAll";
+  const [truncateAtemporalLoading, setTruncateAtemporalLoading] = useState(false);
+  const [truncateAtemporalMessage, setTruncateAtemporalMessage] = useState<string | null>(null);
+  const [truncateAtemporalErr, setTruncateAtemporalErr] = useState(false);
+  const [urlDevConfigured, setUrlDevConfigured] = useState<boolean | null>(null);
+  const [urlProdConfigured, setUrlProdConfigured] = useState<boolean | null>(null);
+  const [truncateAtemporalProdLoading, setTruncateAtemporalProdLoading] = useState(false);
+  const [truncateAtemporalProdMessage, setTruncateAtemporalProdMessage] = useState<string | null>(null);
+  const [truncateAtemporalProdErr, setTruncateAtemporalProdErr] = useState(false);
 
   type ProdConfirmState =
     | { kind: "pastBackfill"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h" }
@@ -105,7 +104,9 @@ export default function SistemaDebugPanel() {
     | { kind: "validateKlines"; target: "dev" | "prod" }
     | { kind: "backfill"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h"; gaps: { from: number; to: number }[] }
     | { kind: "registerGaps"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h"; gaps: { from: number; to: number }[] }
-    | { kind: "validateAll"; target: "dev" | "prod" };
+    | { kind: "validateAll"; target: "dev" | "prod" }
+    | { kind: "truncateAtemporalDev" }
+    | { kind: "truncateAtemporalProd" };
 
   const [prodConfirm, setProdConfirm] = useState<ProdConfirmState | null>(null);
 
@@ -125,6 +126,28 @@ export default function SistemaDebugPanel() {
         }
       })
       .catch(() => {});
+  }, [open, isDevHost, debugTab]);
+
+  useEffect(() => {
+    if (!open || !isDevHost || debugTab !== "historico-dev") return;
+    setUrlDevConfigured(null);
+    fetch(`${API_BASE}/debug/truncate-atemporal-dev`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { urlDevConfigured?: boolean }) => {
+        setUrlDevConfigured(data?.urlDevConfigured === true);
+      })
+      .catch(() => setUrlDevConfigured(false));
+  }, [open, isDevHost, debugTab]);
+
+  useEffect(() => {
+    if (!open || !isDevHost || debugTab !== "historico-prod") return;
+    setUrlProdConfigured(null);
+    fetch(`${API_BASE}/debug/truncate-atemporal-prod`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { urlProdConfigured?: boolean }) => {
+        setUrlProdConfigured(data?.urlProdConfigured === true);
+      })
+      .catch(() => setUrlProdConfigured(false));
   }, [open, isDevHost, debugTab]);
 
   const historicoSymbols = historicoSymbolsList;
@@ -151,7 +174,9 @@ export default function SistemaDebugPanel() {
     pastBackfillLoading !== null ||
     syncKlinesLoading ||
     cacheRefreshLoading ||
-    validadorLoading;
+    validadorLoading ||
+    truncateAtemporalLoading ||
+    truncateAtemporalProdLoading;
 
   useEffect(() => {
     setSessionDebugEnabledState(getSessionDebugEnabled());
@@ -595,6 +620,70 @@ export default function SistemaDebugPanel() {
     }
   }
 
+  async function runTruncateAtemporalProd() {
+    setTruncateAtemporalProdMessage(null);
+    setTruncateAtemporalProdErr(false);
+    setTruncateAtemporalProdLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/debug/truncate-atemporal-prod`, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTruncateAtemporalProdErr(true);
+        setTruncateAtemporalProdMessage(typeof data?.error === "string" ? data.error : `HTTP ${res.status}`);
+        return;
+      }
+      const tables = Array.isArray(data?.tables) ? (data.tables as string[]).join(", ") : "";
+      const msg =
+        ((t as Record<string, string>).truncateAtemporalProdSuccess ?? "Truncado (prod): {tables}").replace("{tables}", tables);
+      setTruncateAtemporalProdMessage(msg);
+      fetch(`${API_BASE}/debug/truncate-atemporal-prod`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((d: { urlProdConfigured?: boolean }) => setUrlProdConfigured(d?.urlProdConfigured === true))
+        .catch(() => {});
+    } catch (e) {
+      setTruncateAtemporalProdErr(true);
+      setTruncateAtemporalProdMessage(e instanceof Error ? e.message : t.error);
+    } finally {
+      setTruncateAtemporalProdLoading(false);
+    }
+  }
+
+  async function runTruncateAtemporalDev() {
+    setTruncateAtemporalMessage(null);
+    setTruncateAtemporalErr(false);
+    setTruncateAtemporalLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/debug/truncate-atemporal-dev`, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTruncateAtemporalErr(true);
+        setTruncateAtemporalMessage(typeof data?.error === "string" ? data.error : `HTTP ${res.status}`);
+        return;
+      }
+      const tables = Array.isArray(data?.tables) ? (data.tables as string[]).join(", ") : "";
+      const msg =
+        ((t as Record<string, string>).truncateAtemporalDevSuccess ?? "Truncado: {tables}").replace("{tables}", tables);
+      setTruncateAtemporalMessage(msg);
+      fetch(`${API_BASE}/debug/truncate-atemporal-dev`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((d: { urlDevConfigured?: boolean }) => setUrlDevConfigured(d?.urlDevConfigured === true))
+        .catch(() => {});
+    } catch (e) {
+      setTruncateAtemporalErr(true);
+      setTruncateAtemporalMessage(e instanceof Error ? e.message : t.error);
+    } finally {
+      setTruncateAtemporalLoading(false);
+    }
+  }
+
   async function runValidador(target: "dev" | "prod") {
     setValidadorRows([]);
     setValidadorIncomplete([]);
@@ -633,10 +722,18 @@ export default function SistemaDebugPanel() {
         return runRegisterGaps(action.interval, action.gaps, action.target);
       case "validateAll":
         return runValidador(action.target);
+      case "truncateAtemporalDev":
+        return runTruncateAtemporalDev();
+      case "truncateAtemporalProd":
+        return runTruncateAtemporalProd();
     }
   }
 
   function requestProdConfirm(action: ProdConfirmState) {
+    if (action.kind === "truncateAtemporalDev" || action.kind === "truncateAtemporalProd") {
+      setProdConfirm(action);
+      return;
+    }
     if (action.target !== "prod") {
       void performProdAction(action);
       return;
@@ -960,7 +1057,7 @@ export default function SistemaDebugPanel() {
             <p className="text-xs text-zinc-500 mb-3">
               {historicoTarget === "prod"
                 ? ((t as Record<string, string>).historicoProdHint ?? "Banco de produção (URL_PROD). Validação, backfill, sync e cache usam este banco.")
-                : ((t as Record<string, string>).historicoDevHint ?? "Banco de desenvolvimento (DATABASE_URL). Validação, backfill, sync e cache usam este banco.")}
+                : ((t as Record<string, string>).historicoDevHint ?? "Banco de desenvolvimento (URL_DEV). Validação, backfill, sync e cache usam este banco.")}
             </p>
             {isDevHost && (
             <section>
@@ -1121,6 +1218,66 @@ export default function SistemaDebugPanel() {
                 </pre>
               )}
             </section>
+            {historicoTarget === "dev" && (
+              <section className="mt-4">
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).truncateAtemporalDevTitle ?? "Truncar tabelas atemporais (URL_DEV)"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).truncateAtemporalDevHint ?? "Renko, Range, Kagi no banco URL_DEV."}
+                </p>
+                {urlDevConfigured === false && (
+                  <p className="text-xs text-amber-700 mb-2">
+                    {(t as Record<string, string>).truncateAtemporalDevUrlDevMissing ?? "URL_DEV não definido."}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={truncateAtemporalLoading || urlDevConfigured === false}
+                  onClick={() => requestProdConfirm({ kind: "truncateAtemporalDev" })}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+                >
+                  {truncateAtemporalLoading
+                    ? ((t as Record<string, string>).truncateAtemporalDevLoading ?? "Truncando…")
+                    : ((t as Record<string, string>).truncateAtemporalDevRun ?? "Truncar tabelas")}
+                </button>
+                {truncateAtemporalMessage && (
+                  <p className={`mt-2 text-xs ${truncateAtemporalErr ? "text-red-600" : "text-emerald-700"}`}>
+                    {truncateAtemporalMessage}
+                  </p>
+                )}
+              </section>
+            )}
+            {historicoTarget === "prod" && (
+              <section className="mt-4">
+                <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                  {(t as Record<string, string>).truncateAtemporalProdTitle ?? "Truncar tabelas atemporais (URL_PROD)"}
+                </h4>
+                <p className="text-xs text-zinc-500 mb-2">
+                  {(t as Record<string, string>).truncateAtemporalProdHint ?? "Renko, Range, Kagi no banco de produção."}
+                </p>
+                {urlProdConfigured === false && (
+                  <p className="text-xs text-amber-700 mb-2">
+                    {(t as Record<string, string>).truncateAtemporalProdUrlProdMissing ?? "URL_PROD não definido."}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={truncateAtemporalProdLoading || urlProdConfigured === false}
+                  onClick={() => requestProdConfirm({ kind: "truncateAtemporalProd" })}
+                  className="text-xs font-medium px-2.5 py-1.5 rounded bg-red-800 text-white hover:bg-red-900 disabled:opacity-50"
+                >
+                  {truncateAtemporalProdLoading
+                    ? ((t as Record<string, string>).truncateAtemporalProdLoadingLabel ?? "Truncando…")
+                    : ((t as Record<string, string>).truncateAtemporalProdRun ?? "Truncar tabelas (produção)")}
+                </button>
+                {truncateAtemporalProdMessage && (
+                  <p className={`mt-2 text-xs ${truncateAtemporalProdErr ? "text-red-600" : "text-emerald-700"}`}>
+                    {truncateAtemporalProdMessage}
+                  </p>
+                )}
+              </section>
+            )}
             </div>
             )}
             </>
@@ -1549,10 +1706,20 @@ export default function SistemaDebugPanel() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-sm font-semibold text-zinc-900">
-              {(t as Record<string, string>).confirmProdTitle ?? "Confirmar ação em produção"}
+              {prodConfirm.kind === "truncateAtemporalDev"
+                ? ((t as Record<string, string>).confirmTruncateAtemporalTitle ?? "Truncar tabelas atemporais (dev)")
+                : prodConfirm.kind === "truncateAtemporalProd"
+                  ? ((t as Record<string, string>).confirmTruncateAtemporalProdTitle ?? "Truncar tabelas atemporais (produção)")
+                  : ((t as Record<string, string>).confirmProdTitle ?? "Confirmar ação em produção")}
             </h3>
             <p className="text-xs text-zinc-600 mt-1">
-              {(t as Record<string, string>).confirmProdDesc ?? "Esta ação será executada no banco de produção. Deseja continuar?"}
+              {prodConfirm.kind === "truncateAtemporalDev"
+                ? ((t as Record<string, string>).confirmTruncateAtemporalDesc ??
+                    "Apaga todas as linhas das tabelas Renko/Range/Kagi no URL_DEV.")
+                : prodConfirm.kind === "truncateAtemporalProd"
+                  ? ((t as Record<string, string>).confirmTruncateAtemporalProdDesc ??
+                      "Apaga todas as linhas das tabelas fast e cache2 no banco URL_PROD. Irreversível.")
+                  : ((t as Record<string, string>).confirmProdDesc ?? "Esta ação será executada no banco de produção. Deseja continuar?")}
             </p>
 
             <div className="mt-3 rounded-md bg-zinc-50 border border-zinc-200 p-3">
@@ -1573,6 +1740,10 @@ export default function SistemaDebugPanel() {
                       return ((t as Record<string, string>).confirmProdRegisterGaps ?? "Registrar gaps ({interval})").replace("{interval}", prodConfirm.interval);
                     case "validateAll":
                       return (t as Record<string, string>).confirmProdValidateAll ?? "Validador de tempo (todas as moedas)";
+                    case "truncateAtemporalDev":
+                      return (t as Record<string, string>).confirmTruncateAtemporalAction ?? "TRUNCATE Renko / Range / Kagi (URL_DEV)";
+                    case "truncateAtemporalProd":
+                      return (t as Record<string, string>).confirmTruncateAtemporalProdAction ?? "TRUNCATE (URL_PROD)";
                     default:
                       return "";
                   }

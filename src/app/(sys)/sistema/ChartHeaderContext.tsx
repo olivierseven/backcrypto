@@ -1,6 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import type { AggIntervalPickerConfig, IntervalOption } from "./klinesChart/types";
+
+/** Registo do seletor de intervalo (KlinesTable) para o header ao lado de Plans. */
+export type ChartIntervalPickerRegistration = {
+  groupMinutes: number;
+  intervalLabel: string;
+  onIntervalChange: (value: number) => void;
+  intervalOptions: IntervalOption[];
+  aggIntervalPicker: AggIntervalPickerConfig;
+};
 
 export interface ChartHeaderData {
   chartContainerWidth: number | null;
@@ -24,13 +34,6 @@ const defaultData: ChartHeaderData = {
   intervalLabel: null,
 };
 
-interface ChartHeaderContextValue {
-  data: ChartHeaderData;
-  setHeaderData: (d: ChartHeaderData | null) => void;
-}
-
-const ChartHeaderContext = createContext<ChartHeaderContextValue | null>(null);
-
 function chartHeaderDataEqual(a: ChartHeaderData, b: ChartHeaderData): boolean {
   return (
     a.chartContainerWidth === b.chartContainerWidth &&
@@ -44,25 +47,45 @@ function chartHeaderDataEqual(a: ChartHeaderData, b: ChartHeaderData): boolean {
   );
 }
 
+type ChartHeaderContextValue = {
+  data: ChartHeaderData;
+  setHeaderData: (d: ChartHeaderData | null) => void;
+  intervalPicker: ChartIntervalPickerRegistration | null;
+  setIntervalPicker: (next: ChartIntervalPickerRegistration | null) => void;
+};
+
+const ChartHeaderContext = createContext<ChartHeaderContextValue | null>(null);
+
 export function ChartHeaderProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<ChartHeaderData>(defaultData);
+  const [intervalPicker, setIntervalPickerState] = useState<ChartIntervalPickerRegistration | null>(null);
+
   const setHeaderData = useCallback((d: ChartHeaderData | null) => {
     const next = d ?? defaultData;
     setData((prev) => (chartHeaderDataEqual(prev, next) ? prev : next));
   }, []);
+
+  const setIntervalPicker = useCallback((next: ChartIntervalPickerRegistration | null) => {
+    setIntervalPickerState(next);
+  }, []);
+
   const value = useMemo(
-    () => ({ data, setHeaderData }),
-    [data, setHeaderData]
+    () => ({ data, setHeaderData, intervalPicker, setIntervalPicker }),
+    [data, setHeaderData, intervalPicker, setIntervalPicker]
   );
-  return (
-    <ChartHeaderContext.Provider value={value}>
-      {children}
-    </ChartHeaderContext.Provider>
-  );
+
+  return <ChartHeaderContext.Provider value={value}>{children}</ChartHeaderContext.Provider>;
 }
 
 export function useChartHeader(): ChartHeaderContextValue {
   const ctx = useContext(ChartHeaderContext);
-  if (!ctx) return { data: defaultData, setHeaderData: () => {} };
+  if (!ctx) {
+    return {
+      data: defaultData,
+      setHeaderData: () => {},
+      intervalPicker: null,
+      setIntervalPicker: () => {},
+    };
+  }
   return ctx;
 }

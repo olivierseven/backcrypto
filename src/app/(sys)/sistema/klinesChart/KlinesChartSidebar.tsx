@@ -3,10 +3,10 @@
 /**
  * Sidebar do gráfico de candles: configuração, cores, desenho e save/load de layout.
  */
-import { useState, useRef, useLayoutEffect, type RefObject } from "react";
+import { useState, useRef, useLayoutEffect, useEffect, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { ASSET_PREFIX } from "@/app/constants";
-import { KLINE_LAST_LAYOUT_KEY, SIDEBAR_WIDTH } from "../KlinesChartConstants";
+import { KLINE_LAST_LAYOUT_KEY, SIDEBAR_WIDTH, groupMinutesToAggKind, isAggFastGroupMinutes } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
   DEFAULT_CANDLE_PRESET,
@@ -20,7 +20,7 @@ import type {
   LineGridId,
   TextColorId,
 } from "./palettes";
-import type { IntervalOption } from "./types";
+import type { AggIntervalPickerConfig, ChartStyle, IntervalOption } from "./types";
 export type KlinesChartSidebarTranslations = Record<string, string>;
 
 export interface KlinesChartSidebarProps {
@@ -34,12 +34,13 @@ export interface KlinesChartSidebarProps {
   /** Tempo selecionado (ex.: "4h") — exibido no topo da sidebar. */
   intervalLabel?: string;
   intervalOptions: IntervalOption[];
+  aggIntervalPicker?: AggIntervalPickerConfig;
   groupMinutes: number;
   onIntervalChange: (value: number) => void;
   heikinAshi?: boolean;
   onHeikinAshiChange?: (enabled: boolean) => void;
-  chartStyle?: "candles" | "bars" | "line" | "linePoints" | "area";
-  onChartStyleChange?: (style: "candles" | "bars" | "line" | "linePoints" | "area") => void;
+  chartStyle?: ChartStyle;
+  onChartStyleChange?: (style: ChartStyle) => void;
   candleBodyStyle?: "filled" | "hollow";
   onCandleBodyStyleChange?: (style: "filled" | "hollow") => void;
   // Settings
@@ -162,6 +163,7 @@ export function KlinesChartSidebar({
   t,
   intervalLabel,
   intervalOptions,
+  aggIntervalPicker,
   groupMinutes,
   onIntervalChange,
   heikinAshi = false,
@@ -295,6 +297,14 @@ export function KlinesChartSidebar({
 
   const [intervalsOpen, setIntervalsOpen] = useState(false);
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
+  const isAggInterval = isAggFastGroupMinutes(groupMinutes);
+  const showKagiClassicStyle = groupMinutesToAggKind(groupMinutes) === "kagi";
+  /** No K5: só Kagi clássico ativo; restantes desabilitados (como Heikin em intervalos agregados). */
+  const kagiLocksOtherChartTypes = showKagiClassicStyle;
+  const kagiOtherTypesTitle = (t as Record<string, string>).chartTypeKagiIntervalOnly ?? "";
+  useEffect(() => {
+    if (isAggInterval) setChartTypeOpen(false);
+  }, [isAggInterval]);
   const [vapColorAboveOpen, setVapColorAboveOpen] = useState(false);
   const [vapColorBelowOpen, setVapColorBelowOpen] = useState(false);
   const [showVolumePrefsSaved, setShowVolumePrefsSaved] = useState(false);
@@ -452,32 +462,37 @@ export function KlinesChartSidebar({
           }
         >
           {(() => {
+            const tk = t as Record<string, string>;
             const chartTypeLabel = heikinAshi
-              ? ((t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi")
-              : chartStyle === "bars"
-                ? ((t as Record<string, string>).chartTypeBars ?? "Barras")
-                : chartStyle === "line"
-                  ? ((t as Record<string, string>).chartTypeLine ?? "Linhas")
-                  : chartStyle === "linePoints"
-                    ? ((t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto")
-                    : chartStyle === "area"
-                      ? ((t as Record<string, string>).chartTypeArea ?? "Área")
-                      : candleBodyStyle === "hollow"
-                        ? ((t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias")
-                        : ((t as Record<string, string>).chartTypeCandles ?? "Candles");
+              ? (tk.chartTypeHeikinAshi ?? "Heikin Ashi")
+              : chartStyle === "kagiClassic"
+                ? (tk.chartTypeKagiClassic ?? "Kagi clássico")
+                : chartStyle === "bars"
+                  ? (tk.chartTypeBars ?? "Barras")
+                  : chartStyle === "line"
+                    ? (tk.chartTypeLine ?? "Linhas")
+                    : chartStyle === "linePoints"
+                      ? (tk.chartTypeLinePoints ?? "Linhas ponto")
+                      : chartStyle === "area"
+                        ? (tk.chartTypeArea ?? "Área")
+                        : candleBodyStyle === "hollow"
+                          ? (tk.chartTypeCandlesHollow ?? "Candles vazias")
+                          : (tk.chartTypeCandles ?? "Candles");
             const chartTypeThumbSrc = heikinAshi
               ? `${ASSET_PREFIX}/assets/charts/heikin_ashi.webp`
-              : chartStyle === "bars"
-                ? `${ASSET_PREFIX}/assets/charts/barras.webp`
-                : chartStyle === "line"
-                  ? `${ASSET_PREFIX}/assets/charts/linhas.webp`
-                  : chartStyle === "linePoints"
-                    ? `${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`
-                    : chartStyle === "area"
-                      ? `${ASSET_PREFIX}/assets/charts/area.webp`
-                      : candleBodyStyle === "hollow"
-                        ? `${ASSET_PREFIX}/assets/charts/candles_vazias.webp`
-                        : `${ASSET_PREFIX}/assets/charts/candles.webp`;
+              : chartStyle === "kagiClassic"
+                ? `${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`
+                : chartStyle === "bars"
+                  ? `${ASSET_PREFIX}/assets/charts/barras.webp`
+                  : chartStyle === "line"
+                    ? `${ASSET_PREFIX}/assets/charts/linhas.webp`
+                    : chartStyle === "linePoints"
+                      ? `${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`
+                      : chartStyle === "area"
+                        ? `${ASSET_PREFIX}/assets/charts/area.webp`
+                        : candleBodyStyle === "hollow"
+                          ? `${ASSET_PREFIX}/assets/charts/candles_vazias.webp`
+                          : `${ASSET_PREFIX}/assets/charts/candles.webp`;
             return (
               <>
                 <button
@@ -1130,38 +1145,141 @@ export function KlinesChartSidebar({
                 <div className="grid grid-cols-1 gap-1 mb-2">
                   <button
                     type="button"
-                    onClick={() => { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); }}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                    disabled={kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (kagiLocksOtherChartTypes) return;
+                      onHeikinAshiChange?.(false);
+                      onChartStyleChange?.("candles");
+                      onCandleBodyStyleChange?.("filled");
+                      setChartTypeOpen(false);
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "filled" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <img src={`${ASSET_PREFIX}/assets/charts/candles.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeCandles ?? "Candles"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("hollow"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !kagiLocksOtherChartTypes) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("candles");
+                        onCandleBodyStyleChange?.("hollow");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "candles" && candleBodyStyle === "hollow" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/candles_vazias.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeCandlesHollow ?? "Candles vazias"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("bars"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !kagiLocksOtherChartTypes) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("bars");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "bars" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/barras.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeBars ?? "Barras"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("line"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !kagiLocksOtherChartTypes) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("line");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "line" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/linhas.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeLine ?? "Linhas"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("linePoints"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !kagiLocksOtherChartTypes) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("linePoints");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "linePoints" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeLinePoints ?? "Linhas ponto"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(false); onChartStyleChange?.("area"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || !showKagiClassicStyle}
+                    title={
+                      !showKagiClassicStyle
+                        ? ((t as Record<string, string>).chartTypeKagiClassicDisabledNonKagi ?? undefined)
+                        : ((t as Record<string, string>).chartTypeKagiClassicHint ?? undefined)
+                    }
+                    onClick={() => {
+                      if (!isDefaultModel && showKagiClassicStyle) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("kagiClassic");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "kagiClassic" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || !showKagiClassicStyle ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {isDefaultModel ? "🔒 " : ""}
+                    <img src={`${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    {(t as Record<string, string>).chartTypeKagiClassic ?? "Kagi clássico"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || kagiLocksOtherChartTypes}
+                    title={kagiLocksOtherChartTypes ? kagiOtherTypesTitle : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !kagiLocksOtherChartTypes) {
+                        onHeikinAshiChange?.(false);
+                        onChartStyleChange?.("area");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "area" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || kagiLocksOtherChartTypes ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/area.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeArea ?? "Área"}
                   </button>
-                  <button type="button" disabled={isDefaultModel} onClick={() => { if (!isDefaultModel) { onHeikinAshiChange?.(true); onChartStyleChange?.("candles"); onCandleBodyStyleChange?.("filled"); setChartTypeOpen(false); } }} className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${heikinAshi ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <button
+                    type="button"
+                    disabled={isDefaultModel || isAggInterval}
+                    title={isAggInterval ? ((t as Record<string, string>).chartTypeHeikinDisabledAgg ?? "Heikin Ashi só aplica a velas OHLC") : undefined}
+                    onClick={() => {
+                      if (!isDefaultModel && !isAggInterval) {
+                        onHeikinAshiChange?.(true);
+                        onChartStyleChange?.("candles");
+                        onCandleBodyStyleChange?.("filled");
+                        setChartTypeOpen(false);
+                      }
+                    }}
+                    className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${heikinAshi && !isAggInterval ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || isAggInterval ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
                     {isDefaultModel ? "🔒 " : ""}
                     <img src={`${ASSET_PREFIX}/assets/charts/heikin_ashi.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeHeikinAshi ?? "Heikin Ashi"}
@@ -1177,6 +1295,100 @@ export function KlinesChartSidebar({
                     <button key={opt.value} type="button" onClick={() => { onIntervalChange(opt.value); setIntervalsOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{opt.label}</button>
                   ))}
                 </div>
+                {aggIntervalPicker != null && (
+                  <div className="space-y-2 mb-3">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRenko ?? "Renko 1×"}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {aggIntervalPicker.renko.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              onIntervalChange(opt.value);
+                              setIntervalsOpen(false);
+                            }}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRange ?? "Range"}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {aggIntervalPicker.range.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              onIntervalChange(opt.value);
+                              setIntervalsOpen(false);
+                            }}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionKagi ?? "Kagi"}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {aggIntervalPicker.kagi.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              onIntervalChange(opt.value);
+                              setIntervalsOpen(false);
+                            }}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRenko2x ?? "Renko Clássico"}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {aggIntervalPicker.renko2x.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              onIntervalChange(opt.value);
+                              setIntervalsOpen(false);
+                            }}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionTrades ?? "Trades"}</p>
+                      <div className="grid grid-cols-3 gap-1">
+                        {aggIntervalPicker.trades500.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              onIntervalChange(opt.value);
+                              setIntervalsOpen(false);
+                            }}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <p className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-100">{t.tableNote}</p>
               </>
             )}

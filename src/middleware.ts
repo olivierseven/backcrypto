@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isPrivateCryptoPath } from "@/lib/crypto-auth-next";
+import { isCryptoDevPath, isCryptoDevRoutesEnabled } from "@/lib/crypto-dev-routes";
 
 const BASE = "/crypto";
 const SESSION_COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -16,6 +17,10 @@ export function middleware(request: NextRequest) {
 
   if (!pathname.startsWith(BASE)) {
     return NextResponse.next();
+  }
+
+  if (isCryptoDevPath(pathname) && !isCryptoDevRoutesEnabled()) {
+    return new NextResponse(null, { status: 404 });
   }
 
   const rest = pathname.slice(BASE.length);
@@ -64,5 +69,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|assets|favicon|icon|manifest|robots).*)"],
+  matcher: [
+    "/((?!_next|api|assets|favicon|icon|manifest|robots).*)",
+    `${BASE}/api/dev`,
+    `${BASE}/api/dev/:path*`,
+  ],
 };
