@@ -986,19 +986,19 @@ export default function DevBinanceTicksPage() {
           <span className="text-zinc-500">Modo tabela:</span>
           <label className="flex cursor-pointer items-center gap-1.5 text-zinc-800">
             <input type="radio" name="chartMode" className="accent-zinc-700" checked={chartMode === "renko"} onChange={() => setChartMode("renko")} />
-            Renko 1×
+            Renko 1x Derived
           </label>
           <label className="flex cursor-pointer items-center gap-1.5 text-zinc-800">
             <input type="radio" name="chartMode" className="accent-zinc-700" checked={chartMode === "range"} onChange={() => setChartMode("range")} />
-            Range
+            Range Derived
           </label>
           <label className="flex cursor-pointer items-center gap-1.5 text-zinc-800">
             <input type="radio" name="chartMode" className="accent-zinc-700" checked={chartMode === "kagi"} onChange={() => setChartMode("kagi")} />
-            Kagi
+            Kagi Derived
           </label>
           <label className="flex cursor-pointer items-center gap-1.5 text-zinc-800">
             <input type="radio" name="chartMode" className="accent-zinc-700" checked={chartMode === "renko2x"} onChange={() => setChartMode("renko2x")} />
-            Renko Clássico
+            Renko 2x Derived
           </label>
           <label className="flex cursor-pointer items-center gap-1.5 text-zinc-800">
             <input type="radio" name="chartMode" className="accent-zinc-700" checked={chartMode === "trades500"} onChange={() => setChartMode("trades500")} />
@@ -1059,13 +1059,13 @@ export default function DevBinanceTicksPage() {
             </div>
             <p className="border-y border-zinc-100 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
               {chartMode === "renko"
-                ? "Renko 1×"
+                ? "Renko 1x Derived"
                 : chartMode === "range"
-                  ? "Range"
+                  ? "Range Derived"
                   : chartMode === "kagi"
-                    ? "Kagi"
+                    ? "Kagi Derived"
                     : chartMode === "renko2x"
-                      ? "Renko Clássico"
+                      ? "Renko 2x Derived"
                       : `${TRADES_PER_CANDLE} trades/candle`}{" "}
               — {s.rest} (últimos {MAX_CHART_ROWS})
             </p>

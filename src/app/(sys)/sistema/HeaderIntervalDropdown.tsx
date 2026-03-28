@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import type { ChartIntervalPickerRegistration } from "./ChartHeaderContext";
+import { AggDerivedInfoButton, AggDerivedInfoModal, type AggDerivedKind } from "./klinesChart/AggDerivedInfoModal";
 
 type Props = {
   picker: ChartIntervalPickerRegistration;
@@ -16,6 +17,7 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
   const tk = t as Record<string, string>;
   const [open, setOpen] = useState(false);
   const [pageLeftOffset, setPageLeftOffset] = useState(0);
+  const [aggDerivedHelp, setAggDerivedHelp] = useState<AggDerivedKind | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,9 +93,15 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
           </div>
           <div className="space-y-2 mb-2">
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {tk.intervalSectionRenko ?? "Renko 1×"}
-              </p>
+              <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                  {tk.intervalSectionRenko ?? "Renko 1x Derived"}
+                </p>
+                <AggDerivedInfoButton
+                  ariaLabel={tk.aggDerivedInfoButtonAria ?? "Info"}
+                  onClick={() => setAggDerivedHelp("renko")}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 {a.renko.map((opt) => (
                   <button
@@ -110,9 +118,15 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {tk.intervalSectionRange ?? "Range"}
-              </p>
+              <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                  {tk.intervalSectionRange ?? "Range Derived"}
+                </p>
+                <AggDerivedInfoButton
+                  ariaLabel={tk.aggDerivedInfoButtonAria ?? "Info"}
+                  onClick={() => setAggDerivedHelp("range")}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 {a.range.map((opt) => (
                   <button
@@ -129,9 +143,15 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {tk.intervalSectionKagi ?? "Kagi"}
-              </p>
+              <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                  {tk.intervalSectionKagi ?? "Kagi Derived"}
+                </p>
+                <AggDerivedInfoButton
+                  ariaLabel={tk.aggDerivedInfoButtonAria ?? "Info"}
+                  onClick={() => setAggDerivedHelp("kagi")}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 {a.kagi.map((opt) => (
                   <button
@@ -148,9 +168,15 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {tk.intervalSectionRenko2x ?? "Renko Clássico"}
-              </p>
+              <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                  {tk.intervalSectionRenko2x ?? "Renko 2x Derived"}
+                </p>
+                <AggDerivedInfoButton
+                  ariaLabel={tk.aggDerivedInfoButtonAria ?? "Info"}
+                  onClick={() => setAggDerivedHelp("renko2x")}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 {a.renko2x.map((opt) => (
                   <button
@@ -167,9 +193,15 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
               </div>
             </div>
             <div>
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">
-                {tk.intervalSectionTrades ?? "Trades"}
-              </p>
+              <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                  {tk.intervalSectionTrades ?? "Trades"}
+                </p>
+                <AggDerivedInfoButton
+                  ariaLabel={tk.aggDerivedInfoButtonAria ?? "Info"}
+                  onClick={() => setAggDerivedHelp("trades")}
+                />
+              </div>
               <div className="grid grid-cols-3 gap-1">
                 {a.trades500.map((opt) => (
                   <button
@@ -188,6 +220,7 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
           </div>
         </div>
       )}
+      <AggDerivedInfoModal kind={aggDerivedHelp} onClose={() => setAggDerivedHelp(null)} t={tk} />
     </div>
   );
 }

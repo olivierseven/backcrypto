@@ -6,6 +6,7 @@
 import { useState, useRef, useLayoutEffect, useEffect, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { ASSET_PREFIX } from "@/app/constants";
+import { AggDerivedInfoButton, AggDerivedInfoModal, type AggDerivedKind } from "./AggDerivedInfoModal";
 import { KLINE_LAST_LAYOUT_KEY, SIDEBAR_WIDTH, groupMinutesToAggKind, isAggFastGroupMinutes } from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
@@ -297,6 +298,7 @@ export function KlinesChartSidebar({
 
   const [intervalsOpen, setIntervalsOpen] = useState(false);
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
+  const [aggDerivedHelp, setAggDerivedHelp] = useState<AggDerivedKind | null>(null);
   const isAggInterval = isAggFastGroupMinutes(groupMinutes);
   const showKagiClassicStyle = groupMinutesToAggKind(groupMinutes) === "kagi";
   /** No K5: só Kagi clássico ativo; restantes desabilitados (como Heikin em intervalos agregados). */
@@ -1298,7 +1300,15 @@ export function KlinesChartSidebar({
                 {aggIntervalPicker != null && (
                   <div className="space-y-2 mb-3">
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRenko ?? "Renko 1×"}</p>
+                      <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                          {(t as Record<string, string>).intervalSectionRenko ?? "Renko 1x Derived"}
+                        </p>
+                        <AggDerivedInfoButton
+                          ariaLabel={(t as Record<string, string>).aggDerivedInfoButtonAria ?? "Info"}
+                          onClick={() => setAggDerivedHelp("renko")}
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         {aggIntervalPicker.renko.map((opt) => (
                           <button
@@ -1316,7 +1326,15 @@ export function KlinesChartSidebar({
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRange ?? "Range"}</p>
+                      <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                          {(t as Record<string, string>).intervalSectionRange ?? "Range Derived"}
+                        </p>
+                        <AggDerivedInfoButton
+                          ariaLabel={(t as Record<string, string>).aggDerivedInfoButtonAria ?? "Info"}
+                          onClick={() => setAggDerivedHelp("range")}
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         {aggIntervalPicker.range.map((opt) => (
                           <button
@@ -1334,7 +1352,15 @@ export function KlinesChartSidebar({
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionKagi ?? "Kagi"}</p>
+                      <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                          {(t as Record<string, string>).intervalSectionKagi ?? "Kagi Derived"}
+                        </p>
+                        <AggDerivedInfoButton
+                          ariaLabel={(t as Record<string, string>).aggDerivedInfoButtonAria ?? "Info"}
+                          onClick={() => setAggDerivedHelp("kagi")}
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         {aggIntervalPicker.kagi.map((opt) => (
                           <button
@@ -1352,7 +1378,15 @@ export function KlinesChartSidebar({
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionRenko2x ?? "Renko Clássico"}</p>
+                      <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                          {(t as Record<string, string>).intervalSectionRenko2x ?? "Renko 2x Derived"}
+                        </p>
+                        <AggDerivedInfoButton
+                          ariaLabel={(t as Record<string, string>).aggDerivedInfoButtonAria ?? "Info"}
+                          onClick={() => setAggDerivedHelp("renko2x")}
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         {aggIntervalPicker.renko2x.map((opt) => (
                           <button
@@ -1370,7 +1404,15 @@ export function KlinesChartSidebar({
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalSectionTrades ?? "Trades"}</p>
+                      <div className="flex items-center justify-between gap-1 px-2 pb-2 border-b border-zinc-100 mb-2">
+                        <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide min-w-0 flex-1">
+                          {(t as Record<string, string>).intervalSectionTrades ?? "Trades"}
+                        </p>
+                        <AggDerivedInfoButton
+                          ariaLabel={(t as Record<string, string>).aggDerivedInfoButtonAria ?? "Info"}
+                          onClick={() => setAggDerivedHelp("trades")}
+                        />
+                      </div>
                       <div className="grid grid-cols-3 gap-1">
                         {aggIntervalPicker.trades500.map((opt) => (
                           <button
@@ -1673,6 +1715,7 @@ export function KlinesChartSidebar({
           </div>,
           document.body
         )}
+      <AggDerivedInfoModal kind={aggDerivedHelp} onClose={() => setAggDerivedHelp(null)} t={t as Record<string, string>} />
     </div>
   );
 }
