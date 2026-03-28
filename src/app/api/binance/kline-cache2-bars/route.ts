@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { cryptoPrisma } from "@/lib/crypto-db";
+import { cryptoPrisma, prismaForAtemporalCacheRead } from "@/lib/crypto-db";
 import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
 
@@ -62,7 +62,8 @@ function isValidInterval(chartKind: string, interval: string): boolean {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const symbolList = await getKlineSymbolsFromDb(cryptoPrisma);
+  const dbCache = prismaForAtemporalCacheRead();
+  const symbolList = await getKlineSymbolsFromDb(dbCache);
   const symbol = resolveSymbol(searchParams.get("symbol"), symbolList);
   const chartKindRaw = (searchParams.get("chartKind") ?? "").trim().toLowerCase();
   const chartKind = CHART_KINDS.has(chartKindRaw) ? chartKindRaw : null;
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
       const { payload } = await jwtVerify(token, JWT_SECRET);
       const userId = typeof payload?.sub === "string" ? payload.sub : null;
       if (userId) {
+        /* Fuso horário: utilizador na sessão local (DATABASE_URL), não em URL_PROD. */
         const user = await cryptoPrisma.user.findUnique({
           where: { id: userId },
           select: { timezoneOffset: true },
@@ -98,7 +100,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const rows = (await cryptoPrisma.binanceKlineCache2.findMany({
+    const rows = (await dbCache.binanceKlineCache2.findMany({
       where: { symbol, chartKind, interval },
       orderBy: { openTime: "desc" },
       take: limit,

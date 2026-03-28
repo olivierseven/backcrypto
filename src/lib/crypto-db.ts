@@ -27,3 +27,19 @@ export function getCryptoPrismaProd(): PrismaClient {
   if (process.env.NODE_ENV !== "production") globalForCrypto.cryptoPrismaProd = client;
   return client;
 }
+
+/**
+ * Leituras de cache atemporal (`BinanceKlineCache2`) em **desenvolvimento local**: se `URL_PROD` estiver no `.env`,
+ * usa o mesmo Postgres que produção para o gráfico /sistema bater com dados reais. Em `NODE_ENV=production` (build)
+ * usa sempre `cryptoPrisma` (DATABASE_URL do deploy). Sessão/fuso do utilizador continuam no `cryptoPrisma` local.
+ */
+export function prismaForAtemporalCacheRead(): PrismaClient {
+  if (process.env.NODE_ENV === "production") return cryptoPrisma;
+  const url = process.env.URL_PROD?.trim();
+  if (!url) return cryptoPrisma;
+  try {
+    return getCryptoPrismaProd();
+  } catch {
+    return cryptoPrisma;
+  }
+}

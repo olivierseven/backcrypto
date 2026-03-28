@@ -29,7 +29,8 @@ import {
   type TradeCountCandleRef,
 } from "@/app/lib/binanceAggRenkoCore";
 
-const FLUSH_MS = 5000;
+/** Fallback raro: barras fechadas são enviadas já no mesmo evento aggTrade (evita atraso de vários segundos). */
+const FLUSH_MS = 8000;
 const BINANCE_AGG_WS_BASE = "wss://stream.binance.com:9443/ws";
 
 export type AggFastWsKind = "renko" | "range" | "kagi" | "renko2x" | "trades500";
@@ -263,6 +264,10 @@ export function useAggFastTradeLive(opts: {
           for (const row of stepTradeCountCandle(tradeCountRef.current, trade.p, trade.q, trade.t, trade.m, trade.t)) {
             pendingRef.current.push({ symbol: sym, ...row.persist });
           }
+        }
+        if (pendingRef.current.length > 0) {
+          const rows = pendingRef.current.splice(0, pendingRef.current.length);
+          onLiveFlushRef.current(rows);
         }
       };
       ws.onclose = () => {
