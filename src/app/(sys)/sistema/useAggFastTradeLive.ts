@@ -62,8 +62,10 @@ export function useAggFastTradeLive(opts: {
   timezoneOffsetHours: number;
   klines: KlineLike[];
   onLiveFlush: (rows: AggFastBarRowPayload[]) => void;
+  /** Chamado quando chega aggTrade válido (atemporal vivo); throttle interno — p.ex. “Última atualização” / bolinha. */
+  onLiveAggActivity?: () => void;
 }) {
-  const { enabled, aggKind, symbol, klinesSourceSymbol, timezoneOffsetHours, klines, onLiveFlush } = opts;
+  const { enabled, aggKind, symbol, klinesSourceSymbol, timezoneOffsetHours, klines, onLiveFlush, onLiveAggActivity } = opts;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
   const rangeRef = useRef<RangeRef>(emptyRangeRef());
@@ -78,7 +80,9 @@ export function useAggFastTradeLive(opts: {
   const tzRef = useRef(timezoneOffsetHours);
   const aggKindRef = useRef(aggKind);
   const onLiveFlushRef = useRef(onLiveFlush);
+  const onLiveAggActivityRef = useRef(onLiveAggActivity);
   onLiveFlushRef.current = onLiveFlush;
+  onLiveAggActivityRef.current = onLiveAggActivity;
   klinesRef.current = klines;
   symRef.current = sym;
   klinesSourceRef.current = klinesSourceSymbol;
@@ -158,6 +162,7 @@ export function useAggFastTradeLive(opts: {
     let alive = true;
     let ws: WebSocket | null = null;
     let reconnectTimer: number | null = null;
+    const lastActivityThrottleRef = { current: 0 };
 
     const connect = () => {
       if (!alive) return;
@@ -177,6 +182,11 @@ export function useAggFastTradeLive(opts: {
         const trade = parseAggTradeForSymbol(raw, sym);
         if (!trade) return;
         if (trade.t < streamMinTradeMsRef.current) return;
+        const now = Date.now();
+        if (now - lastActivityThrottleRef.current >= 250) {
+          lastActivityThrottleRef.current = now;
+          onLiveAggActivityRef.current?.();
+        }
         const kind = aggKindRef.current;
         const ts = tickSize;
         if (kind === "renko") {

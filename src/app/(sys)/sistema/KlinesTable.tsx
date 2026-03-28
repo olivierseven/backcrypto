@@ -364,6 +364,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
+  /** Último feed vivo: miniTicker e/ou aggTrade atemporal — para “Última atualização” / bolinha não depender só do openTime da última barra em cache. */
+  const [spotWsUpdatedAt, setSpotWsUpdatedAt] = useState<number | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
   const [priceFormatAbbreviated, setPriceFormatAbbreviated] = useState(false);
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
@@ -1100,6 +1102,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         mergeAggFastServerAndLive(serverAggKlinesRef.current, tierLive, timezoneOffsetRef.current) as Kline[]
       );
     },
+    onLiveAggActivity: () => setSpotWsUpdatedAt(Date.now()),
   });
 
   useVpsFlushNotify({
@@ -1214,6 +1217,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => clearInterval(t);
   }, []);
 
+  /** Idade do estado “vivo”: max(última barra/cache, miniTicker, aggTrade atemporal). */
+  const effectiveStatusAtMs = useMemo(() => {
+    const tBar = lastUpdate?.getTime() ?? 0;
+    const tWs = spotWsUpdatedAt ?? 0;
+    return Math.max(tBar, tWs);
+  }, [lastUpdate, spotWsUpdatedAt]);
+
   // Preço spot em tempo real (miniTicker) direto da Binance via WebSocket — usado no header
   useEffect(() => {
     const sym = symbol.trim();
@@ -1241,6 +1251,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             if (price != null && now - lastEmitAtRef.current >= 250) {
               lastEmitAtRef.current = now;
               setSpotWsPrice(price);
+              setSpotWsUpdatedAt(now);
             }
           } catch {
             // ignore parse errors
@@ -1266,6 +1277,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
     // ao trocar símbolo, limpa o preço anterior até chegar 1.º evento
     setSpotWsPrice(null);
+    setSpotWsUpdatedAt(null);
     connect();
     return () => {
       alive = false;
@@ -1731,23 +1743,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               }
             }}
           />
-          {lastUpdate && (
+          {(lastUpdate != null || spotWsUpdatedAt != null) && (
             <div className="w-full flex items-center mt-1 pb-0.5 px-0.5 pr-3">
               <span className="flex-1 text-[10px] text-zinc-500 truncate text-left min-w-0" title={currentLayoutLabel ?? undefined}>
                 {currentLayoutLabel ?? ""}
               </span>
               <span className="text-[10px] text-zinc-500 text-center shrink-0">
-                {t.lastUpdate}: {formatTime(lastUpdate.getTime())}
+                {t.lastUpdate}: {formatTime(effectiveStatusAtMs)}
               </span>
               <span className="flex-1 flex justify-end shrink-0 pr-1">
                 <span
                   className="w-2 h-2 rounded-full"
                   title={
                     (() => {
-                      // Idade dos **dados do gráfico** (lastUpdate da API), não do miniTicker —
-                      // senão a bolinha ficava verde com "Última atualização" antiga.
-                      const statusAt = lastUpdate.getTime();
-                      const ageMs = Date.now() - statusAt;
+                      const ageMs = Date.now() - effectiveStatusAtMs;
                       if (ageMs < 60000) return t.statusOnline ?? "Atualizado há menos de 1 min";
                       if (ageMs < 300000) return t.statusDelayed ?? "Atraso entre 1 e 5 min";
                       return t.statusStale ?? "Atraso acima de 5 min";
@@ -1756,8 +1765,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   aria-hidden
                   style={{
                     backgroundColor: (() => {
-                      const statusAt = lastUpdate.getTime();
-                      const ageMs = Date.now() - statusAt;
+                      const ageMs = Date.now() - effectiveStatusAtMs;
                       if (ageMs < 60000) return "#22c55e";
                       if (ageMs < 300000) return "#f97316";
                       return "#ef4444";
