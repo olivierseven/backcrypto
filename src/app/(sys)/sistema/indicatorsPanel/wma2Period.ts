@@ -1,4 +1,5 @@
 import type { Wma2TimeUnit } from "../KlinesIndicatorsContext";
+import { isAggFastGroupMinutes } from "../KlinesChartConstants";
 
 /** Teto do valor da janela temporal em UI e persistência (n.º de dias, horas ou minutos — SMA2/EMA2/WMA2). */
 export const MA2_MAX_WINDOW_VALUE = 9999;
@@ -62,4 +63,13 @@ export function wma2RequestedPeriodCandles(groupMinutes: number, unit: Wma2TimeU
 /** true = não calcular / não mostrar linha (SMA2, EMA2, WMA2): período > 1000 ou menos candles que o período. */
 export function wma2ShouldOmitSeries(rowCount: number, requestedPeriod: number): boolean {
   return requestedPeriod > WMA2_MAX_DISPLAY_PERIOD_CANDLES || rowCount < requestedPeriod;
+}
+
+/**
+ * SMA2/EMA2/WMA2 usam janela em tempo (dias/horas/minutos) por candle temporal.
+ * Gráficos atemporais (Renko, Range, Kagi, Renko 2×, velas por contagem de trades) não têm esse eixo — a linha não deve ter efeito.
+ */
+export function wma2ShouldOmitSeriesOnChart(groupMinutes: number, rowCount: number, requestedPeriod: number): boolean {
+  if (isAggFastGroupMinutes(groupMinutes)) return true;
+  return wma2ShouldOmitSeries(rowCount, requestedPeriod);
 }

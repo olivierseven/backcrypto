@@ -231,7 +231,7 @@ export function legacyToRoot(s: StrategyLegacy | Strategy): Strategy {
 export const INTERVAL_LABELS: Record<number, string> = {
   1: "1m", 3: "3m", 5: "5m", 15: "15m", 30: "30m", 45: "45m",
   60: "1h", 120: "2h", 180: "3h", 240: "4h", 360: "6h", 480: "8h", 720: "12h",
-  1440: "1D", 4320: "3D", 10080: "1S", 43200: "1M",
+  1440: "1D", 4320: "3D", 10080: "1w", 43200: "1month",
 };
 export function intervalMinutesToLabel(min: number): string {
   return INTERVAL_LABELS[min] ?? `${min}m`;

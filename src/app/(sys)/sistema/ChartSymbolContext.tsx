@@ -1,12 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useMemo, useLayoutEffect, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useEffect,
+  useRef,
+  type ReactNode,
+  type MutableRefObject,
+} from "react";
 import { DEFAULT_SYMBOLS_LIST } from "@/app/lib/kline-symbols";
 import { API_BASE } from "@/app/constants";
 import { KLINE_SYMBOL_KEY } from "./KlinesChartConstants";
 
 const DEFAULT_SYMBOL = "BTCUSDT";
 const FALLBACK_OPTIONS = [...DEFAULT_SYMBOLS_LIST] as readonly string[];
+
+const FALLBACK_QUICK_SWITCH_REF: MutableRefObject<string | undefined> = { current: undefined };
 
 export function getSymbolOptionsExport(): string[] {
   return [...FALLBACK_OPTIONS];
@@ -28,6 +41,12 @@ interface ChartSymbolContextValue {
   symbolPanelOpen: boolean;
   openSymbolPanel: () => void;
   closeSymbolPanel: () => void;
+  /** Troca rápida por teclado (até 9 letras + Enter); não confundir com a lista do header. */
+  symbolQuickSwitchOpen: boolean;
+  /** Abre o painel; `initialQuery` = 1ª letra quando o utilizador digita no ar (fora de inputs). */
+  openSymbolQuickSwitch: (initialQuery?: string) => void;
+  closeSymbolQuickSwitch: () => void;
+  quickSwitchInitialRef: MutableRefObject<string | undefined>;
 }
 
 const ChartSymbolContext = createContext<ChartSymbolContextValue | null>(null);
@@ -36,6 +55,9 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
   const [symbolOptions, setSymbolOptions] = useState<readonly string[]>(FALLBACK_OPTIONS);
   const [symbol, setSymbolState] = useState<string>(DEFAULT_SYMBOL);
   const [symbolPanelOpen, setSymbolPanelOpen] = useState(false);
+  const [symbolQuickSwitchOpen, setSymbolQuickSwitchOpen] = useState(false);
+  /** Semente consumida uma vez ao abrir (ex.: "E" ao digitar E). */
+  const quickSwitchInitialRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     fetch(`${API_BASE}/klines/symbols`, { credentials: "include" })
@@ -69,6 +91,13 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
   const openSymbolPanel = useCallback(() => setSymbolPanelOpen(true), []);
   const closeSymbolPanel = useCallback(() => setSymbolPanelOpen(false), []);
 
+  const openSymbolQuickSwitch = useCallback((initialQuery?: string) => {
+    setSymbolPanelOpen(false);
+    quickSwitchInitialRef.current = initialQuery;
+    setSymbolQuickSwitchOpen(true);
+  }, []);
+  const closeSymbolQuickSwitch = useCallback(() => setSymbolQuickSwitchOpen(false), []);
+
   const value = useMemo(
     () => ({
       symbol,
@@ -77,8 +106,22 @@ export function ChartSymbolProvider({ children }: { children: ReactNode }) {
       symbolPanelOpen,
       openSymbolPanel,
       closeSymbolPanel,
+      symbolQuickSwitchOpen,
+      openSymbolQuickSwitch,
+      closeSymbolQuickSwitch,
+      quickSwitchInitialRef,
     }),
-    [symbol, setSymbol, symbolOptions, symbolPanelOpen, openSymbolPanel, closeSymbolPanel]
+    [
+      symbol,
+      setSymbol,
+      symbolOptions,
+      symbolPanelOpen,
+      openSymbolPanel,
+      closeSymbolPanel,
+      symbolQuickSwitchOpen,
+      openSymbolQuickSwitch,
+      closeSymbolQuickSwitch,
+    ]
   );
 
   return (
@@ -98,6 +141,10 @@ export function useChartSymbol(): ChartSymbolContextValue {
       symbolPanelOpen: false,
       openSymbolPanel: () => {},
       closeSymbolPanel: () => {},
+      symbolQuickSwitchOpen: false,
+      openSymbolQuickSwitch: () => {},
+      closeSymbolQuickSwitch: () => {},
+      quickSwitchInitialRef: FALLBACK_QUICK_SWITCH_REF,
     };
   }
   return ctx;

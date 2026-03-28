@@ -48,7 +48,7 @@ import { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, get
 import { INDICATOR_COLOR_PALETTE } from "./indicatorsPanel/index";
 import {
   wma2RequestedPeriodCandles,
-  wma2ShouldOmitSeries,
+  wma2ShouldOmitSeriesOnChart,
   isTimeWindowMa2Type,
   ma2NullIndicesBeyondFullWindow,
   defaultMa2TimeValueForUnit,
@@ -98,8 +98,8 @@ const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] =
   { value: 720, label: "12h", param: "12h" },
   { value: 1440, label: "1D", param: "1d" },
   { value: 4320, label: "3D", param: "3d" },
-  { value: 10080, label: "1S", param: "1w" },
-  { value: 43200, label: "1M", param: "1M" },
+  { value: 10080, label: "1w", param: "1w" },
+  { value: 43200, label: "1month", param: "1M" },
 ];
 
 /** Timeframe padrão quando não definido no localStorage: 1 dia. */
@@ -201,7 +201,7 @@ export function getVapCacheConfig(groupMinutes: number): { param: string; maxCan
     1440: { param: "6h", maxCandles: 600, paramLabel: "6h", paramMinutes: 360 },
     4320: { param: "1d", maxCandles: 450, paramLabel: "1D", paramMinutes: 1440 },
     10080: { param: "3d", maxCandles: 350, paramLabel: "3D", paramMinutes: 4320 },
-    43200: { param: "1w", maxCandles: 600, paramLabel: "1S", paramMinutes: 10080 },
+    43200: { param: "1w", maxCandles: 600, paramLabel: "1month", paramMinutes: 10080 },
   };
   return map[groupMinutes] ?? { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 };
 }
@@ -707,7 +707,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
       } else {
         const twMa2 = isTimeWindowMa2Type(ind.type);
-        const twSkip = twMa2 && wma2ShouldOmitSeries(data.length, period);
+        const twSkip = twMa2 && wma2ShouldOmitSeriesOnChart(groupMinutes, data.length, period);
         const col = twSkip
           ? (new Array(out.length).fill(null) as (number | null)[])
           : ind.type === "SMA2"
@@ -1349,7 +1349,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const intervalLabel = useMemo(() => {
     const p = groupMinutesToCache2Params(normalizeAggGroupMinutes(groupMinutes));
     if (p) return formatCache2IntervalShortLabel(p.chartKind, p.interval);
-    return intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1M";
+    return intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1month";
   }, [groupMinutes, intervalOptions]);
 
   useEffect(() => {

@@ -15,6 +15,9 @@ import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { useChartHeader } from "./ChartHeaderContext";
 
 const SistemaDebugPanel = dynamic(() => import("./SistemaDebugPanel"), { ssr: false });
+/** Overlays só no cliente — import dinâmico reduz o chunk de `app/(sys)/layout` e alivia ChunkLoadError/timeout em dev (basePath + HMR). */
+const SymbolQuickSwitch = dynamic(() => import("./SymbolQuickSwitch"), { ssr: false });
+const IntervalQuickSwitch = dynamic(() => import("./IntervalQuickSwitch"), { ssr: false });
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
 import { KlinesRegressionsProvider } from "./regression/KlinesRegressionsContext";
 import RegressionsPanel from "./RegressionsPanel";
@@ -759,6 +762,8 @@ function SistemaLayoutContent({
                 addStrategyDisabled={addStrategyDisabled}
                 topBarGapClass={topBarGapClass}
               />
+              <SymbolQuickSwitch />
+              <IntervalQuickSwitch />
               <div className="flex-1 flex flex-col min-w-0 min-h-0 relative" style={{ minWidth: "100vw" }}>
                 <div
                   ref={scrollContainerRef}

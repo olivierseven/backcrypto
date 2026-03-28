@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+  type ReactNode,
+} from "react";
 import type { AggIntervalPickerConfig, IntervalOption } from "./klinesChart/types";
 
 /** Registo do seletor de intervalo (KlinesTable) para o header ao lado de Plans. */
@@ -52,6 +61,11 @@ type ChartHeaderContextValue = {
   setHeaderData: (d: ChartHeaderData | null) => void;
   intervalPicker: ChartIntervalPickerRegistration | null;
   setIntervalPicker: (next: ChartIntervalPickerRegistration | null) => void;
+  /** Troca rápida de timeframe por teclado (número + sufixo de letra). */
+  intervalQuickSwitchOpen: boolean;
+  openIntervalQuickSwitch: (initialQuery?: string) => void;
+  closeIntervalQuickSwitch: () => void;
+  intervalQuickSwitchInitialRef: MutableRefObject<string | undefined>;
 };
 
 const ChartHeaderContext = createContext<ChartHeaderContextValue | null>(null);
@@ -59,6 +73,8 @@ const ChartHeaderContext = createContext<ChartHeaderContextValue | null>(null);
 export function ChartHeaderProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<ChartHeaderData>(defaultData);
   const [intervalPicker, setIntervalPickerState] = useState<ChartIntervalPickerRegistration | null>(null);
+  const [intervalQuickSwitchOpen, setIntervalQuickSwitchOpen] = useState(false);
+  const intervalQuickSwitchInitialRef = useRef<string | undefined>(undefined);
 
   const setHeaderData = useCallback((d: ChartHeaderData | null) => {
     const next = d ?? defaultData;
@@ -69,9 +85,35 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
     setIntervalPickerState(next);
   }, []);
 
+  const openIntervalQuickSwitch = useCallback((initialQuery?: string) => {
+    intervalQuickSwitchInitialRef.current = initialQuery;
+    setIntervalQuickSwitchOpen(true);
+  }, []);
+
+  const closeIntervalQuickSwitch = useCallback(() => {
+    setIntervalQuickSwitchOpen(false);
+  }, []);
+
   const value = useMemo(
-    () => ({ data, setHeaderData, intervalPicker, setIntervalPicker }),
-    [data, setHeaderData, intervalPicker, setIntervalPicker]
+    () => ({
+      data,
+      setHeaderData,
+      intervalPicker,
+      setIntervalPicker,
+      intervalQuickSwitchOpen,
+      openIntervalQuickSwitch,
+      closeIntervalQuickSwitch,
+      intervalQuickSwitchInitialRef,
+    }),
+    [
+      data,
+      setHeaderData,
+      intervalPicker,
+      setIntervalPicker,
+      intervalQuickSwitchOpen,
+      openIntervalQuickSwitch,
+      closeIntervalQuickSwitch,
+    ]
   );
 
   return <ChartHeaderContext.Provider value={value}>{children}</ChartHeaderContext.Provider>;
@@ -80,11 +122,16 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
 export function useChartHeader(): ChartHeaderContextValue {
   const ctx = useContext(ChartHeaderContext);
   if (!ctx) {
+    const emptyRef: MutableRefObject<string | undefined> = { current: undefined };
     return {
       data: defaultData,
       setHeaderData: () => {},
       intervalPicker: null,
       setIntervalPicker: () => {},
+      intervalQuickSwitchOpen: false,
+      openIntervalQuickSwitch: () => {},
+      closeIntervalQuickSwitch: () => {},
+      intervalQuickSwitchInitialRef: emptyRef,
     };
   }
   return ctx;

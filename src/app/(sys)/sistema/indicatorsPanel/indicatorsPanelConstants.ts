@@ -42,6 +42,6 @@ export const INTERVAL_OPTIONS: { value: number; label: string }[] = [
   { value: 720, label: "12h" },
   { value: 1440, label: "1D" },
   { value: 4320, label: "3D" },
-  { value: 10080, label: "1S" },
-  { value: 43200, label: "1M" },
+  { value: 10080, label: "1w" },
+  { value: 43200, label: "1month" },
 ];

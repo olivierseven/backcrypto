@@ -105,6 +105,8 @@ import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
 import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
 import { useChartLayoutSave } from "./ChartLayoutSaveContext";
 import { useChartSaveLoad } from "./ChartSaveLoadContext";
+import { useChartHeader } from "./ChartHeaderContext";
+import { useChartSymbol } from "./ChartSymbolContext";
 import { getSessionTabId } from "./sessionTabId";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
@@ -130,6 +132,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
+  const { symbolQuickSwitchOpen } = useChartSymbol();
+  const { intervalQuickSwitchOpen } = useChartHeader();
   const { swapAdjacentSecondaryPanels, userIndicators } = useKlinesIndicators();
   const { userRegressions } = useKlinesRegressions();
   const maxRegForecastBars = useMemo(() => {
@@ -270,6 +274,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   /** Evitar gravar segmentos/visibilidade do intervalo anterior na chave do novo ao trocar timeframe (race entre load e persist). */
   const lastPersistedDrawKeyRef = useRef<string>("");
   const lastPersistedVisibleKeyRef = useRef<string>("");
+  /** Régua ativada temporariamente com Shift (soltar Shift volta ao crosshair). */
+  const rulerHeldByShiftRef = useRef(false);
+  /** Mão (pan) ativada temporariamente com Espaço (soltar volta ao crosshair). */
+  const handHeldBySpaceRef = useRef(false);
+  /** Um frame após clicar na mão na barra: ignora Space-down para não marcar atalho Espaço em corrida com drawMode ainda false. */
+  const skipSpaceTempAfterToolbarHandRef = useRef(false);
+  /** Um frame após clicar na régua na barra: ignora Shift-down para não marcar atalho Shift em corrida com drawMode ainda false. */
+  const skipShiftTempAfterToolbarRulerRef = useRef(false);
 
   const drawing = useKlinesChartDrawing(chartSvgRef);
   const {
@@ -327,6 +339,11 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     setDrawPendingPencil,
     selectPencilTool,
   } = drawing;
+
+  const drawModeRef = useRef(drawMode);
+  const drawToolRef = useRef(drawTool);
+  drawModeRef.current = drawMode;
+  drawToolRef.current = drawTool;
 
   const fullReversed = [...klines].reverse();
   const n = fullReversed.length;
@@ -1329,18 +1346,158 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   }, [crosshairPoint]);
 
   const exitRulerToCrosshair = useCallback(() => {
+    rulerHeldByShiftRef.current = false;
     closeDrawMode();
     setDrawPending(null);
     setDrawPendingLineSecond(null);
   }, [closeDrawMode, setDrawPending, setDrawPendingLineSecond]);
 
+  const exitSelectToCrosshair = useCallback(() => {
+    handHeldBySpaceRef.current = false;
+    closeDrawMode();
+  }, [closeDrawMode]);
+
   const toggleRuler = useCallback(() => {
     if (drawMode && drawTool === "ruler") {
       exitRulerToCrosshair();
     } else {
+      rulerHeldByShiftRef.current = false;
+      handHeldBySpaceRef.current = false;
+      skipShiftTempAfterToolbarRulerRef.current = true;
+      requestAnimationFrame(() => {
+        skipShiftTempAfterToolbarRulerRef.current = false;
+      });
       selectRulerTool();
     }
   }, [drawMode, drawTool, exitRulerToCrosshair, selectRulerTool]);
+
+  const toggleSelectHand = useCallback(() => {
+    if (drawMode && drawTool === "select") {
+      exitSelectToCrosshair();
+    } else {
+      handHeldBySpaceRef.current = false;
+      rulerHeldByShiftRef.current = false;
+      skipSpaceTempAfterToolbarHandRef.current = true;
+      requestAnimationFrame(() => {
+        skipSpaceTempAfterToolbarHandRef.current = false;
+      });
+      selectSelectTool();
+    }
+  }, [drawMode, drawTool, exitSelectToCrosshair, selectSelectTool]);
+
+  const isEditableChartTarget = useCallback((target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (target.isContentEditable) return true;
+    return target.closest('[contenteditable="true"]') != null;
+  }, []);
+
+  // Shift segurado: mira → régua; soltar Shift: volta à mira se ainda estiver na régua (atalho temporário).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Shift") return;
+      if (e.repeat) return;
+      if (symbolQuickSwitchOpen || intervalQuickSwitchOpen) return;
+      if (isEditableChartTarget(e.target)) return;
+      const fromRulerToolbarBtn =
+        e.target instanceof Element && e.target.closest("[data-ruler-toggle]") != null;
+      if (fromRulerToolbarBtn) {
+        e.preventDefault();
+      }
+      // Corrida: clique na régua + Shift no mesmo tick deixava drawModeRef ainda false e rulerHeldByShiftRef true à régua “manual”.
+      if (skipShiftTempAfterToolbarRulerRef.current) {
+        e.preventDefault();
+        return;
+      }
+      if (drawModeRef.current) return;
+      e.preventDefault();
+      selectRulerTool();
+      rulerHeldByShiftRef.current = true;
+    };
+
+    const endRulerIfShiftHeld = () => {
+      if (!rulerHeldByShiftRef.current) return;
+      rulerHeldByShiftRef.current = false;
+      if (drawModeRef.current && drawToolRef.current === "ruler") {
+        exitRulerToCrosshair();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key !== "Shift") return;
+      endRulerIfShiftHeld();
+    };
+
+    const onBlur = () => {
+      endRulerIfShiftHeld();
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [exitRulerToCrosshair, symbolQuickSwitchOpen, intervalQuickSwitchOpen, isEditableChartTarget, selectRulerTool]);
+
+  // Espaço segurado: mira → mão (pan); soltar: volta à mira se ainda estiver na mão (atalho temporário).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      if (e.repeat) return;
+      if (symbolQuickSwitchOpen || intervalQuickSwitchOpen) return;
+      if (isEditableChartTarget(e.target)) return;
+      const fromHandToolbarBtn =
+        e.target instanceof Element && e.target.closest("[data-hand-tool-toggle]") != null;
+      // Impede o Space de ativar o botão da mão (clique sintético) e o retângulo de foco nativo (caixa preta).
+      if (fromHandToolbarBtn) {
+        e.preventDefault();
+      }
+      // Corrida: clique na mão + Space no mesmo tick deixava drawModeRef ainda false e handHeldBySpaceRef true à mão “manual”.
+      if (skipSpaceTempAfterToolbarHandRef.current) {
+        e.preventDefault();
+        return;
+      }
+      if (!drawModeRef.current) {
+        e.preventDefault();
+        selectSelectTool();
+        handHeldBySpaceRef.current = true;
+        return;
+      }
+      if (drawToolRef.current === "select") {
+        e.preventDefault();
+      }
+    };
+
+    const endHandIfSpaceHeld = () => {
+      if (!handHeldBySpaceRef.current) return;
+      handHeldBySpaceRef.current = false;
+      if (drawModeRef.current && drawToolRef.current === "select") {
+        exitSelectToCrosshair();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      endHandIfSpaceHeld();
+    };
+
+    const onBlur = () => {
+      endHandIfSpaceHeld();
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [exitSelectToCrosshair, symbolQuickSwitchOpen, intervalQuickSwitchOpen, isEditableChartTarget, selectSelectTool]);
 
   // Clique fora da área dos candles: desativa a régua (volta ao crosshair)
   useEffect(() => {
@@ -1777,7 +1934,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   };
 
   const utcDayStartMarkerXs: number[] = [];
-  // Risquinhos: <1D todas as meia-noites locais; ≥8h só dia 1 do mês; inclui 1D/3D/1S; 1M (43200) sem marcador.
+  // Risquinhos: <1D todas as meia-noites locais; ≥8h só dia 1 do mês; inclui 1D/3D/1w; 1M (43200) sem marcador.
   if (timeScaleGroupMinutes < 43200 && totalSlots > 0 && windowN > 0) {
     const t0 = openTimeForWindowSlot(0);
     const tLast = openTimeForWindowSlot(totalSlots - 1);
@@ -2093,6 +2250,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             selectPencilTool={selectPencilTool}
             exitRulerToCrosshair={exitRulerToCrosshair}
             toggleRuler={toggleRuler}
+            toggleSelectHand={toggleSelectHand}
             selectSelectTool={selectSelectTool}
             clearAllDrawing={clearAllDrawing}
           />
@@ -2309,7 +2467,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                   <p id="clear-draw-confirm-desc" className="text-sm text-zinc-600 mb-4">
                     {((t as Record<string, string>).clearDrawingsConfirmMessageTimeframe ?? "Delete all drawings for {interval}? This action cannot be undone.").replace(
                       "{interval}",
-                      intervalLabel ?? (groupMinutes < 60 ? `${groupMinutes}m` : groupMinutes === 60 ? "1h" : groupMinutes < 1440 ? `${groupMinutes / 60}h` : groupMinutes === 1440 ? "1d" : groupMinutes === 10080 ? "1w" : `${groupMinutes}m`)
+                      intervalLabel ?? (groupMinutes < 60 ? `${groupMinutes}m` : groupMinutes === 60 ? "1h" : groupMinutes < 1440 ? `${groupMinutes / 60}h` : groupMinutes === 1440 ? "1d" : groupMinutes === 10080 ? "1w" : groupMinutes === 43200 ? "1month" : `${groupMinutes}m`)
                     )}
                   </p>
                   <div className="flex gap-2 justify-end">

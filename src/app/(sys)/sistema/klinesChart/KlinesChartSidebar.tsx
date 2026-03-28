@@ -151,6 +151,7 @@ export interface KlinesChartSidebarProps {
   selectPencilTool: () => void;
   exitRulerToCrosshair: () => void;
   toggleRuler: () => void;
+  toggleSelectHand: () => void;
   selectSelectTool: () => void;
   clearAllDrawing: () => void;
 }
@@ -275,6 +276,7 @@ export function KlinesChartSidebar({
   selectPencilTool,
   exitRulerToCrosshair,
   toggleRuler,
+  toggleSelectHand,
   selectSelectTool,
   clearAllDrawing,
 }: KlinesChartSidebarProps) {
@@ -423,14 +425,11 @@ export function KlinesChartSidebar({
       style={rootStyle}
     >
       <div className={isHorizontal ? "flex-1 min-w-0 overflow-x-auto flex flex-row items-center" : "contents"} style={isHorizontal ? { maxWidth: `min(${horizontalInnerMaxWidth}px, calc(100% - 60px))` } : undefined}>
-      {intervalOptions.length > 0 && (
+      {/* Barra horizontal: o timeframe já está no header (HeaderIntervalDropdown); evitar duplicar. */}
+      {intervalOptions.length > 0 && !isHorizontal && (
         <div
           ref={intervalTriggerRef}
-          className={
-            isHorizontal
-              ? "relative flex items-center px-1 border-r border-zinc-200/80"
-              : "w-full flex flex-col items-center px-1 border-b border-zinc-200/80"
-          }
+          className="w-full flex flex-col items-center px-1 border-b border-zinc-200/80"
         >
           <button
             type="button"
@@ -444,11 +443,7 @@ export function KlinesChartSidebar({
             aria-expanded={intervalsOpen}
             aria-haspopup="dialog"
             title={currentIntervalLabel}
-            className={
-              isHorizontal
-                ? "w-10 h-10 flex items-center justify-center text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
-                : "w-full flex items-center justify-center py-2 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
-            }
+            className="w-full flex items-center justify-center py-2 text-sm font-semibold text-zinc-700 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded cursor-pointer"
           >
             {currentIntervalLabel}
           </button>
@@ -483,7 +478,7 @@ export function KlinesChartSidebar({
             const chartTypeThumbSrc = heikinAshi
               ? `${ASSET_PREFIX}/assets/charts/heikin_ashi.webp`
               : chartStyle === "kagiClassic"
-                ? `${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`
+                ? `${ASSET_PREFIX}/assets/charts/kagi.webp`
                 : chartStyle === "bars"
                   ? `${ASSET_PREFIX}/assets/charts/barras.webp`
                   : chartStyle === "line"
@@ -531,16 +526,14 @@ export function KlinesChartSidebar({
       <div className={sectionWrapClassName}>
         <button
           type="button"
+          data-hand-tool-toggle
           onClick={(e) => {
             e.stopPropagation();
-            if (drawMode && drawTool === "select") {
-              closeDrawMode();
-            } else {
-              selectSelectTool();
-            }
+            toggleSelectHand();
+            (e.currentTarget as HTMLButtonElement).blur();
           }}
           title={t.drawSelectSegment}
-          className={`${iconButtonClassName} ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
+          className={`${iconButtonClassName} rounded-md outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-1 ${drawMode && drawTool === "select" ? "bg-zinc-200" : ""}`}
           aria-label={t.drawSelectSegment}
           aria-pressed={drawMode && drawTool === "select"}
         >
@@ -552,10 +545,11 @@ export function KlinesChartSidebar({
           onClick={(e) => {
             e.stopPropagation();
             toggleRuler();
+            (e.currentTarget as HTMLButtonElement).blur();
           }}
-          title={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
-          className={`${iconButtonClassName} ${drawMode && drawTool === "ruler" ? "bg-zinc-200" : ""}`}
-          aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair")}
+          title={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler (Shift)") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair (Shift)")}
+          className={`${iconButtonClassName} rounded-md outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-1 ${drawMode && drawTool === "ruler" ? "bg-zinc-200" : ""}`}
+          aria-label={drawMode && drawTool === "ruler" ? ((t as Record<string, string>).drawRuler ?? "Ruler (Shift)") : ((t as Record<string, string>).drawCrosshair ?? "Crosshair (Shift)")}
           aria-pressed={drawMode && drawTool === "ruler"}
         >
           <img src={`${ASSET_PREFIX}/assets/draw/${drawMode && drawTool === "ruler" ? "ruler" : "crosshair"}.webp`} alt="" className="w-5 h-5 object-contain pointer-events-none" aria-hidden />
@@ -1248,7 +1242,7 @@ export function KlinesChartSidebar({
                     className={`text-xs font-medium py-1.5 px-2 rounded border text-left flex items-center gap-1.5 ${!heikinAshi && chartStyle === "kagiClassic" ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel || !showKagiClassicStyle ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     {isDefaultModel ? "🔒 " : ""}
-                    <img src={`${ASSET_PREFIX}/assets/charts/linhas_ponto.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
+                    <img src={`${ASSET_PREFIX}/assets/charts/kagi.webp`} alt="" className="w-4 h-4 object-contain" aria-hidden />
                     {(t as Record<string, string>).chartTypeKagiClassic ?? "Kagi clássico"}
                   </button>
                   <button
