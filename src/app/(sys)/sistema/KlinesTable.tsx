@@ -27,15 +27,17 @@ import {
   formatCache2IntervalShortLabel,
   groupMinutesToAggKind,
   groupMinutesToCache2Params,
-  isAggCache2BaseTierForLiveMerge,
   isAggFastGroupMinutes,
   normalizeAggGroupMinutes,
 } from "./KlinesChartConstants";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
-import { type AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
-import { mergeAggFastServerAndLive } from "./aggFastKlineMerge";
+import { type AggFastBarRowPayload, TRADES_PER_CANDLE } from "@/app/lib/binanceAggRenkoCore";
+import { liveSourcePayloadsToTierPayloadsForMerge, mergeAggFastServerAndLive } from "./aggFastKlineMerge";
 import { useAggFastTradeLive, type AggFastWsKind } from "./useAggFastTradeLive";
 import { useVpsFlushNotify } from "./useVpsFlushNotify";
+
+/** Fila → POST `/api/binance/agg-fast-bars` (grava *Fast* + BinanceKlineCache2), alinhado a dev/ticks. */
+const AGG_PERSIST_FLUSH_MS = 10_000;
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -350,8 +352,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [error, setError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  /** Timestamp da última mensagem recebida do WebSocket (miniTicker); usado na bolinha de status. */
-  const [lastWsActivityAt, setLastWsActivityAt] = useState<number | null>(null);
   /** Tick para re-render da bolinha de status (atualiza a cada 15s). */
   const [, setStatusTick] = useState(0);
   /** Fuso do utilizador (API aplica a openTime/closeTime); usado para contar fechamento do candle em UTC. */
@@ -361,6 +361,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   /** Cache GET agg-fast (Renko/Range/Kagi); barras ao vivo fundem-se em memória sem POST. */
   const serverAggKlinesRef = useRef<Kline[]>([]);
   const liveAggRowsByOpenTimeRef = useRef<Map<number, AggFastBarRowPayload>>(new Map());
+  const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
@@ -1002,12 +1003,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const tzForMerge =
           typeof body.timezoneOffset === "number" ? Math.max(-12, Math.min(12, body.timezoneOffset)) : timezoneOffset;
         serverAggKlinesRef.current = list as Kline[];
-        const baseLive = isAggCache2BaseTierForLiveMerge(groupMinutes);
-        if (!baseLive) {
+        const aggLive = isAggFastGroupMinutes(groupMinutes);
+        if (!aggLive) {
           liveAggRowsByOpenTimeRef.current.clear();
           setKlines(list as Kline[]);
         } else {
-          setKlines(mergeAggFastServerAndLive(list, liveAggRowsByOpenTimeRef.current.values(), tzForMerge) as Kline[]);
+          const tierLive = liveSourcePayloadsToTierPayloadsForMerge(
+            liveAggRowsByOpenTimeRef.current.values(),
+            cache2
+          );
+          setKlines(mergeAggFastServerAndLive(list, tierLive, tzForMerge) as Kline[]);
         }
         setKlinesDataSymbol(requestedSymbol);
         if (list.length > 0) {
@@ -1076,7 +1081,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   const aggWsKind = groupMinutesToAggKind(groupMinutes);
   useAggFastTradeLive({
-    enabled: aggWsKind != null && timeframeRestored && isAggCache2BaseTierForLiveMerge(groupMinutes),
+    enabled: aggWsKind != null && timeframeRestored && isAggFastGroupMinutes(groupMinutes),
     aggKind: (aggWsKind ?? "renko") as AggFastWsKind,
     symbol,
     klinesSourceSymbol: klinesDataSymbol,
@@ -1084,9 +1089,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     klines,
     onLiveFlush: (rows) => {
       if (groupMinutesToAggKind(groupMinutes) == null) return;
-      for (const r of rows) liveAggRowsByOpenTimeRef.current.set(r.openTime, r);
+      const gmNorm = normalizeAggGroupMinutes(groupMinutes);
+      const c2 = groupMinutesToCache2Params(gmNorm);
+      for (const r of rows) {
+        liveAggRowsByOpenTimeRef.current.set(r.openTime, r);
+        pendingAggPersistRef.current.push(r);
+      }
+      const tierLive = liveSourcePayloadsToTierPayloadsForMerge(liveAggRowsByOpenTimeRef.current.values(), c2);
       setKlines(
-        mergeAggFastServerAndLive(serverAggKlinesRef.current, liveAggRowsByOpenTimeRef.current.values(), timezoneOffsetRef.current) as Kline[]
+        mergeAggFastServerAndLive(serverAggKlinesRef.current, tierLive, timezoneOffsetRef.current) as Kline[]
       );
     },
   });
@@ -1099,6 +1110,36 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       void fetchKlinesRef.current();
     },
   });
+
+  /** Persiste barras fechadas (tier base 5ticks/500trades) como dev/ticks: *Fast* + cache2 via POST autenticado. */
+  useEffect(() => {
+    if (!timeframeRestored || aggWsKind == null || !isAggFastGroupMinutes(groupMinutes)) return;
+    const flush = async () => {
+      const rows = pendingAggPersistRef.current.splice(0, pendingAggPersistRef.current.length);
+      if (rows.length === 0) return;
+      const kind = aggWsKind;
+      const interval = kind === "trades500" ? `${TRADES_PER_CANDLE}trades` : "5ticks";
+      try {
+        const res = await fetch(`${API_BASE}/binance/agg-fast-bars`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ kind, corretora: "binance", interval, rows }),
+        });
+        if (!res.ok) {
+          const j = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(j.error || `HTTP ${res.status}`);
+        }
+      } catch {
+        /* 401 / rede: não re-enfileirar (evita loop); próximo flush tenta barras novas */
+      }
+    };
+    const id = window.setInterval(flush, AGG_PERSIST_FLUSH_MS);
+    return () => {
+      window.clearInterval(id);
+      void flush();
+    };
+  }, [timeframeRestored, groupMinutes, aggWsKind]);
 
   const fetchSpot = async () => {
     try {
@@ -1121,6 +1162,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setKlinesDataSymbol(null);
     serverAggKlinesRef.current = [];
     liveAggRowsByOpenTimeRef.current.clear();
+    pendingAggPersistRef.current = [];
     setSpot({ currentClose: null, prevDayClose: null });
     setSpotWsPrice(null);
     setSpotWsHigh(null);
@@ -1191,7 +1233,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         ws = new WebSocket(url);
         ws.onmessage = (ev) => {
           if (!alive) return;
-          setLastWsActivityAt(Date.now());
           try {
             const msg = JSON.parse(String(ev.data)) as { c?: string };
             const price = typeof msg?.c === "string" ? msg.c : null;
@@ -1223,9 +1264,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
     };
 
-    // ao trocar símbolo, limpa o preço anterior e o status WS até chegar 1.º evento
+    // ao trocar símbolo, limpa o preço anterior até chegar 1.º evento
     setSpotWsPrice(null);
-    setLastWsActivityAt(null);
     connect();
     return () => {
       alive = false;
@@ -1704,7 +1744,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   className="w-2 h-2 rounded-full"
                   title={
                     (() => {
-                      const statusAt = lastWsActivityAt ?? lastUpdate.getTime();
+                      // Idade dos **dados do gráfico** (lastUpdate da API), não do miniTicker —
+                      // senão a bolinha ficava verde com "Última atualização" antiga.
+                      const statusAt = lastUpdate.getTime();
                       const ageMs = Date.now() - statusAt;
                       if (ageMs < 60000) return t.statusOnline ?? "Atualizado há menos de 1 min";
                       if (ageMs < 300000) return t.statusDelayed ?? "Atraso entre 1 e 5 min";
@@ -1714,7 +1756,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   aria-hidden
                   style={{
                     backgroundColor: (() => {
-                      const statusAt = lastWsActivityAt ?? lastUpdate.getTime();
+                      const statusAt = lastUpdate.getTime();
                       const ageMs = Date.now() - statusAt;
                       if (ageMs < 60000) return "#22c55e";
                       if (ageMs < 300000) return "#f97316";

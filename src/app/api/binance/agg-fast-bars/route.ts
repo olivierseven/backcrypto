@@ -1,13 +1,19 @@
 /**
  * Barras agregadas Renko / Range / Kagi / Renko2× / trade-count (Binance*Fast).
  * Intervalos típicos: 5ticks (Renko, Range, Kagi, Renko2×); 500trades (velas por contagem de trades).
- * GET — leitura (cache no banco). POST — ingestão (worker VPS, ferramentas); o browser em /sistema não envia POST.
+ * GET — leitura. POST — ingestão autenticada (sessão): VPS, dev/ticks e /sistema (aggTrade ao vivo) gravam *Fast* e atualizam BinanceKlineCache2.
  */
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+import { TRADES_PER_CANDLE } from "@/app/lib/binanceAggRenkoCore";
+import {
+  refreshFastKlineCache2AfterFastInsert,
+  type FastChartKind,
+} from "@/app/lib/fastKlineCache2FromFast";
+import { refreshTradeKlineCache2AfterFastInsert } from "@/app/lib/tradeKlineCache2FromFast";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { getKlineSymbolsFromDb, isAllowedSymbol, resolveSymbol } from "@/app/lib/kline-symbols";
 
@@ -139,6 +145,8 @@ export async function GET(request: NextRequest) {
 }
 
 const MAX_INGEST_ROWS = 2000;
+const FAST_TICK_INTERVAL = "5ticks";
+const FAST_TRADE_INTERVAL = `${TRADES_PER_CANDLE}trades`;
 
 function toDec8(n: number): string {
   if (!Number.isFinite(n)) return "0";
@@ -273,6 +281,9 @@ export async function POST(request: NextRequest) {
     takerBuyQuoteAssetVolume: toDec8(r.takerBuyQuoteAssetVolume),
   }));
 
+  const symbolsUnique = [...new Set(parsed.map((r) => r.symbol))];
+  const chartKindForCache: FastChartKind | null = kind === "trades500" ? null : (kind as FastChartKind);
+
   try {
     let count = 0;
     if (kind === "renko") {
@@ -286,7 +297,32 @@ export async function POST(request: NextRequest) {
     } else {
       count = (await cryptoPrisma.binanceTradeCountFast.createMany({ data, skipDuplicates: true })).count;
     }
-    return NextResponse.json({ inserted: count, kind });
+
+    let cache2: { ok: true; symbolsRefreshed: number } | { ok: false; error: string } | undefined;
+    if (parsed.length > 0 && interval === FAST_TICK_INTERVAL && chartKindForCache != null) {
+      const c2 = await refreshFastKlineCache2AfterFastInsert(cryptoPrisma, {
+        corretora,
+        symbols: symbolsUnique,
+        chartKind: chartKindForCache,
+      });
+      cache2 = c2.ok ? { ok: true, symbolsRefreshed: symbolsUnique.length } : c2;
+    }
+
+    let cache2Trades: { ok: true; symbolsRefreshed: number } | { ok: false; error: string } | undefined;
+    if (parsed.length > 0 && kind === "trades500" && interval === FAST_TRADE_INTERVAL) {
+      const c2t = await refreshTradeKlineCache2AfterFastInsert(cryptoPrisma, {
+        corretora,
+        symbols: symbolsUnique,
+      });
+      cache2Trades = c2t.ok ? { ok: true, symbolsRefreshed: symbolsUnique.length } : c2t;
+    }
+
+    return NextResponse.json({
+      inserted: count,
+      kind,
+      ...(cache2 ? { cache2 } : {}),
+      ...(cache2Trades ? { cache2Trades } : {}),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });

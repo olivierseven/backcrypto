@@ -50,8 +50,9 @@ function inferRenkoDirectionFromKlines(klines: KlineLike[]): boolean | null {
 }
 
 /**
- * aggTrade → Renko / Range / Kagi / Renko2× (5ticks) / velas por contagem de trades só no cliente: sem escrita no banco.
- * Barras fechadas saem em `onLiveFlush` para fundir com o GET (cache).
+ * aggTrade → Renko / Range / Kagi / Renko2× (5ticks) / velas por contagem de trades no cliente.
+ * Barras fechadas em `onLiveFlush` fundem com o GET; em /sistema o KlinesTable também enfileira POST
+ * para `/api/binance/agg-fast-bars` (tier base) e grava *Fast* + BinanceKlineCache2 como dev/ticks.
  */
 export function useAggFastTradeLive(opts: {
   enabled: boolean;

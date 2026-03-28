@@ -162,7 +162,10 @@ export function formatCache2IntervalShortLabel(chartKind: AggChartKind, interval
   return `${letter}${ticks}`;
 }
 
-/** Live WS só no tier base (5ticks / 500trades), alinhado às tabelas *Fast. */
+/**
+ * @deprecated O gráfico agrega ao vivo para **qualquer** tier (P5–P200, 500T–10kT) a partir da fonte 5ticks/500trades.
+ * Mantido por compatibilidade; preferir `isAggFastGroupMinutes`.
+ */
 export function isAggCache2BaseTierForLiveMerge(groupMinutes: number): boolean {
   const n = normalizeAggGroupMinutes(groupMinutes);
   const p = groupMinutesToCache2Params(n);

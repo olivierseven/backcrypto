@@ -1,4 +1,15 @@
 import type { AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
+import { Prisma } from "@/lib/prisma-bio-client";
+import {
+  aggregateFastBarsFrom5TickRows,
+  aggregateFastBarsFromTradeCountRows,
+  RENKO_CACHE_TICK_INTERVALS,
+  TRADE_CACHE_TRADE_INTERVALS,
+  type FastBarSourceRow,
+  type RenkoCacheTickInterval,
+  type TradeCacheTradeInterval,
+} from "@/app/lib/renkoKlineCache2Build";
+import type { AggChartKind } from "./KlinesChartConstants";
 
 /**
  * Mesmo formato que GET /api/binance/agg-fast-bars (rowToKline + applyTimezoneOffset).
@@ -97,4 +108,90 @@ export function mergeAggFastServerAndLive(
   }
 
   return out;
+}
+
+function aggPayloadToFastSourceRow(p: AggFastBarRowPayload): FastBarSourceRow {
+  return {
+    symbol: p.symbol,
+    openTime: BigInt(Math.trunc(p.openTime)),
+    closeTime: BigInt(Math.trunc(p.closeTime)),
+    open: new Prisma.Decimal(p.open),
+    high: new Prisma.Decimal(p.high),
+    low: new Prisma.Decimal(p.low),
+    close: new Prisma.Decimal(p.close),
+    volume: new Prisma.Decimal(p.volume),
+    quoteAssetVolume: new Prisma.Decimal(p.quoteAssetVolume),
+    numberOfTrades: p.numberOfTrades,
+    takerBuyBaseAssetVolume: new Prisma.Decimal(p.takerBuyBaseAssetVolume),
+    takerBuyQuoteAssetVolume: new Prisma.Decimal(p.takerBuyQuoteAssetVolume),
+  };
+}
+
+function ohlcChunkToAggPayload(r: {
+  symbol: string;
+  openTime: bigint;
+  closeTime: bigint;
+  open: Prisma.Decimal;
+  high: Prisma.Decimal;
+  low: Prisma.Decimal;
+  close: Prisma.Decimal;
+  volume: Prisma.Decimal;
+  quoteAssetVolume: Prisma.Decimal;
+  numberOfTrades: number;
+  takerBuyBaseAssetVolume: Prisma.Decimal;
+  takerBuyQuoteAssetVolume: Prisma.Decimal;
+}): AggFastBarRowPayload {
+  return {
+    symbol: r.symbol,
+    openTime: Number(r.openTime),
+    closeTime: Number(r.closeTime),
+    open: Number(r.open),
+    high: Number(r.high),
+    low: Number(r.low),
+    close: Number(r.close),
+    volume: Number(r.volume),
+    quoteAssetVolume: Number(r.quoteAssetVolume),
+    numberOfTrades: r.numberOfTrades,
+    takerBuyBaseAssetVolume: Number(r.takerBuyBaseAssetVolume),
+    takerBuyQuoteAssetVolume: Number(r.takerBuyQuoteAssetVolume),
+  };
+}
+
+/**
+ * O WS aggTrade + step* produz sempre barras-fonte (5ticks / 500trades).
+ * Para o gráfico no tier selecionado (P15, 1kT, …), agrega como no servidor antes do merge com GET.
+ */
+export function liveSourcePayloadsToTierPayloadsForMerge(
+  liveSource: Iterable<AggFastBarRowPayload>,
+  cache2: { chartKind: AggChartKind; interval: string } | null
+): AggFastBarRowPayload[] {
+  const rows = [...liveSource];
+  if (rows.length === 0 || cache2 == null) return rows;
+
+  const asc = [...rows].sort((a, b) => a.openTime - b.openTime);
+  const src = asc.map(aggPayloadToFastSourceRow);
+
+  if (cache2.chartKind === "trades500") {
+    const m = /^(\d+)trades$/.exec(cache2.interval.trim());
+    const tr = m ? Number(m[1]) : TRADE_CACHE_TRADE_INTERVALS[0];
+    if (!Number.isFinite(tr) || !(TRADE_CACHE_TRADE_INTERVALS as readonly number[]).includes(tr)) {
+      return rows;
+    }
+    if (tr === TRADE_CACHE_TRADE_INTERVALS[0]) return rows;
+    const agg = aggregateFastBarsFromTradeCountRows(
+      src,
+      tr as TradeCacheTradeInterval,
+      "trades500"
+    );
+    return agg.map(ohlcChunkToAggPayload);
+  }
+
+  const tm = /^(\d+)ticks$/.exec(cache2.interval.trim());
+  const ticks = tm ? Number(tm[1]) : 5;
+  if (!Number.isFinite(ticks) || !(RENKO_CACHE_TICK_INTERVALS as readonly number[]).includes(ticks)) {
+    return rows;
+  }
+  if (ticks === 5) return rows;
+  const agg = aggregateFastBarsFrom5TickRows(src, ticks as RenkoCacheTickInterval, cache2.chartKind);
+  return agg.map(ohlcChunkToAggPayload);
 }
