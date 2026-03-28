@@ -18,6 +18,12 @@ import {
   INTERVAL_OPTIONS,
   MAIN_MAX_INDICATORS,
   SECONDARY_MAX_INDICATORS,
+  AGG_INTERVAL_GROUPS,
+  ALL_INDICATOR_INTERVAL_VALUES,
+  applyIntervalGroupToggle,
+  expandIntervalsExplicit,
+  getIndicatorIntervalLabel,
+  INDICATOR_INTERVAL_GROUPS,
   getIndicatorLabel,
   isMovingAverageType,
   useIndicatorsPanelFields,
@@ -650,12 +656,24 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     const ind = userIndicators.find((u) => u.id === id);
     if (!ind) return;
     const isNone = ind.intervals.length === 1 && ind.intervals[0] === 0;
-    const current = ind.intervals.length === 0 ? INTERVAL_OPTIONS.map((o) => o.value) : isNone ? [] : [...ind.intervals];
+    const expanded = expandIntervalsExplicit(ind.intervals);
+    const current = isNone ? [] : expanded;
     const idx = current.indexOf(groupMinutes);
     let next = idx >= 0 ? current.filter((v) => v !== groupMinutes) : [...current, groupMinutes].sort((a, b) => a - b);
     if (next.length === 0) next = [0];
     updateIndicatorIntervalsWithStrategyReset(id, next);
   }, [userIndicators, updateIndicatorIntervalsWithStrategyReset]);
+
+  const toggleIntervalGroup = useCallback(
+    (id: string, groupValues: readonly number[]) => {
+      const ind = userIndicators.find((u) => u.id === id);
+      if (!ind || groupValues.length === 0) return;
+      const expanded = expandIntervalsExplicit(ind.intervals);
+      const next = applyIntervalGroupToggle(expanded, groupValues);
+      updateIndicatorIntervalsWithStrategyReset(id, next);
+    },
+    [userIndicators, updateIndicatorIntervalsWithStrategyReset]
+  );
 
   const setAllIntervals = useCallback(
     (id: string) => {
@@ -1191,6 +1209,10 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       isMovingAverageType: isMA,
       INDICATOR_COLOR_PALETTE,
       INTERVAL_OPTIONS,
+      AGG_INTERVAL_GROUPS,
+      INDICATOR_INTERVAL_GROUPS,
+      ALL_INDICATOR_INTERVAL_VALUES,
+      getIndicatorIntervalLabel,
       addButtonDisabled,
       defaultModelMaxIndicatorsReached,
       isDefaultLayout: isDefaultModel,
@@ -1204,6 +1226,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       expandedId,
       setExpandedId,
       toggleInterval,
+      toggleIntervalGroup,
       setAllIntervals,
       isIntervalChecked,
       removeIndicator: requestRemoveIndicator,
@@ -1231,6 +1254,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       editForm,
       expandedId,
       toggleInterval,
+      toggleIntervalGroup,
       setAllIntervals,
       isIntervalChecked,
       requestRemoveIndicator,
@@ -1273,7 +1297,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
                   return ind.intervals.length === 0 || ind.intervals.includes(currentGroupMinutes);
                 })
               : userIndicators.filter((ind) => !(ind.intervals.length === 1 && ind.intervals[0] === 0));
-            const currentTimeframeLabel = currentGroupMinutes != null ? (INTERVAL_OPTIONS.find((o) => o.value === currentGroupMinutes)?.label ?? String(currentGroupMinutes)) : "—";
+            const currentTimeframeLabel =
+              currentGroupMinutes != null ? getIndicatorIntervalLabel(currentGroupMinutes) : "—";
             const listToShow = showOnlyCurrentTimeframe ? indicatorsForCurrentTimeframe : userIndicators;
             return (
               <>

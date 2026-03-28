@@ -14,6 +14,11 @@ import {
   normalizeMa2TimeValueForUnit,
 } from "./wma2Period";
 import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
+import {
+  ALL_INDICATOR_INTERVAL_VALUES,
+  applyIntervalGroupToggle,
+  INDICATOR_INTERVAL_GROUPS,
+} from "./aggIntervalOptions";
 
 interface IndicatorsPanelIndicatorCardProps {
   ind: UserIndicatorConfig;
@@ -34,6 +39,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     isMovingAverageType,
     INDICATOR_COLOR_PALETTE,
     INTERVAL_OPTIONS,
+    getIndicatorIntervalLabel,
     editingId,
     editForm,
     setEditForm,
@@ -133,7 +139,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           ? t.allIntervals
           : ind.intervals.length === 1 && ind.intervals[0] === 0
             ? (t as Record<string, string>).noIntervals ?? "Nenhum"
-            : ind.intervals.map((v) => INTERVAL_OPTIONS.find((o) => o.value === v)?.label ?? v).join(", ")}
+            : ind.intervals.map((v) => getIndicatorIntervalLabel(v)).join(", ")}
       </div>
       {editingId === ind.id && editForm && (
         <div className="pt-2 mt-2 border-t border-zinc-200 space-y-2">
@@ -156,34 +162,65 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 {(t as Record<string, string>).noIntervals ?? "Nenhum"}
               </button>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {INTERVAL_OPTIONS.map((opt) => {
-                const formIntervals = editForm.intervals ?? [];
-                const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
-                const isAll = formIntervals.length === 0;
-                const checked = isAll || (!isNone && formIntervals.includes(opt.value));
-                return (
-                  <label key={opt.value} className="inline-flex items-center gap-1 text-[10px]">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => {
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-0.5">
+              {INDICATOR_INTERVAL_GROUPS.map((group) => (
+                <div key={group.titleKey} className="space-y-1 border-b border-zinc-100 pb-2 last:border-0 last:pb-0">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="text-[10px] font-medium text-zinc-700">
+                      {tRecord[group.titleKey] ?? group.titleKey}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
                         setEditForm((f) => {
                           if (!f) return f;
                           const fi = f.intervals ?? [];
                           const fIsNone = fi.length === 1 && fi[0] === 0;
                           const fIsAll = fi.length === 0;
-                          const current = fIsNone ? [] : fIsAll ? INTERVAL_OPTIONS.map((o) => o.value) : [...fi].filter((x) => x !== 0);
-                          const next = current.includes(opt.value) ? current.filter((x) => x !== opt.value) : [...current, opt.value].sort((a, b) => a - b);
-                          return { ...f, intervals: next.length === 0 ? [0] : next.length === INTERVAL_OPTIONS.length ? [] : next };
+                          const expanded = fIsNone ? [] : fIsAll ? [...ALL_INDICATOR_INTERVAL_VALUES] : [...fi].filter((x) => x !== 0);
+                          const gv = group.options.map((o) => o.value);
+                          const next = applyIntervalGroupToggle(expanded, gv);
+                          return { ...f, intervals: next };
                         });
                       }}
-                      className="rounded border-zinc-300"
-                    />
-                    {opt.label}
-                  </label>
-                );
-              })}
+                      className="text-[10px] text-zinc-600 hover:underline"
+                    >
+                      {tRecord.indicatorIntervalsAllInGroup ?? "Todos deste grupo"}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {group.options.map((opt) => {
+                      const formIntervals = editForm.intervals ?? [];
+                      const isNone = formIntervals.length === 1 && formIntervals[0] === 0;
+                      const isAll = formIntervals.length === 0;
+                      const checked = isAll || (!isNone && formIntervals.includes(opt.value));
+                      return (
+                        <label key={`${group.titleKey}-${opt.value}`} className="inline-flex items-center gap-1 text-[10px]">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setEditForm((f) => {
+                                if (!f) return f;
+                                const fi = f.intervals ?? [];
+                                const fIsNone = fi.length === 1 && fi[0] === 0;
+                                const fIsAll = fi.length === 0;
+                                const current = fIsNone ? [] : fIsAll ? [...ALL_INDICATOR_INTERVAL_VALUES] : [...fi].filter((x) => x !== 0);
+                                const next = current.includes(opt.value)
+                                  ? current.filter((x) => x !== opt.value)
+                                  : [...current, opt.value].sort((a, b) => a - b);
+                                return { ...f, intervals: next.length === 0 ? [0] : next };
+                              });
+                            }}
+                            className="rounded border-zinc-300"
+                          />
+                          {opt.label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </>
           <div className="flex items-center gap-2">

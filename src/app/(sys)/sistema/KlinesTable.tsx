@@ -1217,12 +1217,25 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => clearInterval(t);
   }, []);
 
-  /** Idade do estado “vivo”: max(última barra/cache, miniTicker, aggTrade atemporal). */
-  const effectiveStatusAtMs = useMemo(() => {
-    const tBar = lastUpdate?.getTime() ?? 0;
-    const tWs = spotWsUpdatedAt ?? 0;
-    return Math.max(tBar, tWs);
-  }, [lastUpdate, spotWsUpdatedAt]);
+  /**
+   * lastUpdate (GET) usa openTime já com `timezoneOffset` do utilizador (como coluna Open Time).
+   * WS grava instante real UTC — para o relógio: +offset na mesma lógica da API (kline-cache2 / klines).
+   * Bolinha: idade em tempo real = max(barra em UTC, último WS UTC).
+   */
+  const effectiveLastDisplayMs = useMemo(() => {
+    const tzMs = timezoneOffset * 60 * 60 * 1000;
+    const barDisp = lastUpdate?.getTime() ?? 0;
+    const wsDisp = (spotWsUpdatedAt ?? 0) + tzMs;
+    return Math.max(barDisp, wsDisp);
+  }, [lastUpdate, spotWsUpdatedAt, timezoneOffset]);
+
+  const effectiveLastActivityRealMs = useMemo(() => {
+    const tzMs = timezoneOffset * 60 * 60 * 1000;
+    const barDisp = lastUpdate?.getTime() ?? 0;
+    const barReal = barDisp > 0 ? barDisp - tzMs : 0;
+    const wsReal = spotWsUpdatedAt ?? 0;
+    return Math.max(barReal, wsReal);
+  }, [lastUpdate, spotWsUpdatedAt, timezoneOffset]);
 
   // Preço spot em tempo real (miniTicker) direto da Binance via WebSocket — usado no header
   useEffect(() => {
@@ -1749,14 +1762,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 {currentLayoutLabel ?? ""}
               </span>
               <span className="text-[10px] text-zinc-500 text-center shrink-0">
-                {t.lastUpdate}: {formatTime(effectiveStatusAtMs)}
+                {t.lastUpdate}: {formatTime(effectiveLastDisplayMs)}
               </span>
               <span className="flex-1 flex justify-end shrink-0 pr-1">
                 <span
                   className="w-2 h-2 rounded-full"
                   title={
                     (() => {
-                      const ageMs = Date.now() - effectiveStatusAtMs;
+                      const ageMs = Date.now() - effectiveLastActivityRealMs;
                       if (ageMs < 60000) return t.statusOnline ?? "Atualizado há menos de 1 min";
                       if (ageMs < 300000) return t.statusDelayed ?? "Atraso entre 1 e 5 min";
                       return t.statusStale ?? "Atraso acima de 5 min";
@@ -1765,7 +1778,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   aria-hidden
                   style={{
                     backgroundColor: (() => {
-                      const ageMs = Date.now() - effectiveStatusAtMs;
+                      const ageMs = Date.now() - effectiveLastActivityRealMs;
                       if (ageMs < 60000) return "#22c55e";
                       if (ageMs < 300000) return "#f97316";
                       return "#ef4444";

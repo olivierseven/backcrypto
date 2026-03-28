@@ -427,6 +427,12 @@ export interface IndicatorsPanelContextValue {
   isMovingAverageType: (type: string) => boolean;
   INDICATOR_COLOR_PALETTE: readonly string[];
   INTERVAL_OPTIONS: { value: number; label: string }[];
+  /** Atemporais (Renko, Range, …) para "Mostrar em". */
+  AGG_INTERVAL_GROUPS: import("./aggIntervalOptions").AggIntervalGroup[];
+  /** Timeframes + atemporais (secções “Mostrar em”). */
+  INDICATOR_INTERVAL_GROUPS: import("./aggIntervalOptions").AggIntervalGroup[];
+  ALL_INDICATOR_INTERVAL_VALUES: readonly number[];
+  getIndicatorIntervalLabel: (value: number) => string;
   addButtonDisabled: boolean;
   /** true quando o layout ativo é modelo default e já há DEFAULT_MODEL_MAX_INDICATORS indicadores. */
   defaultModelMaxIndicatorsReached?: boolean;
@@ -442,6 +448,8 @@ export interface IndicatorsPanelContextValue {
   expandedId: string | null;
   setExpandedId: (id: string | null) => void;
   toggleInterval: (id: string, groupMinutes: number) => void;
+  /** Liga/desliga todos os `groupMinutes` de um tipo (ex.: todos Renko 1×). */
+  toggleIntervalGroup: (id: string, groupValues: readonly number[]) => void;
   setAllIntervals: (id: string) => void;
   isIntervalChecked: (ind: import("../KlinesIndicatorsContext").UserIndicatorConfig, value: number) => boolean;
   removeIndicator: (id: string) => void;
