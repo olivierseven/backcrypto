@@ -68,10 +68,14 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+/**
+ * Matchers têm de ser strings literais (sem template) — exigência do Next em build.
+ * Com basePath `/crypto`, não repetir o prefixo nos matchers (ver next.config basePath).
+ */
 export const config = {
   matcher: [
     "/((?!_next|api|assets|favicon|icon|manifest|robots).*)",
-    `${BASE}/api/dev`,
-    `${BASE}/api/dev/:path*`,
+    "/api/dev",
+    "/api/dev/:path*",
   ],
 };
