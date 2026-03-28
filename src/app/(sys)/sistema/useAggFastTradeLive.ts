@@ -178,6 +178,7 @@ export function useAggFastTradeLive(opts: {
       }
       ws.onmessage = (ev) => {
         if (!alive) return;
+        refreshStreamFloor();
         const raw = typeof ev.data === "string" ? ev.data : "";
         const trade = parseAggTradeForSymbol(raw, sym);
         if (!trade) return;

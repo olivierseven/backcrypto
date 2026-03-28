@@ -535,8 +535,12 @@ export function minuteFloorUtc(utcMs: number): number {
 
 /**
  * Só processa negócios com T >= este valor (UTC ms).
- * Com dados no banco: max(início do minuto atual, início do minuto da última barra em UTC).
- * Sem dados: início do minuto atual (stream Binance em tempo real).
+ * Com série carregada: início do minuto UTC do open da barra mais recente (após reverter o offset de exibição).
+ * Sem série: início do minuto UTC atual.
+ *
+ * Importante: **não** usar max(início do minuto atual, dbMin). Isso elevava o piso ao “minuto agora” e,
+ * com relógio do cliente adiantado ou trades com T no minuto anterior, `aggTrade` era descartado em massa
+ * enquanto o miniTicker continuava a atualizar o spot — Renko parava, tijolo “em formação” esticava.
  */
 export function streamMinTradeMsUtc(opts: { nowMs: number; timezoneOffsetHours: number; klinesNewestOpenDisplayMs: number | null }): number {
   const nowMin = minuteFloorUtc(opts.nowMs);
@@ -544,8 +548,7 @@ export function streamMinTradeMsUtc(opts: { nowMs: number; timezoneOffsetHours: 
   if (disp == null || !Number.isFinite(disp)) return nowMin;
   const utcOpen = disp - opts.timezoneOffsetHours * 60 * 60 * 1000;
   if (!Number.isFinite(utcOpen)) return nowMin;
-  const dbMin = minuteFloorUtc(utcOpen);
-  return Math.max(nowMin, dbMin);
+  return minuteFloorUtc(utcOpen);
 }
 
 export function syncRenkoRefFromLatestDbClose(ref: RenkoRef, latestClose: number | null) {
