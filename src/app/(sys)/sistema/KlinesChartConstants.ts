@@ -50,6 +50,19 @@ export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
 /** Preferência do usuário: quantidade de candles, tipo de gráfico, exibir/ocultar desenhos (e magnético em KLINE_DRAW_MAGNETIC_KEY). Carregar do localStorage tem preferência sobre o layout. */
 export const KLINE_LOCAL_PREFS_KEY = "backcrypto-klines-local-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
+/** Disparado após `setKlineLastLayoutStorage` (mesmo separador de tabs). */
+export const KLINES_LAYOUT_SLOT_CHANGED_EVENT = "backcrypto-klines-layout-slot";
+
+/** Slot 0 (modelo default): `null`, `"default"` ou `"0"` no localStorage. */
+export function isKlinesDefaultLayoutStorageRaw(raw: string | null): boolean {
+  return raw == null || raw === "default" || raw === "0";
+}
+
+export function setKlineLastLayoutStorage(value: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, value);
+  window.dispatchEvent(new Event(KLINES_LAYOUT_SLOT_CHANGED_EVENT));
+}
 /** Máximo de indicadores permitidos quando o layout ativo é um modelo default (ChartModel). */
 export const DEFAULT_MODEL_MAX_INDICATORS = 2;
 /** No layout default, só estes tipos de indicador podem ser selecionados. Nos layouts 1–7, todos. */
@@ -175,6 +188,12 @@ export function isAggCache2BaseTierForLiveMerge(groupMinutes: number): boolean {
 
 export function isAggFastGroupMinutes(groupMinutes: number): boolean {
   return groupMinutesToCache2Params(normalizeAggGroupMinutes(groupMinutes)) != null;
+}
+
+/** No layout default não se pode usar 1m nem intervalos atemporais (Renko/Range/Kagi/Renko2×/trades). */
+export function isIntervalForbiddenOnDefaultLayout(groupMinutes: number): boolean {
+  if (groupMinutes === 1) return true;
+  return isAggFastGroupMinutes(groupMinutes);
 }
 
 /** Se for intervalo agregado (Fast legado ou cache2), retorna o kind da API / WS; senão null (OHLC clássico). */

@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default function HeaderIntervalDropdown({ picker }: Props) {
-  const { groupMinutes, intervalLabel, onIntervalChange, intervalOptions, aggIntervalPicker } = picker;
+  const { groupMinutes, intervalLabel, onIntervalChange, intervalOptions, aggIntervalPicker, isIntervalOptionDisabled } = picker;
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const tk = t as Record<string, string>;
@@ -45,9 +45,12 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
   }, [open]);
 
   const select = (value: number) => {
+    if (isIntervalOptionDisabled?.(value)) return;
     onIntervalChange(value);
     setOpen(false);
   };
+
+  const lockTitle = tk.defaultLayoutIntervalLockedHint ?? "";
 
   const a = aggIntervalPicker;
 
@@ -78,18 +81,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
             {tk.intervalsPanelTitle ?? t.interval}
           </p>
           <div className="grid grid-cols-3 gap-1 mb-3">
-            {intervalOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={opt.value === groupMinutes}
-                onClick={() => select(opt.value)}
-                className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {intervalOptions.map((opt) => {
+              const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={opt.value === groupMinutes}
+                  disabled={dis}
+                  title={dis ? lockTitle : undefined}
+                  onClick={() => select(opt.value)}
+                  className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
           <div className="space-y-2 mb-2">
             <div>
@@ -103,18 +111,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
                 />
               </div>
               <div className="grid grid-cols-3 gap-1">
-                {a.renko.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={groupMinutes === opt.value}
-                    onClick={() => select(opt.value)}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {a.renko.map((opt) => {
+                  const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={groupMinutes === opt.value}
+                      disabled={dis}
+                      title={dis ? lockTitle : undefined}
+                      onClick={() => select(opt.value)}
+                      className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -128,18 +141,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
                 />
               </div>
               <div className="grid grid-cols-3 gap-1">
-                {a.range.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={groupMinutes === opt.value}
-                    onClick={() => select(opt.value)}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {a.range.map((opt) => {
+                  const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={groupMinutes === opt.value}
+                      disabled={dis}
+                      title={dis ? lockTitle : undefined}
+                      onClick={() => select(opt.value)}
+                      className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -153,18 +171,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
                 />
               </div>
               <div className="grid grid-cols-3 gap-1">
-                {a.kagi.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={groupMinutes === opt.value}
-                    onClick={() => select(opt.value)}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {a.kagi.map((opt) => {
+                  const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={groupMinutes === opt.value}
+                      disabled={dis}
+                      title={dis ? lockTitle : undefined}
+                      onClick={() => select(opt.value)}
+                      className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -178,18 +201,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
                 />
               </div>
               <div className="grid grid-cols-3 gap-1">
-                {a.renko2x.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={groupMinutes === opt.value}
-                    onClick={() => select(opt.value)}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {a.renko2x.map((opt) => {
+                  const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={groupMinutes === opt.value}
+                      disabled={dis}
+                      title={dis ? lockTitle : undefined}
+                      onClick={() => select(opt.value)}
+                      className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -203,18 +231,23 @@ export default function HeaderIntervalDropdown({ picker }: Props) {
                 />
               </div>
               <div className="grid grid-cols-3 gap-1">
-                {a.trades500.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="option"
-                    aria-selected={groupMinutes === opt.value}
-                    onClick={() => select(opt.value)}
-                    className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                {a.trades500.map((opt) => {
+                  const dis = isIntervalOptionDisabled?.(opt.value) ?? false;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="option"
+                      aria-selected={groupMinutes === opt.value}
+                      disabled={dis}
+                      title={dis ? lockTitle : undefined}
+                      onClick={() => select(opt.value)}
+                      className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

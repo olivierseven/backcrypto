@@ -43,6 +43,7 @@ import {
   CHART_SIZE_PERCENT_DEFAULT,
   CHART_SIZE_PERCENT_STEP,
   KLINE_LAST_LAYOUT_KEY,
+  setKlineLastLayoutStorage,
   KLINE_DRAW_SEGMENTS_KEY,
   KLINE_DRAW_VISIBLE_KEY,
   KLINE_DRAW_DEFAULTS_KEY,
@@ -351,10 +352,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   /** Volume no preço: usa klines do cache (volumeAtPriceKlines) quando fornecido; já vêm com a quantidade certa do fetch. */
   const volumeAtPriceData = useMemo(() => {
     const source = volumeAtPriceKlines?.length ? volumeAtPriceKlines : klines;
-    return volumeAtPriceEnabled && source.length > 0
+    return volumeAtPriceEnabled && aggSeriesKind === "ohlc" && source.length > 0
       ? computeVolumeAtPriceBuckets(source as (string | number)[][], volumeAtPriceBuckets)
       : null;
-  }, [volumeAtPriceEnabled, volumeAtPriceKlines, klines, volumeAtPriceBuckets]);
+  }, [volumeAtPriceEnabled, volumeAtPriceKlines, klines, volumeAtPriceBuckets, aggSeriesKind]);
 
   // Sempre abrir a caixa de desenho encostada no canto esquerdo
   useEffect(() => {
@@ -753,7 +754,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (!isFreeUser || typeof window === "undefined") return;
     const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
     if (raw !== "default" && raw !== "0") {
-      window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, "default");
+      setKlineLastLayoutStorage("default");
       setShowUpgradeModal(true);
     }
   }, [isFreeUser]);
@@ -780,7 +781,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     let raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
     if (isFreeUser) {
       raw = "default";
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, "default");
+      if (typeof window !== "undefined") setKlineLastLayoutStorage("default");
     }
     addLayoutLoadLog(`KLINE_LAST_LAYOUT_KEY raw="${raw ?? "null"}"${isFreeUser ? " (free→default)" : ""}`);
     const timeoutId = setTimeout(done, 2000);
@@ -890,7 +891,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                   if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
                   if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
                   window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
-                  window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, String(slotNum));
+                  setKlineLastLayoutStorage(String(slotNum));
                 }
               } catch {
                 /* ignore */
@@ -1296,7 +1297,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
         if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
         window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
-        window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, layout.slot === 0 ? "default" : String(layout.slot));
+        setKlineLastLayoutStorage(layout.slot === 0 ? "default" : String(layout.slot));
       }
     } catch {
       /* ignore */
@@ -1730,42 +1731,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const candleW = Math.max(2, gap * BODY_WIDTH_RATIO);
   const cx = (i: number) => MARGIN_LEFT + (i + 0.5) * gap;
 
-  // Y apenas da janela visível (OHLC + indicadores de preço no Main; indicadores em panel 2/3/4 não entram)
+  // Eixo Y do painel principal: só high/low das velas na janela visível (indicadores no Main e regressão não alteram a escala).
   const lows = windowSlice.map((k) => parseNum(k[3]));
   const highs = windowSlice.map((k) => parseNum(k[2]));
-  const priceExtents: number[] = [...lows, ...highs];
-  for (const ind of indicatorLines) {
-    if (getPanel(ind) !== "main") continue;
-    const col = ind.columnIndex;
-    const cols =
-      ind.type === "Bollinger" || ind.type === "Donchian"
-        ? [col, col + 1, col + 2]
-        : ind.type === "Ichimoku"
-          ? [col, col + 1, col + 2, col + 3]
-          : [col];
-    for (let i = 0; i < windowSlice.length; i++) {
-      for (const c of cols) {
-        const v = windowSlice[i][c];
-        if (v != null && typeof v === "number" && Number.isFinite(v)) priceExtents.push(v);
-      }
-    }
-  }
-  const regressionFilteredForExtents = userRegressions.filter((r) => r.groupMinutes === groupMinutes);
-  const { extentYs: regressionExtentYs } = computeRegressionOverlayPaths({
-    regressions: regressionFilteredForExtents,
-    groupMinutes,
-    userIndicators,
-    windowSlice,
-    windowN,
-    totalSlots,
-    logScale,
-    maxBarNum: n,
-    startIndex,
-  });
-  for (const v of regressionExtentYs) priceExtents.push(v);
-
-  const minPrice = priceExtents.length > 0 ? Math.min(...priceExtents) : Math.min(...lows);
-  const maxPrice = priceExtents.length > 0 ? Math.max(...priceExtents) : Math.max(...highs);
+  const candlePrices = [...lows, ...highs].filter((v) => Number.isFinite(v));
+  const minPrice = candlePrices.length > 0 ? Math.min(...candlePrices) : 0;
+  const maxPrice = candlePrices.length > 0 ? Math.max(...candlePrices) : 1;
   const range = maxPrice - minPrice || 1;
   const pad = range * PAD_Y;
   const yMinLinear = minPrice - pad;
@@ -1809,6 +1780,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return MARGIN_TOP + chartH - ((price - yMin) / yRange) * chartH;
   };
 
+  const regressionFilteredForExtents = userRegressions.filter((r) => r.groupMinutes === groupMinutes);
   const { paths: regressionOverlayPaths } = computeRegressionOverlayPaths({
     regressions: regressionFilteredForExtents,
     groupMinutes,

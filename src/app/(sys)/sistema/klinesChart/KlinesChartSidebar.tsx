@@ -7,7 +7,14 @@ import { useState, useRef, useLayoutEffect, useEffect, type RefObject } from "re
 import { createPortal } from "react-dom";
 import { ASSET_PREFIX } from "@/app/constants";
 import { AggDerivedInfoButton, AggDerivedInfoModal, type AggDerivedKind } from "./AggDerivedInfoModal";
-import { KLINE_LAST_LAYOUT_KEY, SIDEBAR_WIDTH, groupMinutesToAggKind, isAggFastGroupMinutes } from "../KlinesChartConstants";
+import {
+  KLINE_LAST_LAYOUT_KEY,
+  SIDEBAR_WIDTH,
+  groupMinutesToAggKind,
+  isAggFastGroupMinutes,
+  isIntervalForbiddenOnDefaultLayout,
+  isKlinesDefaultLayoutStorageRaw,
+} from "../KlinesChartConstants";
 import {
   CANDLE_COLOR_PRESETS,
   DEFAULT_CANDLE_PRESET,
@@ -302,6 +309,7 @@ export function KlinesChartSidebar({
   const [chartTypeOpen, setChartTypeOpen] = useState(false);
   const [aggDerivedHelp, setAggDerivedHelp] = useState<AggDerivedKind | null>(null);
   const isAggInterval = isAggFastGroupMinutes(groupMinutes);
+  const vapDisabledAggHint = (t as Record<string, string>).volumeAtPriceDisabledAgg ?? "";
   const showKagiClassicStyle = groupMinutesToAggKind(groupMinutes) === "kagi";
   /** No K5: só Kagi clássico ativo; restantes desabilitados (como Heikin em intervalos agregados). */
   const kagiLocksOtherChartTypes = showKagiClassicStyle;
@@ -336,7 +344,9 @@ export function KlinesChartSidebar({
   }, [settingsOpen]);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
   const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
-  const isDefaultModel = rawLayout === "default" || rawLayout === "0";
+  const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
+  const defaultLayoutIntervalLockHint = (t as Record<string, string>).defaultLayoutIntervalLockedHint ?? "";
+  const intervalDisabledOnDefault = (value: number) => isDefaultModel && isIntervalForbiddenOnDefaultLayout(value);
   const isHorizontal = orientation === "horizontal";
   const intervalTriggerRef = useRef<HTMLDivElement>(null);
   const chartTypeTriggerRef = useRef<HTMLDivElement>(null);
@@ -752,11 +762,23 @@ export function KlinesChartSidebar({
           {onVolumeAtPriceEnabledChange != null && (
             <>
               <div className="border-t border-zinc-100 pt-2 mt-2" />
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input type="checkbox" checked={volumeAtPriceEnabled} onChange={(e) => onVolumeAtPriceEnabledChange?.(e.target.checked)} className="rounded border-zinc-300" />
+              <label
+                className={`flex items-center gap-2 px-2 py-1.5 rounded text-sm text-zinc-700 ${isAggInterval ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-zinc-100"}`}
+                title={isAggInterval ? vapDisabledAggHint : undefined}
+              >
+                <input
+                  type="checkbox"
+                  checked={volumeAtPriceEnabled && !isAggInterval}
+                  disabled={isAggInterval}
+                  onChange={(e) => {
+                    if (isAggInterval) return;
+                    onVolumeAtPriceEnabledChange?.(e.target.checked);
+                  }}
+                  className="rounded border-zinc-300"
+                />
                 <span>{(t as Record<string, string>).volumeAtPrice ?? "Volume no preço"}</span>
               </label>
-              {volumeAtPriceEnabled && (
+              {volumeAtPriceEnabled && !isAggInterval && (
                 <>
                   <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                     <span className="shrink-0">{(t as Record<string, string>).volumeAtPriceBuckets ?? "Intervalos (eixo Y)"}</span>
@@ -1287,9 +1309,25 @@ export function KlinesChartSidebar({
               <>
                 <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-2 pb-2 border-b border-zinc-100 mb-2">{(t as Record<string, string>).intervalsPanelTitle ?? t.interval}</p>
                 <div className="grid grid-cols-3 gap-1 mb-3">
-                  {intervalOptions.map((opt) => (
-                    <button key={opt.value} type="button" onClick={() => { onIntervalChange(opt.value); setIntervalsOpen(false); }} className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}>{opt.label}</button>
-                  ))}
+                  {intervalOptions.map((opt) => {
+                    const dis = intervalDisabledOnDefault(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        disabled={dis}
+                        title={dis ? defaultLayoutIntervalLockHint : undefined}
+                        onClick={() => {
+                          if (dis) return;
+                          onIntervalChange(opt.value);
+                          setIntervalsOpen(false);
+                        }}
+                        className={`text-xs font-medium py-1.5 px-2 rounded border ${opt.value === groupMinutes ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${dis ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
                 {aggIntervalPicker != null && (
                   <div className="space-y-2 mb-3">
@@ -1308,11 +1346,14 @@ export function KlinesChartSidebar({
                           <button
                             key={opt.value}
                             type="button"
+                            disabled={isDefaultModel}
+                            title={isDefaultModel ? defaultLayoutIntervalLockHint : undefined}
                             onClick={() => {
+                              if (isDefaultModel) return;
                               onIntervalChange(opt.value);
                               setIntervalsOpen(false);
                             }}
-                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {opt.label}
                           </button>
@@ -1334,11 +1375,14 @@ export function KlinesChartSidebar({
                           <button
                             key={opt.value}
                             type="button"
+                            disabled={isDefaultModel}
+                            title={isDefaultModel ? defaultLayoutIntervalLockHint : undefined}
                             onClick={() => {
+                              if (isDefaultModel) return;
                               onIntervalChange(opt.value);
                               setIntervalsOpen(false);
                             }}
-                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {opt.label}
                           </button>
@@ -1360,11 +1404,14 @@ export function KlinesChartSidebar({
                           <button
                             key={opt.value}
                             type="button"
+                            disabled={isDefaultModel}
+                            title={isDefaultModel ? defaultLayoutIntervalLockHint : undefined}
                             onClick={() => {
+                              if (isDefaultModel) return;
                               onIntervalChange(opt.value);
                               setIntervalsOpen(false);
                             }}
-                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {opt.label}
                           </button>
@@ -1386,11 +1433,14 @@ export function KlinesChartSidebar({
                           <button
                             key={opt.value}
                             type="button"
+                            disabled={isDefaultModel}
+                            title={isDefaultModel ? defaultLayoutIntervalLockHint : undefined}
                             onClick={() => {
+                              if (isDefaultModel) return;
                               onIntervalChange(opt.value);
                               setIntervalsOpen(false);
                             }}
-                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {opt.label}
                           </button>
@@ -1412,11 +1462,14 @@ export function KlinesChartSidebar({
                           <button
                             key={opt.value}
                             type="button"
+                            disabled={isDefaultModel}
+                            title={isDefaultModel ? defaultLayoutIntervalLockHint : undefined}
                             onClick={() => {
+                              if (isDefaultModel) return;
                               onIntervalChange(opt.value);
                               setIntervalsOpen(false);
                             }}
-                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"}`}
+                            className={`text-xs font-medium py-1.5 px-2 rounded border ${groupMinutes === opt.value ? "bg-zinc-200 border-zinc-300" : "bg-white border-zinc-200 hover:bg-zinc-50"} ${isDefaultModel ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             {opt.label}
                           </button>

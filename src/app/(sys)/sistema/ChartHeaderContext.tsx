@@ -19,6 +19,8 @@ export type ChartIntervalPickerRegistration = {
   onIntervalChange: (value: number) => void;
   intervalOptions: IntervalOption[];
   aggIntervalPicker: AggIntervalPickerConfig;
+  /** Layout default: bloquear 1m e atemporais na UI (dropdown / troca rápida). */
+  isIntervalOptionDisabled?: (value: number) => boolean;
 };
 
 export interface ChartHeaderData {

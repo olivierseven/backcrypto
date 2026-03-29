@@ -627,6 +627,7 @@ export const cryptoTranslations = {
         chartTypeRange5: "Range (5)",
         chartTypeKagi5: "Kagi (5)",
         volumeAtPrice: "Volume at price",
+        volumeAtPriceDisabledAgg: "Volume at price is only available on OHLC timeframes, not on atemporal charts (Renko, Range, Kagi, etc.).",
         volumeAtPriceBuckets: "Intervals (Y axis)",
         volumeAtPriceCandles: "Candles",
         volumeAtPricePercent: "Candle percent",
@@ -891,6 +892,8 @@ export const cryptoTranslations = {
         clearDrawingsConfirmNo: "No",
         symbolAria: "Select symbol",
         intervalQuickSearchAria: "Interval quick search",
+        defaultLayoutIntervalLockedHint:
+          "Not available in the default layout. Save or load a layout (1–7) to use 1m or atemporal intervals.",
         symbolQuickSwitchTitle: "Quick symbol",
         symbolQuickSwitchHint: "Gray text is only a preview. Enter applies the symbol; Esc or backdrop cancels. Closes after 3s idle.",
         symbolQuickSwitchPlaceholder: "Type up to 9 characters",
@@ -2045,6 +2048,8 @@ export const cryptoTranslations = {
         chartTypeRange5: "Range (5)",
         chartTypeKagi5: "Kagi (5)",
         volumeAtPrice: "Volume no preço",
+        volumeAtPriceDisabledAgg:
+          "Volume no preço só está disponível em timeframes OHLC, não em gráficos atemporais (Renko, Range, Kagi, etc.).",
         volumeAtPriceBuckets: "Intervalos (eixo Y)",
         volumeAtPriceCandles: "Velas",
         volumeAtPricePercent: "Percentual de velas",
@@ -2310,6 +2315,8 @@ export const cryptoTranslations = {
         clearDrawingsConfirmNo: "Não",
         symbolAria: "Selecionar símbolo",
         intervalQuickSearchAria: "Pesquisa rápida de intervalo",
+        defaultLayoutIntervalLockedHint:
+          "Indisponível no layout default. Guarde ou carregue um layout (1–7) para usar 1m ou intervalos atemporais.",
         symbolQuickSwitchTitle: "Troca rápida de símbolo",
         symbolQuickSwitchHint: "O texto cinza é só pré-visualização. Enter aplica o símbolo; Esc ou fora cancela. Fecha após 3s de inatividade.",
         symbolQuickSwitchPlaceholder: "Até 9 letras",

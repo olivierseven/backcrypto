@@ -28,7 +28,12 @@ import {
   isMovingAverageType,
   useIndicatorsPanelFields,
 } from "./indicatorsPanel/index";
-import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_INDICATORS, DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES } from "./KlinesChartConstants";
+import {
+  KLINE_LAST_LAYOUT_KEY,
+  DEFAULT_MODEL_MAX_INDICATORS,
+  DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES,
+  isKlinesDefaultLayoutStorageRaw,
+} from "./KlinesChartConstants";
 import { IndicatorsPanelContext } from "./indicatorsPanel/IndicatorsPanelContext";
 import { IndicatorsPanelAddForm } from "./indicatorsPanel/IndicatorsPanelAddForm";
 import { IndicatorsPanelIndicatorCard } from "./indicatorsPanel/IndicatorsPanelIndicatorCard";
@@ -355,10 +360,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     (addForm.chartOption === "panel5" && indicatorCountByPanel.panel5 > 0);
   const isDefaultModel =
     typeof window !== "undefined" &&
-    (() => {
-      const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
-      return raw === "default" || raw === "0";
-    })();
+    isKlinesDefaultLayoutStorageRaw(window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY));
   const defaultModelMaxIndicatorsReached = isDefaultModel && userIndicators.length >= DEFAULT_MODEL_MAX_INDICATORS;
 
   const mainPanelFull = indicatorCountByPanel.main >= MAIN_MAX_INDICATORS;

@@ -11,7 +11,7 @@ import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
-import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_STRATEGIES } from "../KlinesChartConstants";
+import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_STRATEGIES, isKlinesDefaultLayoutStorageRaw } from "../KlinesChartConstants";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
@@ -428,7 +428,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const canUseCombinedMode = visibleStrategies.length >= 2;
 
   const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
-  const isDefaultModel = rawLayout === "default" || rawLayout === "0";
+  const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
   const defaultModelMaxStrategiesReached = isDefaultModel && strategies.length >= DEFAULT_MODEL_MAX_STRATEGIES;
 
   useEffect(() => {

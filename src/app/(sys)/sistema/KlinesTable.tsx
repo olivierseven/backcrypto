@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
@@ -20,6 +20,8 @@ import {
   KLINE_HEIKIN_ASHI_KEY,
   KLINE_VOLUME_AT_PRICE_KEY,
   KLINE_AGG_SERIES_KEY,
+  KLINE_LAST_LAYOUT_KEY,
+  KLINES_LAYOUT_SLOT_CHANGED_EVENT,
   CACHE2_TICK_KIND_STRIDE,
   GROUP_MINUTES_CACHE2_BASE,
   GROUP_MINUTES_CACHE2_TRADES_BASE,
@@ -28,6 +30,8 @@ import {
   groupMinutesToAggKind,
   groupMinutesToCache2Params,
   isAggFastGroupMinutes,
+  isIntervalForbiddenOnDefaultLayout,
+  isKlinesDefaultLayoutStorageRaw,
   normalizeAggGroupMinutes,
 } from "./KlinesChartConstants";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
@@ -38,6 +42,24 @@ import { useVpsFlushNotify } from "./useVpsFlushNotify";
 
 /** Fila → POST `/api/binance/agg-fast-bars` (grava *Fast* + BinanceKlineCache2), alinhado a dev/ticks. */
 const AGG_PERSIST_FLUSH_MS = 10_000;
+
+function subscribeKlinesLayoutDefault(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === KLINE_LAST_LAYOUT_KEY || e.key === null) callback();
+  };
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(KLINES_LAYOUT_SLOT_CHANGED_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(KLINES_LAYOUT_SLOT_CHANGED_EVENT, callback);
+  };
+}
+
+function snapshotKlinesLayoutIsDefault(): boolean {
+  if (typeof window === "undefined") return true;
+  return isKlinesDefaultLayoutStorageRaw(window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY));
+}
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
 const SCROLLBAR_GUTTER = 17;
@@ -181,9 +203,6 @@ const VOLUME_AT_PRICE_PERCENT_DEFAULT = 100;
 
 /** Config do cache VAP por intervalo do gráfico: param (API), maxCandles, label para exibição, minutos do candle do cache. */
 export function getVapCacheConfig(groupMinutes: number): { param: string; maxCandles: number; paramLabel: string; paramMinutes: number } {
-  if (groupMinutesToAggKind(groupMinutes) != null) {
-    return { param: "1m", maxCandles: 750, paramLabel: "1m", paramMinutes: 1 };
-  }
   const map: Record<number, { param: string; maxCandles: number; paramLabel: string; paramMinutes: number }> = {
     1: { param: "1m", maxCandles: 1440, paramLabel: "1m", paramMinutes: 1 },
     3: { param: "1m", maxCandles: 450, paramLabel: "1m", paramMinutes: 1 },
@@ -342,11 +361,26 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [layoutAppliedTick, setLayoutAppliedTick] = useState(0);
   /** Só true após restaurar do localStorage no cliente; evita fetch com 1M antes de aplicar o timeframe salvo. */
   const [timeframeRestored, setTimeframeRestored] = useState(false);
+  const activeLayoutIsDefault = useSyncExternalStore(subscribeKlinesLayoutDefault, snapshotKlinesLayoutIsDefault, () => true);
+
   useLayoutEffect(() => {
     const stored = getStoredGroupMinutes();
     setGroupMinutes(stored);
     setTimeframeRestored(true);
   }, []);
+
+  useEffect(() => {
+    if (!activeLayoutIsDefault) return;
+    if (!isIntervalForbiddenOnDefaultLayout(groupMinutes)) return;
+    setGroupMinutes(DEFAULT_GROUP_MINUTES_FIRST_LOAD);
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(DEFAULT_GROUP_MINUTES_FIRST_LOAD));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [activeLayoutIsDefault, groupMinutes]);
   const [klines, setKlines] = useState<Kline[]>([]);
   /** Par a que `klines` correspondem (só após GET aplicar); evita Renko/WS usar velas do par anterior ao trocar moeda. */
   const [klinesDataSymbol, setKlinesDataSymbol] = useState<string | null>(null);
@@ -413,6 +447,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [volumeAtPriceColorAbove, setVolumeAtPriceColorAbove] = useState("#059669");
   const [volumeAtPriceColorBelow, setVolumeAtPriceColorBelow] = useState("#dc2626");
   const [volumeAtPriceWidthPercent, setVolumeAtPriceWidthPercent] = useState(100);
+
+  useEffect(() => {
+    if (isAggFastGroupMinutes(groupMinutes) && volumeAtPriceEnabled) {
+      setVolumeAtPriceEnabled(false);
+    }
+  }, [groupMinutes, volumeAtPriceEnabled]);
   useLayoutEffect(() => {
     const stored = getStoredVolumeAtPrice();
     setVolumeAtPriceEnabled(stored.enabled);
@@ -546,8 +586,45 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return out as unknown as Kline[];
   }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol, aggSeriesKind]);
 
+  /**
+   * Renko/Range/Kagi/Renko2×/trades: mesma linha “em formação” do gráfico (open = close do tijolo mais recente do modelo,
+   * close = spot; high/low só entre open e preço — sem spotWsHigh/Low). Antecede `klines` para tabela, indicadores e
+   * estratégias alinharem com o candle ao vivo. OHLC continua só em `klinesWithSpot`.
+   */
+  const klinesWithAggForming = useMemo((): Kline[] => {
+    if (aggSeriesKind === "ohlc") return klinesWithSpot;
+    if (spotWsPrice == null || klines.length === 0) return klines;
+    if (!isAggFastGroupMinutes(groupMinutes)) return klines;
+    if (lastKlinesFetchSymbolRef.current !== symbol) return klines;
+    const p = Number(spotWsPrice);
+    if (!Number.isFinite(p)) return klines;
+    const newest = klines[0] as (string | number | null)[];
+    const baseOt = Number(newest[0]);
+    const anchorClose = Number(newest[4]);
+    if (!Number.isFinite(baseOt) || !Number.isFinite(anchorClose)) return klines;
+    const o = anchorClose;
+    const hi = Math.max(o, p);
+    const lo = Math.min(o, p);
+    const displayOt = baseOt + 1;
+    const forming = [...newest] as (string | number | null)[];
+    for (let i = 12; i < forming.length; i++) forming[i] = null;
+    forming[0] = displayOt;
+    forming[1] = String(o);
+    forming[2] = String(hi);
+    forming[3] = String(lo);
+    forming[4] = spotWsPrice;
+    forming[5] = "0";
+    forming[6] = displayOt;
+    forming[7] = "0";
+    forming[8] = 0;
+    forming[9] = "0";
+    forming[10] = "0";
+    forming[11] = 0;
+    return [forming as Kline, ...klines];
+  }, [aggSeriesKind, klinesWithSpot, klines, spotWsPrice, groupMinutes, symbol]);
+
   const heikinAshiKlines = useMemo(() => computeHeikinAshi(klinesWithSpot), [klinesWithSpot]);
-  const baseForIndicators = heikinAshiEnabled && aggSeriesKind === "ohlc" ? heikinAshiKlines : klinesWithSpot;
+  const baseForIndicators = heikinAshiEnabled && aggSeriesKind === "ohlc" ? heikinAshiKlines : klinesWithAggForming;
 
   const visibleUserIndicators = useMemo(
     () =>
@@ -756,41 +833,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return out as Kline[];
   }, [baseForIndicators, userIndicators, groupMinutes]);
 
-  /**
-   * Renko/Range/Kagi: o último tijolo **fechado** não deve ser alterado pelo spot (integridade OHLC).
-   * Para o gráfico ao vivo, antecede-se uma linha só de exibição: open = close do último fechado, close = spot.
-   * High/low = só entre open e preço atual (não usar spotWsHigh/Low: são extremos de sessão e geram pavio falso no tijolo “em formação”).
-   * openTime = último openTime + 1 ms (sempre mais recente na ordenação). Tabela/indicadores/estratégias continuam a usar `extendedKlines`.
-   */
-  const chartKlines = useMemo((): Kline[] => {
-    if (!isAggFastGroupMinutes(groupMinutes) || spotWsPrice == null || extendedKlines.length === 0) return extendedKlines;
-    const p = Number(spotWsPrice);
-    if (!Number.isFinite(p)) return extendedKlines;
-    const newest = extendedKlines[0] as (string | number | null)[];
-    const baseOt = Number(newest[0]);
-    const lastClosedClose = Number(newest[4]);
-    if (!Number.isFinite(baseOt) || !Number.isFinite(lastClosedClose)) return extendedKlines;
-    const o = lastClosedClose;
-    const hi = Math.max(o, p);
-    const lo = Math.min(o, p);
-    const displayOt = baseOt + 1;
-    const forming = newest.slice() as (string | number | null)[];
-    for (let i = 12; i < forming.length; i++) forming[i] = null;
-    forming[0] = displayOt;
-    forming[1] = String(o);
-    forming[2] = String(hi);
-    forming[3] = String(lo);
-    forming[4] = spotWsPrice;
-    forming[5] = "0";
-    forming[6] = displayOt;
-    forming[7] = "0";
-    forming[8] = 0;
-    forming[9] = "0";
-    forming[10] = "0";
-    forming[11] = 0;
-    return [forming as Kline, ...extendedKlines];
-  }, [groupMinutes, spotWsPrice, extendedKlines]);
-
   /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
   const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
     let col = 12;
@@ -880,15 +922,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     }));
   }, [visibleStrategies, strategyResults, layoutAppliedTick]);
 
-  /** Alinha `results` ao eixo do gráfico quando há candle sintético “em formação” em `chartKlines`. */
-  const strategyCandleOverlaysForChart = useMemo(() => {
-    if (chartKlines.length <= extendedKlines.length) return strategyCandleOverlays;
-    return strategyCandleOverlays.map((o) => ({
-      ...o,
-      results: [false, ...o.results],
-    }));
-  }, [chartKlines, extendedKlines.length, strategyCandleOverlays]);
-
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   type IchimokuPart = "tenkan" | "kijun" | "spanA" | "spanB" | "chikou";
   const visibleIndicatorColumns = useMemo(() => {
@@ -934,14 +967,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setCurrentGroupMinutes(groupMinutes);
   }, [groupMinutes, setCurrentGroupMinutes]);
 
-  const handleIntervalChange = useCallback((value: number) => {
-    setGroupMinutes(value);
-    try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(value));
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const handleIntervalChange = useCallback(
+    (value: number) => {
+      if (activeLayoutIsDefault && isIntervalForbiddenOnDefaultLayout(value)) return;
+      setGroupMinutes(value);
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_GROUP_MINUTES_KEY, String(value));
+      } catch {
+        /* ignore */
+      }
+    },
+    [activeLayoutIsDefault]
+  );
 
   useEffect(() => {
     try {
@@ -1206,7 +1243,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   }, [klines.length, groupMinutes, timeframeRestored]);
 
   const fetchVapCacheKlines = async () => {
-    if (!volumeAtPriceEnabled) {
+    if (!volumeAtPriceEnabled || isAggFastGroupMinutes(groupMinutes)) {
       setVapCacheKlines([]);
       return;
     }
@@ -1229,9 +1266,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   };
 
   useEffect(() => {
-    fetchVapCacheKlines();
-    if (!volumeAtPriceEnabled) return;
-    const interval = setInterval(fetchVapCacheKlines, REFRESH_MS);
+    if (!volumeAtPriceEnabled || isAggFastGroupMinutes(groupMinutes)) {
+      setVapCacheKlines([]);
+      return;
+    }
+    void fetchVapCacheKlines();
+    const interval = setInterval(() => void fetchVapCacheKlines(), REFRESH_MS);
     return () => clearInterval(interval);
   }, [volumeAtPriceEnabled, groupMinutes, symbol, volumeAtPricePercent]);
 
@@ -1352,6 +1392,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "1month";
   }, [groupMinutes, intervalOptions]);
 
+  const volumeAtPriceActive = volumeAtPriceEnabled && !isAggFastGroupMinutes(groupMinutes);
+
   useEffect(() => {
     setIntervalPicker({
       groupMinutes,
@@ -1359,9 +1401,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       onIntervalChange: handleIntervalChange,
       intervalOptions,
       aggIntervalPicker,
+      isIntervalOptionDisabled:
+        activeLayoutIsDefault ? (value: number) => isIntervalForbiddenOnDefaultLayout(value) : undefined,
     });
     return () => setIntervalPicker(null);
-  }, [groupMinutes, intervalLabel, handleIntervalChange, intervalOptions, aggIntervalPicker, setIntervalPicker]);
+  }, [
+    groupMinutes,
+    intervalLabel,
+    handleIntervalChange,
+    intervalOptions,
+    aggIntervalPicker,
+    setIntervalPicker,
+    activeLayoutIsDefault,
+  ]);
 
   const last24h = (() => {
     if (extendedKlines.length === 0) return null;
@@ -1491,7 +1543,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           <KlinesChart
             isAdmin={isAdmin}
             isFreeUser={isFreeUser}
-            klines={chartKlines}
+            klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
             onPriceFormatChange={(d, a) => {
               setPriceFormatDecimals(d);
@@ -1520,12 +1572,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               }
             }}
             aggSeriesKind={aggSeriesKind}
-            volumeAtPriceEnabled={volumeAtPriceEnabled}
-            volumeAtPriceKlines={volumeAtPriceEnabled ? vapCacheKlines : []}
+            volumeAtPriceEnabled={volumeAtPriceActive}
+            volumeAtPriceKlines={volumeAtPriceActive ? vapCacheKlines : []}
             volumeAtPriceBuckets={volumeAtPriceBuckets}
             volumeAtPricePercent={volumeAtPricePercent}
             onVolumeAtPricePercentChange={(v) => setVolumeAtPricePercent(Math.max(VOLUME_AT_PRICE_PERCENT_MIN, Math.min(VOLUME_AT_PRICE_PERCENT_MAX, Math.round(v))))}
-            vapTimeSpanLabel={volumeAtPriceEnabled ? (() => {
+            vapTimeSpanLabel={volumeAtPriceActive ? (() => {
               const config = getVapCacheConfig(groupMinutes);
               const candlesToUse = Math.max(1, Math.round(config.maxCandles * volumeAtPricePercent / 100));
               return formatVapTimeSpan(candlesToUse, config.paramLabel, config.paramMinutes, lang);
@@ -1680,7 +1732,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               cmfLimitLineStyle: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineStyle ?? "dotted") : undefined,
             };
             })}
-            strategyCandleOverlays={strategyCandleOverlaysForChart}
+            strategyCandleOverlays={strategyCandleOverlays}
             getLayoutExtraConfig={() => ({
               userIndicators,
               userRegressions,
@@ -1701,7 +1753,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               addLayoutLoadLog(`onLayoutConfigLoaded slot=${slot ?? "?"} source=${source ?? "?"} userIndicators=${uiInfo} keys=[${Object.keys(config).join(",")}]`);
               // Timeframe e símbolo ficam só no localStorage; não aplicamos do layout.
               // Volume no preço (por layout). Se o layout não tiver a chave, desliga VAP (ex.: default antigo sem essas chaves).
-              setVolumeAtPriceEnabled(config.volumeAtPriceEnabled === true);
+              setVolumeAtPriceEnabled(config.volumeAtPriceEnabled === true && !isAggFastGroupMinutes(groupMinutes));
               if (typeof config.volumeAtPriceBuckets === "number") setVolumeAtPriceBuckets(clampEvenBuckets(config.volumeAtPriceBuckets));
               if (typeof config.volumeAtPricePercent === "number" && config.volumeAtPricePercent >= VOLUME_AT_PRICE_PERCENT_MIN && config.volumeAtPricePercent <= VOLUME_AT_PRICE_PERCENT_MAX) setVolumeAtPricePercent(Math.round(config.volumeAtPricePercent));
               if (typeof config.volumeAtPriceOpacity === "number" && config.volumeAtPriceOpacity >= VOLUME_AT_PRICE_OPACITY_MIN && config.volumeAtPriceOpacity <= VOLUME_AT_PRICE_OPACITY_MAX) setVolumeAtPriceOpacity(config.volumeAtPriceOpacity);

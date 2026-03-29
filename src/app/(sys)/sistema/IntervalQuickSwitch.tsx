@@ -149,12 +149,13 @@ export default function IntervalQuickSwitch({ enabled = true }: Props) {
   const options = useMemo((): IntervalOption[] => {
     if (!intervalPicker) return [];
     const a = intervalPicker.aggIntervalPicker;
+    const dis = intervalPicker.isIntervalOptionDisabled;
     const tier = (o: { value: number; label: string }): IntervalOption => ({
       value: o.value,
       label: o.label,
       param: o.label,
     });
-    return [
+    const full: IntervalOption[] = [
       ...intervalPicker.intervalOptions,
       ...a.renko.map(tier),
       ...a.range.map(tier),
@@ -162,6 +163,7 @@ export default function IntervalQuickSwitch({ enabled = true }: Props) {
       ...a.renko2x.map(tier),
       ...a.trades500.map(tier),
     ];
+    return dis ? full.filter((o) => !dis(o.value)) : full;
   }, [intervalPicker]);
   const onIntervalChange = intervalPicker?.onIntervalChange;
 
@@ -248,11 +250,11 @@ export default function IntervalQuickSwitch({ enabled = true }: Props) {
       return;
     }
     const picked = resolvePickedInterval(query, matches, options);
-    if (picked) {
+    if (picked && !intervalPicker?.isIntervalOptionDisabled?.(picked.value)) {
       onIntervalChange(picked.value);
       closeIntervalQuickSwitch();
     }
-  }, [query, matches, options, onIntervalChange, closeIntervalQuickSwitch]);
+  }, [query, matches, options, onIntervalChange, closeIntervalQuickSwitch, intervalPicker]);
 
   const onKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
