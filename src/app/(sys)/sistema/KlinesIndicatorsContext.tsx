@@ -11,6 +11,7 @@ import {
 
 import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 import { defaultMa2TimeValueForUnit, isTimeWindowMa2Type, normalizeMa2TimeValueForUnit } from "./indicatorsPanel/wma2Period";
+import { getIndicatorColumnStart } from "./regression/indicatorsColumnStart";
 
 export type UserIndicatorType = "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF" | "Ichimoku";
 
@@ -328,7 +329,7 @@ const FIELD_KEY_TO_INDEX: Record<string, number> = {
 
 /**
  * Retorna o índice da coluna no array kline para um fieldKey.
- * Para user_<id>, usa a lista de userIndicators para obter o índice (12 + posição).
+ * Para user_<id>, usa a primeira coluna de saída desse indicador (mesma regra que KlinesTable / indicatorsColumnStart — MACD, Volume, etc. alteram o deslocamento).
  * HL2, HLC3, OHLC4 não têm coluna na tabela; use getDataAndValueIndexForIndicator para o cálculo.
  */
 export function getFieldIndex(
@@ -339,7 +340,7 @@ export function getFieldIndex(
   if (fieldKey.startsWith("user_")) {
     const id = fieldKey.slice(5);
     const idx = userIndicators.findIndex((u) => u.id === id);
-    if (idx >= 0) return 12 + idx;
+    if (idx >= 0) return getIndicatorColumnStart(userIndicators, idx);
   }
   return 4; // fallback close
 }
