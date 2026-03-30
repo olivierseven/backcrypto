@@ -125,13 +125,12 @@ const ROW_Z = ["z", "x", "c", "v", "b", "n", "m"];
  */
 function getInsertTarget(snapshotRef: MutableRefObject<HTMLElement | null>): HTMLElement | null {
   const active = document.activeElement;
-  if (active instanceof HTMLElement) {
-    if (isEditableTextTarget(active) || isContentEditable(active)) return active;
-    if (active.closest("[data-mobile-ascii-keyboard]")) {
-      const snap = snapshotRef.current;
-      if (snap?.isConnected && (isEditableTextTarget(snap) || isContentEditable(snap))) return snap;
-    }
-  }
+  if (!(active instanceof HTMLElement)) return null;
+  /** Não usar `isContentEditable()` aqui: o predicate `el is HTMLElement` no false estreita `active` a `never` depois do `||`. */
+  if (isEditableTextTarget(active) || active.isContentEditable) return active;
+  if (!active.closest("[data-mobile-ascii-keyboard]")) return null;
+  const snap = snapshotRef.current;
+  if (snap?.isConnected && (isEditableTextTarget(snap) || isContentEditable(snap))) return snap;
   return null;
 }
 
