@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE } from "@/app/constants";
+import { defaultTickFromDailyClose } from "@/app/lib/binanceDefaultTick";
 import {
   addTrade,
   emptyKagiRef,
@@ -142,7 +143,35 @@ export function useAggFastTradeLive(opts: {
   const serverNewestFromCacheRef = useRef(serverNewestKlineFromCache);
   serverNewestFromCacheRef.current = serverNewestKlineFromCache;
 
+  /** True apenas se GET daily-close-tick devolveu tick válido (canónico). */
+  const apiTickOkRef = useRef(false);
+
   const [tickSize, setTickSize] = useState<number | null>(null);
+  /** Evita aplicar fallback às klines antes do fetch terminar (corrida com API lenta). */
+  const [tickFetchSettled, setTickFetchSettled] = useState(false);
+
+  const applyFallbackTickFromRefs = useCallback(() => {
+    const s = symRef.current;
+    const klinesOk = klinesSourceRef.current != null && klinesSourceRef.current.trim().toUpperCase() === s;
+    const k = klinesRef.current;
+    const merged0 = k.length > 0 ? k[0] : undefined;
+    const srv = serverNewestFromCacheRef.current;
+    const close = syncCloseFromMergedAndServer(klinesOk, merged0, srv);
+    const c = close != null && Number.isFinite(close) && close > 0 ? close : null;
+    if (c == null) {
+      setTickSize(null);
+      onPriceTickResolvedRef.current?.(null);
+      return;
+    }
+    const t = defaultTickFromDailyClose(c);
+    if (t > 0) {
+      setTickSize(t);
+      onPriceTickResolvedRef.current?.(t);
+    } else {
+      setTickSize(null);
+      onPriceTickResolvedRef.current?.(null);
+    }
+  }, []);
 
   useEffect(() => {
     pendingRef.current = [];
@@ -155,32 +184,59 @@ export function useAggFastTradeLive(opts: {
 
   useEffect(() => {
     if (!enabled || !sym) {
+      apiTickOkRef.current = false;
+      setTickFetchSettled(false);
       setTickSize(null);
       onPriceTickResolvedRef.current?.(null);
       return;
     }
+    apiTickOkRef.current = false;
     onPriceTickResolvedRef.current?.(null);
     let cancelled = false;
+    setTickFetchSettled(false);
     fetch(`${API_BASE}/binance/daily-close-tick?symbol=${encodeURIComponent(sym)}`)
       .then(async (r) => {
         const j = (await r.json()) as { tick?: number; error?: string };
-        if (!r.ok) throw new Error(j.error || r.statusText);
         if (cancelled) return;
-        const t = Number(j.tick);
-        const v = Number.isFinite(t) && t > 0 ? t : null;
-        setTickSize(v);
-        onPriceTickResolvedRef.current?.(v);
+        if (r.ok) {
+          const t = Number(j.tick);
+          if (Number.isFinite(t) && t > 0) {
+            apiTickOkRef.current = true;
+            setTickSize(t);
+            onPriceTickResolvedRef.current?.(t);
+            return;
+          }
+        }
+        apiTickOkRef.current = false;
       })
       .catch(() => {
-        if (!cancelled) {
-          setTickSize(null);
-          onPriceTickResolvedRef.current?.(null);
-        }
+        if (!cancelled) apiTickOkRef.current = false;
+      })
+      .finally(() => {
+        if (!cancelled) setTickFetchSettled(true);
       });
     return () => {
       cancelled = true;
     };
   }, [enabled, sym]);
+
+  /**
+   * Se o GET daily-close-tick falhar no servidor (ex.: Binance 451 desde IP da Vercel), o WS agg não abria
+   * (tickSize obrigatório). Mesma fórmula do tick: fecho de referência × 0,01% — aqui o fecho vem das klines já carregadas.
+   */
+  useEffect(() => {
+    if (!enabled || !sym || !tickFetchSettled) return;
+    if (apiTickOkRef.current) return;
+    applyFallbackTickFromRefs();
+  }, [
+    enabled,
+    sym,
+    tickFetchSettled,
+    klines,
+    klinesSourceSymbol,
+    serverNewestKlineFromCache,
+    applyFallbackTickFromRefs,
+  ]);
 
   useEffect(() => {
     if (!enabled || !sym) return;
