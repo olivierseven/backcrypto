@@ -133,6 +133,80 @@ export function lastClosedBaseOpenTimeFromCompleteBlocks(
 }
 
 /**
+ * Converte uma linha emitida por `mergeOhlcChunk` para `FastBarSourceRow` (próxima fase da cadeia).
+ */
+export function mergeOhlcChunkRowToFastSourceRow(row: {
+  symbol: string;
+  openTime: bigint;
+  closeTime: bigint;
+  open: Prisma.Decimal;
+  high: Prisma.Decimal;
+  low: Prisma.Decimal;
+  close: Prisma.Decimal;
+  volume: Prisma.Decimal;
+  quoteAssetVolume: Prisma.Decimal;
+  numberOfTrades: number;
+  takerBuyBaseAssetVolume: Prisma.Decimal;
+  takerBuyQuoteAssetVolume: Prisma.Decimal;
+}): FastBarSourceRow {
+  return {
+    symbol: row.symbol,
+    openTime: row.openTime,
+    closeTime: row.closeTime,
+    open: row.open,
+    high: row.high,
+    low: row.low,
+    close: row.close,
+    volume: row.volume,
+    quoteAssetVolume: row.quoteAssetVolume,
+    numberOfTrades: row.numberOfTrades,
+    takerBuyBaseAssetVolume: row.takerBuyBaseAssetVolume,
+    takerBuyQuoteAssetVolume: row.takerBuyQuoteAssetVolume,
+  };
+}
+
+/**
+ * A partir de linhas-fonte 5ticks (um tijolo por linha): normaliza o tier base 5ticks,
+ * depois P15/P25 diretos da base, ou cadeia 5×5t → 25t → tier final para P50+ (múltiplos de 25).
+ * Alinha o modelo “agregação da agregação” (25t como degrau antes de 50, 100, …).
+ */
+export function aggregateFastBarsFrom5TickBricksToTier(
+  rowsAsc: FastBarSourceRow[],
+  targetTicks: RenkoCacheTickInterval,
+  chartKind: string
+): ReturnType<typeof mergeOhlcChunk>[] {
+  if (rowsAsc.length === 0) return [];
+
+  const baseTier = aggregateFastBarsFromFixedGroupSize(rowsAsc, 1, "5ticks", chartKind);
+  const base = baseTier.map(mergeOhlcChunkRowToFastSourceRow);
+
+  if (targetTicks <= 5) {
+    return baseTier;
+  }
+  if (targetTicks === 15) {
+    return aggregateFastBarsFromFixedGroupSize(base, 3, "15ticks", chartKind);
+  }
+  if (targetTicks === 25) {
+    return aggregateFastBarsFromFixedGroupSize(base, 5, "25ticks", chartKind);
+  }
+  if (targetTicks > 25 && targetTicks % 25 === 0) {
+    const tier25 = aggregateFastBarsFromFixedGroupSize(base, 5, "25ticks", chartKind);
+    const src25 = tier25.map(mergeOhlcChunkRowToFastSourceRow);
+    const factor = targetTicks / 25;
+    return aggregateFastBarsFromFixedGroupSize(
+      src25,
+      factor,
+      `${targetTicks}ticks`,
+      chartKind
+    );
+  }
+
+  const gs = groupSizeForTickInterval(targetTicks);
+  const intervalLabel = `${targetTicks}ticks`;
+  return aggregateFastBarsFromFixedGroupSize(base, gs, intervalLabel, chartKind);
+}
+
+/**
  * Agrega linhas consecutivas de 5ticks (mesma ordem temporal) em tijolos maiores.
  * Descarta o resto incompleto no fim (ex.: 10 linhas com groupSize 3 → 3 barras, 1 linha descartada).
  */
@@ -141,9 +215,7 @@ export function aggregateFastBarsFrom5TickRows(
   ticks: RenkoCacheTickInterval,
   chartKind: string
 ): ReturnType<typeof mergeOhlcChunk>[] {
-  const gs = groupSizeForTickInterval(ticks);
-  const intervalLabel = `${ticks}ticks`;
-  return aggregateFastBarsFromFixedGroupSize(rowsAsc, gs, intervalLabel, chartKind);
+  return aggregateFastBarsFrom5TickBricksToTier(rowsAsc, ticks, chartKind);
 }
 
 /** Renko 1× em cache (`chartKind` = renko). */
@@ -151,7 +223,7 @@ export function aggregateRenkoFrom5TickRows(
   rowsAsc: FastBarSourceRow[],
   ticks: RenkoCacheTickInterval
 ): ReturnType<typeof mergeOhlcChunk>[] {
-  return aggregateFastBarsFrom5TickRows(rowsAsc, ticks, "renko");
+  return aggregateFastBarsFrom5TickBricksToTier(rowsAsc, ticks, "renko");
 }
 
 /** Uma linha de `BinanceTradeCountFast` = `TRADES_PER_CANDLE` eventos (ex.: 500). */

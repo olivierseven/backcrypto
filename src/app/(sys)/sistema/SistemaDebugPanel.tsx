@@ -5,6 +5,9 @@ import { useCryptoLang, useCryptoLangContext } from "@/app/contexts/CryptoLangCo
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { DEFAULT_SYMBOLS_LIST } from "@/app/lib/kline-symbols";
+import type { AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
+import type { AggChartKind } from "./KlinesChartConstants";
+import type { AggFastLiveWsTradeRow } from "./aggFastLiveDebug";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
@@ -28,11 +31,184 @@ type ValidateResult =
   | ValidateSingleResult
   | null;
 
+function formatAggDebugTimeUtc(ms: number): string {
+  return new Date(ms).toISOString().replace("T", " ").slice(0, 23);
+}
+
+/** (close − open) / open × 100 — signed, percentage points. */
+function aggRowOpenToCloseDeltaPct(r: AggFastBarRowPayload): number | null {
+  if (!Number.isFinite(r.open) || r.open === 0) return null;
+  return ((r.close - r.open) / r.open) * 100;
+}
+
+/** Renko tick path: |Δ%| ≈ (n × brickHeight / open) × 100 — n = 1 base tier, n = groupSize chart tier. */
+function aggRowExpectedAbsDeltaPct(
+  open: number,
+  brickHeight: number | null,
+  brickCount: number
+): number | null {
+  if (brickHeight == null || !Number.isFinite(brickHeight) || brickHeight <= 0) return null;
+  if (!Number.isFinite(open) || open === 0) return null;
+  const n = Math.max(1, brickCount);
+  return ((n * brickHeight) / open) * 100;
+}
+
+function aggDeltaPctLooksOk(
+  deltaPct: number,
+  expectedAbs: number | null,
+  tierVariant: "base" | "chart"
+): boolean | null {
+  if (expectedAbs == null) return null;
+  const ad = Math.abs(deltaPct);
+  const exp = expectedAbs;
+  const tol =
+    tierVariant === "base"
+      ? Math.max(0.0025, exp * 0.18)
+      : Math.max(0.012, exp * 0.45);
+  return Math.abs(ad - exp) <= tol;
+}
+
+function AggDebugRowsTable({
+  rows,
+  colTimeLabel,
+  colOhlcLabel,
+  colDeltaLabel,
+  colExpectedShortLabel,
+  chartKind,
+  brickHeight,
+  groupSize,
+  tierVariant,
+}: {
+  rows: AggFastBarRowPayload[];
+  colTimeLabel: string;
+  colOhlcLabel: string;
+  colDeltaLabel: string;
+  colExpectedShortLabel: string;
+  chartKind: AggChartKind;
+  brickHeight: number | null;
+  groupSize: number;
+  tierVariant: "base" | "chart";
+}) {
+  const tickRenko = chartKind !== "trades500" && brickHeight != null && Number.isFinite(brickHeight) && brickHeight > 0;
+  const bricksPerRow = tierVariant === "base" ? 1 : Math.max(1, groupSize);
+
+  if (rows.length === 0) {
+    return <p className="text-xs text-zinc-500">—</p>;
+  }
+  return (
+    <div className="overflow-x-auto border border-zinc-200 rounded-md max-h-72 overflow-y-auto">
+      <table className="w-full text-[10px] border-collapse">
+        <thead>
+          <tr className="bg-zinc-100 sticky top-0">
+            <th className="text-left p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colTimeLabel}</th>
+            <th className="text-left p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colOhlcLabel}</th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
+              {colDeltaLabel}
+            </th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
+              {colExpectedShortLabel}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const dPct = aggRowOpenToCloseDeltaPct(r);
+            const expAbs = tickRenko ? aggRowExpectedAbsDeltaPct(r.open, brickHeight, bricksPerRow) : null;
+            const ok = tickRenko && dPct != null && expAbs != null ? aggDeltaPctLooksOk(dPct, expAbs, tierVariant) : null;
+            return (
+              <tr key={`${r.openTime}-${i}`} className="border-b border-zinc-50 hover:bg-zinc-50/80">
+                <td className="p-1 font-mono text-zinc-800 whitespace-nowrap align-top">{formatAggDebugTimeUtc(r.openTime)}</td>
+                <td className="p-1 font-mono text-zinc-800 align-top break-all">
+                  {r.open} · {r.high} · {r.low} · {r.close}
+                </td>
+                <td
+                  className={`p-1 font-mono text-right align-top whitespace-nowrap ${
+                    ok === true
+                      ? "text-emerald-800"
+                      : ok === false
+                        ? "text-red-600 font-semibold"
+                        : "text-zinc-800"
+                  }`}
+                >
+                  {dPct == null ? "—" : `${dPct >= 0 ? "+" : ""}${dPct.toFixed(5)}%`}
+                </td>
+                <td className="p-1 font-mono text-right align-top whitespace-nowrap text-zinc-600">
+                  {!tickRenko || expAbs == null ? "—" : `${expAbs.toFixed(5)}%`}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function AggDebugRawTradesTable({
+  rows,
+  colTimeLabel,
+  colPriceLabel,
+  colQtyLabel,
+  colSideLabel,
+  sideBuyTaker,
+  sideSellTaker,
+}: {
+  rows: AggFastLiveWsTradeRow[];
+  colTimeLabel: string;
+  colPriceLabel: string;
+  colQtyLabel: string;
+  colSideLabel: string;
+  sideBuyTaker: string;
+  sideSellTaker: string;
+}) {
+  if (rows.length === 0) {
+    return <p className="text-xs text-zinc-500">—</p>;
+  }
+  return (
+    <div className="overflow-x-auto border border-zinc-200 rounded-md max-h-72 overflow-y-auto">
+      <table className="w-full text-[10px] border-collapse">
+        <thead>
+          <tr className="bg-zinc-100 sticky top-0">
+            <th className="text-left p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colTimeLabel}</th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colPriceLabel}</th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colQtyLabel}</th>
+            <th className="text-left p-1.5 border-b border-zinc-200 font-medium text-zinc-600">{colSideLabel}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={`${r.t}-${i}`} className="border-b border-zinc-50 hover:bg-zinc-50/80">
+              <td className="p-1 font-mono text-zinc-800 whitespace-nowrap align-top">{formatAggDebugTimeUtc(r.t)}</td>
+              <td className="p-1 font-mono text-zinc-800 text-right align-top">{r.p}</td>
+              <td className="p-1 font-mono text-zinc-800 text-right align-top">{r.q}</td>
+              <td className="p-1 font-mono text-zinc-700 align-top">
+                {r.m === true ? sideSellTaker : r.m === false ? sideBuyTaker : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function SistemaDebugPanel() {
   const lang = useCryptoLang();
   const { lang: currentLang, setLang } = useCryptoLangContext();
   const t = getCryptoT(lang).sistema.debug;
-  const { showKlinesTable, setShowKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabled, clearLayoutLoadLog } = useSistemaDebug();
+  const {
+    showKlinesTable,
+    setShowKlinesTable,
+    layoutLoadLog,
+    layoutLoadDebugEnabled,
+    setLayoutLoadDebugEnabled,
+    layoutSaveLoadDebugEnabled,
+    setLayoutSaveLoadDebugEnabled,
+    clearLayoutLoadLog,
+    aggFastLiveDebugEnabled,
+    setAggFastLiveDebugEnabled,
+    aggFastLiveDebugSnapshot,
+  } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
   const [symbol, setSymbol] = useState(() => DEFAULT_SYMBOLS_LIST[0] ?? "BTCUSDT");
@@ -57,7 +233,9 @@ export default function SistemaDebugPanel() {
   const [selectedChartModelSlot, setSelectedChartModelSlot] = useState<number | null>(null);
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
-  const [debugTab, setDebugTab] = useState<"main" | "inspect" | "qa" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod" | "acesso">("main");
+  const [debugTab, setDebugTab] = useState<
+    "main" | "inspect" | "qa" | "agg-live" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod" | "acesso"
+  >("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
@@ -906,6 +1084,13 @@ export default function SistemaDebugPanel() {
             </button>
             <button
               type="button"
+              onClick={() => setDebugTab("agg-live")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "agg-live" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabAggLive ?? "Agg live"}
+            </button>
+            <button
+              type="button"
               onClick={() => setDebugTab("historico-dev")}
               className={`flex-1 py-2 text-xs font-medium ${debugTab === "historico-dev" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
             >
@@ -1281,6 +1466,145 @@ export default function SistemaDebugPanel() {
             </div>
             )}
             </>
+            )}
+            {debugTab === "agg-live" && (
+              <div className="space-y-4">
+                <label className="flex items-start gap-2 cursor-pointer text-sm text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={aggFastLiveDebugEnabled}
+                    onChange={(e) => setAggFastLiveDebugEnabled(e.target.checked)}
+                    className="rounded border-zinc-300 mt-0.5 shrink-0"
+                  />
+                  <span>
+                    <span className="font-medium">{(t as Record<string, string>).aggLiveDebugEnable}</span>
+                    <span className="block text-xs text-zinc-500 mt-1">{(t as Record<string, string>).aggLiveDebugHint}</span>
+                  </span>
+                </label>
+                {aggFastLiveDebugEnabled && aggFastLiveDebugSnapshot && (
+                  <>
+                    <div className="text-xs font-mono text-zinc-700 bg-zinc-50 border border-zinc-200 rounded p-2 space-y-1">
+                      <div>
+                        <span className="text-zinc-500">{(t as Record<string, string>).aggLiveUpdated ?? "Updated"}:</span>{" "}
+                        {new Date(aggFastLiveDebugSnapshot.at).toLocaleString()}
+                      </div>
+                      <div>
+                        {aggFastLiveDebugSnapshot.symbol} · {aggFastLiveDebugSnapshot.tierShortLabel} ·{" "}
+                        {aggFastLiveDebugSnapshot.interval} · {aggFastLiveDebugSnapshot.chartKind}
+                      </div>
+                      <p className="text-zinc-500 text-[10px] leading-snug">{(t as Record<string, string>).aggLiveDebugMeta}</p>
+                      <div>
+                        {(t as Record<string, string>).aggLiveStatsLine
+                          ?.replace("{baseTier}", aggFastLiveDebugSnapshot.baseTierLabel)
+                          .replace("{tierShort}", aggFastLiveDebugSnapshot.tierShortLabel)
+                          .replace("{groupSize}", String(aggFastLiveDebugSnapshot.groupSize))
+                          .replace("{remainder}", String(aggFastLiveDebugSnapshot.remainderIncomplete))
+                          .replace("{bufferTotal}", String(aggFastLiveDebugSnapshot.rawWsTradeCount))
+                          .replace("{baseTotal}", String(aggFastLiveDebugSnapshot.baseTierTotalCount))}
+                      </div>
+                      <div className="mt-2 rounded border border-amber-200 bg-amber-50/90 px-2 py-2 space-y-1">
+                        <div className="text-[10px] font-semibold text-amber-900 uppercase tracking-wide">
+                          {(t as Record<string, string>).aggLiveTickValidationTitle ?? "Tick validation"}
+                        </div>
+                        <div className="text-[11px] font-mono text-zinc-900 tabular-nums break-all">
+                          <span className="text-zinc-600">
+                            {(t as Record<string, string>).aggLiveTickRowLabel ?? "Price tick"}:
+                          </span>{" "}
+                          {aggFastLiveDebugSnapshot.priceTick != null &&
+                          Number.isFinite(aggFastLiveDebugSnapshot.priceTick)
+                            ? aggFastLiveDebugSnapshot.priceTick.toLocaleString("en-US", {
+                                maximumFractionDigits: 12,
+                                useGrouping: false,
+                              })
+                            : "—"}
+                        </div>
+                        <div className="text-[11px] font-mono text-zinc-900 tabular-nums break-all">
+                          <span className="text-zinc-600">
+                            {(t as Record<string, string>).aggLiveBrickRowLabel ?? "5× brick (Renko base)"}:
+                          </span>{" "}
+                          {aggFastLiveDebugSnapshot.chartKind === "trades500"
+                            ? ((t as Record<string, string>).aggLiveTickNaTrades ?? "N/A (trades chart)")
+                            : aggFastLiveDebugSnapshot.brickHeight != null &&
+                                Number.isFinite(aggFastLiveDebugSnapshot.brickHeight)
+                              ? aggFastLiveDebugSnapshot.brickHeight.toLocaleString("en-US", {
+                                  maximumFractionDigits: 12,
+                                  useGrouping: false,
+                                })
+                              : "—"}
+                        </div>
+                        <p className="text-[10px] text-zinc-600 leading-snug pt-0.5 border-t border-amber-200/80">
+                          {(t as Record<string, string>).aggLiveTickBrickLine
+                            ?.replace(
+                              "{tick}",
+                              aggFastLiveDebugSnapshot.priceTick != null &&
+                                Number.isFinite(aggFastLiveDebugSnapshot.priceTick)
+                                ? String(aggFastLiveDebugSnapshot.priceTick)
+                                : "—"
+                            )
+                            .replace(
+                              "{brick}",
+                              aggFastLiveDebugSnapshot.brickHeight != null &&
+                                Number.isFinite(aggFastLiveDebugSnapshot.brickHeight)
+                                ? String(aggFastLiveDebugSnapshot.brickHeight)
+                                : "—"
+                            )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                          {(t as Record<string, string>).aggLiveBufferTitle}
+                        </h4>
+                        <AggDebugRawTradesTable
+                          rows={aggFastLiveDebugSnapshot.rawWsTradesNewestFirst}
+                          colTimeLabel={(t as Record<string, string>).aggLiveColTime ?? "Time (UTC)"}
+                          colPriceLabel={(t as Record<string, string>).aggLiveColPrice ?? "Price"}
+                          colQtyLabel={(t as Record<string, string>).aggLiveColQty ?? "Qty"}
+                          colSideLabel={(t as Record<string, string>).aggLiveColSide ?? "Taker"}
+                          sideBuyTaker={(t as Record<string, string>).aggLiveSideBuyTaker ?? "Buy"}
+                          sideSellTaker={(t as Record<string, string>).aggLiveSideSellTaker ?? "Sell"}
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                          {(t as Record<string, string>).aggLiveBaseTierTitle}
+                        </h4>
+                        <AggDebugRowsTable
+                          rows={aggFastLiveDebugSnapshot.baseTierRowsNewestFirst}
+                          colTimeLabel={(t as Record<string, string>).aggLiveColTime ?? "openTime (UTC)"}
+                          colOhlcLabel={(t as Record<string, string>).aggLiveColOhlc ?? "O · H · L · C"}
+                          colDeltaLabel={(t as Record<string, string>).aggLiveColDeltaPct ?? "Δ% O→C"}
+                          colExpectedShortLabel={(t as Record<string, string>).aggLiveColExpectedAbs ?? "≈ |Δ| esp."}
+                          chartKind={aggFastLiveDebugSnapshot.chartKind}
+                          brickHeight={aggFastLiveDebugSnapshot.brickHeight}
+                          groupSize={aggFastLiveDebugSnapshot.groupSize}
+                          tierVariant="base"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">
+                          {(t as Record<string, string>).aggLiveChartTierTitle}
+                        </h4>
+                        <AggDebugRowsTable
+                          rows={aggFastLiveDebugSnapshot.chartTierRowsNewestFirst}
+                          colTimeLabel={(t as Record<string, string>).aggLiveColTime ?? "openTime (UTC)"}
+                          colOhlcLabel={(t as Record<string, string>).aggLiveColOhlc ?? "O · H · L · C"}
+                          colDeltaLabel={(t as Record<string, string>).aggLiveColDeltaPct ?? "Δ% O→C"}
+                          colExpectedShortLabel={(t as Record<string, string>).aggLiveColExpectedAbs ?? "≈ |Δ| esp."}
+                          chartKind={aggFastLiveDebugSnapshot.chartKind}
+                          brickHeight={aggFastLiveDebugSnapshot.brickHeight}
+                          groupSize={aggFastLiveDebugSnapshot.groupSize}
+                          tierVariant="chart"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                {aggFastLiveDebugEnabled && !aggFastLiveDebugSnapshot && (
+                  <p className="text-sm text-zinc-500">{(t as Record<string, string>).aggLiveEmpty}</p>
+                )}
+              </div>
             )}
             {debugTab === "qa" && (
               <>

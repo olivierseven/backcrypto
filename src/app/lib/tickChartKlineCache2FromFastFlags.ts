@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@/lib/prisma-bio-client";
 import type { Prisma } from "@/lib/prisma-bio-client";
 import {
+  aggregateFastBarsFrom5TickBricksToTier,
   aggregateFastBarsFromFixedGroupSize,
   createManyKlineCache2Chunks,
   groupSizeForTickInterval,
@@ -171,10 +172,9 @@ export async function processTickChartKlineCacheWithSourceFlags(
     for (const ticks of RENKO_CACHE_TICK_INTERVALS) {
       const intervalLabel = `${ticks}ticks`;
       const gs = groupSizeForTickInterval(ticks);
-      const agg = aggregateFastBarsFromFixedGroupSize(
+      const agg = aggregateFastBarsFrom5TickBricksToTier(
         allSrc,
-        gs,
-        intervalLabel,
+        ticks as RenkoCacheTickInterval,
         chartKind
       );
       const data = aggToCache2Rows(agg);
@@ -256,10 +256,9 @@ export async function processTickChartKlineCacheWithSourceFlags(
           const dataRows: Prisma.BinanceKlineCache2CreateManyInput[] = [];
           for (let i = 0; i < nComplete; i += gs) {
             const chunk = src.slice(i, i + gs);
-            const agg = aggregateFastBarsFromFixedGroupSize(
+            const agg = aggregateFastBarsFrom5TickBricksToTier(
               chunk,
-              gs,
-              intervalLabel,
+              ticks as RenkoCacheTickInterval,
               chartKind
             );
             dataRows.push(...aggToCache2Rows(agg));

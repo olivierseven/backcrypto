@@ -36,7 +36,12 @@ import {
 } from "./KlinesChartConstants";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
 import { type AggFastBarRowPayload, TRADES_PER_CANDLE } from "@/app/lib/binanceAggRenkoCore";
-import { liveSourcePayloadsToTierPayloadsForMerge, mergeAggFastServerAndLive } from "./aggFastKlineMerge";
+import { buildAggFastLiveDebugSnapshot, type AggFastLiveWsTradeRow } from "./aggFastLiveDebug";
+import {
+  aggFastLiveBrickLogicalKey,
+  liveSourcePayloadsToTierPayloadsForMerge,
+  mergeAggFastServerAndLive,
+} from "./aggFastKlineMerge";
 import { useAggFastTradeLive, type AggFastWsKind } from "./useAggFastTradeLive";
 import { useVpsFlushNotify } from "./useVpsFlushNotify";
 
@@ -332,7 +337,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const tk = t as Record<string, string>;
-  const { showKlinesTable, addLayoutLoadLog } = useSistemaDebug();
+  const { showKlinesTable, addLayoutLoadLog, aggFastLiveDebugEnabled, setAggFastLiveDebugSnapshot } = useSistemaDebug();
   const { setHeaderData, setIntervalPicker } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
@@ -401,8 +406,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const prevAggKlineCountForLimitRef = useRef<number | null>(null);
   /** Topo do último GET kline-cache2 (só servidor); âncora de fecho/open para o aggTrade ao vivo. */
   const [serverNewestKlineFromCache, setServerNewestKlineFromCache] = useState<(string | number)[] | null>(null);
-  const liveAggRowsByOpenTimeRef = useRef<Map<number, AggFastBarRowPayload>>(new Map());
+  /** Chave = conteúdo OHLC+vol (sem tempos) — mesmo tijolo com openTime/closeTime diferentes não duplica. */
+  const liveAggRowsByOpenTimeRef = useRef<Map<string, AggFastBarRowPayload>>(new Map());
+  const LIVE_AGG_ROWS_MAX = 2500;
+  /** Ring de aggTrade (WS) para debug — ≠ tijolos fechados. */
+  const liveWsRawTradesRef = useRef<AggFastLiveWsTradeRow[]>([]);
+  const MAX_DEBUG_WS_TRADES = 120;
+  /** Uma entrada por tijolo fechado emitido pelo step* (append-only); o debug não usa só Map.values — evita confundir com stream em tempo real. */
+  const liveDebugClosedBricksRef = useRef<{ seq: number; row: AggFastBarRowPayload }[]>([]);
+  const liveDebugBrickSeqRef = useRef(0);
+  const LIVE_DEBUG_BRICKS_MAX = 2500;
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
+  /** GET daily-close-tick: 0,01% do último fecho diário completo (não do tijolo anterior). */
+  const [aggPriceTick, setAggPriceTick] = useState<number | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
   /** Último feed vivo: miniTicker e/ou aggTrade atemporal — para “Última atualização” / bolinha não depender só do openTime da última barra em cache. */
@@ -413,9 +429,38 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
   const lastSpotPersistAtRef = useRef(0);
   const symbolRef = useRef(symbol);
+  const groupMinutesRef = useRef(groupMinutes);
+  groupMinutesRef.current = groupMinutes;
+  const aggFastLiveDebugEnabledRef = useRef(aggFastLiveDebugEnabled);
+  aggFastLiveDebugEnabledRef.current = aggFastLiveDebugEnabled;
   const lastKlinesFetchSymbolRef = useRef<string | null>(null);
   const fetchKlinesRef = useRef<() => Promise<void>>(async () => {});
   symbolRef.current = symbol;
+
+  const pushAggFastLiveDebug = useCallback(() => {
+    if (!aggFastLiveDebugEnabledRef.current) return;
+    const gm = normalizeAggGroupMinutes(groupMinutesRef.current);
+    if (!isAggFastGroupMinutes(gm)) {
+      setAggFastLiveDebugSnapshot(null);
+      return;
+    }
+    const c2 = groupMinutesToCache2Params(gm);
+    if (c2 == null) {
+      setAggFastLiveDebugSnapshot(null);
+      return;
+    }
+    const tierShort = formatCache2IntervalShortLabel(c2.chartKind, c2.interval);
+    setAggFastLiveDebugSnapshot(
+      buildAggFastLiveDebugSnapshot(
+        liveDebugClosedBricksRef.current.map((e) => e.row),
+        liveWsRawTradesRef.current,
+        c2,
+        symbolRef.current,
+        tierShort,
+        aggPriceTick
+      )
+    );
+  }, [setAggFastLiveDebugSnapshot, aggPriceTick]);
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
@@ -1053,6 +1098,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const aggLive = isAggFastGroupMinutes(groupMinutes);
         if (!aggLive) {
           liveAggRowsByOpenTimeRef.current.clear();
+          liveWsRawTradesRef.current = [];
+          liveDebugClosedBricksRef.current = [];
+          liveDebugBrickSeqRef.current = 0;
           setKlines(list as Kline[]);
         } else {
           const tierLive = liveSourcePayloadsToTierPayloadsForMerge(
@@ -1060,6 +1108,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             cache2
           );
           setKlines(mergeAggFastServerAndLive(list, tierLive, tzForMerge) as Kline[]);
+          pushAggFastLiveDebug();
         }
         setKlinesDataSymbol(requestedSymbol);
         if (list.length > 0) {
@@ -1094,6 +1143,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         serverAggKlinesRef.current = [];
         setServerNewestKlineFromCache(null);
         liveAggRowsByOpenTimeRef.current.clear();
+        liveWsRawTradesRef.current = [];
+        liveDebugClosedBricksRef.current = [];
+        liveDebugBrickSeqRef.current = 0;
         setKlines(list);
         setKlinesDataSymbol(requestedSymbol);
         if (list.length > 0) {
@@ -1120,6 +1172,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       serverAggKlinesRef.current = [];
       setServerNewestKlineFromCache(null);
       liveAggRowsByOpenTimeRef.current.clear();
+      liveWsRawTradesRef.current = [];
+      liveDebugClosedBricksRef.current = [];
+      liveDebugBrickSeqRef.current = 0;
       setNeedsRefresh(false);
     } finally {
       setLoading(false);
@@ -1127,6 +1182,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   };
 
   fetchKlinesRef.current = fetchKlines;
+
+  useEffect(() => {
+    if (!aggFastLiveDebugEnabled) return;
+    const gm = normalizeAggGroupMinutes(groupMinutes);
+    if (!isAggFastGroupMinutes(gm)) return;
+    pushAggFastLiveDebug();
+  }, [aggFastLiveDebugEnabled, groupMinutes, pushAggFastLiveDebug]);
+
+  useEffect(() => {
+    if (!aggFastLiveDebugEnabled) return;
+    pushAggFastLiveDebug();
+  }, [aggPriceTick, aggFastLiveDebugEnabled, pushAggFastLiveDebug]);
 
   const aggWsKind = groupMinutesToAggKind(groupMinutes);
   useAggFastTradeLive({
@@ -1141,16 +1208,39 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (groupMinutesToAggKind(groupMinutes) == null) return;
       const gmNorm = normalizeAggGroupMinutes(groupMinutes);
       const c2 = groupMinutesToCache2Params(gmNorm);
+      const m = liveAggRowsByOpenTimeRef.current;
       for (const r of rows) {
-        liveAggRowsByOpenTimeRef.current.set(r.openTime, r);
+        const k = aggFastLiveBrickLogicalKey(r);
+        const isNewBrick = !m.has(k);
+        m.set(k, r);
+        /** Mesma chave = mesmo tijolo (ex.: flush repetido com o mesmo payload). Map já deduplica; histórico/debug não pode duplicar linhas. */
+        if (!isNewBrick) continue;
         pendingAggPersistRef.current.push(r);
+        liveDebugBrickSeqRef.current += 1;
+        const h = liveDebugClosedBricksRef.current;
+        h.push({ seq: liveDebugBrickSeqRef.current, row: r });
+        if (h.length > LIVE_DEBUG_BRICKS_MAX) {
+          liveDebugClosedBricksRef.current = h.slice(-LIVE_DEBUG_BRICKS_MAX);
+        }
       }
-      const tierLive = liveSourcePayloadsToTierPayloadsForMerge(liveAggRowsByOpenTimeRef.current.values(), c2);
+      if (m.size > LIVE_AGG_ROWS_MAX) {
+        const sorted = [...m.entries()].sort((a, b) => a[1].openTime - b[1].openTime);
+        const drop = m.size - LIVE_AGG_ROWS_MAX;
+        for (let i = 0; i < drop; i++) m.delete(sorted[i]![0]);
+      }
+      const tierLive = liveSourcePayloadsToTierPayloadsForMerge(m.values(), c2);
       setKlines(
         mergeAggFastServerAndLive(serverAggKlinesRef.current, tierLive, timezoneOffsetRef.current) as Kline[]
       );
+      pushAggFastLiveDebug();
     },
     onLiveAggActivity: () => setSpotWsUpdatedAt(Date.now()),
+    onRawAggTrade: (tr) => {
+      const a = liveWsRawTradesRef.current;
+      a.push({ t: tr.t, p: tr.p, q: tr.q, m: tr.m });
+      if (a.length > MAX_DEBUG_WS_TRADES) liveWsRawTradesRef.current = a.slice(-MAX_DEBUG_WS_TRADES);
+    },
+    onPriceTickResolved: setAggPriceTick,
   });
 
   useVpsFlushNotify({
@@ -1215,6 +1305,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setServerNewestKlineFromCache(null);
     prevAggKlineCountForLimitRef.current = null;
     liveAggRowsByOpenTimeRef.current.clear();
+    liveWsRawTradesRef.current = [];
+    liveDebugClosedBricksRef.current = [];
+    liveDebugBrickSeqRef.current = 0;
     pendingAggPersistRef.current = [];
     setSpot({ currentClose: null, prevDayClose: null });
     setSpotWsPrice(null);

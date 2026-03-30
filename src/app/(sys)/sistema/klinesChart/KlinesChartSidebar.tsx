@@ -29,6 +29,11 @@ import type {
   TextColorId,
 } from "./palettes";
 import type { AggIntervalPickerConfig, ChartStyle, IntervalOption } from "./types";
+import {
+  MOBILE_ASCII_KEYBOARD_PREF_EVENT,
+  readMobileAsciiKeyboardDisabled,
+  writeMobileAsciiKeyboardDisabled,
+} from "../mobileAsciiKeyboardPref";
 export type KlinesChartSidebarTranslations = Record<string, string>;
 
 export interface KlinesChartSidebarProps {
@@ -342,6 +347,13 @@ export function KlinesChartSidebar({
       setVapColorBelowOpen(false);
     }
   }, [settingsOpen]);
+  const [mobileAsciiKeyboardDisabled, setMobileAsciiKeyboardDisabled] = useState(false);
+  useEffect(() => {
+    setMobileAsciiKeyboardDisabled(readMobileAsciiKeyboardDisabled());
+    const onPref = () => setMobileAsciiKeyboardDisabled(readMobileAsciiKeyboardDisabled());
+    window.addEventListener(MOBILE_ASCII_KEYBOARD_PREF_EVENT, onPref);
+    return () => window.removeEventListener(MOBILE_ASCII_KEYBOARD_PREF_EVENT, onPref);
+  }, []);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
   const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
   const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
@@ -1506,6 +1518,19 @@ export function KlinesChartSidebar({
                 <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
                   <input type="checkbox" checked={showCandleCountdown} onChange={(e) => setShowCandleCountdown(e.target.checked)} className="rounded border-zinc-300" />
                   <span>{(t as Record<string, string>).showCandleCountdown ?? "Candle countdown"}</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700 border-t border-zinc-100 mt-1 pt-2">
+                  <input
+                    type="checkbox"
+                    checked={mobileAsciiKeyboardDisabled}
+                    onChange={(e) => {
+                      const v = e.target.checked;
+                      setMobileAsciiKeyboardDisabled(v);
+                      writeMobileAsciiKeyboardDisabled(v);
+                    }}
+                    className="rounded border-zinc-300"
+                  />
+                  <span>{(t as Record<string, string>).mobileAsciiKeyboardDisableCheckbox ?? "Disable on-screen keyboard (mobile)"}</span>
                 </label>
                 <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
                   <span className="shrink-0">{t.invisibleCandlesEnd}</span>

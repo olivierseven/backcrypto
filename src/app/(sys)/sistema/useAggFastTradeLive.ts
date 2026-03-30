@@ -92,6 +92,13 @@ export function useAggFastTradeLive(opts: {
   onLiveFlush: (rows: AggFastBarRowPayload[]) => void;
   /** Chamado quando chega aggTrade válido (atemporal vivo); throttle interno — p.ex. “Última atualização” / bolinha. */
   onLiveAggActivity?: () => void;
+  /**
+   * Cada negócio individual depois do filtro de tempo (mesmo fluxo que alimenta Renko/trades).
+   * Para debug: buffer WS ≠ tijolos fechados.
+   */
+  onRawAggTrade?: (trade: { p: number; q: number; t: number; m?: boolean }) => void;
+  /** Tick de preço (GET daily-close-tick = 0,01% do último fecho diário completo). Para debug/UI. */
+  onPriceTickResolved?: (tick: number | null) => void;
 }) {
   const {
     enabled,
@@ -103,6 +110,8 @@ export function useAggFastTradeLive(opts: {
     serverNewestKlineFromCache,
     onLiveFlush,
     onLiveAggActivity,
+    onRawAggTrade,
+    onPriceTickResolved,
   } = opts;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
@@ -119,8 +128,12 @@ export function useAggFastTradeLive(opts: {
   const aggKindRef = useRef(aggKind);
   const onLiveFlushRef = useRef(onLiveFlush);
   const onLiveAggActivityRef = useRef(onLiveAggActivity);
+  const onRawAggTradeRef = useRef(onRawAggTrade);
+  const onPriceTickResolvedRef = useRef(onPriceTickResolved);
   onLiveFlushRef.current = onLiveFlush;
   onLiveAggActivityRef.current = onLiveAggActivity;
+  onRawAggTradeRef.current = onRawAggTrade;
+  onPriceTickResolvedRef.current = onPriceTickResolved;
   klinesRef.current = klines;
   symRef.current = sym;
   klinesSourceRef.current = klinesSourceSymbol;
@@ -143,8 +156,10 @@ export function useAggFastTradeLive(opts: {
   useEffect(() => {
     if (!enabled || !sym) {
       setTickSize(null);
+      onPriceTickResolvedRef.current?.(null);
       return;
     }
+    onPriceTickResolvedRef.current?.(null);
     let cancelled = false;
     fetch(`${API_BASE}/binance/daily-close-tick?symbol=${encodeURIComponent(sym)}`)
       .then(async (r) => {
@@ -152,10 +167,15 @@ export function useAggFastTradeLive(opts: {
         if (!r.ok) throw new Error(j.error || r.statusText);
         if (cancelled) return;
         const t = Number(j.tick);
-        setTickSize(Number.isFinite(t) && t > 0 ? t : null);
+        const v = Number.isFinite(t) && t > 0 ? t : null;
+        setTickSize(v);
+        onPriceTickResolvedRef.current?.(v);
       })
       .catch(() => {
-        if (!cancelled) setTickSize(null);
+        if (!cancelled) {
+          setTickSize(null);
+          onPriceTickResolvedRef.current?.(null);
+        }
       });
     return () => {
       cancelled = true;
@@ -233,6 +253,7 @@ export function useAggFastTradeLive(opts: {
         const trade = parseAggTradeForSymbol(raw, sym);
         if (!trade) return;
         if (trade.t < streamMinTradeMsRef.current) return;
+        onRawAggTradeRef.current?.(trade);
         const now = Date.now();
         if (now - lastActivityThrottleRef.current >= 250) {
           lastActivityThrottleRef.current = now;

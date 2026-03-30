@@ -1,7 +1,42 @@
 import type { AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
+
+/**
+ * Chave única por tijolo fechado (inclui tempos). Útil quando openTime/closeTime fazem parte da identidade.
+ */
+export function aggFastLiveRowKey(r: AggFastBarRowPayload): string {
+  return [
+    r.openTime,
+    r.closeTime,
+    r.open,
+    r.high,
+    r.low,
+    r.close,
+    r.volume,
+    r.numberOfTrades,
+  ].join("|");
+}
+
+/** Estabiliza IEEE 754: mesmos preços na UI com bits diferentes geravam chaves distintas e linhas repetidas. */
+function normBrickKeyNum(n: number): string {
+  if (!Number.isFinite(n)) return String(n);
+  return String(Math.round(n * 1e8) / 1e8);
+}
+
+/**
+ * Identidade visual do tijolo: **só OHLC** (arredondados). Volume/trades mudam entre emissões
+ * duplicadas do mesmo tijolo → não entram na chave (evita linhas repetidas na tabela).
+ */
+export function aggFastLiveBrickLogicalKey(r: AggFastBarRowPayload): string {
+  return [
+    normBrickKeyNum(r.open),
+    normBrickKeyNum(r.high),
+    normBrickKeyNum(r.low),
+    normBrickKeyNum(r.close),
+  ].join("|");
+}
 import { Prisma } from "@/lib/prisma-bio-client";
 import {
-  aggregateFastBarsFrom5TickRows,
+  aggregateFastBarsFrom5TickBricksToTier,
   aggregateFastBarsFromTradeCountRows,
   RENKO_CACHE_TICK_INTERVALS,
   TRADE_CACHE_TRADE_INTERVALS,
@@ -110,7 +145,7 @@ export function mergeAggFastServerAndLive(
   return out;
 }
 
-function aggPayloadToFastSourceRow(p: AggFastBarRowPayload): FastBarSourceRow {
+export function aggPayloadToFastSourceRow(p: AggFastBarRowPayload): FastBarSourceRow {
   return {
     symbol: p.symbol,
     openTime: BigInt(Math.trunc(p.openTime)),
@@ -127,7 +162,7 @@ function aggPayloadToFastSourceRow(p: AggFastBarRowPayload): FastBarSourceRow {
   };
 }
 
-function ohlcChunkToAggPayload(r: {
+export function ohlcChunkToAggPayload(r: {
   symbol: string;
   openTime: bigint;
   closeTime: bigint;
@@ -168,7 +203,9 @@ export function liveSourcePayloadsToTierPayloadsForMerge(
   const rows = [...liveSource];
   if (rows.length === 0 || cache2 == null) return rows;
 
-  const asc = [...rows].sort((a, b) => a.openTime - b.openTime);
+  const asc = [...rows].sort(
+    (a, b) => a.openTime - b.openTime || a.closeTime - b.closeTime || a.open - b.open
+  );
   const src = asc.map(aggPayloadToFastSourceRow);
 
   if (cache2.chartKind === "trades500") {
@@ -192,6 +229,10 @@ export function liveSourcePayloadsToTierPayloadsForMerge(
     return rows;
   }
   if (ticks === 5) return rows;
-  const agg = aggregateFastBarsFrom5TickRows(src, ticks as RenkoCacheTickInterval, cache2.chartKind);
+  const agg = aggregateFastBarsFrom5TickBricksToTier(
+    src,
+    ticks as RenkoCacheTickInterval,
+    cache2.chartKind
+  );
   return agg.map(ohlcChunkToAggPayload);
 }

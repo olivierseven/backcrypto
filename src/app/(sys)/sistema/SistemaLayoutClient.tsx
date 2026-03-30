@@ -18,6 +18,7 @@ const SistemaDebugPanel = dynamic(() => import("./SistemaDebugPanel"), { ssr: fa
 /** Overlays só no cliente — import dinâmico reduz o chunk de `app/(sys)/layout` e alivia ChunkLoadError/timeout em dev (basePath + HMR). */
 const SymbolQuickSwitch = dynamic(() => import("./SymbolQuickSwitch"), { ssr: false });
 const IntervalQuickSwitch = dynamic(() => import("./IntervalQuickSwitch"), { ssr: false });
+const MobileAsciiKeyboard = dynamic(() => import("./MobileAsciiKeyboard"), { ssr: false });
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
 import { KlinesRegressionsProvider } from "./regression/KlinesRegressionsContext";
 import RegressionsPanel from "./RegressionsPanel";
@@ -825,6 +826,7 @@ function SistemaLayoutContent({
                 </>
               )}
             </div>
+            <MobileAsciiKeyboard />
             {isAdmin && <SistemaDebugPanel />}
     </>
   );

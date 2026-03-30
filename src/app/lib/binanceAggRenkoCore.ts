@@ -1,6 +1,7 @@
 /**
- * Renko / Range / Kagi a partir de aggTrade (BRICK_TICK_UNITS × tick diário), alinhado a dev/ticks.
- * Renko: cada tijolo = movimento de BRICK_TICK_UNITS ticks de preço (5 × tick diário); novo tijolo quando
+ * Renko / Range / Kagi a partir de aggTrade (BRICK_TICK_UNITS × tick de preço).
+ * O tick vem de GET /api/binance/daily-close-tick: **0,01% do último fecho diário completo (UTC)** — não é % do tijolo anterior.
+ * Renko: cada tijolo = BRICK_TICK_UNITS × esse tick (ex. 5 × tick); novo tijolo quando
  * o preço atinge lastClose ± B (ver `stepRenkoTable`). Sem regra especial de reversão.
  * Tabelas: BinanceRenkoFast | BinanceRangeFast | BinanceKagiFast (interval "5ticks");
  * Renko 2× (reversão 2B): BinanceRenko2xFast ("5ticks") — tijolos altura B; continuação como Renko 1×; reversão após ±2B.

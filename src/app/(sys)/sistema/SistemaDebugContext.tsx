@@ -1,10 +1,12 @@
 "use client";
 
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import type { AggFastLiveDebugSnapshot } from "./aggFastLiveDebug";
 
 const LAYOUT_DEBUG_MAX = 40;
 const LAYOUT_DEBUG_STORAGE_KEY = "backcrypto-layout-debug";
 const LAYOUT_SAVE_LOAD_DEBUG_STORAGE_KEY = "backcrypto-layout-save-load-debug";
+const AGG_FAST_LIVE_DEBUG_STORAGE_KEY = "backcrypto-agg-fast-live-debug";
 
 function loadLayoutDebugEnabled(): boolean {
   if (typeof window === "undefined") return false;
@@ -24,6 +26,15 @@ function loadLayoutSaveLoadDebugEnabled(): boolean {
   }
 }
 
+function loadAggFastLiveDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(AGG_FAST_LIVE_DEBUG_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface SistemaDebugContextValue {
   showKlinesTable: boolean;
   setShowKlinesTable: (v: boolean) => void;
@@ -35,6 +46,11 @@ interface SistemaDebugContextValue {
   setLayoutSaveLoadDebugEnabled: (v: boolean) => void;
   addLayoutLoadLog: (msg: string) => void;
   clearLayoutLoadLog: () => void;
+  /** Debug agregação atemporal: buffer 5t/500tr vs tier (P15, P25, …). */
+  aggFastLiveDebugEnabled: boolean;
+  setAggFastLiveDebugEnabled: (v: boolean) => void;
+  aggFastLiveDebugSnapshot: AggFastLiveDebugSnapshot | null;
+  setAggFastLiveDebugSnapshot: (s: AggFastLiveDebugSnapshot | null) => void;
 }
 
 const SistemaDebugContext = createContext<SistemaDebugContextValue | null>(null);
@@ -49,6 +65,10 @@ const defaultValue: SistemaDebugContextValue = {
   setLayoutSaveLoadDebugEnabled: () => {},
   addLayoutLoadLog: () => {},
   clearLayoutLoadLog: () => {},
+  aggFastLiveDebugEnabled: false,
+  setAggFastLiveDebugEnabled: () => {},
+  aggFastLiveDebugSnapshot: null,
+  setAggFastLiveDebugSnapshot: () => {},
 };
 
 export function SistemaDebugProvider({ children }: { children: ReactNode }) {
@@ -56,10 +76,13 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
   const [layoutLoadLog, setLayoutLoadLog] = useState<string[]>([]);
   const [layoutLoadDebugEnabled, setLayoutLoadDebugEnabledState] = useState(false);
   const [layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabledState] = useState(false);
+  const [aggFastLiveDebugEnabled, setAggFastLiveDebugEnabledState] = useState(false);
+  const [aggFastLiveDebugSnapshot, setAggFastLiveDebugSnapshotState] = useState<AggFastLiveDebugSnapshot | null>(null);
 
   useLayoutEffect(() => {
     setLayoutLoadDebugEnabledState(loadLayoutDebugEnabled());
     setLayoutSaveLoadDebugEnabledState(loadLayoutSaveLoadDebugEnabled());
+    setAggFastLiveDebugEnabledState(loadAggFastLiveDebugEnabled());
   }, []);
 
   const setLayoutLoadDebugEnabled = useCallback((v: boolean) => {
@@ -78,6 +101,20 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  const setAggFastLiveDebugEnabled = useCallback((v: boolean) => {
+    setAggFastLiveDebugEnabledState(v);
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(AGG_FAST_LIVE_DEBUG_STORAGE_KEY, v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+    if (!v) setAggFastLiveDebugSnapshotState(null);
+  }, []);
+
+  const setAggFastLiveDebugSnapshot = useCallback((s: AggFastLiveDebugSnapshot | null) => {
+    setAggFastLiveDebugSnapshotState(s);
   }, []);
 
   const layoutLoadDebugEnabledRef = useRef(layoutLoadDebugEnabled);
@@ -103,8 +140,25 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       setLayoutSaveLoadDebugEnabled,
       addLayoutLoadLog,
       clearLayoutLoadLog,
+      aggFastLiveDebugEnabled,
+      setAggFastLiveDebugEnabled,
+      aggFastLiveDebugSnapshot,
+      setAggFastLiveDebugSnapshot,
     }),
-    [showKlinesTable, layoutLoadLog, layoutLoadDebugEnabled, setLayoutLoadDebugEnabled, layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabled, addLayoutLoadLog, clearLayoutLoadLog]
+    [
+      showKlinesTable,
+      layoutLoadLog,
+      layoutLoadDebugEnabled,
+      setLayoutLoadDebugEnabled,
+      layoutSaveLoadDebugEnabled,
+      setLayoutSaveLoadDebugEnabled,
+      addLayoutLoadLog,
+      clearLayoutLoadLog,
+      aggFastLiveDebugEnabled,
+      setAggFastLiveDebugEnabled,
+      aggFastLiveDebugSnapshot,
+      setAggFastLiveDebugSnapshot,
+    ]
   );
   return (
     <SistemaDebugContext.Provider value={value}>
