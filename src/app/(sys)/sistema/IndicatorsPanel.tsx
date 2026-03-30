@@ -25,6 +25,7 @@ import {
   getIndicatorIntervalLabel,
   INDICATOR_INTERVAL_GROUPS,
   getIndicatorLabel,
+  indicatorAppliesToCurrentChartTimeframe,
   isMovingAverageType,
   useIndicatorsPanelFields,
 } from "./indicatorsPanel/index";
@@ -293,6 +294,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     let panel4 = 0;
     let panel5 = 0;
     for (const i of userIndicators) {
+      if (!indicatorAppliesToCurrentChartTimeframe(i, currentGroupMinutes)) continue;
       const p = getPanel(i);
       if (p === "main") main++;
       else if (p === "panel2") panel2++;
@@ -301,7 +303,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       else if (p === "panel5") panel5++;
     }
     return { main, panel2, panel3, panel4, panel5 };
-  }, [userIndicators]);
+  }, [userIndicators, currentGroupMinutes]);
 
   const panelsWithSecondary = useMemo(() => ({
     panel2: indicatorCountByPanel.panel2 > 0,
@@ -348,6 +350,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     editForm,
     setFieldKey,
     setEditForm,
+    currentGroupMinutes,
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
@@ -361,7 +364,11 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   const isDefaultModel =
     typeof window !== "undefined" &&
     isKlinesDefaultLayoutStorageRaw(window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY));
-  const defaultModelMaxIndicatorsReached = isDefaultModel && userIndicators.length >= DEFAULT_MODEL_MAX_INDICATORS;
+  const indicatorCountForCurrentTimeframe = useMemo(
+    () => userIndicators.filter((i) => indicatorAppliesToCurrentChartTimeframe(i, currentGroupMinutes)).length,
+    [userIndicators, currentGroupMinutes],
+  );
+  const defaultModelMaxIndicatorsReached = isDefaultModel && indicatorCountForCurrentTimeframe >= DEFAULT_MODEL_MAX_INDICATORS;
 
   const mainPanelFull = indicatorCountByPanel.main >= MAIN_MAX_INDICATORS;
   const chosenPanelFull =

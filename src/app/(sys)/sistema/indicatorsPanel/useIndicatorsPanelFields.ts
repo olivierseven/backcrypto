@@ -6,7 +6,7 @@ import type {
   UserIndicatorType,
   IndicatorFieldKey,
 } from "../KlinesIndicatorsContext";
-import { getIndicatorLabel, isMovingAverageType } from "./indicatorsPanelUtils";
+import { getIndicatorLabel, isIndicatorVisibleForGroupMinutes, isMovingAverageType } from "./indicatorsPanelUtils";
 import type { KlinesT } from "./indicatorsPanelUtils";
 
 export type FieldOption = {
@@ -27,6 +27,8 @@ export interface UseIndicatorsPanelFieldsParams<TEditForm extends { fieldKey: In
   setFieldKey: (v: IndicatorFieldKey) => void;
   /** setState do editForm do parent; o efeito atualiza apenas fieldKey (spread prev + fieldKey). */
   setEditForm: React.Dispatch<React.SetStateAction<TEditForm | null>>;
+  /** Timeframe do gráfico: opções `user_<id>` só incluem indicadores ativos neste intervalo (como na tabela). `null` = ainda sem TF (mesma regra que a lista de indicadores). */
+  currentGroupMinutes: number | null;
 }
 
 export function useIndicatorsPanelFields<TEditForm extends { fieldKey: IndicatorFieldKey }>({
@@ -38,6 +40,7 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
   editForm,
   setFieldKey,
   setEditForm,
+  currentGroupMinutes,
 }: UseIndicatorsPanelFieldsParams<TEditForm>) {
   const usedOutputIds = useMemo(() => {
     const ids = new Set<string>();
@@ -62,6 +65,11 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
       { value: "HLCC4", label: (t as Record<string, string>).fieldHLCC4 ?? "HLCC4" },
     ];
     userIndicators.forEach((u) => {
+      if (currentGroupMinutes == null) {
+        if (u.intervals.length === 1 && u.intervals[0] === 0) return;
+      } else if (!isIndicatorVisibleForGroupMinutes(u, currentGroupMinutes)) {
+        return;
+      }
       const key = `user_${String(u.id)}` as IndicatorFieldKey;
       const outputUsed = usedOutputIds.has(String(u.id));
       const inputUsed =
@@ -77,7 +85,7 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
       });
     });
     return base;
-  }, [t, userIndicators, editingId, usedOutputIds]);
+  }, [t, userIndicators, editingId, usedOutputIds, currentGroupMinutes]);
 
   const firstEnabledFieldValue = useMemo(
     () => (fieldOptions.find((o) => !o.disabled)?.value ?? "close") as IndicatorFieldKey,
@@ -108,7 +116,10 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
 
   useEffect(() => {
     const sel = fieldOptions.find((o) => o.value === fieldKey);
+    const missingUserSeries =
+      typeof fieldKey === "string" && fieldKey.startsWith("user_") && !sel;
     const disabled =
+      missingUserSeries ||
       sel?.disabled ||
       Boolean(sel?.isMovingAverage && isMovingAverageType(indicatorType)) ||
       sel?.optionType === indicatorType;

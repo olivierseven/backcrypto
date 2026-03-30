@@ -19,6 +19,8 @@ export {
   getIndicatorLabelStochD,
   getIndicatorLabelShortStochD,
   isMovingAverageType,
+  isIndicatorVisibleForGroupMinutes,
+  indicatorAppliesToCurrentChartTimeframe,
   type KlinesT,
 } from "./indicatorsPanelUtils";
 export { useIndicatorsPanelFields, type FieldOption, type UseIndicatorsPanelFieldsParams } from "./useIndicatorsPanelFields";

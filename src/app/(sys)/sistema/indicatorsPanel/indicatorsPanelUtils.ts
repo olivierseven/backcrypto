@@ -271,6 +271,26 @@ export function getIndicatorLabelShortStochD(ind: UserIndicatorConfig): string {
   return `%D(${period})`;
 }
 
+/** Mesma regra que a tabela/gráfico: indicador visível neste `groupMinutes` (intervalos vazio = todos). */
+export function isIndicatorVisibleForGroupMinutes(ind: UserIndicatorConfig, groupMinutes: number): boolean {
+  if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+  if (ind.intervals.length === 0) return true;
+  return ind.intervals.includes(groupMinutes);
+}
+
+/**
+ * Indicador entra no limite de painel (7 main / 3 sec.) para o timeframe atual.
+ * Exclui «nenhum intervalo»; com `currentGroupMinutes` só conta os ativos nesse tempo (como a lista «deste tempo»).
+ */
+export function indicatorAppliesToCurrentChartTimeframe(
+  ind: UserIndicatorConfig,
+  currentGroupMinutes: number | null
+): boolean {
+  if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+  if (currentGroupMinutes == null) return true;
+  return isIndicatorVisibleForGroupMinutes(ind, currentGroupMinutes);
+}
+
 export function isMovingAverageType(type: string): boolean {
   return (
     type === "SMA" ||
