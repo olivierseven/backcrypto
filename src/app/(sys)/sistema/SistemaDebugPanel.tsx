@@ -7,7 +7,7 @@ import { API_BASE } from "@/app/constants";
 import { DEFAULT_SYMBOLS_LIST } from "@/app/lib/kline-symbols";
 import type { AggFastBarRowPayload } from "@/app/lib/binanceAggRenkoCore";
 import type { AggChartKind } from "./KlinesChartConstants";
-import type { AggFastLiveWsTradeRow } from "./aggFastLiveDebug";
+import type { AggFastLiveDiagItem, AggFastLiveWsTradeRow } from "./aggFastLiveDebug";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { getSessionDebugEnabled, setSessionDebugEnabled, type SessionDebugInfo } from "./sessionTabId";
@@ -33,6 +33,31 @@ type ValidateResult =
 
 function formatAggDebugTimeUtc(ms: number): string {
   return new Date(ms).toISOString().replace("T", " ").slice(0, 23);
+}
+
+function formatAggLiveDiagLine(d: AggFastLiveDiagItem, tr: Record<string, string>): string {
+  switch (d.k) {
+    case "tickApiError":
+      return (tr.aggLiveDiagTickApiError ?? "daily-close-tick: {error}").replace("{error}", d.error);
+    case "tickFallbackActive":
+      return tr.aggLiveDiagTickFallbackActive ?? "";
+    case "tickStillMissing":
+      return tr.aggLiveDiagTickStillMissing ?? "";
+    case "wsNeedsTick":
+      return tr.aggLiveDiagWsNeedsTick ?? "";
+    case "bufferEmpty":
+      return tr.aggLiveDiagBufferEmpty ?? "";
+    case "noBrickYet":
+      return tr.aggLiveDiagNoBrickYet ?? "";
+    case "hintLoading":
+      return tr.aggLiveDiagHintLoading ?? "";
+    case "hintNoValidClose":
+      return tr.aggLiveDiagHintNoValidClose ?? "";
+    case "hintTickZero":
+      return tr.aggLiveDiagHintTickZero ?? "";
+    default:
+      return "";
+  }
 }
 
 /** (close − open) / open × 100 — signed, percentage points. */
@@ -1506,6 +1531,16 @@ export default function SistemaDebugPanel() {
                         <div className="text-[10px] font-semibold text-amber-900 uppercase tracking-wide">
                           {(t as Record<string, string>).aggLiveTickValidationTitle ?? "Tick validation"}
                         </div>
+                        <div className="text-[11px] font-mono text-zinc-800 break-all">
+                          <span className="text-zinc-600">
+                            {(t as Record<string, string>).aggLiveTickSourceLabel ?? "Tick source"}:
+                          </span>{" "}
+                          {aggFastLiveDebugSnapshot.priceTickDiagnostics?.source === "api"
+                            ? ((t as Record<string, string>).aggLiveTickSourceApi ?? "GET daily-close-tick")
+                            : aggFastLiveDebugSnapshot.priceTickDiagnostics?.source === "fallback"
+                              ? ((t as Record<string, string>).aggLiveTickSourceFallback ?? "Chart close (fallback)")
+                              : "—"}
+                        </div>
                         <div className="text-[11px] font-mono text-zinc-900 tabular-nums break-all">
                           <span className="text-zinc-600">
                             {(t as Record<string, string>).aggLiveTickRowLabel ?? "Price tick"}:
@@ -1550,6 +1585,18 @@ export default function SistemaDebugPanel() {
                             )}
                         </p>
                       </div>
+                      {aggFastLiveDebugSnapshot.diagnostics.length > 0 && (
+                        <div className="mt-2 rounded border border-rose-200 bg-rose-50/95 px-2 py-2 space-y-1.5">
+                          <div className="text-[10px] font-semibold text-rose-900 uppercase tracking-wide">
+                            {(t as Record<string, string>).aggLiveDiagnosticsTitle ?? "Diagnostics"}
+                          </div>
+                          <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-rose-950 leading-snug">
+                            {aggFastLiveDebugSnapshot.diagnostics.map((item, i) => (
+                              <li key={i}>{formatAggLiveDiagLine(item, t as Record<string, string>)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col gap-4">
                       <div>

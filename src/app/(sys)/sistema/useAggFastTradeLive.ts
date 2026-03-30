@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE } from "@/app/constants";
 import { defaultTickFromDailyClose } from "@/app/lib/binanceDefaultTick";
+import type { AggFastLivePriceTickDiagnostics } from "./aggFastLiveDebug";
 import {
   addTrade,
   emptyKagiRef,
@@ -100,6 +101,8 @@ export function useAggFastTradeLive(opts: {
   onRawAggTrade?: (trade: { p: number; q: number; t: number; m?: boolean }) => void;
   /** Tick de preço (GET daily-close-tick = 0,01% do último fecho diário completo). Para debug/UI. */
   onPriceTickResolved?: (tick: number | null) => void;
+  /** Origem do tick + erros da API (painel Agg live). */
+  onPriceTickDiagnostics?: (d: AggFastLivePriceTickDiagnostics | null) => void;
 }) {
   const {
     enabled,
@@ -113,6 +116,7 @@ export function useAggFastTradeLive(opts: {
     onLiveAggActivity,
     onRawAggTrade,
     onPriceTickResolved,
+    onPriceTickDiagnostics,
   } = opts;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
@@ -131,10 +135,12 @@ export function useAggFastTradeLive(opts: {
   const onLiveAggActivityRef = useRef(onLiveAggActivity);
   const onRawAggTradeRef = useRef(onRawAggTrade);
   const onPriceTickResolvedRef = useRef(onPriceTickResolved);
+  const onPriceTickDiagnosticsRef = useRef(onPriceTickDiagnostics);
   onLiveFlushRef.current = onLiveFlush;
   onLiveAggActivityRef.current = onLiveAggActivity;
   onRawAggTradeRef.current = onRawAggTrade;
   onPriceTickResolvedRef.current = onPriceTickResolved;
+  onPriceTickDiagnosticsRef.current = onPriceTickDiagnostics;
   klinesRef.current = klines;
   symRef.current = sym;
   klinesSourceRef.current = klinesSourceSymbol;
@@ -145,6 +151,8 @@ export function useAggFastTradeLive(opts: {
 
   /** True apenas se GET daily-close-tick devolveu tick válido (canónico). */
   const apiTickOkRef = useRef(false);
+  /** Último erro textual do GET daily-close-tick (para fallback / debug). */
+  const lastDailyCloseTickErrorRef = useRef<string | null>(null);
 
   const [tickSize, setTickSize] = useState<number | null>(null);
   /** Evita aplicar fallback às klines antes do fetch terminar (corrida com API lenta). */
@@ -158,18 +166,37 @@ export function useAggFastTradeLive(opts: {
     const srv = serverNewestFromCacheRef.current;
     const close = syncCloseFromMergedAndServer(klinesOk, merged0, srv);
     const c = close != null && Number.isFinite(close) && close > 0 ? close : null;
+    const apiErr = lastDailyCloseTickErrorRef.current;
     if (c == null) {
       setTickSize(null);
       onPriceTickResolvedRef.current?.(null);
+      onPriceTickDiagnosticsRef.current?.({
+        tick: null,
+        source: null,
+        apiError: apiErr,
+        hintKey: "no_valid_close",
+      });
       return;
     }
     const t = defaultTickFromDailyClose(c);
     if (t > 0) {
       setTickSize(t);
       onPriceTickResolvedRef.current?.(t);
+      onPriceTickDiagnosticsRef.current?.({
+        tick: t,
+        source: "fallback",
+        apiError: apiErr,
+        hintKey: null,
+      });
     } else {
       setTickSize(null);
       onPriceTickResolvedRef.current?.(null);
+      onPriceTickDiagnosticsRef.current?.({
+        tick: null,
+        source: null,
+        apiError: apiErr,
+        hintKey: "tick_zero",
+      });
     }
   }, []);
 
@@ -185,32 +212,59 @@ export function useAggFastTradeLive(opts: {
   useEffect(() => {
     if (!enabled || !sym) {
       apiTickOkRef.current = false;
+      lastDailyCloseTickErrorRef.current = null;
       setTickFetchSettled(false);
       setTickSize(null);
       onPriceTickResolvedRef.current?.(null);
+      onPriceTickDiagnosticsRef.current?.(null);
       return;
     }
     apiTickOkRef.current = false;
+    lastDailyCloseTickErrorRef.current = null;
     onPriceTickResolvedRef.current?.(null);
+    onPriceTickDiagnosticsRef.current?.({
+      tick: null,
+      source: null,
+      apiError: null,
+      hintKey: "loading",
+    });
     let cancelled = false;
     setTickFetchSettled(false);
     fetch(`${API_BASE}/binance/daily-close-tick?symbol=${encodeURIComponent(sym)}`)
       .then(async (r) => {
-        const j = (await r.json()) as { tick?: number; error?: string };
+        let j: { tick?: number; error?: string } = {};
+        try {
+          j = (await r.json()) as { tick?: number; error?: string };
+        } catch {
+          j = { error: "Invalid JSON from daily-close-tick" };
+        }
         if (cancelled) return;
         if (r.ok) {
           const t = Number(j.tick);
           if (Number.isFinite(t) && t > 0) {
             apiTickOkRef.current = true;
+            lastDailyCloseTickErrorRef.current = null;
             setTickSize(t);
             onPriceTickResolvedRef.current?.(t);
+            onPriceTickDiagnosticsRef.current?.({
+              tick: t,
+              source: "api",
+              apiError: null,
+              hintKey: null,
+            });
             return;
           }
+          lastDailyCloseTickErrorRef.current = j.error || `HTTP ${r.status} (no tick in body)`;
+        } else {
+          lastDailyCloseTickErrorRef.current = j.error || `HTTP ${r.status}`;
         }
         apiTickOkRef.current = false;
       })
-      .catch(() => {
-        if (!cancelled) apiTickOkRef.current = false;
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          apiTickOkRef.current = false;
+          lastDailyCloseTickErrorRef.current = e instanceof Error ? e.message : "fetch failed";
+        }
       })
       .finally(() => {
         if (!cancelled) setTickFetchSettled(true);

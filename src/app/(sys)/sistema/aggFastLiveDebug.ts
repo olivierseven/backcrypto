@@ -27,6 +27,28 @@ export type AggFastLiveWsTradeRow = {
   m?: boolean;
 };
 
+/** Estado do tick para o painel (origem API vs fallback + erro). */
+export type AggFastLivePriceTickDiagnostics = {
+  tick: number | null;
+  source: "api" | "fallback" | null;
+  /** Mensagem do JSON ou rede quando GET daily-close-tick falha. */
+  apiError: string | null;
+  /** Situação extra (traduzida no painel por código). */
+  hintKey: "loading" | "no_valid_close" | "tick_zero" | null;
+};
+
+/** Itens traduzidos no painel (código → chave em translations). */
+export type AggFastLiveDiagItem =
+  | { k: "tickApiError"; error: string }
+  | { k: "tickFallbackActive" }
+  | { k: "tickStillMissing" }
+  | { k: "wsNeedsTick" }
+  | { k: "bufferEmpty" }
+  | { k: "noBrickYet" }
+  | { k: "hintLoading" }
+  | { k: "hintNoValidClose" }
+  | { k: "hintTickZero" };
+
 export type AggFastLiveDebugSnapshot = {
   at: number;
   symbol: string;
@@ -54,11 +76,57 @@ export type AggFastLiveDebugSnapshot = {
   baseTierRowsNewestFirst: AggFastBarRowPayload[];
   /** Mais recentes primeiro — tier do gráfico, agregado só a partir dos tijolos base. */
   chartTierRowsNewestFirst: AggFastBarRowPayload[];
+  /** Último estado do hook (tick / API / fallback). */
+  priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null;
+  /** Sugestões quando tudo vazio ou inconsistente. */
+  diagnostics: AggFastLiveDiagItem[];
 };
 
 const MAX_RAW_WS_TRADES = 120;
 const MAX_BASE_ROWS = 80;
 const MAX_CHART_ROWS = 50;
+
+function buildAggLiveDiagnostics(
+  cache2: { chartKind: AggChartKind; interval: string },
+  priceTick: number | null,
+  rawWsCount: number,
+  baseTierRowCount: number,
+  tickDiag: AggFastLivePriceTickDiagnostics | null
+): AggFastLiveDiagItem[] {
+  const out: AggFastLiveDiagItem[] = [];
+  const tickOk = priceTick != null && priceTick > 0;
+  if (tickDiag?.hintKey === "no_valid_close") {
+    out.push({ k: "hintNoValidClose" });
+  }
+  if (tickDiag?.hintKey === "tick_zero") {
+    out.push({ k: "hintTickZero" });
+  }
+  if (tickDiag?.apiError && tickDiag.source === "fallback") {
+    out.push({ k: "tickApiError", error: tickDiag.apiError });
+  }
+  if (tickDiag?.source === "fallback" && tickOk) {
+    out.push({ k: "tickFallbackActive" });
+  }
+  if (tickDiag?.hintKey === "loading") {
+    out.push({ k: "hintLoading" });
+  } else if (!tickOk) {
+    out.push({ k: "tickStillMissing" });
+    out.push({ k: "wsNeedsTick" });
+  }
+  if (rawWsCount === 0) {
+    out.push({ k: "bufferEmpty" });
+  } else if (baseTierRowCount === 0) {
+    out.push({ k: "noBrickYet" });
+  }
+
+  const seen = new Set<string>();
+  return out.filter((d) => {
+    const key = d.k === "tickApiError" ? `${d.k}:${d.error}` : d.k;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 /** Mesmo tijolo com openTime/closeTime diferentes → uma linha (última ocorrência por ordem temporal). */
 function dedupeBricksByLogicalKey(rowsAsc: AggFastBarRowPayload[]): AggFastBarRowPayload[] {
@@ -101,7 +169,8 @@ export function buildAggFastLiveDebugSnapshot(
   cache2: { chartKind: AggChartKind; interval: string },
   symbol: string,
   tierShortLabel: string,
-  priceTick: number | null
+  priceTick: number | null,
+  priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null
 ): AggFastLiveDebugSnapshot {
   const rowsSorted = [...closedBricksFromEngine].sort(
     (a, b) => a.openTime - b.openTime || a.closeTime - b.closeTime || a.open - b.open
@@ -172,6 +241,14 @@ export function buildAggFastLiveDebugSnapshot(
       ? BRICK_TICK_UNITS * priceTick
       : null;
 
+  const diagnostics = buildAggLiveDiagnostics(
+    cache2,
+    priceTick,
+    rawWsTradesAsc.length,
+    baseForTable.length,
+    priceTickDiagnostics
+  );
+
   return {
     at: Date.now(),
     symbol: symbol.trim().toUpperCase(),
@@ -188,5 +265,7 @@ export function buildAggFastLiveDebugSnapshot(
     rawWsTradesNewestFirst: rawNewest,
     baseTierRowsNewestFirst: baseForTable.slice(-MAX_BASE_ROWS).reverse(),
     chartTierRowsNewestFirst: chartForTable.slice(-MAX_CHART_ROWS).reverse(),
+    priceTickDiagnostics,
+    diagnostics,
   };
 }

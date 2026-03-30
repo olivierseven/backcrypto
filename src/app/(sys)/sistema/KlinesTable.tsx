@@ -36,7 +36,11 @@ import {
 } from "./KlinesChartConstants";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
 import { type AggFastBarRowPayload, TRADES_PER_CANDLE } from "@/app/lib/binanceAggRenkoCore";
-import { buildAggFastLiveDebugSnapshot, type AggFastLiveWsTradeRow } from "./aggFastLiveDebug";
+import {
+  buildAggFastLiveDebugSnapshot,
+  type AggFastLivePriceTickDiagnostics,
+  type AggFastLiveWsTradeRow,
+} from "./aggFastLiveDebug";
 import {
   aggFastLiveBrickLogicalKey,
   liveSourcePayloadsToTierPayloadsForMerge,
@@ -419,6 +423,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
   /** GET daily-close-tick: 0,01% do último fecho diário completo (não do tijolo anterior). */
   const [aggPriceTick, setAggPriceTick] = useState<number | null>(null);
+  const [aggPriceTickDiag, setAggPriceTickDiag] = useState<AggFastLivePriceTickDiagnostics | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
   /** Último feed vivo: miniTicker e/ou aggTrade atemporal — para “Última atualização” / bolinha não depender só do openTime da última barra em cache. */
@@ -457,10 +462,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         c2,
         symbolRef.current,
         tierShort,
-        aggPriceTick
+        aggPriceTick,
+        aggPriceTickDiag
       )
     );
-  }, [setAggFastLiveDebugSnapshot, aggPriceTick]);
+  }, [setAggFastLiveDebugSnapshot, aggPriceTick, aggPriceTickDiag]);
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
@@ -1193,7 +1199,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   useEffect(() => {
     if (!aggFastLiveDebugEnabled) return;
     pushAggFastLiveDebug();
-  }, [aggPriceTick, aggFastLiveDebugEnabled, pushAggFastLiveDebug]);
+  }, [aggPriceTick, aggPriceTickDiag, aggFastLiveDebugEnabled, pushAggFastLiveDebug]);
 
   const aggWsKind = groupMinutesToAggKind(groupMinutes);
   useAggFastTradeLive({
@@ -1241,6 +1247,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (a.length > MAX_DEBUG_WS_TRADES) liveWsRawTradesRef.current = a.slice(-MAX_DEBUG_WS_TRADES);
     },
     onPriceTickResolved: setAggPriceTick,
+    onPriceTickDiagnostics: setAggPriceTickDiag,
   });
 
   useVpsFlushNotify({
