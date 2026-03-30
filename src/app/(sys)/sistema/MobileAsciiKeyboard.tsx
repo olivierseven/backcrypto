@@ -31,12 +31,17 @@ function isContentEditable(el: Element | null): el is HTMLElement {
   return el instanceof HTMLElement && el.isContentEditable;
 }
 
-function insertIntoInput(el: HTMLInputElement | HTMLTextAreaElement, text: string): void {
+function insertIntoInput(
+  el: HTMLInputElement | HTMLTextAreaElement,
+  text: string,
+  onBeforeFocus?: (target: HTMLElement) => void
+): void {
   if (el.type === "number") {
     const allowed = text.replace(/[^0-9eE+\-.]/g, "");
     if (!allowed && text.length > 0) return;
     text = allowed;
   }
+  onBeforeFocus?.(el);
   el.focus();
   const start = el.selectionStart ?? 0;
   const end = el.selectionEnd ?? 0;
@@ -55,7 +60,12 @@ function insertIntoInput(el: HTMLInputElement | HTMLTextAreaElement, text: strin
   el.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
-function insertIntoContentEditable(el: HTMLElement, text: string): void {
+function insertIntoContentEditable(
+  el: HTMLElement,
+  text: string,
+  onBeforeFocus?: (target: HTMLElement) => void
+): void {
+  onBeforeFocus?.(el);
   el.focus();
   if (typeof document.execCommand === "function") {
     document.execCommand("insertText", false, text);
@@ -71,8 +81,9 @@ function insertIntoContentEditable(el: HTMLElement, text: string): void {
   sel.addRange(range);
 }
 
-function applyBackspace(el: HTMLElement): void {
+function applyBackspace(el: HTMLElement, onBeforeFocus?: (target: HTMLElement) => void): void {
   if (isEditableTextTarget(el)) {
+    onBeforeFocus?.(el);
     el.focus();
     const start = el.selectionStart ?? 0;
     const end = el.selectionEnd ?? 0;
@@ -99,6 +110,7 @@ function applyBackspace(el: HTMLElement): void {
     return;
   }
   if (isContentEditable(el)) {
+    onBeforeFocus?.(el);
     el.focus();
     el.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Backspace", code: "Backspace", bubbles: true, cancelable: true }),
@@ -106,18 +118,19 @@ function applyBackspace(el: HTMLElement): void {
   }
 }
 
-function applyEnter(el: HTMLElement): void {
+function applyEnter(el: HTMLElement, onBeforeFocus?: (target: HTMLElement) => void): void {
   if (el instanceof HTMLTextAreaElement) {
-    insertIntoInput(el, "\n");
+    insertIntoInput(el, "\n", onBeforeFocus);
     return;
   }
   if (el instanceof HTMLInputElement) {
+    onBeforeFocus?.(el);
     el.focus();
     el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true, cancelable: true }));
     return;
   }
   if (isContentEditable(el)) {
-    insertIntoContentEditable(el, "\n");
+    insertIntoContentEditable(el, "\n", onBeforeFocus);
   }
 }
 
@@ -185,6 +198,40 @@ export default function MobileAsciiKeyboard() {
   const shiftRef = useRef(shift);
   shiftRef.current = shift;
   const snapshotRef = useRef<HTMLElement | null>(null);
+  /** Campos onde aplicámos `inputmode="none"` para não abrir o teclado nativo — restaurar ao fechar o painel. */
+  const suppressedInputModeElsRef = useRef(new Set<HTMLElement>());
+
+  const suppressNativeKeyboard = useCallback((el: HTMLElement) => {
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+      if (!suppressedInputModeElsRef.current.has(el)) {
+        el.dataset.mobileAsciiPrevInputmode = el.inputMode;
+        suppressedInputModeElsRef.current.add(el);
+      }
+      el.inputMode = "none";
+    } else if (el.isContentEditable) {
+      if (!suppressedInputModeElsRef.current.has(el)) {
+        el.dataset.mobileAsciiPrevInputmode = el.getAttribute("inputmode") ?? "";
+        suppressedInputModeElsRef.current.add(el);
+      }
+      el.setAttribute("inputmode", "none");
+    }
+  }, []);
+
+  const restoreSuppressedInputModes = useCallback(() => {
+    for (const el of suppressedInputModeElsRef.current) {
+      if (!el.isConnected) continue;
+      const prev = el.dataset.mobileAsciiPrevInputmode;
+      delete el.dataset.mobileAsciiPrevInputmode;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        el.inputMode = prev ?? "";
+      } else {
+        if (prev) el.setAttribute("inputmode", prev);
+        else el.removeAttribute("inputmode");
+      }
+    }
+    suppressedInputModeElsRef.current.clear();
+  }, []);
+
   /** Último campo de texto focado — mais fiável no mobile do que snapshot só no pointer capture (o botão rouba foco). */
   useEffect(() => {
     const onFocusIn = (ev: FocusEvent) => {
@@ -196,6 +243,38 @@ export default function MobileAsciiKeyboard() {
     document.addEventListener("focusin", onFocusIn, true);
     return () => document.removeEventListener("focusin", onFocusIn, true);
   }, []);
+
+  /** Com o painel aberto: não deixar o SO abrir o teclado nativo em inputs ao focar. */
+  useEffect(() => {
+    if (!open) return;
+    const onFocusIn = (ev: FocusEvent) => {
+      const t = ev.target;
+      if (t instanceof HTMLElement && (isEditableTextTarget(t) || isContentEditable(t))) {
+        suppressNativeKeyboard(t);
+      }
+    };
+    document.addEventListener("focusin", onFocusIn, true);
+    return () => document.removeEventListener("focusin", onFocusIn, true);
+  }, [open, suppressNativeKeyboard]);
+
+  /** Ao fechar o overlay: repor `inputmode` para o utilizador poder usar o teclado nativo outra vez. */
+  useEffect(() => {
+    if (!open) restoreSuppressedInputModes();
+  }, [open, restoreSuppressedInputModes]);
+
+  /** Desmontagem / desativar pref: não deixar `inputmode` preso em `none`. */
+  useEffect(() => {
+    return () => restoreSuppressedInputModes();
+  }, [restoreSuppressedInputModes]);
+
+  /** Ao abrir o overlay: se já houver campo focado, suprimir teclado nativo de imediato. */
+  useEffect(() => {
+    if (!open) return;
+    const a = document.activeElement;
+    if (a instanceof HTMLElement && (isEditableTextTarget(a) || isContentEditable(a))) {
+      suppressNativeKeyboard(a);
+    }
+  }, [open, suppressNativeKeyboard]);
 
   /** Antes do botão receber o toque: grava campo focado ou limpa se o foco já não era editável (atalhos no chart). */
   const snapshotEditableBeforeKey = useCallback(() => {
@@ -209,42 +288,48 @@ export default function MobileAsciiKeyboard() {
     }
   }, []);
 
-  const sendChar = useCallback((ch: string) => {
-    const s = shiftRef.current;
-    const out = s && ch.length === 1 && /[a-z]/.test(ch) ? ch.toUpperCase() : ch;
-    if (s && /[a-z]/.test(ch)) setShift(false);
-    const el = getInsertTarget(snapshotRef);
-    if (el) {
-      if (isEditableTextTarget(el)) insertIntoInput(el, out);
-      else if (isContentEditable(el)) insertIntoContentEditable(el, out);
-      /** Mobile: o botão pode roubar foco depois do handler — voltar ao campo para a próxima tecla. */
-      requestAnimationFrame(() => {
+  const sendChar = useCallback(
+    (ch: string) => {
+      const s = shiftRef.current;
+      const out = s && ch.length === 1 && /[a-z]/.test(ch) ? ch.toUpperCase() : ch;
+      if (s && /[a-z]/.test(ch)) setShift(false);
+      const el = getInsertTarget(snapshotRef);
+      if (el) {
+        if (isEditableTextTarget(el)) insertIntoInput(el, out, suppressNativeKeyboard);
+        else if (isContentEditable(el)) insertIntoContentEditable(el, out, suppressNativeKeyboard);
+        /** Mobile: o botão pode roubar foco depois do handler — voltar ao campo para a próxima tecla. */
         requestAnimationFrame(() => {
-          try {
-            if (el.isConnected) el.focus();
-          } catch {
-            /* ignore */
-          }
+          requestAnimationFrame(() => {
+            try {
+              if (el.isConnected) {
+                suppressNativeKeyboard(el);
+                el.focus();
+              }
+            } catch {
+              /* ignore */
+            }
+          });
         });
-      });
-      return;
-    }
-    if (out.length === 1 && /^[a-zA-Z0-9]$/.test(out)) {
-      dispatchShortcutChar(out);
-    }
-  }, []);
+        return;
+      }
+      if (out.length === 1 && /^[a-zA-Z0-9]$/.test(out)) {
+        dispatchShortcutChar(out);
+      }
+    },
+    [suppressNativeKeyboard]
+  );
 
   const onBackspace = useCallback(() => {
     const el = getInsertTarget(snapshotRef);
-    if (el) applyBackspace(el);
+    if (el) applyBackspace(el, suppressNativeKeyboard);
     else dispatchWindowKeydown("Backspace", "Backspace");
-  }, []);
+  }, [suppressNativeKeyboard]);
 
   const onEnter = useCallback(() => {
     const el = getInsertTarget(snapshotRef);
-    if (el) applyEnter(el);
+    if (el) applyEnter(el, suppressNativeKeyboard);
     else dispatchWindowKeydown("Enter", "Enter");
-  }, []);
+  }, [suppressNativeKeyboard]);
 
   const keyBtn =
     "min-h-[42px] min-w-[28px] flex-1 shrink-0 rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium text-zinc-100 px-1 select-none touch-manipulation [-webkit-tap-highlight-color:transparent]";
