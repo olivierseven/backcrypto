@@ -7,6 +7,9 @@
   ],
   "functions": {
     "src/app/api/cron/route.ts": { "regions": ["gru1"] },
-    "src/app/api/cron/cache-refresh/route.ts": { "regions": ["gru1"], "maxDuration": 300 }
+    "src/app/api/cron/cache-refresh/route.ts": { "regions": ["gru1"], "maxDuration": 300 },
+    "src/app/api/binance/daily-close-tick/route.ts": { "regions": ["gru1"] },
+    "src/app/api/debug/klines-backfill/route.ts": { "regions": ["gru1"] },
+    "src/app/api/debug/sync-klines/route.ts": { "regions": ["gru1"] }
   }
 }
