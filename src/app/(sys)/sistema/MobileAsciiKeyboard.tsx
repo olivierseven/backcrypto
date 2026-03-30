@@ -6,7 +6,6 @@ import {
   useRef,
   useState,
   type MutableRefObject,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
@@ -47,7 +46,11 @@ function insertIntoInput(el: HTMLInputElement | HTMLTextAreaElement, text: strin
   if (native?.set) native.set.call(el, next);
   else el.value = next;
   const caret = start + text.length;
-  el.setSelectionRange(caret, caret);
+  try {
+    el.setSelectionRange(caret, caret);
+  } catch {
+    /* iOS / number: alguns estados não permitem seleção */
+  }
   el.dispatchEvent(new Event("input", { bubbles: true }));
   el.dispatchEvent(new Event("change", { bubbles: true }));
 }
@@ -86,7 +89,11 @@ function applyBackspace(el: HTMLElement): void {
     const native = Object.getOwnPropertyDescriptor(el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, "value");
     if (native?.set) native.set.call(el, next);
     else el.value = next;
-    el.setSelectionRange(caret, caret);
+    try {
+      el.setSelectionRange(caret, caret);
+    } catch {
+      /* ignore */
+    }
     el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
     return;
@@ -178,7 +185,17 @@ export default function MobileAsciiKeyboard() {
   const shiftRef = useRef(shift);
   shiftRef.current = shift;
   const snapshotRef = useRef<HTMLElement | null>(null);
-  const lastTapRef = useRef(0);
+  /** Último campo de texto focado — mais fiável no mobile do que snapshot só no pointer capture (o botão rouba foco). */
+  useEffect(() => {
+    const onFocusIn = (ev: FocusEvent) => {
+      const t = ev.target;
+      if (t instanceof HTMLElement && (isEditableTextTarget(t) || isContentEditable(t))) {
+        snapshotRef.current = t;
+      }
+    };
+    document.addEventListener("focusin", onFocusIn, true);
+    return () => document.removeEventListener("focusin", onFocusIn, true);
+  }, []);
 
   /** Antes do botão receber o toque: grava campo focado ou limpa se o foco já não era editável (atalhos no chart). */
   const snapshotEditableBeforeKey = useCallback(() => {
@@ -200,6 +217,16 @@ export default function MobileAsciiKeyboard() {
     if (el) {
       if (isEditableTextTarget(el)) insertIntoInput(el, out);
       else if (isContentEditable(el)) insertIntoContentEditable(el, out);
+      /** Mobile: o botão pode roubar foco depois do handler — voltar ao campo para a próxima tecla. */
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            if (el.isConnected) el.focus();
+          } catch {
+            /* ignore */
+          }
+        });
+      });
       return;
     }
     if (out.length === 1 && /^[a-zA-Z0-9]$/.test(out)) {
@@ -220,17 +247,16 @@ export default function MobileAsciiKeyboard() {
   }, []);
 
   const keyBtn =
-    "min-h-[42px] min-w-[28px] flex-1 shrink-0 rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium text-zinc-100 px-1 select-none touch-manipulation";
+    "min-h-[42px] min-w-[28px] flex-1 shrink-0 rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium text-zinc-100 px-1 select-none touch-manipulation [-webkit-tap-highlight-color:transparent]";
 
-  /** pointerup + click no mesmo toque (mobile): evita duplicar caractere. */
-  const bumpAndSendChar = useCallback(
-    (ch: string) => {
-      const now = Date.now();
-      if (now - lastTapRef.current < 45) return;
-      lastTapRef.current = now;
+  const onKeyPointerDown = useCallback(
+    (e: ReactPointerEvent<HTMLButtonElement>, ch: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      snapshotEditableBeforeKey();
       sendChar(ch);
     },
-    [sendChar],
+    [sendChar, snapshotEditableBeforeKey],
   );
 
   if (prefDisabled) return null;
@@ -246,7 +272,14 @@ export default function MobileAsciiKeyboard() {
           id="mobile-ascii-keyboard-panel"
           role="region"
           aria-label={tk.mobileAsciiKeyboardToggle ?? "Teclado"}
-          className="pointer-events-auto border-t border-zinc-600/80 bg-zinc-900 text-zinc-100 px-1.5 pt-2 pb-1 opacity-50"
+          className="pointer-events-auto border-t border-zinc-600/80 bg-zinc-900 text-zinc-100 px-1.5 pt-2 pb-1 opacity-50 select-none"
+          style={{
+            WebkitTouchCallout: "none",
+            WebkitUserSelect: "none",
+            userSelect: "none",
+            touchAction: "manipulation",
+          }}
+          onContextMenu={(e) => e.preventDefault()}
         >
           <p className="text-[10px] text-zinc-400 px-1 pb-1.5 leading-snug">{tk.mobileAsciiKeyboardHint}</p>
             <div className="flex flex-col gap-1">
@@ -255,18 +288,12 @@ export default function MobileAsciiKeyboard() {
                   <button
                     key={c}
                     type="button"
+                    tabIndex={-1}
                     className={keyBtn}
+                    style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                     onPointerDownCapture={snapshotEditableBeforeKey}
-                    onPointerUp={(e: ReactPointerEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
-                    onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
+                    onPointerDown={(e) => onKeyPointerDown(e, c)}
+                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {c}
                   </button>
@@ -277,18 +304,12 @@ export default function MobileAsciiKeyboard() {
                   <button
                     key={c}
                     type="button"
+                    tabIndex={-1}
                     className={keyBtn}
+                    style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                     onPointerDownCapture={snapshotEditableBeforeKey}
-                    onPointerUp={(e: ReactPointerEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
-                    onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
+                    onPointerDown={(e) => onKeyPointerDown(e, c)}
+                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {shift ? c.toUpperCase() : c}
                   </button>
@@ -299,18 +320,12 @@ export default function MobileAsciiKeyboard() {
                   <button
                     key={c}
                     type="button"
+                    tabIndex={-1}
                     className={keyBtn}
+                    style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                     onPointerDownCapture={snapshotEditableBeforeKey}
-                    onPointerUp={(e: ReactPointerEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
-                    onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
+                    onPointerDown={(e) => onKeyPointerDown(e, c)}
+                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {shift ? c.toUpperCase() : c}
                   </button>
@@ -319,13 +334,17 @@ export default function MobileAsciiKeyboard() {
               <div className="flex gap-1 items-stretch">
                 <button
                   type="button"
+                  tabIndex={-1}
                   className={`${keyBtn} flex-[1.1] ${shift ? "bg-emerald-800" : ""}`}
+                  style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
-                  onPointerUp={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    snapshotEditableBeforeKey();
                     setShift((s) => !s);
                   }}
+                  onContextMenu={(e) => e.preventDefault()}
                   aria-pressed={shift}
                   aria-label={tk.mobileAsciiKeyboardShift ?? "Shift"}
                 >
@@ -335,31 +354,29 @@ export default function MobileAsciiKeyboard() {
                   <button
                     key={c}
                     type="button"
+                    tabIndex={-1}
                     className={keyBtn}
+                    style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                     onPointerDownCapture={snapshotEditableBeforeKey}
-                    onPointerUp={(e: ReactPointerEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
-                    onClick={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      bumpAndSendChar(c);
-                    }}
+                    onPointerDown={(e) => onKeyPointerDown(e, c)}
+                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {shift ? c.toUpperCase() : c}
                   </button>
                 ))}
                 <button
                   type="button"
+                  tabIndex={-1}
                   className={`${keyBtn} flex-[1.4] text-xs`}
+                  style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
-                  onPointerUp={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    snapshotEditableBeforeKey();
                     onBackspace();
                   }}
+                  onContextMenu={(e) => e.preventDefault()}
                   aria-label={tk.mobileAsciiKeyboardBackspace ?? "Backspace"}
                 >
                   ⌫
@@ -368,25 +385,32 @@ export default function MobileAsciiKeyboard() {
               <div className="flex gap-1 pb-0.5">
                 <button
                   type="button"
-                  className="min-h-[44px] flex-[1] rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium touch-manipulation"
+                  tabIndex={-1}
+                  className="min-h-[44px] flex-[1] rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium touch-manipulation [-webkit-tap-highlight-color:transparent]"
+                  style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
-                  onPointerUp={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setOpen(false);
                   }}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
                   {tk.mobileAsciiKeyboardCloseOverlay ?? "Fechar"}
                 </button>
                 <button
                   type="button"
-                  className="min-h-[44px] flex-[2] rounded-md bg-emerald-800 active:bg-emerald-700 text-sm font-semibold touch-manipulation"
+                  tabIndex={-1}
+                  className="min-h-[44px] flex-[2] rounded-md bg-emerald-800 active:bg-emerald-700 text-sm font-semibold touch-manipulation [-webkit-tap-highlight-color:transparent]"
+                  style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
-                  onPointerUp={(e) => {
+                  onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    snapshotEditableBeforeKey();
                     onEnter();
                   }}
+                  onContextMenu={(e) => e.preventDefault()}
                   aria-label={tk.mobileAsciiKeyboardEnter ?? "Enter"}
                 >
                   {tk.mobileAsciiKeyboardEnter ?? "Enter"}
@@ -398,8 +422,11 @@ export default function MobileAsciiKeyboard() {
       <div className="flex justify-center px-2 pt-1 pointer-events-auto">
         <button
           type="button"
+          tabIndex={-1}
           onClick={() => setOpen((v) => !v)}
-          className="flex items-center justify-center border-0 bg-transparent p-1 opacity-50 active:opacity-70 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 rounded-sm"
+          style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
+          onContextMenu={(e) => e.preventDefault()}
+          className="flex items-center justify-center border-0 bg-transparent p-1 opacity-50 active:opacity-70 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 rounded-sm [-webkit-tap-highlight-color:transparent] select-none"
           aria-expanded={open}
           aria-controls="mobile-ascii-keyboard-panel"
           aria-label={tk.mobileAsciiKeyboardToggle ?? "Teclado"}
