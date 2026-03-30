@@ -91,6 +91,13 @@ export function useAggFastTradeLive(opts: {
   klines: KlineLike[];
   /** Primeira linha do último GET kline-cache2 (só servidor); usada como âncora de fecho quando o merge [0] está desalinhado. */
   serverNewestKlineFromCache: KlineLike | null;
+  /**
+   * GET kline-cache2/klines já concluiu para o símbolo atual (`klinesDataSymbol === symbol`).
+   * O WebSocket aggTrade só liga depois — primeiro cache, depois stream ao vivo.
+   */
+  cacheReadyForAggWs: boolean;
+  /** Mudança de intervalo força fechar e recriar o WebSocket (mesmo símbolo). */
+  groupMinutes: number;
   onLiveFlush: (rows: AggFastBarRowPayload[]) => void;
   /** Chamado quando chega aggTrade válido (atemporal vivo); throttle interno — p.ex. “Última atualização” / bolinha. */
   onLiveAggActivity?: () => void;
@@ -117,6 +124,8 @@ export function useAggFastTradeLive(opts: {
     onRawAggTrade,
     onPriceTickResolved,
     onPriceTickDiagnostics,
+    cacheReadyForAggWs,
+    groupMinutes,
   } = opts;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
@@ -313,8 +322,9 @@ export function useAggFastTradeLive(opts: {
     }
   }, [enabled, sym, klines, klinesSourceSymbol, aggKind, serverNewestKlineFromCache]);
 
+  /** aggTrade: só após GET kline-cache2/klines concluir (`cacheReadyForAggWs`). `groupMinutes` na dependência recria o WS ao mudar intervalo. */
   useEffect(() => {
-    if (!enabled || !sym || tickSize == null || !(tickSize > 0)) return;
+    if (!enabled || !sym || tickSize == null || !(tickSize > 0) || !cacheReadyForAggWs) return;
 
     const refreshStreamFloor = () => {
       const s = symRef.current;
@@ -430,7 +440,7 @@ export function useAggFastTradeLive(opts: {
         /* ignore */
       }
     };
-  }, [enabled, sym, tickSize, aggKind]);
+  }, [enabled, sym, tickSize, aggKind, groupMinutes, cacheReadyForAggWs]);
 
   useEffect(() => {
     if (!enabled || !sym) return;

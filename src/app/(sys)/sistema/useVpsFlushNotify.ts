@@ -17,9 +17,11 @@ export function useVpsFlushNotify(opts: {
   enabled: boolean;
   wsUrl: string | undefined;
   symbol: string;
+  /** Recria o WebSocket ao mudar intervalo / vista do gráfico. */
+  groupMinutes: number;
   onFlush: () => void;
 }) {
-  const { enabled, wsUrl, symbol, onFlush } = opts;
+  const { enabled, wsUrl, symbol, groupMinutes, onFlush } = opts;
   const onFlushRef = useRef(onFlush);
   onFlushRef.current = onFlush;
 
@@ -68,5 +70,5 @@ export function useVpsFlushNotify(opts: {
         /* ignore */
       }
     };
-  }, [enabled, wsUrl, symbol]);
+  }, [enabled, wsUrl, symbol, groupMinutes]);
 }

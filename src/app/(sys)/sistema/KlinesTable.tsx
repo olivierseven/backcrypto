@@ -1202,11 +1202,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   }, [aggPriceTick, aggPriceTickDiag, aggFastLiveDebugEnabled, pushAggFastLiveDebug]);
 
   const aggWsKind = groupMinutesToAggKind(groupMinutes);
+  const aggCacheReadyForWs =
+    klinesDataSymbol != null && klinesDataSymbol.trim().toUpperCase() === symbol.trim().toUpperCase();
   useAggFastTradeLive({
     enabled: aggWsKind != null && timeframeRestored && isAggFastGroupMinutes(groupMinutes),
     aggKind: (aggWsKind ?? "renko") as AggFastWsKind,
     symbol,
     klinesSourceSymbol: klinesDataSymbol,
+    cacheReadyForAggWs: aggCacheReadyForWs,
+    groupMinutes,
     timezoneOffsetHours: timezoneOffset,
     klines,
     serverNewestKlineFromCache,
@@ -1254,6 +1258,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     enabled: aggWsKind != null && timeframeRestored && VPS_FLUSH_WS_URL.length > 0,
     wsUrl: VPS_FLUSH_WS_URL || undefined,
     symbol,
+    groupMinutes,
     onFlush: () => {
       void fetchKlinesRef.current();
     },
@@ -1472,7 +1477,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
       ws = null;
     };
-  }, [symbol]);
+  }, [symbol, groupMinutes]);
 
   // Ao voltar para a aba, atualiza na hora (evita depender do timer com aba em segundo plano)
   useEffect(() => {
