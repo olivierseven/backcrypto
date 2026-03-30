@@ -335,7 +335,11 @@ export function KlinesChartSvg({
   }, [selectPanActive, onSelectToolPan]);
 
   const fontSize = Math.round(10 * textScale);
-  const fontSizeAxis = Math.round(12 * textScale);
+  /** Eixo X (data/hora): só reduz em plot estreito; em desktop ≥ ref não amplia (evita “negrito” vs 12×textScale). */
+  const axisWidthRefPx = 380;
+  const axisWidthFactor =
+    chartW >= axisWidthRefPx ? 1 : Math.max(0.55, chartW / axisWidthRefPx);
+  const fontSizeAxis = Math.max(7, Math.round(12 * textScale * axisWidthFactor));
   const volumeOnPriceClipId = useId();
   const plotClipId = useId();
   const showCrosshairValues =
@@ -538,7 +542,7 @@ export function KlinesChartSvg({
           const yRow1 = tableTop + rowH - 2 + labelOffsetDown;
           return (
             <>
-              <g className="text-[12px] font-mono" fill={backgroundTextHex}>
+              <g className="font-mono" fill={backgroundTextHex}>
                 {dayBreaksFiltered.map((b) => {
                   const openTimeMs = b.openTime ?? (b.index < windowN ? (windowSlice[b.index][0] as number) : 0);
                   const x = cx(b.index);
