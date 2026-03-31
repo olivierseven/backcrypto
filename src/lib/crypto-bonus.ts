@@ -2,9 +2,11 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { Tier, TxSource, TxType } from "@/lib/prisma-bio-client";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
 
-/** Bônus de primeiro login: 3.000 coins */
-export const CRYPTO_WELCOME_COINS = 3000;
-export const CRYPTO_WELCOME_DURATION_DAYS = 7;
+/** Valor inicial sugerido no painel admin (dias = coins, como o trial lite). */
+export const DEFAULT_ADMIN_WELCOME_DURATION_DAYS = 7;
+
+const MIN_ACCESS_DAYS = 1;
+const MAX_ACCESS_DAYS = 365;
 
 /**
  * Trial lite de primeiro login (simula como PIX pago):
@@ -14,22 +16,6 @@ export const CRYPTO_WELCOME_DURATION_DAYS = 7;
  */
 export const CRYPTO_LITE_TRIAL_COINS = 1;
 export const CRYPTO_LITE_TRIAL_DURATION_DAYS = 1;
-
-/**
- * Verifica se é o primeiro login do usuário
- * (não possui nenhum CoinLedgerEntry com source BONUS ou STRIPE no banco)
- */
-export async function isFirstLoginCrypto(userId: string): Promise<boolean> {
-  const hasAny = await cryptoPrisma.coinLedgerEntry.findFirst({
-    where: {
-      userId,
-      source: { in: [TxSource.BONUS, TxSource.STRIPE] },
-      type: TxType.CREDIT,
-    },
-    select: { id: true },
-  });
-  return !hasAny;
-}
 
 /**
  * Verifica se é o "primeiro crédito" do usuário.
@@ -45,15 +31,33 @@ export async function isFirstLoginCryptoLiteTrial(userId: string): Promise<boole
 }
 
 /**
- * Cria o pacote de boas-vindas (3.000 coins) e notificação.
+ * Pacote trial lite concedido pelo admin (uma vez por usuário): mesma lógica do primeiro login,
+ * com dias definidos pelo admin; coins = dias. Não chamar no login automático.
  */
-export async function createCryptoWelcomePackage(userId: string): Promise<{
+export async function createCryptoWelcomePackage(
+  userId: string,
+  durationDays: number,
+): Promise<{
   success: boolean;
   coins?: number;
+  durationDays?: number;
   error?: string;
 }> {
+  const days = Math.max(MIN_ACCESS_DAYS, Math.min(MAX_ACCESS_DAYS, Math.floor(Number(durationDays))));
+  const coins = days;
+  const refId = `welcome_crypto_${userId}`;
+
   try {
-    dbg(`[crypto-bonus] creating welcome package userId=${userId.slice(0, 8)}... coins=${CRYPTO_WELCOME_COINS}`);
+    const existingEntry = await cryptoPrisma.coinLedgerEntry.findFirst({
+      where: { userId, refId },
+      select: { id: true },
+    });
+    if (existingEntry) {
+      dbg(`[crypto-bonus] welcome package already exists userId=${userId.slice(0, 8)}... skip`);
+      return { success: true, coins, durationDays: days };
+    }
+
+    dbg(`[crypto-bonus] creating welcome package userId=${userId.slice(0, 8)}... coins=${coins} days=${days}`);
 
     const result = await cryptoPrisma.$transaction(async (tx) => {
       const wallet = await tx.userCoinWallet.upsert({
@@ -63,53 +67,66 @@ export async function createCryptoWelcomePackage(userId: string): Promise<{
         select: { id: true },
       });
 
-      const refId = `welcome_crypto_${userId}_${Date.now()}`;
+      const now = new Date();
+      const expiresAt = new Date(now);
+      expiresAt.setDate(expiresAt.getDate() + days);
+      expiresAt.setHours(23, 59, 59, 999);
+
       const entry = await tx.coinLedgerEntry.create({
         data: {
           userId,
           walletId: wallet.id,
           type: TxType.CREDIT,
-          source: TxSource.BONUS,
-          amount: CRYPTO_WELCOME_COINS,
+          source: TxSource.PAGARME,
+          amount: coins,
           refId,
-          meta: { reason: "welcome_package_crypto", durationDays: CRYPTO_WELCOME_DURATION_DAYS, coins: CRYPTO_WELCOME_COINS },
+          meta: {
+            reason: "welcome_package_crypto",
+            durationDays: days,
+            coins,
+            pixLike: true,
+          },
+          createdAt: now,
         },
         select: { id: true },
       });
 
       await tx.userCoinWallet.update({
         where: { userId },
-        data: { balance: { increment: CRYPTO_WELCOME_COINS } },
+        data: { balance: { increment: coins } },
       });
-
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + CRYPTO_WELCOME_DURATION_DAYS);
-      expiresAt.setHours(23, 59, 59, 999);
 
       await tx.walletCredit.create({
         data: {
           userId,
           entryId: entry.id,
-          amount: CRYPTO_WELCOME_COINS,
+          amount: coins,
           consumed: 0,
           expiresAt,
         },
+      });
+
+      await tx.user.updateMany({
+        where: { id: userId },
+        data: { tier: Tier.lite },
       });
 
       return { entryId: entry.id };
     });
 
     const expiredDate = new Date();
-    expiredDate.setDate(expiredDate.getDate() + CRYPTO_WELCOME_DURATION_DAYS);
+    expiredDate.setDate(expiredDate.getDate() + days);
     const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { language: true },
     });
     const lang = user?.language ?? "pt";
+    const c: number = coins;
+    const d: number = days;
     const message =
       lang === "pt"
-        ? `🎉 Bem-vindo(a)! Você recebeu ${CRYPTO_WELCOME_COINS.toLocaleString("pt-BR")} coins de bônus, válidos por ${CRYPTO_WELCOME_DURATION_DAYS} dias.`
-        : `🎉 Welcome! You received ${CRYPTO_WELCOME_COINS.toLocaleString("en-US")} bonus coins, valid for ${CRYPTO_WELCOME_DURATION_DAYS} days.`;
+        ? `🎉 Trial lite (bônus admin): você recebeu ${c.toLocaleString("pt-BR")} coin${c === 1 ? "" : "s"}, válido${c === 1 ? "" : "s"} por ${d === 1 ? "1 dia" : `${d} dias`}.`
+        : `🎉 Lite trial (admin bonus): you received ${c.toLocaleString("en-US")} coin${c === 1 ? "" : "s"}, valid for ${d === 1 ? "1 day" : `${d} days`}.`;
     await cryptoPrisma.userNotification.create({
       data: {
         senderType: "system",
@@ -120,8 +137,8 @@ export async function createCryptoWelcomePackage(userId: string): Promise<{
       },
     });
 
-    vLog(`[crypto-bonus] welcome package created userId=${userId.slice(0, 8)}... coins=${CRYPTO_WELCOME_COINS} entryId=${result.entryId}`);
-    return { success: true, coins: CRYPTO_WELCOME_COINS };
+    vLog(`[crypto-bonus] welcome package created userId=${userId.slice(0, 8)}... coins=${coins} entryId=${result.entryId}`);
+    return { success: true, coins, durationDays: days };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     error(`[crypto-bonus] failed userId=${userId.slice(0, 8)}... error=${msg}`);
@@ -207,8 +224,8 @@ export async function createCryptoLiteTrialPackage(userId: string): Promise<{
 
     const message =
       lang === "pt"
-        ? `🎉 Bem-vindo(a)! Você recebeu 1 coin de teste (válido por 1 dia).`
-        : `🎉 Welcome! You received 1 test coin (valid for 1 day).`;
+        ? `🎉 Trial lite: você recebeu 1 coin válido por 1 dia.`
+        : `🎉 Lite trial: you received 1 coin valid for 1 day.`;
 
     const expiredDate = new Date();
     expiredDate.setDate(expiredDate.getDate() + CRYPTO_LITE_TRIAL_DURATION_DAYS);
@@ -232,21 +249,18 @@ export async function createCryptoLiteTrialPackage(userId: string): Promise<{
   }
 }
 
-const ADMIN_ACCESS_COINS = 1;
-const MIN_ACCESS_DAYS = 1;
-const MAX_ACCESS_DAYS = 365;
-
 /**
- * Concede acesso lite por N dias (admin). 1 coin, tier lite, expira em durationDays.
+ * Concede trial lite por N dias (admin/debug, pode repetir). Mesma regra do pacote de boas-vindas: coins = dias.
  */
 export async function createAdminAccessPackage(
   userId: string,
   durationDays: number
-): Promise<{ success: boolean; coins?: number; error?: string }> {
+): Promise<{ success: boolean; coins?: number; durationDays?: number; error?: string }> {
   const days = Math.max(MIN_ACCESS_DAYS, Math.min(MAX_ACCESS_DAYS, Math.floor(durationDays)));
+  const coins = days;
   try {
     const refId = `admin_access_${userId}_${Date.now()}`;
-    dbg(`[crypto-bonus] creating admin access package userId=${userId.slice(0, 8)}... days=${days}`);
+    dbg(`[crypto-bonus] creating admin access package userId=${userId.slice(0, 8)}... days=${days} coins=${coins}`);
 
     const result = await cryptoPrisma.$transaction(async (tx) => {
       const wallet = await tx.userCoinWallet.upsert({
@@ -266,10 +280,10 @@ export async function createAdminAccessPackage(
           userId,
           walletId: wallet.id,
           type: TxType.CREDIT,
-          source: TxSource.BONUS,
-          amount: ADMIN_ACCESS_COINS,
+          source: TxSource.PAGARME,
+          amount: coins,
           refId,
-          meta: { reason: "admin_access", durationDays: days, coins: ADMIN_ACCESS_COINS },
+          meta: { reason: "admin_access", durationDays: days, coins, pixLike: true },
           createdAt: now,
         },
         select: { id: true },
@@ -277,14 +291,14 @@ export async function createAdminAccessPackage(
 
       await tx.userCoinWallet.update({
         where: { userId },
-        data: { balance: { increment: ADMIN_ACCESS_COINS } },
+        data: { balance: { increment: coins } },
       });
 
       await tx.walletCredit.create({
         data: {
           userId,
           entryId: entry.id,
-          amount: ADMIN_ACCESS_COINS,
+          amount: coins,
           consumed: 0,
           expiresAt,
         },
@@ -305,8 +319,8 @@ export async function createAdminAccessPackage(
     const lang = user?.language ?? "pt";
     const message =
       lang === "pt"
-        ? `Acesso concedido: 1 coin, válido por ${days} dia(s).`
-        : `Access granted: 1 coin, valid for ${days} day(s).`;
+        ? `🎉 Trial lite (acesso admin): ${coins.toLocaleString("pt-BR")} coin${coins === 1 ? "" : "s"}, válido${coins === 1 ? "" : "s"} por ${days === 1 ? "1 dia" : `${days} dias`}.`
+        : `🎉 Lite trial (admin access): ${coins.toLocaleString("en-US")} coin${coins === 1 ? "" : "s"}, valid for ${days === 1 ? "1 day" : `${days} days`}.`;
     const expiredDate = new Date();
     expiredDate.setDate(expiredDate.getDate() + days);
 
@@ -321,7 +335,7 @@ export async function createAdminAccessPackage(
     });
 
     vLog(`[crypto-bonus] admin access created userId=${userId.slice(0, 8)}... days=${days} entryId=${result.entryId}`);
-    return { success: true, coins: ADMIN_ACCESS_COINS };
+    return { success: true, coins, durationDays: days };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     error(`[crypto-bonus] admin access failed userId=${userId.slice(0, 8)}... error=${msg}`);
@@ -329,4 +343,4 @@ export async function createAdminAccessPackage(
   }
 }
 
-export { MIN_ACCESS_DAYS, MAX_ACCESS_DAYS, ADMIN_ACCESS_COINS };
+export { MIN_ACCESS_DAYS, MAX_ACCESS_DAYS };

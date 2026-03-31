@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/mailer";
 import { decryptEmail } from "@/lib/crypto";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn } from "@/lib/logger";
+import { computeExpiresAtUtcFromMonthDelta } from "@/lib/wallet-credit-expiry";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
 const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
@@ -14,22 +15,14 @@ const EMAIL_LINK_BASE =
     ? "https://sevencoins.com.br"
     : APP_URL);
 
-function getDurationMonthsCrypto(coins: number): number {
-  if (coins >= 49) return 12;
-  if (coins >= 7) return 1;
+function getDurationMonthsCryptoFromPlan(planKey: string): number {
+  if (planKey === "49") return 12;
   return 1;
 }
 
-function computeExpiryCrypto(coins: number, base: Date): Date {
-  const d = new Date(base);
-  const months = getDurationMonthsCrypto(coins);
-  const day = d.getUTCDate();
-  d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() + months);
-  const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
-  d.setUTCDate(Math.min(day, lastDay));
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
+function computeExpiryCryptoFromPlan(planKey: string, base: Date): Date {
+  const months = getDurationMonthsCryptoFromPlan(planKey);
+  return computeExpiresAtUtcFromMonthDelta(base, months);
 }
 
 export async function handleOrderPaid(data: any) {
@@ -49,13 +42,14 @@ export async function handleOrderPaid(data: any) {
   }
 
   const userId = bioOrder.userId;
-  // Coins: prefer DB (set at order creation). Fallback to metadata; do NOT use data.amount (PIX amount is BRL cents, e.g. 26950).
+  const planKey = String(data?.metadata?.plan ?? "");
+  // Coins: prefer DB (set at order creation). Fallback a metadata.coins; não usar data.amount (é BRL).
   let coinsToCredit = (bioOrder.coinsToCredit ?? Number(data?.metadata?.coins)) || 0;
   if (coinsToCredit <= 0) {
-    warn(`[pagarme-crypto] order.paid orderId=${orderId} missing coinsToCredit and metadata.coins, defaulting to 7`);
-    coinsToCredit = 7;
+    warn(`[pagarme-crypto] order.paid orderId=${orderId} missing coinsToCredit and metadata.coins, defaulting to 11`);
+    coinsToCredit = 11;
   }
-  const amountCents = data?.amount ?? (bioOrder.amountTotalCents ?? (coinsToCredit >= 49 ? 4900 : 700));
+  const amountCents = data?.amount ?? bioOrder.amountTotalCents ?? 0;
   const completedAt = data?.updated_at ? new Date(data.updated_at) : new Date();
 
   dbg(`[pagarme-crypto] order.paid orderId=${orderId} userId=${userId.slice(0, 8)}... coins=${coinsToCredit}`);
@@ -99,7 +93,7 @@ export async function handleOrderPaid(data: any) {
       dbg(`[pagarme-crypto] credited +${coinsToCredit} userId=${userId.slice(0, 8)}...`);
     }
 
-    const expiresAt = computeExpiryCrypto(coinsToCredit, completedAt);
+    const expiresAt = computeExpiryCryptoFromPlan(planKey, completedAt);
     await tx.walletCredit.upsert({
       where: { entryId: entry.id },
       update: {},

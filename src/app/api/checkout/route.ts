@@ -10,6 +10,7 @@ import { dbg, warn, error } from "@/lib/logger";
 import { getBalance } from "@/lib/spend-coins";
 import { hasActivePaidCredits } from "@/lib/user-tier";
 import { decryptEmail } from "@/lib/crypto";
+import { isValidPromoCoupon20Off } from "@/lib/crypto-promo-coupon";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -24,14 +25,36 @@ const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 const PRICE_7 = process.env.PRICE_COINS_7;
 const PRICE_49 = process.env.PRICE_COINS_49;
+const PRICE_7_20OFF = process.env.PRICE_COINS_7_20OFF;
+const PRICE_49_20OFF = process.env.PRICE_COINS_49_20OFF;
 
-// $7 → 7 coins | $49 → 49 coins
-const PLANS = {
-  "7": { priceId: PRICE_7!, coins: 7, amountCents: 700 },
-  "49": { priceId: PRICE_49!, coins: 49, amountCents: 4900 },
-} as const;
+type PlanKey = "7" | "49";
 
-type PlanKey = keyof typeof PLANS;
+type ResolvedStripePlan = {
+  priceId: string;
+  coins: number;
+  amountCents: number;
+  pricingLabel: string;
+};
+
+function resolveStripePlan(planKey: PlanKey, coupon: string | undefined): ResolvedStripePlan | { error: "promo_prices_missing" } {
+  const promo = isValidPromoCoupon20Off(coupon);
+  if (promo) {
+    if (!PRICE_7_20OFF || !PRICE_49_20OFF) {
+      return { error: "promo_prices_missing" };
+    }
+    const row =
+      planKey === "49"
+        ? { priceId: PRICE_49_20OFF, amountCents: 6200, pricingLabel: "$62/ano" }
+        : { priceId: PRICE_7_20OFF, amountCents: 900, pricingLabel: "$9/mês" };
+    return { ...row, coins: row.amountCents / 100 };
+  }
+  const row =
+    planKey === "49"
+      ? { priceId: PRICE_49!, amountCents: 7700, pricingLabel: "$77/ano" }
+      : { priceId: PRICE_7!, amountCents: 1100, pricingLabel: "$11/mês" };
+  return { ...row, coins: row.amountCents / 100 };
+}
 
 /** Valida CPF pelos dígitos verificadores (mesmo critério do PIX/Pagar.me). */
 function isValidCpf(digits: string): boolean {
@@ -97,7 +120,7 @@ export async function POST(req: Request) {
     // ignora se não conseguir descriptografar
   }
 
-  let body: { plan?: string; returnTo?: string; tax_code?: string; cpf?: string } = {};
+  let body: { plan?: string; returnTo?: string; tax_code?: string; cpf?: string; coupon?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -105,6 +128,7 @@ export async function POST(req: Request) {
   }
 
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
+  const couponRaw = typeof body?.coupon === "string" ? body.coupon : undefined;
   const taxCodeRaw = typeof body?.tax_code === "string" ? body.tax_code.trim().slice(0, 30) : "";
   const taxCode = taxCodeRaw.length >= 3 ? taxCodeRaw : null;
   const cpfRaw = typeof body?.cpf === "string" ? body.cpf.replace(/\D/g, "").slice(0, 11) : "";
@@ -124,7 +148,15 @@ export async function POST(req: Request) {
     );
   }
 
-  const plan = PLANS[planKey];
+  const resolved = resolveStripePlan(planKey, couponRaw);
+  if ("error" in resolved) {
+    error("[crypto/checkout] valid coupon but PRICE_COINS_*_20OFF missing");
+    return NextResponse.json(
+      { error: "promo_unavailable", message: "Cupom válido, mas preços promocionais não estão configurados no servidor." },
+      { status: 503 }
+    );
+  }
+  const plan = resolved;
 
   const balance = await getBalance(userId);
   if (balance >= MAX_COINS_BEFORE_PURCHASE) {
@@ -165,9 +197,10 @@ export async function POST(req: Request) {
       crypto: "1",
       tax_code: taxCode ?? "",
       user_cpf: userCpf,
+      promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
     };
 
-    // Stripe: assinatura recorrente — $7/mês ou $49/ano; crédito a cada invoice.payment_succeeded no webhook
+    // Stripe: assinatura recorrente — $11/mês ou $77/ano (ou $9/$62 com cupom); crédito a cada invoice.payment_succeeded no webhook
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: plan.priceId, quantity: 1 }],
@@ -176,7 +209,13 @@ export async function POST(req: Request) {
       client_reference_id: userId,
       metadata,
       subscription_data: {
-        metadata: { userId, coins: String(plan.coins), plan: planKey, crypto: "1" },
+        metadata: {
+          userId,
+          coins: String(plan.coins),
+          plan: planKey,
+          crypto: "1",
+          promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
+        },
       },
       ...(customerEmail ? { customer_email: customerEmail } : {}),
     });
@@ -187,7 +226,7 @@ export async function POST(req: Request) {
         userId,
         amountTotalCents: plan.amountCents,
         coinsToCredit: plan.coins,
-        pricingLabel: planKey === "7" ? "$7/mês" : "$49/ano",
+        pricingLabel: plan.pricingLabel,
         currency: "USD",
       },
       create: {
@@ -197,7 +236,7 @@ export async function POST(req: Request) {
         amountTotalCents: plan.amountCents,
         coinsToCredit: plan.coins,
         currency: "USD",
-        pricingLabel: planKey === "7" ? "$7/mês" : "$49/ano",
+        pricingLabel: plan.pricingLabel,
       },
     });
 

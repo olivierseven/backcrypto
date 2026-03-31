@@ -18,8 +18,12 @@ Arquivo de referência: quais variáveis estão em uso no código e quais não a
 | **EMAIL_ENC_KEY_B64** | `src/lib/crypto.ts` — criptografia de e-mail |
 | **DEBUG_LOGS** | `src/app/api/simulacao/run/route.ts`, `src/lib/simulacao-genesis.ts` |
 | **STRIPE_SECRET_KEY** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` |
-| **PRICE_COINS_7** | `api/checkout/route.ts` |
-| **PRICE_COINS_49** | `api/checkout/route.ts` |
+| **PRICE_COINS_7** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` |
+| **PRICE_COINS_49** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` |
+| **PRICE_COINS_7_20OFF** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` — preço Stripe ~20% OFF (cupom) |
+| **PRICE_COINS_49_20OFF** | `api/checkout/route.ts`, `api/webhooks/stripe/route.ts` — preço Stripe ~20% OFF (cupom) |
+| **CRYPTO_PROMO_COUPON_20OFF** | `lib/crypto-promo-coupon.ts` — código do cupom no servidor (default `sevencoins77`) |
+| **NEXT_PUBLIC_CRYPTO_PROMO_COUPON_20OFF** | `plans/CryptoPlansClient.tsx` — mesmo código no cliente para validar antes do checkout |
 | **STRIPE_WEBHOOK_SECRET** | `api/webhooks/stripe/route.ts` |
 | **PAGARME_SECRET_KEY** | `api/checkout-pix/route.ts` |
 | **PAGARME_ACCOUNT_ID** | `api/checkout-pix/route.ts` |

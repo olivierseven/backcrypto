@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/app/constants";
-import { CRYPTO_WELCOME_COINS, CRYPTO_WELCOME_DURATION_DAYS } from "@/lib/crypto-bonus";
-import { BIO_WELCOME_COINS, BIO_WELCOME_DURATION_DAYS } from "@/lib/bio-bonus";
+import {
+  DEFAULT_ADMIN_WELCOME_DURATION_DAYS,
+  MAX_ACCESS_DAYS,
+  MIN_ACCESS_DAYS,
+} from "@/lib/crypto-bonus";
 
 interface Props {
   userId: string;
@@ -51,6 +54,7 @@ export default function CryptoAdminClient({ userId, userEmail }: Props) {
   const [welcomeSearchLoading, setWelcomeSearchLoading] = useState(false);
   const [welcomePackageLoading, setWelcomePackageLoading] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [welcomeDurationDays, setWelcomeDurationDays] = useState(DEFAULT_ADMIN_WELCOME_DURATION_DAYS);
 
   // Deletar usuário
   const [searchUserId, setSearchUserId] = useState("");
@@ -82,7 +86,8 @@ export default function CryptoAdminClient({ userId, userEmail }: Props) {
       <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
         <h2 className="text-lg font-semibold text-emerald-900 mb-4">🎁 Atribuir pacote de boas-vindas</h2>
         <p className="text-sm text-emerald-800 mb-4">
-          Busque um usuário por ID ou email e atribua o pacote de boas-vindas ({BIO_WELCOME_COINS.toLocaleString("pt-BR")} coins, válido por {BIO_WELCOME_DURATION_DAYS} dias).
+          Mesmo tipo do trial lite no primeiro login: escolha quantos dias; a quantidade de coins será igual aos dias
+          (entre {MIN_ACCESS_DAYS} e {MAX_ACCESS_DAYS}).
         </p>
 
         <div className="space-y-4">
@@ -158,15 +163,30 @@ export default function CryptoAdminClient({ userId, userEmail }: Props) {
             <div className="p-4 bg-white rounded-lg border border-emerald-200">
               <h3 className="font-semibold text-zinc-900 mb-3">👤 {welcomeFoundUser.email}</h3>
               <p className="text-sm text-zinc-600 mb-3">ID: {welcomeFoundUser.id}</p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-zinc-700 mb-2">Dias (= coins)</label>
+                <input
+                  type="number"
+                  min={MIN_ACCESS_DAYS}
+                  max={MAX_ACCESS_DAYS}
+                  value={welcomeDurationDays}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (Number.isFinite(v)) setWelcomeDurationDays(Math.round(v));
+                  }}
+                  className="w-full max-w-[200px] px-4 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
               <button
                 onClick={async () => {
                   setWelcomePackageLoading(true);
                   setWelcomeMessage("");
                   try {
+                    const d = Math.min(MAX_ACCESS_DAYS, Math.max(MIN_ACCESS_DAYS, welcomeDurationDays));
                     const res = await apiFetch("welcome-package", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ userId: welcomeFoundUser.id }),
+                      body: JSON.stringify({ userId: welcomeFoundUser.id, durationDays: d }),
                     });
                     const data = await res.json();
                     if (res.ok) {

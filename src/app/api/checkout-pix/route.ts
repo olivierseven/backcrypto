@@ -10,6 +10,7 @@ import { dbg, warn, error } from "@/lib/logger";
 import { getUsdToBrlRate } from "@/lib/usd-brl-rate";
 import { getBalance } from "@/lib/spend-coins";
 import { hasActivePaidCredits } from "@/lib/user-tier";
+import { isValidPromoCoupon20Off } from "@/lib/crypto-promo-coupon";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -30,10 +31,14 @@ const PIX_TEST_AMOUNT_BRL_CENTS = (() => {
 })();
 const PIX_CPF_SEM_INFORMAR = "01234567890";
 
-// Crypto: $7 → 7 coins | $49 → 49 coins (valores em USD; PIX converte para BRL na hora)
+// Crypto: 1 coin = US$1 — planos mensal/anual; PIX converte USD→BRL na hora
 const PLANS_USD = {
-  "7": { coins: 7, amountUsdCents: 700 },
-  "49": { coins: 49, amountUsdCents: 4900 },
+  "7": { amountUsdCents: 1100 },
+  "49": { amountUsdCents: 7700 },
+} as const;
+const PLANS_USD_PROMO = {
+  "7": { amountUsdCents: 900 },
+  "49": { amountUsdCents: 6200 },
 } as const;
 
 function usdCentsToBrlCents(usdCents: number, rate: number): number {
@@ -97,7 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "email_decrypt_fail" }, { status: 500 });
   }
 
-  let body: { plan?: string; returnTo?: string; cpf?: string } = {};
+  let body: { plan?: string; returnTo?: string; cpf?: string; coupon?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -105,7 +110,10 @@ export async function POST(req: Request) {
   }
 
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
-  const plan = PLANS_USD[planKey];
+  const couponRaw = typeof body?.coupon === "string" ? body.coupon : undefined;
+  const planRow = isValidPromoCoupon20Off(couponRaw) ? PLANS_USD_PROMO[planKey] : PLANS_USD[planKey];
+  const coinsUsd = planRow.amountUsdCents / 100;
+  const plan = { amountUsdCents: planRow.amountUsdCents, coins: coinsUsd };
 
   const balance = await getBalance(userId);
   if (balance >= MAX_COINS_BEFORE_PURCHASE) {
@@ -153,7 +161,13 @@ export async function POST(req: Request) {
       { amount: amountBrlCents, description: `${plan.coins.toLocaleString("pt-BR")} coins - Crypto (equiv. $${plan.amountUsdCents / 100})`, quantity: 1, code: `crypto_coins_${planKey}` },
     ],
     payments: [{ payment_method: "pix" as const, pix: { expires_in: PIX_EXPIRES_IN_SECONDS } }],
-    metadata: { userId, coins: String(plan.coins), plan: planKey, crypto: "1" },
+    metadata: {
+      userId,
+      coins: String(plan.coins),
+      plan: planKey,
+      crypto: "1",
+      promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
+    },
   };
 
   const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString("base64");

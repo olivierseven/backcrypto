@@ -291,6 +291,9 @@ export default function SistemaDebugPanel() {
   const [accessDays, setAccessDays] = useState(1);
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState<string | null>(null);
   const [truncateAtemporalLoading, setTruncateAtemporalLoading] = useState(false);
   const [truncateAtemporalMessage, setTruncateAtemporalMessage] = useState<string | null>(null);
   const [truncateAtemporalErr, setTruncateAtemporalErr] = useState(false);
@@ -1946,6 +1949,79 @@ export default function SistemaDebugPanel() {
                   {accessMessage && (
                     <p className={`mt-3 text-sm ${accessMessage.startsWith((t as Record<string, string>).accessError ?? "Erro") ? "text-red-700" : "text-emerald-700"}`}>
                       {accessMessage}
+                    </p>
+                  )}
+                </section>
+                <section className="border-t border-zinc-200 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-zinc-800 mb-2">
+                    {(t as Record<string, string>).deleteUserTitle ?? "Excluir usuário (free, sem compra)"}
+                  </h4>
+                  <p className="text-xs text-zinc-600 mb-3">
+                    {(t as Record<string, string>).deleteUserHint ?? ""}
+                  </p>
+                  <div className="flex flex-col gap-3 max-w-sm">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).accessUserIdLabel ?? "User ID"}</span>
+                      <input
+                        type="text"
+                        value={deleteUserId}
+                        onChange={(e) => {
+                          setDeleteUserId(e.target.value);
+                          setDeleteMessage(null);
+                        }}
+                        placeholder={(t as Record<string, string>).accessUserIdPlaceholder ?? ""}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm font-mono"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={deleteLoading || !deleteUserId.trim()}
+                      onClick={async () => {
+                        const confirmMsg = (t as Record<string, string>).deleteUserConfirm ?? "Confirmar exclusão?";
+                        if (typeof window !== "undefined" && !window.confirm(confirmMsg)) return;
+                        setDeleteMessage(null);
+                        setDeleteLoading(true);
+                        try {
+                          const res = await fetch(`${API_BASE}/debug/delete-user`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId: deleteUserId.trim() }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok && data.ok) {
+                            setDeleteMessage((t as Record<string, string>).deleteUserSuccess ?? "OK");
+                            setDeleteUserId("");
+                          } else {
+                            setDeleteMessage(
+                              `${(t as Record<string, string>).deleteUserErrGeneric ?? "Erro"}: ${data.error ?? res.statusText}`
+                            );
+                          }
+                        } catch (err) {
+                          setDeleteMessage(
+                            `${(t as Record<string, string>).deleteUserErrGeneric ?? "Erro"}: ${err instanceof Error ? err.message : String(err)}`
+                          );
+                        } finally {
+                          setDeleteLoading(false);
+                        }
+                      }}
+                      className="px-3 py-2 bg-red-800 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deleteLoading
+                        ? ((t as { loading?: string }).loading ?? "Executando…")
+                        : ((t as Record<string, string>).deleteUserButton ?? "Excluir")}
+                    </button>
+                  </div>
+                  {deleteMessage && (
+                    <p
+                      className={`mt-3 text-sm ${
+                        deleteMessage.startsWith((t as Record<string, string>).deleteUserErrGeneric ?? "Erro") ||
+                        deleteMessage.startsWith((t as Record<string, string>).deleteUserErrGeneric ?? "Could")
+                          ? "text-red-700"
+                          : "text-emerald-700"
+                      }`}
+                    >
+                      {deleteMessage}
                     </p>
                   )}
                 </section>

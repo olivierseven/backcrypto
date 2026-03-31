@@ -6,7 +6,18 @@ import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 
-const TRIAL_KEYS = ["lite_trial_first_login", "admin_access"];
+/** Ordem: bônus de boas-vindas primeiro, depois trial, depois acesso admin */
+const MODAL_KEY_ORDER = ["welcome_package_crypto", "lite_trial_first_login", "admin_access"] as const;
+
+function pickModalNotification(
+  list: Notification[],
+): Notification | null {
+  for (const key of MODAL_KEY_ORDER) {
+    const n = list.find((x) => x.keySystem === key);
+    if (n) return n;
+  }
+  return null;
+}
 
 interface Notification {
   idNotification: string;
@@ -26,8 +37,8 @@ export default function TrialNotificationModal() {
       .then((data: { notifications?: Notification[] }) => {
         if (cancelled) return;
         const list = data.notifications ?? [];
-        const trial = list.find((n) => n.keySystem && TRIAL_KEYS.includes(n.keySystem));
-        if (trial) setTrialNotification(trial);
+        const picked = pickModalNotification(list);
+        if (picked) setTrialNotification(picked);
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -35,17 +46,27 @@ export default function TrialNotificationModal() {
 
   const handleClose = async () => {
     if (!trialNotification) return;
+    const id = trialNotification.idNotification;
     try {
       await fetch(`${API_BASE}/notifications/mark-read`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationId: trialNotification.idNotification }),
+        body: JSON.stringify({ notificationId: id }),
       });
     } catch {
       // ignore
     }
     setTrialNotification(null);
+    try {
+      const r = await fetch(`${API_BASE}/notifications`, { credentials: "include" });
+      const data = r.ok ? await r.json() : { notifications: [] };
+      const list = (data as { notifications?: Notification[] }).notifications ?? [];
+      const next = pickModalNotification(list);
+      if (next) setTrialNotification(next);
+    } catch {
+      // ignore
+    }
   };
 
   if (!trialNotification || typeof document === "undefined") return null;
@@ -54,7 +75,9 @@ export default function TrialNotificationModal() {
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="trial-modal-title">
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-zinc-200">
         <h2 id="trial-modal-title" className="text-lg font-semibold text-zinc-900 mb-3">
-          {(t as Record<string, string>).trialModalTitle ?? "Bem-vindo(a) — Trial"}
+          {trialNotification.keySystem === "admin_access"
+            ? ((t as Record<string, string>).adminAccessModalTitle ?? "Acesso concedido")
+            : ((t as Record<string, string>).trialModalTitle ?? "Bem-vindo(a) — Trial")}
         </h2>
         <p className="text-sm text-zinc-700 leading-relaxed mb-6 whitespace-pre-wrap">
           {trialNotification.notification}

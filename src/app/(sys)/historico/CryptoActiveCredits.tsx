@@ -49,8 +49,13 @@ export default async function CryptoActiveCredits({ userId, lang = "pt" }: { use
     .map((c) => {
       const meta = c.entry?.meta as { subscriptionId?: string; recurring?: boolean } | null;
       const subscriptionId = meta?.subscriptionId && meta?.recurring ? meta.subscriptionId : null;
-      const packageLabel =
-        c.amount === 7 ? t.historico.credits.packageMonthly.replace("{valor}", "7") : c.amount === 49 ? t.historico.credits.packageAnnual.replace("{valor}", "49") : `${t.historico.credits.package} ${c.amount}`;
+      const durationDays =
+        (c.expiresAt.getTime() - c.createdAt.getTime()) / (24 * 60 * 60 * 1000);
+      const isAnnual = durationDays >= 120;
+      const valor = String(c.amount);
+      const packageLabel = isAnnual
+        ? t.historico.credits.packageAnnual.replace("{valor}", valor)
+        : t.historico.credits.packageMonthly.replace("{valor}", valor);
       return {
         id: c.id,
         amount: c.amount,
@@ -119,6 +124,8 @@ export default async function CryptoActiveCredits({ userId, lang = "pt" }: { use
           translations={{
             package: c.package,
             remaining: c.remaining,
+            day: c.day,
+            days: c.days,
             expiresAt: c.expiresAt,
             seeLess: c.seeLess,
             seeAll: c.seeAll,

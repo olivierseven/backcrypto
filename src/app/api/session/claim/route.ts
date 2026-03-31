@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   }
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  // Primeiro acesso: trial lite (1 coin / 1 dia) — session/claim é chamado ao carregar /sistema.
+  // Primeiro acesso: trial lite (igual /api/auth/check). Boas-vindas grande só via admin.
   if (await isFirstLoginCryptoLiteTrial(userId)) {
     await createCryptoLiteTrialPackage(userId);
   }

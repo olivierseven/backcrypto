@@ -560,8 +560,8 @@ export default function SistemaLayoutClient({
 
   return (
     <CryptoLangProvider lang={lang}>
-      <TrialNotificationModal />
       <SingleTabGuard>
+        <TrialNotificationModal />
         <KlinesIndicatorsProvider>
           <KlinesRegressionsProvider>
           <StrategiesProvider>

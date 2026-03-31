@@ -13,6 +13,7 @@ import { sendEmail } from "@/lib/mailer";
 import { decryptEmail } from "@/lib/crypto";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn, error } from "@/lib/logger";
+import { computeExpiresAtUtcFromMonthDelta } from "@/lib/wallet-credit-expiry";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
 const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
@@ -28,34 +29,21 @@ export const dynamic = "force-dynamic";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
-const PRICE_ID_7 = process.env.PRICE_COINS_7;
-const PRICE_ID_49 = process.env.PRICE_COINS_49;
-
-function pricingLabel(coins: number): string {
-  if (coins >= 49) return "$49";
-  if (coins >= 7) return "$7";
-  return "custom";
-}
-
-function computeExpiryMonths(coins: number): number {
-  if (coins >= 49) return 12;
-  if (coins >= 7) return 1;
+/** Recorrência: plan "49" = anual (12 meses), "7" = mensal (1 mês). Coins = US$ cobrado (1:1). */
+function computeExpiryMonthsFromPlan(planKey: string | undefined): number {
+  if (planKey === "49") return 12;
   return 1;
 }
 
-function computeExpiresAt(coins: number, base: Date): Date {
-  const months = computeExpiryMonths(coins);
-  const d = new Date(base);
-  const dayBefore = d.getUTCDate();
-  d.setUTCMonth(d.getUTCMonth() + months);
-  // Se o mês não tem esse dia (ex.: 31/01 + 1 mês → 31 não existe em fev), o JS vira 2/3 de março.
-  // Ajustar para o último dia do mês alvo (ex.: 28 ou 29 de fevereiro).
-  if (d.getUTCDate() !== dayBefore) {
-    d.setUTCMonth(d.getUTCMonth() + 1);
-    d.setUTCDate(0);
-  }
-  d.setUTCHours(23, 59, 59, 999);
-  return d;
+function pricingLabelCrypto(planKey: string | undefined, coins: number): string {
+  if (planKey === "49") return `$${coins}/ano`;
+  if (planKey === "7") return `$${coins}/mês`;
+  return `$${coins}`;
+}
+
+function computeExpiresAtFromPlan(planKey: string | undefined, base: Date): Date {
+  const months = computeExpiryMonthsFromPlan(planKey);
+  return computeExpiresAtUtcFromMonthDelta(base, months);
 }
 
 async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Checkout.Session) {
@@ -81,14 +69,20 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
     return;
   }
 
+  const planKey = (session.metadata?.plan ?? "").trim();
   const coinsRaw = (session.metadata?.coins ?? "").trim();
-  const coins = Math.floor(Number(coinsRaw)) || 0;
+  let coins = Math.floor(Number(coinsRaw)) || 0;
+  const amountCents = session.amount_total ?? 0;
+  const currency = (session.currency ?? "usd").toLowerCase();
+  if (currency === "usd" && amountCents > 0) {
+    const fromAmount = Math.floor(amountCents / 100);
+    if (fromAmount > 0) coins = fromAmount;
+  }
   if (coins <= 0) {
     warn(`[crypto/stripe] invalid coins session=${session.id}`);
     return;
   }
 
-  const amountCents = session.amount_total ?? 0;
   const completedAt = new Date((event.created ?? Math.floor(Date.now() / 1000)) * 1000);
 
   await cryptoPrisma.$transaction(async (tx) => {
@@ -100,7 +94,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
         amountTotalCents: amountCents,
         coinsToCredit: coins,
         currency: (session.currency ?? "usd").toUpperCase(),
-        pricingLabel: pricingLabel(coins),
+        pricingLabel: pricingLabelCrypto(planKey, coins),
         completedAt,
       },
       create: {
@@ -110,7 +104,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
         amountTotalCents: amountCents,
         coinsToCredit: coins,
         currency: (session.currency ?? "usd").toUpperCase(),
-        pricingLabel: pricingLabel(coins),
+        pricingLabel: pricingLabelCrypto(planKey, coins),
         completedAt,
         createdAt: completedAt,
       },
@@ -148,7 +142,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
       });
     }
 
-    const expiresAt = computeExpiresAt(coins, completedAt);
+    const expiresAt = computeExpiresAtFromPlan(planKey, completedAt);
     await tx.walletCredit.upsert({
       where: { entryId: entry.id },
       update: {},
@@ -254,8 +248,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
 }
 
 /**
- * Cobrança recorrente da assinatura: a cada mês ($7) ou ano ($49) que o Stripe cobra e paga,
- * creditamos 7 ou 49 coins. Se o usuário cancelar o cartão ou parar de pagar, não há evento → não creditamos.
+ * Cobrança recorrente: creditamos coins 1:1 com o US$ cobrado (amount_paid em USD). Validade por metadata.plan (7=mensal, 49=anual).
  */
 type InvoiceWithSubscription = Stripe.Invoice & { subscription?: string | Stripe.Subscription };
 
@@ -292,15 +285,19 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     return;
   }
 
-  const firstLine = invoice.lines?.data?.[0] as { price?: { id?: string }; pricing?: { price_details?: { price?: string } } } | undefined;
-  const priceId =
-    firstLine?.price?.id ??
-    firstLine?.pricing?.price_details?.price;
+  const planKey = (subscription.metadata?.plan ?? "").trim();
+  const currency = (invoice.currency ?? "usd").toLowerCase();
+  const amountCents = invoice.amount_paid ?? 0;
   let coins = 0;
-  if (priceId === PRICE_ID_7) coins = 7;
-  else if (priceId === PRICE_ID_49) coins = 49;
+  if (currency === "usd") {
+    coins = Math.floor(amountCents / 100);
+  }
   if (coins <= 0) {
-    warn(`[crypto/stripe] invoice ${invoice.id} unknown price ${priceId ?? "null"}, skip`);
+    const fromMeta = Math.floor(Number(subscription.metadata?.coins ?? "0"));
+    if (fromMeta > 0) coins = fromMeta;
+  }
+  if (coins <= 0) {
+    warn(`[crypto/stripe] invoice ${invoice.id} could not derive coins (amount_paid=${amountCents} ${currency}), skip`);
     return;
   }
 
@@ -316,7 +313,6 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
   const paidAt = invoice.status_transitions?.paid_at
     ? new Date(invoice.status_transitions.paid_at * 1000)
     : new Date();
-  const amountCents = invoice.amount_paid ?? 0;
 
   await cryptoPrisma.$transaction(async (tx) => {
     const wallet = await tx.userCoinWallet.upsert({
@@ -344,7 +340,7 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
       data: { balance: { increment: coins } },
     });
 
-    const expiresAt = computeExpiresAt(coins, paidAt);
+    const expiresAt = computeExpiresAtFromPlan(planKey, paidAt);
     await tx.walletCredit.create({
       data: {
         userId,

@@ -106,7 +106,9 @@ export default async function BioHistoricoPage({
                         );
                       }
                       const isTrialOrAdminAccess =
-                        meta?.reason === "lite_trial_first_login" || meta?.reason === "admin_access";
+                        meta?.reason === "lite_trial_first_login" ||
+                        meta?.reason === "welcome_package_crypto" ||
+                        meta?.reason === "admin_access";
                       const displayAmount = isTrialOrAdminAccess ? 0 : e.amount;
                       const positive = displayAmount > 0;
                       const sign = positive ? "+" : "";

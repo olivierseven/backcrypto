@@ -16,13 +16,28 @@ type Credit = {
   subscriptionCancelled?: boolean;
 };
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function fullDaysUntilExpiry(expiresAtIso: string): number {
+  const end = new Date(expiresAtIso).getTime();
+  return Math.max(0, Math.ceil((end - Date.now()) / MS_PER_DAY));
+}
+
+function fullDaysInWindow(createdAtIso: string, expiresAtIso: string): number {
+  const start = new Date(createdAtIso).getTime();
+  const end = new Date(expiresAtIso).getTime();
+  return Math.max(1, Math.ceil((end - start) / MS_PER_DAY));
+}
+
 const DEFAULT_T = {
   package: "Pacote",
-  remaining: "Restante",
+  remaining: "Dias restantes",
+  day: "dia",
+  days: "dias",
   expiresAt: "Vence em",
   seeLess: "Ver menos",
   seeAll: "Ver todos ({n})",
-  remainingPct: "Restante {pct}%",
+  remainingPct: "{pct}% do período restante",
   cancelPlan: "Cancelar plano",
   cancelPlanConfirm: "Tem certeza que deseja cancelar o plano? Você mantém os coins até o vencimento.",
   cancelPlanModalBack: "Voltar",
@@ -94,8 +109,11 @@ export default function ExpandableCreditsList({
   return (
     <div className="grid gap-3">
       {visible.map((c) => {
-        const pct = Math.max(0, Math.min(100, Math.round((c.remaining / c.amount) * 100)));
-        const label = c.packageLabel ?? `${t.package}: ${fmtNum(c.amount)} · ${t.remaining}: ${fmtNum(c.remaining)}`;
+        const daysLeft = fullDaysUntilExpiry(c.expiresAt);
+        const windowDays = fullDaysInWindow(c.createdAt, c.expiresAt);
+        const pct = Math.max(0, Math.min(100, Math.round((daysLeft / windowDays) * 100)));
+        const label = c.packageLabel ?? `${t.package}: ${fmtNum(c.amount)}`;
+        const daysUnit = daysLeft === 1 ? t.day : t.days;
         const showCancelButton = Boolean(c.subscriptionId) && !c.subscriptionCancelled;
         const showCancelledStatus = Boolean(c.subscriptionId) && c.subscriptionCancelled;
         const isCancelling = cancellingId === c.id;
@@ -105,7 +123,10 @@ export default function ExpandableCreditsList({
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <div className="text-neutral-700">
                 <b>{label}</b>
-                <span className="text-neutral-500"> · {t.remaining}: {fmtNum(c.remaining)}</span>
+                <span className="text-neutral-500">
+                  {" "}
+                  · {t.remaining}: {fmtNum(daysLeft)} {daysUnit}
+                </span>
               </div>
               <div className="text-neutral-600">{t.expiresAt} <b>{fmtDateIso(c.expiresAt)}</b></div>
             </div>

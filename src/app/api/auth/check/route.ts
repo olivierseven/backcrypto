@@ -30,7 +30,7 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    // Se for o primeiro crédito do usuário (primeiro login real), simula o pacote lite (1 coin / 1 dia).
+    // Trial lite no primeiro login (1 coin / 1 dia). Pacote de boas-vindas maior só via admin.
     if (await isFirstLoginCryptoLiteTrial(userId)) {
       await createCryptoLiteTrialPackage(userId);
     }

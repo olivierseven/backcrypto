@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { createCryptoWelcomePackage, CRYPTO_WELCOME_COINS, CRYPTO_WELCOME_DURATION_DAYS } from "@/lib/crypto-bonus";
+import {
+  createCryptoWelcomePackage,
+  DEFAULT_ADMIN_WELCOME_DURATION_DAYS,
+  MAX_ACCESS_DAYS,
+  MIN_ACCESS_DAYS,
+} from "@/lib/crypto-bonus";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -45,6 +50,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
     }
 
+    const rawDays = body.durationDays ?? body.days ?? DEFAULT_ADMIN_WELCOME_DURATION_DAYS;
+    const durationDays = typeof rawDays === "number" ? rawDays : Number(rawDays);
+    if (!Number.isFinite(durationDays) || durationDays < MIN_ACCESS_DAYS || durationDays > MAX_ACCESS_DAYS) {
+      return NextResponse.json(
+        { error: `durationDays deve ser entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}` },
+        { status: 400 },
+      );
+    }
+
     const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { id: true },
@@ -54,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
-    const result = await createCryptoWelcomePackage(userId);
+    const result = await createCryptoWelcomePackage(userId, durationDays);
 
     if (!result.success) {
       return NextResponse.json(
@@ -63,15 +77,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    vLog(`[crypto/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${CRYPTO_WELCOME_COINS}`);
+    vLog(`[crypto/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${result.coins}`);
 
     return NextResponse.json({
       success: true,
       message: "Pacote de boas-vindas criado com sucesso",
       data: {
         userId,
-        coins: CRYPTO_WELCOME_COINS,
-        durationDays: CRYPTO_WELCOME_DURATION_DAYS,
+        coins: result.coins ?? durationDays,
+        durationDays: result.durationDays ?? durationDays,
       },
     });
   } catch (err: unknown) {

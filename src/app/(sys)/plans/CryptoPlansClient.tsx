@@ -39,23 +39,31 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
   const p = t.plans;
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
-  const PLANS: Record<PlanKey, { label: string; coins: number; priceUsd: number; duration: string; img: string; badge?: string }> = {
-    "7": {
-      label: "$7",
-      coins: 7,
-      priceUsd: 7,
-      duration: `${p.validFor} 1 ${p.month}`,
-      img: `${ASSET_PREFIX}/coins/sevencoin_007.svg`,
-    },
-    "49": {
-      label: "$49",
-      coins: 49,
-      priceUsd: 49,
-      duration: `${p.validFor} 12 ${p.months}`,
-      img: `${ASSET_PREFIX}/coins/sevencoin_049.svg`,
-      badge: p.badgeRecommended,
-    },
-  };
+  type PlanRow = { label: string; coins: number; priceUsd: number; duration: string; img: string; badge?: string };
+  const PLANS: Record<PlanKey, PlanRow> = useMemo(() => {
+    const usd = (k: PlanKey) => (k === "7" ? 11 : 77);
+    const img = (k: PlanKey) =>
+      k === "7"
+        ? `${ASSET_PREFIX}/coins/sevencoin_007.svg`
+        : `${ASSET_PREFIX}/coins/sevencoin_049.svg`;
+    return {
+      "7": {
+        label: `$${usd("7")}`,
+        coins: usd("7"),
+        priceUsd: usd("7"),
+        duration: `${p.validFor} 1 ${p.month}`,
+        img: img("7"),
+      },
+      "49": {
+        label: `$${usd("49")}`,
+        coins: usd("49"),
+        priceUsd: usd("49"),
+        duration: `${p.validFor} 12 ${p.months}`,
+        img: img("49"),
+        badge: p.badgeRecommended,
+      },
+    };
+  }, [p]);
   const sp = useSearchParams();
   const next = useMemo(() => sp.get("next") || SISTEMA_PATH, [sp]);
   /** Path completo para redirect (Stripe/PIX); inclui basePath para location.href */
@@ -110,7 +118,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
       .then((d: { balance?: number }) => {
         if (typeof d?.balance === "number") setBalance(d.balance);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -163,9 +171,11 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
             ? p.balanceLimitReached
             : data?.error === "already_has_active_plan"
               ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
-              : data?.error === "cpf_required"
-                ? (data?.message ?? (p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice)
-                : (data?.message ?? data?.error ?? p.errorCheckout)
+              : data?.error === "promo_unavailable"
+                ? p.couponPromoUnavailable
+                : data?.error === "cpf_required"
+                  ? (data?.message ?? (p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice)
+                  : (data?.message ?? data?.error ?? p.errorCheckout)
         );
         setLoading(null);
         setLoadingMethod(null);
@@ -191,7 +201,11 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
       const res = await fetch(`${API_BASE}/checkout-pix`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, returnTo: next, cpf: cpfForRequest?.trim() || undefined }),
+        body: JSON.stringify({
+          plan,
+          returnTo: next,
+          cpf: cpfForRequest?.trim() || undefined,
+        }),
       });
       const data = await res.json().catch(() => null);
       setLoading(null);
@@ -203,18 +217,21 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
             ? p.balanceLimitReached
             : data?.error === "already_has_active_plan"
               ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
-              : (data?.message ?? data?.error ?? p.errorPix)
+              : data?.error === "promo_unavailable"
+                ? p.couponPromoUnavailable
+                : (data?.message ?? data?.error ?? p.errorPix)
         );
         return;
       }
+      const usdRef = PLANS[plan].priceUsd;
       setPixOrder({
         orderId: data.orderId,
         qrCode: data.qrCode ?? null,
         qrCodeUrl: data.qrCodeUrl ?? null,
         pixCopyPaste: data.pixCopyPaste ?? null,
-        amountCents: data.amountCents ?? (plan === "49" ? 26950 : 3850),
-        amountUsd: data.amountUsd ?? (plan === "49" ? 49 : 7),
-        coins: data.coins ?? (plan === "49" ? 49 : 7),
+        amountCents: data.amountCents ?? Math.round(usdRef * 5.5 * 100),
+        amountUsd: data.amountUsd ?? usdRef,
+        coins: data.coins ?? PLANS[plan].coins,
         returnTo: fullReturnTo,
       });
     } catch {
@@ -288,500 +305,499 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
 
   return (
     <>
-    <div className="card-crypto-generator crypto-card shadow-lg">
-      <div className="relative z-10">
-                  <div className="mb-4 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
-                        {(p as { betaPromoBadge?: string }).betaPromoBadge ?? "Beta promocional"}
-                      </span>
-                      <span className="text-sm font-semibold text-amber-900">
-                        {(p as { betaPromoTitle?: string }).betaPromoTitle ?? "Oferta especial de lançamento"}
-                      </span>
-                    </div>
-                    <p className="text-sm text-amber-800">
-                      {(p as { betaPromoText?: string }).betaPromoText ?? "Valores promocionais por tempo limitado na fase beta. Garanta seus coins agora."}
-                    </p>
-                  </div>
-                  <p className="text-sm text-zinc-700 mb-4">
-                    {p.choosePlan}
-                  </p>
+      <div className="card-crypto-generator crypto-card shadow-lg">
+        <div className="relative z-10">
+          <div className="mb-4 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-800">
+                {(p as { betaPromoBadge?: string }).betaPromoBadge ?? "Beta promocional"}
+              </span>
+              <span className="text-sm font-semibold text-amber-900">
+                {(p as { betaPromoTitle?: string }).betaPromoTitle ?? "Oferta especial de lançamento"}
+              </span>
+            </div>
+            <p className="text-sm text-amber-800">
+              {(p as { betaPromoText?: string }).betaPromoText ?? "Valores promocionais por tempo limitado na fase beta. Garanta seus coins agora."}
+            </p>
+          </div>
+          <p className="text-sm text-zinc-700 mb-4">
+            {p.choosePlan}
+          </p>
 
-                  <label className="mt-4 flex items-start gap-3 rounded-xl border border-purple-300 bg-white/50 px-3 py-2">
-                    <input
-                      type="checkbox"
-                      checked={accepted}
-                      onChange={(e) => setAccepted(e.target.checked)}
-                      className="mt-1 size-4 accent-purple-600"
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-purple-300 bg-white/50 px-3 py-2">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="mt-1 size-4 accent-purple-600"
+            />
+            <span className="text-sm leading-5 text-zinc-700 ">
+              {p.iAgree}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setAccepted(true);
+                  setPoliciesTab("terms");
+                }}
+                className="underline hover:no-underline text-purple-700 cursor-pointer bg-transparent border-0 p-0"
+              >
+                {p.terms}
+              </button>
+              {" "}{p.and}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setAccepted(true);
+                  setPoliciesTab("privacy");
+                }}
+                className="underline hover:no-underline text-purple-700 cursor-pointer bg-transparent border-0 p-0"
+              >
+                {p.privacyPolicy}
+              </button>.
+            </span>
+          </label>
+
+          {!canPurchase && balance !== null && (
+            <div className="mt-3 rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {p.balanceLimitReached}
+            </div>
+          )}
+          {err && (
+            <div className="mt-3 rounded-lg border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {err}
+            </div>
+          )}
+
+          {/* Painel PIX — mesmo estilo da labs */}
+          {pixOrder && (
+            <div className="mt-4 rounded-2xl border-2 border-green-600/30 bg-green-50 p-4 md:p-5">
+              <h4 className="text-base font-semibold text-zinc-900 mb-3">{p.payWithPix}</h4>
+              <p className="text-sm text-zinc-700  mb-3">
+                {p.amount}: <strong>R$ {(pixOrder.amountCents / 100).toFixed(2).replace(".", ",")}</strong>
+                {pixOrder.amountUsd != null && (
+                  <> <span className="text-zinc-500">(equiv. a ${pixOrder.amountUsd})</span></>
+                )}
+              </p>
+              <div className="flex flex-col gap-4">
+                {(pixOrder.qrCodeUrl || pixOrder.qrCode) && (
+                  <div className="flex-shrink-0 rounded-xl overflow-hidden bg-white p-2 w-fit">
+                    <img
+                      src={pixOrder.qrCodeUrl || pixOrder.qrCode || ""}
+                      alt="QR Code PIX"
+                      width={200}
+                      height={200}
+                      className="w-[200px] h-[200px] object-contain"
                     />
-                    <span className="text-sm leading-5 text-zinc-700 ">
-                      {p.iAgree}{" "}
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs text-zinc-600  mb-1">{p.orCopyPix}</p>
+                  {pixOrder.pixCopyPaste ? (
+                    <div className="flex gap-2">
+                      <input
+                        id="crypto-pix-copy-input"
+                        type="text"
+                        readOnly
+                        value={pixOrder.pixCopyPaste}
+                        className="flex-1 min-w-0 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-mono"
+                      />
                       <button
                         type="button"
-                        onClick={() => {
-                          setAccepted(true);
-                          setPoliciesTab("terms");
-                        }}
-                        className="underline hover:no-underline text-purple-700 cursor-pointer bg-transparent border-0 p-0"
+                        onClick={copyPix}
+                        className="crypto-btn rounded-lg bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 disabled:opacity-70 min-w-[72px]"
                       >
-                        {p.terms}
+                        {pixCopied ? p.copied : p.copy}
                       </button>
-                      {" "}{p.and}{" "}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccepted(true);
-                          setPoliciesTab("privacy");
-                        }}
-                        className="underline hover:no-underline text-purple-700 cursor-pointer bg-transparent border-0 p-0"
-                      >
-                        {p.privacyPolicy}
-                      </button>.
-                    </span>
-                  </label>
-
-                  {!canPurchase && balance !== null && (
-                    <div className="mt-3 rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                      {p.balanceLimitReached}
                     </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500 ">{p.codeNotAvailable}</p>
                   )}
-                  {err && (
-                    <div className="mt-3 rounded-lg border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-700">
-                      {err}
-                    </div>
-                  )}
+                </div>
+                {!(pixOrder.qrCodeUrl || pixOrder.qrCode || pixOrder.pixCopyPaste) && (
+                  <p className="text-sm text-amber-700 ">
+                    {p.qrNotReturned} <span className="font-mono text-xs">{pixOrder.orderId}</span>
+                  </p>
+                )}
+                <p className="text-sm text-green-700  flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  {p.awaitingPayment}
+                </p>
+                <p className="text-xs text-zinc-500 ">{p.pageAutoRefresh}</p>
+              </div>
+            </div>
+          )}
 
-                  {/* Painel PIX — mesmo estilo da labs */}
-                  {pixOrder && (
-                    <div className="mt-4 rounded-2xl border-2 border-green-600/30 bg-green-50 p-4 md:p-5">
-                      <h4 className="text-base font-semibold text-zinc-900 mb-3">{p.payWithPix}</h4>
-                      <p className="text-sm text-zinc-700  mb-3">
-                        {p.amount}: <strong>R$ {(pixOrder.amountCents / 100).toFixed(2).replace(".", ",")}</strong>
-                        {pixOrder.amountUsd != null && (
-                          <> <span className="text-zinc-500">(equiv. a ${pixOrder.amountUsd})</span></>
-                        )}
-                      </p>
-                      <div className="flex flex-col gap-4">
-                        {(pixOrder.qrCodeUrl || pixOrder.qrCode) && (
-                          <div className="flex-shrink-0 rounded-xl overflow-hidden bg-white p-2 w-fit">
-                            <img
-                              src={pixOrder.qrCodeUrl || pixOrder.qrCode || ""}
-                              alt="QR Code PIX"
-                              width={200}
-                              height={200}
-                              className="w-[200px] h-[200px] object-contain"
-                            />
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-xs text-zinc-600  mb-1">{p.orCopyPix}</p>
-                          {pixOrder.pixCopyPaste ? (
-                            <div className="flex gap-2">
-                              <input
-                                id="crypto-pix-copy-input"
-                                type="text"
-                                readOnly
-                                value={pixOrder.pixCopyPaste}
-                                className="flex-1 min-w-0 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-xs font-mono"
-                              />
-                              <button
-                                type="button"
-                                onClick={copyPix}
-                                className="crypto-btn rounded-lg bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 disabled:opacity-70 min-w-[72px]"
-                              >
-                                {pixCopied ? p.copied : p.copy}
-                              </button>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-zinc-500 ">{p.codeNotAvailable}</p>
-                          )}
-                        </div>
-                        {!(pixOrder.qrCodeUrl || pixOrder.qrCode || pixOrder.pixCopyPaste) && (
-                          <p className="text-sm text-amber-700 ">
-                            {p.qrNotReturned} <span className="font-mono text-xs">{pixOrder.orderId}</span>
-                          </p>
-                        )}
-                        <p className="text-sm text-green-700  flex items-center gap-2">
-                          <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                          {p.awaitingPayment}
-                        </p>
-                        <p className="text-xs text-zinc-500 ">{p.pageAutoRefresh}</p>
+          {/* Cards dos planos — mesmo formato e cores da labs */}
+          <div className="crypto-plans-grid px-2 py-2 sm:px-3 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+            {(Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][]).map(([planKey, plan]) => {
+              const isLoadingCard = loading === planKey && loadingMethod === "card";
+              const isLoadingPix = loading === planKey && loadingMethod === "pix";
+              const anyLoading = loading === planKey;
+              return (
+                <div
+                  key={planKey}
+                  className="group rounded-3xl p-[1px] bg-gradient-to-br from-white/40 to-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.25)]"
+                >
+                  <div
+                    className="crypto-plan-value-card relative w-full rounded-3xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-purple-300/70"
+                    style={{ background: "rgb(255 255 255 / 0.8)" }}
+                  >
+                    {plan.badge && (
+                      <span className="absolute -top-2 -right-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 text-xs font-semibold text-white shadow">
+                        {plan.badge}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-4 text-neutral-900">
+                      <div className="relative">
+                        <Image
+                          src={plan.img}
+                          alt={plan.label}
+                          width={72}
+                          height={72}
+                          className="rounded-xl"
+                          unoptimized
+                        />
+                        <span
+                          className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition
+                                     bg-[radial-gradient(120%_90%_at_20%_15%,rgba(0,0,0,0.05),transparent_60%)]"
+                        />
+                      </div>
+                      <div>
+                        <div className="text-lg font-semibold tracking-tight">{plan.label}</div>
+                        <div className="text-xs text-neutral-600">{plan.duration}</div>
                       </div>
                     </div>
-                  )}
-
-                  {/* Cards dos planos — mesmo formato e cores da labs */}
-                  <div className="crypto-plans-grid px-2 py-2 sm:px-3 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-                    {(Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][]).map(([planKey, plan]) => {
-                      const isLoadingCard = loading === planKey && loadingMethod === "card";
-                      const isLoadingPix = loading === planKey && loadingMethod === "pix";
-                      const anyLoading = loading === planKey;
-                      return (
-                        <div
-                          key={planKey}
-                          className="group rounded-3xl p-[1px] bg-gradient-to-br from-white/40 to-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.25)]"
-                        >
-                          <div
-                            className="crypto-plan-value-card relative w-full rounded-3xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl focus-within:ring-2 focus-within:ring-purple-300/70"
-                            style={{ background: "rgb(255 255 255 / 0.8)" }}
-                          >
-                            {plan.badge && (
-                              <span className="absolute -top-2 -right-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-3 py-1 text-xs font-semibold text-white shadow">
-                                {plan.badge}
-                              </span>
-                            )}
-                            <div className="flex items-center gap-4 text-neutral-900">
-                              <div className="relative">
-                                <Image
-                                  src={plan.img}
-                                  alt={plan.label}
-                                  width={72}
-                                  height={72}
-                                  className="rounded-xl"
-                                  unoptimized
-                                />
-                                <span
-                                  className="pointer-events-none absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition
-                                     bg-[radial-gradient(120%_90%_at_20%_15%,rgba(0,0,0,0.05),transparent_60%)]"
-                                />
-                              </div>
-                              <div>
-                                <div className="text-lg font-semibold tracking-tight">{plan.label}</div>
-                                <div className="text-xs text-neutral-600">{plan.duration}</div>
-                              </div>
-                            </div>
-                            <div className="mt-4 flex flex-col gap-2">
-                              {pixCpfPlan === planKey ? (
+                    <div className="mt-4 flex flex-col gap-2">
+                      {pixCpfPlan === planKey ? (
+                        <>
+                          <label className="block text-xs font-medium text-neutral-700">{p.cpfForInvoice}</label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            placeholder={p.cpfPlaceholder}
+                            value={cpf}
+                            onChange={(e) => {
+                              setCpf(e.target.value.replace(/\D/g, "").slice(0, 11));
+                              setPixCpfError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                const v = cpf.trim().replace(/\D/g, "");
+                                if (v.length === 0) {
+                                  setPixCpfError(p.informCpfOrSkip);
+                                  return;
+                                }
+                                const err = validateCpfForPix(cpf, p);
+                                if (err) {
+                                  setPixCpfError(err);
+                                  return;
+                                }
+                                beginCheckoutPix(planKey, v);
+                              }
+                            }}
+                            className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          />
+                          {pixCpfError && <p className="text-xs text-red-600">{pixCpfError}</p>}
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const v = cpf.trim().replace(/\D/g, "");
+                                if (v.length === 0) {
+                                  setPixCpfError(p.informCpfOrSkip);
+                                  return;
+                                }
+                                const err = validateCpfForPix(cpf, p);
+                                if (err) {
+                                  setPixCpfError(err);
+                                  return;
+                                }
+                                beginCheckoutPix(planKey, v);
+                              }}
+                              disabled={!accepted || anyLoading || !canPurchase}
+                              className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {isLoadingPix ? (
                                 <>
-                                  <label className="block text-xs font-medium text-neutral-700">{p.cpfForInvoice}</label>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={p.cpfPlaceholder}
-                                    value={cpf}
-                                    onChange={(e) => {
-                                      setCpf(e.target.value.replace(/\D/g, "").slice(0, 11));
-                                      setPixCpfError(null);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        const v = cpf.trim().replace(/\D/g, "");
-                                        if (v.length === 0) {
-                                          setPixCpfError(p.informCpfOrSkip);
-                                          return;
-                                        }
-                                        const err = validateCpfForPix(cpf, p);
-                                        if (err) {
-                                          setPixCpfError(err);
-                                          return;
-                                        }
-                                        beginCheckoutPix(planKey, v);
-                                      }
-                                    }}
-                                    className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                  />
-                                  {pixCpfError && <p className="text-xs text-red-600">{pixCpfError}</p>}
-                                  <div className="flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const v = cpf.trim().replace(/\D/g, "");
-                                        if (v.length === 0) {
-                                          setPixCpfError(p.informCpfOrSkip);
-                                          return;
-                                        }
-                                        const err = validateCpfForPix(cpf, p);
-                                        if (err) {
-                                          setPixCpfError(err);
-                                          return;
-                                        }
-                                        beginCheckoutPix(planKey, v);
-                                      }}
-                                      disabled={!accepted || anyLoading || !canPurchase}
-                                      className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                    >
-                                      {isLoadingPix ? (
-                                        <>
-                                          <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                          </svg>
-                                          {p.generating}
-                                        </>
-                                      ) : (
-                                        <>{p.generatePix}</>
-                                      )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setPixCpfError(p.cpfRequiredForInvoice)}
-                                      className="rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 active:scale-[.99]"
-                                    >
-                                      {p.dontInform}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => { setPixCpfPlan(null); setPixCpfError(null); }}
-                                      className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
-                                      aria-label={p.back}
-                                    >
-                                      <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                        <path d="M19 12H5M12 19l-7-7 7-7" />
-                                      </svg>
-                                    </button>
-                                  </div>
+                                  <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                  </svg>
+                                  {p.generating}
                                 </>
-                              ) : cardTaxIdPlan === planKey ? (
-                                lang === "pt" ? (
+                              ) : (
+                                <>{p.generatePix}</>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPixCpfError(p.cpfRequiredForInvoice)}
+                              className="rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 active:scale-[.99]"
+                            >
+                              {p.dontInform}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setPixCpfPlan(null); setPixCpfError(null); }}
+                              className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
+                              aria-label={p.back}
+                            >
+                              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <path d="M19 12H5M12 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+                          </div>
+                        </>
+                      ) : cardTaxIdPlan === planKey ? (
+                        lang === "pt" ? (
+                          <>
+                            <label className="block text-xs font-medium text-neutral-700">{p.cpfForInvoice}</label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="off"
+                              placeholder={p.cpfPlaceholder}
+                              value={cpf}
+                              onChange={(e) => {
+                                setCpf(e.target.value.replace(/\D/g, "").slice(0, 11));
+                                setCardTaxIdError(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const v = cpf.trim().replace(/\D/g, "");
+                                  if (v.length === 0) {
+                                    setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
+                                    return;
+                                  }
+                                  const err = validateCpfForPix(cpf, p);
+                                  if (err) {
+                                    setCardTaxIdError(err);
+                                    return;
+                                  }
+                                  beginCheckout(planKey, undefined, v);
+                                }
+                              }}
+                              className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                            {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const v = cpf.trim().replace(/\D/g, "");
+                                  if (v.length === 0) {
+                                    setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
+                                    return;
+                                  }
+                                  const err = validateCpfForPix(cpf, p);
+                                  if (err) {
+                                    setCardTaxIdError(err);
+                                    return;
+                                  }
+                                  setCardTaxIdError(null);
+                                  beginCheckout(planKey, undefined, v);
+                                }}
+                                disabled={!accepted || anyLoading || !canPurchase}
+                                className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isLoadingCard ? (
                                   <>
-                                    <label className="block text-xs font-medium text-neutral-700">{p.cpfForInvoice}</label>
-                                    <input
-                                      type="text"
-                                      inputMode="numeric"
-                                      autoComplete="off"
-                                      placeholder={p.cpfPlaceholder}
-                                      value={cpf}
-                                      onChange={(e) => {
-                                        setCpf(e.target.value.replace(/\D/g, "").slice(0, 11));
-                                        setCardTaxIdError(null);
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
-                                          const v = cpf.trim().replace(/\D/g, "");
-                                          if (v.length === 0) {
-                                            setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
-                                            return;
-                                          }
-                                          const err = validateCpfForPix(cpf, p);
-                                          if (err) {
-                                            setCardTaxIdError(err);
-                                            return;
-                                          }
-                                          beginCheckout(planKey, undefined, v);
-                                        }
-                                      }}
-                                      className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
-                                    <div className="flex flex-wrap gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const v = cpf.trim().replace(/\D/g, "");
-                                          if (v.length === 0) {
-                                            setCardTaxIdError((p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice);
-                                            return;
-                                          }
-                                          const err = validateCpfForPix(cpf, p);
-                                          if (err) {
-                                            setCardTaxIdError(err);
-                                            return;
-                                          }
-                                          setCardTaxIdError(null);
-                                          beginCheckout(planKey, undefined, v);
-                                        }}
-                                        disabled={!accepted || anyLoading || !canPurchase}
-                                        className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                      >
-                                        {isLoadingCard ? (
-                                          <>
-                                            <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                              <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                            </svg>
-                                            {p.processing}
-                                          </>
-                                        ) : (
-                                          <>{p.payWithCard}</>
-                                        )}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
-                                        className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
-                                        aria-label={p.back}
-                                      >
-                                        <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                          <path d="M19 12H5M12 19l-7-7 7-7" />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                                    <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                    {p.processing}
                                   </>
                                 ) : (
-                                  <>
-                                    <label className="block text-xs font-medium text-neutral-700">{p.taxIdForCard}</label>
-                                    <input
-                                      type="text"
-                                      inputMode="text"
-                                      autoComplete="off"
-                                      placeholder={p.taxIdPlaceholder}
-                                      value={cardTaxId}
-                                      onChange={(e) => {
-                                        setCardTaxId(e.target.value.slice(0, 30));
-                                        setCardTaxIdError(null);
-                                      }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                          e.preventDefault();
-                                          const v = cardTaxId.trim();
-                                          if (v.length > 0 && v.length < 3) {
-                                            setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
-                                            return;
-                                          }
-                                          beginCheckout(planKey, v || undefined);
-                                        }
-                                      }}
-                                      className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                    />
-                                    {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
-                                    <div className="flex flex-wrap gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          const v = cardTaxId.trim();
-                                          if (v.length > 0 && v.length < 3) {
-                                            setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
-                                            return;
-                                          }
-                                          setCardTaxIdError(null);
-                                          beginCheckout(planKey, v || undefined);
-                                        }}
-                                        disabled={!accepted || anyLoading || !canPurchase}
-                                        className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                      >
-                                        {isLoadingCard ? (
-                                          <>
-                                            <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                              <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                            </svg>
-                                            {p.processing}
-                                          </>
-                                        ) : (
-                                          <>{p.payWithCard}</>
-                                        )}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
-                                        className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
-                                        aria-label={p.back}
-                                      >
-                                        <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                                          <path d="M19 12H5M12 19l-7-7 7-7" />
-                                        </svg>
-                                      </button>
-                                    </div>
-                                    <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
-                                  </>
-                                )
-                              ) : (
-                                <>
-                                  <div className="flex flex-wrap gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => { setCardTaxIdPlan(planKey); setCardTaxIdError(null); setPixCpfPlan(null); }}
-                                      disabled={!accepted || anyLoading || !canPurchase}
-                                      className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                    >
-                                      {isLoadingCard ? (
-                                        <>
-                                          <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                          </svg>
-                                          {p.processing}
-                                        </>
-                                      ) : (
-                                        <>{p.card}</>
-                                      )}
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => { setPixCpfPlan(planKey); setPixCpfError(null); setCardTaxIdPlan(null); }}
-                                      disabled={!accepted || anyLoading || !canPurchase}
-                                      className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
-                                    >
-                                      {isLoadingPix ? (
-                                        <>
-                                          <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                          </svg>
-                                          {p.generating}
-                                        </>
-                                      ) : (
-                                        <>{p.pix}</>
-                                      )}
-                                    </button>
-                                  </div>
-                                  <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
-                                </>
-                              )}
+                                  <>{p.payWithCard}</>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
+                                className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
+                                aria-label={p.back}
+                              >
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                                </svg>
+                              </button>
                             </div>
+                            <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                          </>
+                        ) : (
+                          <>
+                            <label className="block text-xs font-medium text-neutral-700">{p.taxIdForCard}</label>
+                            <input
+                              type="text"
+                              inputMode="text"
+                              autoComplete="off"
+                              placeholder={p.taxIdPlaceholder}
+                              value={cardTaxId}
+                              onChange={(e) => {
+                                setCardTaxId(e.target.value.slice(0, 30));
+                                setCardTaxIdError(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const v = cardTaxId.trim();
+                                  if (v.length > 0 && v.length < 3) {
+                                    setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
+                                    return;
+                                  }
+                                  beginCheckout(planKey, v || undefined);
+                                }
+                              }}
+                              className="w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                            {cardTaxIdError && <p className="text-xs text-red-600">{cardTaxIdError}</p>}
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const v = cardTaxId.trim();
+                                  if (v.length > 0 && v.length < 3) {
+                                    setCardTaxIdError(p.taxIdMinLength ?? "TAX ID deve ter ao menos 3 caracteres");
+                                    return;
+                                  }
+                                  setCardTaxIdError(null);
+                                  beginCheckout(planKey, v || undefined);
+                                }}
+                                disabled={!accepted || anyLoading || !canPurchase}
+                                className="crypto-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isLoadingCard ? (
+                                  <>
+                                    <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                      <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                    {p.processing}
+                                  </>
+                                ) : (
+                                  <>{p.payWithCard}</>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setCardTaxIdPlan(null); setCardTaxIdError(null); }}
+                                className="rounded-xl p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 active:scale-[.99]"
+                                aria-label={p.back}
+                              >
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                                </svg>
+                              </button>
+                            </div>
+                            <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                          </>
+                        )
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => { setCardTaxIdPlan(planKey); setCardTaxIdError(null); setPixCpfPlan(null); }}
+                              disabled={!accepted || anyLoading || !canPurchase}
+                              className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {isLoadingCard ? (
+                                <>
+                                  <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                  </svg>
+                                  {p.processing}
+                                </>
+                              ) : (
+                                <>{p.card}</>
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setPixCpfPlan(planKey); setPixCpfError(null); setCardTaxIdPlan(null); }}
+                              disabled={!accepted || anyLoading || !canPurchase}
+                              className="crypto-btn inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-[.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {isLoadingPix ? (
+                                <>
+                                  <svg className="size-4 animate-spin" viewBox="0 0 24 24" aria-hidden>
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                  </svg>
+                                  {p.generating}
+                                </>
+                              ) : (
+                                <>{p.pix}</>
+                              )}
+                            </button>
                           </div>
-                        </div>
-                      );
-                    })}
+                          <div className="text-xs text-neutral-500">{p.immediateDelivery}</div>
+                        </>
+                      )}
+                    </div>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
 
-    {accepted && (
-      <div className="card-crypto-generator crypto-card shadow-lg mt-6 overflow-hidden">
-        <div className="flex flex-wrap border-b border-purple-100">
-          {(["terms", "privacy", "refund-policy", "contato"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setPoliciesTab(tab)}
-              className={`flex-1 min-w-[100px] px-3 py-2.5 text-sm font-medium transition-colors ${
-                policiesTab === tab
-                  ? "bg-purple-50 text-purple-800 border-b-2 border-purple-600 -mb-px"
-                  : "text-zinc-600 hover:bg-zinc-50"
-              }`}
-            >
-              {tab === "terms" ? p.terms : tab === "privacy" ? p.privacyPolicy : tab === "refund-policy" ? p.refundPolicy : p.contact}
-            </button>
-          ))}
-        </div>
-        <div className="h-[min(70vh,420px)] min-h-[280px] bg-white overflow-auto">
-          {policiesTab === null && (
-            <div className="flex items-center justify-center h-full text-zinc-500 text-sm px-4 text-center">
-              {p.policiesClickTab}
-            </div>
-          )}
-          {policiesTab !== null && policiesLoading && (
-            <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
-              {p.policiesLoading}
-            </div>
-          )}
-          {policiesTab !== null && !policiesLoading && policiesError && (
-            <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center text-sm text-zinc-600">
-              <p>{p.policiesError}</p>
-              <a
-                href={`https://sevencoins.com.br${policiesTab === "terms" ? "/terms" : policiesTab === "privacy" ? "/privacy" : policiesTab === "refund-policy" ? "/refund-policy" : "/contato"}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-600 hover:underline font-medium"
+      {accepted && (
+        <div className="card-crypto-generator crypto-card shadow-lg mt-6 overflow-hidden">
+          <div className="flex flex-wrap border-b border-purple-100">
+            {(["terms", "privacy", "refund-policy", "contato"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setPoliciesTab(tab)}
+                className={`flex-1 min-w-[100px] px-3 py-2.5 text-sm font-medium transition-colors ${policiesTab === tab
+                    ? "bg-purple-50 text-purple-800 border-b-2 border-purple-600 -mb-px"
+                    : "text-zinc-600 hover:bg-zinc-50"
+                  }`}
               >
-                {p.policiesOpenNewTab}
-              </a>
-            </div>
-          )}
-          {policiesTab !== null && !policiesLoading && !policiesError && policiesCache[policiesTab] && (
-            <div
-              className="crypto-policies-content p-4 prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 text-zinc-700"
-              dangerouslySetInnerHTML={{ __html: policiesCache[policiesTab]! }}
-            />
-          )}
+                {tab === "terms" ? p.terms : tab === "privacy" ? p.privacyPolicy : tab === "refund-policy" ? p.refundPolicy : p.contact}
+              </button>
+            ))}
+          </div>
+          <div className="h-[min(70vh,420px)] min-h-[280px] bg-white overflow-auto">
+            {policiesTab === null && (
+              <div className="flex items-center justify-center h-full text-zinc-500 text-sm px-4 text-center">
+                {p.policiesClickTab}
+              </div>
+            )}
+            {policiesTab !== null && policiesLoading && (
+              <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
+                {p.policiesLoading}
+              </div>
+            )}
+            {policiesTab !== null && !policiesLoading && policiesError && (
+              <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center text-sm text-zinc-600">
+                <p>{p.policiesError}</p>
+                <a
+                  href={`https://sevencoins.com.br${policiesTab === "terms" ? "/terms" : policiesTab === "privacy" ? "/privacy" : policiesTab === "refund-policy" ? "/refund-policy" : "/contato"}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-600 hover:underline font-medium"
+                >
+                  {p.policiesOpenNewTab}
+                </a>
+              </div>
+            )}
+            {policiesTab !== null && !policiesLoading && !policiesError && policiesCache[policiesTab] && (
+              <div
+                className="crypto-policies-content p-4 prose prose-sm max-w-none prose-headings:text-zinc-900 prose-p:text-zinc-700 text-zinc-700"
+                dangerouslySetInnerHTML={{ __html: policiesCache[policiesTab]! }}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }

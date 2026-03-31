@@ -79,7 +79,7 @@ export async function hasActiveCredits(userId: string): Promise<boolean> {
 }
 
 /**
- * Verifica se o usuário tem créditos ativos de compra (pagos), excluindo trial (lite_trial_first_login) e acesso admin.
+ * Verifica se o usuário tem créditos ativos de compra (pagos), excluindo trial lite (Pagar.me: trial, bônus admin, acesso admin).
  * Usado no checkout: trial pode comprar; só bloqueia se tiver créditos de Stripe/PIX pagos ativos.
  */
 export async function hasActivePaidCredits(userId: string): Promise<boolean> {
@@ -94,7 +94,10 @@ export async function hasActivePaidCredits(userId: string): Promise<boolean> {
     const reason = meta?.reason;
     const source = c.entry?.source;
     const isTrialOrAdmin =
-      (source === TxSource.PAGARME && reason === "lite_trial_first_login") ||
+      (source === TxSource.PAGARME &&
+        (reason === "lite_trial_first_login" ||
+          reason === "welcome_package_crypto" ||
+          reason === "admin_access")) ||
       (source === TxSource.BONUS && reason === "admin_access");
     if (!isTrialOrAdmin) return true;
   }
