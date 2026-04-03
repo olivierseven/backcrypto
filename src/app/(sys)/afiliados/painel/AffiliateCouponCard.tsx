@@ -59,12 +59,15 @@ export default function AffiliateCouponCard({
   generateLabel: string;
   generatingLabel: string;
   yourCodesLabel: string;
+  loadingCodesLabel: string;
   emptyLabel: string;
   onlyExpiredSeeHistoryLabel: string;
   errorLabel: string;
   maxInactiveLabel: string;
   maxActiveLabel: string;
   generateBlockedHint: string;
+  generateBlockedNotApprovedHint: string;
+  couponNotApprovedError: string;
   activateBlockedByActiveHint: string;
   activateLabel: string;
   activatingActivateLabel: string;

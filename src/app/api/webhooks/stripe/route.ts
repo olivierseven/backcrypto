@@ -83,6 +83,12 @@ async function chargeIdFromInvoicePaymentShell(
  * Webhook `invoice.payment_succeeded` muitas vezes traz `charge` / `payment_intent` vazios;
  * usa InvoicePayment (`payment.*`) e, se preciso, lista `invoicePayments` por fatura.
  */
+/** Campos opcionais em `Invoice` nem sempre presentes nos tipos Stripe; usados após expand. */
+type InvoiceWithChargePi = Stripe.Invoice & {
+  charge?: string | Stripe.Charge | null;
+  payment_intent?: string | Stripe.PaymentIntent | null;
+};
+
 async function resolveInvoicePaymentRefs(
   stripe: Stripe,
   invoiceId: string,
@@ -106,10 +112,11 @@ async function resolveInvoicePaymentRefs(
         throw err;
       }
     }
-    const chDirect = stripeRefId(inv.charge ?? null);
+    const invEx = inv as InvoiceWithChargePi;
+    const chDirect = stripeRefId(invEx.charge ?? null);
     if (chDirect) chargeId = chDirect;
 
-    const piRef = inv.payment_intent;
+    const piRef = invEx.payment_intent;
     if (piRef) {
       if (typeof piRef === "string") {
         paymentIntentId = piRef;
@@ -406,6 +413,10 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
 type InvoiceWithSubscription = Stripe.Invoice & { subscription?: string | Stripe.Subscription };
 
 async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Invoice): Promise<void> {
+  if (!invoice.id) {
+    dbg(`[crypto/stripe] invoice.payment_succeeded without invoice id, skip`);
+    return;
+  }
   const inv = invoice as InvoiceWithSubscription;
   let subscriptionId: string | null = typeof inv.subscription === "string" ? inv.subscription : inv.subscription?.id ?? null;
   // API 2025+: subscription pode vir em parent.subscription_details.subscription
