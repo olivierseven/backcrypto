@@ -47,6 +47,12 @@ export default function BioLandingFooter({ lang, setLang }: Props) {
             <a href={`${SC_BASE}/terms`} className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
               {L.terms}
             </a>
+            <a
+              href={`${SC_BASE}/${lang}/affiliate-terms`}
+              className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              {L.affiliateTerms}
+            </a>
             <a href={`${SC_BASE}/refund-policy`} className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
               {L.refund}
             </a>

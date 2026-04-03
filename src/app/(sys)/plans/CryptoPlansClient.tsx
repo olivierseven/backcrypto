@@ -39,33 +39,66 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
   const p = t.plans;
   const locale = lang === "en" ? "en-US" : "pt-BR";
 
-  type PlanRow = { label: string; coins: number; priceUsd: number; duration: string; img: string; badge?: string };
+  /** Alinhado a checkout / checkout-pix: preço cheio vs ~20% com cupom de afiliado válido. */
+  const REGULAR_USD: Record<PlanKey, number> = { "7": 11, "49": 77 };
+  const PROMO_USD: Record<PlanKey, number> = { "7": 9, "49": 62 };
+
+  type PlanRow = {
+    label: string;
+    coins: number;
+    priceUsd: number;
+    duration: string;
+    img: string;
+    badge?: string;
+    /** Quando cupom aplicado: preço lista para riscar ao lado do promocional */
+    regularUsd?: number;
+  };
+  const [couponPromoActive, setCouponPromoActive] = useState(false);
   const PLANS: Record<PlanKey, PlanRow> = useMemo(() => {
-    const usd = (k: PlanKey) => (k === "7" ? 11 : 77);
     const img = (k: PlanKey) =>
       k === "7"
         ? `${ASSET_PREFIX}/coins/sevencoin_007.svg`
         : `${ASSET_PREFIX}/coins/sevencoin_049.svg`;
+    const price = (k: PlanKey) => (couponPromoActive ? PROMO_USD[k] : REGULAR_USD[k]);
     return {
       "7": {
-        label: `$${usd("7")}`,
-        coins: usd("7"),
-        priceUsd: usd("7"),
+        label: `$${price("7")}`,
+        coins: price("7"),
+        priceUsd: price("7"),
+        regularUsd: couponPromoActive ? REGULAR_USD["7"] : undefined,
         duration: `${p.validFor} 1 ${p.month}`,
         img: img("7"),
       },
       "49": {
-        label: `$${usd("49")}`,
-        coins: usd("49"),
-        priceUsd: usd("49"),
+        label: `$${price("49")}`,
+        coins: price("49"),
+        priceUsd: price("49"),
+        regularUsd: couponPromoActive ? REGULAR_USD["49"] : undefined,
         duration: `${p.validFor} 12 ${p.months}`,
         img: img("49"),
         badge: p.badgeRecommended,
       },
     };
-  }, [p]);
+  }, [p, couponPromoActive]);
   const sp = useSearchParams();
   const next = useMemo(() => sp.get("next") || SISTEMA_PATH, [sp]);
+  const cupomFromUrl = useMemo(() => (sp.get("cupom") || sp.get("coupon") || "").trim(), [sp]);
+  const [couponCode, setCouponCode] = useState("");
+  const cupomEffective = useMemo(
+    () => (couponCode.trim() || cupomFromUrl).trim(),
+    [couponCode, cupomFromUrl]
+  );
+  useEffect(() => {
+    if (!cupomFromUrl) return;
+    setCouponCode((prev) => {
+      if (prev.trim() !== "") return prev;
+      return cupomFromUrl.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 7);
+    });
+  }, [cupomFromUrl]);
+  const idAfiliadoFromUrl = useMemo(
+    () => (sp.get("idAfiliado") || sp.get("afiliado") || sp.get("ref") || "").trim(),
+    [sp]
+  );
   /** Path completo para redirect (Stripe/PIX); inclui basePath para location.href */
   const fullReturnTo = useMemo(
     () => (next.startsWith(APP_CRYPTO_ROUTE_PREFIX) ? next : `${APP_CRYPTO_ROUTE_PREFIX}${next}`),
@@ -103,10 +136,54 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
   } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [balance, setBalance] = useState<number | null>(null);
+  const [couponApplyLoading, setCouponApplyLoading] = useState(false);
+  const [couponApplyMsg, setCouponApplyMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const MAX_COINS_BEFORE_PURCHASE = 700_000_000;
   const canPurchase = balance === null || balance < MAX_COINS_BEFORE_PURCHASE;
+
+  async function applyCoupon() {
+    setCouponApplyMsg(null);
+    const code = couponCode.trim();
+    if (!code) {
+      setCouponPromoActive(false);
+      setCouponApplyMsg({ ok: false, text: p.couponEmpty });
+      return;
+    }
+    setCouponApplyLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/plan-coupon/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; applied?: boolean };
+      if (!res.ok) {
+        setCouponPromoActive(false);
+        const msg =
+          data?.error === "coupon_invalid_format"
+            ? (p as { couponInvalidFormat?: string }).couponInvalidFormat ?? p.couponInvalid
+            : data?.error === "coupon_invalid_or_expired"
+              ? (p as { couponInvalidOrExpired?: string }).couponInvalidOrExpired ?? p.couponInvalid
+              : p.couponInvalid;
+        setCouponApplyMsg({ ok: false, text: msg });
+        return;
+      }
+      if (data.applied) {
+        setCouponPromoActive(true);
+        setCouponApplyMsg({ ok: true, text: p.couponAppliedOk });
+      } else {
+        setCouponPromoActive(false);
+        setCouponApplyMsg({ ok: false, text: p.couponEmpty });
+      }
+    } catch {
+      setCouponPromoActive(false);
+      setCouponApplyMsg({ ok: false, text: p.errorNetwork });
+    } finally {
+      setCouponApplyLoading(false);
+    }
+  }
 
   useEffect(() => {
     setPoliciesCache({ terms: null, privacy: null, "refund-policy": null, contato: null });
@@ -148,10 +225,21 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
     setLoading(plan);
     setLoadingMethod("card");
     try {
-      const payload: { plan: PlanKey; returnTo: string; tax_code?: string; cpf?: string } = {
+      const payload: {
+        plan: PlanKey;
+        returnTo: string;
+        tax_code?: string;
+        cpf?: string;
+        cupom_id?: string;
+        coupon?: string;
+        idAfiliado?: string;
+      } = {
         plan,
         returnTo: next,
         tax_code: taxId?.trim() || undefined,
+        cupom_id: cupomEffective,
+        coupon: cupomEffective,
+        idAfiliado: idAfiliadoFromUrl,
       };
       if (lang === "pt" && cpfForCard?.trim()) {
         const digits = cpfForCard.replace(/\D/g, "").slice(0, 11);
@@ -173,9 +261,13 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
               ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
               : data?.error === "promo_unavailable"
                 ? p.couponPromoUnavailable
-                : data?.error === "cpf_required"
-                  ? (data?.message ?? (p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice)
-                  : (data?.message ?? data?.error ?? p.errorCheckout)
+                : data?.error === "coupon_invalid_format"
+                  ? (p as { couponInvalidFormat?: string }).couponInvalidFormat ?? p.couponInvalid
+                  : data?.error === "coupon_invalid_or_expired"
+                    ? (p as { couponInvalidOrExpired?: string }).couponInvalidOrExpired ?? p.couponInvalid
+                    : data?.error === "cpf_required"
+                      ? (data?.message ?? (p as { cpfRequiredForCard?: string }).cpfRequiredForCard ?? p.cpfRequiredForInvoice)
+                      : (data?.message ?? data?.error ?? p.errorCheckout)
         );
         setLoading(null);
         setLoadingMethod(null);
@@ -205,6 +297,9 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
           plan,
           returnTo: next,
           cpf: cpfForRequest?.trim() || undefined,
+          cupom_id: cupomEffective,
+          coupon: cupomEffective,
+          idAfiliado: idAfiliadoFromUrl,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -219,7 +314,11 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
               ? (p as { alreadyHasActivePlan?: string }).alreadyHasActivePlan ?? data?.message
               : data?.error === "promo_unavailable"
                 ? p.couponPromoUnavailable
-                : (data?.message ?? data?.error ?? p.errorPix)
+                : data?.error === "coupon_invalid_format"
+                  ? (p as { couponInvalidFormat?: string }).couponInvalidFormat ?? p.couponInvalid
+                  : data?.error === "coupon_invalid_or_expired"
+                    ? (p as { couponInvalidOrExpired?: string }).couponInvalidOrExpired ?? p.couponInvalid
+                    : (data?.message ?? data?.error ?? p.errorPix)
         );
         return;
       }
@@ -323,6 +422,55 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
           <p className="text-sm text-zinc-700 mb-4">
             {p.choosePlan}
           </p>
+
+          <div className="mb-4 space-y-2">
+            <label htmlFor="crypto-plan-coupon" className="block text-sm font-medium text-zinc-800">
+              {p.couponLabel}
+            </label>
+            <div className="flex flex-wrap items-stretch gap-2 max-w-xl">
+              <input
+                id="crypto-plan-coupon"
+                type="text"
+                name="coupon"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={7}
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponApplyMsg(null);
+                  setCouponPromoActive(false);
+                  setCouponCode(e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 7));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void applyCoupon();
+                  }
+                }}
+                placeholder={p.couponPlaceholder}
+                className="min-w-0 flex-1 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm font-mono tracking-widest text-neutral-900 placeholder:text-neutral-400 placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent sm:max-w-xs"
+              />
+              <button
+                type="button"
+                onClick={() => void applyCoupon()}
+                disabled={couponApplyLoading}
+                className="crypto-btn shrink-0 rounded-xl border border-purple-600 bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {couponApplyLoading ? p.processing : p.couponApply}
+              </button>
+            </div>
+            {couponApplyMsg && (
+              <p
+                className={`text-sm ${couponApplyMsg.ok ? "text-emerald-700" : "text-red-600"}`}
+                role="status"
+              >
+                {couponApplyMsg.text}
+              </p>
+            )}
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              {(p as { couponHint?: string }).couponHint ?? ""}
+            </p>
+          </div>
 
           <label className="mt-4 flex items-start gap-3 rounded-xl border border-purple-300 bg-white/50 px-3 py-2">
             <input
@@ -428,7 +576,7 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
           )}
 
           {/* Cards dos planos — mesmo formato e cores da labs */}
-          <div className="crypto-plans-grid px-2 py-2 sm:px-3 sm:py-3 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+          <div className="crypto-plans-grid px-2 pt-2 pb-0 sm:px-3 sm:pt-3 sm:pb-0 grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
             {(Object.entries(PLANS) as [PlanKey, (typeof PLANS)[PlanKey]][]).map(([planKey, plan]) => {
               const isLoadingCard = loading === planKey && loadingMethod === "card";
               const isLoadingPix = loading === planKey && loadingMethod === "pix";
@@ -463,7 +611,18 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
                         />
                       </div>
                       <div>
-                        <div className="text-lg font-semibold tracking-tight">{plan.label}</div>
+                        <div className="text-lg font-semibold tracking-tight">
+                          {plan.regularUsd != null ? (
+                            <span className="inline-flex flex-wrap items-baseline gap-x-2">
+                              <span className="text-emerald-700">{plan.label}</span>
+                              <span className="text-sm font-medium text-zinc-400 line-through">
+                                ${plan.regularUsd}
+                              </span>
+                            </span>
+                          ) : (
+                            plan.label
+                          )}
+                        </div>
                         <div className="text-xs text-neutral-600">{plan.duration}</div>
                       </div>
                     </div>
@@ -745,6 +904,10 @@ export default function CryptoPlansClient({ lang = "pt" }: { lang?: CryptoLang }
               );
             })}
           </div>
+
+          <p className="mt-2 pt-2 text-xs text-neutral-600 leading-relaxed border-t border-zinc-200/70">
+            {p.cardAutoRenewNote}
+          </p>
         </div>
       </div>
 

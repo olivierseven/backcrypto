@@ -10,7 +10,7 @@ import { dbg, warn, error } from "@/lib/logger";
 import { getUsdToBrlRate } from "@/lib/usd-brl-rate";
 import { getBalance } from "@/lib/spend-coins";
 import { hasActivePaidCredits } from "@/lib/user-tier";
-import { isValidPromoCoupon20Off } from "@/lib/crypto-promo-coupon";
+import { resolveAffiliateCouponForPlanCheckout } from "@/lib/affiliate-coupon-plan";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -102,7 +102,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "email_decrypt_fail" }, { status: 500 });
   }
 
-  let body: { plan?: string; returnTo?: string; cpf?: string; coupon?: string } = {};
+  let body: { plan?: string; returnTo?: string; cpf?: string; coupon?: string; cupom_id?: string; idAfiliado?: string } =
+    {};
   try {
     body = await req.json();
   } catch {
@@ -110,8 +111,21 @@ export async function POST(req: Request) {
   }
 
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
-  const couponRaw = typeof body?.coupon === "string" ? body.coupon : undefined;
-  const planRow = isValidPromoCoupon20Off(couponRaw) ? PLANS_USD_PROMO[planKey] : PLANS_USD[planKey];
+  const cupomInput =
+    (typeof body.cupom_id === "string" && body.cupom_id.trim()
+      ? body.cupom_id
+      : typeof body.coupon === "string"
+        ? body.coupon
+        : undefined) ?? undefined;
+  const idAfiliadoMeta = (typeof body.idAfiliado === "string" ? body.idAfiliado : "").trim();
+
+  const cupomResolved = await resolveAffiliateCouponForPlanCheckout(cupomInput);
+  if (!cupomResolved.ok) {
+    return NextResponse.json({ error: cupomResolved.error }, { status: 400 });
+  }
+  const affiliate = cupomResolved.affiliate;
+  const usePromo = affiliate !== null;
+  const planRow = usePromo ? PLANS_USD_PROMO[planKey] : PLANS_USD[planKey];
   const coinsUsd = planRow.amountUsdCents / 100;
   const plan = { amountUsdCents: planRow.amountUsdCents, coins: coinsUsd };
 
@@ -166,7 +180,10 @@ export async function POST(req: Request) {
       coins: String(plan.coins),
       plan: planKey,
       crypto: "1",
-      promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
+      promo_20off: usePromo ? "1" : "",
+      cupom_id: affiliate?.code ?? "",
+      idAfiliado: affiliate?.idAfiliado ?? idAfiliadoMeta,
+      affiliate_account_id: affiliate?.affiliateAccountId ?? "",
     },
   };
 

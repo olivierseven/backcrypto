@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isPrivateCryptoPath } from "@/lib/crypto-auth-next";
+import {
+  isPrivateCryptoPath,
+  isAffiliateProtectedPath,
+  affiliateLangFromPainelPath,
+  CRYPTO_AFFILIATE_LOGIN_PAGE,
+  AFFILIATE_JWT_COOKIE_NAME,
+} from "@/lib/crypto-auth-next";
 import { isCryptoDevPath, isCryptoDevRoutesEnabled } from "@/lib/crypto-dev-routes";
 
 const BASE = "/crypto";
 const SESSION_COOKIE = process.env.JWT_COOKIE_NAME || "session";
+const AFFILIATE_SESSION_COOKIE = AFFILIATE_JWT_COOKIE_NAME;
+
+/** Para o layout `(sys)` distinguir rotas que não usam sessão User (ex.: painel de afiliado). */
+function nextWithCryptoPathname(request: NextRequest, pathname: string): NextResponse {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-crypto-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
 
 /**
  * 1) Redireciona URLs antigas com ?lang= para path /pt ou /en (público).
@@ -13,21 +27,29 @@ const SESSION_COOKIE = process.env.JWT_COOKIE_NAME || "session";
  */
 export function middleware(request: NextRequest) {
   const url = request.nextUrl;
-  const pathname = url.pathname;
-
-  if (!pathname.startsWith(BASE)) {
-    return NextResponse.next();
-  }
+  const rawPathname = url.pathname;
+  const pathname = rawPathname.startsWith(BASE) ? rawPathname : `${BASE}${rawPathname}`;
+  const appPathname = pathname.startsWith(BASE) ? pathname.slice(BASE.length) : pathname;
 
   if (isCryptoDevPath(pathname) && !isCryptoDevRoutesEnabled()) {
     return new NextResponse(null, { status: 404 });
   }
 
-  const rest = pathname.slice(BASE.length);
-  const normalized = rest === "" ? "/" : rest;
+  const normalized = appPathname === "" ? "/" : appPathname;
   const segments = normalized.split("/").filter(Boolean);
   const first = segments[0];
   const langParam = url.searchParams.get("lang");
+
+  if (isAffiliateProtectedPath(pathname)) {
+    const token = request.cookies.get(AFFILIATE_SESSION_COOKIE)?.value;
+    if (!token) {
+      const loginUrl = new URL(CRYPTO_AFFILIATE_LOGIN_PAGE, url.origin);
+      const langPainel = affiliateLangFromPainelPath(pathname);
+      if (langPainel) loginUrl.searchParams.set("lang", langPainel);
+      loginUrl.searchParams.set("next", `${pathname}${url.search}`);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   if (isPrivateCryptoPath(pathname)) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
@@ -54,18 +76,18 @@ export function middleware(request: NextRequest) {
   }
 
   if (first === "pt" || first === "en") {
-    const res = NextResponse.next();
+    const res = nextWithCryptoPathname(request, pathname);
     res.headers.set("x-lang", first);
     return res;
   }
 
   if (langParam === "en" || langParam === "pt") {
-    const res = NextResponse.next();
+    const res = nextWithCryptoPathname(request, pathname);
     res.headers.set("x-lang", langParam);
     return res;
   }
 
-  return NextResponse.next();
+  return nextWithCryptoPathname(request, pathname);
 }
 
 /**

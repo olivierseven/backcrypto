@@ -6,6 +6,11 @@ import { decryptEmail } from "@/lib/crypto";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn } from "@/lib/logger";
 import { computeExpiresAtUtcFromMonthDelta } from "@/lib/wallet-credit-expiry";
+import {
+  convertAmountByCurrency,
+  resolveAffiliatePaymentCurrency,
+  resolveCommissionAffiliateCentsForPlanPayment,
+} from "@/lib/affiliate-payment-currency";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
 const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
@@ -34,7 +39,7 @@ export async function handleOrderPaid(data: any) {
 
   const bioOrder = await cryptoPrisma.pagarMeOrder.findUnique({
     where: { id: orderId },
-    select: { id: true, userId: true, coinsToCredit: true, amountTotalCents: true },
+    select: { id: true, userId: true, coinsToCredit: true, amountTotalCents: true, pricingLabel: true, currency: true },
   });
   if (!bioOrder) {
     dbg(`[pagarme-crypto] order.paid orderId=${orderId} not in DB, skip`);
@@ -110,6 +115,44 @@ export async function handleOrderPaid(data: any) {
     await tx.user.updateMany({
       where: { id: userId },
       data: { tier: Tier.lite },
+    });
+
+    const cupomId = String(data?.metadata?.cupom_id ?? "").trim();
+    const idAfiliadoMeta = String(data?.metadata?.idAfiliado ?? "").trim();
+    /** 1 coin = US$1 — mesmo critério do Stripe; `amountCents` do Pagar.me é BRL cobrado. */
+    const usdCentsFromCoins = Math.round(coinsToCredit * 100);
+    await tx.stripePlanPayment.upsert({
+      where: { pagarmeOrderId: orderId },
+      create: {
+        userId,
+        provider: "pagarme",
+        pagarmeOrderId: orderId,
+        cupomId,
+        idAfiliado: idAfiliadoMeta,
+        planKey: planKey || null,
+        amountTotalCents: usdCentsFromCoins,
+        currency: "usd",
+        coinsCredited: coinsToCredit,
+        pricingLabel: bioOrder.pricingLabel ?? null,
+        paidAt: completedAt,
+      },
+      update: {},
+    });
+    const affiliateCurrency = await resolveAffiliatePaymentCurrency(idAfiliadoMeta);
+    const amountAffiliateCents = await convertAmountByCurrency(usdCentsFromCoins, "usd", affiliateCurrency);
+    const commissionAffiliateCents = await resolveCommissionAffiliateCentsForPlanPayment({
+      idAfiliado: idAfiliadoMeta,
+      planKey: planKey || null,
+      usdCentsForTier: usdCentsFromCoins,
+      affiliateCurrency,
+    });
+    await tx.stripePlanPayment.update({
+      where: { pagarmeOrderId: orderId },
+      data: {
+        amountAffiliateCents,
+        currencyAffiliate: affiliateCurrency,
+        commissionAffiliateCents,
+      },
     });
   });
 

@@ -259,7 +259,16 @@ export default function SistemaDebugPanel() {
   const [saveChartModelLoading, setSaveChartModelLoading] = useState(false);
   const [saveChartModelMessage, setSaveChartModelMessage] = useState<string | null>(null);
   const [debugTab, setDebugTab] = useState<
-    "main" | "inspect" | "qa" | "agg-live" | "historico-dev" | "historico-prod" | "validador-dev" | "validador-prod" | "acesso"
+    | "main"
+    | "inspect"
+    | "qa"
+    | "agg-live"
+    | "historico-dev"
+    | "historico-prod"
+    | "validador-dev"
+    | "validador-prod"
+    | "acesso"
+    | "afiliado"
   >("main");
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
@@ -302,6 +311,15 @@ export default function SistemaDebugPanel() {
   const [truncateAtemporalProdLoading, setTruncateAtemporalProdLoading] = useState(false);
   const [truncateAtemporalProdMessage, setTruncateAtemporalProdMessage] = useState<string | null>(null);
   const [truncateAtemporalProdErr, setTruncateAtemporalProdErr] = useState(false);
+
+  const [affFromUserId, setAffFromUserId] = useState("");
+  const [affFromUserEmail, setAffFromUserEmail] = useState("");
+  const [affFromUserLoading, setAffFromUserLoading] = useState(false);
+  const [affFromUserMsg, setAffFromUserMsg] = useState<string | null>(null);
+  const [affCreateEmail, setAffCreateEmail] = useState("");
+  const [affCreatePassword, setAffCreatePassword] = useState("");
+  const [affCreateLoading, setAffCreateLoading] = useState(false);
+  const [affCreateMsg, setAffCreateMsg] = useState<string | null>(null);
 
   type ProdConfirmState =
     | { kind: "pastBackfill"; target: "dev" | "prod"; interval: "1m" | "5m" | "1h" }
@@ -1151,6 +1169,13 @@ export default function SistemaDebugPanel() {
               className={`flex-1 py-2 text-xs font-medium ${debugTab === "acesso" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
             >
               {(t as Record<string, string>).tabAcesso ?? "Acesso"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDebugTab("afiliado")}
+              className={`flex-1 py-2 text-xs font-medium ${debugTab === "afiliado" ? "text-zinc-800 border-b-2 border-zinc-600 bg-white" : "text-zinc-500 hover:text-zinc-700"}`}
+            >
+              {(t as Record<string, string>).tabAfiliado ?? "Afiliado"}
             </button>
           </div>
           <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -2022,6 +2047,198 @@ export default function SistemaDebugPanel() {
                       }`}
                     >
                       {deleteMessage}
+                    </p>
+                  )}
+                </section>
+              </div>
+            )}
+            {debugTab === "afiliado" && (
+              <div className="space-y-4">
+                <section>
+                  <h4 className="text-sm font-medium text-zinc-800 mb-2">
+                    {(t as Record<string, string>).affiliateFromUserTitle ?? "Afiliado a partir de usuário"}
+                  </h4>
+                  <p className="text-xs text-zinc-600 mb-3">
+                    {(t as Record<string, string>).affiliateFromUserHint ?? ""}
+                  </p>
+                  <div className="flex flex-col gap-3 max-w-sm">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">
+                        {(t as Record<string, string>).accessUserIdLabel ?? "User ID"}
+                      </span>
+                      <input
+                        type="text"
+                        value={affFromUserId}
+                        onChange={(e) => {
+                          setAffFromUserId(e.target.value);
+                          setAffFromUserEmail("");
+                          setAffFromUserMsg(null);
+                        }}
+                        placeholder={(t as Record<string, string>).accessUserIdPlaceholder ?? ""}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm font-mono"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">
+                        {(t as Record<string, string>).affiliateEmailCreateLabel ?? "E-mail"}
+                      </span>
+                      <input
+                        type="email"
+                        value={affFromUserEmail}
+                        onChange={(e) => {
+                          setAffFromUserEmail(e.target.value);
+                          setAffFromUserId("");
+                          setAffFromUserMsg(null);
+                        }}
+                        placeholder="email@exemplo.com"
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={affFromUserLoading || (!affFromUserId.trim() && !affFromUserEmail.trim())}
+                      onClick={async () => {
+                        setAffFromUserMsg(null);
+                        setAffFromUserLoading(true);
+                        try {
+                          const res = await fetch(`${API_BASE}/admin/affiliate-from-user`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              userId: affFromUserId.trim() || undefined,
+                              email: affFromUserEmail.trim() || undefined,
+                            }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok && data.ok) {
+                            const updated =
+                              data.action === "updated"
+                                ? ((t as Record<string, string>).affiliateSuccessUpdated ?? "Atualizado.")
+                                : ((t as Record<string, string>).affiliateSuccessCreatedFromUser ?? "OK");
+                            setAffFromUserMsg(updated);
+                            setAffFromUserId("");
+                            setAffFromUserEmail("");
+                          } else {
+                            setAffFromUserMsg(
+                              `${(t as Record<string, string>).affiliateError ?? "Erro"}: ${data.error ?? res.statusText}`
+                            );
+                          }
+                        } catch (err) {
+                          setAffFromUserMsg(
+                            `${(t as Record<string, string>).affiliateError ?? "Erro"}: ${err instanceof Error ? err.message : String(err)}`
+                          );
+                        } finally {
+                          setAffFromUserLoading(false);
+                        }
+                      }}
+                      className="px-3 py-2 bg-violet-800 text-white text-sm rounded hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {affFromUserLoading
+                        ? ((t as { loading?: string }).loading ?? "Executando…")
+                        : ((t as Record<string, string>).affiliateGrantFromUser ?? "Conceder")}
+                    </button>
+                  </div>
+                  {affFromUserMsg && (
+                    <p
+                      className={`mt-3 text-sm ${
+                        affFromUserMsg.startsWith((t as Record<string, string>).affiliateError ?? "Erro")
+                          ? "text-red-700"
+                          : "text-emerald-700"
+                      }`}
+                    >
+                      {affFromUserMsg}
+                    </p>
+                  )}
+                </section>
+                <section className="border-t border-zinc-200 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-zinc-800 mb-2">
+                    {(t as Record<string, string>).affiliateStandaloneTitle ?? "Criar só afiliado"}
+                  </h4>
+                  <p className="text-xs text-zinc-600 mb-3">
+                    {(t as Record<string, string>).affiliateStandaloneHint ?? ""}
+                  </p>
+                  <div className="flex flex-col gap-3 max-w-sm">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">
+                        {(t as Record<string, string>).affiliateEmailCreateLabel ?? "E-mail"}
+                      </span>
+                      <input
+                        type="email"
+                        value={affCreateEmail}
+                        onChange={(e) => {
+                          setAffCreateEmail(e.target.value);
+                          setAffCreateMsg(null);
+                        }}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm"
+                        autoComplete="off"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-xs font-medium text-zinc-600">
+                        {(t as Record<string, string>).affiliatePasswordCreateLabel ?? "Senha"}
+                      </span>
+                      <input
+                        type="password"
+                        value={affCreatePassword}
+                        onChange={(e) => {
+                          setAffCreatePassword(e.target.value);
+                          setAffCreateMsg(null);
+                        }}
+                        className="border border-zinc-300 rounded px-2 py-1.5 text-sm"
+                        autoComplete="new-password"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={affCreateLoading || !affCreateEmail.trim() || !affCreatePassword}
+                      onClick={async () => {
+                        setAffCreateMsg(null);
+                        setAffCreateLoading(true);
+                        try {
+                          const res = await fetch(`${API_BASE}/admin/affiliate-create`, {
+                            method: "POST",
+                            credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              email: affCreateEmail.trim(),
+                              password: affCreatePassword,
+                            }),
+                          });
+                          const data = await res.json().catch(() => ({}));
+                          if (res.ok && data.ok) {
+                            setAffCreateMsg((t as Record<string, string>).affiliateSuccessCreated ?? "OK");
+                            setAffCreateEmail("");
+                            setAffCreatePassword("");
+                          } else {
+                            setAffCreateMsg(
+                              `${(t as Record<string, string>).affiliateError ?? "Erro"}: ${data.error ?? res.statusText}`
+                            );
+                          }
+                        } catch (err) {
+                          setAffCreateMsg(
+                            `${(t as Record<string, string>).affiliateError ?? "Erro"}: ${err instanceof Error ? err.message : String(err)}`
+                          );
+                        } finally {
+                          setAffCreateLoading(false);
+                        }
+                      }}
+                      className="px-3 py-2 bg-zinc-800 text-white text-sm rounded hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {affCreateLoading
+                        ? ((t as { loading?: string }).loading ?? "Executando…")
+                        : ((t as Record<string, string>).affiliateCreateStandalone ?? "Criar")}
+                    </button>
+                  </div>
+                  {affCreateMsg && (
+                    <p
+                      className={`mt-3 text-sm ${
+                        affCreateMsg.startsWith((t as Record<string, string>).affiliateError ?? "Erro")
+                          ? "text-red-700"
+                          : "text-emerald-700"
+                      }`}
+                    >
+                      {affCreateMsg}
                     </p>
                   )}
                 </section>

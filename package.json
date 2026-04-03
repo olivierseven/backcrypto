@@ -27,7 +27,10 @@
     "dump-db": "node scripts/dump-db.js",
     "restore-db": "node scripts/restore-db.js",
     "set-admin": "node scripts/set-admin.js",
-    "verify-schema-vs-db": "node scripts/verify-schema-vs-db.js"
+    "verify-schema-vs-db": "node scripts/verify-schema-vs-db.js",
+    "sync-plan-payment-payouts": "tsx scripts/sync-plan-payment-payout-status.ts",
+    "backfill-affiliate-payment-currency": "tsx scripts/backfill-affiliate-payment-currency.ts",
+    "backfill-affiliate-commission-month-agg": "tsx scripts/backfill-affiliate-commission-month-agg.ts"
   },
   "dependencies": {
     "@capacitor-community/in-app-review": "^8.0.0",
@@ -60,6 +63,7 @@
     "pg": "^8.13.0",
     "postcss": "^8",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.0"
   },

@@ -21,3 +21,15 @@ export async function getLocaleFromRequest(): Promise<Locale> {
 
   return "pt";
 }
+
+/**
+ * Login de afiliados (`/crypto/afiliados/login`): prioriza `?lang=` da origem (link com `?lang=pt|en`),
+ * depois o mesmo fluxo de {@link getLocaleFromRequest} (x-lang, cookie).
+ */
+export async function getLocaleForAffiliateLoginPage(
+  searchParams: { lang?: string } | null | undefined
+): Promise<Locale> {
+  const q = searchParams?.lang;
+  if (q === "pt" || q === "en") return q;
+  return getLocaleFromRequest();
+}

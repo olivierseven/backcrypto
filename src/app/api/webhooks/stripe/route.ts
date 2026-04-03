@@ -14,6 +14,12 @@ import { decryptEmail } from "@/lib/crypto";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { dbg, warn, error } from "@/lib/logger";
 import { computeExpiresAtUtcFromMonthDelta } from "@/lib/wallet-credit-expiry";
+import { resolveAffiliateIdFromCouponCode } from "@/lib/affiliate-coupon-plan";
+import {
+  convertAmountByCurrency,
+  resolveAffiliatePaymentCurrency,
+  resolveCommissionAffiliateCentsForPlanPayment,
+} from "@/lib/affiliate-payment-currency";
 
 const APP_URL = process.env.APP_URL || "http://localhost:3004";
 const BASE_PATH = process.env.APP_BASE_PATH || "/crypto";
@@ -44,6 +50,108 @@ function pricingLabelCrypto(planKey: string | undefined, coins: number): string 
 function computeExpiresAtFromPlan(planKey: string | undefined, base: Date): Date {
   const months = computeExpiryMonthsFromPlan(planKey);
   return computeExpiresAtUtcFromMonthDelta(base, months);
+}
+
+/** Extrai id string de campo Stripe que pode vir como id ou objeto expandido. */
+function stripeRefId(field: string | { id: string } | null | undefined): string | null {
+  if (typeof field === "string") return field;
+  if (field && typeof field === "object" && "id" in field) return field.id;
+  return null;
+}
+
+/** InvoicePayment: ids ficam em payment.charge / payment.payment_intent (Stripe 2024+). */
+async function chargeIdFromInvoicePaymentShell(
+  stripe: Stripe,
+  shell: Stripe.InvoicePayment.Payment | null | undefined,
+): Promise<{ paymentIntentId: string | null; chargeId: string | null } | null> {
+  if (!shell) return null;
+  if (shell.charge) {
+    const cid = stripeRefId(shell.charge ?? null);
+    return cid ? { paymentIntentId: null, chargeId: cid } : null;
+  }
+  if (shell.payment_intent) {
+    const piId =
+      typeof shell.payment_intent === "string" ? shell.payment_intent : shell.payment_intent.id;
+    const pi = await stripe.paymentIntents.retrieve(piId, { expand: ["latest_charge"] });
+    const lc = stripeRefId(pi.latest_charge ?? null);
+    return { paymentIntentId: piId, chargeId: lc };
+  }
+  return null;
+}
+
+/**
+ * Webhook `invoice.payment_succeeded` muitas vezes traz `charge` / `payment_intent` vazios;
+ * usa InvoicePayment (`payment.*`) e, se preciso, lista `invoicePayments` por fatura.
+ */
+async function resolveInvoicePaymentRefs(
+  stripe: Stripe,
+  invoiceId: string,
+  fromEvent: { paymentIntentId: string | null; chargeId: string | null },
+): Promise<{ paymentIntentId: string | null; chargeId: string | null }> {
+  let paymentIntentId = fromEvent.paymentIntentId;
+  let chargeId = fromEvent.chargeId;
+  try {
+    let inv: Stripe.Invoice;
+    try {
+      inv = await stripe.invoices.retrieve(invoiceId, {
+        expand: ["charge", "payment_intent", "payment_intent.latest_charge", "payments"],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("cannot be expanded") && msg.includes("payments")) {
+        inv = await stripe.invoices.retrieve(invoiceId, {
+          expand: ["charge", "payment_intent", "payment_intent.latest_charge"],
+        });
+      } else {
+        throw err;
+      }
+    }
+    const chDirect = stripeRefId(inv.charge ?? null);
+    if (chDirect) chargeId = chDirect;
+
+    const piRef = inv.payment_intent;
+    if (piRef) {
+      if (typeof piRef === "string") {
+        paymentIntentId = piRef;
+        const pi = await stripe.paymentIntents.retrieve(piRef, { expand: ["latest_charge"] });
+        const lc = stripeRefId(pi.latest_charge ?? null);
+        if (lc) chargeId = lc;
+      } else {
+        paymentIntentId = piRef.id;
+        const lc = stripeRefId(piRef.latest_charge ?? null);
+        if (lc) chargeId = lc;
+      }
+    }
+
+    if (!chargeId) {
+      const pdata = inv.payments as { data?: Stripe.InvoicePayment[] } | null | undefined;
+      const payList = Array.isArray(pdata?.data) ? pdata.data : [];
+      for (const ip of payList) {
+        const got = await chargeIdFromInvoicePaymentShell(stripe, ip.payment);
+        if (got?.chargeId) {
+          chargeId = got.chargeId;
+          if (got.paymentIntentId) paymentIntentId = got.paymentIntentId;
+          break;
+        }
+      }
+    }
+
+    if (!chargeId) {
+      const ipList = await stripe.invoicePayments.list({ invoice: invoiceId, limit: 15 });
+      for (const ip of ipList.data) {
+        const got = await chargeIdFromInvoicePaymentShell(stripe, ip.payment);
+        if (got?.chargeId) {
+          chargeId = got.chargeId;
+          if (got.paymentIntentId) paymentIntentId = got.paymentIntentId;
+          break;
+        }
+      }
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    dbg(`[crypto/stripe] invoice ${invoiceId} payment refs retrieve failed: ${msg}`);
+  }
+  return { paymentIntentId, chargeId };
 }
 
 async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Checkout.Session) {
@@ -158,6 +266,51 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
     await tx.user.updateMany({
       where: { id: userId },
       data: { tier: Tier.lite },
+    });
+
+    const cupomId = String(session.metadata?.cupom_id ?? "").trim();
+    const idAfiliadoResolved = (await resolveAffiliateIdFromCouponCode(cupomId)) ?? "";
+    const sessPi = session as Stripe.Checkout.Session & {
+      payment_intent?: string | Stripe.PaymentIntent | null;
+      charge?: string | Stripe.Charge | null;
+    };
+    const paymentIntentId = stripeRefId(sessPi.payment_intent ?? null);
+    const chargeId = stripeRefId(sessPi.charge ?? null);
+
+    await tx.stripePlanPayment.upsert({
+      where: { checkoutSessionId: session.id },
+      create: {
+        userId,
+        provider: "stripe",
+        checkoutSessionId: session.id,
+        paymentIntentId,
+        chargeId,
+        cupomId,
+        idAfiliado: idAfiliadoResolved,
+        planKey: planKey || null,
+        amountTotalCents: amountCents,
+        currency,
+        coinsCredited: coins,
+        pricingLabel: pricingLabelCrypto(planKey, coins),
+        paidAt: completedAt,
+      },
+      update: {},
+    });
+    const affiliateCurrency = await resolveAffiliatePaymentCurrency(idAfiliadoResolved);
+    const amountAffiliateCents = await convertAmountByCurrency(amountCents, "usd", affiliateCurrency);
+    const commissionAffiliateCents = await resolveCommissionAffiliateCentsForPlanPayment({
+      idAfiliado: idAfiliadoResolved,
+      planKey: planKey || null,
+      usdCentsForTier: amountCents,
+      affiliateCurrency,
+    });
+    await tx.stripePlanPayment.update({
+      where: { checkoutSessionId: session.id },
+      data: {
+        amountAffiliateCents,
+        currencyAffiliate: affiliateCurrency,
+        commissionAffiliateCents,
+      },
     });
   });
 
@@ -314,6 +467,27 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     ? new Date(invoice.status_transitions.paid_at * 1000)
     : new Date();
 
+  const cupomId = String(subscription.metadata?.cupom_id ?? "").trim();
+  const previousInstallments = await cryptoPrisma.stripePlanPayment.count({
+    where: { provider: "stripe", subscriptionId },
+  });
+  const isFirstInstallment = previousInstallments === 0;
+  const idAfiliadoResolved = isFirstInstallment
+    ? (await resolveAffiliateIdFromCouponCode(cupomId)) ?? ""
+    : "";
+  const invRefs = invoice as Stripe.Invoice & {
+    payment_intent?: string | Stripe.PaymentIntent | null;
+    charge?: string | Stripe.Charge | null;
+  };
+  const fromEventPi = stripeRefId(invRefs.payment_intent ?? null);
+  const fromEventCh = stripeRefId(invRefs.charge ?? null);
+  const pr = await resolveInvoicePaymentRefs(stripe, invoice.id, {
+    paymentIntentId: fromEventPi,
+    chargeId: fromEventCh,
+  });
+  const paymentIntentId = pr.paymentIntentId;
+  const chargeId = pr.chargeId;
+
   await cryptoPrisma.$transaction(async (tx) => {
     const wallet = await tx.userCoinWallet.upsert({
       where: { userId },
@@ -355,6 +529,46 @@ async function handleInvoicePaymentSucceeded(stripe: Stripe, invoice: Stripe.Inv
     await tx.user.updateMany({
       where: { id: userId },
       data: { tier: Tier.lite },
+    });
+
+    await tx.stripePlanPayment.upsert({
+      where: { invoiceId: invoice.id },
+      create: {
+        userId,
+        provider: "stripe",
+        invoiceId: invoice.id,
+        subscriptionId,
+        paymentIntentId,
+        chargeId,
+        cupomId,
+        idAfiliado: idAfiliadoResolved,
+        planKey: planKey || null,
+        amountTotalCents: amountCents,
+        currency,
+        coinsCredited: coins,
+        pricingLabel: pricingLabelCrypto(planKey, coins),
+        paidAt,
+      },
+      update: {
+        ...(paymentIntentId ? { paymentIntentId } : {}),
+        ...(chargeId ? { chargeId } : {}),
+      },
+    });
+    const affiliateCurrency = await resolveAffiliatePaymentCurrency(idAfiliadoResolved);
+    const amountAffiliateCents = await convertAmountByCurrency(amountCents, "usd", affiliateCurrency);
+    const commissionAffiliateCents = await resolveCommissionAffiliateCentsForPlanPayment({
+      idAfiliado: idAfiliadoResolved,
+      planKey: planKey || null,
+      usdCentsForTier: amountCents,
+      affiliateCurrency,
+    });
+    await tx.stripePlanPayment.update({
+      where: { invoiceId: invoice.id },
+      data: {
+        amountAffiliateCents,
+        currencyAffiliate: affiliateCurrency,
+        commissionAffiliateCents,
+      },
     });
   });
 

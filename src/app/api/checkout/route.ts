@@ -10,7 +10,7 @@ import { dbg, warn, error } from "@/lib/logger";
 import { getBalance } from "@/lib/spend-coins";
 import { hasActivePaidCredits } from "@/lib/user-tier";
 import { decryptEmail } from "@/lib/crypto";
-import { isValidPromoCoupon20Off } from "@/lib/crypto-promo-coupon";
+import { resolveAffiliateCouponForPlanCheckout } from "@/lib/affiliate-coupon-plan";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -37,9 +37,8 @@ type ResolvedStripePlan = {
   pricingLabel: string;
 };
 
-function resolveStripePlan(planKey: PlanKey, coupon: string | undefined): ResolvedStripePlan | { error: "promo_prices_missing" } {
-  const promo = isValidPromoCoupon20Off(coupon);
-  if (promo) {
+function resolveStripePlan(planKey: PlanKey, usePromo: boolean): ResolvedStripePlan | { error: "promo_prices_missing" } {
+  if (usePromo) {
     if (!PRICE_7_20OFF || !PRICE_49_20OFF) {
       return { error: "promo_prices_missing" };
     }
@@ -120,15 +119,36 @@ export async function POST(req: Request) {
     // ignora se não conseguir descriptografar
   }
 
-  let body: { plan?: string; returnTo?: string; tax_code?: string; cpf?: string; coupon?: string } = {};
+  let body: {
+    plan?: string;
+    returnTo?: string;
+    tax_code?: string;
+    cpf?: string;
+    coupon?: string;
+    cupom_id?: string;
+    idAfiliado?: string;
+  } = {};
   try {
     body = await req.json();
   } catch {
     body = {};
   }
 
+  const cupomInput =
+    (typeof body.cupom_id === "string" && body.cupom_id.trim()
+      ? body.cupom_id
+      : typeof body.coupon === "string"
+        ? body.coupon
+        : undefined) ?? undefined;
+
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
-  const couponRaw = typeof body?.coupon === "string" ? body.coupon : undefined;
+
+  const cupomResolved = await resolveAffiliateCouponForPlanCheckout(cupomInput);
+  if (!cupomResolved.ok) {
+    return NextResponse.json({ error: cupomResolved.error }, { status: 400 });
+  }
+  const affiliate = cupomResolved.affiliate;
+  const usePromo = affiliate !== null;
   const taxCodeRaw = typeof body?.tax_code === "string" ? body.tax_code.trim().slice(0, 30) : "";
   const taxCode = taxCodeRaw.length >= 3 ? taxCodeRaw : null;
   const cpfRaw = typeof body?.cpf === "string" ? body.cpf.replace(/\D/g, "").slice(0, 11) : "";
@@ -148,7 +168,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const resolved = resolveStripePlan(planKey, couponRaw);
+  const resolved = resolveStripePlan(planKey, usePromo);
   if ("error" in resolved) {
     error("[crypto/checkout] valid coupon but PRICE_COINS_*_20OFF missing");
     return NextResponse.json(
@@ -197,7 +217,9 @@ export async function POST(req: Request) {
       crypto: "1",
       tax_code: taxCode ?? "",
       user_cpf: userCpf,
-      promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
+      promo_20off: usePromo ? "1" : "",
+      cupom_id: affiliate?.code ?? "",
+      affiliate_account_id: affiliate?.affiliateAccountId ?? "",
     };
 
     // Stripe: assinatura recorrente — $11/mês ou $77/ano (ou $9/$62 com cupom); crédito a cada invoice.payment_succeeded no webhook
@@ -214,7 +236,9 @@ export async function POST(req: Request) {
           coins: String(plan.coins),
           plan: planKey,
           crypto: "1",
-          promo_20off: isValidPromoCoupon20Off(couponRaw) ? "1" : "",
+          promo_20off: usePromo ? "1" : "",
+          cupom_id: affiliate?.code ?? "",
+          affiliate_account_id: affiliate?.affiliateAccountId ?? "",
         },
       },
       ...(customerEmail ? { customer_email: customerEmail } : {}),

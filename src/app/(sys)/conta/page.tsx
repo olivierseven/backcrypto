@@ -54,7 +54,7 @@ export default async function BioContaPage() {
 
   return (
     <main className="crypto-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="crypto-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
+      <div className="crypto-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-0 py-0 sm:px-6 md:px-8">
         <div className="w-full">
           <BioContaClient
             user={user}

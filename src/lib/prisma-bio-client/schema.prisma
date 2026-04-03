@@ -136,7 +136,43 @@ model User {
   notifications       UserNotification[]
   chartLayouts        ChartLayout[]
   chartModels         ChartModel[]
+  stripePlanPayments  StripePlanPayment[]
 
+  @@schema("backcrypto")
+}
+
+/// Conta de afiliado (login separado do User). E-mail criptografado + emailSearchHash + passwordHash (bcrypt), como User.
+model AffiliateAccount {
+  id                          String    @id @default(cuid())
+  emailEnc                    String
+  emailIv                     String
+  emailTag                    String
+  emailSearchHash             String    @unique
+  passwordHash                String
+  ativo                       Boolean   @default(true)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  lastLoginAt                 DateTime? @map("last_login_at")
+  lastPlanPaymentPayoutSyncAt DateTime? @map("last_plan_payment_payout_sync_at")
+
+  coupons AffiliateCoupon[]
+
+  @@schema("backcrypto")
+}
+
+/// Cupom/campanha gerado pelo afiliado (código alfanumérico 7 caracteres, único globalmente).
+model AffiliateCoupon {
+  id                 String    @id @default(cuid())
+  affiliateAccountId String    @map("affiliate_account_id")
+  code               String    @unique @db.VarChar(7)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  ativo              Boolean   @default(false)
+  expiresAt          DateTime? @map("expires_at")
+
+  affiliateAccount AffiliateAccount @relation(fields: [affiliateAccountId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateAccountId])
+  @@map("AffiliateCoupon")
   @@schema("backcrypto")
 }
 
@@ -316,6 +352,101 @@ model StripeCheckoutSession {
   @@index([userId, status])
   @@index([userId, completedAt])
   @@index([completedAt])
+  @@schema("backcrypto")
+}
+
+// Pagamentos de plano: Stripe (invoice / sessão) ou Pagar.me (PIX). Metadados cupom_id e idAfiliado espelham o envio na criação do checkout/pedido.
+model StripePlanPayment {
+  id                       String   @id @default(cuid())
+  provider                 String   @default("stripe") // "stripe" | "pagarme"
+  userId                   String
+  invoiceId                String?  @unique @map("invoice_id")
+  checkoutSessionId        String?  @unique @map("checkout_session_id")
+  pagarmeOrderId           String?  @unique @map("pagarme_order_id")
+  subscriptionId           String?  @map("subscription_id")
+  paymentIntentId          String?  @map("payment_intent_id")
+  chargeId                 String?  @map("charge_id")
+  cupomId                  String   @default("") @map("cupom_id")
+  idAfiliado               String   @default("") @map("id_afiliado")
+  planKey                  String?  @map("plan_key")
+  amountTotalCents         Int      @map("amount_total_cents")
+  currency                 String   @default("usd")
+  amountAffiliateCents     Int?     @map("amount_affiliate_cents")
+  currencyAffiliate        String?  @map("currency_affiliate")
+  /// Comissão fixa (anual/mensal em USD na candidatura) convertida para a moeda do afiliado — centavos BRL ou USD.
+  commissionAffiliateCents Int?     @map("commission_affiliate_cents")
+  coinsCredited            Int      @map("coins_credited")
+  pricingLabel             String?  @map("pricing_label")
+  paidAt                   DateTime @map("paid_at")
+  createdAt                DateTime @default(now()) @map("created_at")
+  situacao                 String   @default("pendente") @map("situacao")
+
+  stripePayoutId    String?   @map("stripe_payout_id")
+  pagarmePayoutId   String?   @map("pagarme_payout_id")
+  payoutStatus      String?   @map("payout_status")
+  payoutArrivalDate DateTime? @map("payout_arrival_date")
+  payoutUpdatedAt   DateTime? @map("payout_updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, paidAt])
+  @@index([provider, paidAt])
+  @@index([idAfiliado])
+  @@index([cupomId])
+  @@index([stripePayoutId])
+  @@index([pagarmePayoutId])
+  @@map("StripePlanPayment")
+  @@schema("backcrypto")
+}
+
+/// Agregação mensal por afiliado: mês = 1.º dia UTC de `created_at`. Totais de negócio = comissão (`commission_affiliate_cents`); colunas `total_affiliate_*` de venda ficam zeradas.
+model AffiliatePlanPaymentMonthAgg {
+  id                                       String    @id @default(cuid())
+  idAfiliado                               String    @map("id_afiliado")
+  monthStart                               DateTime  @map("month_start") @db.Date
+  /// Legado (comissão USD); mantido zerado — usar `totalAffiliateCents` / `currencyAffiliate`.
+  totalAmountCents                         Int       @default(0) @map("total_amount_cents")
+  totalReembolsadoCents                    Int       @default(0) @map("total_reembolsado_cents")
+  totalAprovadoCents                       Int       @default(0) @map("total_aprovado_cents")
+  /// Legado (volume de venda em `amount_affiliate_cents`); mantido zerado — usar totais `total_*_commission_*`.
+  totalAffiliateCents                      Int       @default(0) @map("total_affiliate_cents")
+  totalReembolsadoAffiliateCents           Int       @default(0) @map("total_reembolsado_affiliate_cents")
+  totalAprovadoAffiliateCents              Int       @default(0) @map("total_aprovado_affiliate_cents")
+  /// Soma de `commission_affiliate_cents` (ou recálculo) no mês, mesma moeda que `currency_affiliate`.
+  totalCommissionAffiliateCents            Int       @default(0) @map("total_commission_affiliate_cents")
+  totalReembolsadoCommissionAffiliateCents Int       @default(0) @map("total_reembolsado_commission_affiliate_cents")
+  totalAprovadoCommissionAffiliateCents    Int       @default(0) @map("total_aprovado_commission_affiliate_cents")
+  /// Comissão que estava aprovada e passou a `expirado` (não paga); não confundir com estorno.
+  totalExpiradoCommissionAffiliateCents    Int       @default(0) @map("total_expirado_commission_affiliate_cents")
+  /// `brl` | `usd` conforme `AffiliateApplication.locale` na atualização do agregado.
+  currencyAffiliate                        String?   @map("currency_affiliate") @db.VarChar(8)
+  /// Fim do prazo de fecho: 1.º dia do mês = `monthStart` + 14 meses civis (UTC).
+  expiresAt                                DateTime? @map("expires_at") @db.Date
+  /// Chave: `em_aberto` | `aguardando_nota_fiscal` | `nota_fiscal_em_analise` | `expirado` | …
+  status                                   String    @default("em_aberto") @map("status")
+  updatedAt                                DateTime  @updatedAt @map("updated_at")
+
+  invoice AffiliateMonthAggInvoice?
+
+  @@unique([idAfiliado, monthStart])
+  @@index([idAfiliado])
+  @@map("AffiliatePlanPaymentMonthAgg")
+  @@schema("backcrypto")
+}
+
+/// NF / invoice (PDF) enviada pelo afiliado para o fecho mensal — uma por linha de `AffiliatePlanPaymentMonthAgg`.
+model AffiliateMonthAggInvoice {
+  id          String                       @id @default(cuid())
+  monthAggId  String                       @unique @map("month_agg_id")
+  monthAgg    AffiliatePlanPaymentMonthAgg @relation(fields: [monthAggId], references: [id], onDelete: Cascade)
+  pdfBytes    Bytes                        @map("pdf_bytes")
+  fileName    String?                      @map("file_name") @db.VarChar(512)
+  contentType String                       @default("application/pdf") @map("content_type")
+  sizeBytes   Int                          @map("size_bytes")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @updatedAt @map("updated_at")
+
+  @@map("AffiliateMonthAggInvoice")
   @@schema("backcrypto")
 }
 
@@ -651,6 +782,19 @@ model AppConfig {
   @@schema("backcrypto")
 }
 
+/// Erros de API/scripts (gravar só quando falhar).
+model LogErro {
+  id       String   @id @default(cuid())
+  dataHora DateTime @default(now()) @map("data_hora")
+  origem   String   @db.VarChar(512)
+  msgErro  String   @map("msg_erro") @db.Text
+
+  @@index([dataHora])
+  @@index([origem])
+  @@map("LogErro")
+  @@schema("backcrypto")
+}
+
 // Lista de símbolos para sync (cron) e cache-refresh. Fonte de verdade no banco.
 model KlineSymbol {
   symbol         String  @id // ex: BTCUSDT
@@ -659,5 +803,66 @@ model KlineSymbol {
   requiredDays5m Int? // janela 5m em dias (ex.: 90); null = default 90
   requiredDays1h Int? // janela 1h em dias (ex.: 730); null = default 730
 
+  @@schema("backcrypto")
+}
+
+// Inscrições no programa de afiliados (landing /pt|en/afiliados).
+model AffiliateApplication {
+  id                        String   @id @default(cuid())
+  idAfiliado                String   @unique @map("id_afiliado")
+  /// Brasil: 14 dígitos. Inscrições em EN podem usar só `taxId` (CNPJ nulo).
+  cnpjDigits                String?  @map("cnpj_digits")
+  /// Inscrições internacionais (EN): Tax ID / número de registo comercial.
+  taxId                     String?  @map("tax_id")
+  razaoSocial               String   @map("razao_social")
+  responsavel               String
+  email                     String   @unique
+  siteUrl                   String   @map("site_url")
+  acceptedDocs              Boolean  @default(false) @map("accepted_docs")
+  approved                  Boolean  @default(false) @map("aprovado")
+  locale                    String   @default("pt")
+  /// Comissão fixa por venda plano anual (USD, centavos). Default 800 = US$ 8,00.
+  commissionAnnualUsdCents  Int      @default(800) @map("commission_annual_usd_cents")
+  /// Comissão fixa por venda plano mensal (USD, centavos). Default 120 = US$ 1,20.
+  commissionMonthlyUsdCents Int      @default(120) @map("commission_monthly_usd_cents")
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  payoutProfile AffiliatePayoutProfile?
+
+  @@map("AffiliateApplication")
+  @@schema("backcrypto")
+}
+
+/// Dados bancários / recebimento do afiliado (PIX ou conta BR; PayPal ou wire internacional).
+model AffiliatePayoutProfile {
+  id                     String               @id @default(cuid())
+  affiliateApplicationId String               @unique @map("affiliate_application_id")
+  affiliateApplication   AffiliateApplication @relation(fields: [affiliateApplicationId], references: [id], onDelete: Cascade)
+
+  /// Última aba na UI: `br` | `intl`
+  activeTab String @default("br") @map("active_tab") @db.VarChar(16)
+
+  brRazaoSocial String? @map("br_razao_social") @db.VarChar(512)
+  brCnpjDigits  String? @map("br_cnpj_digits") @db.VarChar(14)
+  brBanco       String? @map("br_banco") @db.VarChar(256)
+  /// `corrente` | `poupanca`
+  brTipoConta   String? @map("br_tipo_conta") @db.VarChar(32)
+  brAgencia     String? @map("br_agencia") @db.VarChar(32)
+  brNumeroConta String? @map("br_numero_conta") @db.VarChar(64)
+  brChavePix    String? @map("br_chave_pix") @db.VarChar(512)
+
+  /// `paypal` | `wire`
+  intPaymentMethod     String? @map("int_payment_method") @db.VarChar(16)
+  intPaypalEmail       String? @map("int_paypal_email") @db.VarChar(320)
+  intBankName          String? @map("int_bank_name") @db.VarChar(256)
+  intAccountOrIban     String? @map("int_account_or_iban") @db.VarChar(64)
+  intSwiftBic          String? @map("int_swift_bic") @db.VarChar(32)
+  intAccountHolderName String? @map("int_account_holder_name") @db.VarChar(512)
+  intCountry           String? @map("int_country") @db.VarChar(120)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("AffiliatePayoutProfile")
   @@schema("backcrypto")
 }

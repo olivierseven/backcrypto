@@ -165,6 +165,29 @@ exports.Prisma.UserScalarFieldEnum = {
   previousTabUpdatedAt: 'previousTabUpdatedAt'
 };
 
+exports.Prisma.AffiliateAccountScalarFieldEnum = {
+  id: 'id',
+  emailEnc: 'emailEnc',
+  emailIv: 'emailIv',
+  emailTag: 'emailTag',
+  emailSearchHash: 'emailSearchHash',
+  passwordHash: 'passwordHash',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt',
+  lastPlanPaymentPayoutSyncAt: 'lastPlanPaymentPayoutSyncAt'
+};
+
+exports.Prisma.AffiliateCouponScalarFieldEnum = {
+  id: 'id',
+  affiliateAccountId: 'affiliateAccountId',
+  code: 'code',
+  createdAt: 'createdAt',
+  ativo: 'ativo',
+  expiresAt: 'expiresAt'
+};
+
 exports.Prisma.ChartLayoutScalarFieldEnum = {
   userId: 'userId',
   slot: 'slot',
@@ -274,6 +297,67 @@ exports.Prisma.StripeCheckoutSessionScalarFieldEnum = {
   pricingLabel: 'pricingLabel',
   completedAt: 'completedAt',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.StripePlanPaymentScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  userId: 'userId',
+  invoiceId: 'invoiceId',
+  checkoutSessionId: 'checkoutSessionId',
+  pagarmeOrderId: 'pagarmeOrderId',
+  subscriptionId: 'subscriptionId',
+  paymentIntentId: 'paymentIntentId',
+  chargeId: 'chargeId',
+  cupomId: 'cupomId',
+  idAfiliado: 'idAfiliado',
+  planKey: 'planKey',
+  amountTotalCents: 'amountTotalCents',
+  currency: 'currency',
+  amountAffiliateCents: 'amountAffiliateCents',
+  currencyAffiliate: 'currencyAffiliate',
+  commissionAffiliateCents: 'commissionAffiliateCents',
+  coinsCredited: 'coinsCredited',
+  pricingLabel: 'pricingLabel',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt',
+  situacao: 'situacao',
+  stripePayoutId: 'stripePayoutId',
+  pagarmePayoutId: 'pagarmePayoutId',
+  payoutStatus: 'payoutStatus',
+  payoutArrivalDate: 'payoutArrivalDate',
+  payoutUpdatedAt: 'payoutUpdatedAt'
+};
+
+exports.Prisma.AffiliatePlanPaymentMonthAggScalarFieldEnum = {
+  id: 'id',
+  idAfiliado: 'idAfiliado',
+  monthStart: 'monthStart',
+  totalAmountCents: 'totalAmountCents',
+  totalReembolsadoCents: 'totalReembolsadoCents',
+  totalAprovadoCents: 'totalAprovadoCents',
+  totalAffiliateCents: 'totalAffiliateCents',
+  totalReembolsadoAffiliateCents: 'totalReembolsadoAffiliateCents',
+  totalAprovadoAffiliateCents: 'totalAprovadoAffiliateCents',
+  totalCommissionAffiliateCents: 'totalCommissionAffiliateCents',
+  totalReembolsadoCommissionAffiliateCents: 'totalReembolsadoCommissionAffiliateCents',
+  totalAprovadoCommissionAffiliateCents: 'totalAprovadoCommissionAffiliateCents',
+  totalExpiradoCommissionAffiliateCents: 'totalExpiradoCommissionAffiliateCents',
+  currencyAffiliate: 'currencyAffiliate',
+  expiresAt: 'expiresAt',
+  status: 'status',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AffiliateMonthAggInvoiceScalarFieldEnum = {
+  id: 'id',
+  monthAggId: 'monthAggId',
+  pdfBytes: 'pdfBytes',
+  fileName: 'fileName',
+  contentType: 'contentType',
+  sizeBytes: 'sizeBytes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.PagarMeOrderScalarFieldEnum = {
@@ -511,12 +595,58 @@ exports.Prisma.AppConfigScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.LogErroScalarFieldEnum = {
+  id: 'id',
+  dataHora: 'dataHora',
+  origem: 'origem',
+  msgErro: 'msgErro'
+};
+
 exports.Prisma.KlineSymbolScalarFieldEnum = {
   symbol: 'symbol',
   ativo: 'ativo',
   requiredDays1m: 'requiredDays1m',
   requiredDays5m: 'requiredDays5m',
   requiredDays1h: 'requiredDays1h'
+};
+
+exports.Prisma.AffiliateApplicationScalarFieldEnum = {
+  id: 'id',
+  idAfiliado: 'idAfiliado',
+  cnpjDigits: 'cnpjDigits',
+  taxId: 'taxId',
+  razaoSocial: 'razaoSocial',
+  responsavel: 'responsavel',
+  email: 'email',
+  siteUrl: 'siteUrl',
+  acceptedDocs: 'acceptedDocs',
+  approved: 'approved',
+  locale: 'locale',
+  commissionAnnualUsdCents: 'commissionAnnualUsdCents',
+  commissionMonthlyUsdCents: 'commissionMonthlyUsdCents',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AffiliatePayoutProfileScalarFieldEnum = {
+  id: 'id',
+  affiliateApplicationId: 'affiliateApplicationId',
+  activeTab: 'activeTab',
+  brRazaoSocial: 'brRazaoSocial',
+  brCnpjDigits: 'brCnpjDigits',
+  brBanco: 'brBanco',
+  brTipoConta: 'brTipoConta',
+  brAgencia: 'brAgencia',
+  brNumeroConta: 'brNumeroConta',
+  brChavePix: 'brChavePix',
+  intPaymentMethod: 'intPaymentMethod',
+  intPaypalEmail: 'intPaypalEmail',
+  intBankName: 'intBankName',
+  intAccountOrIban: 'intAccountOrIban',
+  intSwiftBic: 'intSwiftBic',
+  intAccountHolderName: 'intAccountHolderName',
+  intCountry: 'intCountry',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -613,6 +743,8 @@ exports.CheckoutStatus = exports.$Enums.CheckoutStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  AffiliateAccount: 'AffiliateAccount',
+  AffiliateCoupon: 'AffiliateCoupon',
   ChartLayout: 'ChartLayout',
   ChartModel: 'ChartModel',
   UserNotification: 'UserNotification',
@@ -624,6 +756,9 @@ exports.Prisma.ModelName = {
   WalletCredit: 'WalletCredit',
   StripeEvent: 'StripeEvent',
   StripeCheckoutSession: 'StripeCheckoutSession',
+  StripePlanPayment: 'StripePlanPayment',
+  AffiliatePlanPaymentMonthAgg: 'AffiliatePlanPaymentMonthAgg',
+  AffiliateMonthAggInvoice: 'AffiliateMonthAggInvoice',
   PagarMeOrder: 'PagarMeOrder',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
@@ -637,7 +772,10 @@ exports.Prisma.ModelName = {
   BinanceKlineCache2: 'BinanceKlineCache2',
   BinanceKlineGap: 'BinanceKlineGap',
   AppConfig: 'AppConfig',
-  KlineSymbol: 'KlineSymbol'
+  LogErro: 'LogErro',
+  KlineSymbol: 'KlineSymbol',
+  AffiliateApplication: 'AffiliateApplication',
+  AffiliatePayoutProfile: 'AffiliatePayoutProfile'
 };
 
 /**

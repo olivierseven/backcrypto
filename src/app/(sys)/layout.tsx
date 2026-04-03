@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import SistemaLayoutClient from "@/app/(sys)/sistema/SistemaLayoutClient";
 import ConnectionErrorView from "@/app/(sys)/sistema/ConnectionErrorView";
+import { AFFILIATE_JWT_COOKIE_NAME, isAffiliatePainelSysPath } from "@/lib/crypto-auth-next";
+import { getLocaleFromRequest } from "@/lib/get-locale-server";
+import { isAffiliateAccountAtivo } from "@/lib/affiliate-account-ativo";
+import { jwtVerify } from "jose";
 import { requireSysUserId } from "./require-sys-user";
+
+const AFF_JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret");
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -14,6 +20,25 @@ export const metadata: Metadata = {
 };
 
 export default async function SysLayout({ children }: { children: ReactNode }) {
+  const pathname = (await headers()).get("x-crypto-pathname") ?? "";
+  if (isAffiliatePainelSysPath(pathname)) {
+    const token = (await cookies()).get(AFFILIATE_JWT_COOKIE_NAME)?.value;
+    if (token) {
+      try {
+        const { payload } = await jwtVerify(token, AFF_JWT_SECRET);
+        if (payload.affiliate === true && typeof payload.sub === "string") {
+          if (!(await isAffiliateAccountAtivo(payload.sub))) {
+            const lang = await getLocaleFromRequest();
+            redirect(`/api/auth/afiliados/logout?login=inactive&lang=${lang}`);
+          }
+        }
+      } catch {
+        /* JWT inválido: páginas de afiliado redirecionam */
+      }
+    }
+    return <>{children}</>;
+  }
+
   const userId = await requireSysUserId();
 
   let user: { language: string | null; hideStatusBar: boolean | null; role: string | null; tier: string | null } | null;

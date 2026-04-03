@@ -19,6 +19,16 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model AffiliateAccount
+ * Conta de afiliado (login separado do User). E-mail criptografado + emailSearchHash + passwordHash (bcrypt), como User.
+ */
+export type AffiliateAccount = $Result.DefaultSelection<Prisma.$AffiliateAccountPayload>
+/**
+ * Model AffiliateCoupon
+ * Cupom/campanha gerado pelo afiliado (código alfanumérico 7 caracteres, único globalmente).
+ */
+export type AffiliateCoupon = $Result.DefaultSelection<Prisma.$AffiliateCouponPayload>
+/**
  * Model ChartLayout
  * 
  */
@@ -73,6 +83,21 @@ export type StripeEvent = $Result.DefaultSelection<Prisma.$StripeEventPayload>
  * 
  */
 export type StripeCheckoutSession = $Result.DefaultSelection<Prisma.$StripeCheckoutSessionPayload>
+/**
+ * Model StripePlanPayment
+ * 
+ */
+export type StripePlanPayment = $Result.DefaultSelection<Prisma.$StripePlanPaymentPayload>
+/**
+ * Model AffiliatePlanPaymentMonthAgg
+ * Agregação mensal por afiliado: mês = 1.º dia UTC de `created_at`. Totais de negócio = comissão (`commission_affiliate_cents`); colunas `total_affiliate_*` de venda ficam zeradas.
+ */
+export type AffiliatePlanPaymentMonthAgg = $Result.DefaultSelection<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+/**
+ * Model AffiliateMonthAggInvoice
+ * NF / invoice (PDF) enviada pelo afiliado para o fecho mensal — uma por linha de `AffiliatePlanPaymentMonthAgg`.
+ */
+export type AffiliateMonthAggInvoice = $Result.DefaultSelection<Prisma.$AffiliateMonthAggInvoicePayload>
 /**
  * Model PagarMeOrder
  * 
@@ -139,10 +164,25 @@ export type BinanceKlineGap = $Result.DefaultSelection<Prisma.$BinanceKlineGapPa
  */
 export type AppConfig = $Result.DefaultSelection<Prisma.$AppConfigPayload>
 /**
+ * Model LogErro
+ * Erros de API/scripts (gravar só quando falhar).
+ */
+export type LogErro = $Result.DefaultSelection<Prisma.$LogErroPayload>
+/**
  * Model KlineSymbol
  * 
  */
 export type KlineSymbol = $Result.DefaultSelection<Prisma.$KlineSymbolPayload>
+/**
+ * Model AffiliateApplication
+ * 
+ */
+export type AffiliateApplication = $Result.DefaultSelection<Prisma.$AffiliateApplicationPayload>
+/**
+ * Model AffiliatePayoutProfile
+ * Dados bancários / recebimento do afiliado (PIX ou conta BR; PayPal ou wire internacional).
+ */
+export type AffiliatePayoutProfile = $Result.DefaultSelection<Prisma.$AffiliatePayoutProfilePayload>
 
 /**
  * Enums
@@ -397,6 +437,26 @@ export class PrismaClient<
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.affiliateAccount`: Exposes CRUD operations for the **AffiliateAccount** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliateAccounts
+    * const affiliateAccounts = await prisma.affiliateAccount.findMany()
+    * ```
+    */
+  get affiliateAccount(): Prisma.AffiliateAccountDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.affiliateCoupon`: Exposes CRUD operations for the **AffiliateCoupon** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliateCoupons
+    * const affiliateCoupons = await prisma.affiliateCoupon.findMany()
+    * ```
+    */
+  get affiliateCoupon(): Prisma.AffiliateCouponDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.chartLayout`: Exposes CRUD operations for the **ChartLayout** model.
     * Example usage:
     * ```ts
@@ -505,6 +565,36 @@ export class PrismaClient<
     * ```
     */
   get stripeCheckoutSession(): Prisma.StripeCheckoutSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stripePlanPayment`: Exposes CRUD operations for the **StripePlanPayment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StripePlanPayments
+    * const stripePlanPayments = await prisma.stripePlanPayment.findMany()
+    * ```
+    */
+  get stripePlanPayment(): Prisma.StripePlanPaymentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.affiliatePlanPaymentMonthAgg`: Exposes CRUD operations for the **AffiliatePlanPaymentMonthAgg** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliatePlanPaymentMonthAggs
+    * const affiliatePlanPaymentMonthAggs = await prisma.affiliatePlanPaymentMonthAgg.findMany()
+    * ```
+    */
+  get affiliatePlanPaymentMonthAgg(): Prisma.AffiliatePlanPaymentMonthAggDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.affiliateMonthAggInvoice`: Exposes CRUD operations for the **AffiliateMonthAggInvoice** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliateMonthAggInvoices
+    * const affiliateMonthAggInvoices = await prisma.affiliateMonthAggInvoice.findMany()
+    * ```
+    */
+  get affiliateMonthAggInvoice(): Prisma.AffiliateMonthAggInvoiceDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.pagarMeOrder`: Exposes CRUD operations for the **PagarMeOrder** model.
@@ -637,6 +727,16 @@ export class PrismaClient<
   get appConfig(): Prisma.AppConfigDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.logErro`: Exposes CRUD operations for the **LogErro** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LogErros
+    * const logErros = await prisma.logErro.findMany()
+    * ```
+    */
+  get logErro(): Prisma.LogErroDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.klineSymbol`: Exposes CRUD operations for the **KlineSymbol** model.
     * Example usage:
     * ```ts
@@ -645,6 +745,26 @@ export class PrismaClient<
     * ```
     */
   get klineSymbol(): Prisma.KlineSymbolDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.affiliateApplication`: Exposes CRUD operations for the **AffiliateApplication** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliateApplications
+    * const affiliateApplications = await prisma.affiliateApplication.findMany()
+    * ```
+    */
+  get affiliateApplication(): Prisma.AffiliateApplicationDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.affiliatePayoutProfile`: Exposes CRUD operations for the **AffiliatePayoutProfile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AffiliatePayoutProfiles
+    * const affiliatePayoutProfiles = await prisma.affiliatePayoutProfile.findMany()
+    * ```
+    */
+  get affiliatePayoutProfile(): Prisma.AffiliatePayoutProfileDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1087,6 +1207,8 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    AffiliateAccount: 'AffiliateAccount',
+    AffiliateCoupon: 'AffiliateCoupon',
     ChartLayout: 'ChartLayout',
     ChartModel: 'ChartModel',
     UserNotification: 'UserNotification',
@@ -1098,6 +1220,9 @@ export namespace Prisma {
     WalletCredit: 'WalletCredit',
     StripeEvent: 'StripeEvent',
     StripeCheckoutSession: 'StripeCheckoutSession',
+    StripePlanPayment: 'StripePlanPayment',
+    AffiliatePlanPaymentMonthAgg: 'AffiliatePlanPaymentMonthAgg',
+    AffiliateMonthAggInvoice: 'AffiliateMonthAggInvoice',
     PagarMeOrder: 'PagarMeOrder',
     BinanceKline: 'BinanceKline',
     BinanceKlineFast: 'BinanceKlineFast',
@@ -1111,7 +1236,10 @@ export namespace Prisma {
     BinanceKlineCache2: 'BinanceKlineCache2',
     BinanceKlineGap: 'BinanceKlineGap',
     AppConfig: 'AppConfig',
-    KlineSymbol: 'KlineSymbol'
+    LogErro: 'LogErro',
+    KlineSymbol: 'KlineSymbol',
+    AffiliateApplication: 'AffiliateApplication',
+    AffiliatePayoutProfile: 'AffiliatePayoutProfile'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1130,7 +1258,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "klineSymbol"
+      modelProps: "user" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1205,6 +1333,154 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliateAccount: {
+        payload: Prisma.$AffiliateAccountPayload<ExtArgs>
+        fields: Prisma.AffiliateAccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliateAccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliateAccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliateAccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliateAccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          findMany: {
+            args: Prisma.AffiliateAccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>[]
+          }
+          create: {
+            args: Prisma.AffiliateAccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          createMany: {
+            args: Prisma.AffiliateAccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliateAccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliateAccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          update: {
+            args: Prisma.AffiliateAccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliateAccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliateAccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliateAccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliateAccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateAccountPayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliateAccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliateAccount>
+          }
+          groupBy: {
+            args: Prisma.AffiliateAccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateAccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliateAccountCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateAccountCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliateCoupon: {
+        payload: Prisma.$AffiliateCouponPayload<ExtArgs>
+        fields: Prisma.AffiliateCouponFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliateCouponFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliateCouponFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliateCouponFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliateCouponFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          findMany: {
+            args: Prisma.AffiliateCouponFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>[]
+          }
+          create: {
+            args: Prisma.AffiliateCouponCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          createMany: {
+            args: Prisma.AffiliateCouponCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliateCouponCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliateCouponDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          update: {
+            args: Prisma.AffiliateCouponUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliateCouponDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliateCouponUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliateCouponUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliateCouponUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateCouponPayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliateCouponAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliateCoupon>
+          }
+          groupBy: {
+            args: Prisma.AffiliateCouponGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateCouponGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliateCouponCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateCouponCountAggregateOutputType> | number
           }
         }
       }
@@ -2019,6 +2295,228 @@ export namespace Prisma {
           count: {
             args: Prisma.StripeCheckoutSessionCountArgs<ExtArgs>
             result: $Utils.Optional<StripeCheckoutSessionCountAggregateOutputType> | number
+          }
+        }
+      }
+      StripePlanPayment: {
+        payload: Prisma.$StripePlanPaymentPayload<ExtArgs>
+        fields: Prisma.StripePlanPaymentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StripePlanPaymentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StripePlanPaymentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          findFirst: {
+            args: Prisma.StripePlanPaymentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StripePlanPaymentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          findMany: {
+            args: Prisma.StripePlanPaymentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>[]
+          }
+          create: {
+            args: Prisma.StripePlanPaymentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          createMany: {
+            args: Prisma.StripePlanPaymentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StripePlanPaymentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>[]
+          }
+          delete: {
+            args: Prisma.StripePlanPaymentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          update: {
+            args: Prisma.StripePlanPaymentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          deleteMany: {
+            args: Prisma.StripePlanPaymentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StripePlanPaymentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StripePlanPaymentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>[]
+          }
+          upsert: {
+            args: Prisma.StripePlanPaymentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StripePlanPaymentPayload>
+          }
+          aggregate: {
+            args: Prisma.StripePlanPaymentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStripePlanPayment>
+          }
+          groupBy: {
+            args: Prisma.StripePlanPaymentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StripePlanPaymentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StripePlanPaymentCountArgs<ExtArgs>
+            result: $Utils.Optional<StripePlanPaymentCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliatePlanPaymentMonthAgg: {
+        payload: Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>
+        fields: Prisma.AffiliatePlanPaymentMonthAggFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliatePlanPaymentMonthAggFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliatePlanPaymentMonthAggFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliatePlanPaymentMonthAggFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliatePlanPaymentMonthAggFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          findMany: {
+            args: Prisma.AffiliatePlanPaymentMonthAggFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>[]
+          }
+          create: {
+            args: Prisma.AffiliatePlanPaymentMonthAggCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          createMany: {
+            args: Prisma.AffiliatePlanPaymentMonthAggCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliatePlanPaymentMonthAggCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliatePlanPaymentMonthAggDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          update: {
+            args: Prisma.AffiliatePlanPaymentMonthAggUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliatePlanPaymentMonthAggDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliatePlanPaymentMonthAggUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliatePlanPaymentMonthAggUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliatePlanPaymentMonthAggUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePlanPaymentMonthAggPayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliatePlanPaymentMonthAggAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliatePlanPaymentMonthAgg>
+          }
+          groupBy: {
+            args: Prisma.AffiliatePlanPaymentMonthAggGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliatePlanPaymentMonthAggGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliatePlanPaymentMonthAggCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliatePlanPaymentMonthAggCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliateMonthAggInvoice: {
+        payload: Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>
+        fields: Prisma.AffiliateMonthAggInvoiceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliateMonthAggInvoiceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliateMonthAggInvoiceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliateMonthAggInvoiceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliateMonthAggInvoiceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          findMany: {
+            args: Prisma.AffiliateMonthAggInvoiceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>[]
+          }
+          create: {
+            args: Prisma.AffiliateMonthAggInvoiceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          createMany: {
+            args: Prisma.AffiliateMonthAggInvoiceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliateMonthAggInvoiceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliateMonthAggInvoiceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          update: {
+            args: Prisma.AffiliateMonthAggInvoiceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliateMonthAggInvoiceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliateMonthAggInvoiceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliateMonthAggInvoiceUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliateMonthAggInvoiceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateMonthAggInvoicePayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliateMonthAggInvoiceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliateMonthAggInvoice>
+          }
+          groupBy: {
+            args: Prisma.AffiliateMonthAggInvoiceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateMonthAggInvoiceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliateMonthAggInvoiceCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateMonthAggInvoiceCountAggregateOutputType> | number
           }
         }
       }
@@ -2984,6 +3482,80 @@ export namespace Prisma {
           }
         }
       }
+      LogErro: {
+        payload: Prisma.$LogErroPayload<ExtArgs>
+        fields: Prisma.LogErroFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LogErroFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LogErroFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          findFirst: {
+            args: Prisma.LogErroFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LogErroFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          findMany: {
+            args: Prisma.LogErroFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>[]
+          }
+          create: {
+            args: Prisma.LogErroCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          createMany: {
+            args: Prisma.LogErroCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LogErroCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>[]
+          }
+          delete: {
+            args: Prisma.LogErroDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          update: {
+            args: Prisma.LogErroUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          deleteMany: {
+            args: Prisma.LogErroDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LogErroUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LogErroUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>[]
+          }
+          upsert: {
+            args: Prisma.LogErroUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LogErroPayload>
+          }
+          aggregate: {
+            args: Prisma.LogErroAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLogErro>
+          }
+          groupBy: {
+            args: Prisma.LogErroGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LogErroGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LogErroCountArgs<ExtArgs>
+            result: $Utils.Optional<LogErroCountAggregateOutputType> | number
+          }
+        }
+      }
       KlineSymbol: {
         payload: Prisma.$KlineSymbolPayload<ExtArgs>
         fields: Prisma.KlineSymbolFieldRefs
@@ -3055,6 +3627,154 @@ export namespace Prisma {
           count: {
             args: Prisma.KlineSymbolCountArgs<ExtArgs>
             result: $Utils.Optional<KlineSymbolCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliateApplication: {
+        payload: Prisma.$AffiliateApplicationPayload<ExtArgs>
+        fields: Prisma.AffiliateApplicationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliateApplicationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliateApplicationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliateApplicationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliateApplicationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          findMany: {
+            args: Prisma.AffiliateApplicationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>[]
+          }
+          create: {
+            args: Prisma.AffiliateApplicationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          createMany: {
+            args: Prisma.AffiliateApplicationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliateApplicationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliateApplicationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          update: {
+            args: Prisma.AffiliateApplicationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliateApplicationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliateApplicationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliateApplicationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliateApplicationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliateApplicationPayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliateApplicationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliateApplication>
+          }
+          groupBy: {
+            args: Prisma.AffiliateApplicationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateApplicationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliateApplicationCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliateApplicationCountAggregateOutputType> | number
+          }
+        }
+      }
+      AffiliatePayoutProfile: {
+        payload: Prisma.$AffiliatePayoutProfilePayload<ExtArgs>
+        fields: Prisma.AffiliatePayoutProfileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AffiliatePayoutProfileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AffiliatePayoutProfileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          findFirst: {
+            args: Prisma.AffiliatePayoutProfileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AffiliatePayoutProfileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          findMany: {
+            args: Prisma.AffiliatePayoutProfileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>[]
+          }
+          create: {
+            args: Prisma.AffiliatePayoutProfileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          createMany: {
+            args: Prisma.AffiliatePayoutProfileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AffiliatePayoutProfileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>[]
+          }
+          delete: {
+            args: Prisma.AffiliatePayoutProfileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          update: {
+            args: Prisma.AffiliatePayoutProfileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          deleteMany: {
+            args: Prisma.AffiliatePayoutProfileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AffiliatePayoutProfileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AffiliatePayoutProfileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>[]
+          }
+          upsert: {
+            args: Prisma.AffiliatePayoutProfileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AffiliatePayoutProfilePayload>
+          }
+          aggregate: {
+            args: Prisma.AffiliatePayoutProfileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAffiliatePayoutProfile>
+          }
+          groupBy: {
+            args: Prisma.AffiliatePayoutProfileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AffiliatePayoutProfileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AffiliatePayoutProfileCountArgs<ExtArgs>
+            result: $Utils.Optional<AffiliatePayoutProfileCountAggregateOutputType> | number
           }
         }
       }
@@ -3155,6 +3875,8 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    affiliateAccount?: AffiliateAccountOmit
+    affiliateCoupon?: AffiliateCouponOmit
     chartLayout?: ChartLayoutOmit
     chartModel?: ChartModelOmit
     userNotification?: UserNotificationOmit
@@ -3166,6 +3888,9 @@ export namespace Prisma {
     walletCredit?: WalletCreditOmit
     stripeEvent?: StripeEventOmit
     stripeCheckoutSession?: StripeCheckoutSessionOmit
+    stripePlanPayment?: StripePlanPaymentOmit
+    affiliatePlanPaymentMonthAgg?: AffiliatePlanPaymentMonthAggOmit
+    affiliateMonthAggInvoice?: AffiliateMonthAggInvoiceOmit
     pagarMeOrder?: PagarMeOrderOmit
     binanceKline?: BinanceKlineOmit
     binanceKlineFast?: BinanceKlineFastOmit
@@ -3179,7 +3904,10 @@ export namespace Prisma {
     binanceKlineCache2?: BinanceKlineCache2Omit
     binanceKlineGap?: BinanceKlineGapOmit
     appConfig?: AppConfigOmit
+    logErro?: LogErroOmit
     klineSymbol?: KlineSymbolOmit
+    affiliateApplication?: AffiliateApplicationOmit
+    affiliatePayoutProfile?: AffiliatePayoutProfileOmit
   }
 
   /* Types for Logging */
@@ -3270,6 +3998,7 @@ export namespace Prisma {
     notifications: number
     chartLayouts: number
     chartModels: number
+    stripePlanPayments: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3283,6 +4012,7 @@ export namespace Prisma {
     notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
     chartLayouts?: boolean | UserCountOutputTypeCountChartLayoutsArgs
     chartModels?: boolean | UserCountOutputTypeCountChartModelsArgs
+    stripePlanPayments?: boolean | UserCountOutputTypeCountStripePlanPaymentsArgs
   }
 
   // Custom InputTypes
@@ -3364,6 +4094,44 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountChartModelsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ChartModelWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountStripePlanPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StripePlanPaymentWhereInput
+  }
+
+
+  /**
+   * Count Type AffiliateAccountCountOutputType
+   */
+
+  export type AffiliateAccountCountOutputType = {
+    coupons: number
+  }
+
+  export type AffiliateAccountCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    coupons?: boolean | AffiliateAccountCountOutputTypeCountCouponsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AffiliateAccountCountOutputType without action
+   */
+  export type AffiliateAccountCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccountCountOutputType
+     */
+    select?: AffiliateAccountCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AffiliateAccountCountOutputType without action
+   */
+  export type AffiliateAccountCountOutputTypeCountCouponsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliateCouponWhereInput
   }
 
 
@@ -3931,6 +4699,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
+    stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -4079,6 +4848,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
+    stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4098,6 +4868,7 @@ export namespace Prisma {
       notifications: Prisma.$UserNotificationPayload<ExtArgs>[]
       chartLayouts: Prisma.$ChartLayoutPayload<ExtArgs>[]
       chartModels: Prisma.$ChartModelPayload<ExtArgs>[]
+      stripePlanPayments: Prisma.$StripePlanPaymentPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4546,6 +5317,7 @@ export namespace Prisma {
     notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     chartLayouts<T extends User$chartLayoutsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartLayoutsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartLayoutPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     chartModels<T extends User$chartModelsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartModelsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartModelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    stripePlanPayments<T extends User$stripePlanPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, User$stripePlanPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5263,6 +6035,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.stripePlanPayments
+   */
+  export type User$stripePlanPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    where?: StripePlanPaymentWhereInput
+    orderBy?: StripePlanPaymentOrderByWithRelationInput | StripePlanPaymentOrderByWithRelationInput[]
+    cursor?: StripePlanPaymentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StripePlanPaymentScalarFieldEnum | StripePlanPaymentScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5278,6 +6074,2225 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AffiliateAccount
+   */
+
+  export type AggregateAffiliateAccount = {
+    _count: AffiliateAccountCountAggregateOutputType | null
+    _min: AffiliateAccountMinAggregateOutputType | null
+    _max: AffiliateAccountMaxAggregateOutputType | null
+  }
+
+  export type AffiliateAccountMinAggregateOutputType = {
+    id: string | null
+    emailEnc: string | null
+    emailIv: string | null
+    emailTag: string | null
+    emailSearchHash: string | null
+    passwordHash: string | null
+    ativo: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+    lastPlanPaymentPayoutSyncAt: Date | null
+  }
+
+  export type AffiliateAccountMaxAggregateOutputType = {
+    id: string | null
+    emailEnc: string | null
+    emailIv: string | null
+    emailTag: string | null
+    emailSearchHash: string | null
+    passwordHash: string | null
+    ativo: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+    lastPlanPaymentPayoutSyncAt: Date | null
+  }
+
+  export type AffiliateAccountCountAggregateOutputType = {
+    id: number
+    emailEnc: number
+    emailIv: number
+    emailTag: number
+    emailSearchHash: number
+    passwordHash: number
+    ativo: number
+    createdAt: number
+    updatedAt: number
+    lastLoginAt: number
+    lastPlanPaymentPayoutSyncAt: number
+    _all: number
+  }
+
+
+  export type AffiliateAccountMinAggregateInputType = {
+    id?: true
+    emailEnc?: true
+    emailIv?: true
+    emailTag?: true
+    emailSearchHash?: true
+    passwordHash?: true
+    ativo?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    lastPlanPaymentPayoutSyncAt?: true
+  }
+
+  export type AffiliateAccountMaxAggregateInputType = {
+    id?: true
+    emailEnc?: true
+    emailIv?: true
+    emailTag?: true
+    emailSearchHash?: true
+    passwordHash?: true
+    ativo?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    lastPlanPaymentPayoutSyncAt?: true
+  }
+
+  export type AffiliateAccountCountAggregateInputType = {
+    id?: true
+    emailEnc?: true
+    emailIv?: true
+    emailTag?: true
+    emailSearchHash?: true
+    passwordHash?: true
+    ativo?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    lastPlanPaymentPayoutSyncAt?: true
+    _all?: true
+  }
+
+  export type AffiliateAccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateAccount to aggregate.
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateAccounts to fetch.
+     */
+    orderBy?: AffiliateAccountOrderByWithRelationInput | AffiliateAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliateAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliateAccounts
+    **/
+    _count?: true | AffiliateAccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliateAccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliateAccountMaxAggregateInputType
+  }
+
+  export type GetAffiliateAccountAggregateType<T extends AffiliateAccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliateAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliateAccount[P]>
+      : GetScalarType<T[P], AggregateAffiliateAccount[P]>
+  }
+
+
+
+
+  export type AffiliateAccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliateAccountWhereInput
+    orderBy?: AffiliateAccountOrderByWithAggregationInput | AffiliateAccountOrderByWithAggregationInput[]
+    by: AffiliateAccountScalarFieldEnum[] | AffiliateAccountScalarFieldEnum
+    having?: AffiliateAccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliateAccountCountAggregateInputType | true
+    _min?: AffiliateAccountMinAggregateInputType
+    _max?: AffiliateAccountMaxAggregateInputType
+  }
+
+  export type AffiliateAccountGroupByOutputType = {
+    id: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo: boolean
+    createdAt: Date
+    updatedAt: Date
+    lastLoginAt: Date | null
+    lastPlanPaymentPayoutSyncAt: Date | null
+    _count: AffiliateAccountCountAggregateOutputType | null
+    _min: AffiliateAccountMinAggregateOutputType | null
+    _max: AffiliateAccountMaxAggregateOutputType | null
+  }
+
+  type GetAffiliateAccountGroupByPayload<T extends AffiliateAccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliateAccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliateAccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliateAccountGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliateAccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliateAccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    emailEnc?: boolean
+    emailIv?: boolean
+    emailTag?: boolean
+    emailSearchHash?: boolean
+    passwordHash?: boolean
+    ativo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    lastPlanPaymentPayoutSyncAt?: boolean
+    coupons?: boolean | AffiliateAccount$couponsArgs<ExtArgs>
+    _count?: boolean | AffiliateAccountCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateAccount"]>
+
+  export type AffiliateAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    emailEnc?: boolean
+    emailIv?: boolean
+    emailTag?: boolean
+    emailSearchHash?: boolean
+    passwordHash?: boolean
+    ativo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    lastPlanPaymentPayoutSyncAt?: boolean
+  }, ExtArgs["result"]["affiliateAccount"]>
+
+  export type AffiliateAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    emailEnc?: boolean
+    emailIv?: boolean
+    emailTag?: boolean
+    emailSearchHash?: boolean
+    passwordHash?: boolean
+    ativo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    lastPlanPaymentPayoutSyncAt?: boolean
+  }, ExtArgs["result"]["affiliateAccount"]>
+
+  export type AffiliateAccountSelectScalar = {
+    id?: boolean
+    emailEnc?: boolean
+    emailIv?: boolean
+    emailTag?: boolean
+    emailSearchHash?: boolean
+    passwordHash?: boolean
+    ativo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    lastPlanPaymentPayoutSyncAt?: boolean
+  }
+
+  export type AffiliateAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "passwordHash" | "ativo" | "createdAt" | "updatedAt" | "lastLoginAt" | "lastPlanPaymentPayoutSyncAt", ExtArgs["result"]["affiliateAccount"]>
+  export type AffiliateAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    coupons?: boolean | AffiliateAccount$couponsArgs<ExtArgs>
+    _count?: boolean | AffiliateAccountCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AffiliateAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AffiliateAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AffiliateAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliateAccount"
+    objects: {
+      coupons: Prisma.$AffiliateCouponPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      emailEnc: string
+      emailIv: string
+      emailTag: string
+      emailSearchHash: string
+      passwordHash: string
+      ativo: boolean
+      createdAt: Date
+      updatedAt: Date
+      lastLoginAt: Date | null
+      lastPlanPaymentPayoutSyncAt: Date | null
+    }, ExtArgs["result"]["affiliateAccount"]>
+    composites: {}
+  }
+
+  type AffiliateAccountGetPayload<S extends boolean | null | undefined | AffiliateAccountDefaultArgs> = $Result.GetResult<Prisma.$AffiliateAccountPayload, S>
+
+  type AffiliateAccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliateAccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliateAccountCountAggregateInputType | true
+    }
+
+  export interface AffiliateAccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliateAccount'], meta: { name: 'AffiliateAccount' } }
+    /**
+     * Find zero or one AffiliateAccount that matches the filter.
+     * @param {AffiliateAccountFindUniqueArgs} args - Arguments to find a AffiliateAccount
+     * @example
+     * // Get one AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliateAccountFindUniqueArgs>(args: SelectSubset<T, AffiliateAccountFindUniqueArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliateAccount that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliateAccountFindUniqueOrThrowArgs} args - Arguments to find a AffiliateAccount
+     * @example
+     * // Get one AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliateAccountFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliateAccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateAccount that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountFindFirstArgs} args - Arguments to find a AffiliateAccount
+     * @example
+     * // Get one AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliateAccountFindFirstArgs>(args?: SelectSubset<T, AffiliateAccountFindFirstArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateAccount that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountFindFirstOrThrowArgs} args - Arguments to find a AffiliateAccount
+     * @example
+     * // Get one AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliateAccountFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliateAccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliateAccounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliateAccounts
+     * const affiliateAccounts = await prisma.affiliateAccount.findMany()
+     * 
+     * // Get first 10 AffiliateAccounts
+     * const affiliateAccounts = await prisma.affiliateAccount.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliateAccountWithIdOnly = await prisma.affiliateAccount.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliateAccountFindManyArgs>(args?: SelectSubset<T, AffiliateAccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliateAccount.
+     * @param {AffiliateAccountCreateArgs} args - Arguments to create a AffiliateAccount.
+     * @example
+     * // Create one AffiliateAccount
+     * const AffiliateAccount = await prisma.affiliateAccount.create({
+     *   data: {
+     *     // ... data to create a AffiliateAccount
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliateAccountCreateArgs>(args: SelectSubset<T, AffiliateAccountCreateArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliateAccounts.
+     * @param {AffiliateAccountCreateManyArgs} args - Arguments to create many AffiliateAccounts.
+     * @example
+     * // Create many AffiliateAccounts
+     * const affiliateAccount = await prisma.affiliateAccount.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliateAccountCreateManyArgs>(args?: SelectSubset<T, AffiliateAccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliateAccounts and returns the data saved in the database.
+     * @param {AffiliateAccountCreateManyAndReturnArgs} args - Arguments to create many AffiliateAccounts.
+     * @example
+     * // Create many AffiliateAccounts
+     * const affiliateAccount = await prisma.affiliateAccount.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliateAccounts and only return the `id`
+     * const affiliateAccountWithIdOnly = await prisma.affiliateAccount.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliateAccountCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliateAccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliateAccount.
+     * @param {AffiliateAccountDeleteArgs} args - Arguments to delete one AffiliateAccount.
+     * @example
+     * // Delete one AffiliateAccount
+     * const AffiliateAccount = await prisma.affiliateAccount.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliateAccount
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliateAccountDeleteArgs>(args: SelectSubset<T, AffiliateAccountDeleteArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliateAccount.
+     * @param {AffiliateAccountUpdateArgs} args - Arguments to update one AffiliateAccount.
+     * @example
+     * // Update one AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliateAccountUpdateArgs>(args: SelectSubset<T, AffiliateAccountUpdateArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliateAccounts.
+     * @param {AffiliateAccountDeleteManyArgs} args - Arguments to filter AffiliateAccounts to delete.
+     * @example
+     * // Delete a few AffiliateAccounts
+     * const { count } = await prisma.affiliateAccount.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliateAccountDeleteManyArgs>(args?: SelectSubset<T, AffiliateAccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliateAccounts
+     * const affiliateAccount = await prisma.affiliateAccount.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliateAccountUpdateManyArgs>(args: SelectSubset<T, AffiliateAccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateAccounts and returns the data updated in the database.
+     * @param {AffiliateAccountUpdateManyAndReturnArgs} args - Arguments to update many AffiliateAccounts.
+     * @example
+     * // Update many AffiliateAccounts
+     * const affiliateAccount = await prisma.affiliateAccount.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliateAccounts and only return the `id`
+     * const affiliateAccountWithIdOnly = await prisma.affiliateAccount.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliateAccountUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliateAccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliateAccount.
+     * @param {AffiliateAccountUpsertArgs} args - Arguments to update or create a AffiliateAccount.
+     * @example
+     * // Update or create a AffiliateAccount
+     * const affiliateAccount = await prisma.affiliateAccount.upsert({
+     *   create: {
+     *     // ... data to create a AffiliateAccount
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliateAccount we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliateAccountUpsertArgs>(args: SelectSubset<T, AffiliateAccountUpsertArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliateAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountCountArgs} args - Arguments to filter AffiliateAccounts to count.
+     * @example
+     * // Count the number of AffiliateAccounts
+     * const count = await prisma.affiliateAccount.count({
+     *   where: {
+     *     // ... the filter for the AffiliateAccounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliateAccountCountArgs>(
+      args?: Subset<T, AffiliateAccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliateAccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliateAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliateAccountAggregateArgs>(args: Subset<T, AffiliateAccountAggregateArgs>): Prisma.PrismaPromise<GetAffiliateAccountAggregateType<T>>
+
+    /**
+     * Group by AffiliateAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateAccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliateAccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliateAccountGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliateAccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliateAccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliateAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliateAccount model
+   */
+  readonly fields: AffiliateAccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliateAccount.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliateAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    coupons<T extends AffiliateAccount$couponsArgs<ExtArgs> = {}>(args?: Subset<T, AffiliateAccount$couponsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliateAccount model
+   */
+  interface AffiliateAccountFieldRefs {
+    readonly id: FieldRef<"AffiliateAccount", 'String'>
+    readonly emailEnc: FieldRef<"AffiliateAccount", 'String'>
+    readonly emailIv: FieldRef<"AffiliateAccount", 'String'>
+    readonly emailTag: FieldRef<"AffiliateAccount", 'String'>
+    readonly emailSearchHash: FieldRef<"AffiliateAccount", 'String'>
+    readonly passwordHash: FieldRef<"AffiliateAccount", 'String'>
+    readonly ativo: FieldRef<"AffiliateAccount", 'Boolean'>
+    readonly createdAt: FieldRef<"AffiliateAccount", 'DateTime'>
+    readonly updatedAt: FieldRef<"AffiliateAccount", 'DateTime'>
+    readonly lastLoginAt: FieldRef<"AffiliateAccount", 'DateTime'>
+    readonly lastPlanPaymentPayoutSyncAt: FieldRef<"AffiliateAccount", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliateAccount findUnique
+   */
+  export type AffiliateAccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateAccount to fetch.
+     */
+    where: AffiliateAccountWhereUniqueInput
+  }
+
+  /**
+   * AffiliateAccount findUniqueOrThrow
+   */
+  export type AffiliateAccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateAccount to fetch.
+     */
+    where: AffiliateAccountWhereUniqueInput
+  }
+
+  /**
+   * AffiliateAccount findFirst
+   */
+  export type AffiliateAccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateAccount to fetch.
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateAccounts to fetch.
+     */
+    orderBy?: AffiliateAccountOrderByWithRelationInput | AffiliateAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateAccounts.
+     */
+    cursor?: AffiliateAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateAccounts.
+     */
+    distinct?: AffiliateAccountScalarFieldEnum | AffiliateAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateAccount findFirstOrThrow
+   */
+  export type AffiliateAccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateAccount to fetch.
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateAccounts to fetch.
+     */
+    orderBy?: AffiliateAccountOrderByWithRelationInput | AffiliateAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateAccounts.
+     */
+    cursor?: AffiliateAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateAccounts.
+     */
+    distinct?: AffiliateAccountScalarFieldEnum | AffiliateAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateAccount findMany
+   */
+  export type AffiliateAccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateAccounts to fetch.
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateAccounts to fetch.
+     */
+    orderBy?: AffiliateAccountOrderByWithRelationInput | AffiliateAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliateAccounts.
+     */
+    cursor?: AffiliateAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateAccounts.
+     */
+    skip?: number
+    distinct?: AffiliateAccountScalarFieldEnum | AffiliateAccountScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateAccount create
+   */
+  export type AffiliateAccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliateAccount.
+     */
+    data: XOR<AffiliateAccountCreateInput, AffiliateAccountUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliateAccount createMany
+   */
+  export type AffiliateAccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliateAccounts.
+     */
+    data: AffiliateAccountCreateManyInput | AffiliateAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateAccount createManyAndReturn
+   */
+  export type AffiliateAccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliateAccounts.
+     */
+    data: AffiliateAccountCreateManyInput | AffiliateAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateAccount update
+   */
+  export type AffiliateAccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliateAccount.
+     */
+    data: XOR<AffiliateAccountUpdateInput, AffiliateAccountUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliateAccount to update.
+     */
+    where: AffiliateAccountWhereUniqueInput
+  }
+
+  /**
+   * AffiliateAccount updateMany
+   */
+  export type AffiliateAccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliateAccounts.
+     */
+    data: XOR<AffiliateAccountUpdateManyMutationInput, AffiliateAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateAccounts to update
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * Limit how many AffiliateAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateAccount updateManyAndReturn
+   */
+  export type AffiliateAccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliateAccounts.
+     */
+    data: XOR<AffiliateAccountUpdateManyMutationInput, AffiliateAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateAccounts to update
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * Limit how many AffiliateAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateAccount upsert
+   */
+  export type AffiliateAccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliateAccount to update in case it exists.
+     */
+    where: AffiliateAccountWhereUniqueInput
+    /**
+     * In case the AffiliateAccount found by the `where` argument doesn't exist, create a new AffiliateAccount with this data.
+     */
+    create: XOR<AffiliateAccountCreateInput, AffiliateAccountUncheckedCreateInput>
+    /**
+     * In case the AffiliateAccount was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliateAccountUpdateInput, AffiliateAccountUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliateAccount delete
+   */
+  export type AffiliateAccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliateAccount to delete.
+     */
+    where: AffiliateAccountWhereUniqueInput
+  }
+
+  /**
+   * AffiliateAccount deleteMany
+   */
+  export type AffiliateAccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateAccounts to delete
+     */
+    where?: AffiliateAccountWhereInput
+    /**
+     * Limit how many AffiliateAccounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateAccount.coupons
+   */
+  export type AffiliateAccount$couponsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    where?: AffiliateCouponWhereInput
+    orderBy?: AffiliateCouponOrderByWithRelationInput | AffiliateCouponOrderByWithRelationInput[]
+    cursor?: AffiliateCouponWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AffiliateCouponScalarFieldEnum | AffiliateCouponScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateAccount without action
+   */
+  export type AffiliateAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateAccount
+     */
+    select?: AffiliateAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateAccount
+     */
+    omit?: AffiliateAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateAccountInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AffiliateCoupon
+   */
+
+  export type AggregateAffiliateCoupon = {
+    _count: AffiliateCouponCountAggregateOutputType | null
+    _min: AffiliateCouponMinAggregateOutputType | null
+    _max: AffiliateCouponMaxAggregateOutputType | null
+  }
+
+  export type AffiliateCouponMinAggregateOutputType = {
+    id: string | null
+    affiliateAccountId: string | null
+    code: string | null
+    createdAt: Date | null
+    ativo: boolean | null
+    expiresAt: Date | null
+  }
+
+  export type AffiliateCouponMaxAggregateOutputType = {
+    id: string | null
+    affiliateAccountId: string | null
+    code: string | null
+    createdAt: Date | null
+    ativo: boolean | null
+    expiresAt: Date | null
+  }
+
+  export type AffiliateCouponCountAggregateOutputType = {
+    id: number
+    affiliateAccountId: number
+    code: number
+    createdAt: number
+    ativo: number
+    expiresAt: number
+    _all: number
+  }
+
+
+  export type AffiliateCouponMinAggregateInputType = {
+    id?: true
+    affiliateAccountId?: true
+    code?: true
+    createdAt?: true
+    ativo?: true
+    expiresAt?: true
+  }
+
+  export type AffiliateCouponMaxAggregateInputType = {
+    id?: true
+    affiliateAccountId?: true
+    code?: true
+    createdAt?: true
+    ativo?: true
+    expiresAt?: true
+  }
+
+  export type AffiliateCouponCountAggregateInputType = {
+    id?: true
+    affiliateAccountId?: true
+    code?: true
+    createdAt?: true
+    ativo?: true
+    expiresAt?: true
+    _all?: true
+  }
+
+  export type AffiliateCouponAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateCoupon to aggregate.
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateCoupons to fetch.
+     */
+    orderBy?: AffiliateCouponOrderByWithRelationInput | AffiliateCouponOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliateCouponWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateCoupons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateCoupons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliateCoupons
+    **/
+    _count?: true | AffiliateCouponCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliateCouponMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliateCouponMaxAggregateInputType
+  }
+
+  export type GetAffiliateCouponAggregateType<T extends AffiliateCouponAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliateCoupon]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliateCoupon[P]>
+      : GetScalarType<T[P], AggregateAffiliateCoupon[P]>
+  }
+
+
+
+
+  export type AffiliateCouponGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliateCouponWhereInput
+    orderBy?: AffiliateCouponOrderByWithAggregationInput | AffiliateCouponOrderByWithAggregationInput[]
+    by: AffiliateCouponScalarFieldEnum[] | AffiliateCouponScalarFieldEnum
+    having?: AffiliateCouponScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliateCouponCountAggregateInputType | true
+    _min?: AffiliateCouponMinAggregateInputType
+    _max?: AffiliateCouponMaxAggregateInputType
+  }
+
+  export type AffiliateCouponGroupByOutputType = {
+    id: string
+    affiliateAccountId: string
+    code: string
+    createdAt: Date
+    ativo: boolean
+    expiresAt: Date | null
+    _count: AffiliateCouponCountAggregateOutputType | null
+    _min: AffiliateCouponMinAggregateOutputType | null
+    _max: AffiliateCouponMaxAggregateOutputType | null
+  }
+
+  type GetAffiliateCouponGroupByPayload<T extends AffiliateCouponGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliateCouponGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliateCouponGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliateCouponGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliateCouponGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliateCouponSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateAccountId?: boolean
+    code?: boolean
+    createdAt?: boolean
+    ativo?: boolean
+    expiresAt?: boolean
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateCoupon"]>
+
+  export type AffiliateCouponSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateAccountId?: boolean
+    code?: boolean
+    createdAt?: boolean
+    ativo?: boolean
+    expiresAt?: boolean
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateCoupon"]>
+
+  export type AffiliateCouponSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateAccountId?: boolean
+    code?: boolean
+    createdAt?: boolean
+    ativo?: boolean
+    expiresAt?: boolean
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateCoupon"]>
+
+  export type AffiliateCouponSelectScalar = {
+    id?: boolean
+    affiliateAccountId?: boolean
+    code?: boolean
+    createdAt?: boolean
+    ativo?: boolean
+    expiresAt?: boolean
+  }
+
+  export type AffiliateCouponOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "affiliateAccountId" | "code" | "createdAt" | "ativo" | "expiresAt", ExtArgs["result"]["affiliateCoupon"]>
+  export type AffiliateCouponInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }
+  export type AffiliateCouponIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }
+  export type AffiliateCouponIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateAccount?: boolean | AffiliateAccountDefaultArgs<ExtArgs>
+  }
+
+  export type $AffiliateCouponPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliateCoupon"
+    objects: {
+      affiliateAccount: Prisma.$AffiliateAccountPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      affiliateAccountId: string
+      code: string
+      createdAt: Date
+      ativo: boolean
+      expiresAt: Date | null
+    }, ExtArgs["result"]["affiliateCoupon"]>
+    composites: {}
+  }
+
+  type AffiliateCouponGetPayload<S extends boolean | null | undefined | AffiliateCouponDefaultArgs> = $Result.GetResult<Prisma.$AffiliateCouponPayload, S>
+
+  type AffiliateCouponCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliateCouponFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliateCouponCountAggregateInputType | true
+    }
+
+  export interface AffiliateCouponDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliateCoupon'], meta: { name: 'AffiliateCoupon' } }
+    /**
+     * Find zero or one AffiliateCoupon that matches the filter.
+     * @param {AffiliateCouponFindUniqueArgs} args - Arguments to find a AffiliateCoupon
+     * @example
+     * // Get one AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliateCouponFindUniqueArgs>(args: SelectSubset<T, AffiliateCouponFindUniqueArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliateCoupon that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliateCouponFindUniqueOrThrowArgs} args - Arguments to find a AffiliateCoupon
+     * @example
+     * // Get one AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliateCouponFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliateCouponFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateCoupon that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponFindFirstArgs} args - Arguments to find a AffiliateCoupon
+     * @example
+     * // Get one AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliateCouponFindFirstArgs>(args?: SelectSubset<T, AffiliateCouponFindFirstArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateCoupon that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponFindFirstOrThrowArgs} args - Arguments to find a AffiliateCoupon
+     * @example
+     * // Get one AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliateCouponFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliateCouponFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliateCoupons that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliateCoupons
+     * const affiliateCoupons = await prisma.affiliateCoupon.findMany()
+     * 
+     * // Get first 10 AffiliateCoupons
+     * const affiliateCoupons = await prisma.affiliateCoupon.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliateCouponWithIdOnly = await prisma.affiliateCoupon.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliateCouponFindManyArgs>(args?: SelectSubset<T, AffiliateCouponFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliateCoupon.
+     * @param {AffiliateCouponCreateArgs} args - Arguments to create a AffiliateCoupon.
+     * @example
+     * // Create one AffiliateCoupon
+     * const AffiliateCoupon = await prisma.affiliateCoupon.create({
+     *   data: {
+     *     // ... data to create a AffiliateCoupon
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliateCouponCreateArgs>(args: SelectSubset<T, AffiliateCouponCreateArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliateCoupons.
+     * @param {AffiliateCouponCreateManyArgs} args - Arguments to create many AffiliateCoupons.
+     * @example
+     * // Create many AffiliateCoupons
+     * const affiliateCoupon = await prisma.affiliateCoupon.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliateCouponCreateManyArgs>(args?: SelectSubset<T, AffiliateCouponCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliateCoupons and returns the data saved in the database.
+     * @param {AffiliateCouponCreateManyAndReturnArgs} args - Arguments to create many AffiliateCoupons.
+     * @example
+     * // Create many AffiliateCoupons
+     * const affiliateCoupon = await prisma.affiliateCoupon.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliateCoupons and only return the `id`
+     * const affiliateCouponWithIdOnly = await prisma.affiliateCoupon.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliateCouponCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliateCouponCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliateCoupon.
+     * @param {AffiliateCouponDeleteArgs} args - Arguments to delete one AffiliateCoupon.
+     * @example
+     * // Delete one AffiliateCoupon
+     * const AffiliateCoupon = await prisma.affiliateCoupon.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliateCoupon
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliateCouponDeleteArgs>(args: SelectSubset<T, AffiliateCouponDeleteArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliateCoupon.
+     * @param {AffiliateCouponUpdateArgs} args - Arguments to update one AffiliateCoupon.
+     * @example
+     * // Update one AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliateCouponUpdateArgs>(args: SelectSubset<T, AffiliateCouponUpdateArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliateCoupons.
+     * @param {AffiliateCouponDeleteManyArgs} args - Arguments to filter AffiliateCoupons to delete.
+     * @example
+     * // Delete a few AffiliateCoupons
+     * const { count } = await prisma.affiliateCoupon.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliateCouponDeleteManyArgs>(args?: SelectSubset<T, AffiliateCouponDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateCoupons.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliateCoupons
+     * const affiliateCoupon = await prisma.affiliateCoupon.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliateCouponUpdateManyArgs>(args: SelectSubset<T, AffiliateCouponUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateCoupons and returns the data updated in the database.
+     * @param {AffiliateCouponUpdateManyAndReturnArgs} args - Arguments to update many AffiliateCoupons.
+     * @example
+     * // Update many AffiliateCoupons
+     * const affiliateCoupon = await prisma.affiliateCoupon.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliateCoupons and only return the `id`
+     * const affiliateCouponWithIdOnly = await prisma.affiliateCoupon.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliateCouponUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliateCouponUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliateCoupon.
+     * @param {AffiliateCouponUpsertArgs} args - Arguments to update or create a AffiliateCoupon.
+     * @example
+     * // Update or create a AffiliateCoupon
+     * const affiliateCoupon = await prisma.affiliateCoupon.upsert({
+     *   create: {
+     *     // ... data to create a AffiliateCoupon
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliateCoupon we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliateCouponUpsertArgs>(args: SelectSubset<T, AffiliateCouponUpsertArgs<ExtArgs>>): Prisma__AffiliateCouponClient<$Result.GetResult<Prisma.$AffiliateCouponPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliateCoupons.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponCountArgs} args - Arguments to filter AffiliateCoupons to count.
+     * @example
+     * // Count the number of AffiliateCoupons
+     * const count = await prisma.affiliateCoupon.count({
+     *   where: {
+     *     // ... the filter for the AffiliateCoupons we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliateCouponCountArgs>(
+      args?: Subset<T, AffiliateCouponCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliateCouponCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliateCoupon.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliateCouponAggregateArgs>(args: Subset<T, AffiliateCouponAggregateArgs>): Prisma.PrismaPromise<GetAffiliateCouponAggregateType<T>>
+
+    /**
+     * Group by AffiliateCoupon.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateCouponGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliateCouponGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliateCouponGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliateCouponGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliateCouponGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliateCouponGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliateCoupon model
+   */
+  readonly fields: AffiliateCouponFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliateCoupon.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliateCouponClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    affiliateAccount<T extends AffiliateAccountDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AffiliateAccountDefaultArgs<ExtArgs>>): Prisma__AffiliateAccountClient<$Result.GetResult<Prisma.$AffiliateAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliateCoupon model
+   */
+  interface AffiliateCouponFieldRefs {
+    readonly id: FieldRef<"AffiliateCoupon", 'String'>
+    readonly affiliateAccountId: FieldRef<"AffiliateCoupon", 'String'>
+    readonly code: FieldRef<"AffiliateCoupon", 'String'>
+    readonly createdAt: FieldRef<"AffiliateCoupon", 'DateTime'>
+    readonly ativo: FieldRef<"AffiliateCoupon", 'Boolean'>
+    readonly expiresAt: FieldRef<"AffiliateCoupon", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliateCoupon findUnique
+   */
+  export type AffiliateCouponFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateCoupon to fetch.
+     */
+    where: AffiliateCouponWhereUniqueInput
+  }
+
+  /**
+   * AffiliateCoupon findUniqueOrThrow
+   */
+  export type AffiliateCouponFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateCoupon to fetch.
+     */
+    where: AffiliateCouponWhereUniqueInput
+  }
+
+  /**
+   * AffiliateCoupon findFirst
+   */
+  export type AffiliateCouponFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateCoupon to fetch.
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateCoupons to fetch.
+     */
+    orderBy?: AffiliateCouponOrderByWithRelationInput | AffiliateCouponOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateCoupons.
+     */
+    cursor?: AffiliateCouponWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateCoupons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateCoupons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateCoupons.
+     */
+    distinct?: AffiliateCouponScalarFieldEnum | AffiliateCouponScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateCoupon findFirstOrThrow
+   */
+  export type AffiliateCouponFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateCoupon to fetch.
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateCoupons to fetch.
+     */
+    orderBy?: AffiliateCouponOrderByWithRelationInput | AffiliateCouponOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateCoupons.
+     */
+    cursor?: AffiliateCouponWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateCoupons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateCoupons.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateCoupons.
+     */
+    distinct?: AffiliateCouponScalarFieldEnum | AffiliateCouponScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateCoupon findMany
+   */
+  export type AffiliateCouponFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateCoupons to fetch.
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateCoupons to fetch.
+     */
+    orderBy?: AffiliateCouponOrderByWithRelationInput | AffiliateCouponOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliateCoupons.
+     */
+    cursor?: AffiliateCouponWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateCoupons from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateCoupons.
+     */
+    skip?: number
+    distinct?: AffiliateCouponScalarFieldEnum | AffiliateCouponScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateCoupon create
+   */
+  export type AffiliateCouponCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliateCoupon.
+     */
+    data: XOR<AffiliateCouponCreateInput, AffiliateCouponUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliateCoupon createMany
+   */
+  export type AffiliateCouponCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliateCoupons.
+     */
+    data: AffiliateCouponCreateManyInput | AffiliateCouponCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateCoupon createManyAndReturn
+   */
+  export type AffiliateCouponCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliateCoupons.
+     */
+    data: AffiliateCouponCreateManyInput | AffiliateCouponCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliateCoupon update
+   */
+  export type AffiliateCouponUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliateCoupon.
+     */
+    data: XOR<AffiliateCouponUpdateInput, AffiliateCouponUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliateCoupon to update.
+     */
+    where: AffiliateCouponWhereUniqueInput
+  }
+
+  /**
+   * AffiliateCoupon updateMany
+   */
+  export type AffiliateCouponUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliateCoupons.
+     */
+    data: XOR<AffiliateCouponUpdateManyMutationInput, AffiliateCouponUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateCoupons to update
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * Limit how many AffiliateCoupons to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateCoupon updateManyAndReturn
+   */
+  export type AffiliateCouponUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliateCoupons.
+     */
+    data: XOR<AffiliateCouponUpdateManyMutationInput, AffiliateCouponUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateCoupons to update
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * Limit how many AffiliateCoupons to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliateCoupon upsert
+   */
+  export type AffiliateCouponUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliateCoupon to update in case it exists.
+     */
+    where: AffiliateCouponWhereUniqueInput
+    /**
+     * In case the AffiliateCoupon found by the `where` argument doesn't exist, create a new AffiliateCoupon with this data.
+     */
+    create: XOR<AffiliateCouponCreateInput, AffiliateCouponUncheckedCreateInput>
+    /**
+     * In case the AffiliateCoupon was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliateCouponUpdateInput, AffiliateCouponUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliateCoupon delete
+   */
+  export type AffiliateCouponDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliateCoupon to delete.
+     */
+    where: AffiliateCouponWhereUniqueInput
+  }
+
+  /**
+   * AffiliateCoupon deleteMany
+   */
+  export type AffiliateCouponDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateCoupons to delete
+     */
+    where?: AffiliateCouponWhereInput
+    /**
+     * Limit how many AffiliateCoupons to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateCoupon without action
+   */
+  export type AffiliateCouponDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateCoupon
+     */
+    select?: AffiliateCouponSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateCoupon
+     */
+    omit?: AffiliateCouponOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateCouponInclude<ExtArgs> | null
   }
 
 
@@ -17385,6 +20400,3840 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: StripeCheckoutSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model StripePlanPayment
+   */
+
+  export type AggregateStripePlanPayment = {
+    _count: StripePlanPaymentCountAggregateOutputType | null
+    _avg: StripePlanPaymentAvgAggregateOutputType | null
+    _sum: StripePlanPaymentSumAggregateOutputType | null
+    _min: StripePlanPaymentMinAggregateOutputType | null
+    _max: StripePlanPaymentMaxAggregateOutputType | null
+  }
+
+  export type StripePlanPaymentAvgAggregateOutputType = {
+    amountTotalCents: number | null
+    amountAffiliateCents: number | null
+    commissionAffiliateCents: number | null
+    coinsCredited: number | null
+  }
+
+  export type StripePlanPaymentSumAggregateOutputType = {
+    amountTotalCents: number | null
+    amountAffiliateCents: number | null
+    commissionAffiliateCents: number | null
+    coinsCredited: number | null
+  }
+
+  export type StripePlanPaymentMinAggregateOutputType = {
+    id: string | null
+    provider: string | null
+    userId: string | null
+    invoiceId: string | null
+    checkoutSessionId: string | null
+    pagarmeOrderId: string | null
+    subscriptionId: string | null
+    paymentIntentId: string | null
+    chargeId: string | null
+    cupomId: string | null
+    idAfiliado: string | null
+    planKey: string | null
+    amountTotalCents: number | null
+    currency: string | null
+    amountAffiliateCents: number | null
+    currencyAffiliate: string | null
+    commissionAffiliateCents: number | null
+    coinsCredited: number | null
+    pricingLabel: string | null
+    paidAt: Date | null
+    createdAt: Date | null
+    situacao: string | null
+    stripePayoutId: string | null
+    pagarmePayoutId: string | null
+    payoutStatus: string | null
+    payoutArrivalDate: Date | null
+    payoutUpdatedAt: Date | null
+  }
+
+  export type StripePlanPaymentMaxAggregateOutputType = {
+    id: string | null
+    provider: string | null
+    userId: string | null
+    invoiceId: string | null
+    checkoutSessionId: string | null
+    pagarmeOrderId: string | null
+    subscriptionId: string | null
+    paymentIntentId: string | null
+    chargeId: string | null
+    cupomId: string | null
+    idAfiliado: string | null
+    planKey: string | null
+    amountTotalCents: number | null
+    currency: string | null
+    amountAffiliateCents: number | null
+    currencyAffiliate: string | null
+    commissionAffiliateCents: number | null
+    coinsCredited: number | null
+    pricingLabel: string | null
+    paidAt: Date | null
+    createdAt: Date | null
+    situacao: string | null
+    stripePayoutId: string | null
+    pagarmePayoutId: string | null
+    payoutStatus: string | null
+    payoutArrivalDate: Date | null
+    payoutUpdatedAt: Date | null
+  }
+
+  export type StripePlanPaymentCountAggregateOutputType = {
+    id: number
+    provider: number
+    userId: number
+    invoiceId: number
+    checkoutSessionId: number
+    pagarmeOrderId: number
+    subscriptionId: number
+    paymentIntentId: number
+    chargeId: number
+    cupomId: number
+    idAfiliado: number
+    planKey: number
+    amountTotalCents: number
+    currency: number
+    amountAffiliateCents: number
+    currencyAffiliate: number
+    commissionAffiliateCents: number
+    coinsCredited: number
+    pricingLabel: number
+    paidAt: number
+    createdAt: number
+    situacao: number
+    stripePayoutId: number
+    pagarmePayoutId: number
+    payoutStatus: number
+    payoutArrivalDate: number
+    payoutUpdatedAt: number
+    _all: number
+  }
+
+
+  export type StripePlanPaymentAvgAggregateInputType = {
+    amountTotalCents?: true
+    amountAffiliateCents?: true
+    commissionAffiliateCents?: true
+    coinsCredited?: true
+  }
+
+  export type StripePlanPaymentSumAggregateInputType = {
+    amountTotalCents?: true
+    amountAffiliateCents?: true
+    commissionAffiliateCents?: true
+    coinsCredited?: true
+  }
+
+  export type StripePlanPaymentMinAggregateInputType = {
+    id?: true
+    provider?: true
+    userId?: true
+    invoiceId?: true
+    checkoutSessionId?: true
+    pagarmeOrderId?: true
+    subscriptionId?: true
+    paymentIntentId?: true
+    chargeId?: true
+    cupomId?: true
+    idAfiliado?: true
+    planKey?: true
+    amountTotalCents?: true
+    currency?: true
+    amountAffiliateCents?: true
+    currencyAffiliate?: true
+    commissionAffiliateCents?: true
+    coinsCredited?: true
+    pricingLabel?: true
+    paidAt?: true
+    createdAt?: true
+    situacao?: true
+    stripePayoutId?: true
+    pagarmePayoutId?: true
+    payoutStatus?: true
+    payoutArrivalDate?: true
+    payoutUpdatedAt?: true
+  }
+
+  export type StripePlanPaymentMaxAggregateInputType = {
+    id?: true
+    provider?: true
+    userId?: true
+    invoiceId?: true
+    checkoutSessionId?: true
+    pagarmeOrderId?: true
+    subscriptionId?: true
+    paymentIntentId?: true
+    chargeId?: true
+    cupomId?: true
+    idAfiliado?: true
+    planKey?: true
+    amountTotalCents?: true
+    currency?: true
+    amountAffiliateCents?: true
+    currencyAffiliate?: true
+    commissionAffiliateCents?: true
+    coinsCredited?: true
+    pricingLabel?: true
+    paidAt?: true
+    createdAt?: true
+    situacao?: true
+    stripePayoutId?: true
+    pagarmePayoutId?: true
+    payoutStatus?: true
+    payoutArrivalDate?: true
+    payoutUpdatedAt?: true
+  }
+
+  export type StripePlanPaymentCountAggregateInputType = {
+    id?: true
+    provider?: true
+    userId?: true
+    invoiceId?: true
+    checkoutSessionId?: true
+    pagarmeOrderId?: true
+    subscriptionId?: true
+    paymentIntentId?: true
+    chargeId?: true
+    cupomId?: true
+    idAfiliado?: true
+    planKey?: true
+    amountTotalCents?: true
+    currency?: true
+    amountAffiliateCents?: true
+    currencyAffiliate?: true
+    commissionAffiliateCents?: true
+    coinsCredited?: true
+    pricingLabel?: true
+    paidAt?: true
+    createdAt?: true
+    situacao?: true
+    stripePayoutId?: true
+    pagarmePayoutId?: true
+    payoutStatus?: true
+    payoutArrivalDate?: true
+    payoutUpdatedAt?: true
+    _all?: true
+  }
+
+  export type StripePlanPaymentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripePlanPayment to aggregate.
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripePlanPayments to fetch.
+     */
+    orderBy?: StripePlanPaymentOrderByWithRelationInput | StripePlanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StripePlanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripePlanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripePlanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StripePlanPayments
+    **/
+    _count?: true | StripePlanPaymentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: StripePlanPaymentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: StripePlanPaymentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StripePlanPaymentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StripePlanPaymentMaxAggregateInputType
+  }
+
+  export type GetStripePlanPaymentAggregateType<T extends StripePlanPaymentAggregateArgs> = {
+        [P in keyof T & keyof AggregateStripePlanPayment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStripePlanPayment[P]>
+      : GetScalarType<T[P], AggregateStripePlanPayment[P]>
+  }
+
+
+
+
+  export type StripePlanPaymentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StripePlanPaymentWhereInput
+    orderBy?: StripePlanPaymentOrderByWithAggregationInput | StripePlanPaymentOrderByWithAggregationInput[]
+    by: StripePlanPaymentScalarFieldEnum[] | StripePlanPaymentScalarFieldEnum
+    having?: StripePlanPaymentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StripePlanPaymentCountAggregateInputType | true
+    _avg?: StripePlanPaymentAvgAggregateInputType
+    _sum?: StripePlanPaymentSumAggregateInputType
+    _min?: StripePlanPaymentMinAggregateInputType
+    _max?: StripePlanPaymentMaxAggregateInputType
+  }
+
+  export type StripePlanPaymentGroupByOutputType = {
+    id: string
+    provider: string
+    userId: string
+    invoiceId: string | null
+    checkoutSessionId: string | null
+    pagarmeOrderId: string | null
+    subscriptionId: string | null
+    paymentIntentId: string | null
+    chargeId: string | null
+    cupomId: string
+    idAfiliado: string
+    planKey: string | null
+    amountTotalCents: number
+    currency: string
+    amountAffiliateCents: number | null
+    currencyAffiliate: string | null
+    commissionAffiliateCents: number | null
+    coinsCredited: number
+    pricingLabel: string | null
+    paidAt: Date
+    createdAt: Date
+    situacao: string
+    stripePayoutId: string | null
+    pagarmePayoutId: string | null
+    payoutStatus: string | null
+    payoutArrivalDate: Date | null
+    payoutUpdatedAt: Date | null
+    _count: StripePlanPaymentCountAggregateOutputType | null
+    _avg: StripePlanPaymentAvgAggregateOutputType | null
+    _sum: StripePlanPaymentSumAggregateOutputType | null
+    _min: StripePlanPaymentMinAggregateOutputType | null
+    _max: StripePlanPaymentMaxAggregateOutputType | null
+  }
+
+  type GetStripePlanPaymentGroupByPayload<T extends StripePlanPaymentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StripePlanPaymentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StripePlanPaymentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StripePlanPaymentGroupByOutputType[P]>
+            : GetScalarType<T[P], StripePlanPaymentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StripePlanPaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    userId?: boolean
+    invoiceId?: boolean
+    checkoutSessionId?: boolean
+    pagarmeOrderId?: boolean
+    subscriptionId?: boolean
+    paymentIntentId?: boolean
+    chargeId?: boolean
+    cupomId?: boolean
+    idAfiliado?: boolean
+    planKey?: boolean
+    amountTotalCents?: boolean
+    currency?: boolean
+    amountAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    commissionAffiliateCents?: boolean
+    coinsCredited?: boolean
+    pricingLabel?: boolean
+    paidAt?: boolean
+    createdAt?: boolean
+    situacao?: boolean
+    stripePayoutId?: boolean
+    pagarmePayoutId?: boolean
+    payoutStatus?: boolean
+    payoutArrivalDate?: boolean
+    payoutUpdatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stripePlanPayment"]>
+
+  export type StripePlanPaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    userId?: boolean
+    invoiceId?: boolean
+    checkoutSessionId?: boolean
+    pagarmeOrderId?: boolean
+    subscriptionId?: boolean
+    paymentIntentId?: boolean
+    chargeId?: boolean
+    cupomId?: boolean
+    idAfiliado?: boolean
+    planKey?: boolean
+    amountTotalCents?: boolean
+    currency?: boolean
+    amountAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    commissionAffiliateCents?: boolean
+    coinsCredited?: boolean
+    pricingLabel?: boolean
+    paidAt?: boolean
+    createdAt?: boolean
+    situacao?: boolean
+    stripePayoutId?: boolean
+    pagarmePayoutId?: boolean
+    payoutStatus?: boolean
+    payoutArrivalDate?: boolean
+    payoutUpdatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stripePlanPayment"]>
+
+  export type StripePlanPaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    userId?: boolean
+    invoiceId?: boolean
+    checkoutSessionId?: boolean
+    pagarmeOrderId?: boolean
+    subscriptionId?: boolean
+    paymentIntentId?: boolean
+    chargeId?: boolean
+    cupomId?: boolean
+    idAfiliado?: boolean
+    planKey?: boolean
+    amountTotalCents?: boolean
+    currency?: boolean
+    amountAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    commissionAffiliateCents?: boolean
+    coinsCredited?: boolean
+    pricingLabel?: boolean
+    paidAt?: boolean
+    createdAt?: boolean
+    situacao?: boolean
+    stripePayoutId?: boolean
+    pagarmePayoutId?: boolean
+    payoutStatus?: boolean
+    payoutArrivalDate?: boolean
+    payoutUpdatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stripePlanPayment"]>
+
+  export type StripePlanPaymentSelectScalar = {
+    id?: boolean
+    provider?: boolean
+    userId?: boolean
+    invoiceId?: boolean
+    checkoutSessionId?: boolean
+    pagarmeOrderId?: boolean
+    subscriptionId?: boolean
+    paymentIntentId?: boolean
+    chargeId?: boolean
+    cupomId?: boolean
+    idAfiliado?: boolean
+    planKey?: boolean
+    amountTotalCents?: boolean
+    currency?: boolean
+    amountAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    commissionAffiliateCents?: boolean
+    coinsCredited?: boolean
+    pricingLabel?: boolean
+    paidAt?: boolean
+    createdAt?: boolean
+    situacao?: boolean
+    stripePayoutId?: boolean
+    pagarmePayoutId?: boolean
+    payoutStatus?: boolean
+    payoutArrivalDate?: boolean
+    payoutUpdatedAt?: boolean
+  }
+
+  export type StripePlanPaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "provider" | "userId" | "invoiceId" | "checkoutSessionId" | "pagarmeOrderId" | "subscriptionId" | "paymentIntentId" | "chargeId" | "cupomId" | "idAfiliado" | "planKey" | "amountTotalCents" | "currency" | "amountAffiliateCents" | "currencyAffiliate" | "commissionAffiliateCents" | "coinsCredited" | "pricingLabel" | "paidAt" | "createdAt" | "situacao" | "stripePayoutId" | "pagarmePayoutId" | "payoutStatus" | "payoutArrivalDate" | "payoutUpdatedAt", ExtArgs["result"]["stripePlanPayment"]>
+  export type StripePlanPaymentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type StripePlanPaymentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type StripePlanPaymentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $StripePlanPaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StripePlanPayment"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      provider: string
+      userId: string
+      invoiceId: string | null
+      checkoutSessionId: string | null
+      pagarmeOrderId: string | null
+      subscriptionId: string | null
+      paymentIntentId: string | null
+      chargeId: string | null
+      cupomId: string
+      idAfiliado: string
+      planKey: string | null
+      amountTotalCents: number
+      currency: string
+      amountAffiliateCents: number | null
+      currencyAffiliate: string | null
+      /**
+       * Comissão fixa (anual/mensal em USD na candidatura) convertida para a moeda do afiliado — centavos BRL ou USD.
+       */
+      commissionAffiliateCents: number | null
+      coinsCredited: number
+      pricingLabel: string | null
+      paidAt: Date
+      createdAt: Date
+      situacao: string
+      stripePayoutId: string | null
+      pagarmePayoutId: string | null
+      payoutStatus: string | null
+      payoutArrivalDate: Date | null
+      payoutUpdatedAt: Date | null
+    }, ExtArgs["result"]["stripePlanPayment"]>
+    composites: {}
+  }
+
+  type StripePlanPaymentGetPayload<S extends boolean | null | undefined | StripePlanPaymentDefaultArgs> = $Result.GetResult<Prisma.$StripePlanPaymentPayload, S>
+
+  type StripePlanPaymentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StripePlanPaymentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StripePlanPaymentCountAggregateInputType | true
+    }
+
+  export interface StripePlanPaymentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StripePlanPayment'], meta: { name: 'StripePlanPayment' } }
+    /**
+     * Find zero or one StripePlanPayment that matches the filter.
+     * @param {StripePlanPaymentFindUniqueArgs} args - Arguments to find a StripePlanPayment
+     * @example
+     * // Get one StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StripePlanPaymentFindUniqueArgs>(args: SelectSubset<T, StripePlanPaymentFindUniqueArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StripePlanPayment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StripePlanPaymentFindUniqueOrThrowArgs} args - Arguments to find a StripePlanPayment
+     * @example
+     * // Get one StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StripePlanPaymentFindUniqueOrThrowArgs>(args: SelectSubset<T, StripePlanPaymentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripePlanPayment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentFindFirstArgs} args - Arguments to find a StripePlanPayment
+     * @example
+     * // Get one StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StripePlanPaymentFindFirstArgs>(args?: SelectSubset<T, StripePlanPaymentFindFirstArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StripePlanPayment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentFindFirstOrThrowArgs} args - Arguments to find a StripePlanPayment
+     * @example
+     * // Get one StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StripePlanPaymentFindFirstOrThrowArgs>(args?: SelectSubset<T, StripePlanPaymentFindFirstOrThrowArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StripePlanPayments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StripePlanPayments
+     * const stripePlanPayments = await prisma.stripePlanPayment.findMany()
+     * 
+     * // Get first 10 StripePlanPayments
+     * const stripePlanPayments = await prisma.stripePlanPayment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const stripePlanPaymentWithIdOnly = await prisma.stripePlanPayment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StripePlanPaymentFindManyArgs>(args?: SelectSubset<T, StripePlanPaymentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StripePlanPayment.
+     * @param {StripePlanPaymentCreateArgs} args - Arguments to create a StripePlanPayment.
+     * @example
+     * // Create one StripePlanPayment
+     * const StripePlanPayment = await prisma.stripePlanPayment.create({
+     *   data: {
+     *     // ... data to create a StripePlanPayment
+     *   }
+     * })
+     * 
+     */
+    create<T extends StripePlanPaymentCreateArgs>(args: SelectSubset<T, StripePlanPaymentCreateArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StripePlanPayments.
+     * @param {StripePlanPaymentCreateManyArgs} args - Arguments to create many StripePlanPayments.
+     * @example
+     * // Create many StripePlanPayments
+     * const stripePlanPayment = await prisma.stripePlanPayment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StripePlanPaymentCreateManyArgs>(args?: SelectSubset<T, StripePlanPaymentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StripePlanPayments and returns the data saved in the database.
+     * @param {StripePlanPaymentCreateManyAndReturnArgs} args - Arguments to create many StripePlanPayments.
+     * @example
+     * // Create many StripePlanPayments
+     * const stripePlanPayment = await prisma.stripePlanPayment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StripePlanPayments and only return the `id`
+     * const stripePlanPaymentWithIdOnly = await prisma.stripePlanPayment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StripePlanPaymentCreateManyAndReturnArgs>(args?: SelectSubset<T, StripePlanPaymentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StripePlanPayment.
+     * @param {StripePlanPaymentDeleteArgs} args - Arguments to delete one StripePlanPayment.
+     * @example
+     * // Delete one StripePlanPayment
+     * const StripePlanPayment = await prisma.stripePlanPayment.delete({
+     *   where: {
+     *     // ... filter to delete one StripePlanPayment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StripePlanPaymentDeleteArgs>(args: SelectSubset<T, StripePlanPaymentDeleteArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StripePlanPayment.
+     * @param {StripePlanPaymentUpdateArgs} args - Arguments to update one StripePlanPayment.
+     * @example
+     * // Update one StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StripePlanPaymentUpdateArgs>(args: SelectSubset<T, StripePlanPaymentUpdateArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StripePlanPayments.
+     * @param {StripePlanPaymentDeleteManyArgs} args - Arguments to filter StripePlanPayments to delete.
+     * @example
+     * // Delete a few StripePlanPayments
+     * const { count } = await prisma.stripePlanPayment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StripePlanPaymentDeleteManyArgs>(args?: SelectSubset<T, StripePlanPaymentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripePlanPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StripePlanPayments
+     * const stripePlanPayment = await prisma.stripePlanPayment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StripePlanPaymentUpdateManyArgs>(args: SelectSubset<T, StripePlanPaymentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StripePlanPayments and returns the data updated in the database.
+     * @param {StripePlanPaymentUpdateManyAndReturnArgs} args - Arguments to update many StripePlanPayments.
+     * @example
+     * // Update many StripePlanPayments
+     * const stripePlanPayment = await prisma.stripePlanPayment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StripePlanPayments and only return the `id`
+     * const stripePlanPaymentWithIdOnly = await prisma.stripePlanPayment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StripePlanPaymentUpdateManyAndReturnArgs>(args: SelectSubset<T, StripePlanPaymentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StripePlanPayment.
+     * @param {StripePlanPaymentUpsertArgs} args - Arguments to update or create a StripePlanPayment.
+     * @example
+     * // Update or create a StripePlanPayment
+     * const stripePlanPayment = await prisma.stripePlanPayment.upsert({
+     *   create: {
+     *     // ... data to create a StripePlanPayment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StripePlanPayment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StripePlanPaymentUpsertArgs>(args: SelectSubset<T, StripePlanPaymentUpsertArgs<ExtArgs>>): Prisma__StripePlanPaymentClient<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StripePlanPayments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentCountArgs} args - Arguments to filter StripePlanPayments to count.
+     * @example
+     * // Count the number of StripePlanPayments
+     * const count = await prisma.stripePlanPayment.count({
+     *   where: {
+     *     // ... the filter for the StripePlanPayments we want to count
+     *   }
+     * })
+    **/
+    count<T extends StripePlanPaymentCountArgs>(
+      args?: Subset<T, StripePlanPaymentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StripePlanPaymentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StripePlanPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StripePlanPaymentAggregateArgs>(args: Subset<T, StripePlanPaymentAggregateArgs>): Prisma.PrismaPromise<GetStripePlanPaymentAggregateType<T>>
+
+    /**
+     * Group by StripePlanPayment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StripePlanPaymentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StripePlanPaymentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StripePlanPaymentGroupByArgs['orderBy'] }
+        : { orderBy?: StripePlanPaymentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StripePlanPaymentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStripePlanPaymentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StripePlanPayment model
+   */
+  readonly fields: StripePlanPaymentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StripePlanPayment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StripePlanPaymentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StripePlanPayment model
+   */
+  interface StripePlanPaymentFieldRefs {
+    readonly id: FieldRef<"StripePlanPayment", 'String'>
+    readonly provider: FieldRef<"StripePlanPayment", 'String'>
+    readonly userId: FieldRef<"StripePlanPayment", 'String'>
+    readonly invoiceId: FieldRef<"StripePlanPayment", 'String'>
+    readonly checkoutSessionId: FieldRef<"StripePlanPayment", 'String'>
+    readonly pagarmeOrderId: FieldRef<"StripePlanPayment", 'String'>
+    readonly subscriptionId: FieldRef<"StripePlanPayment", 'String'>
+    readonly paymentIntentId: FieldRef<"StripePlanPayment", 'String'>
+    readonly chargeId: FieldRef<"StripePlanPayment", 'String'>
+    readonly cupomId: FieldRef<"StripePlanPayment", 'String'>
+    readonly idAfiliado: FieldRef<"StripePlanPayment", 'String'>
+    readonly planKey: FieldRef<"StripePlanPayment", 'String'>
+    readonly amountTotalCents: FieldRef<"StripePlanPayment", 'Int'>
+    readonly currency: FieldRef<"StripePlanPayment", 'String'>
+    readonly amountAffiliateCents: FieldRef<"StripePlanPayment", 'Int'>
+    readonly currencyAffiliate: FieldRef<"StripePlanPayment", 'String'>
+    readonly commissionAffiliateCents: FieldRef<"StripePlanPayment", 'Int'>
+    readonly coinsCredited: FieldRef<"StripePlanPayment", 'Int'>
+    readonly pricingLabel: FieldRef<"StripePlanPayment", 'String'>
+    readonly paidAt: FieldRef<"StripePlanPayment", 'DateTime'>
+    readonly createdAt: FieldRef<"StripePlanPayment", 'DateTime'>
+    readonly situacao: FieldRef<"StripePlanPayment", 'String'>
+    readonly stripePayoutId: FieldRef<"StripePlanPayment", 'String'>
+    readonly pagarmePayoutId: FieldRef<"StripePlanPayment", 'String'>
+    readonly payoutStatus: FieldRef<"StripePlanPayment", 'String'>
+    readonly payoutArrivalDate: FieldRef<"StripePlanPayment", 'DateTime'>
+    readonly payoutUpdatedAt: FieldRef<"StripePlanPayment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StripePlanPayment findUnique
+   */
+  export type StripePlanPaymentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which StripePlanPayment to fetch.
+     */
+    where: StripePlanPaymentWhereUniqueInput
+  }
+
+  /**
+   * StripePlanPayment findUniqueOrThrow
+   */
+  export type StripePlanPaymentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which StripePlanPayment to fetch.
+     */
+    where: StripePlanPaymentWhereUniqueInput
+  }
+
+  /**
+   * StripePlanPayment findFirst
+   */
+  export type StripePlanPaymentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which StripePlanPayment to fetch.
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripePlanPayments to fetch.
+     */
+    orderBy?: StripePlanPaymentOrderByWithRelationInput | StripePlanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripePlanPayments.
+     */
+    cursor?: StripePlanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripePlanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripePlanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripePlanPayments.
+     */
+    distinct?: StripePlanPaymentScalarFieldEnum | StripePlanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * StripePlanPayment findFirstOrThrow
+   */
+  export type StripePlanPaymentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which StripePlanPayment to fetch.
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripePlanPayments to fetch.
+     */
+    orderBy?: StripePlanPaymentOrderByWithRelationInput | StripePlanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StripePlanPayments.
+     */
+    cursor?: StripePlanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripePlanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripePlanPayments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StripePlanPayments.
+     */
+    distinct?: StripePlanPaymentScalarFieldEnum | StripePlanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * StripePlanPayment findMany
+   */
+  export type StripePlanPaymentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter, which StripePlanPayments to fetch.
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StripePlanPayments to fetch.
+     */
+    orderBy?: StripePlanPaymentOrderByWithRelationInput | StripePlanPaymentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StripePlanPayments.
+     */
+    cursor?: StripePlanPaymentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StripePlanPayments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StripePlanPayments.
+     */
+    skip?: number
+    distinct?: StripePlanPaymentScalarFieldEnum | StripePlanPaymentScalarFieldEnum[]
+  }
+
+  /**
+   * StripePlanPayment create
+   */
+  export type StripePlanPaymentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a StripePlanPayment.
+     */
+    data: XOR<StripePlanPaymentCreateInput, StripePlanPaymentUncheckedCreateInput>
+  }
+
+  /**
+   * StripePlanPayment createMany
+   */
+  export type StripePlanPaymentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StripePlanPayments.
+     */
+    data: StripePlanPaymentCreateManyInput | StripePlanPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StripePlanPayment createManyAndReturn
+   */
+  export type StripePlanPaymentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * The data used to create many StripePlanPayments.
+     */
+    data: StripePlanPaymentCreateManyInput | StripePlanPaymentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StripePlanPayment update
+   */
+  export type StripePlanPaymentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a StripePlanPayment.
+     */
+    data: XOR<StripePlanPaymentUpdateInput, StripePlanPaymentUncheckedUpdateInput>
+    /**
+     * Choose, which StripePlanPayment to update.
+     */
+    where: StripePlanPaymentWhereUniqueInput
+  }
+
+  /**
+   * StripePlanPayment updateMany
+   */
+  export type StripePlanPaymentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StripePlanPayments.
+     */
+    data: XOR<StripePlanPaymentUpdateManyMutationInput, StripePlanPaymentUncheckedUpdateManyInput>
+    /**
+     * Filter which StripePlanPayments to update
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * Limit how many StripePlanPayments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripePlanPayment updateManyAndReturn
+   */
+  export type StripePlanPaymentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * The data used to update StripePlanPayments.
+     */
+    data: XOR<StripePlanPaymentUpdateManyMutationInput, StripePlanPaymentUncheckedUpdateManyInput>
+    /**
+     * Filter which StripePlanPayments to update
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * Limit how many StripePlanPayments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StripePlanPayment upsert
+   */
+  export type StripePlanPaymentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the StripePlanPayment to update in case it exists.
+     */
+    where: StripePlanPaymentWhereUniqueInput
+    /**
+     * In case the StripePlanPayment found by the `where` argument doesn't exist, create a new StripePlanPayment with this data.
+     */
+    create: XOR<StripePlanPaymentCreateInput, StripePlanPaymentUncheckedCreateInput>
+    /**
+     * In case the StripePlanPayment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StripePlanPaymentUpdateInput, StripePlanPaymentUncheckedUpdateInput>
+  }
+
+  /**
+   * StripePlanPayment delete
+   */
+  export type StripePlanPaymentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+    /**
+     * Filter which StripePlanPayment to delete.
+     */
+    where: StripePlanPaymentWhereUniqueInput
+  }
+
+  /**
+   * StripePlanPayment deleteMany
+   */
+  export type StripePlanPaymentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StripePlanPayments to delete
+     */
+    where?: StripePlanPaymentWhereInput
+    /**
+     * Limit how many StripePlanPayments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StripePlanPayment without action
+   */
+  export type StripePlanPaymentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StripePlanPayment
+     */
+    select?: StripePlanPaymentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StripePlanPayment
+     */
+    omit?: StripePlanPaymentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StripePlanPaymentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AffiliatePlanPaymentMonthAgg
+   */
+
+  export type AggregateAffiliatePlanPaymentMonthAgg = {
+    _count: AffiliatePlanPaymentMonthAggCountAggregateOutputType | null
+    _avg: AffiliatePlanPaymentMonthAggAvgAggregateOutputType | null
+    _sum: AffiliatePlanPaymentMonthAggSumAggregateOutputType | null
+    _min: AffiliatePlanPaymentMonthAggMinAggregateOutputType | null
+    _max: AffiliatePlanPaymentMonthAggMaxAggregateOutputType | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggAvgAggregateOutputType = {
+    totalAmountCents: number | null
+    totalReembolsadoCents: number | null
+    totalAprovadoCents: number | null
+    totalAffiliateCents: number | null
+    totalReembolsadoAffiliateCents: number | null
+    totalAprovadoAffiliateCents: number | null
+    totalCommissionAffiliateCents: number | null
+    totalReembolsadoCommissionAffiliateCents: number | null
+    totalAprovadoCommissionAffiliateCents: number | null
+    totalExpiradoCommissionAffiliateCents: number | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggSumAggregateOutputType = {
+    totalAmountCents: number | null
+    totalReembolsadoCents: number | null
+    totalAprovadoCents: number | null
+    totalAffiliateCents: number | null
+    totalReembolsadoAffiliateCents: number | null
+    totalAprovadoAffiliateCents: number | null
+    totalCommissionAffiliateCents: number | null
+    totalReembolsadoCommissionAffiliateCents: number | null
+    totalAprovadoCommissionAffiliateCents: number | null
+    totalExpiradoCommissionAffiliateCents: number | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggMinAggregateOutputType = {
+    id: string | null
+    idAfiliado: string | null
+    monthStart: Date | null
+    totalAmountCents: number | null
+    totalReembolsadoCents: number | null
+    totalAprovadoCents: number | null
+    totalAffiliateCents: number | null
+    totalReembolsadoAffiliateCents: number | null
+    totalAprovadoAffiliateCents: number | null
+    totalCommissionAffiliateCents: number | null
+    totalReembolsadoCommissionAffiliateCents: number | null
+    totalAprovadoCommissionAffiliateCents: number | null
+    totalExpiradoCommissionAffiliateCents: number | null
+    currencyAffiliate: string | null
+    expiresAt: Date | null
+    status: string | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggMaxAggregateOutputType = {
+    id: string | null
+    idAfiliado: string | null
+    monthStart: Date | null
+    totalAmountCents: number | null
+    totalReembolsadoCents: number | null
+    totalAprovadoCents: number | null
+    totalAffiliateCents: number | null
+    totalReembolsadoAffiliateCents: number | null
+    totalAprovadoAffiliateCents: number | null
+    totalCommissionAffiliateCents: number | null
+    totalReembolsadoCommissionAffiliateCents: number | null
+    totalAprovadoCommissionAffiliateCents: number | null
+    totalExpiradoCommissionAffiliateCents: number | null
+    currencyAffiliate: string | null
+    expiresAt: Date | null
+    status: string | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggCountAggregateOutputType = {
+    id: number
+    idAfiliado: number
+    monthStart: number
+    totalAmountCents: number
+    totalReembolsadoCents: number
+    totalAprovadoCents: number
+    totalAffiliateCents: number
+    totalReembolsadoAffiliateCents: number
+    totalAprovadoAffiliateCents: number
+    totalCommissionAffiliateCents: number
+    totalReembolsadoCommissionAffiliateCents: number
+    totalAprovadoCommissionAffiliateCents: number
+    totalExpiradoCommissionAffiliateCents: number
+    currencyAffiliate: number
+    expiresAt: number
+    status: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AffiliatePlanPaymentMonthAggAvgAggregateInputType = {
+    totalAmountCents?: true
+    totalReembolsadoCents?: true
+    totalAprovadoCents?: true
+    totalAffiliateCents?: true
+    totalReembolsadoAffiliateCents?: true
+    totalAprovadoAffiliateCents?: true
+    totalCommissionAffiliateCents?: true
+    totalReembolsadoCommissionAffiliateCents?: true
+    totalAprovadoCommissionAffiliateCents?: true
+    totalExpiradoCommissionAffiliateCents?: true
+  }
+
+  export type AffiliatePlanPaymentMonthAggSumAggregateInputType = {
+    totalAmountCents?: true
+    totalReembolsadoCents?: true
+    totalAprovadoCents?: true
+    totalAffiliateCents?: true
+    totalReembolsadoAffiliateCents?: true
+    totalAprovadoAffiliateCents?: true
+    totalCommissionAffiliateCents?: true
+    totalReembolsadoCommissionAffiliateCents?: true
+    totalAprovadoCommissionAffiliateCents?: true
+    totalExpiradoCommissionAffiliateCents?: true
+  }
+
+  export type AffiliatePlanPaymentMonthAggMinAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    monthStart?: true
+    totalAmountCents?: true
+    totalReembolsadoCents?: true
+    totalAprovadoCents?: true
+    totalAffiliateCents?: true
+    totalReembolsadoAffiliateCents?: true
+    totalAprovadoAffiliateCents?: true
+    totalCommissionAffiliateCents?: true
+    totalReembolsadoCommissionAffiliateCents?: true
+    totalAprovadoCommissionAffiliateCents?: true
+    totalExpiradoCommissionAffiliateCents?: true
+    currencyAffiliate?: true
+    expiresAt?: true
+    status?: true
+    updatedAt?: true
+  }
+
+  export type AffiliatePlanPaymentMonthAggMaxAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    monthStart?: true
+    totalAmountCents?: true
+    totalReembolsadoCents?: true
+    totalAprovadoCents?: true
+    totalAffiliateCents?: true
+    totalReembolsadoAffiliateCents?: true
+    totalAprovadoAffiliateCents?: true
+    totalCommissionAffiliateCents?: true
+    totalReembolsadoCommissionAffiliateCents?: true
+    totalAprovadoCommissionAffiliateCents?: true
+    totalExpiradoCommissionAffiliateCents?: true
+    currencyAffiliate?: true
+    expiresAt?: true
+    status?: true
+    updatedAt?: true
+  }
+
+  export type AffiliatePlanPaymentMonthAggCountAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    monthStart?: true
+    totalAmountCents?: true
+    totalReembolsadoCents?: true
+    totalAprovadoCents?: true
+    totalAffiliateCents?: true
+    totalReembolsadoAffiliateCents?: true
+    totalAprovadoAffiliateCents?: true
+    totalCommissionAffiliateCents?: true
+    totalReembolsadoCommissionAffiliateCents?: true
+    totalAprovadoCommissionAffiliateCents?: true
+    totalExpiradoCommissionAffiliateCents?: true
+    currencyAffiliate?: true
+    expiresAt?: true
+    status?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AffiliatePlanPaymentMonthAggAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliatePlanPaymentMonthAgg to aggregate.
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePlanPaymentMonthAggs to fetch.
+     */
+    orderBy?: AffiliatePlanPaymentMonthAggOrderByWithRelationInput | AffiliatePlanPaymentMonthAggOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePlanPaymentMonthAggs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePlanPaymentMonthAggs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliatePlanPaymentMonthAggs
+    **/
+    _count?: true | AffiliatePlanPaymentMonthAggCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AffiliatePlanPaymentMonthAggAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AffiliatePlanPaymentMonthAggSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliatePlanPaymentMonthAggMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliatePlanPaymentMonthAggMaxAggregateInputType
+  }
+
+  export type GetAffiliatePlanPaymentMonthAggAggregateType<T extends AffiliatePlanPaymentMonthAggAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliatePlanPaymentMonthAgg]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliatePlanPaymentMonthAgg[P]>
+      : GetScalarType<T[P], AggregateAffiliatePlanPaymentMonthAgg[P]>
+  }
+
+
+
+
+  export type AffiliatePlanPaymentMonthAggGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    orderBy?: AffiliatePlanPaymentMonthAggOrderByWithAggregationInput | AffiliatePlanPaymentMonthAggOrderByWithAggregationInput[]
+    by: AffiliatePlanPaymentMonthAggScalarFieldEnum[] | AffiliatePlanPaymentMonthAggScalarFieldEnum
+    having?: AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliatePlanPaymentMonthAggCountAggregateInputType | true
+    _avg?: AffiliatePlanPaymentMonthAggAvgAggregateInputType
+    _sum?: AffiliatePlanPaymentMonthAggSumAggregateInputType
+    _min?: AffiliatePlanPaymentMonthAggMinAggregateInputType
+    _max?: AffiliatePlanPaymentMonthAggMaxAggregateInputType
+  }
+
+  export type AffiliatePlanPaymentMonthAggGroupByOutputType = {
+    id: string
+    idAfiliado: string
+    monthStart: Date
+    totalAmountCents: number
+    totalReembolsadoCents: number
+    totalAprovadoCents: number
+    totalAffiliateCents: number
+    totalReembolsadoAffiliateCents: number
+    totalAprovadoAffiliateCents: number
+    totalCommissionAffiliateCents: number
+    totalReembolsadoCommissionAffiliateCents: number
+    totalAprovadoCommissionAffiliateCents: number
+    totalExpiradoCommissionAffiliateCents: number
+    currencyAffiliate: string | null
+    expiresAt: Date | null
+    status: string
+    updatedAt: Date
+    _count: AffiliatePlanPaymentMonthAggCountAggregateOutputType | null
+    _avg: AffiliatePlanPaymentMonthAggAvgAggregateOutputType | null
+    _sum: AffiliatePlanPaymentMonthAggSumAggregateOutputType | null
+    _min: AffiliatePlanPaymentMonthAggMinAggregateOutputType | null
+    _max: AffiliatePlanPaymentMonthAggMaxAggregateOutputType | null
+  }
+
+  type GetAffiliatePlanPaymentMonthAggGroupByPayload<T extends AffiliatePlanPaymentMonthAggGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliatePlanPaymentMonthAggGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliatePlanPaymentMonthAggGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliatePlanPaymentMonthAggGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliatePlanPaymentMonthAggGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliatePlanPaymentMonthAggSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    monthStart?: boolean
+    totalAmountCents?: boolean
+    totalReembolsadoCents?: boolean
+    totalAprovadoCents?: boolean
+    totalAffiliateCents?: boolean
+    totalReembolsadoAffiliateCents?: boolean
+    totalAprovadoAffiliateCents?: boolean
+    totalCommissionAffiliateCents?: boolean
+    totalReembolsadoCommissionAffiliateCents?: boolean
+    totalAprovadoCommissionAffiliateCents?: boolean
+    totalExpiradoCommissionAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    updatedAt?: boolean
+    invoice?: boolean | AffiliatePlanPaymentMonthAgg$invoiceArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliatePlanPaymentMonthAgg"]>
+
+  export type AffiliatePlanPaymentMonthAggSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    monthStart?: boolean
+    totalAmountCents?: boolean
+    totalReembolsadoCents?: boolean
+    totalAprovadoCents?: boolean
+    totalAffiliateCents?: boolean
+    totalReembolsadoAffiliateCents?: boolean
+    totalAprovadoAffiliateCents?: boolean
+    totalCommissionAffiliateCents?: boolean
+    totalReembolsadoCommissionAffiliateCents?: boolean
+    totalAprovadoCommissionAffiliateCents?: boolean
+    totalExpiradoCommissionAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["affiliatePlanPaymentMonthAgg"]>
+
+  export type AffiliatePlanPaymentMonthAggSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    monthStart?: boolean
+    totalAmountCents?: boolean
+    totalReembolsadoCents?: boolean
+    totalAprovadoCents?: boolean
+    totalAffiliateCents?: boolean
+    totalReembolsadoAffiliateCents?: boolean
+    totalAprovadoAffiliateCents?: boolean
+    totalCommissionAffiliateCents?: boolean
+    totalReembolsadoCommissionAffiliateCents?: boolean
+    totalAprovadoCommissionAffiliateCents?: boolean
+    totalExpiradoCommissionAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["affiliatePlanPaymentMonthAgg"]>
+
+  export type AffiliatePlanPaymentMonthAggSelectScalar = {
+    id?: boolean
+    idAfiliado?: boolean
+    monthStart?: boolean
+    totalAmountCents?: boolean
+    totalReembolsadoCents?: boolean
+    totalAprovadoCents?: boolean
+    totalAffiliateCents?: boolean
+    totalReembolsadoAffiliateCents?: boolean
+    totalAprovadoAffiliateCents?: boolean
+    totalCommissionAffiliateCents?: boolean
+    totalReembolsadoCommissionAffiliateCents?: boolean
+    totalAprovadoCommissionAffiliateCents?: boolean
+    totalExpiradoCommissionAffiliateCents?: boolean
+    currencyAffiliate?: boolean
+    expiresAt?: boolean
+    status?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AffiliatePlanPaymentMonthAggOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idAfiliado" | "monthStart" | "totalAmountCents" | "totalReembolsadoCents" | "totalAprovadoCents" | "totalAffiliateCents" | "totalReembolsadoAffiliateCents" | "totalAprovadoAffiliateCents" | "totalCommissionAffiliateCents" | "totalReembolsadoCommissionAffiliateCents" | "totalAprovadoCommissionAffiliateCents" | "totalExpiradoCommissionAffiliateCents" | "currencyAffiliate" | "expiresAt" | "status" | "updatedAt", ExtArgs["result"]["affiliatePlanPaymentMonthAgg"]>
+  export type AffiliatePlanPaymentMonthAggInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    invoice?: boolean | AffiliatePlanPaymentMonthAgg$invoiceArgs<ExtArgs>
+  }
+  export type AffiliatePlanPaymentMonthAggIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AffiliatePlanPaymentMonthAggIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AffiliatePlanPaymentMonthAggPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliatePlanPaymentMonthAgg"
+    objects: {
+      invoice: Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      idAfiliado: string
+      monthStart: Date
+      /**
+       * Legado (comissão USD); mantido zerado — usar `totalAffiliateCents` / `currencyAffiliate`.
+       */
+      totalAmountCents: number
+      totalReembolsadoCents: number
+      totalAprovadoCents: number
+      /**
+       * Legado (volume de venda em `amount_affiliate_cents`); mantido zerado — usar totais `total_*_commission_*`.
+       */
+      totalAffiliateCents: number
+      totalReembolsadoAffiliateCents: number
+      totalAprovadoAffiliateCents: number
+      /**
+       * Soma de `commission_affiliate_cents` (ou recálculo) no mês, mesma moeda que `currency_affiliate`.
+       */
+      totalCommissionAffiliateCents: number
+      totalReembolsadoCommissionAffiliateCents: number
+      totalAprovadoCommissionAffiliateCents: number
+      /**
+       * Comissão que estava aprovada e passou a `expirado` (não paga); não confundir com estorno.
+       */
+      totalExpiradoCommissionAffiliateCents: number
+      /**
+       * `brl` | `usd` conforme `AffiliateApplication.locale` na atualização do agregado.
+       */
+      currencyAffiliate: string | null
+      /**
+       * Fim do prazo de fecho: 1.º dia do mês = `monthStart` + 14 meses civis (UTC).
+       */
+      expiresAt: Date | null
+      /**
+       * Chave: `em_aberto` | `aguardando_nota_fiscal` | `nota_fiscal_em_analise` | `expirado` | …
+       */
+      status: string
+      updatedAt: Date
+    }, ExtArgs["result"]["affiliatePlanPaymentMonthAgg"]>
+    composites: {}
+  }
+
+  type AffiliatePlanPaymentMonthAggGetPayload<S extends boolean | null | undefined | AffiliatePlanPaymentMonthAggDefaultArgs> = $Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload, S>
+
+  type AffiliatePlanPaymentMonthAggCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliatePlanPaymentMonthAggFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliatePlanPaymentMonthAggCountAggregateInputType | true
+    }
+
+  export interface AffiliatePlanPaymentMonthAggDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliatePlanPaymentMonthAgg'], meta: { name: 'AffiliatePlanPaymentMonthAgg' } }
+    /**
+     * Find zero or one AffiliatePlanPaymentMonthAgg that matches the filter.
+     * @param {AffiliatePlanPaymentMonthAggFindUniqueArgs} args - Arguments to find a AffiliatePlanPaymentMonthAgg
+     * @example
+     * // Get one AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliatePlanPaymentMonthAggFindUniqueArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggFindUniqueArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliatePlanPaymentMonthAgg that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliatePlanPaymentMonthAggFindUniqueOrThrowArgs} args - Arguments to find a AffiliatePlanPaymentMonthAgg
+     * @example
+     * // Get one AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliatePlanPaymentMonthAggFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliatePlanPaymentMonthAgg that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggFindFirstArgs} args - Arguments to find a AffiliatePlanPaymentMonthAgg
+     * @example
+     * // Get one AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliatePlanPaymentMonthAggFindFirstArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggFindFirstArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliatePlanPaymentMonthAgg that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggFindFirstOrThrowArgs} args - Arguments to find a AffiliatePlanPaymentMonthAgg
+     * @example
+     * // Get one AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliatePlanPaymentMonthAggFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliatePlanPaymentMonthAggs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAggs = await prisma.affiliatePlanPaymentMonthAgg.findMany()
+     * 
+     * // Get first 10 AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAggs = await prisma.affiliatePlanPaymentMonthAgg.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliatePlanPaymentMonthAggWithIdOnly = await prisma.affiliatePlanPaymentMonthAgg.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliatePlanPaymentMonthAggFindManyArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliatePlanPaymentMonthAgg.
+     * @param {AffiliatePlanPaymentMonthAggCreateArgs} args - Arguments to create a AffiliatePlanPaymentMonthAgg.
+     * @example
+     * // Create one AffiliatePlanPaymentMonthAgg
+     * const AffiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.create({
+     *   data: {
+     *     // ... data to create a AffiliatePlanPaymentMonthAgg
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliatePlanPaymentMonthAggCreateArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggCreateArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliatePlanPaymentMonthAggs.
+     * @param {AffiliatePlanPaymentMonthAggCreateManyArgs} args - Arguments to create many AffiliatePlanPaymentMonthAggs.
+     * @example
+     * // Create many AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliatePlanPaymentMonthAggCreateManyArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliatePlanPaymentMonthAggs and returns the data saved in the database.
+     * @param {AffiliatePlanPaymentMonthAggCreateManyAndReturnArgs} args - Arguments to create many AffiliatePlanPaymentMonthAggs.
+     * @example
+     * // Create many AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliatePlanPaymentMonthAggs and only return the `id`
+     * const affiliatePlanPaymentMonthAggWithIdOnly = await prisma.affiliatePlanPaymentMonthAgg.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliatePlanPaymentMonthAggCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliatePlanPaymentMonthAgg.
+     * @param {AffiliatePlanPaymentMonthAggDeleteArgs} args - Arguments to delete one AffiliatePlanPaymentMonthAgg.
+     * @example
+     * // Delete one AffiliatePlanPaymentMonthAgg
+     * const AffiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliatePlanPaymentMonthAgg
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliatePlanPaymentMonthAggDeleteArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggDeleteArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliatePlanPaymentMonthAgg.
+     * @param {AffiliatePlanPaymentMonthAggUpdateArgs} args - Arguments to update one AffiliatePlanPaymentMonthAgg.
+     * @example
+     * // Update one AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliatePlanPaymentMonthAggUpdateArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggUpdateArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliatePlanPaymentMonthAggs.
+     * @param {AffiliatePlanPaymentMonthAggDeleteManyArgs} args - Arguments to filter AffiliatePlanPaymentMonthAggs to delete.
+     * @example
+     * // Delete a few AffiliatePlanPaymentMonthAggs
+     * const { count } = await prisma.affiliatePlanPaymentMonthAgg.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliatePlanPaymentMonthAggDeleteManyArgs>(args?: SelectSubset<T, AffiliatePlanPaymentMonthAggDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliatePlanPaymentMonthAggs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliatePlanPaymentMonthAggUpdateManyArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliatePlanPaymentMonthAggs and returns the data updated in the database.
+     * @param {AffiliatePlanPaymentMonthAggUpdateManyAndReturnArgs} args - Arguments to update many AffiliatePlanPaymentMonthAggs.
+     * @example
+     * // Update many AffiliatePlanPaymentMonthAggs
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliatePlanPaymentMonthAggs and only return the `id`
+     * const affiliatePlanPaymentMonthAggWithIdOnly = await prisma.affiliatePlanPaymentMonthAgg.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliatePlanPaymentMonthAggUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliatePlanPaymentMonthAgg.
+     * @param {AffiliatePlanPaymentMonthAggUpsertArgs} args - Arguments to update or create a AffiliatePlanPaymentMonthAgg.
+     * @example
+     * // Update or create a AffiliatePlanPaymentMonthAgg
+     * const affiliatePlanPaymentMonthAgg = await prisma.affiliatePlanPaymentMonthAgg.upsert({
+     *   create: {
+     *     // ... data to create a AffiliatePlanPaymentMonthAgg
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliatePlanPaymentMonthAgg we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliatePlanPaymentMonthAggUpsertArgs>(args: SelectSubset<T, AffiliatePlanPaymentMonthAggUpsertArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliatePlanPaymentMonthAggs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggCountArgs} args - Arguments to filter AffiliatePlanPaymentMonthAggs to count.
+     * @example
+     * // Count the number of AffiliatePlanPaymentMonthAggs
+     * const count = await prisma.affiliatePlanPaymentMonthAgg.count({
+     *   where: {
+     *     // ... the filter for the AffiliatePlanPaymentMonthAggs we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliatePlanPaymentMonthAggCountArgs>(
+      args?: Subset<T, AffiliatePlanPaymentMonthAggCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliatePlanPaymentMonthAggCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliatePlanPaymentMonthAgg.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliatePlanPaymentMonthAggAggregateArgs>(args: Subset<T, AffiliatePlanPaymentMonthAggAggregateArgs>): Prisma.PrismaPromise<GetAffiliatePlanPaymentMonthAggAggregateType<T>>
+
+    /**
+     * Group by AffiliatePlanPaymentMonthAgg.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePlanPaymentMonthAggGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliatePlanPaymentMonthAggGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliatePlanPaymentMonthAggGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliatePlanPaymentMonthAggGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliatePlanPaymentMonthAggGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliatePlanPaymentMonthAggGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliatePlanPaymentMonthAgg model
+   */
+  readonly fields: AffiliatePlanPaymentMonthAggFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliatePlanPaymentMonthAgg.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliatePlanPaymentMonthAggClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    invoice<T extends AffiliatePlanPaymentMonthAgg$invoiceArgs<ExtArgs> = {}>(args?: Subset<T, AffiliatePlanPaymentMonthAgg$invoiceArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliatePlanPaymentMonthAgg model
+   */
+  interface AffiliatePlanPaymentMonthAggFieldRefs {
+    readonly id: FieldRef<"AffiliatePlanPaymentMonthAgg", 'String'>
+    readonly idAfiliado: FieldRef<"AffiliatePlanPaymentMonthAgg", 'String'>
+    readonly monthStart: FieldRef<"AffiliatePlanPaymentMonthAgg", 'DateTime'>
+    readonly totalAmountCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalReembolsadoCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalAprovadoCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalReembolsadoAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalAprovadoAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalCommissionAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalReembolsadoCommissionAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalAprovadoCommissionAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly totalExpiradoCommissionAffiliateCents: FieldRef<"AffiliatePlanPaymentMonthAgg", 'Int'>
+    readonly currencyAffiliate: FieldRef<"AffiliatePlanPaymentMonthAgg", 'String'>
+    readonly expiresAt: FieldRef<"AffiliatePlanPaymentMonthAgg", 'DateTime'>
+    readonly status: FieldRef<"AffiliatePlanPaymentMonthAgg", 'String'>
+    readonly updatedAt: FieldRef<"AffiliatePlanPaymentMonthAgg", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliatePlanPaymentMonthAgg findUnique
+   */
+  export type AffiliatePlanPaymentMonthAggFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePlanPaymentMonthAgg to fetch.
+     */
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg findUniqueOrThrow
+   */
+  export type AffiliatePlanPaymentMonthAggFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePlanPaymentMonthAgg to fetch.
+     */
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg findFirst
+   */
+  export type AffiliatePlanPaymentMonthAggFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePlanPaymentMonthAgg to fetch.
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePlanPaymentMonthAggs to fetch.
+     */
+    orderBy?: AffiliatePlanPaymentMonthAggOrderByWithRelationInput | AffiliatePlanPaymentMonthAggOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliatePlanPaymentMonthAggs.
+     */
+    cursor?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePlanPaymentMonthAggs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePlanPaymentMonthAggs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliatePlanPaymentMonthAggs.
+     */
+    distinct?: AffiliatePlanPaymentMonthAggScalarFieldEnum | AffiliatePlanPaymentMonthAggScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg findFirstOrThrow
+   */
+  export type AffiliatePlanPaymentMonthAggFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePlanPaymentMonthAgg to fetch.
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePlanPaymentMonthAggs to fetch.
+     */
+    orderBy?: AffiliatePlanPaymentMonthAggOrderByWithRelationInput | AffiliatePlanPaymentMonthAggOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliatePlanPaymentMonthAggs.
+     */
+    cursor?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePlanPaymentMonthAggs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePlanPaymentMonthAggs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliatePlanPaymentMonthAggs.
+     */
+    distinct?: AffiliatePlanPaymentMonthAggScalarFieldEnum | AffiliatePlanPaymentMonthAggScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg findMany
+   */
+  export type AffiliatePlanPaymentMonthAggFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePlanPaymentMonthAggs to fetch.
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePlanPaymentMonthAggs to fetch.
+     */
+    orderBy?: AffiliatePlanPaymentMonthAggOrderByWithRelationInput | AffiliatePlanPaymentMonthAggOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliatePlanPaymentMonthAggs.
+     */
+    cursor?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePlanPaymentMonthAggs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePlanPaymentMonthAggs.
+     */
+    skip?: number
+    distinct?: AffiliatePlanPaymentMonthAggScalarFieldEnum | AffiliatePlanPaymentMonthAggScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg create
+   */
+  export type AffiliatePlanPaymentMonthAggCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliatePlanPaymentMonthAgg.
+     */
+    data: XOR<AffiliatePlanPaymentMonthAggCreateInput, AffiliatePlanPaymentMonthAggUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg createMany
+   */
+  export type AffiliatePlanPaymentMonthAggCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliatePlanPaymentMonthAggs.
+     */
+    data: AffiliatePlanPaymentMonthAggCreateManyInput | AffiliatePlanPaymentMonthAggCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg createManyAndReturn
+   */
+  export type AffiliatePlanPaymentMonthAggCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliatePlanPaymentMonthAggs.
+     */
+    data: AffiliatePlanPaymentMonthAggCreateManyInput | AffiliatePlanPaymentMonthAggCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg update
+   */
+  export type AffiliatePlanPaymentMonthAggUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliatePlanPaymentMonthAgg.
+     */
+    data: XOR<AffiliatePlanPaymentMonthAggUpdateInput, AffiliatePlanPaymentMonthAggUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliatePlanPaymentMonthAgg to update.
+     */
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg updateMany
+   */
+  export type AffiliatePlanPaymentMonthAggUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliatePlanPaymentMonthAggs.
+     */
+    data: XOR<AffiliatePlanPaymentMonthAggUpdateManyMutationInput, AffiliatePlanPaymentMonthAggUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliatePlanPaymentMonthAggs to update
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * Limit how many AffiliatePlanPaymentMonthAggs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg updateManyAndReturn
+   */
+  export type AffiliatePlanPaymentMonthAggUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliatePlanPaymentMonthAggs.
+     */
+    data: XOR<AffiliatePlanPaymentMonthAggUpdateManyMutationInput, AffiliatePlanPaymentMonthAggUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliatePlanPaymentMonthAggs to update
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * Limit how many AffiliatePlanPaymentMonthAggs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg upsert
+   */
+  export type AffiliatePlanPaymentMonthAggUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliatePlanPaymentMonthAgg to update in case it exists.
+     */
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    /**
+     * In case the AffiliatePlanPaymentMonthAgg found by the `where` argument doesn't exist, create a new AffiliatePlanPaymentMonthAgg with this data.
+     */
+    create: XOR<AffiliatePlanPaymentMonthAggCreateInput, AffiliatePlanPaymentMonthAggUncheckedCreateInput>
+    /**
+     * In case the AffiliatePlanPaymentMonthAgg was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliatePlanPaymentMonthAggUpdateInput, AffiliatePlanPaymentMonthAggUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg delete
+   */
+  export type AffiliatePlanPaymentMonthAggDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliatePlanPaymentMonthAgg to delete.
+     */
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg deleteMany
+   */
+  export type AffiliatePlanPaymentMonthAggDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliatePlanPaymentMonthAggs to delete
+     */
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    /**
+     * Limit how many AffiliatePlanPaymentMonthAggs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg.invoice
+   */
+  export type AffiliatePlanPaymentMonthAgg$invoiceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    where?: AffiliateMonthAggInvoiceWhereInput
+  }
+
+  /**
+   * AffiliatePlanPaymentMonthAgg without action
+   */
+  export type AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePlanPaymentMonthAgg
+     */
+    select?: AffiliatePlanPaymentMonthAggSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePlanPaymentMonthAgg
+     */
+    omit?: AffiliatePlanPaymentMonthAggOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePlanPaymentMonthAggInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AffiliateMonthAggInvoice
+   */
+
+  export type AggregateAffiliateMonthAggInvoice = {
+    _count: AffiliateMonthAggInvoiceCountAggregateOutputType | null
+    _avg: AffiliateMonthAggInvoiceAvgAggregateOutputType | null
+    _sum: AffiliateMonthAggInvoiceSumAggregateOutputType | null
+    _min: AffiliateMonthAggInvoiceMinAggregateOutputType | null
+    _max: AffiliateMonthAggInvoiceMaxAggregateOutputType | null
+  }
+
+  export type AffiliateMonthAggInvoiceAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type AffiliateMonthAggInvoiceSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type AffiliateMonthAggInvoiceMinAggregateOutputType = {
+    id: string | null
+    monthAggId: string | null
+    pdfBytes: Bytes | null
+    fileName: string | null
+    contentType: string | null
+    sizeBytes: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliateMonthAggInvoiceMaxAggregateOutputType = {
+    id: string | null
+    monthAggId: string | null
+    pdfBytes: Bytes | null
+    fileName: string | null
+    contentType: string | null
+    sizeBytes: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliateMonthAggInvoiceCountAggregateOutputType = {
+    id: number
+    monthAggId: number
+    pdfBytes: number
+    fileName: number
+    contentType: number
+    sizeBytes: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AffiliateMonthAggInvoiceAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type AffiliateMonthAggInvoiceSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type AffiliateMonthAggInvoiceMinAggregateInputType = {
+    id?: true
+    monthAggId?: true
+    pdfBytes?: true
+    fileName?: true
+    contentType?: true
+    sizeBytes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AffiliateMonthAggInvoiceMaxAggregateInputType = {
+    id?: true
+    monthAggId?: true
+    pdfBytes?: true
+    fileName?: true
+    contentType?: true
+    sizeBytes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AffiliateMonthAggInvoiceCountAggregateInputType = {
+    id?: true
+    monthAggId?: true
+    pdfBytes?: true
+    fileName?: true
+    contentType?: true
+    sizeBytes?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AffiliateMonthAggInvoiceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateMonthAggInvoice to aggregate.
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateMonthAggInvoices to fetch.
+     */
+    orderBy?: AffiliateMonthAggInvoiceOrderByWithRelationInput | AffiliateMonthAggInvoiceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliateMonthAggInvoiceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateMonthAggInvoices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateMonthAggInvoices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliateMonthAggInvoices
+    **/
+    _count?: true | AffiliateMonthAggInvoiceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AffiliateMonthAggInvoiceAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AffiliateMonthAggInvoiceSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliateMonthAggInvoiceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliateMonthAggInvoiceMaxAggregateInputType
+  }
+
+  export type GetAffiliateMonthAggInvoiceAggregateType<T extends AffiliateMonthAggInvoiceAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliateMonthAggInvoice]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliateMonthAggInvoice[P]>
+      : GetScalarType<T[P], AggregateAffiliateMonthAggInvoice[P]>
+  }
+
+
+
+
+  export type AffiliateMonthAggInvoiceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliateMonthAggInvoiceWhereInput
+    orderBy?: AffiliateMonthAggInvoiceOrderByWithAggregationInput | AffiliateMonthAggInvoiceOrderByWithAggregationInput[]
+    by: AffiliateMonthAggInvoiceScalarFieldEnum[] | AffiliateMonthAggInvoiceScalarFieldEnum
+    having?: AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliateMonthAggInvoiceCountAggregateInputType | true
+    _avg?: AffiliateMonthAggInvoiceAvgAggregateInputType
+    _sum?: AffiliateMonthAggInvoiceSumAggregateInputType
+    _min?: AffiliateMonthAggInvoiceMinAggregateInputType
+    _max?: AffiliateMonthAggInvoiceMaxAggregateInputType
+  }
+
+  export type AffiliateMonthAggInvoiceGroupByOutputType = {
+    id: string
+    monthAggId: string
+    pdfBytes: Bytes
+    fileName: string | null
+    contentType: string
+    sizeBytes: number
+    createdAt: Date
+    updatedAt: Date
+    _count: AffiliateMonthAggInvoiceCountAggregateOutputType | null
+    _avg: AffiliateMonthAggInvoiceAvgAggregateOutputType | null
+    _sum: AffiliateMonthAggInvoiceSumAggregateOutputType | null
+    _min: AffiliateMonthAggInvoiceMinAggregateOutputType | null
+    _max: AffiliateMonthAggInvoiceMaxAggregateOutputType | null
+  }
+
+  type GetAffiliateMonthAggInvoiceGroupByPayload<T extends AffiliateMonthAggInvoiceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliateMonthAggInvoiceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliateMonthAggInvoiceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliateMonthAggInvoiceGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliateMonthAggInvoiceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliateMonthAggInvoiceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    monthAggId?: boolean
+    pdfBytes?: boolean
+    fileName?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateMonthAggInvoice"]>
+
+  export type AffiliateMonthAggInvoiceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    monthAggId?: boolean
+    pdfBytes?: boolean
+    fileName?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateMonthAggInvoice"]>
+
+  export type AffiliateMonthAggInvoiceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    monthAggId?: boolean
+    pdfBytes?: boolean
+    fileName?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateMonthAggInvoice"]>
+
+  export type AffiliateMonthAggInvoiceSelectScalar = {
+    id?: boolean
+    monthAggId?: boolean
+    pdfBytes?: boolean
+    fileName?: boolean
+    contentType?: boolean
+    sizeBytes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AffiliateMonthAggInvoiceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "monthAggId" | "pdfBytes" | "fileName" | "contentType" | "sizeBytes" | "createdAt" | "updatedAt", ExtArgs["result"]["affiliateMonthAggInvoice"]>
+  export type AffiliateMonthAggInvoiceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }
+  export type AffiliateMonthAggInvoiceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }
+  export type AffiliateMonthAggInvoiceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    monthAgg?: boolean | AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>
+  }
+
+  export type $AffiliateMonthAggInvoicePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliateMonthAggInvoice"
+    objects: {
+      monthAgg: Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      monthAggId: string
+      pdfBytes: Prisma.Bytes
+      fileName: string | null
+      contentType: string
+      sizeBytes: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["affiliateMonthAggInvoice"]>
+    composites: {}
+  }
+
+  type AffiliateMonthAggInvoiceGetPayload<S extends boolean | null | undefined | AffiliateMonthAggInvoiceDefaultArgs> = $Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload, S>
+
+  type AffiliateMonthAggInvoiceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliateMonthAggInvoiceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliateMonthAggInvoiceCountAggregateInputType | true
+    }
+
+  export interface AffiliateMonthAggInvoiceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliateMonthAggInvoice'], meta: { name: 'AffiliateMonthAggInvoice' } }
+    /**
+     * Find zero or one AffiliateMonthAggInvoice that matches the filter.
+     * @param {AffiliateMonthAggInvoiceFindUniqueArgs} args - Arguments to find a AffiliateMonthAggInvoice
+     * @example
+     * // Get one AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliateMonthAggInvoiceFindUniqueArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceFindUniqueArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliateMonthAggInvoice that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliateMonthAggInvoiceFindUniqueOrThrowArgs} args - Arguments to find a AffiliateMonthAggInvoice
+     * @example
+     * // Get one AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliateMonthAggInvoiceFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateMonthAggInvoice that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceFindFirstArgs} args - Arguments to find a AffiliateMonthAggInvoice
+     * @example
+     * // Get one AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliateMonthAggInvoiceFindFirstArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceFindFirstArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateMonthAggInvoice that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceFindFirstOrThrowArgs} args - Arguments to find a AffiliateMonthAggInvoice
+     * @example
+     * // Get one AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliateMonthAggInvoiceFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliateMonthAggInvoices that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoices = await prisma.affiliateMonthAggInvoice.findMany()
+     * 
+     * // Get first 10 AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoices = await prisma.affiliateMonthAggInvoice.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliateMonthAggInvoiceWithIdOnly = await prisma.affiliateMonthAggInvoice.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliateMonthAggInvoiceFindManyArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliateMonthAggInvoice.
+     * @param {AffiliateMonthAggInvoiceCreateArgs} args - Arguments to create a AffiliateMonthAggInvoice.
+     * @example
+     * // Create one AffiliateMonthAggInvoice
+     * const AffiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.create({
+     *   data: {
+     *     // ... data to create a AffiliateMonthAggInvoice
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliateMonthAggInvoiceCreateArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceCreateArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliateMonthAggInvoices.
+     * @param {AffiliateMonthAggInvoiceCreateManyArgs} args - Arguments to create many AffiliateMonthAggInvoices.
+     * @example
+     * // Create many AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliateMonthAggInvoiceCreateManyArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliateMonthAggInvoices and returns the data saved in the database.
+     * @param {AffiliateMonthAggInvoiceCreateManyAndReturnArgs} args - Arguments to create many AffiliateMonthAggInvoices.
+     * @example
+     * // Create many AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliateMonthAggInvoices and only return the `id`
+     * const affiliateMonthAggInvoiceWithIdOnly = await prisma.affiliateMonthAggInvoice.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliateMonthAggInvoiceCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliateMonthAggInvoice.
+     * @param {AffiliateMonthAggInvoiceDeleteArgs} args - Arguments to delete one AffiliateMonthAggInvoice.
+     * @example
+     * // Delete one AffiliateMonthAggInvoice
+     * const AffiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliateMonthAggInvoice
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliateMonthAggInvoiceDeleteArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceDeleteArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliateMonthAggInvoice.
+     * @param {AffiliateMonthAggInvoiceUpdateArgs} args - Arguments to update one AffiliateMonthAggInvoice.
+     * @example
+     * // Update one AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliateMonthAggInvoiceUpdateArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceUpdateArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliateMonthAggInvoices.
+     * @param {AffiliateMonthAggInvoiceDeleteManyArgs} args - Arguments to filter AffiliateMonthAggInvoices to delete.
+     * @example
+     * // Delete a few AffiliateMonthAggInvoices
+     * const { count } = await prisma.affiliateMonthAggInvoice.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliateMonthAggInvoiceDeleteManyArgs>(args?: SelectSubset<T, AffiliateMonthAggInvoiceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateMonthAggInvoices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliateMonthAggInvoiceUpdateManyArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateMonthAggInvoices and returns the data updated in the database.
+     * @param {AffiliateMonthAggInvoiceUpdateManyAndReturnArgs} args - Arguments to update many AffiliateMonthAggInvoices.
+     * @example
+     * // Update many AffiliateMonthAggInvoices
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliateMonthAggInvoices and only return the `id`
+     * const affiliateMonthAggInvoiceWithIdOnly = await prisma.affiliateMonthAggInvoice.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliateMonthAggInvoiceUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliateMonthAggInvoice.
+     * @param {AffiliateMonthAggInvoiceUpsertArgs} args - Arguments to update or create a AffiliateMonthAggInvoice.
+     * @example
+     * // Update or create a AffiliateMonthAggInvoice
+     * const affiliateMonthAggInvoice = await prisma.affiliateMonthAggInvoice.upsert({
+     *   create: {
+     *     // ... data to create a AffiliateMonthAggInvoice
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliateMonthAggInvoice we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliateMonthAggInvoiceUpsertArgs>(args: SelectSubset<T, AffiliateMonthAggInvoiceUpsertArgs<ExtArgs>>): Prisma__AffiliateMonthAggInvoiceClient<$Result.GetResult<Prisma.$AffiliateMonthAggInvoicePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliateMonthAggInvoices.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceCountArgs} args - Arguments to filter AffiliateMonthAggInvoices to count.
+     * @example
+     * // Count the number of AffiliateMonthAggInvoices
+     * const count = await prisma.affiliateMonthAggInvoice.count({
+     *   where: {
+     *     // ... the filter for the AffiliateMonthAggInvoices we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliateMonthAggInvoiceCountArgs>(
+      args?: Subset<T, AffiliateMonthAggInvoiceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliateMonthAggInvoiceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliateMonthAggInvoice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliateMonthAggInvoiceAggregateArgs>(args: Subset<T, AffiliateMonthAggInvoiceAggregateArgs>): Prisma.PrismaPromise<GetAffiliateMonthAggInvoiceAggregateType<T>>
+
+    /**
+     * Group by AffiliateMonthAggInvoice.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateMonthAggInvoiceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliateMonthAggInvoiceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliateMonthAggInvoiceGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliateMonthAggInvoiceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliateMonthAggInvoiceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliateMonthAggInvoiceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliateMonthAggInvoice model
+   */
+  readonly fields: AffiliateMonthAggInvoiceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliateMonthAggInvoice.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliateMonthAggInvoiceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    monthAgg<T extends AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AffiliatePlanPaymentMonthAggDefaultArgs<ExtArgs>>): Prisma__AffiliatePlanPaymentMonthAggClient<$Result.GetResult<Prisma.$AffiliatePlanPaymentMonthAggPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliateMonthAggInvoice model
+   */
+  interface AffiliateMonthAggInvoiceFieldRefs {
+    readonly id: FieldRef<"AffiliateMonthAggInvoice", 'String'>
+    readonly monthAggId: FieldRef<"AffiliateMonthAggInvoice", 'String'>
+    readonly pdfBytes: FieldRef<"AffiliateMonthAggInvoice", 'Bytes'>
+    readonly fileName: FieldRef<"AffiliateMonthAggInvoice", 'String'>
+    readonly contentType: FieldRef<"AffiliateMonthAggInvoice", 'String'>
+    readonly sizeBytes: FieldRef<"AffiliateMonthAggInvoice", 'Int'>
+    readonly createdAt: FieldRef<"AffiliateMonthAggInvoice", 'DateTime'>
+    readonly updatedAt: FieldRef<"AffiliateMonthAggInvoice", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliateMonthAggInvoice findUnique
+   */
+  export type AffiliateMonthAggInvoiceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateMonthAggInvoice to fetch.
+     */
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  /**
+   * AffiliateMonthAggInvoice findUniqueOrThrow
+   */
+  export type AffiliateMonthAggInvoiceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateMonthAggInvoice to fetch.
+     */
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  /**
+   * AffiliateMonthAggInvoice findFirst
+   */
+  export type AffiliateMonthAggInvoiceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateMonthAggInvoice to fetch.
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateMonthAggInvoices to fetch.
+     */
+    orderBy?: AffiliateMonthAggInvoiceOrderByWithRelationInput | AffiliateMonthAggInvoiceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateMonthAggInvoices.
+     */
+    cursor?: AffiliateMonthAggInvoiceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateMonthAggInvoices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateMonthAggInvoices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateMonthAggInvoices.
+     */
+    distinct?: AffiliateMonthAggInvoiceScalarFieldEnum | AffiliateMonthAggInvoiceScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateMonthAggInvoice findFirstOrThrow
+   */
+  export type AffiliateMonthAggInvoiceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateMonthAggInvoice to fetch.
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateMonthAggInvoices to fetch.
+     */
+    orderBy?: AffiliateMonthAggInvoiceOrderByWithRelationInput | AffiliateMonthAggInvoiceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateMonthAggInvoices.
+     */
+    cursor?: AffiliateMonthAggInvoiceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateMonthAggInvoices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateMonthAggInvoices.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateMonthAggInvoices.
+     */
+    distinct?: AffiliateMonthAggInvoiceScalarFieldEnum | AffiliateMonthAggInvoiceScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateMonthAggInvoice findMany
+   */
+  export type AffiliateMonthAggInvoiceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateMonthAggInvoices to fetch.
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateMonthAggInvoices to fetch.
+     */
+    orderBy?: AffiliateMonthAggInvoiceOrderByWithRelationInput | AffiliateMonthAggInvoiceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliateMonthAggInvoices.
+     */
+    cursor?: AffiliateMonthAggInvoiceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateMonthAggInvoices from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateMonthAggInvoices.
+     */
+    skip?: number
+    distinct?: AffiliateMonthAggInvoiceScalarFieldEnum | AffiliateMonthAggInvoiceScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateMonthAggInvoice create
+   */
+  export type AffiliateMonthAggInvoiceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliateMonthAggInvoice.
+     */
+    data: XOR<AffiliateMonthAggInvoiceCreateInput, AffiliateMonthAggInvoiceUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliateMonthAggInvoice createMany
+   */
+  export type AffiliateMonthAggInvoiceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliateMonthAggInvoices.
+     */
+    data: AffiliateMonthAggInvoiceCreateManyInput | AffiliateMonthAggInvoiceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateMonthAggInvoice createManyAndReturn
+   */
+  export type AffiliateMonthAggInvoiceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliateMonthAggInvoices.
+     */
+    data: AffiliateMonthAggInvoiceCreateManyInput | AffiliateMonthAggInvoiceCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliateMonthAggInvoice update
+   */
+  export type AffiliateMonthAggInvoiceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliateMonthAggInvoice.
+     */
+    data: XOR<AffiliateMonthAggInvoiceUpdateInput, AffiliateMonthAggInvoiceUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliateMonthAggInvoice to update.
+     */
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  /**
+   * AffiliateMonthAggInvoice updateMany
+   */
+  export type AffiliateMonthAggInvoiceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliateMonthAggInvoices.
+     */
+    data: XOR<AffiliateMonthAggInvoiceUpdateManyMutationInput, AffiliateMonthAggInvoiceUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateMonthAggInvoices to update
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * Limit how many AffiliateMonthAggInvoices to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateMonthAggInvoice updateManyAndReturn
+   */
+  export type AffiliateMonthAggInvoiceUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliateMonthAggInvoices.
+     */
+    data: XOR<AffiliateMonthAggInvoiceUpdateManyMutationInput, AffiliateMonthAggInvoiceUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateMonthAggInvoices to update
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * Limit how many AffiliateMonthAggInvoices to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliateMonthAggInvoice upsert
+   */
+  export type AffiliateMonthAggInvoiceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliateMonthAggInvoice to update in case it exists.
+     */
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+    /**
+     * In case the AffiliateMonthAggInvoice found by the `where` argument doesn't exist, create a new AffiliateMonthAggInvoice with this data.
+     */
+    create: XOR<AffiliateMonthAggInvoiceCreateInput, AffiliateMonthAggInvoiceUncheckedCreateInput>
+    /**
+     * In case the AffiliateMonthAggInvoice was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliateMonthAggInvoiceUpdateInput, AffiliateMonthAggInvoiceUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliateMonthAggInvoice delete
+   */
+  export type AffiliateMonthAggInvoiceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliateMonthAggInvoice to delete.
+     */
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  /**
+   * AffiliateMonthAggInvoice deleteMany
+   */
+  export type AffiliateMonthAggInvoiceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateMonthAggInvoices to delete
+     */
+    where?: AffiliateMonthAggInvoiceWhereInput
+    /**
+     * Limit how many AffiliateMonthAggInvoices to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateMonthAggInvoice without action
+   */
+  export type AffiliateMonthAggInvoiceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateMonthAggInvoice
+     */
+    select?: AffiliateMonthAggInvoiceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateMonthAggInvoice
+     */
+    omit?: AffiliateMonthAggInvoiceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateMonthAggInvoiceInclude<ExtArgs> | null
   }
 
 
@@ -32924,6 +39773,988 @@ export namespace Prisma {
 
 
   /**
+   * Model LogErro
+   */
+
+  export type AggregateLogErro = {
+    _count: LogErroCountAggregateOutputType | null
+    _min: LogErroMinAggregateOutputType | null
+    _max: LogErroMaxAggregateOutputType | null
+  }
+
+  export type LogErroMinAggregateOutputType = {
+    id: string | null
+    dataHora: Date | null
+    origem: string | null
+    msgErro: string | null
+  }
+
+  export type LogErroMaxAggregateOutputType = {
+    id: string | null
+    dataHora: Date | null
+    origem: string | null
+    msgErro: string | null
+  }
+
+  export type LogErroCountAggregateOutputType = {
+    id: number
+    dataHora: number
+    origem: number
+    msgErro: number
+    _all: number
+  }
+
+
+  export type LogErroMinAggregateInputType = {
+    id?: true
+    dataHora?: true
+    origem?: true
+    msgErro?: true
+  }
+
+  export type LogErroMaxAggregateInputType = {
+    id?: true
+    dataHora?: true
+    origem?: true
+    msgErro?: true
+  }
+
+  export type LogErroCountAggregateInputType = {
+    id?: true
+    dataHora?: true
+    origem?: true
+    msgErro?: true
+    _all?: true
+  }
+
+  export type LogErroAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LogErro to aggregate.
+     */
+    where?: LogErroWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LogErros to fetch.
+     */
+    orderBy?: LogErroOrderByWithRelationInput | LogErroOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LogErroWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LogErros from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LogErros.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LogErros
+    **/
+    _count?: true | LogErroCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LogErroMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LogErroMaxAggregateInputType
+  }
+
+  export type GetLogErroAggregateType<T extends LogErroAggregateArgs> = {
+        [P in keyof T & keyof AggregateLogErro]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLogErro[P]>
+      : GetScalarType<T[P], AggregateLogErro[P]>
+  }
+
+
+
+
+  export type LogErroGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LogErroWhereInput
+    orderBy?: LogErroOrderByWithAggregationInput | LogErroOrderByWithAggregationInput[]
+    by: LogErroScalarFieldEnum[] | LogErroScalarFieldEnum
+    having?: LogErroScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LogErroCountAggregateInputType | true
+    _min?: LogErroMinAggregateInputType
+    _max?: LogErroMaxAggregateInputType
+  }
+
+  export type LogErroGroupByOutputType = {
+    id: string
+    dataHora: Date
+    origem: string
+    msgErro: string
+    _count: LogErroCountAggregateOutputType | null
+    _min: LogErroMinAggregateOutputType | null
+    _max: LogErroMaxAggregateOutputType | null
+  }
+
+  type GetLogErroGroupByPayload<T extends LogErroGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LogErroGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LogErroGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LogErroGroupByOutputType[P]>
+            : GetScalarType<T[P], LogErroGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LogErroSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    dataHora?: boolean
+    origem?: boolean
+    msgErro?: boolean
+  }, ExtArgs["result"]["logErro"]>
+
+  export type LogErroSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    dataHora?: boolean
+    origem?: boolean
+    msgErro?: boolean
+  }, ExtArgs["result"]["logErro"]>
+
+  export type LogErroSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    dataHora?: boolean
+    origem?: boolean
+    msgErro?: boolean
+  }, ExtArgs["result"]["logErro"]>
+
+  export type LogErroSelectScalar = {
+    id?: boolean
+    dataHora?: boolean
+    origem?: boolean
+    msgErro?: boolean
+  }
+
+  export type LogErroOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "dataHora" | "origem" | "msgErro", ExtArgs["result"]["logErro"]>
+
+  export type $LogErroPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LogErro"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      dataHora: Date
+      origem: string
+      msgErro: string
+    }, ExtArgs["result"]["logErro"]>
+    composites: {}
+  }
+
+  type LogErroGetPayload<S extends boolean | null | undefined | LogErroDefaultArgs> = $Result.GetResult<Prisma.$LogErroPayload, S>
+
+  type LogErroCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LogErroFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LogErroCountAggregateInputType | true
+    }
+
+  export interface LogErroDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LogErro'], meta: { name: 'LogErro' } }
+    /**
+     * Find zero or one LogErro that matches the filter.
+     * @param {LogErroFindUniqueArgs} args - Arguments to find a LogErro
+     * @example
+     * // Get one LogErro
+     * const logErro = await prisma.logErro.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LogErroFindUniqueArgs>(args: SelectSubset<T, LogErroFindUniqueArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LogErro that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LogErroFindUniqueOrThrowArgs} args - Arguments to find a LogErro
+     * @example
+     * // Get one LogErro
+     * const logErro = await prisma.logErro.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LogErroFindUniqueOrThrowArgs>(args: SelectSubset<T, LogErroFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LogErro that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroFindFirstArgs} args - Arguments to find a LogErro
+     * @example
+     * // Get one LogErro
+     * const logErro = await prisma.logErro.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LogErroFindFirstArgs>(args?: SelectSubset<T, LogErroFindFirstArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LogErro that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroFindFirstOrThrowArgs} args - Arguments to find a LogErro
+     * @example
+     * // Get one LogErro
+     * const logErro = await prisma.logErro.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LogErroFindFirstOrThrowArgs>(args?: SelectSubset<T, LogErroFindFirstOrThrowArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LogErros that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LogErros
+     * const logErros = await prisma.logErro.findMany()
+     * 
+     * // Get first 10 LogErros
+     * const logErros = await prisma.logErro.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const logErroWithIdOnly = await prisma.logErro.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends LogErroFindManyArgs>(args?: SelectSubset<T, LogErroFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LogErro.
+     * @param {LogErroCreateArgs} args - Arguments to create a LogErro.
+     * @example
+     * // Create one LogErro
+     * const LogErro = await prisma.logErro.create({
+     *   data: {
+     *     // ... data to create a LogErro
+     *   }
+     * })
+     * 
+     */
+    create<T extends LogErroCreateArgs>(args: SelectSubset<T, LogErroCreateArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LogErros.
+     * @param {LogErroCreateManyArgs} args - Arguments to create many LogErros.
+     * @example
+     * // Create many LogErros
+     * const logErro = await prisma.logErro.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LogErroCreateManyArgs>(args?: SelectSubset<T, LogErroCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LogErros and returns the data saved in the database.
+     * @param {LogErroCreateManyAndReturnArgs} args - Arguments to create many LogErros.
+     * @example
+     * // Create many LogErros
+     * const logErro = await prisma.logErro.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LogErros and only return the `id`
+     * const logErroWithIdOnly = await prisma.logErro.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LogErroCreateManyAndReturnArgs>(args?: SelectSubset<T, LogErroCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LogErro.
+     * @param {LogErroDeleteArgs} args - Arguments to delete one LogErro.
+     * @example
+     * // Delete one LogErro
+     * const LogErro = await prisma.logErro.delete({
+     *   where: {
+     *     // ... filter to delete one LogErro
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LogErroDeleteArgs>(args: SelectSubset<T, LogErroDeleteArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LogErro.
+     * @param {LogErroUpdateArgs} args - Arguments to update one LogErro.
+     * @example
+     * // Update one LogErro
+     * const logErro = await prisma.logErro.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LogErroUpdateArgs>(args: SelectSubset<T, LogErroUpdateArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LogErros.
+     * @param {LogErroDeleteManyArgs} args - Arguments to filter LogErros to delete.
+     * @example
+     * // Delete a few LogErros
+     * const { count } = await prisma.logErro.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LogErroDeleteManyArgs>(args?: SelectSubset<T, LogErroDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LogErros.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LogErros
+     * const logErro = await prisma.logErro.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LogErroUpdateManyArgs>(args: SelectSubset<T, LogErroUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LogErros and returns the data updated in the database.
+     * @param {LogErroUpdateManyAndReturnArgs} args - Arguments to update many LogErros.
+     * @example
+     * // Update many LogErros
+     * const logErro = await prisma.logErro.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LogErros and only return the `id`
+     * const logErroWithIdOnly = await prisma.logErro.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LogErroUpdateManyAndReturnArgs>(args: SelectSubset<T, LogErroUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LogErro.
+     * @param {LogErroUpsertArgs} args - Arguments to update or create a LogErro.
+     * @example
+     * // Update or create a LogErro
+     * const logErro = await prisma.logErro.upsert({
+     *   create: {
+     *     // ... data to create a LogErro
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LogErro we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LogErroUpsertArgs>(args: SelectSubset<T, LogErroUpsertArgs<ExtArgs>>): Prisma__LogErroClient<$Result.GetResult<Prisma.$LogErroPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LogErros.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroCountArgs} args - Arguments to filter LogErros to count.
+     * @example
+     * // Count the number of LogErros
+     * const count = await prisma.logErro.count({
+     *   where: {
+     *     // ... the filter for the LogErros we want to count
+     *   }
+     * })
+    **/
+    count<T extends LogErroCountArgs>(
+      args?: Subset<T, LogErroCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LogErroCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LogErro.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LogErroAggregateArgs>(args: Subset<T, LogErroAggregateArgs>): Prisma.PrismaPromise<GetLogErroAggregateType<T>>
+
+    /**
+     * Group by LogErro.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LogErroGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LogErroGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LogErroGroupByArgs['orderBy'] }
+        : { orderBy?: LogErroGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LogErroGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLogErroGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LogErro model
+   */
+  readonly fields: LogErroFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LogErro.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LogErroClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LogErro model
+   */
+  interface LogErroFieldRefs {
+    readonly id: FieldRef<"LogErro", 'String'>
+    readonly dataHora: FieldRef<"LogErro", 'DateTime'>
+    readonly origem: FieldRef<"LogErro", 'String'>
+    readonly msgErro: FieldRef<"LogErro", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LogErro findUnique
+   */
+  export type LogErroFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter, which LogErro to fetch.
+     */
+    where: LogErroWhereUniqueInput
+  }
+
+  /**
+   * LogErro findUniqueOrThrow
+   */
+  export type LogErroFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter, which LogErro to fetch.
+     */
+    where: LogErroWhereUniqueInput
+  }
+
+  /**
+   * LogErro findFirst
+   */
+  export type LogErroFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter, which LogErro to fetch.
+     */
+    where?: LogErroWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LogErros to fetch.
+     */
+    orderBy?: LogErroOrderByWithRelationInput | LogErroOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LogErros.
+     */
+    cursor?: LogErroWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LogErros from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LogErros.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LogErros.
+     */
+    distinct?: LogErroScalarFieldEnum | LogErroScalarFieldEnum[]
+  }
+
+  /**
+   * LogErro findFirstOrThrow
+   */
+  export type LogErroFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter, which LogErro to fetch.
+     */
+    where?: LogErroWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LogErros to fetch.
+     */
+    orderBy?: LogErroOrderByWithRelationInput | LogErroOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LogErros.
+     */
+    cursor?: LogErroWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LogErros from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LogErros.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LogErros.
+     */
+    distinct?: LogErroScalarFieldEnum | LogErroScalarFieldEnum[]
+  }
+
+  /**
+   * LogErro findMany
+   */
+  export type LogErroFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter, which LogErros to fetch.
+     */
+    where?: LogErroWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LogErros to fetch.
+     */
+    orderBy?: LogErroOrderByWithRelationInput | LogErroOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LogErros.
+     */
+    cursor?: LogErroWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LogErros from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LogErros.
+     */
+    skip?: number
+    distinct?: LogErroScalarFieldEnum | LogErroScalarFieldEnum[]
+  }
+
+  /**
+   * LogErro create
+   */
+  export type LogErroCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * The data needed to create a LogErro.
+     */
+    data: XOR<LogErroCreateInput, LogErroUncheckedCreateInput>
+  }
+
+  /**
+   * LogErro createMany
+   */
+  export type LogErroCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LogErros.
+     */
+    data: LogErroCreateManyInput | LogErroCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LogErro createManyAndReturn
+   */
+  export type LogErroCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * The data used to create many LogErros.
+     */
+    data: LogErroCreateManyInput | LogErroCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LogErro update
+   */
+  export type LogErroUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * The data needed to update a LogErro.
+     */
+    data: XOR<LogErroUpdateInput, LogErroUncheckedUpdateInput>
+    /**
+     * Choose, which LogErro to update.
+     */
+    where: LogErroWhereUniqueInput
+  }
+
+  /**
+   * LogErro updateMany
+   */
+  export type LogErroUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LogErros.
+     */
+    data: XOR<LogErroUpdateManyMutationInput, LogErroUncheckedUpdateManyInput>
+    /**
+     * Filter which LogErros to update
+     */
+    where?: LogErroWhereInput
+    /**
+     * Limit how many LogErros to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LogErro updateManyAndReturn
+   */
+  export type LogErroUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * The data used to update LogErros.
+     */
+    data: XOR<LogErroUpdateManyMutationInput, LogErroUncheckedUpdateManyInput>
+    /**
+     * Filter which LogErros to update
+     */
+    where?: LogErroWhereInput
+    /**
+     * Limit how many LogErros to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LogErro upsert
+   */
+  export type LogErroUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * The filter to search for the LogErro to update in case it exists.
+     */
+    where: LogErroWhereUniqueInput
+    /**
+     * In case the LogErro found by the `where` argument doesn't exist, create a new LogErro with this data.
+     */
+    create: XOR<LogErroCreateInput, LogErroUncheckedCreateInput>
+    /**
+     * In case the LogErro was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LogErroUpdateInput, LogErroUncheckedUpdateInput>
+  }
+
+  /**
+   * LogErro delete
+   */
+  export type LogErroDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+    /**
+     * Filter which LogErro to delete.
+     */
+    where: LogErroWhereUniqueInput
+  }
+
+  /**
+   * LogErro deleteMany
+   */
+  export type LogErroDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LogErros to delete
+     */
+    where?: LogErroWhereInput
+    /**
+     * Limit how many LogErros to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LogErro without action
+   */
+  export type LogErroDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LogErro
+     */
+    select?: LogErroSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LogErro
+     */
+    omit?: LogErroOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model KlineSymbol
    */
 
@@ -33961,6 +41792,2485 @@ export namespace Prisma {
 
 
   /**
+   * Model AffiliateApplication
+   */
+
+  export type AggregateAffiliateApplication = {
+    _count: AffiliateApplicationCountAggregateOutputType | null
+    _avg: AffiliateApplicationAvgAggregateOutputType | null
+    _sum: AffiliateApplicationSumAggregateOutputType | null
+    _min: AffiliateApplicationMinAggregateOutputType | null
+    _max: AffiliateApplicationMaxAggregateOutputType | null
+  }
+
+  export type AffiliateApplicationAvgAggregateOutputType = {
+    commissionAnnualUsdCents: number | null
+    commissionMonthlyUsdCents: number | null
+  }
+
+  export type AffiliateApplicationSumAggregateOutputType = {
+    commissionAnnualUsdCents: number | null
+    commissionMonthlyUsdCents: number | null
+  }
+
+  export type AffiliateApplicationMinAggregateOutputType = {
+    id: string | null
+    idAfiliado: string | null
+    cnpjDigits: string | null
+    taxId: string | null
+    razaoSocial: string | null
+    responsavel: string | null
+    email: string | null
+    siteUrl: string | null
+    acceptedDocs: boolean | null
+    approved: boolean | null
+    locale: string | null
+    commissionAnnualUsdCents: number | null
+    commissionMonthlyUsdCents: number | null
+    createdAt: Date | null
+  }
+
+  export type AffiliateApplicationMaxAggregateOutputType = {
+    id: string | null
+    idAfiliado: string | null
+    cnpjDigits: string | null
+    taxId: string | null
+    razaoSocial: string | null
+    responsavel: string | null
+    email: string | null
+    siteUrl: string | null
+    acceptedDocs: boolean | null
+    approved: boolean | null
+    locale: string | null
+    commissionAnnualUsdCents: number | null
+    commissionMonthlyUsdCents: number | null
+    createdAt: Date | null
+  }
+
+  export type AffiliateApplicationCountAggregateOutputType = {
+    id: number
+    idAfiliado: number
+    cnpjDigits: number
+    taxId: number
+    razaoSocial: number
+    responsavel: number
+    email: number
+    siteUrl: number
+    acceptedDocs: number
+    approved: number
+    locale: number
+    commissionAnnualUsdCents: number
+    commissionMonthlyUsdCents: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AffiliateApplicationAvgAggregateInputType = {
+    commissionAnnualUsdCents?: true
+    commissionMonthlyUsdCents?: true
+  }
+
+  export type AffiliateApplicationSumAggregateInputType = {
+    commissionAnnualUsdCents?: true
+    commissionMonthlyUsdCents?: true
+  }
+
+  export type AffiliateApplicationMinAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    cnpjDigits?: true
+    taxId?: true
+    razaoSocial?: true
+    responsavel?: true
+    email?: true
+    siteUrl?: true
+    acceptedDocs?: true
+    approved?: true
+    locale?: true
+    commissionAnnualUsdCents?: true
+    commissionMonthlyUsdCents?: true
+    createdAt?: true
+  }
+
+  export type AffiliateApplicationMaxAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    cnpjDigits?: true
+    taxId?: true
+    razaoSocial?: true
+    responsavel?: true
+    email?: true
+    siteUrl?: true
+    acceptedDocs?: true
+    approved?: true
+    locale?: true
+    commissionAnnualUsdCents?: true
+    commissionMonthlyUsdCents?: true
+    createdAt?: true
+  }
+
+  export type AffiliateApplicationCountAggregateInputType = {
+    id?: true
+    idAfiliado?: true
+    cnpjDigits?: true
+    taxId?: true
+    razaoSocial?: true
+    responsavel?: true
+    email?: true
+    siteUrl?: true
+    acceptedDocs?: true
+    approved?: true
+    locale?: true
+    commissionAnnualUsdCents?: true
+    commissionMonthlyUsdCents?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AffiliateApplicationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateApplication to aggregate.
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateApplications to fetch.
+     */
+    orderBy?: AffiliateApplicationOrderByWithRelationInput | AffiliateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliateApplications
+    **/
+    _count?: true | AffiliateApplicationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AffiliateApplicationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AffiliateApplicationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliateApplicationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliateApplicationMaxAggregateInputType
+  }
+
+  export type GetAffiliateApplicationAggregateType<T extends AffiliateApplicationAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliateApplication]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliateApplication[P]>
+      : GetScalarType<T[P], AggregateAffiliateApplication[P]>
+  }
+
+
+
+
+  export type AffiliateApplicationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliateApplicationWhereInput
+    orderBy?: AffiliateApplicationOrderByWithAggregationInput | AffiliateApplicationOrderByWithAggregationInput[]
+    by: AffiliateApplicationScalarFieldEnum[] | AffiliateApplicationScalarFieldEnum
+    having?: AffiliateApplicationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliateApplicationCountAggregateInputType | true
+    _avg?: AffiliateApplicationAvgAggregateInputType
+    _sum?: AffiliateApplicationSumAggregateInputType
+    _min?: AffiliateApplicationMinAggregateInputType
+    _max?: AffiliateApplicationMaxAggregateInputType
+  }
+
+  export type AffiliateApplicationGroupByOutputType = {
+    id: string
+    idAfiliado: string
+    cnpjDigits: string | null
+    taxId: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs: boolean
+    approved: boolean
+    locale: string
+    commissionAnnualUsdCents: number
+    commissionMonthlyUsdCents: number
+    createdAt: Date
+    _count: AffiliateApplicationCountAggregateOutputType | null
+    _avg: AffiliateApplicationAvgAggregateOutputType | null
+    _sum: AffiliateApplicationSumAggregateOutputType | null
+    _min: AffiliateApplicationMinAggregateOutputType | null
+    _max: AffiliateApplicationMaxAggregateOutputType | null
+  }
+
+  type GetAffiliateApplicationGroupByPayload<T extends AffiliateApplicationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliateApplicationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliateApplicationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliateApplicationGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliateApplicationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliateApplicationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    cnpjDigits?: boolean
+    taxId?: boolean
+    razaoSocial?: boolean
+    responsavel?: boolean
+    email?: boolean
+    siteUrl?: boolean
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: boolean
+    commissionAnnualUsdCents?: boolean
+    commissionMonthlyUsdCents?: boolean
+    createdAt?: boolean
+    payoutProfile?: boolean | AffiliateApplication$payoutProfileArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliateApplication"]>
+
+  export type AffiliateApplicationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    cnpjDigits?: boolean
+    taxId?: boolean
+    razaoSocial?: boolean
+    responsavel?: boolean
+    email?: boolean
+    siteUrl?: boolean
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: boolean
+    commissionAnnualUsdCents?: boolean
+    commissionMonthlyUsdCents?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["affiliateApplication"]>
+
+  export type AffiliateApplicationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    idAfiliado?: boolean
+    cnpjDigits?: boolean
+    taxId?: boolean
+    razaoSocial?: boolean
+    responsavel?: boolean
+    email?: boolean
+    siteUrl?: boolean
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: boolean
+    commissionAnnualUsdCents?: boolean
+    commissionMonthlyUsdCents?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["affiliateApplication"]>
+
+  export type AffiliateApplicationSelectScalar = {
+    id?: boolean
+    idAfiliado?: boolean
+    cnpjDigits?: boolean
+    taxId?: boolean
+    razaoSocial?: boolean
+    responsavel?: boolean
+    email?: boolean
+    siteUrl?: boolean
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: boolean
+    commissionAnnualUsdCents?: boolean
+    commissionMonthlyUsdCents?: boolean
+    createdAt?: boolean
+  }
+
+  export type AffiliateApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idAfiliado" | "cnpjDigits" | "taxId" | "razaoSocial" | "responsavel" | "email" | "siteUrl" | "acceptedDocs" | "approved" | "locale" | "commissionAnnualUsdCents" | "commissionMonthlyUsdCents" | "createdAt", ExtArgs["result"]["affiliateApplication"]>
+  export type AffiliateApplicationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    payoutProfile?: boolean | AffiliateApplication$payoutProfileArgs<ExtArgs>
+  }
+  export type AffiliateApplicationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AffiliateApplicationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AffiliateApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliateApplication"
+    objects: {
+      payoutProfile: Prisma.$AffiliatePayoutProfilePayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      idAfiliado: string
+      /**
+       * Brasil: 14 dígitos. Inscrições em EN podem usar só `taxId` (CNPJ nulo).
+       */
+      cnpjDigits: string | null
+      /**
+       * Inscrições internacionais (EN): Tax ID / número de registo comercial.
+       */
+      taxId: string | null
+      razaoSocial: string
+      responsavel: string
+      email: string
+      siteUrl: string
+      acceptedDocs: boolean
+      approved: boolean
+      locale: string
+      /**
+       * Comissão fixa por venda plano anual (USD, centavos). Default 800 = US$ 8,00.
+       */
+      commissionAnnualUsdCents: number
+      /**
+       * Comissão fixa por venda plano mensal (USD, centavos). Default 120 = US$ 1,20.
+       */
+      commissionMonthlyUsdCents: number
+      createdAt: Date
+    }, ExtArgs["result"]["affiliateApplication"]>
+    composites: {}
+  }
+
+  type AffiliateApplicationGetPayload<S extends boolean | null | undefined | AffiliateApplicationDefaultArgs> = $Result.GetResult<Prisma.$AffiliateApplicationPayload, S>
+
+  type AffiliateApplicationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliateApplicationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliateApplicationCountAggregateInputType | true
+    }
+
+  export interface AffiliateApplicationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliateApplication'], meta: { name: 'AffiliateApplication' } }
+    /**
+     * Find zero or one AffiliateApplication that matches the filter.
+     * @param {AffiliateApplicationFindUniqueArgs} args - Arguments to find a AffiliateApplication
+     * @example
+     * // Get one AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliateApplicationFindUniqueArgs>(args: SelectSubset<T, AffiliateApplicationFindUniqueArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliateApplication that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliateApplicationFindUniqueOrThrowArgs} args - Arguments to find a AffiliateApplication
+     * @example
+     * // Get one AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliateApplicationFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliateApplicationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateApplication that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationFindFirstArgs} args - Arguments to find a AffiliateApplication
+     * @example
+     * // Get one AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliateApplicationFindFirstArgs>(args?: SelectSubset<T, AffiliateApplicationFindFirstArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliateApplication that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationFindFirstOrThrowArgs} args - Arguments to find a AffiliateApplication
+     * @example
+     * // Get one AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliateApplicationFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliateApplicationFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliateApplications that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliateApplications
+     * const affiliateApplications = await prisma.affiliateApplication.findMany()
+     * 
+     * // Get first 10 AffiliateApplications
+     * const affiliateApplications = await prisma.affiliateApplication.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliateApplicationWithIdOnly = await prisma.affiliateApplication.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliateApplicationFindManyArgs>(args?: SelectSubset<T, AffiliateApplicationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliateApplication.
+     * @param {AffiliateApplicationCreateArgs} args - Arguments to create a AffiliateApplication.
+     * @example
+     * // Create one AffiliateApplication
+     * const AffiliateApplication = await prisma.affiliateApplication.create({
+     *   data: {
+     *     // ... data to create a AffiliateApplication
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliateApplicationCreateArgs>(args: SelectSubset<T, AffiliateApplicationCreateArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliateApplications.
+     * @param {AffiliateApplicationCreateManyArgs} args - Arguments to create many AffiliateApplications.
+     * @example
+     * // Create many AffiliateApplications
+     * const affiliateApplication = await prisma.affiliateApplication.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliateApplicationCreateManyArgs>(args?: SelectSubset<T, AffiliateApplicationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliateApplications and returns the data saved in the database.
+     * @param {AffiliateApplicationCreateManyAndReturnArgs} args - Arguments to create many AffiliateApplications.
+     * @example
+     * // Create many AffiliateApplications
+     * const affiliateApplication = await prisma.affiliateApplication.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliateApplications and only return the `id`
+     * const affiliateApplicationWithIdOnly = await prisma.affiliateApplication.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliateApplicationCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliateApplicationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliateApplication.
+     * @param {AffiliateApplicationDeleteArgs} args - Arguments to delete one AffiliateApplication.
+     * @example
+     * // Delete one AffiliateApplication
+     * const AffiliateApplication = await prisma.affiliateApplication.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliateApplication
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliateApplicationDeleteArgs>(args: SelectSubset<T, AffiliateApplicationDeleteArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliateApplication.
+     * @param {AffiliateApplicationUpdateArgs} args - Arguments to update one AffiliateApplication.
+     * @example
+     * // Update one AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliateApplicationUpdateArgs>(args: SelectSubset<T, AffiliateApplicationUpdateArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliateApplications.
+     * @param {AffiliateApplicationDeleteManyArgs} args - Arguments to filter AffiliateApplications to delete.
+     * @example
+     * // Delete a few AffiliateApplications
+     * const { count } = await prisma.affiliateApplication.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliateApplicationDeleteManyArgs>(args?: SelectSubset<T, AffiliateApplicationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateApplications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliateApplications
+     * const affiliateApplication = await prisma.affiliateApplication.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliateApplicationUpdateManyArgs>(args: SelectSubset<T, AffiliateApplicationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliateApplications and returns the data updated in the database.
+     * @param {AffiliateApplicationUpdateManyAndReturnArgs} args - Arguments to update many AffiliateApplications.
+     * @example
+     * // Update many AffiliateApplications
+     * const affiliateApplication = await prisma.affiliateApplication.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliateApplications and only return the `id`
+     * const affiliateApplicationWithIdOnly = await prisma.affiliateApplication.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliateApplicationUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliateApplicationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliateApplication.
+     * @param {AffiliateApplicationUpsertArgs} args - Arguments to update or create a AffiliateApplication.
+     * @example
+     * // Update or create a AffiliateApplication
+     * const affiliateApplication = await prisma.affiliateApplication.upsert({
+     *   create: {
+     *     // ... data to create a AffiliateApplication
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliateApplication we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliateApplicationUpsertArgs>(args: SelectSubset<T, AffiliateApplicationUpsertArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliateApplications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationCountArgs} args - Arguments to filter AffiliateApplications to count.
+     * @example
+     * // Count the number of AffiliateApplications
+     * const count = await prisma.affiliateApplication.count({
+     *   where: {
+     *     // ... the filter for the AffiliateApplications we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliateApplicationCountArgs>(
+      args?: Subset<T, AffiliateApplicationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliateApplicationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliateApplication.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliateApplicationAggregateArgs>(args: Subset<T, AffiliateApplicationAggregateArgs>): Prisma.PrismaPromise<GetAffiliateApplicationAggregateType<T>>
+
+    /**
+     * Group by AffiliateApplication.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliateApplicationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliateApplicationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliateApplicationGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliateApplicationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliateApplicationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliateApplicationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliateApplication model
+   */
+  readonly fields: AffiliateApplicationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliateApplication.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliateApplicationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    payoutProfile<T extends AffiliateApplication$payoutProfileArgs<ExtArgs> = {}>(args?: Subset<T, AffiliateApplication$payoutProfileArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliateApplication model
+   */
+  interface AffiliateApplicationFieldRefs {
+    readonly id: FieldRef<"AffiliateApplication", 'String'>
+    readonly idAfiliado: FieldRef<"AffiliateApplication", 'String'>
+    readonly cnpjDigits: FieldRef<"AffiliateApplication", 'String'>
+    readonly taxId: FieldRef<"AffiliateApplication", 'String'>
+    readonly razaoSocial: FieldRef<"AffiliateApplication", 'String'>
+    readonly responsavel: FieldRef<"AffiliateApplication", 'String'>
+    readonly email: FieldRef<"AffiliateApplication", 'String'>
+    readonly siteUrl: FieldRef<"AffiliateApplication", 'String'>
+    readonly acceptedDocs: FieldRef<"AffiliateApplication", 'Boolean'>
+    readonly approved: FieldRef<"AffiliateApplication", 'Boolean'>
+    readonly locale: FieldRef<"AffiliateApplication", 'String'>
+    readonly commissionAnnualUsdCents: FieldRef<"AffiliateApplication", 'Int'>
+    readonly commissionMonthlyUsdCents: FieldRef<"AffiliateApplication", 'Int'>
+    readonly createdAt: FieldRef<"AffiliateApplication", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliateApplication findUnique
+   */
+  export type AffiliateApplicationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateApplication to fetch.
+     */
+    where: AffiliateApplicationWhereUniqueInput
+  }
+
+  /**
+   * AffiliateApplication findUniqueOrThrow
+   */
+  export type AffiliateApplicationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateApplication to fetch.
+     */
+    where: AffiliateApplicationWhereUniqueInput
+  }
+
+  /**
+   * AffiliateApplication findFirst
+   */
+  export type AffiliateApplicationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateApplication to fetch.
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateApplications to fetch.
+     */
+    orderBy?: AffiliateApplicationOrderByWithRelationInput | AffiliateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateApplications.
+     */
+    cursor?: AffiliateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateApplications.
+     */
+    distinct?: AffiliateApplicationScalarFieldEnum | AffiliateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateApplication findFirstOrThrow
+   */
+  export type AffiliateApplicationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateApplication to fetch.
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateApplications to fetch.
+     */
+    orderBy?: AffiliateApplicationOrderByWithRelationInput | AffiliateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliateApplications.
+     */
+    cursor?: AffiliateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateApplications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliateApplications.
+     */
+    distinct?: AffiliateApplicationScalarFieldEnum | AffiliateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateApplication findMany
+   */
+  export type AffiliateApplicationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliateApplications to fetch.
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliateApplications to fetch.
+     */
+    orderBy?: AffiliateApplicationOrderByWithRelationInput | AffiliateApplicationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliateApplications.
+     */
+    cursor?: AffiliateApplicationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliateApplications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliateApplications.
+     */
+    skip?: number
+    distinct?: AffiliateApplicationScalarFieldEnum | AffiliateApplicationScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliateApplication create
+   */
+  export type AffiliateApplicationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliateApplication.
+     */
+    data: XOR<AffiliateApplicationCreateInput, AffiliateApplicationUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliateApplication createMany
+   */
+  export type AffiliateApplicationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliateApplications.
+     */
+    data: AffiliateApplicationCreateManyInput | AffiliateApplicationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateApplication createManyAndReturn
+   */
+  export type AffiliateApplicationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliateApplications.
+     */
+    data: AffiliateApplicationCreateManyInput | AffiliateApplicationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliateApplication update
+   */
+  export type AffiliateApplicationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliateApplication.
+     */
+    data: XOR<AffiliateApplicationUpdateInput, AffiliateApplicationUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliateApplication to update.
+     */
+    where: AffiliateApplicationWhereUniqueInput
+  }
+
+  /**
+   * AffiliateApplication updateMany
+   */
+  export type AffiliateApplicationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliateApplications.
+     */
+    data: XOR<AffiliateApplicationUpdateManyMutationInput, AffiliateApplicationUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateApplications to update
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * Limit how many AffiliateApplications to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateApplication updateManyAndReturn
+   */
+  export type AffiliateApplicationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliateApplications.
+     */
+    data: XOR<AffiliateApplicationUpdateManyMutationInput, AffiliateApplicationUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliateApplications to update
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * Limit how many AffiliateApplications to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateApplication upsert
+   */
+  export type AffiliateApplicationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliateApplication to update in case it exists.
+     */
+    where: AffiliateApplicationWhereUniqueInput
+    /**
+     * In case the AffiliateApplication found by the `where` argument doesn't exist, create a new AffiliateApplication with this data.
+     */
+    create: XOR<AffiliateApplicationCreateInput, AffiliateApplicationUncheckedCreateInput>
+    /**
+     * In case the AffiliateApplication was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliateApplicationUpdateInput, AffiliateApplicationUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliateApplication delete
+   */
+  export type AffiliateApplicationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliateApplication to delete.
+     */
+    where: AffiliateApplicationWhereUniqueInput
+  }
+
+  /**
+   * AffiliateApplication deleteMany
+   */
+  export type AffiliateApplicationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliateApplications to delete
+     */
+    where?: AffiliateApplicationWhereInput
+    /**
+     * Limit how many AffiliateApplications to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliateApplication.payoutProfile
+   */
+  export type AffiliateApplication$payoutProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    where?: AffiliatePayoutProfileWhereInput
+  }
+
+  /**
+   * AffiliateApplication without action
+   */
+  export type AffiliateApplicationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliateApplication
+     */
+    select?: AffiliateApplicationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliateApplication
+     */
+    omit?: AffiliateApplicationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliateApplicationInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AffiliatePayoutProfile
+   */
+
+  export type AggregateAffiliatePayoutProfile = {
+    _count: AffiliatePayoutProfileCountAggregateOutputType | null
+    _min: AffiliatePayoutProfileMinAggregateOutputType | null
+    _max: AffiliatePayoutProfileMaxAggregateOutputType | null
+  }
+
+  export type AffiliatePayoutProfileMinAggregateOutputType = {
+    id: string | null
+    affiliateApplicationId: string | null
+    activeTab: string | null
+    brRazaoSocial: string | null
+    brCnpjDigits: string | null
+    brBanco: string | null
+    brTipoConta: string | null
+    brAgencia: string | null
+    brNumeroConta: string | null
+    brChavePix: string | null
+    intPaymentMethod: string | null
+    intPaypalEmail: string | null
+    intBankName: string | null
+    intAccountOrIban: string | null
+    intSwiftBic: string | null
+    intAccountHolderName: string | null
+    intCountry: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliatePayoutProfileMaxAggregateOutputType = {
+    id: string | null
+    affiliateApplicationId: string | null
+    activeTab: string | null
+    brRazaoSocial: string | null
+    brCnpjDigits: string | null
+    brBanco: string | null
+    brTipoConta: string | null
+    brAgencia: string | null
+    brNumeroConta: string | null
+    brChavePix: string | null
+    intPaymentMethod: string | null
+    intPaypalEmail: string | null
+    intBankName: string | null
+    intAccountOrIban: string | null
+    intSwiftBic: string | null
+    intAccountHolderName: string | null
+    intCountry: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AffiliatePayoutProfileCountAggregateOutputType = {
+    id: number
+    affiliateApplicationId: number
+    activeTab: number
+    brRazaoSocial: number
+    brCnpjDigits: number
+    brBanco: number
+    brTipoConta: number
+    brAgencia: number
+    brNumeroConta: number
+    brChavePix: number
+    intPaymentMethod: number
+    intPaypalEmail: number
+    intBankName: number
+    intAccountOrIban: number
+    intSwiftBic: number
+    intAccountHolderName: number
+    intCountry: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AffiliatePayoutProfileMinAggregateInputType = {
+    id?: true
+    affiliateApplicationId?: true
+    activeTab?: true
+    brRazaoSocial?: true
+    brCnpjDigits?: true
+    brBanco?: true
+    brTipoConta?: true
+    brAgencia?: true
+    brNumeroConta?: true
+    brChavePix?: true
+    intPaymentMethod?: true
+    intPaypalEmail?: true
+    intBankName?: true
+    intAccountOrIban?: true
+    intSwiftBic?: true
+    intAccountHolderName?: true
+    intCountry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AffiliatePayoutProfileMaxAggregateInputType = {
+    id?: true
+    affiliateApplicationId?: true
+    activeTab?: true
+    brRazaoSocial?: true
+    brCnpjDigits?: true
+    brBanco?: true
+    brTipoConta?: true
+    brAgencia?: true
+    brNumeroConta?: true
+    brChavePix?: true
+    intPaymentMethod?: true
+    intPaypalEmail?: true
+    intBankName?: true
+    intAccountOrIban?: true
+    intSwiftBic?: true
+    intAccountHolderName?: true
+    intCountry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AffiliatePayoutProfileCountAggregateInputType = {
+    id?: true
+    affiliateApplicationId?: true
+    activeTab?: true
+    brRazaoSocial?: true
+    brCnpjDigits?: true
+    brBanco?: true
+    brTipoConta?: true
+    brAgencia?: true
+    brNumeroConta?: true
+    brChavePix?: true
+    intPaymentMethod?: true
+    intPaypalEmail?: true
+    intBankName?: true
+    intAccountOrIban?: true
+    intSwiftBic?: true
+    intAccountHolderName?: true
+    intCountry?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AffiliatePayoutProfileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliatePayoutProfile to aggregate.
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePayoutProfiles to fetch.
+     */
+    orderBy?: AffiliatePayoutProfileOrderByWithRelationInput | AffiliatePayoutProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AffiliatePayoutProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePayoutProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePayoutProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AffiliatePayoutProfiles
+    **/
+    _count?: true | AffiliatePayoutProfileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AffiliatePayoutProfileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AffiliatePayoutProfileMaxAggregateInputType
+  }
+
+  export type GetAffiliatePayoutProfileAggregateType<T extends AffiliatePayoutProfileAggregateArgs> = {
+        [P in keyof T & keyof AggregateAffiliatePayoutProfile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAffiliatePayoutProfile[P]>
+      : GetScalarType<T[P], AggregateAffiliatePayoutProfile[P]>
+  }
+
+
+
+
+  export type AffiliatePayoutProfileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AffiliatePayoutProfileWhereInput
+    orderBy?: AffiliatePayoutProfileOrderByWithAggregationInput | AffiliatePayoutProfileOrderByWithAggregationInput[]
+    by: AffiliatePayoutProfileScalarFieldEnum[] | AffiliatePayoutProfileScalarFieldEnum
+    having?: AffiliatePayoutProfileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AffiliatePayoutProfileCountAggregateInputType | true
+    _min?: AffiliatePayoutProfileMinAggregateInputType
+    _max?: AffiliatePayoutProfileMaxAggregateInputType
+  }
+
+  export type AffiliatePayoutProfileGroupByOutputType = {
+    id: string
+    affiliateApplicationId: string
+    activeTab: string
+    brRazaoSocial: string | null
+    brCnpjDigits: string | null
+    brBanco: string | null
+    brTipoConta: string | null
+    brAgencia: string | null
+    brNumeroConta: string | null
+    brChavePix: string | null
+    intPaymentMethod: string | null
+    intPaypalEmail: string | null
+    intBankName: string | null
+    intAccountOrIban: string | null
+    intSwiftBic: string | null
+    intAccountHolderName: string | null
+    intCountry: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AffiliatePayoutProfileCountAggregateOutputType | null
+    _min: AffiliatePayoutProfileMinAggregateOutputType | null
+    _max: AffiliatePayoutProfileMaxAggregateOutputType | null
+  }
+
+  type GetAffiliatePayoutProfileGroupByPayload<T extends AffiliatePayoutProfileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AffiliatePayoutProfileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AffiliatePayoutProfileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AffiliatePayoutProfileGroupByOutputType[P]>
+            : GetScalarType<T[P], AffiliatePayoutProfileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AffiliatePayoutProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateApplicationId?: boolean
+    activeTab?: boolean
+    brRazaoSocial?: boolean
+    brCnpjDigits?: boolean
+    brBanco?: boolean
+    brTipoConta?: boolean
+    brAgencia?: boolean
+    brNumeroConta?: boolean
+    brChavePix?: boolean
+    intPaymentMethod?: boolean
+    intPaypalEmail?: boolean
+    intBankName?: boolean
+    intAccountOrIban?: boolean
+    intSwiftBic?: boolean
+    intAccountHolderName?: boolean
+    intCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliatePayoutProfile"]>
+
+  export type AffiliatePayoutProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateApplicationId?: boolean
+    activeTab?: boolean
+    brRazaoSocial?: boolean
+    brCnpjDigits?: boolean
+    brBanco?: boolean
+    brTipoConta?: boolean
+    brAgencia?: boolean
+    brNumeroConta?: boolean
+    brChavePix?: boolean
+    intPaymentMethod?: boolean
+    intPaypalEmail?: boolean
+    intBankName?: boolean
+    intAccountOrIban?: boolean
+    intSwiftBic?: boolean
+    intAccountHolderName?: boolean
+    intCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliatePayoutProfile"]>
+
+  export type AffiliatePayoutProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    affiliateApplicationId?: boolean
+    activeTab?: boolean
+    brRazaoSocial?: boolean
+    brCnpjDigits?: boolean
+    brBanco?: boolean
+    brTipoConta?: boolean
+    brAgencia?: boolean
+    brNumeroConta?: boolean
+    brChavePix?: boolean
+    intPaymentMethod?: boolean
+    intPaypalEmail?: boolean
+    intBankName?: boolean
+    intAccountOrIban?: boolean
+    intSwiftBic?: boolean
+    intAccountHolderName?: boolean
+    intCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["affiliatePayoutProfile"]>
+
+  export type AffiliatePayoutProfileSelectScalar = {
+    id?: boolean
+    affiliateApplicationId?: boolean
+    activeTab?: boolean
+    brRazaoSocial?: boolean
+    brCnpjDigits?: boolean
+    brBanco?: boolean
+    brTipoConta?: boolean
+    brAgencia?: boolean
+    brNumeroConta?: boolean
+    brChavePix?: boolean
+    intPaymentMethod?: boolean
+    intPaypalEmail?: boolean
+    intBankName?: boolean
+    intAccountOrIban?: boolean
+    intSwiftBic?: boolean
+    intAccountHolderName?: boolean
+    intCountry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AffiliatePayoutProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "affiliateApplicationId" | "activeTab" | "brRazaoSocial" | "brCnpjDigits" | "brBanco" | "brTipoConta" | "brAgencia" | "brNumeroConta" | "brChavePix" | "intPaymentMethod" | "intPaypalEmail" | "intBankName" | "intAccountOrIban" | "intSwiftBic" | "intAccountHolderName" | "intCountry" | "createdAt" | "updatedAt", ExtArgs["result"]["affiliatePayoutProfile"]>
+  export type AffiliatePayoutProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }
+  export type AffiliatePayoutProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }
+  export type AffiliatePayoutProfileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    affiliateApplication?: boolean | AffiliateApplicationDefaultArgs<ExtArgs>
+  }
+
+  export type $AffiliatePayoutProfilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AffiliatePayoutProfile"
+    objects: {
+      affiliateApplication: Prisma.$AffiliateApplicationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      affiliateApplicationId: string
+      /**
+       * Última aba na UI: `br` | `intl`
+       */
+      activeTab: string
+      brRazaoSocial: string | null
+      brCnpjDigits: string | null
+      brBanco: string | null
+      /**
+       * `corrente` | `poupanca`
+       */
+      brTipoConta: string | null
+      brAgencia: string | null
+      brNumeroConta: string | null
+      brChavePix: string | null
+      /**
+       * `paypal` | `wire`
+       */
+      intPaymentMethod: string | null
+      intPaypalEmail: string | null
+      intBankName: string | null
+      intAccountOrIban: string | null
+      intSwiftBic: string | null
+      intAccountHolderName: string | null
+      intCountry: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["affiliatePayoutProfile"]>
+    composites: {}
+  }
+
+  type AffiliatePayoutProfileGetPayload<S extends boolean | null | undefined | AffiliatePayoutProfileDefaultArgs> = $Result.GetResult<Prisma.$AffiliatePayoutProfilePayload, S>
+
+  type AffiliatePayoutProfileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AffiliatePayoutProfileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AffiliatePayoutProfileCountAggregateInputType | true
+    }
+
+  export interface AffiliatePayoutProfileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AffiliatePayoutProfile'], meta: { name: 'AffiliatePayoutProfile' } }
+    /**
+     * Find zero or one AffiliatePayoutProfile that matches the filter.
+     * @param {AffiliatePayoutProfileFindUniqueArgs} args - Arguments to find a AffiliatePayoutProfile
+     * @example
+     * // Get one AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AffiliatePayoutProfileFindUniqueArgs>(args: SelectSubset<T, AffiliatePayoutProfileFindUniqueArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AffiliatePayoutProfile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AffiliatePayoutProfileFindUniqueOrThrowArgs} args - Arguments to find a AffiliatePayoutProfile
+     * @example
+     * // Get one AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AffiliatePayoutProfileFindUniqueOrThrowArgs>(args: SelectSubset<T, AffiliatePayoutProfileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliatePayoutProfile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileFindFirstArgs} args - Arguments to find a AffiliatePayoutProfile
+     * @example
+     * // Get one AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AffiliatePayoutProfileFindFirstArgs>(args?: SelectSubset<T, AffiliatePayoutProfileFindFirstArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AffiliatePayoutProfile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileFindFirstOrThrowArgs} args - Arguments to find a AffiliatePayoutProfile
+     * @example
+     * // Get one AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AffiliatePayoutProfileFindFirstOrThrowArgs>(args?: SelectSubset<T, AffiliatePayoutProfileFindFirstOrThrowArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AffiliatePayoutProfiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AffiliatePayoutProfiles
+     * const affiliatePayoutProfiles = await prisma.affiliatePayoutProfile.findMany()
+     * 
+     * // Get first 10 AffiliatePayoutProfiles
+     * const affiliatePayoutProfiles = await prisma.affiliatePayoutProfile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const affiliatePayoutProfileWithIdOnly = await prisma.affiliatePayoutProfile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AffiliatePayoutProfileFindManyArgs>(args?: SelectSubset<T, AffiliatePayoutProfileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AffiliatePayoutProfile.
+     * @param {AffiliatePayoutProfileCreateArgs} args - Arguments to create a AffiliatePayoutProfile.
+     * @example
+     * // Create one AffiliatePayoutProfile
+     * const AffiliatePayoutProfile = await prisma.affiliatePayoutProfile.create({
+     *   data: {
+     *     // ... data to create a AffiliatePayoutProfile
+     *   }
+     * })
+     * 
+     */
+    create<T extends AffiliatePayoutProfileCreateArgs>(args: SelectSubset<T, AffiliatePayoutProfileCreateArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AffiliatePayoutProfiles.
+     * @param {AffiliatePayoutProfileCreateManyArgs} args - Arguments to create many AffiliatePayoutProfiles.
+     * @example
+     * // Create many AffiliatePayoutProfiles
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AffiliatePayoutProfileCreateManyArgs>(args?: SelectSubset<T, AffiliatePayoutProfileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AffiliatePayoutProfiles and returns the data saved in the database.
+     * @param {AffiliatePayoutProfileCreateManyAndReturnArgs} args - Arguments to create many AffiliatePayoutProfiles.
+     * @example
+     * // Create many AffiliatePayoutProfiles
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AffiliatePayoutProfiles and only return the `id`
+     * const affiliatePayoutProfileWithIdOnly = await prisma.affiliatePayoutProfile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AffiliatePayoutProfileCreateManyAndReturnArgs>(args?: SelectSubset<T, AffiliatePayoutProfileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AffiliatePayoutProfile.
+     * @param {AffiliatePayoutProfileDeleteArgs} args - Arguments to delete one AffiliatePayoutProfile.
+     * @example
+     * // Delete one AffiliatePayoutProfile
+     * const AffiliatePayoutProfile = await prisma.affiliatePayoutProfile.delete({
+     *   where: {
+     *     // ... filter to delete one AffiliatePayoutProfile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AffiliatePayoutProfileDeleteArgs>(args: SelectSubset<T, AffiliatePayoutProfileDeleteArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AffiliatePayoutProfile.
+     * @param {AffiliatePayoutProfileUpdateArgs} args - Arguments to update one AffiliatePayoutProfile.
+     * @example
+     * // Update one AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AffiliatePayoutProfileUpdateArgs>(args: SelectSubset<T, AffiliatePayoutProfileUpdateArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AffiliatePayoutProfiles.
+     * @param {AffiliatePayoutProfileDeleteManyArgs} args - Arguments to filter AffiliatePayoutProfiles to delete.
+     * @example
+     * // Delete a few AffiliatePayoutProfiles
+     * const { count } = await prisma.affiliatePayoutProfile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AffiliatePayoutProfileDeleteManyArgs>(args?: SelectSubset<T, AffiliatePayoutProfileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliatePayoutProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AffiliatePayoutProfiles
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AffiliatePayoutProfileUpdateManyArgs>(args: SelectSubset<T, AffiliatePayoutProfileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AffiliatePayoutProfiles and returns the data updated in the database.
+     * @param {AffiliatePayoutProfileUpdateManyAndReturnArgs} args - Arguments to update many AffiliatePayoutProfiles.
+     * @example
+     * // Update many AffiliatePayoutProfiles
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AffiliatePayoutProfiles and only return the `id`
+     * const affiliatePayoutProfileWithIdOnly = await prisma.affiliatePayoutProfile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AffiliatePayoutProfileUpdateManyAndReturnArgs>(args: SelectSubset<T, AffiliatePayoutProfileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AffiliatePayoutProfile.
+     * @param {AffiliatePayoutProfileUpsertArgs} args - Arguments to update or create a AffiliatePayoutProfile.
+     * @example
+     * // Update or create a AffiliatePayoutProfile
+     * const affiliatePayoutProfile = await prisma.affiliatePayoutProfile.upsert({
+     *   create: {
+     *     // ... data to create a AffiliatePayoutProfile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AffiliatePayoutProfile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AffiliatePayoutProfileUpsertArgs>(args: SelectSubset<T, AffiliatePayoutProfileUpsertArgs<ExtArgs>>): Prisma__AffiliatePayoutProfileClient<$Result.GetResult<Prisma.$AffiliatePayoutProfilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AffiliatePayoutProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileCountArgs} args - Arguments to filter AffiliatePayoutProfiles to count.
+     * @example
+     * // Count the number of AffiliatePayoutProfiles
+     * const count = await prisma.affiliatePayoutProfile.count({
+     *   where: {
+     *     // ... the filter for the AffiliatePayoutProfiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends AffiliatePayoutProfileCountArgs>(
+      args?: Subset<T, AffiliatePayoutProfileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AffiliatePayoutProfileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AffiliatePayoutProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AffiliatePayoutProfileAggregateArgs>(args: Subset<T, AffiliatePayoutProfileAggregateArgs>): Prisma.PrismaPromise<GetAffiliatePayoutProfileAggregateType<T>>
+
+    /**
+     * Group by AffiliatePayoutProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AffiliatePayoutProfileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AffiliatePayoutProfileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AffiliatePayoutProfileGroupByArgs['orderBy'] }
+        : { orderBy?: AffiliatePayoutProfileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AffiliatePayoutProfileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAffiliatePayoutProfileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AffiliatePayoutProfile model
+   */
+  readonly fields: AffiliatePayoutProfileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AffiliatePayoutProfile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AffiliatePayoutProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    affiliateApplication<T extends AffiliateApplicationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AffiliateApplicationDefaultArgs<ExtArgs>>): Prisma__AffiliateApplicationClient<$Result.GetResult<Prisma.$AffiliateApplicationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AffiliatePayoutProfile model
+   */
+  interface AffiliatePayoutProfileFieldRefs {
+    readonly id: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly affiliateApplicationId: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly activeTab: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brRazaoSocial: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brCnpjDigits: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brBanco: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brTipoConta: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brAgencia: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brNumeroConta: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly brChavePix: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intPaymentMethod: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intPaypalEmail: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intBankName: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intAccountOrIban: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intSwiftBic: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intAccountHolderName: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly intCountry: FieldRef<"AffiliatePayoutProfile", 'String'>
+    readonly createdAt: FieldRef<"AffiliatePayoutProfile", 'DateTime'>
+    readonly updatedAt: FieldRef<"AffiliatePayoutProfile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AffiliatePayoutProfile findUnique
+   */
+  export type AffiliatePayoutProfileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePayoutProfile to fetch.
+     */
+    where: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePayoutProfile findUniqueOrThrow
+   */
+  export type AffiliatePayoutProfileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePayoutProfile to fetch.
+     */
+    where: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePayoutProfile findFirst
+   */
+  export type AffiliatePayoutProfileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePayoutProfile to fetch.
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePayoutProfiles to fetch.
+     */
+    orderBy?: AffiliatePayoutProfileOrderByWithRelationInput | AffiliatePayoutProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliatePayoutProfiles.
+     */
+    cursor?: AffiliatePayoutProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePayoutProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePayoutProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliatePayoutProfiles.
+     */
+    distinct?: AffiliatePayoutProfileScalarFieldEnum | AffiliatePayoutProfileScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePayoutProfile findFirstOrThrow
+   */
+  export type AffiliatePayoutProfileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePayoutProfile to fetch.
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePayoutProfiles to fetch.
+     */
+    orderBy?: AffiliatePayoutProfileOrderByWithRelationInput | AffiliatePayoutProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AffiliatePayoutProfiles.
+     */
+    cursor?: AffiliatePayoutProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePayoutProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePayoutProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AffiliatePayoutProfiles.
+     */
+    distinct?: AffiliatePayoutProfileScalarFieldEnum | AffiliatePayoutProfileScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePayoutProfile findMany
+   */
+  export type AffiliatePayoutProfileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which AffiliatePayoutProfiles to fetch.
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AffiliatePayoutProfiles to fetch.
+     */
+    orderBy?: AffiliatePayoutProfileOrderByWithRelationInput | AffiliatePayoutProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AffiliatePayoutProfiles.
+     */
+    cursor?: AffiliatePayoutProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AffiliatePayoutProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AffiliatePayoutProfiles.
+     */
+    skip?: number
+    distinct?: AffiliatePayoutProfileScalarFieldEnum | AffiliatePayoutProfileScalarFieldEnum[]
+  }
+
+  /**
+   * AffiliatePayoutProfile create
+   */
+  export type AffiliatePayoutProfileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AffiliatePayoutProfile.
+     */
+    data: XOR<AffiliatePayoutProfileCreateInput, AffiliatePayoutProfileUncheckedCreateInput>
+  }
+
+  /**
+   * AffiliatePayoutProfile createMany
+   */
+  export type AffiliatePayoutProfileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AffiliatePayoutProfiles.
+     */
+    data: AffiliatePayoutProfileCreateManyInput | AffiliatePayoutProfileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AffiliatePayoutProfile createManyAndReturn
+   */
+  export type AffiliatePayoutProfileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * The data used to create many AffiliatePayoutProfiles.
+     */
+    data: AffiliatePayoutProfileCreateManyInput | AffiliatePayoutProfileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliatePayoutProfile update
+   */
+  export type AffiliatePayoutProfileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AffiliatePayoutProfile.
+     */
+    data: XOR<AffiliatePayoutProfileUpdateInput, AffiliatePayoutProfileUncheckedUpdateInput>
+    /**
+     * Choose, which AffiliatePayoutProfile to update.
+     */
+    where: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePayoutProfile updateMany
+   */
+  export type AffiliatePayoutProfileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AffiliatePayoutProfiles.
+     */
+    data: XOR<AffiliatePayoutProfileUpdateManyMutationInput, AffiliatePayoutProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliatePayoutProfiles to update
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * Limit how many AffiliatePayoutProfiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliatePayoutProfile updateManyAndReturn
+   */
+  export type AffiliatePayoutProfileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * The data used to update AffiliatePayoutProfiles.
+     */
+    data: XOR<AffiliatePayoutProfileUpdateManyMutationInput, AffiliatePayoutProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which AffiliatePayoutProfiles to update
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * Limit how many AffiliatePayoutProfiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AffiliatePayoutProfile upsert
+   */
+  export type AffiliatePayoutProfileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AffiliatePayoutProfile to update in case it exists.
+     */
+    where: AffiliatePayoutProfileWhereUniqueInput
+    /**
+     * In case the AffiliatePayoutProfile found by the `where` argument doesn't exist, create a new AffiliatePayoutProfile with this data.
+     */
+    create: XOR<AffiliatePayoutProfileCreateInput, AffiliatePayoutProfileUncheckedCreateInput>
+    /**
+     * In case the AffiliatePayoutProfile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AffiliatePayoutProfileUpdateInput, AffiliatePayoutProfileUncheckedUpdateInput>
+  }
+
+  /**
+   * AffiliatePayoutProfile delete
+   */
+  export type AffiliatePayoutProfileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+    /**
+     * Filter which AffiliatePayoutProfile to delete.
+     */
+    where: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  /**
+   * AffiliatePayoutProfile deleteMany
+   */
+  export type AffiliatePayoutProfileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AffiliatePayoutProfiles to delete
+     */
+    where?: AffiliatePayoutProfileWhereInput
+    /**
+     * Limit how many AffiliatePayoutProfiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AffiliatePayoutProfile without action
+   */
+  export type AffiliatePayoutProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AffiliatePayoutProfile
+     */
+    select?: AffiliatePayoutProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AffiliatePayoutProfile
+     */
+    omit?: AffiliatePayoutProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AffiliatePayoutProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -34019,6 +44329,35 @@ export namespace Prisma {
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const AffiliateAccountScalarFieldEnum: {
+    id: 'id',
+    emailEnc: 'emailEnc',
+    emailIv: 'emailIv',
+    emailTag: 'emailTag',
+    emailSearchHash: 'emailSearchHash',
+    passwordHash: 'passwordHash',
+    ativo: 'ativo',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    lastLoginAt: 'lastLoginAt',
+    lastPlanPaymentPayoutSyncAt: 'lastPlanPaymentPayoutSyncAt'
+  };
+
+  export type AffiliateAccountScalarFieldEnum = (typeof AffiliateAccountScalarFieldEnum)[keyof typeof AffiliateAccountScalarFieldEnum]
+
+
+  export const AffiliateCouponScalarFieldEnum: {
+    id: 'id',
+    affiliateAccountId: 'affiliateAccountId',
+    code: 'code',
+    createdAt: 'createdAt',
+    ativo: 'ativo',
+    expiresAt: 'expiresAt'
+  };
+
+  export type AffiliateCouponScalarFieldEnum = (typeof AffiliateCouponScalarFieldEnum)[keyof typeof AffiliateCouponScalarFieldEnum]
 
 
   export const ChartLayoutScalarFieldEnum: {
@@ -34163,6 +44502,76 @@ export namespace Prisma {
   };
 
   export type StripeCheckoutSessionScalarFieldEnum = (typeof StripeCheckoutSessionScalarFieldEnum)[keyof typeof StripeCheckoutSessionScalarFieldEnum]
+
+
+  export const StripePlanPaymentScalarFieldEnum: {
+    id: 'id',
+    provider: 'provider',
+    userId: 'userId',
+    invoiceId: 'invoiceId',
+    checkoutSessionId: 'checkoutSessionId',
+    pagarmeOrderId: 'pagarmeOrderId',
+    subscriptionId: 'subscriptionId',
+    paymentIntentId: 'paymentIntentId',
+    chargeId: 'chargeId',
+    cupomId: 'cupomId',
+    idAfiliado: 'idAfiliado',
+    planKey: 'planKey',
+    amountTotalCents: 'amountTotalCents',
+    currency: 'currency',
+    amountAffiliateCents: 'amountAffiliateCents',
+    currencyAffiliate: 'currencyAffiliate',
+    commissionAffiliateCents: 'commissionAffiliateCents',
+    coinsCredited: 'coinsCredited',
+    pricingLabel: 'pricingLabel',
+    paidAt: 'paidAt',
+    createdAt: 'createdAt',
+    situacao: 'situacao',
+    stripePayoutId: 'stripePayoutId',
+    pagarmePayoutId: 'pagarmePayoutId',
+    payoutStatus: 'payoutStatus',
+    payoutArrivalDate: 'payoutArrivalDate',
+    payoutUpdatedAt: 'payoutUpdatedAt'
+  };
+
+  export type StripePlanPaymentScalarFieldEnum = (typeof StripePlanPaymentScalarFieldEnum)[keyof typeof StripePlanPaymentScalarFieldEnum]
+
+
+  export const AffiliatePlanPaymentMonthAggScalarFieldEnum: {
+    id: 'id',
+    idAfiliado: 'idAfiliado',
+    monthStart: 'monthStart',
+    totalAmountCents: 'totalAmountCents',
+    totalReembolsadoCents: 'totalReembolsadoCents',
+    totalAprovadoCents: 'totalAprovadoCents',
+    totalAffiliateCents: 'totalAffiliateCents',
+    totalReembolsadoAffiliateCents: 'totalReembolsadoAffiliateCents',
+    totalAprovadoAffiliateCents: 'totalAprovadoAffiliateCents',
+    totalCommissionAffiliateCents: 'totalCommissionAffiliateCents',
+    totalReembolsadoCommissionAffiliateCents: 'totalReembolsadoCommissionAffiliateCents',
+    totalAprovadoCommissionAffiliateCents: 'totalAprovadoCommissionAffiliateCents',
+    totalExpiradoCommissionAffiliateCents: 'totalExpiradoCommissionAffiliateCents',
+    currencyAffiliate: 'currencyAffiliate',
+    expiresAt: 'expiresAt',
+    status: 'status',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AffiliatePlanPaymentMonthAggScalarFieldEnum = (typeof AffiliatePlanPaymentMonthAggScalarFieldEnum)[keyof typeof AffiliatePlanPaymentMonthAggScalarFieldEnum]
+
+
+  export const AffiliateMonthAggInvoiceScalarFieldEnum: {
+    id: 'id',
+    monthAggId: 'monthAggId',
+    pdfBytes: 'pdfBytes',
+    fileName: 'fileName',
+    contentType: 'contentType',
+    sizeBytes: 'sizeBytes',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AffiliateMonthAggInvoiceScalarFieldEnum = (typeof AffiliateMonthAggInvoiceScalarFieldEnum)[keyof typeof AffiliateMonthAggInvoiceScalarFieldEnum]
 
 
   export const PagarMeOrderScalarFieldEnum: {
@@ -34439,6 +44848,16 @@ export namespace Prisma {
   export type AppConfigScalarFieldEnum = (typeof AppConfigScalarFieldEnum)[keyof typeof AppConfigScalarFieldEnum]
 
 
+  export const LogErroScalarFieldEnum: {
+    id: 'id',
+    dataHora: 'dataHora',
+    origem: 'origem',
+    msgErro: 'msgErro'
+  };
+
+  export type LogErroScalarFieldEnum = (typeof LogErroScalarFieldEnum)[keyof typeof LogErroScalarFieldEnum]
+
+
   export const KlineSymbolScalarFieldEnum: {
     symbol: 'symbol',
     ativo: 'ativo',
@@ -34448,6 +44867,51 @@ export namespace Prisma {
   };
 
   export type KlineSymbolScalarFieldEnum = (typeof KlineSymbolScalarFieldEnum)[keyof typeof KlineSymbolScalarFieldEnum]
+
+
+  export const AffiliateApplicationScalarFieldEnum: {
+    id: 'id',
+    idAfiliado: 'idAfiliado',
+    cnpjDigits: 'cnpjDigits',
+    taxId: 'taxId',
+    razaoSocial: 'razaoSocial',
+    responsavel: 'responsavel',
+    email: 'email',
+    siteUrl: 'siteUrl',
+    acceptedDocs: 'acceptedDocs',
+    approved: 'approved',
+    locale: 'locale',
+    commissionAnnualUsdCents: 'commissionAnnualUsdCents',
+    commissionMonthlyUsdCents: 'commissionMonthlyUsdCents',
+    createdAt: 'createdAt'
+  };
+
+  export type AffiliateApplicationScalarFieldEnum = (typeof AffiliateApplicationScalarFieldEnum)[keyof typeof AffiliateApplicationScalarFieldEnum]
+
+
+  export const AffiliatePayoutProfileScalarFieldEnum: {
+    id: 'id',
+    affiliateApplicationId: 'affiliateApplicationId',
+    activeTab: 'activeTab',
+    brRazaoSocial: 'brRazaoSocial',
+    brCnpjDigits: 'brCnpjDigits',
+    brBanco: 'brBanco',
+    brTipoConta: 'brTipoConta',
+    brAgencia: 'brAgencia',
+    brNumeroConta: 'brNumeroConta',
+    brChavePix: 'brChavePix',
+    intPaymentMethod: 'intPaymentMethod',
+    intPaypalEmail: 'intPaypalEmail',
+    intBankName: 'intBankName',
+    intAccountOrIban: 'intAccountOrIban',
+    intSwiftBic: 'intSwiftBic',
+    intAccountHolderName: 'intAccountHolderName',
+    intCountry: 'intCountry',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AffiliatePayoutProfileScalarFieldEnum = (typeof AffiliatePayoutProfileScalarFieldEnum)[keyof typeof AffiliatePayoutProfileScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -34693,6 +45157,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Bytes'
+   */
+  export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
+    
+
+
+  /**
+   * Reference to a field of type 'Bytes[]'
+   */
+  export type ListBytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes[]'>
+    
+
+
+  /**
    * Reference to a field of type 'BigInt'
    */
   export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
@@ -34779,6 +45257,7 @@ export namespace Prisma {
     notifications?: UserNotificationListRelationFilter
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
+    stripePlanPayments?: StripePlanPaymentListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -34834,6 +45313,7 @@ export namespace Prisma {
     notifications?: UserNotificationOrderByRelationAggregateInput
     chartLayouts?: ChartLayoutOrderByRelationAggregateInput
     chartModels?: ChartModelOrderByRelationAggregateInput
+    stripePlanPayments?: StripePlanPaymentOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -34892,6 +45372,7 @@ export namespace Prisma {
     notifications?: UserNotificationListRelationFilter
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
+    stripePlanPayments?: StripePlanPaymentListRelationFilter
   }, "id" | "emailSearchHash" | "nickname">
 
   export type UserOrderByWithAggregationInput = {
@@ -34988,6 +45469,151 @@ export namespace Prisma {
     activeTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     previousTabId?: StringNullableWithAggregatesFilter<"User"> | string | null
     previousTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  }
+
+  export type AffiliateAccountWhereInput = {
+    AND?: AffiliateAccountWhereInput | AffiliateAccountWhereInput[]
+    OR?: AffiliateAccountWhereInput[]
+    NOT?: AffiliateAccountWhereInput | AffiliateAccountWhereInput[]
+    id?: StringFilter<"AffiliateAccount"> | string
+    emailEnc?: StringFilter<"AffiliateAccount"> | string
+    emailIv?: StringFilter<"AffiliateAccount"> | string
+    emailTag?: StringFilter<"AffiliateAccount"> | string
+    emailSearchHash?: StringFilter<"AffiliateAccount"> | string
+    passwordHash?: StringFilter<"AffiliateAccount"> | string
+    ativo?: BoolFilter<"AffiliateAccount"> | boolean
+    createdAt?: DateTimeFilter<"AffiliateAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliateAccount"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"AffiliateAccount"> | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: DateTimeNullableFilter<"AffiliateAccount"> | Date | string | null
+    coupons?: AffiliateCouponListRelationFilter
+  }
+
+  export type AffiliateAccountOrderByWithRelationInput = {
+    id?: SortOrder
+    emailEnc?: SortOrder
+    emailIv?: SortOrder
+    emailTag?: SortOrder
+    emailSearchHash?: SortOrder
+    passwordHash?: SortOrder
+    ativo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    lastPlanPaymentPayoutSyncAt?: SortOrderInput | SortOrder
+    coupons?: AffiliateCouponOrderByRelationAggregateInput
+  }
+
+  export type AffiliateAccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    emailSearchHash?: string
+    AND?: AffiliateAccountWhereInput | AffiliateAccountWhereInput[]
+    OR?: AffiliateAccountWhereInput[]
+    NOT?: AffiliateAccountWhereInput | AffiliateAccountWhereInput[]
+    emailEnc?: StringFilter<"AffiliateAccount"> | string
+    emailIv?: StringFilter<"AffiliateAccount"> | string
+    emailTag?: StringFilter<"AffiliateAccount"> | string
+    passwordHash?: StringFilter<"AffiliateAccount"> | string
+    ativo?: BoolFilter<"AffiliateAccount"> | boolean
+    createdAt?: DateTimeFilter<"AffiliateAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliateAccount"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"AffiliateAccount"> | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: DateTimeNullableFilter<"AffiliateAccount"> | Date | string | null
+    coupons?: AffiliateCouponListRelationFilter
+  }, "id" | "emailSearchHash">
+
+  export type AffiliateAccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    emailEnc?: SortOrder
+    emailIv?: SortOrder
+    emailTag?: SortOrder
+    emailSearchHash?: SortOrder
+    passwordHash?: SortOrder
+    ativo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    lastPlanPaymentPayoutSyncAt?: SortOrderInput | SortOrder
+    _count?: AffiliateAccountCountOrderByAggregateInput
+    _max?: AffiliateAccountMaxOrderByAggregateInput
+    _min?: AffiliateAccountMinOrderByAggregateInput
+  }
+
+  export type AffiliateAccountScalarWhereWithAggregatesInput = {
+    AND?: AffiliateAccountScalarWhereWithAggregatesInput | AffiliateAccountScalarWhereWithAggregatesInput[]
+    OR?: AffiliateAccountScalarWhereWithAggregatesInput[]
+    NOT?: AffiliateAccountScalarWhereWithAggregatesInput | AffiliateAccountScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    emailEnc?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    emailIv?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    emailTag?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    emailSearchHash?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    passwordHash?: StringWithAggregatesFilter<"AffiliateAccount"> | string
+    ativo?: BoolWithAggregatesFilter<"AffiliateAccount"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"AffiliateAccount"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AffiliateAccount"> | Date | string
+    lastLoginAt?: DateTimeNullableWithAggregatesFilter<"AffiliateAccount"> | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: DateTimeNullableWithAggregatesFilter<"AffiliateAccount"> | Date | string | null
+  }
+
+  export type AffiliateCouponWhereInput = {
+    AND?: AffiliateCouponWhereInput | AffiliateCouponWhereInput[]
+    OR?: AffiliateCouponWhereInput[]
+    NOT?: AffiliateCouponWhereInput | AffiliateCouponWhereInput[]
+    id?: StringFilter<"AffiliateCoupon"> | string
+    affiliateAccountId?: StringFilter<"AffiliateCoupon"> | string
+    code?: StringFilter<"AffiliateCoupon"> | string
+    createdAt?: DateTimeFilter<"AffiliateCoupon"> | Date | string
+    ativo?: BoolFilter<"AffiliateCoupon"> | boolean
+    expiresAt?: DateTimeNullableFilter<"AffiliateCoupon"> | Date | string | null
+    affiliateAccount?: XOR<AffiliateAccountScalarRelationFilter, AffiliateAccountWhereInput>
+  }
+
+  export type AffiliateCouponOrderByWithRelationInput = {
+    id?: SortOrder
+    affiliateAccountId?: SortOrder
+    code?: SortOrder
+    createdAt?: SortOrder
+    ativo?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    affiliateAccount?: AffiliateAccountOrderByWithRelationInput
+  }
+
+  export type AffiliateCouponWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    code?: string
+    AND?: AffiliateCouponWhereInput | AffiliateCouponWhereInput[]
+    OR?: AffiliateCouponWhereInput[]
+    NOT?: AffiliateCouponWhereInput | AffiliateCouponWhereInput[]
+    affiliateAccountId?: StringFilter<"AffiliateCoupon"> | string
+    createdAt?: DateTimeFilter<"AffiliateCoupon"> | Date | string
+    ativo?: BoolFilter<"AffiliateCoupon"> | boolean
+    expiresAt?: DateTimeNullableFilter<"AffiliateCoupon"> | Date | string | null
+    affiliateAccount?: XOR<AffiliateAccountScalarRelationFilter, AffiliateAccountWhereInput>
+  }, "id" | "code">
+
+  export type AffiliateCouponOrderByWithAggregationInput = {
+    id?: SortOrder
+    affiliateAccountId?: SortOrder
+    code?: SortOrder
+    createdAt?: SortOrder
+    ativo?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    _count?: AffiliateCouponCountOrderByAggregateInput
+    _max?: AffiliateCouponMaxOrderByAggregateInput
+    _min?: AffiliateCouponMinOrderByAggregateInput
+  }
+
+  export type AffiliateCouponScalarWhereWithAggregatesInput = {
+    AND?: AffiliateCouponScalarWhereWithAggregatesInput | AffiliateCouponScalarWhereWithAggregatesInput[]
+    OR?: AffiliateCouponScalarWhereWithAggregatesInput[]
+    NOT?: AffiliateCouponScalarWhereWithAggregatesInput | AffiliateCouponScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliateCoupon"> | string
+    affiliateAccountId?: StringWithAggregatesFilter<"AffiliateCoupon"> | string
+    code?: StringWithAggregatesFilter<"AffiliateCoupon"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"AffiliateCoupon"> | Date | string
+    ativo?: BoolWithAggregatesFilter<"AffiliateCoupon"> | boolean
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"AffiliateCoupon"> | Date | string | null
   }
 
   export type ChartLayoutWhereInput = {
@@ -35732,6 +46358,363 @@ export namespace Prisma {
     pricingLabel?: StringWithAggregatesFilter<"StripeCheckoutSession"> | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"StripeCheckoutSession"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"StripeCheckoutSession"> | Date | string
+  }
+
+  export type StripePlanPaymentWhereInput = {
+    AND?: StripePlanPaymentWhereInput | StripePlanPaymentWhereInput[]
+    OR?: StripePlanPaymentWhereInput[]
+    NOT?: StripePlanPaymentWhereInput | StripePlanPaymentWhereInput[]
+    id?: StringFilter<"StripePlanPayment"> | string
+    provider?: StringFilter<"StripePlanPayment"> | string
+    userId?: StringFilter<"StripePlanPayment"> | string
+    invoiceId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    checkoutSessionId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    pagarmeOrderId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    subscriptionId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paymentIntentId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    chargeId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    cupomId?: StringFilter<"StripePlanPayment"> | string
+    idAfiliado?: StringFilter<"StripePlanPayment"> | string
+    planKey?: StringNullableFilter<"StripePlanPayment"> | string | null
+    amountTotalCents?: IntFilter<"StripePlanPayment"> | number
+    currency?: StringFilter<"StripePlanPayment"> | string
+    amountAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    currencyAffiliate?: StringNullableFilter<"StripePlanPayment"> | string | null
+    commissionAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    coinsCredited?: IntFilter<"StripePlanPayment"> | number
+    pricingLabel?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paidAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    createdAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    situacao?: StringFilter<"StripePlanPayment"> | string
+    stripePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    pagarmePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutStatus?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutArrivalDate?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+    payoutUpdatedAt?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type StripePlanPaymentOrderByWithRelationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    userId?: SortOrder
+    invoiceId?: SortOrderInput | SortOrder
+    checkoutSessionId?: SortOrderInput | SortOrder
+    pagarmeOrderId?: SortOrderInput | SortOrder
+    subscriptionId?: SortOrderInput | SortOrder
+    paymentIntentId?: SortOrderInput | SortOrder
+    chargeId?: SortOrderInput | SortOrder
+    cupomId?: SortOrder
+    idAfiliado?: SortOrder
+    planKey?: SortOrderInput | SortOrder
+    amountTotalCents?: SortOrder
+    currency?: SortOrder
+    amountAffiliateCents?: SortOrderInput | SortOrder
+    currencyAffiliate?: SortOrderInput | SortOrder
+    commissionAffiliateCents?: SortOrderInput | SortOrder
+    coinsCredited?: SortOrder
+    pricingLabel?: SortOrderInput | SortOrder
+    paidAt?: SortOrder
+    createdAt?: SortOrder
+    situacao?: SortOrder
+    stripePayoutId?: SortOrderInput | SortOrder
+    pagarmePayoutId?: SortOrderInput | SortOrder
+    payoutStatus?: SortOrderInput | SortOrder
+    payoutArrivalDate?: SortOrderInput | SortOrder
+    payoutUpdatedAt?: SortOrderInput | SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type StripePlanPaymentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    invoiceId?: string
+    checkoutSessionId?: string
+    pagarmeOrderId?: string
+    AND?: StripePlanPaymentWhereInput | StripePlanPaymentWhereInput[]
+    OR?: StripePlanPaymentWhereInput[]
+    NOT?: StripePlanPaymentWhereInput | StripePlanPaymentWhereInput[]
+    provider?: StringFilter<"StripePlanPayment"> | string
+    userId?: StringFilter<"StripePlanPayment"> | string
+    subscriptionId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paymentIntentId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    chargeId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    cupomId?: StringFilter<"StripePlanPayment"> | string
+    idAfiliado?: StringFilter<"StripePlanPayment"> | string
+    planKey?: StringNullableFilter<"StripePlanPayment"> | string | null
+    amountTotalCents?: IntFilter<"StripePlanPayment"> | number
+    currency?: StringFilter<"StripePlanPayment"> | string
+    amountAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    currencyAffiliate?: StringNullableFilter<"StripePlanPayment"> | string | null
+    commissionAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    coinsCredited?: IntFilter<"StripePlanPayment"> | number
+    pricingLabel?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paidAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    createdAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    situacao?: StringFilter<"StripePlanPayment"> | string
+    stripePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    pagarmePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutStatus?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutArrivalDate?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+    payoutUpdatedAt?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "invoiceId" | "checkoutSessionId" | "pagarmeOrderId">
+
+  export type StripePlanPaymentOrderByWithAggregationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    userId?: SortOrder
+    invoiceId?: SortOrderInput | SortOrder
+    checkoutSessionId?: SortOrderInput | SortOrder
+    pagarmeOrderId?: SortOrderInput | SortOrder
+    subscriptionId?: SortOrderInput | SortOrder
+    paymentIntentId?: SortOrderInput | SortOrder
+    chargeId?: SortOrderInput | SortOrder
+    cupomId?: SortOrder
+    idAfiliado?: SortOrder
+    planKey?: SortOrderInput | SortOrder
+    amountTotalCents?: SortOrder
+    currency?: SortOrder
+    amountAffiliateCents?: SortOrderInput | SortOrder
+    currencyAffiliate?: SortOrderInput | SortOrder
+    commissionAffiliateCents?: SortOrderInput | SortOrder
+    coinsCredited?: SortOrder
+    pricingLabel?: SortOrderInput | SortOrder
+    paidAt?: SortOrder
+    createdAt?: SortOrder
+    situacao?: SortOrder
+    stripePayoutId?: SortOrderInput | SortOrder
+    pagarmePayoutId?: SortOrderInput | SortOrder
+    payoutStatus?: SortOrderInput | SortOrder
+    payoutArrivalDate?: SortOrderInput | SortOrder
+    payoutUpdatedAt?: SortOrderInput | SortOrder
+    _count?: StripePlanPaymentCountOrderByAggregateInput
+    _avg?: StripePlanPaymentAvgOrderByAggregateInput
+    _max?: StripePlanPaymentMaxOrderByAggregateInput
+    _min?: StripePlanPaymentMinOrderByAggregateInput
+    _sum?: StripePlanPaymentSumOrderByAggregateInput
+  }
+
+  export type StripePlanPaymentScalarWhereWithAggregatesInput = {
+    AND?: StripePlanPaymentScalarWhereWithAggregatesInput | StripePlanPaymentScalarWhereWithAggregatesInput[]
+    OR?: StripePlanPaymentScalarWhereWithAggregatesInput[]
+    NOT?: StripePlanPaymentScalarWhereWithAggregatesInput | StripePlanPaymentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    provider?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    userId?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    invoiceId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    checkoutSessionId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    pagarmeOrderId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    subscriptionId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    paymentIntentId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    chargeId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    cupomId?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    idAfiliado?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    planKey?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    amountTotalCents?: IntWithAggregatesFilter<"StripePlanPayment"> | number
+    currency?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    amountAffiliateCents?: IntNullableWithAggregatesFilter<"StripePlanPayment"> | number | null
+    currencyAffiliate?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    commissionAffiliateCents?: IntNullableWithAggregatesFilter<"StripePlanPayment"> | number | null
+    coinsCredited?: IntWithAggregatesFilter<"StripePlanPayment"> | number
+    pricingLabel?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    paidAt?: DateTimeWithAggregatesFilter<"StripePlanPayment"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"StripePlanPayment"> | Date | string
+    situacao?: StringWithAggregatesFilter<"StripePlanPayment"> | string
+    stripePayoutId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    pagarmePayoutId?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    payoutStatus?: StringNullableWithAggregatesFilter<"StripePlanPayment"> | string | null
+    payoutArrivalDate?: DateTimeNullableWithAggregatesFilter<"StripePlanPayment"> | Date | string | null
+    payoutUpdatedAt?: DateTimeNullableWithAggregatesFilter<"StripePlanPayment"> | Date | string | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggWhereInput = {
+    AND?: AffiliatePlanPaymentMonthAggWhereInput | AffiliatePlanPaymentMonthAggWhereInput[]
+    OR?: AffiliatePlanPaymentMonthAggWhereInput[]
+    NOT?: AffiliatePlanPaymentMonthAggWhereInput | AffiliatePlanPaymentMonthAggWhereInput[]
+    id?: StringFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    idAfiliado?: StringFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    monthStart?: DateTimeFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+    totalAmountCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalExpiradoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    currencyAffiliate?: StringNullableFilter<"AffiliatePlanPaymentMonthAgg"> | string | null
+    expiresAt?: DateTimeNullableFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string | null
+    status?: StringFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    updatedAt?: DateTimeFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+    invoice?: XOR<AffiliateMonthAggInvoiceNullableScalarRelationFilter, AffiliateMonthAggInvoiceWhereInput> | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggOrderByWithRelationInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    monthStart?: SortOrder
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    status?: SortOrder
+    updatedAt?: SortOrder
+    invoice?: AffiliateMonthAggInvoiceOrderByWithRelationInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    idAfiliado_monthStart?: AffiliatePlanPaymentMonthAggIdAfiliadoMonthStartCompoundUniqueInput
+    AND?: AffiliatePlanPaymentMonthAggWhereInput | AffiliatePlanPaymentMonthAggWhereInput[]
+    OR?: AffiliatePlanPaymentMonthAggWhereInput[]
+    NOT?: AffiliatePlanPaymentMonthAggWhereInput | AffiliatePlanPaymentMonthAggWhereInput[]
+    idAfiliado?: StringFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    monthStart?: DateTimeFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+    totalAmountCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalExpiradoCommissionAffiliateCents?: IntFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    currencyAffiliate?: StringNullableFilter<"AffiliatePlanPaymentMonthAgg"> | string | null
+    expiresAt?: DateTimeNullableFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string | null
+    status?: StringFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    updatedAt?: DateTimeFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+    invoice?: XOR<AffiliateMonthAggInvoiceNullableScalarRelationFilter, AffiliateMonthAggInvoiceWhereInput> | null
+  }, "id" | "idAfiliado_monthStart">
+
+  export type AffiliatePlanPaymentMonthAggOrderByWithAggregationInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    monthStart?: SortOrder
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    status?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AffiliatePlanPaymentMonthAggCountOrderByAggregateInput
+    _avg?: AffiliatePlanPaymentMonthAggAvgOrderByAggregateInput
+    _max?: AffiliatePlanPaymentMonthAggMaxOrderByAggregateInput
+    _min?: AffiliatePlanPaymentMonthAggMinOrderByAggregateInput
+    _sum?: AffiliatePlanPaymentMonthAggSumOrderByAggregateInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput = {
+    AND?: AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput | AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput[]
+    OR?: AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput[]
+    NOT?: AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput | AffiliatePlanPaymentMonthAggScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    idAfiliado?: StringWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    monthStart?: DateTimeWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+    totalAmountCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalCommissionAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalReembolsadoCommissionAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalAprovadoCommissionAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    totalExpiradoCommissionAffiliateCents?: IntWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | number
+    currencyAffiliate?: StringNullableWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string | null
+    status?: StringWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AffiliatePlanPaymentMonthAgg"> | Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceWhereInput = {
+    AND?: AffiliateMonthAggInvoiceWhereInput | AffiliateMonthAggInvoiceWhereInput[]
+    OR?: AffiliateMonthAggInvoiceWhereInput[]
+    NOT?: AffiliateMonthAggInvoiceWhereInput | AffiliateMonthAggInvoiceWhereInput[]
+    id?: StringFilter<"AffiliateMonthAggInvoice"> | string
+    monthAggId?: StringFilter<"AffiliateMonthAggInvoice"> | string
+    pdfBytes?: BytesFilter<"AffiliateMonthAggInvoice"> | Bytes
+    fileName?: StringNullableFilter<"AffiliateMonthAggInvoice"> | string | null
+    contentType?: StringFilter<"AffiliateMonthAggInvoice"> | string
+    sizeBytes?: IntFilter<"AffiliateMonthAggInvoice"> | number
+    createdAt?: DateTimeFilter<"AffiliateMonthAggInvoice"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliateMonthAggInvoice"> | Date | string
+    monthAgg?: XOR<AffiliatePlanPaymentMonthAggScalarRelationFilter, AffiliatePlanPaymentMonthAggWhereInput>
+  }
+
+  export type AffiliateMonthAggInvoiceOrderByWithRelationInput = {
+    id?: SortOrder
+    monthAggId?: SortOrder
+    pdfBytes?: SortOrder
+    fileName?: SortOrderInput | SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    monthAgg?: AffiliatePlanPaymentMonthAggOrderByWithRelationInput
+  }
+
+  export type AffiliateMonthAggInvoiceWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    monthAggId?: string
+    AND?: AffiliateMonthAggInvoiceWhereInput | AffiliateMonthAggInvoiceWhereInput[]
+    OR?: AffiliateMonthAggInvoiceWhereInput[]
+    NOT?: AffiliateMonthAggInvoiceWhereInput | AffiliateMonthAggInvoiceWhereInput[]
+    pdfBytes?: BytesFilter<"AffiliateMonthAggInvoice"> | Bytes
+    fileName?: StringNullableFilter<"AffiliateMonthAggInvoice"> | string | null
+    contentType?: StringFilter<"AffiliateMonthAggInvoice"> | string
+    sizeBytes?: IntFilter<"AffiliateMonthAggInvoice"> | number
+    createdAt?: DateTimeFilter<"AffiliateMonthAggInvoice"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliateMonthAggInvoice"> | Date | string
+    monthAgg?: XOR<AffiliatePlanPaymentMonthAggScalarRelationFilter, AffiliatePlanPaymentMonthAggWhereInput>
+  }, "id" | "monthAggId">
+
+  export type AffiliateMonthAggInvoiceOrderByWithAggregationInput = {
+    id?: SortOrder
+    monthAggId?: SortOrder
+    pdfBytes?: SortOrder
+    fileName?: SortOrderInput | SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AffiliateMonthAggInvoiceCountOrderByAggregateInput
+    _avg?: AffiliateMonthAggInvoiceAvgOrderByAggregateInput
+    _max?: AffiliateMonthAggInvoiceMaxOrderByAggregateInput
+    _min?: AffiliateMonthAggInvoiceMinOrderByAggregateInput
+    _sum?: AffiliateMonthAggInvoiceSumOrderByAggregateInput
+  }
+
+  export type AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput = {
+    AND?: AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput | AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput[]
+    OR?: AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput[]
+    NOT?: AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput | AffiliateMonthAggInvoiceScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliateMonthAggInvoice"> | string
+    monthAggId?: StringWithAggregatesFilter<"AffiliateMonthAggInvoice"> | string
+    pdfBytes?: BytesWithAggregatesFilter<"AffiliateMonthAggInvoice"> | Bytes
+    fileName?: StringNullableWithAggregatesFilter<"AffiliateMonthAggInvoice"> | string | null
+    contentType?: StringWithAggregatesFilter<"AffiliateMonthAggInvoice"> | string
+    sizeBytes?: IntWithAggregatesFilter<"AffiliateMonthAggInvoice"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"AffiliateMonthAggInvoice"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AffiliateMonthAggInvoice"> | Date | string
   }
 
   export type PagarMeOrderWhereInput = {
@@ -37103,6 +48086,53 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"AppConfig"> | Date | string
   }
 
+  export type LogErroWhereInput = {
+    AND?: LogErroWhereInput | LogErroWhereInput[]
+    OR?: LogErroWhereInput[]
+    NOT?: LogErroWhereInput | LogErroWhereInput[]
+    id?: StringFilter<"LogErro"> | string
+    dataHora?: DateTimeFilter<"LogErro"> | Date | string
+    origem?: StringFilter<"LogErro"> | string
+    msgErro?: StringFilter<"LogErro"> | string
+  }
+
+  export type LogErroOrderByWithRelationInput = {
+    id?: SortOrder
+    dataHora?: SortOrder
+    origem?: SortOrder
+    msgErro?: SortOrder
+  }
+
+  export type LogErroWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: LogErroWhereInput | LogErroWhereInput[]
+    OR?: LogErroWhereInput[]
+    NOT?: LogErroWhereInput | LogErroWhereInput[]
+    dataHora?: DateTimeFilter<"LogErro"> | Date | string
+    origem?: StringFilter<"LogErro"> | string
+    msgErro?: StringFilter<"LogErro"> | string
+  }, "id">
+
+  export type LogErroOrderByWithAggregationInput = {
+    id?: SortOrder
+    dataHora?: SortOrder
+    origem?: SortOrder
+    msgErro?: SortOrder
+    _count?: LogErroCountOrderByAggregateInput
+    _max?: LogErroMaxOrderByAggregateInput
+    _min?: LogErroMinOrderByAggregateInput
+  }
+
+  export type LogErroScalarWhereWithAggregatesInput = {
+    AND?: LogErroScalarWhereWithAggregatesInput | LogErroScalarWhereWithAggregatesInput[]
+    OR?: LogErroScalarWhereWithAggregatesInput[]
+    NOT?: LogErroScalarWhereWithAggregatesInput | LogErroScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"LogErro"> | string
+    dataHora?: DateTimeWithAggregatesFilter<"LogErro"> | Date | string
+    origem?: StringWithAggregatesFilter<"LogErro"> | string
+    msgErro?: StringWithAggregatesFilter<"LogErro"> | string
+  }
+
   export type KlineSymbolWhereInput = {
     AND?: KlineSymbolWhereInput | KlineSymbolWhereInput[]
     OR?: KlineSymbolWhereInput[]
@@ -37155,6 +48185,233 @@ export namespace Prisma {
     requiredDays1m?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
     requiredDays5m?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
     requiredDays1h?: IntNullableWithAggregatesFilter<"KlineSymbol"> | number | null
+  }
+
+  export type AffiliateApplicationWhereInput = {
+    AND?: AffiliateApplicationWhereInput | AffiliateApplicationWhereInput[]
+    OR?: AffiliateApplicationWhereInput[]
+    NOT?: AffiliateApplicationWhereInput | AffiliateApplicationWhereInput[]
+    id?: StringFilter<"AffiliateApplication"> | string
+    idAfiliado?: StringFilter<"AffiliateApplication"> | string
+    cnpjDigits?: StringNullableFilter<"AffiliateApplication"> | string | null
+    taxId?: StringNullableFilter<"AffiliateApplication"> | string | null
+    razaoSocial?: StringFilter<"AffiliateApplication"> | string
+    responsavel?: StringFilter<"AffiliateApplication"> | string
+    email?: StringFilter<"AffiliateApplication"> | string
+    siteUrl?: StringFilter<"AffiliateApplication"> | string
+    acceptedDocs?: BoolFilter<"AffiliateApplication"> | boolean
+    approved?: BoolFilter<"AffiliateApplication"> | boolean
+    locale?: StringFilter<"AffiliateApplication"> | string
+    commissionAnnualUsdCents?: IntFilter<"AffiliateApplication"> | number
+    commissionMonthlyUsdCents?: IntFilter<"AffiliateApplication"> | number
+    createdAt?: DateTimeFilter<"AffiliateApplication"> | Date | string
+    payoutProfile?: XOR<AffiliatePayoutProfileNullableScalarRelationFilter, AffiliatePayoutProfileWhereInput> | null
+  }
+
+  export type AffiliateApplicationOrderByWithRelationInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    cnpjDigits?: SortOrderInput | SortOrder
+    taxId?: SortOrderInput | SortOrder
+    razaoSocial?: SortOrder
+    responsavel?: SortOrder
+    email?: SortOrder
+    siteUrl?: SortOrder
+    acceptedDocs?: SortOrder
+    approved?: SortOrder
+    locale?: SortOrder
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+    createdAt?: SortOrder
+    payoutProfile?: AffiliatePayoutProfileOrderByWithRelationInput
+  }
+
+  export type AffiliateApplicationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    idAfiliado?: string
+    email?: string
+    AND?: AffiliateApplicationWhereInput | AffiliateApplicationWhereInput[]
+    OR?: AffiliateApplicationWhereInput[]
+    NOT?: AffiliateApplicationWhereInput | AffiliateApplicationWhereInput[]
+    cnpjDigits?: StringNullableFilter<"AffiliateApplication"> | string | null
+    taxId?: StringNullableFilter<"AffiliateApplication"> | string | null
+    razaoSocial?: StringFilter<"AffiliateApplication"> | string
+    responsavel?: StringFilter<"AffiliateApplication"> | string
+    siteUrl?: StringFilter<"AffiliateApplication"> | string
+    acceptedDocs?: BoolFilter<"AffiliateApplication"> | boolean
+    approved?: BoolFilter<"AffiliateApplication"> | boolean
+    locale?: StringFilter<"AffiliateApplication"> | string
+    commissionAnnualUsdCents?: IntFilter<"AffiliateApplication"> | number
+    commissionMonthlyUsdCents?: IntFilter<"AffiliateApplication"> | number
+    createdAt?: DateTimeFilter<"AffiliateApplication"> | Date | string
+    payoutProfile?: XOR<AffiliatePayoutProfileNullableScalarRelationFilter, AffiliatePayoutProfileWhereInput> | null
+  }, "id" | "idAfiliado" | "email">
+
+  export type AffiliateApplicationOrderByWithAggregationInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    cnpjDigits?: SortOrderInput | SortOrder
+    taxId?: SortOrderInput | SortOrder
+    razaoSocial?: SortOrder
+    responsavel?: SortOrder
+    email?: SortOrder
+    siteUrl?: SortOrder
+    acceptedDocs?: SortOrder
+    approved?: SortOrder
+    locale?: SortOrder
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+    createdAt?: SortOrder
+    _count?: AffiliateApplicationCountOrderByAggregateInput
+    _avg?: AffiliateApplicationAvgOrderByAggregateInput
+    _max?: AffiliateApplicationMaxOrderByAggregateInput
+    _min?: AffiliateApplicationMinOrderByAggregateInput
+    _sum?: AffiliateApplicationSumOrderByAggregateInput
+  }
+
+  export type AffiliateApplicationScalarWhereWithAggregatesInput = {
+    AND?: AffiliateApplicationScalarWhereWithAggregatesInput | AffiliateApplicationScalarWhereWithAggregatesInput[]
+    OR?: AffiliateApplicationScalarWhereWithAggregatesInput[]
+    NOT?: AffiliateApplicationScalarWhereWithAggregatesInput | AffiliateApplicationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    idAfiliado?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    cnpjDigits?: StringNullableWithAggregatesFilter<"AffiliateApplication"> | string | null
+    taxId?: StringNullableWithAggregatesFilter<"AffiliateApplication"> | string | null
+    razaoSocial?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    responsavel?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    email?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    siteUrl?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    acceptedDocs?: BoolWithAggregatesFilter<"AffiliateApplication"> | boolean
+    approved?: BoolWithAggregatesFilter<"AffiliateApplication"> | boolean
+    locale?: StringWithAggregatesFilter<"AffiliateApplication"> | string
+    commissionAnnualUsdCents?: IntWithAggregatesFilter<"AffiliateApplication"> | number
+    commissionMonthlyUsdCents?: IntWithAggregatesFilter<"AffiliateApplication"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"AffiliateApplication"> | Date | string
+  }
+
+  export type AffiliatePayoutProfileWhereInput = {
+    AND?: AffiliatePayoutProfileWhereInput | AffiliatePayoutProfileWhereInput[]
+    OR?: AffiliatePayoutProfileWhereInput[]
+    NOT?: AffiliatePayoutProfileWhereInput | AffiliatePayoutProfileWhereInput[]
+    id?: StringFilter<"AffiliatePayoutProfile"> | string
+    affiliateApplicationId?: StringFilter<"AffiliatePayoutProfile"> | string
+    activeTab?: StringFilter<"AffiliatePayoutProfile"> | string
+    brRazaoSocial?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brCnpjDigits?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brBanco?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brTipoConta?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brAgencia?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brNumeroConta?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brChavePix?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intPaymentMethod?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intPaypalEmail?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intBankName?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountOrIban?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intSwiftBic?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountHolderName?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intCountry?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    createdAt?: DateTimeFilter<"AffiliatePayoutProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliatePayoutProfile"> | Date | string
+    affiliateApplication?: XOR<AffiliateApplicationScalarRelationFilter, AffiliateApplicationWhereInput>
+  }
+
+  export type AffiliatePayoutProfileOrderByWithRelationInput = {
+    id?: SortOrder
+    affiliateApplicationId?: SortOrder
+    activeTab?: SortOrder
+    brRazaoSocial?: SortOrderInput | SortOrder
+    brCnpjDigits?: SortOrderInput | SortOrder
+    brBanco?: SortOrderInput | SortOrder
+    brTipoConta?: SortOrderInput | SortOrder
+    brAgencia?: SortOrderInput | SortOrder
+    brNumeroConta?: SortOrderInput | SortOrder
+    brChavePix?: SortOrderInput | SortOrder
+    intPaymentMethod?: SortOrderInput | SortOrder
+    intPaypalEmail?: SortOrderInput | SortOrder
+    intBankName?: SortOrderInput | SortOrder
+    intAccountOrIban?: SortOrderInput | SortOrder
+    intSwiftBic?: SortOrderInput | SortOrder
+    intAccountHolderName?: SortOrderInput | SortOrder
+    intCountry?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    affiliateApplication?: AffiliateApplicationOrderByWithRelationInput
+  }
+
+  export type AffiliatePayoutProfileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    affiliateApplicationId?: string
+    AND?: AffiliatePayoutProfileWhereInput | AffiliatePayoutProfileWhereInput[]
+    OR?: AffiliatePayoutProfileWhereInput[]
+    NOT?: AffiliatePayoutProfileWhereInput | AffiliatePayoutProfileWhereInput[]
+    activeTab?: StringFilter<"AffiliatePayoutProfile"> | string
+    brRazaoSocial?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brCnpjDigits?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brBanco?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brTipoConta?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brAgencia?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brNumeroConta?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    brChavePix?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intPaymentMethod?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intPaypalEmail?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intBankName?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountOrIban?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intSwiftBic?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountHolderName?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    intCountry?: StringNullableFilter<"AffiliatePayoutProfile"> | string | null
+    createdAt?: DateTimeFilter<"AffiliatePayoutProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"AffiliatePayoutProfile"> | Date | string
+    affiliateApplication?: XOR<AffiliateApplicationScalarRelationFilter, AffiliateApplicationWhereInput>
+  }, "id" | "affiliateApplicationId">
+
+  export type AffiliatePayoutProfileOrderByWithAggregationInput = {
+    id?: SortOrder
+    affiliateApplicationId?: SortOrder
+    activeTab?: SortOrder
+    brRazaoSocial?: SortOrderInput | SortOrder
+    brCnpjDigits?: SortOrderInput | SortOrder
+    brBanco?: SortOrderInput | SortOrder
+    brTipoConta?: SortOrderInput | SortOrder
+    brAgencia?: SortOrderInput | SortOrder
+    brNumeroConta?: SortOrderInput | SortOrder
+    brChavePix?: SortOrderInput | SortOrder
+    intPaymentMethod?: SortOrderInput | SortOrder
+    intPaypalEmail?: SortOrderInput | SortOrder
+    intBankName?: SortOrderInput | SortOrder
+    intAccountOrIban?: SortOrderInput | SortOrder
+    intSwiftBic?: SortOrderInput | SortOrder
+    intAccountHolderName?: SortOrderInput | SortOrder
+    intCountry?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AffiliatePayoutProfileCountOrderByAggregateInput
+    _max?: AffiliatePayoutProfileMaxOrderByAggregateInput
+    _min?: AffiliatePayoutProfileMinOrderByAggregateInput
+  }
+
+  export type AffiliatePayoutProfileScalarWhereWithAggregatesInput = {
+    AND?: AffiliatePayoutProfileScalarWhereWithAggregatesInput | AffiliatePayoutProfileScalarWhereWithAggregatesInput[]
+    OR?: AffiliatePayoutProfileScalarWhereWithAggregatesInput[]
+    NOT?: AffiliatePayoutProfileScalarWhereWithAggregatesInput | AffiliatePayoutProfileScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AffiliatePayoutProfile"> | string
+    affiliateApplicationId?: StringWithAggregatesFilter<"AffiliatePayoutProfile"> | string
+    activeTab?: StringWithAggregatesFilter<"AffiliatePayoutProfile"> | string
+    brRazaoSocial?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brCnpjDigits?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brBanco?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brTipoConta?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brAgencia?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brNumeroConta?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    brChavePix?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intPaymentMethod?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intPaypalEmail?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intBankName?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountOrIban?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intSwiftBic?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intAccountHolderName?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    intCountry?: StringNullableWithAggregatesFilter<"AffiliatePayoutProfile"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AffiliatePayoutProfile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AffiliatePayoutProfile"> | Date | string
   }
 
   export type UserCreateInput = {
@@ -37210,6 +48467,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -37265,6 +48523,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -37320,6 +48579,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -37375,6 +48635,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -37507,6 +48768,170 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateAccountCreateInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    lastPlanPaymentPayoutSyncAt?: Date | string | null
+    coupons?: AffiliateCouponCreateNestedManyWithoutAffiliateAccountInput
+  }
+
+  export type AffiliateAccountUncheckedCreateInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    lastPlanPaymentPayoutSyncAt?: Date | string | null
+    coupons?: AffiliateCouponUncheckedCreateNestedManyWithoutAffiliateAccountInput
+  }
+
+  export type AffiliateAccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    coupons?: AffiliateCouponUpdateManyWithoutAffiliateAccountNestedInput
+  }
+
+  export type AffiliateAccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    coupons?: AffiliateCouponUncheckedUpdateManyWithoutAffiliateAccountNestedInput
+  }
+
+  export type AffiliateAccountCreateManyInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    lastPlanPaymentPayoutSyncAt?: Date | string | null
+  }
+
+  export type AffiliateAccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateAccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponCreateInput = {
+    id?: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+    affiliateAccount: AffiliateAccountCreateNestedOneWithoutCouponsInput
+  }
+
+  export type AffiliateCouponUncheckedCreateInput = {
+    id?: string
+    affiliateAccountId: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+  }
+
+  export type AffiliateCouponUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    affiliateAccount?: AffiliateAccountUpdateOneRequiredWithoutCouponsNestedInput
+  }
+
+  export type AffiliateCouponUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    affiliateAccountId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponCreateManyInput = {
+    id?: string
+    affiliateAccountId: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+  }
+
+  export type AffiliateCouponUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    affiliateAccountId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type ChartLayoutCreateInput = {
@@ -38280,6 +49705,435 @@ export namespace Prisma {
     pricingLabel?: StringFieldUpdateOperationsInput | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripePlanPaymentCreateInput = {
+    id?: string
+    provider?: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
+    user: UserCreateNestedOneWithoutStripePlanPaymentsInput
+  }
+
+  export type StripePlanPaymentUncheckedCreateInput = {
+    id?: string
+    provider?: string
+    userId: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
+  }
+
+  export type StripePlanPaymentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutStripePlanPaymentsNestedInput
+  }
+
+  export type StripePlanPaymentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type StripePlanPaymentCreateManyInput = {
+    id?: string
+    provider?: string
+    userId: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
+  }
+
+  export type StripePlanPaymentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type StripePlanPaymentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggCreateInput = {
+    id?: string
+    idAfiliado: string
+    monthStart: Date | string
+    totalAmountCents?: number
+    totalReembolsadoCents?: number
+    totalAprovadoCents?: number
+    totalAffiliateCents?: number
+    totalReembolsadoAffiliateCents?: number
+    totalAprovadoAffiliateCents?: number
+    totalCommissionAffiliateCents?: number
+    totalReembolsadoCommissionAffiliateCents?: number
+    totalAprovadoCommissionAffiliateCents?: number
+    totalExpiradoCommissionAffiliateCents?: number
+    currencyAffiliate?: string | null
+    expiresAt?: Date | string | null
+    status?: string
+    updatedAt?: Date | string
+    invoice?: AffiliateMonthAggInvoiceCreateNestedOneWithoutMonthAggInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggUncheckedCreateInput = {
+    id?: string
+    idAfiliado: string
+    monthStart: Date | string
+    totalAmountCents?: number
+    totalReembolsadoCents?: number
+    totalAprovadoCents?: number
+    totalAffiliateCents?: number
+    totalReembolsadoAffiliateCents?: number
+    totalAprovadoAffiliateCents?: number
+    totalCommissionAffiliateCents?: number
+    totalReembolsadoCommissionAffiliateCents?: number
+    totalAprovadoCommissionAffiliateCents?: number
+    totalExpiradoCommissionAffiliateCents?: number
+    currencyAffiliate?: string | null
+    expiresAt?: Date | string | null
+    status?: string
+    updatedAt?: Date | string
+    invoice?: AffiliateMonthAggInvoiceUncheckedCreateNestedOneWithoutMonthAggInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoice?: AffiliateMonthAggInvoiceUpdateOneWithoutMonthAggNestedInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    invoice?: AffiliateMonthAggInvoiceUncheckedUpdateOneWithoutMonthAggNestedInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggCreateManyInput = {
+    id?: string
+    idAfiliado: string
+    monthStart: Date | string
+    totalAmountCents?: number
+    totalReembolsadoCents?: number
+    totalAprovadoCents?: number
+    totalAffiliateCents?: number
+    totalReembolsadoAffiliateCents?: number
+    totalAprovadoAffiliateCents?: number
+    totalCommissionAffiliateCents?: number
+    totalReembolsadoCommissionAffiliateCents?: number
+    totalAprovadoCommissionAffiliateCents?: number
+    totalExpiradoCommissionAffiliateCents?: number
+    currencyAffiliate?: string | null
+    expiresAt?: Date | string | null
+    status?: string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceCreateInput = {
+    id?: string
+    pdfBytes: Bytes
+    fileName?: string | null
+    contentType?: string
+    sizeBytes: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    monthAgg: AffiliatePlanPaymentMonthAggCreateNestedOneWithoutInvoiceInput
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedCreateInput = {
+    id?: string
+    monthAggId: string
+    pdfBytes: Bytes
+    fileName?: string | null
+    contentType?: string
+    sizeBytes: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    monthAgg?: AffiliatePlanPaymentMonthAggUpdateOneRequiredWithoutInvoiceNestedInput
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthAggId?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceCreateManyInput = {
+    id?: string
+    monthAggId: string
+    pdfBytes: Bytes
+    fileName?: string | null
+    contentType?: string
+    sizeBytes: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    monthAggId?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PagarMeOrderCreateInput = {
@@ -39926,6 +51780,55 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type LogErroCreateInput = {
+    id?: string
+    dataHora?: Date | string
+    origem: string
+    msgErro: string
+  }
+
+  export type LogErroUncheckedCreateInput = {
+    id?: string
+    dataHora?: Date | string
+    origem: string
+    msgErro: string
+  }
+
+  export type LogErroUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dataHora?: DateTimeFieldUpdateOperationsInput | Date | string
+    origem?: StringFieldUpdateOperationsInput | string
+    msgErro?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LogErroUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dataHora?: DateTimeFieldUpdateOperationsInput | Date | string
+    origem?: StringFieldUpdateOperationsInput | string
+    msgErro?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LogErroCreateManyInput = {
+    id?: string
+    dataHora?: Date | string
+    origem: string
+    msgErro: string
+  }
+
+  export type LogErroUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dataHora?: DateTimeFieldUpdateOperationsInput | Date | string
+    origem?: StringFieldUpdateOperationsInput | string
+    msgErro?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type LogErroUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    dataHora?: DateTimeFieldUpdateOperationsInput | Date | string
+    origem?: StringFieldUpdateOperationsInput | string
+    msgErro?: StringFieldUpdateOperationsInput | string
+  }
+
   export type KlineSymbolCreateInput = {
     symbol: string
     ativo?: boolean
@@ -39980,6 +51883,282 @@ export namespace Prisma {
     requiredDays1m?: NullableIntFieldUpdateOperationsInput | number | null
     requiredDays5m?: NullableIntFieldUpdateOperationsInput | number | null
     requiredDays1h?: NullableIntFieldUpdateOperationsInput | number | null
+  }
+
+  export type AffiliateApplicationCreateInput = {
+    id?: string
+    idAfiliado: string
+    cnpjDigits?: string | null
+    taxId?: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: string
+    commissionAnnualUsdCents?: number
+    commissionMonthlyUsdCents?: number
+    createdAt?: Date | string
+    payoutProfile?: AffiliatePayoutProfileCreateNestedOneWithoutAffiliateApplicationInput
+  }
+
+  export type AffiliateApplicationUncheckedCreateInput = {
+    id?: string
+    idAfiliado: string
+    cnpjDigits?: string | null
+    taxId?: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: string
+    commissionAnnualUsdCents?: number
+    commissionMonthlyUsdCents?: number
+    createdAt?: Date | string
+    payoutProfile?: AffiliatePayoutProfileUncheckedCreateNestedOneWithoutAffiliateApplicationInput
+  }
+
+  export type AffiliateApplicationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payoutProfile?: AffiliatePayoutProfileUpdateOneWithoutAffiliateApplicationNestedInput
+  }
+
+  export type AffiliateApplicationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payoutProfile?: AffiliatePayoutProfileUncheckedUpdateOneWithoutAffiliateApplicationNestedInput
+  }
+
+  export type AffiliateApplicationCreateManyInput = {
+    id?: string
+    idAfiliado: string
+    cnpjDigits?: string | null
+    taxId?: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: string
+    commissionAnnualUsdCents?: number
+    commissionMonthlyUsdCents?: number
+    createdAt?: Date | string
+  }
+
+  export type AffiliateApplicationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateApplicationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePayoutProfileCreateInput = {
+    id?: string
+    activeTab?: string
+    brRazaoSocial?: string | null
+    brCnpjDigits?: string | null
+    brBanco?: string | null
+    brTipoConta?: string | null
+    brAgencia?: string | null
+    brNumeroConta?: string | null
+    brChavePix?: string | null
+    intPaymentMethod?: string | null
+    intPaypalEmail?: string | null
+    intBankName?: string | null
+    intAccountOrIban?: string | null
+    intSwiftBic?: string | null
+    intAccountHolderName?: string | null
+    intCountry?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    affiliateApplication: AffiliateApplicationCreateNestedOneWithoutPayoutProfileInput
+  }
+
+  export type AffiliatePayoutProfileUncheckedCreateInput = {
+    id?: string
+    affiliateApplicationId: string
+    activeTab?: string
+    brRazaoSocial?: string | null
+    brCnpjDigits?: string | null
+    brBanco?: string | null
+    brTipoConta?: string | null
+    brAgencia?: string | null
+    brNumeroConta?: string | null
+    brChavePix?: string | null
+    intPaymentMethod?: string | null
+    intPaypalEmail?: string | null
+    intBankName?: string | null
+    intAccountOrIban?: string | null
+    intSwiftBic?: string | null
+    intAccountHolderName?: string | null
+    intCountry?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePayoutProfileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    affiliateApplication?: AffiliateApplicationUpdateOneRequiredWithoutPayoutProfileNestedInput
+  }
+
+  export type AffiliatePayoutProfileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    affiliateApplicationId?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePayoutProfileCreateManyInput = {
+    id?: string
+    affiliateApplicationId: string
+    activeTab?: string
+    brRazaoSocial?: string | null
+    brCnpjDigits?: string | null
+    brBanco?: string | null
+    brTipoConta?: string | null
+    brAgencia?: string | null
+    brNumeroConta?: string | null
+    brChavePix?: string | null
+    intPaymentMethod?: string | null
+    intPaypalEmail?: string | null
+    intBankName?: string | null
+    intAccountOrIban?: string | null
+    intSwiftBic?: string | null
+    intAccountHolderName?: string | null
+    intCountry?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePayoutProfileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePayoutProfileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    affiliateApplicationId?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -40165,6 +52344,12 @@ export namespace Prisma {
     none?: ChartModelWhereInput
   }
 
+  export type StripePlanPaymentListRelationFilter = {
+    every?: StripePlanPaymentWhereInput
+    some?: StripePlanPaymentWhereInput
+    none?: StripePlanPaymentWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -40207,6 +52392,10 @@ export namespace Prisma {
   }
 
   export type ChartModelOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type StripePlanPaymentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -40524,6 +52713,90 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumAppLanguageFilter<$PrismaModel>
     _max?: NestedEnumAppLanguageFilter<$PrismaModel>
+  }
+
+  export type AffiliateCouponListRelationFilter = {
+    every?: AffiliateCouponWhereInput
+    some?: AffiliateCouponWhereInput
+    none?: AffiliateCouponWhereInput
+  }
+
+  export type AffiliateCouponOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AffiliateAccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    emailEnc?: SortOrder
+    emailIv?: SortOrder
+    emailTag?: SortOrder
+    emailSearchHash?: SortOrder
+    passwordHash?: SortOrder
+    ativo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+    lastPlanPaymentPayoutSyncAt?: SortOrder
+  }
+
+  export type AffiliateAccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    emailEnc?: SortOrder
+    emailIv?: SortOrder
+    emailTag?: SortOrder
+    emailSearchHash?: SortOrder
+    passwordHash?: SortOrder
+    ativo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+    lastPlanPaymentPayoutSyncAt?: SortOrder
+  }
+
+  export type AffiliateAccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    emailEnc?: SortOrder
+    emailIv?: SortOrder
+    emailTag?: SortOrder
+    emailSearchHash?: SortOrder
+    passwordHash?: SortOrder
+    ativo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+    lastPlanPaymentPayoutSyncAt?: SortOrder
+  }
+
+  export type AffiliateAccountScalarRelationFilter = {
+    is?: AffiliateAccountWhereInput
+    isNot?: AffiliateAccountWhereInput
+  }
+
+  export type AffiliateCouponCountOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateAccountId?: SortOrder
+    code?: SortOrder
+    createdAt?: SortOrder
+    ativo?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type AffiliateCouponMaxOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateAccountId?: SortOrder
+    code?: SortOrder
+    createdAt?: SortOrder
+    ativo?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type AffiliateCouponMinOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateAccountId?: SortOrder
+    code?: SortOrder
+    createdAt?: SortOrder
+    ativo?: SortOrder
+    expiresAt?: SortOrder
   }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -41086,6 +53359,269 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumCheckoutStatusFilter<$PrismaModel>
     _max?: NestedEnumCheckoutStatusFilter<$PrismaModel>
+  }
+
+  export type StripePlanPaymentCountOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    userId?: SortOrder
+    invoiceId?: SortOrder
+    checkoutSessionId?: SortOrder
+    pagarmeOrderId?: SortOrder
+    subscriptionId?: SortOrder
+    paymentIntentId?: SortOrder
+    chargeId?: SortOrder
+    cupomId?: SortOrder
+    idAfiliado?: SortOrder
+    planKey?: SortOrder
+    amountTotalCents?: SortOrder
+    currency?: SortOrder
+    amountAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    commissionAffiliateCents?: SortOrder
+    coinsCredited?: SortOrder
+    pricingLabel?: SortOrder
+    paidAt?: SortOrder
+    createdAt?: SortOrder
+    situacao?: SortOrder
+    stripePayoutId?: SortOrder
+    pagarmePayoutId?: SortOrder
+    payoutStatus?: SortOrder
+    payoutArrivalDate?: SortOrder
+    payoutUpdatedAt?: SortOrder
+  }
+
+  export type StripePlanPaymentAvgOrderByAggregateInput = {
+    amountTotalCents?: SortOrder
+    amountAffiliateCents?: SortOrder
+    commissionAffiliateCents?: SortOrder
+    coinsCredited?: SortOrder
+  }
+
+  export type StripePlanPaymentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    userId?: SortOrder
+    invoiceId?: SortOrder
+    checkoutSessionId?: SortOrder
+    pagarmeOrderId?: SortOrder
+    subscriptionId?: SortOrder
+    paymentIntentId?: SortOrder
+    chargeId?: SortOrder
+    cupomId?: SortOrder
+    idAfiliado?: SortOrder
+    planKey?: SortOrder
+    amountTotalCents?: SortOrder
+    currency?: SortOrder
+    amountAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    commissionAffiliateCents?: SortOrder
+    coinsCredited?: SortOrder
+    pricingLabel?: SortOrder
+    paidAt?: SortOrder
+    createdAt?: SortOrder
+    situacao?: SortOrder
+    stripePayoutId?: SortOrder
+    pagarmePayoutId?: SortOrder
+    payoutStatus?: SortOrder
+    payoutArrivalDate?: SortOrder
+    payoutUpdatedAt?: SortOrder
+  }
+
+  export type StripePlanPaymentMinOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    userId?: SortOrder
+    invoiceId?: SortOrder
+    checkoutSessionId?: SortOrder
+    pagarmeOrderId?: SortOrder
+    subscriptionId?: SortOrder
+    paymentIntentId?: SortOrder
+    chargeId?: SortOrder
+    cupomId?: SortOrder
+    idAfiliado?: SortOrder
+    planKey?: SortOrder
+    amountTotalCents?: SortOrder
+    currency?: SortOrder
+    amountAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    commissionAffiliateCents?: SortOrder
+    coinsCredited?: SortOrder
+    pricingLabel?: SortOrder
+    paidAt?: SortOrder
+    createdAt?: SortOrder
+    situacao?: SortOrder
+    stripePayoutId?: SortOrder
+    pagarmePayoutId?: SortOrder
+    payoutStatus?: SortOrder
+    payoutArrivalDate?: SortOrder
+    payoutUpdatedAt?: SortOrder
+  }
+
+  export type StripePlanPaymentSumOrderByAggregateInput = {
+    amountTotalCents?: SortOrder
+    amountAffiliateCents?: SortOrder
+    commissionAffiliateCents?: SortOrder
+    coinsCredited?: SortOrder
+  }
+
+  export type AffiliateMonthAggInvoiceNullableScalarRelationFilter = {
+    is?: AffiliateMonthAggInvoiceWhereInput | null
+    isNot?: AffiliateMonthAggInvoiceWhereInput | null
+  }
+
+  export type AffiliatePlanPaymentMonthAggIdAfiliadoMonthStartCompoundUniqueInput = {
+    idAfiliado: string
+    monthStart: Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggCountOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    monthStart?: SortOrder
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliatePlanPaymentMonthAggAvgOrderByAggregateInput = {
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+  }
+
+  export type AffiliatePlanPaymentMonthAggMaxOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    monthStart?: SortOrder
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliatePlanPaymentMonthAggMinOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    monthStart?: SortOrder
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+    currencyAffiliate?: SortOrder
+    expiresAt?: SortOrder
+    status?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliatePlanPaymentMonthAggSumOrderByAggregateInput = {
+    totalAmountCents?: SortOrder
+    totalReembolsadoCents?: SortOrder
+    totalAprovadoCents?: SortOrder
+    totalAffiliateCents?: SortOrder
+    totalReembolsadoAffiliateCents?: SortOrder
+    totalAprovadoAffiliateCents?: SortOrder
+    totalCommissionAffiliateCents?: SortOrder
+    totalReembolsadoCommissionAffiliateCents?: SortOrder
+    totalAprovadoCommissionAffiliateCents?: SortOrder
+    totalExpiradoCommissionAffiliateCents?: SortOrder
+  }
+
+  export type BytesFilter<$PrismaModel = never> = {
+    equals?: Bytes | BytesFieldRefInput<$PrismaModel>
+    in?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    notIn?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    not?: NestedBytesFilter<$PrismaModel> | Bytes
+  }
+
+  export type AffiliatePlanPaymentMonthAggScalarRelationFilter = {
+    is?: AffiliatePlanPaymentMonthAggWhereInput
+    isNot?: AffiliatePlanPaymentMonthAggWhereInput
+  }
+
+  export type AffiliateMonthAggInvoiceCountOrderByAggregateInput = {
+    id?: SortOrder
+    monthAggId?: SortOrder
+    pdfBytes?: SortOrder
+    fileName?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliateMonthAggInvoiceAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type AffiliateMonthAggInvoiceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    monthAggId?: SortOrder
+    pdfBytes?: SortOrder
+    fileName?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliateMonthAggInvoiceMinOrderByAggregateInput = {
+    id?: SortOrder
+    monthAggId?: SortOrder
+    pdfBytes?: SortOrder
+    fileName?: SortOrder
+    contentType?: SortOrder
+    sizeBytes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliateMonthAggInvoiceSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type BytesWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Bytes | BytesFieldRefInput<$PrismaModel>
+    in?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    notIn?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    not?: NestedBytesWithAggregatesFilter<$PrismaModel> | Bytes
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBytesFilter<$PrismaModel>
+    _max?: NestedBytesFilter<$PrismaModel>
   }
 
   export type PagarMeOrderCountOrderByAggregateInput = {
@@ -42196,6 +54732,27 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type LogErroCountOrderByAggregateInput = {
+    id?: SortOrder
+    dataHora?: SortOrder
+    origem?: SortOrder
+    msgErro?: SortOrder
+  }
+
+  export type LogErroMaxOrderByAggregateInput = {
+    id?: SortOrder
+    dataHora?: SortOrder
+    origem?: SortOrder
+    msgErro?: SortOrder
+  }
+
+  export type LogErroMinOrderByAggregateInput = {
+    id?: SortOrder
+    dataHora?: SortOrder
+    origem?: SortOrder
+    msgErro?: SortOrder
+  }
+
   export type KlineSymbolCountOrderByAggregateInput = {
     symbol?: SortOrder
     ativo?: SortOrder
@@ -42230,6 +54787,143 @@ export namespace Prisma {
     requiredDays1m?: SortOrder
     requiredDays5m?: SortOrder
     requiredDays1h?: SortOrder
+  }
+
+  export type AffiliatePayoutProfileNullableScalarRelationFilter = {
+    is?: AffiliatePayoutProfileWhereInput | null
+    isNot?: AffiliatePayoutProfileWhereInput | null
+  }
+
+  export type AffiliateApplicationCountOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    cnpjDigits?: SortOrder
+    taxId?: SortOrder
+    razaoSocial?: SortOrder
+    responsavel?: SortOrder
+    email?: SortOrder
+    siteUrl?: SortOrder
+    acceptedDocs?: SortOrder
+    approved?: SortOrder
+    locale?: SortOrder
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AffiliateApplicationAvgOrderByAggregateInput = {
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+  }
+
+  export type AffiliateApplicationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    cnpjDigits?: SortOrder
+    taxId?: SortOrder
+    razaoSocial?: SortOrder
+    responsavel?: SortOrder
+    email?: SortOrder
+    siteUrl?: SortOrder
+    acceptedDocs?: SortOrder
+    approved?: SortOrder
+    locale?: SortOrder
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AffiliateApplicationMinOrderByAggregateInput = {
+    id?: SortOrder
+    idAfiliado?: SortOrder
+    cnpjDigits?: SortOrder
+    taxId?: SortOrder
+    razaoSocial?: SortOrder
+    responsavel?: SortOrder
+    email?: SortOrder
+    siteUrl?: SortOrder
+    acceptedDocs?: SortOrder
+    approved?: SortOrder
+    locale?: SortOrder
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AffiliateApplicationSumOrderByAggregateInput = {
+    commissionAnnualUsdCents?: SortOrder
+    commissionMonthlyUsdCents?: SortOrder
+  }
+
+  export type AffiliateApplicationScalarRelationFilter = {
+    is?: AffiliateApplicationWhereInput
+    isNot?: AffiliateApplicationWhereInput
+  }
+
+  export type AffiliatePayoutProfileCountOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateApplicationId?: SortOrder
+    activeTab?: SortOrder
+    brRazaoSocial?: SortOrder
+    brCnpjDigits?: SortOrder
+    brBanco?: SortOrder
+    brTipoConta?: SortOrder
+    brAgencia?: SortOrder
+    brNumeroConta?: SortOrder
+    brChavePix?: SortOrder
+    intPaymentMethod?: SortOrder
+    intPaypalEmail?: SortOrder
+    intBankName?: SortOrder
+    intAccountOrIban?: SortOrder
+    intSwiftBic?: SortOrder
+    intAccountHolderName?: SortOrder
+    intCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliatePayoutProfileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateApplicationId?: SortOrder
+    activeTab?: SortOrder
+    brRazaoSocial?: SortOrder
+    brCnpjDigits?: SortOrder
+    brBanco?: SortOrder
+    brTipoConta?: SortOrder
+    brAgencia?: SortOrder
+    brNumeroConta?: SortOrder
+    brChavePix?: SortOrder
+    intPaymentMethod?: SortOrder
+    intPaypalEmail?: SortOrder
+    intBankName?: SortOrder
+    intAccountOrIban?: SortOrder
+    intSwiftBic?: SortOrder
+    intAccountHolderName?: SortOrder
+    intCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AffiliatePayoutProfileMinOrderByAggregateInput = {
+    id?: SortOrder
+    affiliateApplicationId?: SortOrder
+    activeTab?: SortOrder
+    brRazaoSocial?: SortOrder
+    brCnpjDigits?: SortOrder
+    brBanco?: SortOrder
+    brTipoConta?: SortOrder
+    brAgencia?: SortOrder
+    brNumeroConta?: SortOrder
+    brChavePix?: SortOrder
+    intPaymentMethod?: SortOrder
+    intPaypalEmail?: SortOrder
+    intBankName?: SortOrder
+    intAccountOrIban?: SortOrder
+    intSwiftBic?: SortOrder
+    intAccountHolderName?: SortOrder
+    intCountry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type AccessRequestCreateNestedManyWithoutUserInput = {
@@ -42308,6 +55002,13 @@ export namespace Prisma {
     connect?: ChartModelWhereUniqueInput | ChartModelWhereUniqueInput[]
   }
 
+  export type StripePlanPaymentCreateNestedManyWithoutUserInput = {
+    create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
+    createMany?: StripePlanPaymentCreateManyUserInputEnvelope
+    connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+  }
+
   export type AccessRequestUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -42382,6 +55083,13 @@ export namespace Prisma {
     connectOrCreate?: ChartModelCreateOrConnectWithoutUserInput | ChartModelCreateOrConnectWithoutUserInput[]
     createMany?: ChartModelCreateManyUserInputEnvelope
     connect?: ChartModelWhereUniqueInput | ChartModelWhereUniqueInput[]
+  }
+
+  export type StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
+    createMany?: StripePlanPaymentCreateManyUserInputEnvelope
+    connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -42594,6 +55302,20 @@ export namespace Prisma {
     deleteMany?: ChartModelScalarWhereInput | ChartModelScalarWhereInput[]
   }
 
+  export type StripePlanPaymentUpdateManyWithoutUserNestedInput = {
+    create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
+    upsert?: StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput | StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: StripePlanPaymentCreateManyUserInputEnvelope
+    set?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    disconnect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    delete?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    update?: StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput | StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: StripePlanPaymentUpdateManyWithWhereWithoutUserInput | StripePlanPaymentUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
+  }
+
   export type AccessRequestUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -42742,6 +55464,76 @@ export namespace Prisma {
     update?: ChartModelUpdateWithWhereUniqueWithoutUserInput | ChartModelUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: ChartModelUpdateManyWithWhereWithoutUserInput | ChartModelUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: ChartModelScalarWhereInput | ChartModelScalarWhereInput[]
+  }
+
+  export type StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
+    upsert?: StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput | StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: StripePlanPaymentCreateManyUserInputEnvelope
+    set?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    disconnect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    delete?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+    update?: StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput | StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: StripePlanPaymentUpdateManyWithWhereWithoutUserInput | StripePlanPaymentUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
+  }
+
+  export type AffiliateCouponCreateNestedManyWithoutAffiliateAccountInput = {
+    create?: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput> | AffiliateCouponCreateWithoutAffiliateAccountInput[] | AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput[]
+    connectOrCreate?: AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput | AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput[]
+    createMany?: AffiliateCouponCreateManyAffiliateAccountInputEnvelope
+    connect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+  }
+
+  export type AffiliateCouponUncheckedCreateNestedManyWithoutAffiliateAccountInput = {
+    create?: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput> | AffiliateCouponCreateWithoutAffiliateAccountInput[] | AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput[]
+    connectOrCreate?: AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput | AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput[]
+    createMany?: AffiliateCouponCreateManyAffiliateAccountInputEnvelope
+    connect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+  }
+
+  export type AffiliateCouponUpdateManyWithoutAffiliateAccountNestedInput = {
+    create?: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput> | AffiliateCouponCreateWithoutAffiliateAccountInput[] | AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput[]
+    connectOrCreate?: AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput | AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput[]
+    upsert?: AffiliateCouponUpsertWithWhereUniqueWithoutAffiliateAccountInput | AffiliateCouponUpsertWithWhereUniqueWithoutAffiliateAccountInput[]
+    createMany?: AffiliateCouponCreateManyAffiliateAccountInputEnvelope
+    set?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    disconnect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    delete?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    connect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    update?: AffiliateCouponUpdateWithWhereUniqueWithoutAffiliateAccountInput | AffiliateCouponUpdateWithWhereUniqueWithoutAffiliateAccountInput[]
+    updateMany?: AffiliateCouponUpdateManyWithWhereWithoutAffiliateAccountInput | AffiliateCouponUpdateManyWithWhereWithoutAffiliateAccountInput[]
+    deleteMany?: AffiliateCouponScalarWhereInput | AffiliateCouponScalarWhereInput[]
+  }
+
+  export type AffiliateCouponUncheckedUpdateManyWithoutAffiliateAccountNestedInput = {
+    create?: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput> | AffiliateCouponCreateWithoutAffiliateAccountInput[] | AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput[]
+    connectOrCreate?: AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput | AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput[]
+    upsert?: AffiliateCouponUpsertWithWhereUniqueWithoutAffiliateAccountInput | AffiliateCouponUpsertWithWhereUniqueWithoutAffiliateAccountInput[]
+    createMany?: AffiliateCouponCreateManyAffiliateAccountInputEnvelope
+    set?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    disconnect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    delete?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    connect?: AffiliateCouponWhereUniqueInput | AffiliateCouponWhereUniqueInput[]
+    update?: AffiliateCouponUpdateWithWhereUniqueWithoutAffiliateAccountInput | AffiliateCouponUpdateWithWhereUniqueWithoutAffiliateAccountInput[]
+    updateMany?: AffiliateCouponUpdateManyWithWhereWithoutAffiliateAccountInput | AffiliateCouponUpdateManyWithWhereWithoutAffiliateAccountInput[]
+    deleteMany?: AffiliateCouponScalarWhereInput | AffiliateCouponScalarWhereInput[]
+  }
+
+  export type AffiliateAccountCreateNestedOneWithoutCouponsInput = {
+    create?: XOR<AffiliateAccountCreateWithoutCouponsInput, AffiliateAccountUncheckedCreateWithoutCouponsInput>
+    connectOrCreate?: AffiliateAccountCreateOrConnectWithoutCouponsInput
+    connect?: AffiliateAccountWhereUniqueInput
+  }
+
+  export type AffiliateAccountUpdateOneRequiredWithoutCouponsNestedInput = {
+    create?: XOR<AffiliateAccountCreateWithoutCouponsInput, AffiliateAccountUncheckedCreateWithoutCouponsInput>
+    connectOrCreate?: AffiliateAccountCreateOrConnectWithoutCouponsInput
+    upsert?: AffiliateAccountUpsertWithoutCouponsInput
+    connect?: AffiliateAccountWhereUniqueInput
+    update?: XOR<XOR<AffiliateAccountUpdateToOneWithWhereWithoutCouponsInput, AffiliateAccountUpdateWithoutCouponsInput>, AffiliateAccountUncheckedUpdateWithoutCouponsInput>
   }
 
   export type UserCreateNestedOneWithoutChartLayoutsInput = {
@@ -43002,6 +55794,70 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCheckoutSessionsInput, UserUpdateWithoutCheckoutSessionsInput>, UserUncheckedUpdateWithoutCheckoutSessionsInput>
   }
 
+  export type UserCreateNestedOneWithoutStripePlanPaymentsInput = {
+    create?: XOR<UserCreateWithoutStripePlanPaymentsInput, UserUncheckedCreateWithoutStripePlanPaymentsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutStripePlanPaymentsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutStripePlanPaymentsNestedInput = {
+    create?: XOR<UserCreateWithoutStripePlanPaymentsInput, UserUncheckedCreateWithoutStripePlanPaymentsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutStripePlanPaymentsInput
+    upsert?: UserUpsertWithoutStripePlanPaymentsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutStripePlanPaymentsInput, UserUpdateWithoutStripePlanPaymentsInput>, UserUncheckedUpdateWithoutStripePlanPaymentsInput>
+  }
+
+  export type AffiliateMonthAggInvoiceCreateNestedOneWithoutMonthAggInput = {
+    create?: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+    connectOrCreate?: AffiliateMonthAggInvoiceCreateOrConnectWithoutMonthAggInput
+    connect?: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedCreateNestedOneWithoutMonthAggInput = {
+    create?: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+    connectOrCreate?: AffiliateMonthAggInvoiceCreateOrConnectWithoutMonthAggInput
+    connect?: AffiliateMonthAggInvoiceWhereUniqueInput
+  }
+
+  export type AffiliateMonthAggInvoiceUpdateOneWithoutMonthAggNestedInput = {
+    create?: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+    connectOrCreate?: AffiliateMonthAggInvoiceCreateOrConnectWithoutMonthAggInput
+    upsert?: AffiliateMonthAggInvoiceUpsertWithoutMonthAggInput
+    disconnect?: AffiliateMonthAggInvoiceWhereInput | boolean
+    delete?: AffiliateMonthAggInvoiceWhereInput | boolean
+    connect?: AffiliateMonthAggInvoiceWhereUniqueInput
+    update?: XOR<XOR<AffiliateMonthAggInvoiceUpdateToOneWithWhereWithoutMonthAggInput, AffiliateMonthAggInvoiceUpdateWithoutMonthAggInput>, AffiliateMonthAggInvoiceUncheckedUpdateWithoutMonthAggInput>
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedUpdateOneWithoutMonthAggNestedInput = {
+    create?: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+    connectOrCreate?: AffiliateMonthAggInvoiceCreateOrConnectWithoutMonthAggInput
+    upsert?: AffiliateMonthAggInvoiceUpsertWithoutMonthAggInput
+    disconnect?: AffiliateMonthAggInvoiceWhereInput | boolean
+    delete?: AffiliateMonthAggInvoiceWhereInput | boolean
+    connect?: AffiliateMonthAggInvoiceWhereUniqueInput
+    update?: XOR<XOR<AffiliateMonthAggInvoiceUpdateToOneWithWhereWithoutMonthAggInput, AffiliateMonthAggInvoiceUpdateWithoutMonthAggInput>, AffiliateMonthAggInvoiceUncheckedUpdateWithoutMonthAggInput>
+  }
+
+  export type AffiliatePlanPaymentMonthAggCreateNestedOneWithoutInvoiceInput = {
+    create?: XOR<AffiliatePlanPaymentMonthAggCreateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedCreateWithoutInvoiceInput>
+    connectOrCreate?: AffiliatePlanPaymentMonthAggCreateOrConnectWithoutInvoiceInput
+    connect?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+  }
+
+  export type BytesFieldUpdateOperationsInput = {
+    set?: Bytes
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpdateOneRequiredWithoutInvoiceNestedInput = {
+    create?: XOR<AffiliatePlanPaymentMonthAggCreateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedCreateWithoutInvoiceInput>
+    connectOrCreate?: AffiliatePlanPaymentMonthAggCreateOrConnectWithoutInvoiceInput
+    upsert?: AffiliatePlanPaymentMonthAggUpsertWithoutInvoiceInput
+    connect?: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    update?: XOR<XOR<AffiliatePlanPaymentMonthAggUpdateToOneWithWhereWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUpdateWithoutInvoiceInput>, AffiliatePlanPaymentMonthAggUncheckedUpdateWithoutInvoiceInput>
+  }
+
   export type UserCreateNestedOneWithoutPagarMeOrdersInput = {
     create?: XOR<UserCreateWithoutPagarMeOrdersInput, UserUncheckedCreateWithoutPagarMeOrdersInput>
     connectOrCreate?: UserCreateOrConnectWithoutPagarMeOrdersInput
@@ -43022,6 +55878,52 @@ export namespace Prisma {
     decrement?: bigint | number
     multiply?: bigint | number
     divide?: bigint | number
+  }
+
+  export type AffiliatePayoutProfileCreateNestedOneWithoutAffiliateApplicationInput = {
+    create?: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+    connectOrCreate?: AffiliatePayoutProfileCreateOrConnectWithoutAffiliateApplicationInput
+    connect?: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  export type AffiliatePayoutProfileUncheckedCreateNestedOneWithoutAffiliateApplicationInput = {
+    create?: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+    connectOrCreate?: AffiliatePayoutProfileCreateOrConnectWithoutAffiliateApplicationInput
+    connect?: AffiliatePayoutProfileWhereUniqueInput
+  }
+
+  export type AffiliatePayoutProfileUpdateOneWithoutAffiliateApplicationNestedInput = {
+    create?: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+    connectOrCreate?: AffiliatePayoutProfileCreateOrConnectWithoutAffiliateApplicationInput
+    upsert?: AffiliatePayoutProfileUpsertWithoutAffiliateApplicationInput
+    disconnect?: AffiliatePayoutProfileWhereInput | boolean
+    delete?: AffiliatePayoutProfileWhereInput | boolean
+    connect?: AffiliatePayoutProfileWhereUniqueInput
+    update?: XOR<XOR<AffiliatePayoutProfileUpdateToOneWithWhereWithoutAffiliateApplicationInput, AffiliatePayoutProfileUpdateWithoutAffiliateApplicationInput>, AffiliatePayoutProfileUncheckedUpdateWithoutAffiliateApplicationInput>
+  }
+
+  export type AffiliatePayoutProfileUncheckedUpdateOneWithoutAffiliateApplicationNestedInput = {
+    create?: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+    connectOrCreate?: AffiliatePayoutProfileCreateOrConnectWithoutAffiliateApplicationInput
+    upsert?: AffiliatePayoutProfileUpsertWithoutAffiliateApplicationInput
+    disconnect?: AffiliatePayoutProfileWhereInput | boolean
+    delete?: AffiliatePayoutProfileWhereInput | boolean
+    connect?: AffiliatePayoutProfileWhereUniqueInput
+    update?: XOR<XOR<AffiliatePayoutProfileUpdateToOneWithWhereWithoutAffiliateApplicationInput, AffiliatePayoutProfileUpdateWithoutAffiliateApplicationInput>, AffiliatePayoutProfileUncheckedUpdateWithoutAffiliateApplicationInput>
+  }
+
+  export type AffiliateApplicationCreateNestedOneWithoutPayoutProfileInput = {
+    create?: XOR<AffiliateApplicationCreateWithoutPayoutProfileInput, AffiliateApplicationUncheckedCreateWithoutPayoutProfileInput>
+    connectOrCreate?: AffiliateApplicationCreateOrConnectWithoutPayoutProfileInput
+    connect?: AffiliateApplicationWhereUniqueInput
+  }
+
+  export type AffiliateApplicationUpdateOneRequiredWithoutPayoutProfileNestedInput = {
+    create?: XOR<AffiliateApplicationCreateWithoutPayoutProfileInput, AffiliateApplicationUncheckedCreateWithoutPayoutProfileInput>
+    connectOrCreate?: AffiliateApplicationCreateOrConnectWithoutPayoutProfileInput
+    upsert?: AffiliateApplicationUpsertWithoutPayoutProfileInput
+    connect?: AffiliateApplicationWhereUniqueInput
+    update?: XOR<XOR<AffiliateApplicationUpdateToOneWithWhereWithoutPayoutProfileInput, AffiliateApplicationUpdateWithoutPayoutProfileInput>, AffiliateApplicationUncheckedUpdateWithoutPayoutProfileInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -43434,6 +56336,23 @@ export namespace Prisma {
     _max?: NestedEnumCheckoutStatusFilter<$PrismaModel>
   }
 
+  export type NestedBytesFilter<$PrismaModel = never> = {
+    equals?: Bytes | BytesFieldRefInput<$PrismaModel>
+    in?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    notIn?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    not?: NestedBytesFilter<$PrismaModel> | Bytes
+  }
+
+  export type NestedBytesWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Bytes | BytesFieldRefInput<$PrismaModel>
+    in?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    notIn?: Bytes[] | ListBytesFieldRefInput<$PrismaModel>
+    not?: NestedBytesWithAggregatesFilter<$PrismaModel> | Bytes
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBytesFilter<$PrismaModel>
+    _max?: NestedBytesFilter<$PrismaModel>
+  }
+
   export type NestedBigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -43786,6 +56705,74 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type StripePlanPaymentCreateWithoutUserInput = {
+    id?: string
+    provider?: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
+  }
+
+  export type StripePlanPaymentUncheckedCreateWithoutUserInput = {
+    id?: string
+    provider?: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
+  }
+
+  export type StripePlanPaymentCreateOrConnectWithoutUserInput = {
+    where: StripePlanPaymentWhereUniqueInput
+    create: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput>
+  }
+
+  export type StripePlanPaymentCreateManyUserInputEnvelope = {
+    data: StripePlanPaymentCreateManyUserInput | StripePlanPaymentCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccessRequestUpsertWithWhereUniqueWithoutUserInput = {
     where: AccessRequestWhereUniqueInput
     update: XOR<AccessRequestUpdateWithoutUserInput, AccessRequestUncheckedUpdateWithoutUserInput>
@@ -44114,6 +57101,181 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"ChartModel"> | Date | string
   }
 
+  export type StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput = {
+    where: StripePlanPaymentWhereUniqueInput
+    update: XOR<StripePlanPaymentUpdateWithoutUserInput, StripePlanPaymentUncheckedUpdateWithoutUserInput>
+    create: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput>
+  }
+
+  export type StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput = {
+    where: StripePlanPaymentWhereUniqueInput
+    data: XOR<StripePlanPaymentUpdateWithoutUserInput, StripePlanPaymentUncheckedUpdateWithoutUserInput>
+  }
+
+  export type StripePlanPaymentUpdateManyWithWhereWithoutUserInput = {
+    where: StripePlanPaymentScalarWhereInput
+    data: XOR<StripePlanPaymentUpdateManyMutationInput, StripePlanPaymentUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type StripePlanPaymentScalarWhereInput = {
+    AND?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
+    OR?: StripePlanPaymentScalarWhereInput[]
+    NOT?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
+    id?: StringFilter<"StripePlanPayment"> | string
+    provider?: StringFilter<"StripePlanPayment"> | string
+    userId?: StringFilter<"StripePlanPayment"> | string
+    invoiceId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    checkoutSessionId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    pagarmeOrderId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    subscriptionId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paymentIntentId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    chargeId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    cupomId?: StringFilter<"StripePlanPayment"> | string
+    idAfiliado?: StringFilter<"StripePlanPayment"> | string
+    planKey?: StringNullableFilter<"StripePlanPayment"> | string | null
+    amountTotalCents?: IntFilter<"StripePlanPayment"> | number
+    currency?: StringFilter<"StripePlanPayment"> | string
+    amountAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    currencyAffiliate?: StringNullableFilter<"StripePlanPayment"> | string | null
+    commissionAffiliateCents?: IntNullableFilter<"StripePlanPayment"> | number | null
+    coinsCredited?: IntFilter<"StripePlanPayment"> | number
+    pricingLabel?: StringNullableFilter<"StripePlanPayment"> | string | null
+    paidAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    createdAt?: DateTimeFilter<"StripePlanPayment"> | Date | string
+    situacao?: StringFilter<"StripePlanPayment"> | string
+    stripePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    pagarmePayoutId?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutStatus?: StringNullableFilter<"StripePlanPayment"> | string | null
+    payoutArrivalDate?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+    payoutUpdatedAt?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
+  }
+
+  export type AffiliateCouponCreateWithoutAffiliateAccountInput = {
+    id?: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+  }
+
+  export type AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput = {
+    id?: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+  }
+
+  export type AffiliateCouponCreateOrConnectWithoutAffiliateAccountInput = {
+    where: AffiliateCouponWhereUniqueInput
+    create: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput>
+  }
+
+  export type AffiliateCouponCreateManyAffiliateAccountInputEnvelope = {
+    data: AffiliateCouponCreateManyAffiliateAccountInput | AffiliateCouponCreateManyAffiliateAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AffiliateCouponUpsertWithWhereUniqueWithoutAffiliateAccountInput = {
+    where: AffiliateCouponWhereUniqueInput
+    update: XOR<AffiliateCouponUpdateWithoutAffiliateAccountInput, AffiliateCouponUncheckedUpdateWithoutAffiliateAccountInput>
+    create: XOR<AffiliateCouponCreateWithoutAffiliateAccountInput, AffiliateCouponUncheckedCreateWithoutAffiliateAccountInput>
+  }
+
+  export type AffiliateCouponUpdateWithWhereUniqueWithoutAffiliateAccountInput = {
+    where: AffiliateCouponWhereUniqueInput
+    data: XOR<AffiliateCouponUpdateWithoutAffiliateAccountInput, AffiliateCouponUncheckedUpdateWithoutAffiliateAccountInput>
+  }
+
+  export type AffiliateCouponUpdateManyWithWhereWithoutAffiliateAccountInput = {
+    where: AffiliateCouponScalarWhereInput
+    data: XOR<AffiliateCouponUpdateManyMutationInput, AffiliateCouponUncheckedUpdateManyWithoutAffiliateAccountInput>
+  }
+
+  export type AffiliateCouponScalarWhereInput = {
+    AND?: AffiliateCouponScalarWhereInput | AffiliateCouponScalarWhereInput[]
+    OR?: AffiliateCouponScalarWhereInput[]
+    NOT?: AffiliateCouponScalarWhereInput | AffiliateCouponScalarWhereInput[]
+    id?: StringFilter<"AffiliateCoupon"> | string
+    affiliateAccountId?: StringFilter<"AffiliateCoupon"> | string
+    code?: StringFilter<"AffiliateCoupon"> | string
+    createdAt?: DateTimeFilter<"AffiliateCoupon"> | Date | string
+    ativo?: BoolFilter<"AffiliateCoupon"> | boolean
+    expiresAt?: DateTimeNullableFilter<"AffiliateCoupon"> | Date | string | null
+  }
+
+  export type AffiliateAccountCreateWithoutCouponsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    lastPlanPaymentPayoutSyncAt?: Date | string | null
+  }
+
+  export type AffiliateAccountUncheckedCreateWithoutCouponsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    passwordHash: string
+    ativo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    lastPlanPaymentPayoutSyncAt?: Date | string | null
+  }
+
+  export type AffiliateAccountCreateOrConnectWithoutCouponsInput = {
+    where: AffiliateAccountWhereUniqueInput
+    create: XOR<AffiliateAccountCreateWithoutCouponsInput, AffiliateAccountUncheckedCreateWithoutCouponsInput>
+  }
+
+  export type AffiliateAccountUpsertWithoutCouponsInput = {
+    update: XOR<AffiliateAccountUpdateWithoutCouponsInput, AffiliateAccountUncheckedUpdateWithoutCouponsInput>
+    create: XOR<AffiliateAccountCreateWithoutCouponsInput, AffiliateAccountUncheckedCreateWithoutCouponsInput>
+    where?: AffiliateAccountWhereInput
+  }
+
+  export type AffiliateAccountUpdateToOneWithWhereWithoutCouponsInput = {
+    where?: AffiliateAccountWhereInput
+    data: XOR<AffiliateAccountUpdateWithoutCouponsInput, AffiliateAccountUncheckedUpdateWithoutCouponsInput>
+  }
+
+  export type AffiliateAccountUpdateWithoutCouponsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateAccountUncheckedUpdateWithoutCouponsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastPlanPaymentPayoutSyncAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type UserCreateWithoutChartLayoutsInput = {
     id?: string
     emailEnc: string
@@ -44166,6 +57328,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartLayoutsInput = {
@@ -44220,6 +57383,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartLayoutsInput = {
@@ -44290,6 +57454,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartLayoutsInput = {
@@ -44344,6 +57509,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutChartModelsInput = {
@@ -44398,6 +57564,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartModelsInput = {
@@ -44452,6 +57619,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartModelsInput = {
@@ -44522,6 +57690,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartModelsInput = {
@@ -44576,6 +57745,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -44630,6 +57800,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -44684,6 +57855,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -44754,6 +57926,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -44808,6 +57981,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAccessRequestsInput = {
@@ -44862,6 +58036,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccessRequestsInput = {
@@ -44916,6 +58091,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccessRequestsInput = {
@@ -44986,6 +58162,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccessRequestsInput = {
@@ -45040,6 +58217,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutVerificationTokensInput = {
@@ -45094,6 +58272,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutVerificationTokensInput = {
@@ -45148,6 +58327,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutVerificationTokensInput = {
@@ -45218,6 +58398,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutVerificationTokensInput = {
@@ -45272,6 +58453,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutPasswordResetTokensInput = {
@@ -45326,6 +58508,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -45380,6 +58563,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -45450,6 +58634,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -45504,6 +58689,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CoinLedgerEntryCreateWithoutWalletInput = {
@@ -45592,6 +58778,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinWalletInput = {
@@ -45646,6 +58833,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinWalletInput = {
@@ -45732,6 +58920,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinWalletInput = {
@@ -45786,6 +58975,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCoinLedgerInput = {
@@ -45840,6 +59030,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinLedgerInput = {
@@ -45894,6 +59085,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinLedgerInput = {
@@ -46010,6 +59202,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinLedgerInput = {
@@ -46064,6 +59257,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCoinWalletUpsertWithoutEntriesInput = {
@@ -46205,6 +59399,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWalletCreditsInput = {
@@ -46259,6 +59454,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWalletCreditsInput = {
@@ -46364,6 +59560,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWalletCreditsInput = {
@@ -46418,6 +59615,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCheckoutSessionsInput = {
@@ -46472,6 +59670,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCheckoutSessionsInput = {
@@ -46526,6 +59725,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCheckoutSessionsInput = {
@@ -46596,6 +59796,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCheckoutSessionsInput = {
@@ -46650,6 +59851,395 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutStripePlanPaymentsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutStripePlanPaymentsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutStripePlanPaymentsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutStripePlanPaymentsInput, UserUncheckedCreateWithoutStripePlanPaymentsInput>
+  }
+
+  export type UserUpsertWithoutStripePlanPaymentsInput = {
+    update: XOR<UserUpdateWithoutStripePlanPaymentsInput, UserUncheckedUpdateWithoutStripePlanPaymentsInput>
+    create: XOR<UserCreateWithoutStripePlanPaymentsInput, UserUncheckedCreateWithoutStripePlanPaymentsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutStripePlanPaymentsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutStripePlanPaymentsInput, UserUncheckedUpdateWithoutStripePlanPaymentsInput>
+  }
+
+  export type UserUpdateWithoutStripePlanPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutStripePlanPaymentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type AffiliateMonthAggInvoiceCreateWithoutMonthAggInput = {
+    id?: string
+    pdfBytes: Bytes
+    fileName?: string | null
+    contentType?: string
+    sizeBytes: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput = {
+    id?: string
+    pdfBytes: Bytes
+    fileName?: string | null
+    contentType?: string
+    sizeBytes: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceCreateOrConnectWithoutMonthAggInput = {
+    where: AffiliateMonthAggInvoiceWhereUniqueInput
+    create: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+  }
+
+  export type AffiliateMonthAggInvoiceUpsertWithoutMonthAggInput = {
+    update: XOR<AffiliateMonthAggInvoiceUpdateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedUpdateWithoutMonthAggInput>
+    create: XOR<AffiliateMonthAggInvoiceCreateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedCreateWithoutMonthAggInput>
+    where?: AffiliateMonthAggInvoiceWhereInput
+  }
+
+  export type AffiliateMonthAggInvoiceUpdateToOneWithWhereWithoutMonthAggInput = {
+    where?: AffiliateMonthAggInvoiceWhereInput
+    data: XOR<AffiliateMonthAggInvoiceUpdateWithoutMonthAggInput, AffiliateMonthAggInvoiceUncheckedUpdateWithoutMonthAggInput>
+  }
+
+  export type AffiliateMonthAggInvoiceUpdateWithoutMonthAggInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateMonthAggInvoiceUncheckedUpdateWithoutMonthAggInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    pdfBytes?: BytesFieldUpdateOperationsInput | Bytes
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    contentType?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggCreateWithoutInvoiceInput = {
+    id?: string
+    idAfiliado: string
+    monthStart: Date | string
+    totalAmountCents?: number
+    totalReembolsadoCents?: number
+    totalAprovadoCents?: number
+    totalAffiliateCents?: number
+    totalReembolsadoAffiliateCents?: number
+    totalAprovadoAffiliateCents?: number
+    totalCommissionAffiliateCents?: number
+    totalReembolsadoCommissionAffiliateCents?: number
+    totalAprovadoCommissionAffiliateCents?: number
+    totalExpiradoCommissionAffiliateCents?: number
+    currencyAffiliate?: string | null
+    expiresAt?: Date | string | null
+    status?: string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggUncheckedCreateWithoutInvoiceInput = {
+    id?: string
+    idAfiliado: string
+    monthStart: Date | string
+    totalAmountCents?: number
+    totalReembolsadoCents?: number
+    totalAprovadoCents?: number
+    totalAffiliateCents?: number
+    totalReembolsadoAffiliateCents?: number
+    totalAprovadoAffiliateCents?: number
+    totalCommissionAffiliateCents?: number
+    totalReembolsadoCommissionAffiliateCents?: number
+    totalAprovadoCommissionAffiliateCents?: number
+    totalExpiradoCommissionAffiliateCents?: number
+    currencyAffiliate?: string | null
+    expiresAt?: Date | string | null
+    status?: string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggCreateOrConnectWithoutInvoiceInput = {
+    where: AffiliatePlanPaymentMonthAggWhereUniqueInput
+    create: XOR<AffiliatePlanPaymentMonthAggCreateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedCreateWithoutInvoiceInput>
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpsertWithoutInvoiceInput = {
+    update: XOR<AffiliatePlanPaymentMonthAggUpdateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedUpdateWithoutInvoiceInput>
+    create: XOR<AffiliatePlanPaymentMonthAggCreateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedCreateWithoutInvoiceInput>
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpdateToOneWithWhereWithoutInvoiceInput = {
+    where?: AffiliatePlanPaymentMonthAggWhereInput
+    data: XOR<AffiliatePlanPaymentMonthAggUpdateWithoutInvoiceInput, AffiliatePlanPaymentMonthAggUncheckedUpdateWithoutInvoiceInput>
+  }
+
+  export type AffiliatePlanPaymentMonthAggUpdateWithoutInvoiceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePlanPaymentMonthAggUncheckedUpdateWithoutInvoiceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    monthStart?: DateTimeFieldUpdateOperationsInput | Date | string
+    totalAmountCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCents?: IntFieldUpdateOperationsInput | number
+    totalAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalReembolsadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalAprovadoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    totalExpiradoCommissionAffiliateCents?: IntFieldUpdateOperationsInput | number
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserCreateWithoutPagarMeOrdersInput = {
@@ -46704,6 +60294,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPagarMeOrdersInput = {
@@ -46758,6 +60349,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPagarMeOrdersInput = {
@@ -46828,6 +60420,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPagarMeOrdersInput = {
@@ -46882,6 +60475,191 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput = {
+    id?: string
+    activeTab?: string
+    brRazaoSocial?: string | null
+    brCnpjDigits?: string | null
+    brBanco?: string | null
+    brTipoConta?: string | null
+    brAgencia?: string | null
+    brNumeroConta?: string | null
+    brChavePix?: string | null
+    intPaymentMethod?: string | null
+    intPaypalEmail?: string | null
+    intBankName?: string | null
+    intAccountOrIban?: string | null
+    intSwiftBic?: string | null
+    intAccountHolderName?: string | null
+    intCountry?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput = {
+    id?: string
+    activeTab?: string
+    brRazaoSocial?: string | null
+    brCnpjDigits?: string | null
+    brBanco?: string | null
+    brTipoConta?: string | null
+    brAgencia?: string | null
+    brNumeroConta?: string | null
+    brChavePix?: string | null
+    intPaymentMethod?: string | null
+    intPaypalEmail?: string | null
+    intBankName?: string | null
+    intAccountOrIban?: string | null
+    intSwiftBic?: string | null
+    intAccountHolderName?: string | null
+    intCountry?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AffiliatePayoutProfileCreateOrConnectWithoutAffiliateApplicationInput = {
+    where: AffiliatePayoutProfileWhereUniqueInput
+    create: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+  }
+
+  export type AffiliatePayoutProfileUpsertWithoutAffiliateApplicationInput = {
+    update: XOR<AffiliatePayoutProfileUpdateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedUpdateWithoutAffiliateApplicationInput>
+    create: XOR<AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedCreateWithoutAffiliateApplicationInput>
+    where?: AffiliatePayoutProfileWhereInput
+  }
+
+  export type AffiliatePayoutProfileUpdateToOneWithWhereWithoutAffiliateApplicationInput = {
+    where?: AffiliatePayoutProfileWhereInput
+    data: XOR<AffiliatePayoutProfileUpdateWithoutAffiliateApplicationInput, AffiliatePayoutProfileUncheckedUpdateWithoutAffiliateApplicationInput>
+  }
+
+  export type AffiliatePayoutProfileUpdateWithoutAffiliateApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliatePayoutProfileUncheckedUpdateWithoutAffiliateApplicationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    activeTab?: StringFieldUpdateOperationsInput | string
+    brRazaoSocial?: NullableStringFieldUpdateOperationsInput | string | null
+    brCnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    brBanco?: NullableStringFieldUpdateOperationsInput | string | null
+    brTipoConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brAgencia?: NullableStringFieldUpdateOperationsInput | string | null
+    brNumeroConta?: NullableStringFieldUpdateOperationsInput | string | null
+    brChavePix?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    intPaypalEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    intBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountOrIban?: NullableStringFieldUpdateOperationsInput | string | null
+    intSwiftBic?: NullableStringFieldUpdateOperationsInput | string | null
+    intAccountHolderName?: NullableStringFieldUpdateOperationsInput | string | null
+    intCountry?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateApplicationCreateWithoutPayoutProfileInput = {
+    id?: string
+    idAfiliado: string
+    cnpjDigits?: string | null
+    taxId?: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: string
+    commissionAnnualUsdCents?: number
+    commissionMonthlyUsdCents?: number
+    createdAt?: Date | string
+  }
+
+  export type AffiliateApplicationUncheckedCreateWithoutPayoutProfileInput = {
+    id?: string
+    idAfiliado: string
+    cnpjDigits?: string | null
+    taxId?: string | null
+    razaoSocial: string
+    responsavel: string
+    email: string
+    siteUrl: string
+    acceptedDocs?: boolean
+    approved?: boolean
+    locale?: string
+    commissionAnnualUsdCents?: number
+    commissionMonthlyUsdCents?: number
+    createdAt?: Date | string
+  }
+
+  export type AffiliateApplicationCreateOrConnectWithoutPayoutProfileInput = {
+    where: AffiliateApplicationWhereUniqueInput
+    create: XOR<AffiliateApplicationCreateWithoutPayoutProfileInput, AffiliateApplicationUncheckedCreateWithoutPayoutProfileInput>
+  }
+
+  export type AffiliateApplicationUpsertWithoutPayoutProfileInput = {
+    update: XOR<AffiliateApplicationUpdateWithoutPayoutProfileInput, AffiliateApplicationUncheckedUpdateWithoutPayoutProfileInput>
+    create: XOR<AffiliateApplicationCreateWithoutPayoutProfileInput, AffiliateApplicationUncheckedCreateWithoutPayoutProfileInput>
+    where?: AffiliateApplicationWhereInput
+  }
+
+  export type AffiliateApplicationUpdateToOneWithWhereWithoutPayoutProfileInput = {
+    where?: AffiliateApplicationWhereInput
+    data: XOR<AffiliateApplicationUpdateWithoutPayoutProfileInput, AffiliateApplicationUncheckedUpdateWithoutPayoutProfileInput>
+  }
+
+  export type AffiliateApplicationUpdateWithoutPayoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AffiliateApplicationUncheckedUpdateWithoutPayoutProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    cnpjDigits?: NullableStringFieldUpdateOperationsInput | string | null
+    taxId?: NullableStringFieldUpdateOperationsInput | string | null
+    razaoSocial?: StringFieldUpdateOperationsInput | string
+    responsavel?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    siteUrl?: StringFieldUpdateOperationsInput | string
+    acceptedDocs?: BoolFieldUpdateOperationsInput | boolean
+    approved?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
+    commissionAnnualUsdCents?: IntFieldUpdateOperationsInput | number
+    commissionMonthlyUsdCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AccessRequestCreateManyUserInput = {
@@ -46983,6 +60761,35 @@ export namespace Prisma {
     others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
     updatedAt?: Date | string
+  }
+
+  export type StripePlanPaymentCreateManyUserInput = {
+    id?: string
+    provider?: string
+    invoiceId?: string | null
+    checkoutSessionId?: string | null
+    pagarmeOrderId?: string | null
+    subscriptionId?: string | null
+    paymentIntentId?: string | null
+    chargeId?: string | null
+    cupomId?: string
+    idAfiliado?: string
+    planKey?: string | null
+    amountTotalCents: number
+    currency?: string
+    amountAffiliateCents?: number | null
+    currencyAffiliate?: string | null
+    commissionAffiliateCents?: number | null
+    coinsCredited: number
+    pricingLabel?: string | null
+    paidAt: Date | string
+    createdAt?: Date | string
+    situacao?: string
+    stripePayoutId?: string | null
+    pagarmePayoutId?: string | null
+    payoutStatus?: string | null
+    payoutArrivalDate?: Date | string | null
+    payoutUpdatedAt?: Date | string | null
   }
 
   export type AccessRequestUpdateWithoutUserInput = {
@@ -47288,6 +61095,125 @@ export namespace Prisma {
     others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StripePlanPaymentUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type StripePlanPaymentUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type StripePlanPaymentUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    invoiceId?: NullableStringFieldUpdateOperationsInput | string | null
+    checkoutSessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmeOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentIntentId?: NullableStringFieldUpdateOperationsInput | string | null
+    chargeId?: NullableStringFieldUpdateOperationsInput | string | null
+    cupomId?: StringFieldUpdateOperationsInput | string
+    idAfiliado?: StringFieldUpdateOperationsInput | string
+    planKey?: NullableStringFieldUpdateOperationsInput | string | null
+    amountTotalCents?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    amountAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    currencyAffiliate?: NullableStringFieldUpdateOperationsInput | string | null
+    commissionAffiliateCents?: NullableIntFieldUpdateOperationsInput | number | null
+    coinsCredited?: IntFieldUpdateOperationsInput | number
+    pricingLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    paidAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    situacao?: StringFieldUpdateOperationsInput | string
+    stripePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    pagarmePayoutId?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponCreateManyAffiliateAccountInput = {
+    id?: string
+    code: string
+    createdAt?: Date | string
+    ativo?: boolean
+    expiresAt?: Date | string | null
+  }
+
+  export type AffiliateCouponUpdateWithoutAffiliateAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponUncheckedUpdateWithoutAffiliateAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AffiliateCouponUncheckedUpdateManyWithoutAffiliateAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ativo?: BoolFieldUpdateOperationsInput | boolean
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CoinLedgerEntryCreateManyWalletInput = {

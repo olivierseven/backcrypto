@@ -485,10 +485,14 @@
   margin-right: auto !important;
 }
 @media (max-width: 639px) {
-  [data-app="crypto"] .crypto-page .crypto-header .crypto-header-inner,
-  [data-app="crypto"] .crypto-conta-page .crypto-header .crypto-header-inner {
+  [data-app="crypto"] .crypto-page .crypto-header .crypto-header-inner {
     padding-left: 2rem !important;
     padding-right: 2rem !important;
+  }
+  /* Conta / afiliados: menos padding — cards usam largura quase total no mobile */
+  [data-app="crypto"] .crypto-conta-page .crypto-header .crypto-header-inner {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
   }
 }
 [data-app="crypto"] .crypto-wrap,
@@ -497,10 +501,14 @@
   margin-top: 0.75rem !important;
 }
 @media (max-width: 639px) {
-  [data-app="crypto"] .crypto-page,
-  [data-app="crypto"] .crypto-conta-page {
+  [data-app="crypto"] .crypto-page {
     padding-left: 2rem !important;
     padding-right: 2rem !important;
+    box-sizing: border-box !important;
+  }
+  [data-app="crypto"] .crypto-conta-page {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
     box-sizing: border-box !important;
   }
   [data-app="crypto"] .crypto-wrap,
@@ -519,6 +527,16 @@
     margin-top: 1rem !important;
   }
 }
+
+/* Afiliados: faixa do header borda a borda (padding do `crypto-conta-page` fica só no main com os cards). */
+[data-app="crypto"] .affiliate-area-header {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  align-self: stretch;
+}
+
 /* Bio (global): cards, espaçamentos, entradas e botões — vale em todo o app */
 [data-app="crypto"] .crypto-card {
   padding: 1rem !important;

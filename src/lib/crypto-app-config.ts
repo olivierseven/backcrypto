@@ -1,3 +1,39 @@
+import { cryptoPrisma } from "@/lib/crypto-db";
+
+/** Chave em `backcrypto.AppConfig` — limite de linhas no sync de reembolso (login afiliado). */
+export const APP_CONFIG_KEY_AFFILIATE_REFUND_SYNC_ROW_LIMIT = "AFFILIATE_REFUND_SYNC_ROW_LIMIT";
+
+const DEFAULT_AFFILIATE_REFUND_SYNC_ROW_LIMIT = 500;
+const MAX_AFFILIATE_REFUND_SYNC_ROW_LIMIT = 2000;
+
+function clampAffiliateRefundSyncRowLimit(n: number): number {
+  return Math.max(1, Math.min(MAX_AFFILIATE_REFUND_SYNC_ROW_LIMIT, n));
+}
+
+/**
+ * Ordem: `AppConfig` → env `AFFILIATE_REFUND_SYNC_ROW_LIMIT` → default 500 (1–2000).
+ */
+export async function resolveAffiliateRefundSyncRowLimit(): Promise<number> {
+  try {
+    const row = await cryptoPrisma.appConfig.findUnique({
+      where: { key: APP_CONFIG_KEY_AFFILIATE_REFUND_SYNC_ROW_LIMIT },
+      select: { value: true },
+    });
+    if (row?.value) {
+      const n = parseInt(String(row.value).trim(), 10);
+      if (Number.isFinite(n)) return clampAffiliateRefundSyncRowLimit(n);
+    }
+  } catch {
+    /* tabela ausente ou erro transitório */
+  }
+  const raw = process.env.AFFILIATE_REFUND_SYNC_ROW_LIMIT;
+  if (raw != null && raw !== "") {
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n)) return clampAffiliateRefundSyncRowLimit(n);
+  }
+  return DEFAULT_AFFILIATE_REFUND_SYNC_ROW_LIMIT;
+}
+
 // Tabelas Bio removidas; retorna apenas defaults (sem BioAppConfig).
 const BIO_QUEUE_KEYS = [
   "bio_queue_max_fila_1x", "bio_queue_max_fila_20x", "bio_queue_max_fila_100x", "bio_queue_max_fila_1000x",
