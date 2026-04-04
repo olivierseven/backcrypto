@@ -165,6 +165,34 @@ exports.Prisma.UserScalarFieldEnum = {
   previousTabUpdatedAt: 'previousTabUpdatedAt'
 };
 
+exports.Prisma.UserBinanceConnectionScalarFieldEnum = {
+  userId: 'userId',
+  payloadEnc: 'payloadEnc',
+  payloadIv: 'payloadIv',
+  payloadTag: 'payloadTag',
+  apiKeyLast4: 'apiKeyLast4',
+  lastVerifiedAt: 'lastVerifiedAt',
+  defaultQuoteUsdtPerOrder: 'defaultQuoteUsdtPerOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserBinanceSpotOrderScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  symbol: 'symbol',
+  binanceOrderId: 'binanceOrderId',
+  side: 'side',
+  orderType: 'orderType',
+  status: 'status',
+  price: 'price',
+  origQty: 'origQty',
+  executedQty: 'executedQty',
+  rawJson: 'rawJson',
+  canceledAt: 'canceledAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.AffiliateAccountScalarFieldEnum = {
   id: 'id',
   emailEnc: 'emailEnc',
@@ -743,6 +771,8 @@ exports.CheckoutStatus = exports.$Enums.CheckoutStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  UserBinanceConnection: 'UserBinanceConnection',
+  UserBinanceSpotOrder: 'UserBinanceSpotOrder',
   AffiliateAccount: 'AffiliateAccount',
   AffiliateCoupon: 'AffiliateCoupon',
   ChartLayout: 'ChartLayout',

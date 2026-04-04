@@ -71,6 +71,16 @@ export interface KlinesChartSvgProps {
   lastCloseLineHex: string;
   lastCloseLineStrokeWidth?: "thin" | "normal" | "thick";
   lastCloseLineStrokeStyle?: "solid" | "dotted" | "dashed";
+  /** Linhas horizontais: ordens limite de compra abertas (Binance) + preço na boleta. */
+  showLimitBuyLine?: boolean;
+  limitBuyLineYs?: number[];
+  limitBuyLineHex?: string;
+  /** Pré-visualização Ctrl: compra limite válida (≥0,1% abaixo do último). */
+  ctrlLimitBuyPreviewLineY?: number | null;
+  ctrlLimitBuyPreviewHex?: string;
+  /** Pré-visualização Alt: venda limite válida (≥0,1% acima do último). */
+  altLimitSellPreviewLineY?: number | null;
+  altLimitSellPreviewHex?: string;
   chartBgHex: string;
   backgroundTextHex: string;
   formatYAxis: (v: number) => string;
@@ -195,6 +205,13 @@ export function KlinesChartSvg({
   lastCloseLineHex,
   lastCloseLineStrokeWidth = "thin",
   lastCloseLineStrokeStyle = "dashed",
+  showLimitBuyLine = false,
+  limitBuyLineYs = [],
+  limitBuyLineHex = "#059669",
+  ctrlLimitBuyPreviewLineY = null,
+  ctrlLimitBuyPreviewHex = "#d97706",
+  altLimitSellPreviewLineY = null,
+  altLimitSellPreviewHex = "#dc2626",
   chartBgHex,
   backgroundTextHex,
   formatYAxis,
@@ -342,11 +359,9 @@ export function KlinesChartSvg({
   const fontSizeAxis = Math.max(7, Math.round(12 * textScale * axisWidthFactor));
   const volumeOnPriceClipId = useId();
   const plotClipId = useId();
+  /** Mira fixa no último ponto até novo clique; índice pode sair da janela ao rolar — ainda lemos de fullReversed. */
   const showCrosshairValues =
-    crosshairPoint !== null &&
-    (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) &&
-    crosshairPoint.index >= 0 &&
-    crosshairPoint.index < fullReversed.length;
+    crosshairPoint !== null && crosshairPoint.index >= 0 && crosshairPoint.index < fullReversed.length;
 
   const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4" | "panel5", topY: number, lines: ChartIndicatorLine[]) => (
     <div
@@ -520,6 +535,43 @@ export function KlinesChartSvg({
             stroke={lastCloseLineHex}
             strokeWidth={lineWidthToStroke(lastCloseLineStrokeWidth)}
             strokeDasharray={lastCloseLineStrokeStyle === "solid" ? undefined : lastCloseLineStrokeStyle === "dotted" ? "1 2" : "4 2"}
+          />
+        )}
+        {showLimitBuyLine &&
+          limitBuyLineYs.map((yy, i) => (
+            <line
+              key={`limit-buy-${i}`}
+              x1={MARGIN_LEFT}
+              y1={yy}
+              x2={MARGIN_LEFT + chartW}
+              y2={yy}
+              stroke={limitBuyLineHex}
+              strokeWidth={lineWidthToStroke("thin")}
+              strokeDasharray="1 2"
+            />
+          ))}
+        {ctrlLimitBuyPreviewLineY != null && Number.isFinite(ctrlLimitBuyPreviewLineY) && (
+          <line
+            x1={MARGIN_LEFT}
+            y1={ctrlLimitBuyPreviewLineY}
+            x2={MARGIN_LEFT + chartW}
+            y2={ctrlLimitBuyPreviewLineY}
+            stroke={ctrlLimitBuyPreviewHex}
+            strokeWidth={lineWidthToStroke("normal")}
+            strokeDasharray="8 4"
+            opacity={0.92}
+          />
+        )}
+        {altLimitSellPreviewLineY != null && Number.isFinite(altLimitSellPreviewLineY) && (
+          <line
+            x1={MARGIN_LEFT}
+            y1={altLimitSellPreviewLineY}
+            x2={MARGIN_LEFT + chartW}
+            y2={altLimitSellPreviewLineY}
+            stroke={altLimitSellPreviewHex}
+            strokeWidth={lineWidthToStroke("normal")}
+            strokeDasharray="8 4"
+            opacity={0.92}
           />
         )}
         {showMainAxis &&
@@ -1819,8 +1871,8 @@ export function KlinesChartSvg({
           );
         })()}
         {crosshairPoint && (() => {
-          const isOverCandle = crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
-          const showCrosshair = isOverCandle || crosshairDragging;
+          const showCrosshair =
+            crosshairPoint.index >= 0 && crosshairPoint.index < n;
           if (!showCrosshair) return null;
           let crossX = segmentToPixel(crosshairPoint.index, crosshairPoint.price).x;
           let crossY = crosshairPoint.panelClickY != null ? crosshairPoint.panelClickY : y(crosshairPoint.price);

@@ -148,8 +148,7 @@ export function KlinesChartYAxis({
   }, [currentCandleCloseTimeMs, groupMinutes]);
 
   const crosshairActive =
-    crosshairPoint !== null &&
-    (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging);
+    crosshairPoint !== null && crosshairPoint.index >= 0 && crosshairPoint.index < n;
   const crosshairOverlay =
     crosshairActive && crosshairPoint !== null
       ? (() => {

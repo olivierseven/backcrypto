@@ -36,6 +36,7 @@ import SaveLoadPanel from "./SaveLoadPanel";
 import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
 import SingleTabGuard from "./SingleTabGuard";
 import TrialNotificationModal from "./TrialNotificationModal";
+import SistemaTradingFooter from "./SistemaTradingFooter";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -791,6 +792,7 @@ function SistemaLayoutContent({
                   {isSistemaChartPage && <SistemaHeaderCard />}
                   {children}
                 </div>
+                {isSistemaChartPage && <SistemaTradingFooter />}
               </div>
               {indicatorsPanelOpen && (
                 <>

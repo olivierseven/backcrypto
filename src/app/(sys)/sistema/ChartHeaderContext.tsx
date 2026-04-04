@@ -26,41 +26,82 @@ export type ChartIntervalPickerRegistration = {
 export interface ChartHeaderData {
   chartContainerWidth: number | null;
   priceText: string | null;
+  /** Preço de referência numérico (USDT) para o par atual — mesmo valor usado em `priceText`, sem formatação. */
+  lastPriceUsdt: number | null;
   pctText: string | null;
   max24h: string | null;
   min24h: string | null;
   vol24hBtc: string | null;
   vol24hUsd: string | null;
   intervalLabel: string | null;
+  /** Preço limite de compra (USDT) na boleta, para linha no gráfico; null se não aplicável. */
+  limitBuyOrderPriceUsdt: number | null;
+  /** Ordens limite de compra abertas na Binance (NEW / parcial) — preços para linhas no gráfico. */
+  openLimitBuyPricesUsdt: number[];
+  /** Mesmas ordens com id (cancelar no gráfico). */
+  openLimitBuyOrdersUsdt: { orderId: string; price: number }[];
+  /** Preço USDT no eixo principal onde a mira está fixa; null sem mira ou mira só em painel secundário. */
+  crosshairMainPriceUsdt: number | null;
 }
 
 const defaultData: ChartHeaderData = {
   chartContainerWidth: null,
   priceText: null,
+  lastPriceUsdt: null,
   pctText: null,
   max24h: null,
   min24h: null,
   vol24hBtc: null,
   vol24hUsd: null,
   intervalLabel: null,
+  limitBuyOrderPriceUsdt: null,
+  openLimitBuyPricesUsdt: [],
+  openLimitBuyOrdersUsdt: [],
+  crosshairMainPriceUsdt: null,
 };
+
+function sameNumberArray(a: number[], b: number[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function sameLimitBuyOrders(
+  a: { orderId: string; price: number }[],
+  b: { orderId: string; price: number }[]
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].orderId !== b[i].orderId || a[i].price !== b[i].price) return false;
+  }
+  return true;
+}
 
 function chartHeaderDataEqual(a: ChartHeaderData, b: ChartHeaderData): boolean {
   return (
     a.chartContainerWidth === b.chartContainerWidth &&
     a.priceText === b.priceText &&
+    a.lastPriceUsdt === b.lastPriceUsdt &&
     a.pctText === b.pctText &&
     a.max24h === b.max24h &&
     a.min24h === b.min24h &&
     a.vol24hBtc === b.vol24hBtc &&
     a.vol24hUsd === b.vol24hUsd &&
-    a.intervalLabel === b.intervalLabel
+    a.intervalLabel === b.intervalLabel &&
+    a.limitBuyOrderPriceUsdt === b.limitBuyOrderPriceUsdt &&
+    sameNumberArray(a.openLimitBuyPricesUsdt, b.openLimitBuyPricesUsdt) &&
+    sameLimitBuyOrders(a.openLimitBuyOrdersUsdt, b.openLimitBuyOrdersUsdt) &&
+    a.crosshairMainPriceUsdt === b.crosshairMainPriceUsdt
   );
 }
 
 type ChartHeaderContextValue = {
   data: ChartHeaderData;
   setHeaderData: (d: ChartHeaderData | null) => void;
+  setLimitBuyOrderPriceUsdt: (v: number | null) => void;
+  setOpenLimitBuyPricesUsdt: (v: number[]) => void;
+  setOpenLimitBuyOrdersUsdt: (v: { orderId: string; price: number }[]) => void;
+  setCrosshairMainPriceUsdt: (v: number | null) => void;
   intervalPicker: ChartIntervalPickerRegistration | null;
   setIntervalPicker: (next: ChartIntervalPickerRegistration | null) => void;
   /** Troca rápida de timeframe por teclado (número + sufixo de letra). */
@@ -83,6 +124,34 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
     setData((prev) => (chartHeaderDataEqual(prev, next) ? prev : next));
   }, []);
 
+  const setLimitBuyOrderPriceUsdt = useCallback((v: number | null) => {
+    setData((prev) => {
+      const next = { ...prev, limitBuyOrderPriceUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
+  const setOpenLimitBuyPricesUsdt = useCallback((v: number[]) => {
+    setData((prev) => {
+      const next = { ...prev, openLimitBuyPricesUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
+  const setOpenLimitBuyOrdersUsdt = useCallback((v: { orderId: string; price: number }[]) => {
+    setData((prev) => {
+      const next = { ...prev, openLimitBuyOrdersUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
+  const setCrosshairMainPriceUsdt = useCallback((v: number | null) => {
+    setData((prev) => {
+      const next = { ...prev, crosshairMainPriceUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
   const setIntervalPicker = useCallback((next: ChartIntervalPickerRegistration | null) => {
     setIntervalPickerState(next);
   }, []);
@@ -100,6 +169,10 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
     () => ({
       data,
       setHeaderData,
+      setLimitBuyOrderPriceUsdt,
+      setOpenLimitBuyPricesUsdt,
+      setOpenLimitBuyOrdersUsdt,
+      setCrosshairMainPriceUsdt,
       intervalPicker,
       setIntervalPicker,
       intervalQuickSwitchOpen,
@@ -110,6 +183,10 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
     [
       data,
       setHeaderData,
+      setLimitBuyOrderPriceUsdt,
+      setOpenLimitBuyPricesUsdt,
+      setOpenLimitBuyOrdersUsdt,
+      setCrosshairMainPriceUsdt,
       intervalPicker,
       setIntervalPicker,
       intervalQuickSwitchOpen,
@@ -128,6 +205,10 @@ export function useChartHeader(): ChartHeaderContextValue {
     return {
       data: defaultData,
       setHeaderData: () => {},
+      setLimitBuyOrderPriceUsdt: () => {},
+      setOpenLimitBuyPricesUsdt: () => {},
+      setOpenLimitBuyOrdersUsdt: () => {},
+      setCrosshairMainPriceUsdt: () => {},
       intervalPicker: null,
       setIntervalPicker: () => {},
       intervalQuickSwitchOpen: false,

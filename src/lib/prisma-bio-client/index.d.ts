@@ -19,6 +19,16 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model UserBinanceConnection
+ * Credenciais API Binance do utilizador (payload cifrado com EMAIL_ENC_KEY_B64 / AES-256-GCM).
+ */
+export type UserBinanceConnection = $Result.DefaultSelection<Prisma.$UserBinanceConnectionPayload>
+/**
+ * Model UserBinanceSpotOrder
+ * Ordens spot Binance criadas pela app (para cancelamento e histórico). `binance_order_id` vem da API.
+ */
+export type UserBinanceSpotOrder = $Result.DefaultSelection<Prisma.$UserBinanceSpotOrderPayload>
+/**
  * Model AffiliateAccount
  * Conta de afiliado (login separado do User). E-mail criptografado + emailSearchHash + passwordHash (bcrypt), como User.
  */
@@ -435,6 +445,26 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userBinanceConnection`: Exposes CRUD operations for the **UserBinanceConnection** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserBinanceConnections
+    * const userBinanceConnections = await prisma.userBinanceConnection.findMany()
+    * ```
+    */
+  get userBinanceConnection(): Prisma.UserBinanceConnectionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userBinanceSpotOrder`: Exposes CRUD operations for the **UserBinanceSpotOrder** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserBinanceSpotOrders
+    * const userBinanceSpotOrders = await prisma.userBinanceSpotOrder.findMany()
+    * ```
+    */
+  get userBinanceSpotOrder(): Prisma.UserBinanceSpotOrderDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.affiliateAccount`: Exposes CRUD operations for the **AffiliateAccount** model.
@@ -1207,6 +1237,8 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    UserBinanceConnection: 'UserBinanceConnection',
+    UserBinanceSpotOrder: 'UserBinanceSpotOrder',
     AffiliateAccount: 'AffiliateAccount',
     AffiliateCoupon: 'AffiliateCoupon',
     ChartLayout: 'ChartLayout',
@@ -1258,7 +1290,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
+      modelProps: "user" | "userBinanceConnection" | "userBinanceSpotOrder" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1333,6 +1365,154 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserBinanceConnection: {
+        payload: Prisma.$UserBinanceConnectionPayload<ExtArgs>
+        fields: Prisma.UserBinanceConnectionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserBinanceConnectionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserBinanceConnectionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          findFirst: {
+            args: Prisma.UserBinanceConnectionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserBinanceConnectionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          findMany: {
+            args: Prisma.UserBinanceConnectionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>[]
+          }
+          create: {
+            args: Prisma.UserBinanceConnectionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          createMany: {
+            args: Prisma.UserBinanceConnectionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserBinanceConnectionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>[]
+          }
+          delete: {
+            args: Prisma.UserBinanceConnectionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          update: {
+            args: Prisma.UserBinanceConnectionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserBinanceConnectionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserBinanceConnectionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserBinanceConnectionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserBinanceConnectionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceConnectionPayload>
+          }
+          aggregate: {
+            args: Prisma.UserBinanceConnectionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserBinanceConnection>
+          }
+          groupBy: {
+            args: Prisma.UserBinanceConnectionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserBinanceConnectionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserBinanceConnectionCountArgs<ExtArgs>
+            result: $Utils.Optional<UserBinanceConnectionCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserBinanceSpotOrder: {
+        payload: Prisma.$UserBinanceSpotOrderPayload<ExtArgs>
+        fields: Prisma.UserBinanceSpotOrderFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserBinanceSpotOrderFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserBinanceSpotOrderFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          findFirst: {
+            args: Prisma.UserBinanceSpotOrderFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserBinanceSpotOrderFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          findMany: {
+            args: Prisma.UserBinanceSpotOrderFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>[]
+          }
+          create: {
+            args: Prisma.UserBinanceSpotOrderCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          createMany: {
+            args: Prisma.UserBinanceSpotOrderCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserBinanceSpotOrderCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>[]
+          }
+          delete: {
+            args: Prisma.UserBinanceSpotOrderDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          update: {
+            args: Prisma.UserBinanceSpotOrderUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserBinanceSpotOrderDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserBinanceSpotOrderUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserBinanceSpotOrderUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserBinanceSpotOrderUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserBinanceSpotOrderPayload>
+          }
+          aggregate: {
+            args: Prisma.UserBinanceSpotOrderAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserBinanceSpotOrder>
+          }
+          groupBy: {
+            args: Prisma.UserBinanceSpotOrderGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserBinanceSpotOrderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserBinanceSpotOrderCountArgs<ExtArgs>
+            result: $Utils.Optional<UserBinanceSpotOrderCountAggregateOutputType> | number
           }
         }
       }
@@ -3875,6 +4055,8 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    userBinanceConnection?: UserBinanceConnectionOmit
+    userBinanceSpotOrder?: UserBinanceSpotOrderOmit
     affiliateAccount?: AffiliateAccountOmit
     affiliateCoupon?: AffiliateCouponOmit
     chartLayout?: ChartLayoutOmit
@@ -3999,6 +4181,7 @@ export namespace Prisma {
     chartLayouts: number
     chartModels: number
     stripePlanPayments: number
+    binanceSpotOrders: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4013,6 +4196,7 @@ export namespace Prisma {
     chartLayouts?: boolean | UserCountOutputTypeCountChartLayoutsArgs
     chartModels?: boolean | UserCountOutputTypeCountChartModelsArgs
     stripePlanPayments?: boolean | UserCountOutputTypeCountStripePlanPaymentsArgs
+    binanceSpotOrders?: boolean | UserCountOutputTypeCountBinanceSpotOrdersArgs
   }
 
   // Custom InputTypes
@@ -4101,6 +4285,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountStripePlanPaymentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: StripePlanPaymentWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountBinanceSpotOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserBinanceSpotOrderWhereInput
   }
 
 
@@ -4700,6 +4891,8 @@ export namespace Prisma {
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
+    binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
+    binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -4849,6 +5042,8 @@ export namespace Prisma {
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
+    binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
+    binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4869,6 +5064,8 @@ export namespace Prisma {
       chartLayouts: Prisma.$ChartLayoutPayload<ExtArgs>[]
       chartModels: Prisma.$ChartModelPayload<ExtArgs>[]
       stripePlanPayments: Prisma.$StripePlanPaymentPayload<ExtArgs>[]
+      binanceConnection: Prisma.$UserBinanceConnectionPayload<ExtArgs> | null
+      binanceSpotOrders: Prisma.$UserBinanceSpotOrderPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5318,6 +5515,8 @@ export namespace Prisma {
     chartLayouts<T extends User$chartLayoutsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartLayoutsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartLayoutPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     chartModels<T extends User$chartModelsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartModelsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartModelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     stripePlanPayments<T extends User$stripePlanPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, User$stripePlanPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    binanceConnection<T extends User$binanceConnectionArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceConnectionArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    binanceSpotOrders<T extends User$binanceSpotOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceSpotOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6059,6 +6258,49 @@ export namespace Prisma {
   }
 
   /**
+   * User.binanceConnection
+   */
+  export type User$binanceConnectionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    where?: UserBinanceConnectionWhereInput
+  }
+
+  /**
+   * User.binanceSpotOrders
+   */
+  export type User$binanceSpotOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    where?: UserBinanceSpotOrderWhereInput
+    orderBy?: UserBinanceSpotOrderOrderByWithRelationInput | UserBinanceSpotOrderOrderByWithRelationInput[]
+    cursor?: UserBinanceSpotOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserBinanceSpotOrderScalarFieldEnum | UserBinanceSpotOrderScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6074,6 +6316,2311 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserBinanceConnection
+   */
+
+  export type AggregateUserBinanceConnection = {
+    _count: UserBinanceConnectionCountAggregateOutputType | null
+    _avg: UserBinanceConnectionAvgAggregateOutputType | null
+    _sum: UserBinanceConnectionSumAggregateOutputType | null
+    _min: UserBinanceConnectionMinAggregateOutputType | null
+    _max: UserBinanceConnectionMaxAggregateOutputType | null
+  }
+
+  export type UserBinanceConnectionAvgAggregateOutputType = {
+    defaultQuoteUsdtPerOrder: Decimal | null
+  }
+
+  export type UserBinanceConnectionSumAggregateOutputType = {
+    defaultQuoteUsdtPerOrder: Decimal | null
+  }
+
+  export type UserBinanceConnectionMinAggregateOutputType = {
+    userId: string | null
+    payloadEnc: string | null
+    payloadIv: string | null
+    payloadTag: string | null
+    apiKeyLast4: string | null
+    lastVerifiedAt: Date | null
+    defaultQuoteUsdtPerOrder: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserBinanceConnectionMaxAggregateOutputType = {
+    userId: string | null
+    payloadEnc: string | null
+    payloadIv: string | null
+    payloadTag: string | null
+    apiKeyLast4: string | null
+    lastVerifiedAt: Date | null
+    defaultQuoteUsdtPerOrder: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserBinanceConnectionCountAggregateOutputType = {
+    userId: number
+    payloadEnc: number
+    payloadIv: number
+    payloadTag: number
+    apiKeyLast4: number
+    lastVerifiedAt: number
+    defaultQuoteUsdtPerOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserBinanceConnectionAvgAggregateInputType = {
+    defaultQuoteUsdtPerOrder?: true
+  }
+
+  export type UserBinanceConnectionSumAggregateInputType = {
+    defaultQuoteUsdtPerOrder?: true
+  }
+
+  export type UserBinanceConnectionMinAggregateInputType = {
+    userId?: true
+    payloadEnc?: true
+    payloadIv?: true
+    payloadTag?: true
+    apiKeyLast4?: true
+    lastVerifiedAt?: true
+    defaultQuoteUsdtPerOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserBinanceConnectionMaxAggregateInputType = {
+    userId?: true
+    payloadEnc?: true
+    payloadIv?: true
+    payloadTag?: true
+    apiKeyLast4?: true
+    lastVerifiedAt?: true
+    defaultQuoteUsdtPerOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserBinanceConnectionCountAggregateInputType = {
+    userId?: true
+    payloadEnc?: true
+    payloadIv?: true
+    payloadTag?: true
+    apiKeyLast4?: true
+    lastVerifiedAt?: true
+    defaultQuoteUsdtPerOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserBinanceConnectionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserBinanceConnection to aggregate.
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceConnections to fetch.
+     */
+    orderBy?: UserBinanceConnectionOrderByWithRelationInput | UserBinanceConnectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserBinanceConnectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceConnections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceConnections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserBinanceConnections
+    **/
+    _count?: true | UserBinanceConnectionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserBinanceConnectionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserBinanceConnectionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserBinanceConnectionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserBinanceConnectionMaxAggregateInputType
+  }
+
+  export type GetUserBinanceConnectionAggregateType<T extends UserBinanceConnectionAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserBinanceConnection]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserBinanceConnection[P]>
+      : GetScalarType<T[P], AggregateUserBinanceConnection[P]>
+  }
+
+
+
+
+  export type UserBinanceConnectionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserBinanceConnectionWhereInput
+    orderBy?: UserBinanceConnectionOrderByWithAggregationInput | UserBinanceConnectionOrderByWithAggregationInput[]
+    by: UserBinanceConnectionScalarFieldEnum[] | UserBinanceConnectionScalarFieldEnum
+    having?: UserBinanceConnectionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserBinanceConnectionCountAggregateInputType | true
+    _avg?: UserBinanceConnectionAvgAggregateInputType
+    _sum?: UserBinanceConnectionSumAggregateInputType
+    _min?: UserBinanceConnectionMinAggregateInputType
+    _max?: UserBinanceConnectionMaxAggregateInputType
+  }
+
+  export type UserBinanceConnectionGroupByOutputType = {
+    userId: string
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt: Date | null
+    defaultQuoteUsdtPerOrder: Decimal | null
+    createdAt: Date
+    updatedAt: Date
+    _count: UserBinanceConnectionCountAggregateOutputType | null
+    _avg: UserBinanceConnectionAvgAggregateOutputType | null
+    _sum: UserBinanceConnectionSumAggregateOutputType | null
+    _min: UserBinanceConnectionMinAggregateOutputType | null
+    _max: UserBinanceConnectionMaxAggregateOutputType | null
+  }
+
+  type GetUserBinanceConnectionGroupByPayload<T extends UserBinanceConnectionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserBinanceConnectionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserBinanceConnectionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserBinanceConnectionGroupByOutputType[P]>
+            : GetScalarType<T[P], UserBinanceConnectionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserBinanceConnectionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    payloadEnc?: boolean
+    payloadIv?: boolean
+    payloadTag?: boolean
+    apiKeyLast4?: boolean
+    lastVerifiedAt?: boolean
+    defaultQuoteUsdtPerOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceConnection"]>
+
+  export type UserBinanceConnectionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    payloadEnc?: boolean
+    payloadIv?: boolean
+    payloadTag?: boolean
+    apiKeyLast4?: boolean
+    lastVerifiedAt?: boolean
+    defaultQuoteUsdtPerOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceConnection"]>
+
+  export type UserBinanceConnectionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    payloadEnc?: boolean
+    payloadIv?: boolean
+    payloadTag?: boolean
+    apiKeyLast4?: boolean
+    lastVerifiedAt?: boolean
+    defaultQuoteUsdtPerOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceConnection"]>
+
+  export type UserBinanceConnectionSelectScalar = {
+    userId?: boolean
+    payloadEnc?: boolean
+    payloadIv?: boolean
+    payloadTag?: boolean
+    apiKeyLast4?: boolean
+    lastVerifiedAt?: boolean
+    defaultQuoteUsdtPerOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserBinanceConnectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "payloadEnc" | "payloadIv" | "payloadTag" | "apiKeyLast4" | "lastVerifiedAt" | "defaultQuoteUsdtPerOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["userBinanceConnection"]>
+  export type UserBinanceConnectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserBinanceConnectionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserBinanceConnectionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $UserBinanceConnectionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserBinanceConnection"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      userId: string
+      payloadEnc: string
+      payloadIv: string
+      payloadTag: string
+      apiKeyLast4: string
+      lastVerifiedAt: Date | null
+      /**
+       * USDT a gastar por operação (compra): pré-preenchimento nas boletas; opcional.
+       */
+      defaultQuoteUsdtPerOrder: Prisma.Decimal | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["userBinanceConnection"]>
+    composites: {}
+  }
+
+  type UserBinanceConnectionGetPayload<S extends boolean | null | undefined | UserBinanceConnectionDefaultArgs> = $Result.GetResult<Prisma.$UserBinanceConnectionPayload, S>
+
+  type UserBinanceConnectionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserBinanceConnectionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserBinanceConnectionCountAggregateInputType | true
+    }
+
+  export interface UserBinanceConnectionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserBinanceConnection'], meta: { name: 'UserBinanceConnection' } }
+    /**
+     * Find zero or one UserBinanceConnection that matches the filter.
+     * @param {UserBinanceConnectionFindUniqueArgs} args - Arguments to find a UserBinanceConnection
+     * @example
+     * // Get one UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserBinanceConnectionFindUniqueArgs>(args: SelectSubset<T, UserBinanceConnectionFindUniqueArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserBinanceConnection that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserBinanceConnectionFindUniqueOrThrowArgs} args - Arguments to find a UserBinanceConnection
+     * @example
+     * // Get one UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserBinanceConnectionFindUniqueOrThrowArgs>(args: SelectSubset<T, UserBinanceConnectionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserBinanceConnection that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionFindFirstArgs} args - Arguments to find a UserBinanceConnection
+     * @example
+     * // Get one UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserBinanceConnectionFindFirstArgs>(args?: SelectSubset<T, UserBinanceConnectionFindFirstArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserBinanceConnection that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionFindFirstOrThrowArgs} args - Arguments to find a UserBinanceConnection
+     * @example
+     * // Get one UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserBinanceConnectionFindFirstOrThrowArgs>(args?: SelectSubset<T, UserBinanceConnectionFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserBinanceConnections that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserBinanceConnections
+     * const userBinanceConnections = await prisma.userBinanceConnection.findMany()
+     * 
+     * // Get first 10 UserBinanceConnections
+     * const userBinanceConnections = await prisma.userBinanceConnection.findMany({ take: 10 })
+     * 
+     * // Only select the `userId`
+     * const userBinanceConnectionWithUserIdOnly = await prisma.userBinanceConnection.findMany({ select: { userId: true } })
+     * 
+     */
+    findMany<T extends UserBinanceConnectionFindManyArgs>(args?: SelectSubset<T, UserBinanceConnectionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserBinanceConnection.
+     * @param {UserBinanceConnectionCreateArgs} args - Arguments to create a UserBinanceConnection.
+     * @example
+     * // Create one UserBinanceConnection
+     * const UserBinanceConnection = await prisma.userBinanceConnection.create({
+     *   data: {
+     *     // ... data to create a UserBinanceConnection
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserBinanceConnectionCreateArgs>(args: SelectSubset<T, UserBinanceConnectionCreateArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserBinanceConnections.
+     * @param {UserBinanceConnectionCreateManyArgs} args - Arguments to create many UserBinanceConnections.
+     * @example
+     * // Create many UserBinanceConnections
+     * const userBinanceConnection = await prisma.userBinanceConnection.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserBinanceConnectionCreateManyArgs>(args?: SelectSubset<T, UserBinanceConnectionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserBinanceConnections and returns the data saved in the database.
+     * @param {UserBinanceConnectionCreateManyAndReturnArgs} args - Arguments to create many UserBinanceConnections.
+     * @example
+     * // Create many UserBinanceConnections
+     * const userBinanceConnection = await prisma.userBinanceConnection.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserBinanceConnections and only return the `userId`
+     * const userBinanceConnectionWithUserIdOnly = await prisma.userBinanceConnection.createManyAndReturn({
+     *   select: { userId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserBinanceConnectionCreateManyAndReturnArgs>(args?: SelectSubset<T, UserBinanceConnectionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserBinanceConnection.
+     * @param {UserBinanceConnectionDeleteArgs} args - Arguments to delete one UserBinanceConnection.
+     * @example
+     * // Delete one UserBinanceConnection
+     * const UserBinanceConnection = await prisma.userBinanceConnection.delete({
+     *   where: {
+     *     // ... filter to delete one UserBinanceConnection
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserBinanceConnectionDeleteArgs>(args: SelectSubset<T, UserBinanceConnectionDeleteArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserBinanceConnection.
+     * @param {UserBinanceConnectionUpdateArgs} args - Arguments to update one UserBinanceConnection.
+     * @example
+     * // Update one UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserBinanceConnectionUpdateArgs>(args: SelectSubset<T, UserBinanceConnectionUpdateArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserBinanceConnections.
+     * @param {UserBinanceConnectionDeleteManyArgs} args - Arguments to filter UserBinanceConnections to delete.
+     * @example
+     * // Delete a few UserBinanceConnections
+     * const { count } = await prisma.userBinanceConnection.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserBinanceConnectionDeleteManyArgs>(args?: SelectSubset<T, UserBinanceConnectionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserBinanceConnections.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserBinanceConnections
+     * const userBinanceConnection = await prisma.userBinanceConnection.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserBinanceConnectionUpdateManyArgs>(args: SelectSubset<T, UserBinanceConnectionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserBinanceConnections and returns the data updated in the database.
+     * @param {UserBinanceConnectionUpdateManyAndReturnArgs} args - Arguments to update many UserBinanceConnections.
+     * @example
+     * // Update many UserBinanceConnections
+     * const userBinanceConnection = await prisma.userBinanceConnection.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserBinanceConnections and only return the `userId`
+     * const userBinanceConnectionWithUserIdOnly = await prisma.userBinanceConnection.updateManyAndReturn({
+     *   select: { userId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserBinanceConnectionUpdateManyAndReturnArgs>(args: SelectSubset<T, UserBinanceConnectionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserBinanceConnection.
+     * @param {UserBinanceConnectionUpsertArgs} args - Arguments to update or create a UserBinanceConnection.
+     * @example
+     * // Update or create a UserBinanceConnection
+     * const userBinanceConnection = await prisma.userBinanceConnection.upsert({
+     *   create: {
+     *     // ... data to create a UserBinanceConnection
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserBinanceConnection we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserBinanceConnectionUpsertArgs>(args: SelectSubset<T, UserBinanceConnectionUpsertArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserBinanceConnections.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionCountArgs} args - Arguments to filter UserBinanceConnections to count.
+     * @example
+     * // Count the number of UserBinanceConnections
+     * const count = await prisma.userBinanceConnection.count({
+     *   where: {
+     *     // ... the filter for the UserBinanceConnections we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserBinanceConnectionCountArgs>(
+      args?: Subset<T, UserBinanceConnectionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserBinanceConnectionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserBinanceConnection.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserBinanceConnectionAggregateArgs>(args: Subset<T, UserBinanceConnectionAggregateArgs>): Prisma.PrismaPromise<GetUserBinanceConnectionAggregateType<T>>
+
+    /**
+     * Group by UserBinanceConnection.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceConnectionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserBinanceConnectionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserBinanceConnectionGroupByArgs['orderBy'] }
+        : { orderBy?: UserBinanceConnectionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserBinanceConnectionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserBinanceConnectionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserBinanceConnection model
+   */
+  readonly fields: UserBinanceConnectionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserBinanceConnection.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserBinanceConnectionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserBinanceConnection model
+   */
+  interface UserBinanceConnectionFieldRefs {
+    readonly userId: FieldRef<"UserBinanceConnection", 'String'>
+    readonly payloadEnc: FieldRef<"UserBinanceConnection", 'String'>
+    readonly payloadIv: FieldRef<"UserBinanceConnection", 'String'>
+    readonly payloadTag: FieldRef<"UserBinanceConnection", 'String'>
+    readonly apiKeyLast4: FieldRef<"UserBinanceConnection", 'String'>
+    readonly lastVerifiedAt: FieldRef<"UserBinanceConnection", 'DateTime'>
+    readonly defaultQuoteUsdtPerOrder: FieldRef<"UserBinanceConnection", 'Decimal'>
+    readonly createdAt: FieldRef<"UserBinanceConnection", 'DateTime'>
+    readonly updatedAt: FieldRef<"UserBinanceConnection", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserBinanceConnection findUnique
+   */
+  export type UserBinanceConnectionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceConnection to fetch.
+     */
+    where: UserBinanceConnectionWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceConnection findUniqueOrThrow
+   */
+  export type UserBinanceConnectionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceConnection to fetch.
+     */
+    where: UserBinanceConnectionWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceConnection findFirst
+   */
+  export type UserBinanceConnectionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceConnection to fetch.
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceConnections to fetch.
+     */
+    orderBy?: UserBinanceConnectionOrderByWithRelationInput | UserBinanceConnectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserBinanceConnections.
+     */
+    cursor?: UserBinanceConnectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceConnections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceConnections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserBinanceConnections.
+     */
+    distinct?: UserBinanceConnectionScalarFieldEnum | UserBinanceConnectionScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceConnection findFirstOrThrow
+   */
+  export type UserBinanceConnectionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceConnection to fetch.
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceConnections to fetch.
+     */
+    orderBy?: UserBinanceConnectionOrderByWithRelationInput | UserBinanceConnectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserBinanceConnections.
+     */
+    cursor?: UserBinanceConnectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceConnections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceConnections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserBinanceConnections.
+     */
+    distinct?: UserBinanceConnectionScalarFieldEnum | UserBinanceConnectionScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceConnection findMany
+   */
+  export type UserBinanceConnectionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceConnections to fetch.
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceConnections to fetch.
+     */
+    orderBy?: UserBinanceConnectionOrderByWithRelationInput | UserBinanceConnectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserBinanceConnections.
+     */
+    cursor?: UserBinanceConnectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceConnections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceConnections.
+     */
+    skip?: number
+    distinct?: UserBinanceConnectionScalarFieldEnum | UserBinanceConnectionScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceConnection create
+   */
+  export type UserBinanceConnectionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserBinanceConnection.
+     */
+    data: XOR<UserBinanceConnectionCreateInput, UserBinanceConnectionUncheckedCreateInput>
+  }
+
+  /**
+   * UserBinanceConnection createMany
+   */
+  export type UserBinanceConnectionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserBinanceConnections.
+     */
+    data: UserBinanceConnectionCreateManyInput | UserBinanceConnectionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserBinanceConnection createManyAndReturn
+   */
+  export type UserBinanceConnectionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserBinanceConnections.
+     */
+    data: UserBinanceConnectionCreateManyInput | UserBinanceConnectionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserBinanceConnection update
+   */
+  export type UserBinanceConnectionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserBinanceConnection.
+     */
+    data: XOR<UserBinanceConnectionUpdateInput, UserBinanceConnectionUncheckedUpdateInput>
+    /**
+     * Choose, which UserBinanceConnection to update.
+     */
+    where: UserBinanceConnectionWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceConnection updateMany
+   */
+  export type UserBinanceConnectionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserBinanceConnections.
+     */
+    data: XOR<UserBinanceConnectionUpdateManyMutationInput, UserBinanceConnectionUncheckedUpdateManyInput>
+    /**
+     * Filter which UserBinanceConnections to update
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * Limit how many UserBinanceConnections to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserBinanceConnection updateManyAndReturn
+   */
+  export type UserBinanceConnectionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * The data used to update UserBinanceConnections.
+     */
+    data: XOR<UserBinanceConnectionUpdateManyMutationInput, UserBinanceConnectionUncheckedUpdateManyInput>
+    /**
+     * Filter which UserBinanceConnections to update
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * Limit how many UserBinanceConnections to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserBinanceConnection upsert
+   */
+  export type UserBinanceConnectionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserBinanceConnection to update in case it exists.
+     */
+    where: UserBinanceConnectionWhereUniqueInput
+    /**
+     * In case the UserBinanceConnection found by the `where` argument doesn't exist, create a new UserBinanceConnection with this data.
+     */
+    create: XOR<UserBinanceConnectionCreateInput, UserBinanceConnectionUncheckedCreateInput>
+    /**
+     * In case the UserBinanceConnection was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserBinanceConnectionUpdateInput, UserBinanceConnectionUncheckedUpdateInput>
+  }
+
+  /**
+   * UserBinanceConnection delete
+   */
+  export type UserBinanceConnectionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+    /**
+     * Filter which UserBinanceConnection to delete.
+     */
+    where: UserBinanceConnectionWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceConnection deleteMany
+   */
+  export type UserBinanceConnectionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserBinanceConnections to delete
+     */
+    where?: UserBinanceConnectionWhereInput
+    /**
+     * Limit how many UserBinanceConnections to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserBinanceConnection without action
+   */
+  export type UserBinanceConnectionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceConnection
+     */
+    select?: UserBinanceConnectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceConnection
+     */
+    omit?: UserBinanceConnectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceConnectionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserBinanceSpotOrder
+   */
+
+  export type AggregateUserBinanceSpotOrder = {
+    _count: UserBinanceSpotOrderCountAggregateOutputType | null
+    _min: UserBinanceSpotOrderMinAggregateOutputType | null
+    _max: UserBinanceSpotOrderMaxAggregateOutputType | null
+  }
+
+  export type UserBinanceSpotOrderMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    symbol: string | null
+    binanceOrderId: string | null
+    side: string | null
+    orderType: string | null
+    status: string | null
+    price: string | null
+    origQty: string | null
+    executedQty: string | null
+    canceledAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserBinanceSpotOrderMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    symbol: string | null
+    binanceOrderId: string | null
+    side: string | null
+    orderType: string | null
+    status: string | null
+    price: string | null
+    origQty: string | null
+    executedQty: string | null
+    canceledAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserBinanceSpotOrderCountAggregateOutputType = {
+    id: number
+    userId: number
+    symbol: number
+    binanceOrderId: number
+    side: number
+    orderType: number
+    status: number
+    price: number
+    origQty: number
+    executedQty: number
+    rawJson: number
+    canceledAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type UserBinanceSpotOrderMinAggregateInputType = {
+    id?: true
+    userId?: true
+    symbol?: true
+    binanceOrderId?: true
+    side?: true
+    orderType?: true
+    status?: true
+    price?: true
+    origQty?: true
+    executedQty?: true
+    canceledAt?: true
+    createdAt?: true
+  }
+
+  export type UserBinanceSpotOrderMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    symbol?: true
+    binanceOrderId?: true
+    side?: true
+    orderType?: true
+    status?: true
+    price?: true
+    origQty?: true
+    executedQty?: true
+    canceledAt?: true
+    createdAt?: true
+  }
+
+  export type UserBinanceSpotOrderCountAggregateInputType = {
+    id?: true
+    userId?: true
+    symbol?: true
+    binanceOrderId?: true
+    side?: true
+    orderType?: true
+    status?: true
+    price?: true
+    origQty?: true
+    executedQty?: true
+    rawJson?: true
+    canceledAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type UserBinanceSpotOrderAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserBinanceSpotOrder to aggregate.
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceSpotOrders to fetch.
+     */
+    orderBy?: UserBinanceSpotOrderOrderByWithRelationInput | UserBinanceSpotOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserBinanceSpotOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceSpotOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceSpotOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserBinanceSpotOrders
+    **/
+    _count?: true | UserBinanceSpotOrderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserBinanceSpotOrderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserBinanceSpotOrderMaxAggregateInputType
+  }
+
+  export type GetUserBinanceSpotOrderAggregateType<T extends UserBinanceSpotOrderAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserBinanceSpotOrder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserBinanceSpotOrder[P]>
+      : GetScalarType<T[P], AggregateUserBinanceSpotOrder[P]>
+  }
+
+
+
+
+  export type UserBinanceSpotOrderGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserBinanceSpotOrderWhereInput
+    orderBy?: UserBinanceSpotOrderOrderByWithAggregationInput | UserBinanceSpotOrderOrderByWithAggregationInput[]
+    by: UserBinanceSpotOrderScalarFieldEnum[] | UserBinanceSpotOrderScalarFieldEnum
+    having?: UserBinanceSpotOrderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserBinanceSpotOrderCountAggregateInputType | true
+    _min?: UserBinanceSpotOrderMinAggregateInputType
+    _max?: UserBinanceSpotOrderMaxAggregateInputType
+  }
+
+  export type UserBinanceSpotOrderGroupByOutputType = {
+    id: string
+    userId: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status: string | null
+    price: string | null
+    origQty: string | null
+    executedQty: string | null
+    rawJson: JsonValue | null
+    canceledAt: Date | null
+    createdAt: Date
+    _count: UserBinanceSpotOrderCountAggregateOutputType | null
+    _min: UserBinanceSpotOrderMinAggregateOutputType | null
+    _max: UserBinanceSpotOrderMaxAggregateOutputType | null
+  }
+
+  type GetUserBinanceSpotOrderGroupByPayload<T extends UserBinanceSpotOrderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserBinanceSpotOrderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserBinanceSpotOrderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserBinanceSpotOrderGroupByOutputType[P]>
+            : GetScalarType<T[P], UserBinanceSpotOrderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserBinanceSpotOrderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    symbol?: boolean
+    binanceOrderId?: boolean
+    side?: boolean
+    orderType?: boolean
+    status?: boolean
+    price?: boolean
+    origQty?: boolean
+    executedQty?: boolean
+    rawJson?: boolean
+    canceledAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceSpotOrder"]>
+
+  export type UserBinanceSpotOrderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    symbol?: boolean
+    binanceOrderId?: boolean
+    side?: boolean
+    orderType?: boolean
+    status?: boolean
+    price?: boolean
+    origQty?: boolean
+    executedQty?: boolean
+    rawJson?: boolean
+    canceledAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceSpotOrder"]>
+
+  export type UserBinanceSpotOrderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    symbol?: boolean
+    binanceOrderId?: boolean
+    side?: boolean
+    orderType?: boolean
+    status?: boolean
+    price?: boolean
+    origQty?: boolean
+    executedQty?: boolean
+    rawJson?: boolean
+    canceledAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userBinanceSpotOrder"]>
+
+  export type UserBinanceSpotOrderSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    symbol?: boolean
+    binanceOrderId?: boolean
+    side?: boolean
+    orderType?: boolean
+    status?: boolean
+    price?: boolean
+    origQty?: boolean
+    executedQty?: boolean
+    rawJson?: boolean
+    canceledAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type UserBinanceSpotOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "symbol" | "binanceOrderId" | "side" | "orderType" | "status" | "price" | "origQty" | "executedQty" | "rawJson" | "canceledAt" | "createdAt", ExtArgs["result"]["userBinanceSpotOrder"]>
+  export type UserBinanceSpotOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserBinanceSpotOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserBinanceSpotOrderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $UserBinanceSpotOrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserBinanceSpotOrder"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      symbol: string
+      binanceOrderId: string
+      side: string
+      orderType: string
+      status: string | null
+      price: string | null
+      origQty: string | null
+      executedQty: string | null
+      rawJson: Prisma.JsonValue | null
+      canceledAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["userBinanceSpotOrder"]>
+    composites: {}
+  }
+
+  type UserBinanceSpotOrderGetPayload<S extends boolean | null | undefined | UserBinanceSpotOrderDefaultArgs> = $Result.GetResult<Prisma.$UserBinanceSpotOrderPayload, S>
+
+  type UserBinanceSpotOrderCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserBinanceSpotOrderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserBinanceSpotOrderCountAggregateInputType | true
+    }
+
+  export interface UserBinanceSpotOrderDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserBinanceSpotOrder'], meta: { name: 'UserBinanceSpotOrder' } }
+    /**
+     * Find zero or one UserBinanceSpotOrder that matches the filter.
+     * @param {UserBinanceSpotOrderFindUniqueArgs} args - Arguments to find a UserBinanceSpotOrder
+     * @example
+     * // Get one UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserBinanceSpotOrderFindUniqueArgs>(args: SelectSubset<T, UserBinanceSpotOrderFindUniqueArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserBinanceSpotOrder that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserBinanceSpotOrderFindUniqueOrThrowArgs} args - Arguments to find a UserBinanceSpotOrder
+     * @example
+     * // Get one UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserBinanceSpotOrderFindUniqueOrThrowArgs>(args: SelectSubset<T, UserBinanceSpotOrderFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserBinanceSpotOrder that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderFindFirstArgs} args - Arguments to find a UserBinanceSpotOrder
+     * @example
+     * // Get one UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserBinanceSpotOrderFindFirstArgs>(args?: SelectSubset<T, UserBinanceSpotOrderFindFirstArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserBinanceSpotOrder that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderFindFirstOrThrowArgs} args - Arguments to find a UserBinanceSpotOrder
+     * @example
+     * // Get one UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserBinanceSpotOrderFindFirstOrThrowArgs>(args?: SelectSubset<T, UserBinanceSpotOrderFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserBinanceSpotOrders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserBinanceSpotOrders
+     * const userBinanceSpotOrders = await prisma.userBinanceSpotOrder.findMany()
+     * 
+     * // Get first 10 UserBinanceSpotOrders
+     * const userBinanceSpotOrders = await prisma.userBinanceSpotOrder.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userBinanceSpotOrderWithIdOnly = await prisma.userBinanceSpotOrder.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserBinanceSpotOrderFindManyArgs>(args?: SelectSubset<T, UserBinanceSpotOrderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserBinanceSpotOrder.
+     * @param {UserBinanceSpotOrderCreateArgs} args - Arguments to create a UserBinanceSpotOrder.
+     * @example
+     * // Create one UserBinanceSpotOrder
+     * const UserBinanceSpotOrder = await prisma.userBinanceSpotOrder.create({
+     *   data: {
+     *     // ... data to create a UserBinanceSpotOrder
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserBinanceSpotOrderCreateArgs>(args: SelectSubset<T, UserBinanceSpotOrderCreateArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserBinanceSpotOrders.
+     * @param {UserBinanceSpotOrderCreateManyArgs} args - Arguments to create many UserBinanceSpotOrders.
+     * @example
+     * // Create many UserBinanceSpotOrders
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserBinanceSpotOrderCreateManyArgs>(args?: SelectSubset<T, UserBinanceSpotOrderCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserBinanceSpotOrders and returns the data saved in the database.
+     * @param {UserBinanceSpotOrderCreateManyAndReturnArgs} args - Arguments to create many UserBinanceSpotOrders.
+     * @example
+     * // Create many UserBinanceSpotOrders
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserBinanceSpotOrders and only return the `id`
+     * const userBinanceSpotOrderWithIdOnly = await prisma.userBinanceSpotOrder.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserBinanceSpotOrderCreateManyAndReturnArgs>(args?: SelectSubset<T, UserBinanceSpotOrderCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserBinanceSpotOrder.
+     * @param {UserBinanceSpotOrderDeleteArgs} args - Arguments to delete one UserBinanceSpotOrder.
+     * @example
+     * // Delete one UserBinanceSpotOrder
+     * const UserBinanceSpotOrder = await prisma.userBinanceSpotOrder.delete({
+     *   where: {
+     *     // ... filter to delete one UserBinanceSpotOrder
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserBinanceSpotOrderDeleteArgs>(args: SelectSubset<T, UserBinanceSpotOrderDeleteArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserBinanceSpotOrder.
+     * @param {UserBinanceSpotOrderUpdateArgs} args - Arguments to update one UserBinanceSpotOrder.
+     * @example
+     * // Update one UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserBinanceSpotOrderUpdateArgs>(args: SelectSubset<T, UserBinanceSpotOrderUpdateArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserBinanceSpotOrders.
+     * @param {UserBinanceSpotOrderDeleteManyArgs} args - Arguments to filter UserBinanceSpotOrders to delete.
+     * @example
+     * // Delete a few UserBinanceSpotOrders
+     * const { count } = await prisma.userBinanceSpotOrder.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserBinanceSpotOrderDeleteManyArgs>(args?: SelectSubset<T, UserBinanceSpotOrderDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserBinanceSpotOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserBinanceSpotOrders
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserBinanceSpotOrderUpdateManyArgs>(args: SelectSubset<T, UserBinanceSpotOrderUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserBinanceSpotOrders and returns the data updated in the database.
+     * @param {UserBinanceSpotOrderUpdateManyAndReturnArgs} args - Arguments to update many UserBinanceSpotOrders.
+     * @example
+     * // Update many UserBinanceSpotOrders
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserBinanceSpotOrders and only return the `id`
+     * const userBinanceSpotOrderWithIdOnly = await prisma.userBinanceSpotOrder.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserBinanceSpotOrderUpdateManyAndReturnArgs>(args: SelectSubset<T, UserBinanceSpotOrderUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserBinanceSpotOrder.
+     * @param {UserBinanceSpotOrderUpsertArgs} args - Arguments to update or create a UserBinanceSpotOrder.
+     * @example
+     * // Update or create a UserBinanceSpotOrder
+     * const userBinanceSpotOrder = await prisma.userBinanceSpotOrder.upsert({
+     *   create: {
+     *     // ... data to create a UserBinanceSpotOrder
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserBinanceSpotOrder we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserBinanceSpotOrderUpsertArgs>(args: SelectSubset<T, UserBinanceSpotOrderUpsertArgs<ExtArgs>>): Prisma__UserBinanceSpotOrderClient<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserBinanceSpotOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderCountArgs} args - Arguments to filter UserBinanceSpotOrders to count.
+     * @example
+     * // Count the number of UserBinanceSpotOrders
+     * const count = await prisma.userBinanceSpotOrder.count({
+     *   where: {
+     *     // ... the filter for the UserBinanceSpotOrders we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserBinanceSpotOrderCountArgs>(
+      args?: Subset<T, UserBinanceSpotOrderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserBinanceSpotOrderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserBinanceSpotOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserBinanceSpotOrderAggregateArgs>(args: Subset<T, UserBinanceSpotOrderAggregateArgs>): Prisma.PrismaPromise<GetUserBinanceSpotOrderAggregateType<T>>
+
+    /**
+     * Group by UserBinanceSpotOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserBinanceSpotOrderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserBinanceSpotOrderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserBinanceSpotOrderGroupByArgs['orderBy'] }
+        : { orderBy?: UserBinanceSpotOrderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserBinanceSpotOrderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserBinanceSpotOrderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserBinanceSpotOrder model
+   */
+  readonly fields: UserBinanceSpotOrderFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserBinanceSpotOrder.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserBinanceSpotOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserBinanceSpotOrder model
+   */
+  interface UserBinanceSpotOrderFieldRefs {
+    readonly id: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly userId: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly symbol: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly binanceOrderId: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly side: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly orderType: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly status: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly price: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly origQty: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly executedQty: FieldRef<"UserBinanceSpotOrder", 'String'>
+    readonly rawJson: FieldRef<"UserBinanceSpotOrder", 'Json'>
+    readonly canceledAt: FieldRef<"UserBinanceSpotOrder", 'DateTime'>
+    readonly createdAt: FieldRef<"UserBinanceSpotOrder", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserBinanceSpotOrder findUnique
+   */
+  export type UserBinanceSpotOrderFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceSpotOrder to fetch.
+     */
+    where: UserBinanceSpotOrderWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceSpotOrder findUniqueOrThrow
+   */
+  export type UserBinanceSpotOrderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceSpotOrder to fetch.
+     */
+    where: UserBinanceSpotOrderWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceSpotOrder findFirst
+   */
+  export type UserBinanceSpotOrderFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceSpotOrder to fetch.
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceSpotOrders to fetch.
+     */
+    orderBy?: UserBinanceSpotOrderOrderByWithRelationInput | UserBinanceSpotOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserBinanceSpotOrders.
+     */
+    cursor?: UserBinanceSpotOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceSpotOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceSpotOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserBinanceSpotOrders.
+     */
+    distinct?: UserBinanceSpotOrderScalarFieldEnum | UserBinanceSpotOrderScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceSpotOrder findFirstOrThrow
+   */
+  export type UserBinanceSpotOrderFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceSpotOrder to fetch.
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceSpotOrders to fetch.
+     */
+    orderBy?: UserBinanceSpotOrderOrderByWithRelationInput | UserBinanceSpotOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserBinanceSpotOrders.
+     */
+    cursor?: UserBinanceSpotOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceSpotOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceSpotOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserBinanceSpotOrders.
+     */
+    distinct?: UserBinanceSpotOrderScalarFieldEnum | UserBinanceSpotOrderScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceSpotOrder findMany
+   */
+  export type UserBinanceSpotOrderFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which UserBinanceSpotOrders to fetch.
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserBinanceSpotOrders to fetch.
+     */
+    orderBy?: UserBinanceSpotOrderOrderByWithRelationInput | UserBinanceSpotOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserBinanceSpotOrders.
+     */
+    cursor?: UserBinanceSpotOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserBinanceSpotOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserBinanceSpotOrders.
+     */
+    skip?: number
+    distinct?: UserBinanceSpotOrderScalarFieldEnum | UserBinanceSpotOrderScalarFieldEnum[]
+  }
+
+  /**
+   * UserBinanceSpotOrder create
+   */
+  export type UserBinanceSpotOrderCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserBinanceSpotOrder.
+     */
+    data: XOR<UserBinanceSpotOrderCreateInput, UserBinanceSpotOrderUncheckedCreateInput>
+  }
+
+  /**
+   * UserBinanceSpotOrder createMany
+   */
+  export type UserBinanceSpotOrderCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserBinanceSpotOrders.
+     */
+    data: UserBinanceSpotOrderCreateManyInput | UserBinanceSpotOrderCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserBinanceSpotOrder createManyAndReturn
+   */
+  export type UserBinanceSpotOrderCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserBinanceSpotOrders.
+     */
+    data: UserBinanceSpotOrderCreateManyInput | UserBinanceSpotOrderCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserBinanceSpotOrder update
+   */
+  export type UserBinanceSpotOrderUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserBinanceSpotOrder.
+     */
+    data: XOR<UserBinanceSpotOrderUpdateInput, UserBinanceSpotOrderUncheckedUpdateInput>
+    /**
+     * Choose, which UserBinanceSpotOrder to update.
+     */
+    where: UserBinanceSpotOrderWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceSpotOrder updateMany
+   */
+  export type UserBinanceSpotOrderUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserBinanceSpotOrders.
+     */
+    data: XOR<UserBinanceSpotOrderUpdateManyMutationInput, UserBinanceSpotOrderUncheckedUpdateManyInput>
+    /**
+     * Filter which UserBinanceSpotOrders to update
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * Limit how many UserBinanceSpotOrders to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserBinanceSpotOrder updateManyAndReturn
+   */
+  export type UserBinanceSpotOrderUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * The data used to update UserBinanceSpotOrders.
+     */
+    data: XOR<UserBinanceSpotOrderUpdateManyMutationInput, UserBinanceSpotOrderUncheckedUpdateManyInput>
+    /**
+     * Filter which UserBinanceSpotOrders to update
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * Limit how many UserBinanceSpotOrders to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserBinanceSpotOrder upsert
+   */
+  export type UserBinanceSpotOrderUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserBinanceSpotOrder to update in case it exists.
+     */
+    where: UserBinanceSpotOrderWhereUniqueInput
+    /**
+     * In case the UserBinanceSpotOrder found by the `where` argument doesn't exist, create a new UserBinanceSpotOrder with this data.
+     */
+    create: XOR<UserBinanceSpotOrderCreateInput, UserBinanceSpotOrderUncheckedCreateInput>
+    /**
+     * In case the UserBinanceSpotOrder was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserBinanceSpotOrderUpdateInput, UserBinanceSpotOrderUncheckedUpdateInput>
+  }
+
+  /**
+   * UserBinanceSpotOrder delete
+   */
+  export type UserBinanceSpotOrderDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+    /**
+     * Filter which UserBinanceSpotOrder to delete.
+     */
+    where: UserBinanceSpotOrderWhereUniqueInput
+  }
+
+  /**
+   * UserBinanceSpotOrder deleteMany
+   */
+  export type UserBinanceSpotOrderDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserBinanceSpotOrders to delete
+     */
+    where?: UserBinanceSpotOrderWhereInput
+    /**
+     * Limit how many UserBinanceSpotOrders to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserBinanceSpotOrder without action
+   */
+  export type UserBinanceSpotOrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserBinanceSpotOrder
+     */
+    select?: UserBinanceSpotOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserBinanceSpotOrder
+     */
+    omit?: UserBinanceSpotOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserBinanceSpotOrderInclude<ExtArgs> | null
   }
 
 
@@ -44331,6 +46878,40 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const UserBinanceConnectionScalarFieldEnum: {
+    userId: 'userId',
+    payloadEnc: 'payloadEnc',
+    payloadIv: 'payloadIv',
+    payloadTag: 'payloadTag',
+    apiKeyLast4: 'apiKeyLast4',
+    lastVerifiedAt: 'lastVerifiedAt',
+    defaultQuoteUsdtPerOrder: 'defaultQuoteUsdtPerOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserBinanceConnectionScalarFieldEnum = (typeof UserBinanceConnectionScalarFieldEnum)[keyof typeof UserBinanceConnectionScalarFieldEnum]
+
+
+  export const UserBinanceSpotOrderScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    symbol: 'symbol',
+    binanceOrderId: 'binanceOrderId',
+    side: 'side',
+    orderType: 'orderType',
+    status: 'status',
+    price: 'price',
+    origQty: 'origQty',
+    executedQty: 'executedQty',
+    rawJson: 'rawJson',
+    canceledAt: 'canceledAt',
+    createdAt: 'createdAt'
+  };
+
+  export type UserBinanceSpotOrderScalarFieldEnum = (typeof UserBinanceSpotOrderScalarFieldEnum)[keyof typeof UserBinanceSpotOrderScalarFieldEnum]
+
+
   export const AffiliateAccountScalarFieldEnum: {
     id: 'id',
     emailEnc: 'emailEnc',
@@ -45258,6 +47839,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
     stripePlanPayments?: StripePlanPaymentListRelationFilter
+    binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
+    binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -45314,6 +47897,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutOrderByRelationAggregateInput
     chartModels?: ChartModelOrderByRelationAggregateInput
     stripePlanPayments?: StripePlanPaymentOrderByRelationAggregateInput
+    binanceConnection?: UserBinanceConnectionOrderByWithRelationInput
+    binanceSpotOrders?: UserBinanceSpotOrderOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -45373,6 +47958,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
     stripePlanPayments?: StripePlanPaymentListRelationFilter
+    binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
+    binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
   }, "id" | "emailSearchHash" | "nickname">
 
   export type UserOrderByWithAggregationInput = {
@@ -45469,6 +48056,179 @@ export namespace Prisma {
     activeTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     previousTabId?: StringNullableWithAggregatesFilter<"User"> | string | null
     previousTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  }
+
+  export type UserBinanceConnectionWhereInput = {
+    AND?: UserBinanceConnectionWhereInput | UserBinanceConnectionWhereInput[]
+    OR?: UserBinanceConnectionWhereInput[]
+    NOT?: UserBinanceConnectionWhereInput | UserBinanceConnectionWhereInput[]
+    userId?: StringFilter<"UserBinanceConnection"> | string
+    payloadEnc?: StringFilter<"UserBinanceConnection"> | string
+    payloadIv?: StringFilter<"UserBinanceConnection"> | string
+    payloadTag?: StringFilter<"UserBinanceConnection"> | string
+    apiKeyLast4?: StringFilter<"UserBinanceConnection"> | string
+    lastVerifiedAt?: DateTimeNullableFilter<"UserBinanceConnection"> | Date | string | null
+    defaultQuoteUsdtPerOrder?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
+    updatedAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type UserBinanceConnectionOrderByWithRelationInput = {
+    userId?: SortOrder
+    payloadEnc?: SortOrder
+    payloadIv?: SortOrder
+    payloadTag?: SortOrder
+    apiKeyLast4?: SortOrder
+    lastVerifiedAt?: SortOrderInput | SortOrder
+    defaultQuoteUsdtPerOrder?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type UserBinanceConnectionWhereUniqueInput = Prisma.AtLeast<{
+    userId?: string
+    AND?: UserBinanceConnectionWhereInput | UserBinanceConnectionWhereInput[]
+    OR?: UserBinanceConnectionWhereInput[]
+    NOT?: UserBinanceConnectionWhereInput | UserBinanceConnectionWhereInput[]
+    payloadEnc?: StringFilter<"UserBinanceConnection"> | string
+    payloadIv?: StringFilter<"UserBinanceConnection"> | string
+    payloadTag?: StringFilter<"UserBinanceConnection"> | string
+    apiKeyLast4?: StringFilter<"UserBinanceConnection"> | string
+    lastVerifiedAt?: DateTimeNullableFilter<"UserBinanceConnection"> | Date | string | null
+    defaultQuoteUsdtPerOrder?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
+    updatedAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "userId">
+
+  export type UserBinanceConnectionOrderByWithAggregationInput = {
+    userId?: SortOrder
+    payloadEnc?: SortOrder
+    payloadIv?: SortOrder
+    payloadTag?: SortOrder
+    apiKeyLast4?: SortOrder
+    lastVerifiedAt?: SortOrderInput | SortOrder
+    defaultQuoteUsdtPerOrder?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserBinanceConnectionCountOrderByAggregateInput
+    _avg?: UserBinanceConnectionAvgOrderByAggregateInput
+    _max?: UserBinanceConnectionMaxOrderByAggregateInput
+    _min?: UserBinanceConnectionMinOrderByAggregateInput
+    _sum?: UserBinanceConnectionSumOrderByAggregateInput
+  }
+
+  export type UserBinanceConnectionScalarWhereWithAggregatesInput = {
+    AND?: UserBinanceConnectionScalarWhereWithAggregatesInput | UserBinanceConnectionScalarWhereWithAggregatesInput[]
+    OR?: UserBinanceConnectionScalarWhereWithAggregatesInput[]
+    NOT?: UserBinanceConnectionScalarWhereWithAggregatesInput | UserBinanceConnectionScalarWhereWithAggregatesInput[]
+    userId?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
+    payloadEnc?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
+    payloadIv?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
+    payloadTag?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
+    apiKeyLast4?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
+    lastVerifiedAt?: DateTimeNullableWithAggregatesFilter<"UserBinanceConnection"> | Date | string | null
+    defaultQuoteUsdtPerOrder?: DecimalNullableWithAggregatesFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"UserBinanceConnection"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UserBinanceConnection"> | Date | string
+  }
+
+  export type UserBinanceSpotOrderWhereInput = {
+    AND?: UserBinanceSpotOrderWhereInput | UserBinanceSpotOrderWhereInput[]
+    OR?: UserBinanceSpotOrderWhereInput[]
+    NOT?: UserBinanceSpotOrderWhereInput | UserBinanceSpotOrderWhereInput[]
+    id?: StringFilter<"UserBinanceSpotOrder"> | string
+    userId?: StringFilter<"UserBinanceSpotOrder"> | string
+    symbol?: StringFilter<"UserBinanceSpotOrder"> | string
+    binanceOrderId?: StringFilter<"UserBinanceSpotOrder"> | string
+    side?: StringFilter<"UserBinanceSpotOrder"> | string
+    orderType?: StringFilter<"UserBinanceSpotOrder"> | string
+    status?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    price?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    origQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    executedQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    rawJson?: JsonNullableFilter<"UserBinanceSpotOrder">
+    canceledAt?: DateTimeNullableFilter<"UserBinanceSpotOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserBinanceSpotOrder"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type UserBinanceSpotOrderOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    symbol?: SortOrder
+    binanceOrderId?: SortOrder
+    side?: SortOrder
+    orderType?: SortOrder
+    status?: SortOrderInput | SortOrder
+    price?: SortOrderInput | SortOrder
+    origQty?: SortOrderInput | SortOrder
+    executedQty?: SortOrderInput | SortOrder
+    rawJson?: SortOrderInput | SortOrder
+    canceledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type UserBinanceSpotOrderWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_symbol_binanceOrderId?: UserBinanceSpotOrderUserIdSymbolBinanceOrderIdCompoundUniqueInput
+    AND?: UserBinanceSpotOrderWhereInput | UserBinanceSpotOrderWhereInput[]
+    OR?: UserBinanceSpotOrderWhereInput[]
+    NOT?: UserBinanceSpotOrderWhereInput | UserBinanceSpotOrderWhereInput[]
+    userId?: StringFilter<"UserBinanceSpotOrder"> | string
+    symbol?: StringFilter<"UserBinanceSpotOrder"> | string
+    binanceOrderId?: StringFilter<"UserBinanceSpotOrder"> | string
+    side?: StringFilter<"UserBinanceSpotOrder"> | string
+    orderType?: StringFilter<"UserBinanceSpotOrder"> | string
+    status?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    price?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    origQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    executedQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    rawJson?: JsonNullableFilter<"UserBinanceSpotOrder">
+    canceledAt?: DateTimeNullableFilter<"UserBinanceSpotOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserBinanceSpotOrder"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_symbol_binanceOrderId">
+
+  export type UserBinanceSpotOrderOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    symbol?: SortOrder
+    binanceOrderId?: SortOrder
+    side?: SortOrder
+    orderType?: SortOrder
+    status?: SortOrderInput | SortOrder
+    price?: SortOrderInput | SortOrder
+    origQty?: SortOrderInput | SortOrder
+    executedQty?: SortOrderInput | SortOrder
+    rawJson?: SortOrderInput | SortOrder
+    canceledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: UserBinanceSpotOrderCountOrderByAggregateInput
+    _max?: UserBinanceSpotOrderMaxOrderByAggregateInput
+    _min?: UserBinanceSpotOrderMinOrderByAggregateInput
+  }
+
+  export type UserBinanceSpotOrderScalarWhereWithAggregatesInput = {
+    AND?: UserBinanceSpotOrderScalarWhereWithAggregatesInput | UserBinanceSpotOrderScalarWhereWithAggregatesInput[]
+    OR?: UserBinanceSpotOrderScalarWhereWithAggregatesInput[]
+    NOT?: UserBinanceSpotOrderScalarWhereWithAggregatesInput | UserBinanceSpotOrderScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    userId?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    symbol?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    binanceOrderId?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    side?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    orderType?: StringWithAggregatesFilter<"UserBinanceSpotOrder"> | string
+    status?: StringNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | string | null
+    price?: StringNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | string | null
+    origQty?: StringNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | string | null
+    executedQty?: StringNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | string | null
+    rawJson?: JsonNullableWithAggregatesFilter<"UserBinanceSpotOrder">
+    canceledAt?: DateTimeNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"UserBinanceSpotOrder"> | Date | string
   }
 
   export type AffiliateAccountWhereInput = {
@@ -48468,6 +51228,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -48524,6 +51286,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -48580,6 +51344,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -48636,6 +51402,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -48768,6 +51536,200 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserBinanceConnectionCreateInput = {
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt?: Date | string | null
+    defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutBinanceConnectionInput
+  }
+
+  export type UserBinanceConnectionUncheckedCreateInput = {
+    userId: string
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt?: Date | string | null
+    defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserBinanceConnectionUpdateInput = {
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutBinanceConnectionNestedInput
+  }
+
+  export type UserBinanceConnectionUncheckedUpdateInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceConnectionCreateManyInput = {
+    userId: string
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt?: Date | string | null
+    defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserBinanceConnectionUpdateManyMutationInput = {
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceConnectionUncheckedUpdateManyInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderCreateInput = {
+    id?: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutBinanceSpotOrdersInput
+  }
+
+  export type UserBinanceSpotOrderUncheckedCreateInput = {
+    id?: string
+    userId: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserBinanceSpotOrderUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutBinanceSpotOrdersNestedInput
+  }
+
+  export type UserBinanceSpotOrderUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderCreateManyInput = {
+    id?: string
+    userId: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserBinanceSpotOrderUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AffiliateAccountCreateInput = {
@@ -52350,6 +55312,17 @@ export namespace Prisma {
     none?: StripePlanPaymentWhereInput
   }
 
+  export type UserBinanceConnectionNullableScalarRelationFilter = {
+    is?: UserBinanceConnectionWhereInput | null
+    isNot?: UserBinanceConnectionWhereInput | null
+  }
+
+  export type UserBinanceSpotOrderListRelationFilter = {
+    every?: UserBinanceSpotOrderWhereInput
+    some?: UserBinanceSpotOrderWhereInput
+    none?: UserBinanceSpotOrderWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -52396,6 +55369,10 @@ export namespace Prisma {
   }
 
   export type StripePlanPaymentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserBinanceSpotOrderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -52715,6 +55692,183 @@ export namespace Prisma {
     _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type UserBinanceConnectionCountOrderByAggregateInput = {
+    userId?: SortOrder
+    payloadEnc?: SortOrder
+    payloadIv?: SortOrder
+    payloadTag?: SortOrder
+    apiKeyLast4?: SortOrder
+    lastVerifiedAt?: SortOrder
+    defaultQuoteUsdtPerOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserBinanceConnectionAvgOrderByAggregateInput = {
+    defaultQuoteUsdtPerOrder?: SortOrder
+  }
+
+  export type UserBinanceConnectionMaxOrderByAggregateInput = {
+    userId?: SortOrder
+    payloadEnc?: SortOrder
+    payloadIv?: SortOrder
+    payloadTag?: SortOrder
+    apiKeyLast4?: SortOrder
+    lastVerifiedAt?: SortOrder
+    defaultQuoteUsdtPerOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserBinanceConnectionMinOrderByAggregateInput = {
+    userId?: SortOrder
+    payloadEnc?: SortOrder
+    payloadIv?: SortOrder
+    payloadTag?: SortOrder
+    apiKeyLast4?: SortOrder
+    lastVerifiedAt?: SortOrder
+    defaultQuoteUsdtPerOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserBinanceConnectionSumOrderByAggregateInput = {
+    defaultQuoteUsdtPerOrder?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type UserBinanceSpotOrderUserIdSymbolBinanceOrderIdCompoundUniqueInput = {
+    userId: string
+    symbol: string
+    binanceOrderId: string
+  }
+
+  export type UserBinanceSpotOrderCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    symbol?: SortOrder
+    binanceOrderId?: SortOrder
+    side?: SortOrder
+    orderType?: SortOrder
+    status?: SortOrder
+    price?: SortOrder
+    origQty?: SortOrder
+    executedQty?: SortOrder
+    rawJson?: SortOrder
+    canceledAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserBinanceSpotOrderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    symbol?: SortOrder
+    binanceOrderId?: SortOrder
+    side?: SortOrder
+    orderType?: SortOrder
+    status?: SortOrder
+    price?: SortOrder
+    origQty?: SortOrder
+    executedQty?: SortOrder
+    canceledAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserBinanceSpotOrderMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    symbol?: SortOrder
+    binanceOrderId?: SortOrder
+    side?: SortOrder
+    orderType?: SortOrder
+    status?: SortOrder
+    price?: SortOrder
+    origQty?: SortOrder
+    executedQty?: SortOrder
+    canceledAt?: SortOrder
+    createdAt?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
   export type AffiliateCouponListRelationFilter = {
     every?: AffiliateCouponWhereInput
     some?: AffiliateCouponWhereInput
@@ -52798,34 +55952,6 @@ export namespace Prisma {
     ativo?: SortOrder
     expiresAt?: SortOrder
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
-
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
-  }
 
   export type ChartLayoutUserIdSlotCompoundUniqueInput = {
     userId: string
@@ -52864,32 +55990,6 @@ export namespace Prisma {
 
   export type ChartLayoutSumOrderByAggregateInput = {
     slot?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type ChartModelUserIdSlotCompoundUniqueInput = {
@@ -55009,6 +58109,19 @@ export namespace Prisma {
     connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
   }
 
+  export type UserBinanceConnectionCreateNestedOneWithoutUserInput = {
+    create?: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserBinanceConnectionCreateOrConnectWithoutUserInput
+    connect?: UserBinanceConnectionWhereUniqueInput
+  }
+
+  export type UserBinanceSpotOrderCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput> | UserBinanceSpotOrderCreateWithoutUserInput[] | UserBinanceSpotOrderUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserBinanceSpotOrderCreateOrConnectWithoutUserInput | UserBinanceSpotOrderCreateOrConnectWithoutUserInput[]
+    createMany?: UserBinanceSpotOrderCreateManyUserInputEnvelope
+    connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+  }
+
   export type AccessRequestUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -55090,6 +58203,19 @@ export namespace Prisma {
     connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
     createMany?: StripePlanPaymentCreateManyUserInputEnvelope
     connect?: StripePlanPaymentWhereUniqueInput | StripePlanPaymentWhereUniqueInput[]
+  }
+
+  export type UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserBinanceConnectionCreateOrConnectWithoutUserInput
+    connect?: UserBinanceConnectionWhereUniqueInput
+  }
+
+  export type UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput> | UserBinanceSpotOrderCreateWithoutUserInput[] | UserBinanceSpotOrderUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserBinanceSpotOrderCreateOrConnectWithoutUserInput | UserBinanceSpotOrderCreateOrConnectWithoutUserInput[]
+    createMany?: UserBinanceSpotOrderCreateManyUserInputEnvelope
+    connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -55316,6 +58442,30 @@ export namespace Prisma {
     deleteMany?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
   }
 
+  export type UserBinanceConnectionUpdateOneWithoutUserNestedInput = {
+    create?: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserBinanceConnectionCreateOrConnectWithoutUserInput
+    upsert?: UserBinanceConnectionUpsertWithoutUserInput
+    disconnect?: UserBinanceConnectionWhereInput | boolean
+    delete?: UserBinanceConnectionWhereInput | boolean
+    connect?: UserBinanceConnectionWhereUniqueInput
+    update?: XOR<XOR<UserBinanceConnectionUpdateToOneWithWhereWithoutUserInput, UserBinanceConnectionUpdateWithoutUserInput>, UserBinanceConnectionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput> | UserBinanceSpotOrderCreateWithoutUserInput[] | UserBinanceSpotOrderUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserBinanceSpotOrderCreateOrConnectWithoutUserInput | UserBinanceSpotOrderCreateOrConnectWithoutUserInput[]
+    upsert?: UserBinanceSpotOrderUpsertWithWhereUniqueWithoutUserInput | UserBinanceSpotOrderUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserBinanceSpotOrderCreateManyUserInputEnvelope
+    set?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    disconnect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    delete?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    update?: UserBinanceSpotOrderUpdateWithWhereUniqueWithoutUserInput | UserBinanceSpotOrderUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserBinanceSpotOrderUpdateManyWithWhereWithoutUserInput | UserBinanceSpotOrderUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
+  }
+
   export type AccessRequestUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -55478,6 +58628,66 @@ export namespace Prisma {
     update?: StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput | StripePlanPaymentUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: StripePlanPaymentUpdateManyWithWhereWithoutUserInput | StripePlanPaymentUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: StripePlanPaymentScalarWhereInput | StripePlanPaymentScalarWhereInput[]
+  }
+
+  export type UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+    connectOrCreate?: UserBinanceConnectionCreateOrConnectWithoutUserInput
+    upsert?: UserBinanceConnectionUpsertWithoutUserInput
+    disconnect?: UserBinanceConnectionWhereInput | boolean
+    delete?: UserBinanceConnectionWhereInput | boolean
+    connect?: UserBinanceConnectionWhereUniqueInput
+    update?: XOR<XOR<UserBinanceConnectionUpdateToOneWithWhereWithoutUserInput, UserBinanceConnectionUpdateWithoutUserInput>, UserBinanceConnectionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput> | UserBinanceSpotOrderCreateWithoutUserInput[] | UserBinanceSpotOrderUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserBinanceSpotOrderCreateOrConnectWithoutUserInput | UserBinanceSpotOrderCreateOrConnectWithoutUserInput[]
+    upsert?: UserBinanceSpotOrderUpsertWithWhereUniqueWithoutUserInput | UserBinanceSpotOrderUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserBinanceSpotOrderCreateManyUserInputEnvelope
+    set?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    disconnect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    delete?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+    update?: UserBinanceSpotOrderUpdateWithWhereUniqueWithoutUserInput | UserBinanceSpotOrderUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserBinanceSpotOrderUpdateManyWithWhereWithoutUserInput | UserBinanceSpotOrderUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutBinanceConnectionInput = {
+    create?: XOR<UserCreateWithoutBinanceConnectionInput, UserUncheckedCreateWithoutBinanceConnectionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBinanceConnectionInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type UserUpdateOneRequiredWithoutBinanceConnectionNestedInput = {
+    create?: XOR<UserCreateWithoutBinanceConnectionInput, UserUncheckedCreateWithoutBinanceConnectionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBinanceConnectionInput
+    upsert?: UserUpsertWithoutBinanceConnectionInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBinanceConnectionInput, UserUpdateWithoutBinanceConnectionInput>, UserUncheckedUpdateWithoutBinanceConnectionInput>
+  }
+
+  export type UserCreateNestedOneWithoutBinanceSpotOrdersInput = {
+    create?: XOR<UserCreateWithoutBinanceSpotOrdersInput, UserUncheckedCreateWithoutBinanceSpotOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBinanceSpotOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutBinanceSpotOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutBinanceSpotOrdersInput, UserUncheckedCreateWithoutBinanceSpotOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBinanceSpotOrdersInput
+    upsert?: UserUpsertWithoutBinanceSpotOrdersInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBinanceSpotOrdersInput, UserUpdateWithoutBinanceSpotOrdersInput>, UserUncheckedUpdateWithoutBinanceSpotOrdersInput>
   }
 
   export type AffiliateCouponCreateNestedManyWithoutAffiliateAccountInput = {
@@ -56221,6 +59431,33 @@ export namespace Prisma {
     _min?: NestedEnumAppLanguageFilter<$PrismaModel>
     _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
   export type NestedJsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -56773,6 +60010,73 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type UserBinanceConnectionCreateWithoutUserInput = {
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt?: Date | string | null
+    defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserBinanceConnectionUncheckedCreateWithoutUserInput = {
+    payloadEnc: string
+    payloadIv: string
+    payloadTag: string
+    apiKeyLast4: string
+    lastVerifiedAt?: Date | string | null
+    defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserBinanceConnectionCreateOrConnectWithoutUserInput = {
+    where: UserBinanceConnectionWhereUniqueInput
+    create: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderCreateWithoutUserInput = {
+    id?: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserBinanceSpotOrderUncheckedCreateWithoutUserInput = {
+    id?: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserBinanceSpotOrderCreateOrConnectWithoutUserInput = {
+    where: UserBinanceSpotOrderWhereUniqueInput
+    create: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderCreateManyUserInputEnvelope = {
+    data: UserBinanceSpotOrderCreateManyUserInput | UserBinanceSpotOrderCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccessRequestUpsertWithWhereUniqueWithoutUserInput = {
     where: AccessRequestWhereUniqueInput
     update: XOR<AccessRequestUpdateWithoutUserInput, AccessRequestUncheckedUpdateWithoutUserInput>
@@ -57150,6 +60454,562 @@ export namespace Prisma {
     payoutUpdatedAt?: DateTimeNullableFilter<"StripePlanPayment"> | Date | string | null
   }
 
+  export type UserBinanceConnectionUpsertWithoutUserInput = {
+    update: XOR<UserBinanceConnectionUpdateWithoutUserInput, UserBinanceConnectionUncheckedUpdateWithoutUserInput>
+    create: XOR<UserBinanceConnectionCreateWithoutUserInput, UserBinanceConnectionUncheckedCreateWithoutUserInput>
+    where?: UserBinanceConnectionWhereInput
+  }
+
+  export type UserBinanceConnectionUpdateToOneWithWhereWithoutUserInput = {
+    where?: UserBinanceConnectionWhereInput
+    data: XOR<UserBinanceConnectionUpdateWithoutUserInput, UserBinanceConnectionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserBinanceConnectionUpdateWithoutUserInput = {
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceConnectionUncheckedUpdateWithoutUserInput = {
+    payloadEnc?: StringFieldUpdateOperationsInput | string
+    payloadIv?: StringFieldUpdateOperationsInput | string
+    payloadTag?: StringFieldUpdateOperationsInput | string
+    apiKeyLast4?: StringFieldUpdateOperationsInput | string
+    lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserBinanceSpotOrderWhereUniqueInput
+    update: XOR<UserBinanceSpotOrderUpdateWithoutUserInput, UserBinanceSpotOrderUncheckedUpdateWithoutUserInput>
+    create: XOR<UserBinanceSpotOrderCreateWithoutUserInput, UserBinanceSpotOrderUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserBinanceSpotOrderWhereUniqueInput
+    data: XOR<UserBinanceSpotOrderUpdateWithoutUserInput, UserBinanceSpotOrderUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderUpdateManyWithWhereWithoutUserInput = {
+    where: UserBinanceSpotOrderScalarWhereInput
+    data: XOR<UserBinanceSpotOrderUpdateManyMutationInput, UserBinanceSpotOrderUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserBinanceSpotOrderScalarWhereInput = {
+    AND?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
+    OR?: UserBinanceSpotOrderScalarWhereInput[]
+    NOT?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
+    id?: StringFilter<"UserBinanceSpotOrder"> | string
+    userId?: StringFilter<"UserBinanceSpotOrder"> | string
+    symbol?: StringFilter<"UserBinanceSpotOrder"> | string
+    binanceOrderId?: StringFilter<"UserBinanceSpotOrder"> | string
+    side?: StringFilter<"UserBinanceSpotOrder"> | string
+    orderType?: StringFilter<"UserBinanceSpotOrder"> | string
+    status?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    price?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    origQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    executedQty?: StringNullableFilter<"UserBinanceSpotOrder"> | string | null
+    rawJson?: JsonNullableFilter<"UserBinanceSpotOrder">
+    canceledAt?: DateTimeNullableFilter<"UserBinanceSpotOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserBinanceSpotOrder"> | Date | string
+  }
+
+  export type UserCreateWithoutBinanceConnectionInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutBinanceConnectionInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutBinanceConnectionInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBinanceConnectionInput, UserUncheckedCreateWithoutBinanceConnectionInput>
+  }
+
+  export type UserUpsertWithoutBinanceConnectionInput = {
+    update: XOR<UserUpdateWithoutBinanceConnectionInput, UserUncheckedUpdateWithoutBinanceConnectionInput>
+    create: XOR<UserCreateWithoutBinanceConnectionInput, UserUncheckedCreateWithoutBinanceConnectionInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBinanceConnectionInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBinanceConnectionInput, UserUncheckedUpdateWithoutBinanceConnectionInput>
+  }
+
+  export type UserUpdateWithoutBinanceConnectionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBinanceConnectionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutBinanceSpotOrdersInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutBinanceSpotOrdersInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutBinanceSpotOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBinanceSpotOrdersInput, UserUncheckedCreateWithoutBinanceSpotOrdersInput>
+  }
+
+  export type UserUpsertWithoutBinanceSpotOrdersInput = {
+    update: XOR<UserUpdateWithoutBinanceSpotOrdersInput, UserUncheckedUpdateWithoutBinanceSpotOrdersInput>
+    create: XOR<UserCreateWithoutBinanceSpotOrdersInput, UserUncheckedCreateWithoutBinanceSpotOrdersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBinanceSpotOrdersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBinanceSpotOrdersInput, UserUncheckedUpdateWithoutBinanceSpotOrdersInput>
+  }
+
+  export type UserUpdateWithoutBinanceSpotOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBinanceSpotOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+  }
+
   export type AffiliateCouponCreateWithoutAffiliateAccountInput = {
     id?: string
     code: string
@@ -57329,6 +61189,8 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartLayoutsInput = {
@@ -57384,6 +61246,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartLayoutsInput = {
@@ -57455,6 +61319,8 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartLayoutsInput = {
@@ -57510,6 +61376,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutChartModelsInput = {
@@ -57565,6 +61433,8 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartModelsInput = {
@@ -57620,6 +61490,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartModelsInput = {
@@ -57691,6 +61563,8 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartModelsInput = {
@@ -57746,6 +61620,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -57801,6 +61677,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -57856,6 +61734,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -57927,6 +61807,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -57982,6 +61864,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAccessRequestsInput = {
@@ -58037,6 +61921,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccessRequestsInput = {
@@ -58092,6 +61978,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccessRequestsInput = {
@@ -58163,6 +62051,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccessRequestsInput = {
@@ -58218,6 +62108,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutVerificationTokensInput = {
@@ -58273,6 +62165,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutVerificationTokensInput = {
@@ -58328,6 +62222,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutVerificationTokensInput = {
@@ -58399,6 +62295,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutVerificationTokensInput = {
@@ -58454,6 +62352,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutPasswordResetTokensInput = {
@@ -58509,6 +62409,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -58564,6 +62466,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -58635,6 +62539,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -58690,6 +62596,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CoinLedgerEntryCreateWithoutWalletInput = {
@@ -58779,6 +62687,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinWalletInput = {
@@ -58834,6 +62744,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinWalletInput = {
@@ -58921,6 +62833,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinWalletInput = {
@@ -58976,6 +62890,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCoinLedgerInput = {
@@ -59031,6 +62947,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinLedgerInput = {
@@ -59086,6 +63004,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinLedgerInput = {
@@ -59203,6 +63123,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinLedgerInput = {
@@ -59258,6 +63180,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCoinWalletUpsertWithoutEntriesInput = {
@@ -59400,6 +63324,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWalletCreditsInput = {
@@ -59455,6 +63381,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWalletCreditsInput = {
@@ -59561,6 +63489,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWalletCreditsInput = {
@@ -59616,6 +63546,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCheckoutSessionsInput = {
@@ -59671,6 +63603,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCheckoutSessionsInput = {
@@ -59726,6 +63660,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCheckoutSessionsInput = {
@@ -59797,6 +63733,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCheckoutSessionsInput = {
@@ -59852,6 +63790,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutStripePlanPaymentsInput = {
@@ -59907,6 +63847,8 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutStripePlanPaymentsInput = {
@@ -59962,6 +63904,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutStripePlanPaymentsInput = {
@@ -60033,6 +63977,8 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutStripePlanPaymentsInput = {
@@ -60088,6 +64034,8 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AffiliateMonthAggInvoiceCreateWithoutMonthAggInput = {
@@ -60295,6 +64243,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPagarMeOrdersInput = {
@@ -60350,6 +64300,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPagarMeOrdersInput = {
@@ -60421,6 +64373,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPagarMeOrdersInput = {
@@ -60476,6 +64430,8 @@ export namespace Prisma {
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput = {
@@ -60790,6 +64746,21 @@ export namespace Prisma {
     payoutStatus?: string | null
     payoutArrivalDate?: Date | string | null
     payoutUpdatedAt?: Date | string | null
+  }
+
+  export type UserBinanceSpotOrderCreateManyUserInput = {
+    id?: string
+    symbol: string
+    binanceOrderId: string
+    side: string
+    orderType: string
+    status?: string | null
+    price?: string | null
+    origQty?: string | null
+    executedQty?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: Date | string | null
+    createdAt?: Date | string
   }
 
   export type AccessRequestUpdateWithoutUserInput = {
@@ -61182,6 +65153,51 @@ export namespace Prisma {
     payoutStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payoutArrivalDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     payoutUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserBinanceSpotOrderUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserBinanceSpotOrderUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    orderType?: StringFieldUpdateOperationsInput | string
+    status?: NullableStringFieldUpdateOperationsInput | string | null
+    price?: NullableStringFieldUpdateOperationsInput | string | null
+    origQty?: NullableStringFieldUpdateOperationsInput | string | null
+    executedQty?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type AffiliateCouponCreateManyAffiliateAccountInput = {

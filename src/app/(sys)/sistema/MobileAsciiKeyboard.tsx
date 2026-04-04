@@ -332,7 +332,7 @@ export default function MobileAsciiKeyboard() {
   }, [suppressNativeKeyboard]);
 
   const keyBtn =
-    "min-h-[42px] min-w-[28px] flex-1 shrink-0 rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium text-zinc-100 px-1 select-none touch-manipulation [-webkit-tap-highlight-color:transparent]";
+    "min-h-[42px] min-w-[28px] flex-1 shrink-0 rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium text-zinc-100 px-1 select-none touch-manipulation [-webkit-tap-highlight-color:transparent] pointer-events-auto";
 
   const onKeyPointerDown = useCallback(
     (e: ReactPointerEvent<HTMLButtonElement>, ch: string) => {
@@ -357,7 +357,7 @@ export default function MobileAsciiKeyboard() {
           id="mobile-ascii-keyboard-panel"
           role="region"
           aria-label={tk.mobileAsciiKeyboardToggle ?? "Teclado"}
-          className="pointer-events-auto border-t border-zinc-600/80 bg-zinc-900 text-zinc-100 px-1.5 pt-2 pb-1 opacity-50 select-none"
+          className="pointer-events-none border-t border-zinc-600/80 bg-zinc-900 text-zinc-100 px-1.5 pt-2 pb-1 opacity-50 select-none"
           style={{
             WebkitTouchCallout: "none",
             WebkitUserSelect: "none",
@@ -366,7 +366,7 @@ export default function MobileAsciiKeyboard() {
           }}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <p className="text-[10px] text-zinc-400 px-1 pb-1.5 leading-snug">{tk.mobileAsciiKeyboardHint}</p>
+          <p className="text-[10px] text-zinc-400 px-1 pb-1.5 leading-snug pointer-events-none">{tk.mobileAsciiKeyboardHint}</p>
             <div className="flex flex-col gap-1">
               <div className="flex gap-1 justify-center">
                 {ROW_NUM.map((c) => (
@@ -471,7 +471,7 @@ export default function MobileAsciiKeyboard() {
                 <button
                   type="button"
                   tabIndex={-1}
-                  className="min-h-[44px] flex-[1] rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium touch-manipulation [-webkit-tap-highlight-color:transparent]"
+                  className="min-h-[44px] flex-[1] rounded-md bg-zinc-700 active:bg-zinc-600 text-sm font-medium touch-manipulation [-webkit-tap-highlight-color:transparent] pointer-events-auto"
                   style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
                   onPointerDown={(e) => {
@@ -486,7 +486,7 @@ export default function MobileAsciiKeyboard() {
                 <button
                   type="button"
                   tabIndex={-1}
-                  className="min-h-[44px] flex-[2] rounded-md bg-emerald-800 active:bg-emerald-700 text-sm font-semibold touch-manipulation [-webkit-tap-highlight-color:transparent]"
+                  className="min-h-[44px] flex-[2] rounded-md bg-emerald-800 active:bg-emerald-700 text-sm font-semibold touch-manipulation [-webkit-tap-highlight-color:transparent] pointer-events-auto"
                   style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
                   onPointerDownCapture={snapshotEditableBeforeKey}
                   onPointerDown={(e) => {
@@ -504,14 +504,14 @@ export default function MobileAsciiKeyboard() {
             </div>
         </div>
       )}
-      <div className="flex justify-center px-2 pt-1 pointer-events-auto">
+      <div className="flex justify-center px-2 pt-1 pointer-events-none">
         <button
           type="button"
           tabIndex={-1}
           onClick={() => setOpen((v) => !v)}
           style={{ WebkitTouchCallout: "none", touchAction: "manipulation" }}
           onContextMenu={(e) => e.preventDefault()}
-          className="flex items-center justify-center border-0 bg-transparent p-1 opacity-50 active:opacity-70 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 rounded-sm [-webkit-tap-highlight-color:transparent] select-none"
+          className="flex items-center justify-center border-0 bg-transparent p-1 opacity-50 active:opacity-70 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/60 rounded-sm [-webkit-tap-highlight-color:transparent] select-none pointer-events-auto"
           aria-expanded={open}
           aria-controls="mobile-ascii-keyboard-panel"
           aria-label={tk.mobileAsciiKeyboardToggle ?? "Teclado"}

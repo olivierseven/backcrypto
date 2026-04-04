@@ -9,6 +9,7 @@ import { getCryptoT, translateValidationError, type CryptoLang } from "@/app/lib
 import { Capacitor } from "@capacitor/core";
 import { applyNativeStatusBarHidden } from "@/app/lib/applyNativeStatusBar";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
+import BinanceConnectionCard from "./BinanceConnectionCard";
 
 interface UserData {
   id: string;
@@ -337,6 +338,10 @@ export default function BioContaClient({
           </Link>
         </div>
       </div>
+
+      {process.env.NODE_ENV === "development" && (
+        <BinanceConnectionCard language={language as CryptoLang} />
+      )}
 
       {/* Card: Preferências do app */}
       <div className="card-crypto-generator crypto-card">

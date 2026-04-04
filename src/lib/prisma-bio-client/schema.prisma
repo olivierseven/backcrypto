@@ -137,7 +137,52 @@ model User {
   chartLayouts        ChartLayout[]
   chartModels         ChartModel[]
   stripePlanPayments  StripePlanPayment[]
+  binanceConnection   UserBinanceConnection?
+  binanceSpotOrders   UserBinanceSpotOrder[]
 
+  @@schema("backcrypto")
+}
+
+/// Credenciais API Binance do utilizador (payload cifrado com EMAIL_ENC_KEY_B64 / AES-256-GCM).
+model UserBinanceConnection {
+  userId                   String    @id @map("user_id")
+  payloadEnc               String    @map("payload_enc")
+  payloadIv                String    @map("payload_iv")
+  payloadTag               String    @map("payload_tag")
+  apiKeyLast4              String    @map("api_key_last4") @db.VarChar(8)
+  lastVerifiedAt           DateTime? @map("last_verified_at")
+  /// USDT a gastar por operação (compra): pré-preenchimento nas boletas; opcional.
+  defaultQuoteUsdtPerOrder Decimal?  @map("default_quote_usdt_per_order") @db.Decimal(20, 8)
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("UserBinanceConnection")
+  @@schema("backcrypto")
+}
+
+/// Ordens spot Binance criadas pela app (para cancelamento e histórico). `binance_order_id` vem da API.
+model UserBinanceSpotOrder {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  symbol         String    @db.VarChar(32)
+  binanceOrderId String    @map("binance_order_id") @db.VarChar(32)
+  side           String    @db.VarChar(8)
+  orderType      String    @map("order_type") @db.VarChar(16)
+  status         String?   @db.VarChar(32)
+  price          String?   @db.VarChar(64)
+  origQty        String?   @map("orig_qty") @db.VarChar(64)
+  executedQty    String?   @map("executed_qty") @db.VarChar(64)
+  rawJson        Json?     @map("raw_json")
+  canceledAt     DateTime? @map("canceled_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol, binanceOrderId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("UserBinanceSpotOrder")
   @@schema("backcrypto")
 }
 

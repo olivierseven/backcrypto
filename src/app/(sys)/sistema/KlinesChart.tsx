@@ -107,10 +107,18 @@ import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
 import { useChartLayoutSave } from "./ChartLayoutSaveContext";
 import { useChartSaveLoad } from "./ChartSaveLoadContext";
 import { useChartHeader } from "./ChartHeaderContext";
+import { isValidLimitBuyPriceVsLast, isValidLimitSellPriceVsLast } from "@/lib/binance-limit-buy-validation";
+import { parseSpotOpenOrdersJson } from "@/lib/spot-open-orders-client";
+import ChartCtrlLimitBuyModal from "./ChartCtrlLimitBuyModal";
+import ChartCtrlLimitSellModal from "./ChartCtrlLimitSellModal";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { getSessionTabId } from "./sessionTabId";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
+
+function sameUsdtLimitPrice(a: number, b: number): boolean {
+  return Math.round(a * 1e8) === Math.round(b * 1e8);
+}
 
 const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
@@ -134,7 +142,60 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const { symbolQuickSwitchOpen } = useChartSymbol();
-  const { intervalQuickSwitchOpen } = useChartHeader();
+  const {
+    intervalQuickSwitchOpen,
+    data: headerData,
+    setCrosshairMainPriceUsdt,
+    setOpenLimitBuyPricesUsdt,
+    setOpenLimitBuyOrdersUsdt,
+  } = useChartHeader();
+  const [chartLimitBuyCancelingKey, setChartLimitBuyCancelingKey] = useState<string | null>(null);
+
+  const refreshOpenLimitOrders = useCallback(async () => {
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s) return;
+    try {
+      const r = await fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`, {
+        credentials: "include",
+      });
+      const j = await r.json().catch(() => ({}));
+      const { prices, orders } = parseSpotOpenOrdersJson(j);
+      setOpenLimitBuyPricesUsdt(prices);
+      setOpenLimitBuyOrdersUsdt(orders);
+    } catch {
+      /* ignore */
+    }
+  }, [symbolProp, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt]);
+
+  const handleChartLimitBuyCancel = useCallback(
+    async (orderIds: string[]) => {
+      const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+      if (!s || orderIds.length === 0) return;
+      const busyKey = [...orderIds].sort().join(",");
+      setChartLimitBuyCancelingKey(busyKey);
+      try {
+        for (const orderId of orderIds) {
+          const res = await fetch(`${API_BASE}/user/binance-connection/order/cancel`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ symbol: s, orderId }),
+          });
+          if (!res.ok) {
+            const data = (await res.json().catch(() => ({}))) as { msg?: string; error?: string };
+            throw new Error(typeof data.msg === "string" ? data.msg : data.error ?? "cancel_failed");
+          }
+        }
+        await refreshOpenLimitOrders();
+      } catch {
+        /* silent */
+      } finally {
+        setChartLimitBuyCancelingKey(null);
+      }
+    },
+    [symbolProp, refreshOpenLimitOrders]
+  );
+
   const { swapAdjacentSecondaryPanels, userIndicators } = useKlinesIndicators();
   const { userRegressions } = useKlinesRegressions();
   const maxRegForecastBars = useMemo(() => {
@@ -175,6 +236,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
   const [saveSuccessModalOpen, setSaveSuccessModalOpen] = useState(false);
   const [savedLayoutName, setSavedLayoutName] = useState<string | null>(null);
+  /** Preço (USDT) sob o rato com Ctrl no painel principal — linha laranja de pré-visualização de compra limite. */
+  const [ctrlBuyPreviewPrice, setCtrlBuyPreviewPrice] = useState<number | null>(null);
+  /** Alt: pré-visualização de venda limite (linha vermelha). */
+  const [altSellPreviewPrice, setAltSellPreviewPrice] = useState<number | null>(null);
+  const [ctrlLimitBuyConfirm, setCtrlLimitBuyConfirm] = useState<{ price: number; symbol: string } | null>(null);
+  const [altLimitSellConfirm, setAltLimitSellConfirm] = useState<{ price: number; symbol: string } | null>(null);
   const [saveConfirmSlot, setSaveConfirmSlot] = useState<number | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
@@ -1334,17 +1401,52 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   crosshairPointRef.current = crosshairPoint;
 
-  // Clique fora do gráfico: desativa o crosshair
+  // Clique fora da faixa do gráfico (plot + eixo Y + overlays de mira): desativa o crosshair. Usar chartRowRef — o overlay de mira não fica dentro do <svg>.
+  // Não limpar ao clicar no rodapé Comprar/Vender ou na boleta (`data-no-clear-crosshair`): senão perde-se a mira e o preço de referência.
   useEffect(() => {
     if (crosshairPoint === null) return;
     const onDocClick = (e: MouseEvent) => {
-      if (chartSvgRef.current && !chartSvgRef.current.contains(e.target as Node)) {
-        setCrosshairPoint(null);
-      }
+      const t = e.target;
+      if (!(t instanceof Node)) return;
+      if (chartRowRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest("[data-no-clear-crosshair]")) return;
+      setCrosshairPoint(null);
     };
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
   }, [crosshairPoint]);
+
+  /** Preço USDT no painel principal onde a mira está (boleta: compra limite). Painel RSI/MACD etc. não define preço spot. */
+  useEffect(() => {
+    if (crosshairPoint == null) {
+      setCrosshairMainPriceUsdt(null);
+      return;
+    }
+    if (crosshairPoint.panelClickY != null) {
+      setCrosshairMainPriceUsdt(null);
+      return;
+    }
+    const px = crosshairPoint.price;
+    if (Number.isFinite(px) && px > 0) setCrosshairMainPriceUsdt(px);
+    else setCrosshairMainPriceUsdt(null);
+  }, [crosshairPoint, setCrosshairMainPriceUsdt]);
+
+  useEffect(() => {
+    const clear = () => {
+      setCtrlBuyPreviewPrice(null);
+      setAltSellPreviewPrice(null);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Control") setCtrlBuyPreviewPrice(null);
+      if (e.key === "Alt") setAltSellPreviewPrice(null);
+    };
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", clear);
+    return () => {
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", clear);
+    };
+  }, []);
 
   const exitRulerToCrosshair = useCallback(() => {
     rulerHeldByShiftRef.current = false;
@@ -1448,11 +1550,25 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== " " && e.code !== "Space") return;
-      if (e.repeat) return;
       if (symbolQuickSwitchOpen || intervalQuickSwitchOpen) return;
       if (isEditableChartTarget(e.target)) return;
       const fromHandToolbarBtn =
         e.target instanceof Element && e.target.closest("[data-hand-tool-toggle]") != null;
+      // keydown repetido (Space segurado): sem preventDefault o browser faz scroll da página (comportamento nativo).
+      if (e.repeat) {
+        if (fromHandToolbarBtn) {
+          e.preventDefault();
+          return;
+        }
+        if (skipSpaceTempAfterToolbarHandRef.current) {
+          e.preventDefault();
+          return;
+        }
+        if (handHeldBySpaceRef.current || (drawModeRef.current && drawToolRef.current === "select")) {
+          e.preventDefault();
+        }
+        return;
+      }
       // Impede o Space de ativar o botão da mão (clique sintético) e o retângulo de foco nativo (caixa preta).
       if (fromHandToolbarBtn) {
         e.preventDefault();
@@ -2040,10 +2156,65 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     liveLastClose != null && Number.isFinite(parseNum(String(liveLastClose)))
       ? parseNum(String(liveLastClose))
       : (n > 0 ? parseNum(String(klines[0][4])) : 0);
+  /** Último preço “de mercado” para regras de compra limite: header ao vivo ou fecho do gráfico. */
+  const lastPriceForTrading =
+    headerData.lastPriceUsdt != null && Number.isFinite(headerData.lastPriceUsdt) && headerData.lastPriceUsdt > 0
+      ? headerData.lastPriceUsdt
+      : lastClose > 0 && Number.isFinite(lastClose)
+        ? lastClose
+        : null;
   const lastCloseY = y(lastClose);
   const lastCloseInVisibleRange =
     lastClose >= yMin && lastClose <= yMax;
   const showLastClose = lastClose > 0 && lastCloseInVisibleRange;
+  const limitBuyPricesMerged = (() => {
+    const uniq = new Set<number>();
+    for (const p of headerData.openLimitBuyPricesUsdt) {
+      if (Number.isFinite(p) && p > 0) uniq.add(p);
+    }
+    const sheet = headerData.limitBuyOrderPriceUsdt;
+    if (sheet != null && Number.isFinite(sheet) && sheet > 0) uniq.add(sheet);
+    return [...uniq].sort((a, b) => a - b);
+  })();
+
+  const limitBuyLinesVisible = limitBuyPricesMerged.filter((p) => p >= yMin && p <= yMax);
+  const showLimitBuyLine = limitBuyLinesVisible.length > 0;
+  const limitBuyLineYs = limitBuyLinesVisible.map((p) => y(p));
+  const limitBuyCancelTargets = (() => {
+    const orders = headerData.openLimitBuyOrdersUsdt;
+    if (orders.length === 0) return [] as { y: number; orderIds: string[] }[];
+    const out: { y: number; orderIds: string[] }[] = [];
+    for (const price of limitBuyLinesVisible) {
+      const orderIds = orders.filter((o) => sameUsdtLimitPrice(o.price, price)).map((o) => o.orderId);
+      if (orderIds.length > 0) out.push({ y: y(price), orderIds });
+    }
+    return out;
+  })();
+
+  const ctrlLimitBuyPreviewLineY = useMemo(() => {
+    if (pathname !== SISTEMA_PATH) return null;
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s.endsWith("USDT") || s.length <= 4) return null;
+    if (lastPriceForTrading == null) return null;
+    const lim = ctrlBuyPreviewPrice;
+    if (lim == null || !Number.isFinite(lim)) return null;
+    if (!isValidLimitBuyPriceVsLast(lim, lastPriceForTrading)) return null;
+    if (lim < yMin || lim > yMax) return null;
+    return y(lim);
+  }, [pathname, symbolProp, ctrlBuyPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+
+  const altLimitSellPreviewLineY = useMemo(() => {
+    if (pathname !== SISTEMA_PATH) return null;
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s.endsWith("USDT") || s.length <= 4) return null;
+    if (lastPriceForTrading == null) return null;
+    const lim = altSellPreviewPrice;
+    if (lim == null || !Number.isFinite(lim)) return null;
+    if (!isValidLimitSellPriceVsLast(lim, lastPriceForTrading)) return null;
+    if (lim < yMin || lim > yMax) return null;
+    return y(lim);
+  }, [pathname, symbolProp, altSellPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+
   const rawOpenTime = n > 0 ? klines[0][0] : null;
   const openTimeMs = rawOpenTime != null ? (typeof rawOpenTime === "number" ? rawOpenTime : Number(rawOpenTime)) : null;
   const offsetMs = timezoneOffset * 60 * 60 * 1000;
@@ -2532,6 +2703,13 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               lastCloseLineHex={lastCloseLineHex}
               lastCloseLineStrokeWidth={lastCloseLineStrokeWidth}
               lastCloseLineStrokeStyle={lastCloseLineStrokeStyle}
+              showLimitBuyLine={showLimitBuyLine}
+              limitBuyLineYs={limitBuyLineYs}
+              limitBuyLineHex="#059669"
+              ctrlLimitBuyPreviewLineY={ctrlLimitBuyPreviewLineY}
+              ctrlLimitBuyPreviewHex="#d97706"
+              altLimitSellPreviewLineY={altLimitSellPreviewLineY}
+              altLimitSellPreviewHex="#dc2626"
               chartBgHex={chartBgHex}
               backgroundTextHex={backgroundTextHex}
               formatYAxis={formatYAxisResolved}
@@ -2611,6 +2789,11 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 <div
                   ref={crosshairOverlayDivRef}
                   role="presentation"
+                  title={
+                    pathname === SISTEMA_PATH
+                      ? `${(t as Record<string, string>).tradingCtrlLimitBuyHint ?? ""} ${(t as Record<string, string>).tradingAltLimitSellHint ?? ""}`.trim()
+                      : undefined
+                  }
                   style={{
                     position: "absolute",
                     left: MARGIN_LEFT,
@@ -2629,10 +2812,46 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
                     const toData = crosshairPixelToDataRef.current;
                     if (!toData) return;
-                    const newPoint = toData(px, py);
-                    const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                    const newPoint = toData(px, py) as {
+                      index: number;
+                      price: number;
+                      panelClickY?: number;
+                    };
+                    const symStr = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                    const symUsdtOk = symStr.endsWith("USDT") && symStr.length > 4;
+                    const lastP = lastPriceForTrading;
+                    if (
+                      pathname === SISTEMA_PATH &&
+                      symUsdtOk &&
+                      e.altKey &&
+                      newPoint.panelClickY == null &&
+                      lastP != null &&
+                      isValidLimitSellPriceVsLast(newPoint.price, lastP)
+                    ) {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                      setAltLimitSellConfirm({ price: newPoint.price, symbol: symStr });
+                      return;
+                    }
+                    if (
+                      pathname === SISTEMA_PATH &&
+                      symUsdtOk &&
+                      e.ctrlKey &&
+                      !e.altKey &&
+                      newPoint.panelClickY == null &&
+                      lastP != null &&
+                      isValidLimitBuyPriceVsLast(newPoint.price, lastP)
+                    ) {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                      setCtrlLimitBuyConfirm({ price: newPoint.price, symbol: symStr });
+                      return;
+                    }
+                    const isSamePoint =
+                      crosshairPoint !== null &&
+                      crosshairPoint.index === newPoint.index &&
+                      Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
                     if (isSamePoint) {
                       setCrosshairPoint(null);
+                      e.currentTarget.releasePointerCapture(e.pointerId);
                       return;
                     }
                     setCrosshairPoint(newPoint);
@@ -2640,13 +2859,56 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     setCrosshairDragging(true);
                   }) : undefined}
                   onPointerMove={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
-                    if (!crosshairDraggingRef.current) return;
                     const rect = e.currentTarget.getBoundingClientRect();
                     const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
                     const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
                     const toData = crosshairPixelToDataRef.current;
+                    if (pathname === SISTEMA_PATH && toData && symbolProp) {
+                      const symStr = String(symbolProp).trim().toUpperCase();
+                      const symOk = symStr.endsWith("USDT") && symStr.length > 4;
+                      if (e.altKey && symOk && lastPriceForTrading != null) {
+                        const pt = toData(px, py) as {
+                          index: number;
+                          price: number;
+                          panelClickY?: number;
+                        };
+                        if (pt.panelClickY == null && isValidLimitSellPriceVsLast(pt.price, lastPriceForTrading)) {
+                          setAltSellPreviewPrice(pt.price);
+                          setCtrlBuyPreviewPrice(null);
+                        } else {
+                          setAltSellPreviewPrice(null);
+                        }
+                      } else if (e.ctrlKey && symOk && lastPriceForTrading != null) {
+                        const pt = toData(px, py) as {
+                          index: number;
+                          price: number;
+                          panelClickY?: number;
+                        };
+                        if (pt.panelClickY == null && isValidLimitBuyPriceVsLast(pt.price, lastPriceForTrading)) {
+                          setCtrlBuyPreviewPrice(pt.price);
+                          setAltSellPreviewPrice(null);
+                        } else {
+                          setCtrlBuyPreviewPrice(null);
+                        }
+                      } else {
+                        setCtrlBuyPreviewPrice(null);
+                        setAltSellPreviewPrice(null);
+                      }
+                    } else {
+                      setCtrlBuyPreviewPrice(null);
+                      setAltSellPreviewPrice(null);
+                    }
+                    if (!crosshairDraggingRef.current) return;
                     if (toData) setCrosshairPoint(toData(px, py));
                   }) : undefined}
+                  onPointerLeave={
+                    !segmentOptionsOpen
+                      ? () => {
+                          setCtrlBuyPreviewPrice(null);
+                          setAltSellPreviewPrice(null);
+                        }
+                      : undefined
+                  }
                   onPointerUp={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
                     e.currentTarget.releasePointerCapture(e.pointerId);
                     crosshairDraggingRef.current = false;
@@ -2708,6 +2970,42 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 ) : null}
               </>
             )}
+            {pathname === SISTEMA_PATH &&
+              limitBuyCancelTargets.length > 0 &&
+              limitBuyCancelTargets.map((row, idx) => {
+                const busyKey = [...row.orderIds].sort().join(",");
+                const busy = chartLimitBuyCancelingKey === busyKey;
+                const tk = t as Record<string, string>;
+                const cancelLabel = tk.chartLimitBuyCancelOrder ?? "Cancel";
+                const cancelAria = tk.chartLimitBuyCancelOrderAria ?? cancelLabel;
+                return (
+                  <div
+                    key={`limit-buy-cancel-${busyKey}-${idx}`}
+                    className="pointer-events-auto"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT + 4,
+                      top: row.y - 12,
+                      zIndex: 5,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="crypto-btn shrink-0 rounded border border-emerald-700/45 bg-white/95 px-1.5 py-0 text-[10px] font-medium leading-tight text-emerald-900 shadow-sm hover:bg-emerald-50 disabled:opacity-60 dark:bg-zinc-900/95 dark:hover:bg-zinc-800"
+                      aria-label={cancelAria}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        void handleChartLimitBuyCancel(row.orderIds);
+                      }}
+                    >
+                      {busy ? (tk.tradingHistoryCanceling ?? "…") : cancelLabel}
+                    </button>
+                  </div>
+                );
+              })}
             <div ref={chartYAxisContainerRef} className="contents">
               <KlinesChartYAxis
                 chartHeight={chartHeight}
@@ -2773,59 +3071,63 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     : undefined
                 }
                 textScale={textScale}
-                horizontalLineAxisLabels={
-                  drawingsVisible
+                horizontalLineAxisLabels={(() => {
+                  const LIMIT_BUY_LINE_HEX = "#059669";
+                  const fromDraw = drawingsVisible
                     ? [
-                      ...drawSegments
-                        .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
-                        .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
-                      ...drawSegments
-                        .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
-                        .flatMap((s) => {
-                          const range = s.price1 - s.price2;
-                          const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
-                          const entries: { price: number; color: string }[] = [
-                            { price: s.price2 + range * 0.618, color: level618Color },
-                          ];
-                          if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
-                          return entries;
-                        }),
-                      ...drawSegments
-                        .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
-                        .flatMap((s) => {
-                          const range = s.price1 - s.price2;
-                          const c = s.color ?? DEFAULT_SEGMENT_COLOR;
-                          const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
-                          const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
-                          const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
-                          return [
-                            { price: s.price2, color: c },
-                            { price: s.price2 + range * k1, color: c },
-                            { price: s.price2 + range * 0.5, color: c },
-                            { price: s.price2 + range * k3, color: c },
-                            { price: s.price1, color: c },
-                            { price: s.price2 + range * kExt, color: c },
-                          ];
-                        }),
-                      ...drawSegments
-                        .filter((s): s is DrawSegment & { type: "stopGain" } => s.type === "stopGain" && s.stopGainShowValuesOnYAxis === true)
-                        .flatMap((s) => {
-                          const midPrice = s.price1;
-                          const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
-                          const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
-                          const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
-                          const gainOffset = openAmount * (ru / (ru + rd));
-                          const stopOffset = openAmount * (rd / (ru + rd));
-                          const midColor = s.color ?? DEFAULT_SEGMENT_COLOR;
-                          return [
-                            { price: midPrice - stopOffset, color: "#dc2626" },
-                            { price: midPrice, color: midColor },
-                            { price: midPrice + gainOffset, color: "#059669" },
-                          ];
-                        }),
-                    ]
-                    : undefined
-                }
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
+                          .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const entries: { price: number; color: string }[] = [
+                              { price: s.price2 + range * 0.618, color: level618Color },
+                            ];
+                            if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
+                            return entries;
+                          }),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const c = s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
+                            const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
+                            const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
+                            return [
+                              { price: s.price2, color: c },
+                              { price: s.price2 + range * k1, color: c },
+                              { price: s.price2 + range * 0.5, color: c },
+                              { price: s.price2 + range * k3, color: c },
+                              { price: s.price1, color: c },
+                              { price: s.price2 + range * kExt, color: c },
+                            ];
+                          }),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "stopGain" } => s.type === "stopGain" && s.stopGainShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const midPrice = s.price1;
+                            const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
+                            const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
+                            const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
+                            const gainOffset = openAmount * (ru / (ru + rd));
+                            const stopOffset = openAmount * (rd / (ru + rd));
+                            const midColor = s.color ?? DEFAULT_SEGMENT_COLOR;
+                            return [
+                              { price: midPrice - stopOffset, color: "#dc2626" },
+                              { price: midPrice, color: midColor },
+                              { price: midPrice + gainOffset, color: "#059669" },
+                            ];
+                          }),
+                      ]
+                    : [];
+                  const fromLimit = limitBuyLinesVisible.map((price) => ({ price, color: LIMIT_BUY_LINE_HEX }));
+                  const merged = [...fromDraw, ...fromLimit];
+                  return merged.length > 0 ? merged : undefined;
+                })()}
               />
             </div>
           </div>
@@ -2908,6 +3210,40 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 </div>
               </div>
             </div>
+          )}
+          {pathname === SISTEMA_PATH && (
+            <>
+              <ChartCtrlLimitBuyModal
+                open={ctrlLimitBuyConfirm !== null}
+                onClose={() => setCtrlLimitBuyConfirm(null)}
+                symbol={ctrlLimitBuyConfirm?.symbol ?? ""}
+                limitPrice={ctrlLimitBuyConfirm?.price ?? 0}
+                lang={lang}
+                onOrdered={() => {
+                  const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                  if (!s) return;
+                  void fetch(
+                    `${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`,
+                    { credentials: "include" }
+                  )
+                    .then(async (r) => {
+                      const j = await r.json().catch(() => ({}));
+                      const { prices, orders } = parseSpotOpenOrdersJson(j);
+                      setOpenLimitBuyPricesUsdt(prices);
+                      setOpenLimitBuyOrdersUsdt(orders);
+                    })
+                    .catch(() => {});
+                }}
+              />
+              <ChartCtrlLimitSellModal
+                open={altLimitSellConfirm !== null}
+                onClose={() => setAltLimitSellConfirm(null)}
+                symbol={altLimitSellConfirm?.symbol ?? ""}
+                limitPrice={altLimitSellConfirm?.price ?? 0}
+                lang={lang}
+                onOrdered={() => {}}
+              />
+            </>
           )}
           <KlinesChartFooter
             footerYAxisHex={footerYAxisHex}

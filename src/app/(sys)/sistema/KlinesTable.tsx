@@ -10,6 +10,7 @@ import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesI
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
+import { parseSpotOpenOrdersJson } from "@/lib/spot-open-orders-client";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, collectSeriesKeys, type Strategy } from "./strategies/strategiesTypes";
@@ -342,7 +343,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const t = getCryptoT(lang).sistema.klines;
   const tk = t as Record<string, string>;
   const { showKlinesTable, addLayoutLoadLog, aggFastLiveDebugEnabled, setAggFastLiveDebugSnapshot } = useSistemaDebug();
-  const { setHeaderData, setIntervalPicker } = useChartHeader();
+  const { data: headerData, setHeaderData, setIntervalPicker, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt } = useChartHeader();
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { userRegressions, replaceUserRegressionsFromLayout } = useKlinesRegressions();
@@ -1572,13 +1573,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   useEffect(() => {
     const current = spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
     const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
-    const currentNum = current != null ? parseFloat(current) : null;
+    const currentNumRaw = current != null ? parseFloat(current) : NaN;
+    const currentNum = Number.isFinite(currentNumRaw) ? currentNumRaw : null;
     const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
       ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
       : null;
     setHeaderData({
+      ...headerData,
       chartContainerWidth,
       priceText: current != null ? formatPriceLikeChart(current) : null,
+      lastPriceUsdt: currentNum,
       pctText: pct != null ? `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%` : null,
       max24h: last24h != null ? formatPriceLikeChart(String(last24h.max)) : null,
       min24h: last24h != null ? formatPriceLikeChart(String(last24h.min)) : null,
@@ -1586,7 +1590,40 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
     });
-  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart]);
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart, headerData]);
+
+  useEffect(() => {
+    if (!symbol || symbol.trim().length < 5) {
+      setOpenLimitBuyPricesUsdt([]);
+      setOpenLimitBuyOrdersUsdt([]);
+      return;
+    }
+    let cancelled = false;
+    const load = () => {
+      fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(symbol.trim().toUpperCase())}`, {
+        credentials: "include",
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (cancelled) return;
+          const { prices, orders } = parseSpotOpenOrdersJson(data);
+          setOpenLimitBuyPricesUsdt(prices);
+          setOpenLimitBuyOrdersUsdt(orders);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setOpenLimitBuyPricesUsdt([]);
+            setOpenLimitBuyOrdersUsdt([]);
+          }
+        });
+    };
+    load();
+    const id = setInterval(load, 25000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [symbol, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt]);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));

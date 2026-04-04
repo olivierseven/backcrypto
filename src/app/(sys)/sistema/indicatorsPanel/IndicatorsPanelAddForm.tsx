@@ -986,7 +986,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "HMA_CUSTOM" && !isTimeWindowMa2Type(form.indicatorType) && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "HMA_CUSTOM" && form.indicatorType !== "Bollinger" && form.indicatorType !== "Donchian" && !isTimeWindowMa2Type(form.indicatorType) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
           <div className="flex items-center gap-1">
