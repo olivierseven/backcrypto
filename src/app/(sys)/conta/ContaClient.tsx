@@ -339,9 +339,7 @@ export default function BioContaClient({
         </div>
       </div>
 
-      {process.env.NODE_ENV === "development" && (
-        <BinanceConnectionCard language={language as CryptoLang} />
-      )}
+      <BinanceConnectionCard language={language as CryptoLang} />
 
       {/* Card: Preferências do app */}
       <div className="card-crypto-generator crypto-card">
