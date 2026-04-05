@@ -49,6 +49,51 @@ async function relaySignedRequestToVps(payload: RelayPayload): Promise<{ ok: boo
   return { ok: res.ok, status: res.status, json };
 }
 
+/** GET público relayado na VPS (mesmo IP que ordens assinadas), só `exchangeInfo?symbol=`. */
+async function relayPublicExchangeInfoToVps(fullUrl: string): Promise<{ ok: boolean; status: number; json: unknown }> {
+  const res = await fetch(`${binanceProxyBaseUrl()}/v1/relay`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.BINANCE_PROXY_SECRET}`,
+    },
+    body: JSON.stringify({ kind: "public_get", url: fullUrl }),
+    cache: "no-store",
+    signal: AbortSignal.timeout(30_000),
+  });
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+  return { ok: res.ok, status: res.status, json };
+}
+
+const EXCHANGE_INFO_FETCH_MS = 22_000;
+
+/**
+ * `GET /api/v3/exchangeInfo?symbol=` — sem assinatura. Com `BINANCE_PROXY_*`, o pedido sai pela VPS (rota fixa / região do servidor).
+ */
+export async function fetchBinanceExchangeInfo(symbol: string): Promise<{ ok: boolean; status: number; json: unknown }> {
+  const sym = symbol.trim().toUpperCase();
+  const url = `${BINANCE_BASE}/api/v3/exchangeInfo?symbol=${encodeURIComponent(sym)}`;
+  if (useBinanceProxy()) {
+    return relayPublicExchangeInfoToVps(url);
+  }
+  const res = await fetch(url, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(EXCHANGE_INFO_FETCH_MS),
+  });
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+  return { ok: res.ok, status: res.status, json };
+}
+
 function buildSignedQuery(secret: string, extraParams: Record<string, string> = {}): { queryString: string; signature: string } {
   const timestamp = Date.now().toString();
   const params = new URLSearchParams({ timestamp, ...extraParams });

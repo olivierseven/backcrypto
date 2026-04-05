@@ -1,4 +1,4 @@
-const BINANCE_BASE = (process.env.BINANCE_API_BASE_URL ?? "https://api.binance.com").replace(/\/$/, "");
+import { fetchBinanceExchangeInfo } from "./binance-user-api";
 
 export type LotSizeFilter = {
   stepSize: string;
@@ -20,8 +20,6 @@ export type SymbolSpotFilters = {
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const symbolFiltersCache = new Map<string, { at: number; value: SymbolSpotFilters }>();
 
-/** Timeout por pedido a exchangeInfo (serverless pode ser lento; evita falhar em silêncio). */
-const EXCHANGE_INFO_FETCH_MS = 22_000;
 const EXCHANGE_INFO_RETRIES = 5;
 
 function sleep(ms: number): Promise<void> {
@@ -64,20 +62,16 @@ export async function getSymbolSpotFilters(
     }
   }
 
-  const url = `${BINANCE_BASE}/api/v3/exchangeInfo?symbol=${encodeURIComponent(sym)}`;
   const empty: SymbolSpotFilters = { lot: null, price: null };
 
   for (let attempt = 0; attempt < EXCHANGE_INFO_RETRIES; attempt++) {
     try {
-      const res = await fetch(url, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(EXCHANGE_INFO_FETCH_MS),
-      });
-      if (!res.ok) {
+      const { ok, json } = await fetchBinanceExchangeInfo(sym);
+      if (!ok || json === null) {
         await sleep(250 * (attempt + 1));
         continue;
       }
-      const data = (await res.json()) as {
+      const data = json as {
         symbols?: {
           filters?: {
             filterType?: string;
