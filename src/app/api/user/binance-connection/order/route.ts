@@ -139,10 +139,29 @@ export async function POST(request: NextRequest) {
       params.quantity = quantity!.trim();
     }
 
-    const filters = await getSymbolSpotFilters(sym);
+    const filters = await getSymbolSpotFilters(sym, { bypassCache: true });
 
-    if (type === "LIMIT" && params.price && filters.price) {
+    if (type === "LIMIT" && params.price) {
+      if (!filters.price?.tickSize) {
+        return NextResponse.json(
+          {
+            error: "exchange_filters_unavailable",
+            msg: "Could not load PRICE_FILTER for this symbol. Please try again in a moment.",
+          },
+          { status: 503 }
+        );
+      }
       params.price = floorPriceToTick(params.price, filters.price.tickSize);
+    }
+
+    if (type === "LIMIT" && params.quantity && !filters.lot) {
+      return NextResponse.json(
+        {
+          error: "exchange_filters_unavailable",
+          msg: "Could not load LOT_SIZE for this symbol. Please try again in a moment.",
+        },
+        { status: 503 }
+      );
     }
 
     if (params.quantity) {

@@ -1308,6 +1308,8 @@ export const cryptoTranslations = {
         tradingCtrlLimitBuyLoading: "Loading…",
         tradingCtrlLimitBuyUsdtHint: "You can edit (max. {max} USDT available in spot).",
         tradingCtrlLimitBuyUsdtExceedsBalance: "Amount exceeds available USDT in spot.",
+        tradingOrderLotSizeInvalid:
+          "Order quantity rounds to zero for this pair's LOT_SIZE rules. Try a larger USDT amount or a different limit price.",
         tradingCtrlLimitSellConfirmTitle: "Confirm limit sell",
         tradingCtrlLimitSellConfirmIntro: "Place a GTC limit sell on Binance with:",
         tradingCtrlLimitSellConfirmPrice: "Limit price (USDT)",
@@ -3252,6 +3254,8 @@ export const cryptoTranslations = {
         tradingCtrlLimitBuyLoading: "A carregar…",
         tradingCtrlLimitBuyUsdtHint: "Pode alterar (máx. {max} USDT disponíveis no spot).",
         tradingCtrlLimitBuyUsdtExceedsBalance: "O valor ultrapassa o USDT disponível no spot.",
+        tradingOrderLotSizeInvalid:
+          "A quantidade arredonda para zero com as regras LOT_SIZE deste par. Tente mais USDT ou outro preço limite.",
         tradingCtrlLimitSellConfirmTitle: "Confirmar venda limite",
         tradingCtrlLimitSellConfirmIntro: "Enviar ordem limite GTC na Binance com:",
         tradingCtrlLimitSellConfirmPrice: "Preço limite (USDT)",

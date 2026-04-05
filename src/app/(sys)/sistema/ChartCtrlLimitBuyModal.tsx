@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "@/app/constants";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
+import { floorPriceToTick, floorQuantityToLotStep } from "@/lib/binance-exchange-filters";
 
 function formatDecimalStr(n: number): string {
   return n
@@ -121,8 +122,32 @@ export default function ChartCtrlLimitBuyModal({ open, onClose, symbol, limitPri
     setSubmitting(true);
     setErrMsg(null);
     try {
-      const qtyStr = formatQtyBinance(n / limitPrice);
-      const priceStr = formatDecimalStr(limitPrice);
+      const filtersRes = await fetch(`${API_BASE}/binance/symbol-filters?symbol=${encodeURIComponent(sym)}`);
+      const filters = filtersRes.ok
+        ? ((await filtersRes.json()) as {
+            lot?: { stepSize: string; minQty: string } | null;
+            price?: { tickSize: string } | null;
+          })
+        : {};
+      const priceTick = filters?.price?.tickSize;
+      let priceStr = formatDecimalStr(limitPrice);
+      if (priceTick) {
+        priceStr = floorPriceToTick(priceStr, priceTick);
+      }
+      const px = parseFloat(priceStr);
+      if (!Number.isFinite(px) || px <= 0) {
+        setErrMsg(t.tradingError);
+        return;
+      }
+      let qtyStr = formatQtyBinance(n / px);
+      if (filters?.lot?.stepSize) {
+        qtyStr = floorQuantityToLotStep(qtyStr, filters.lot.stepSize);
+      }
+      const qtyN = parseFloat(qtyStr);
+      if (!Number.isFinite(qtyN) || qtyN <= 0) {
+        setErrMsg((t as Record<string, string>).tradingOrderLotSizeInvalid ?? t.tradingError);
+        return;
+      }
       const res = await fetch(`${API_BASE}/user/binance-connection/order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

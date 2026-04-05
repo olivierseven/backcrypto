@@ -20,62 +20,87 @@ export type SymbolSpotFilters = {
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const symbolFiltersCache = new Map<string, { at: number; value: SymbolSpotFilters }>();
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export type GetSymbolSpotFiltersOptions = {
+  /** Ignora leitura do cache (recomendado ao submeter ordens para evitar PRICE_FILTER com tick desatualizado). */
+  bypassCache?: boolean;
+};
+
 /**
  * LOT_SIZE + PRICE_FILTER num único exchangeInfo (cache por símbolo).
+ * Não grava cache em falhas HTTP — evita servir `{ price: null }` por 5 min após um timeout.
  */
-export async function getSymbolSpotFilters(symbol: string): Promise<SymbolSpotFilters> {
+export async function getSymbolSpotFilters(
+  symbol: string,
+  opts?: GetSymbolSpotFiltersOptions
+): Promise<SymbolSpotFilters> {
   const sym = symbol.trim().toUpperCase();
   const now = Date.now();
-  const hit = symbolFiltersCache.get(sym);
-  if (hit && now - hit.at < CACHE_TTL_MS) {
-    return hit.value;
+  if (!opts?.bypassCache) {
+    const hit = symbolFiltersCache.get(sym);
+    if (hit && now - hit.at < CACHE_TTL_MS) {
+      return hit.value;
+    }
   }
 
   const url = `${BINANCE_BASE}/api/v3/exchangeInfo?symbol=${encodeURIComponent(sym)}`;
-  const res = await fetch(url, { cache: "no-store" });
   const empty: SymbolSpotFilters = { lot: null, price: null };
-  if (!res.ok) {
-    symbolFiltersCache.set(sym, { at: now, value: empty });
-    return empty;
-  }
-  const data = (await res.json()) as {
-    symbols?: {
-      filters?: {
-        filterType?: string;
-        stepSize?: string;
-        minQty?: string;
-        maxQty?: string;
-        tickSize?: string;
-        minPrice?: string;
-        maxPrice?: string;
-      }[];
-    }[];
-  };
-  const filters = data.symbols?.[0]?.filters ?? [];
-  const lotRaw = filters.find((f) => f.filterType === "LOT_SIZE");
-  const priceRaw = filters.find((f) => f.filterType === "PRICE_FILTER");
 
-  let lot: LotSizeFilter | null = null;
-  if (lotRaw?.stepSize && lotRaw?.minQty) {
-    lot = {
-      stepSize: lotRaw.stepSize,
-      minQty: lotRaw.minQty,
-      maxQty: lotRaw.maxQty ?? "0",
-    };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        await sleep(200 * (attempt + 1));
+        continue;
+      }
+      const data = (await res.json()) as {
+        symbols?: {
+          filters?: {
+            filterType?: string;
+            stepSize?: string;
+            minQty?: string;
+            maxQty?: string;
+            tickSize?: string;
+            minPrice?: string;
+            maxPrice?: string;
+          }[];
+        }[];
+      };
+      const filters = data.symbols?.[0]?.filters ?? [];
+      const lotRaw = filters.find((f) => f.filterType === "LOT_SIZE");
+      const priceRaw = filters.find((f) => f.filterType === "PRICE_FILTER");
+
+      let lot: LotSizeFilter | null = null;
+      if (lotRaw?.stepSize && lotRaw?.minQty) {
+        lot = {
+          stepSize: lotRaw.stepSize,
+          minQty: lotRaw.minQty,
+          maxQty: lotRaw.maxQty ?? "0",
+        };
+      }
+
+      let price: PriceFilter | null = null;
+      if (priceRaw?.tickSize) {
+        price = {
+          tickSize: priceRaw.tickSize,
+          minPrice: priceRaw.minPrice,
+          maxPrice: priceRaw.maxPrice,
+        };
+      }
+
+      const value: SymbolSpotFilters = { lot, price };
+      symbolFiltersCache.set(sym, { at: Date.now(), value });
+      return value;
+    } catch {
+      await sleep(200 * (attempt + 1));
+    }
   }
 
-  let price: PriceFilter | null = null;
-  if (priceRaw?.tickSize) {
-    price = {
-      tickSize: priceRaw.tickSize,
-      minPrice: priceRaw.minPrice,
-      maxPrice: priceRaw.maxPrice,
-    };
-  }
-
-  const value: SymbolSpotFilters = { lot, price };
-  symbolFiltersCache.set(sym, { at: now, value });
-  return value;
+  console.error("[getSymbolSpotFilters] failed after retries", sym);
+  return empty;
 }
 
 /**
