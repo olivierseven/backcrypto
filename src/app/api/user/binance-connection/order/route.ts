@@ -6,9 +6,36 @@ import { binanceSignedPost } from "@/lib/binance-user-api";
 import { getUserBinanceCredentials } from "@/lib/user-binance-credentials";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { DEFAULT_SYMBOLS_LIST, getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
-import { floorPriceToTick, floorQuantityToLotStep, getSymbolSpotFilters } from "@/lib/binance-exchange-filters";
+import {
+  floorPriceToTick,
+  floorQuantityToLotStep,
+  getSymbolSpotFiltersForOrder,
+  peekStaleSymbolSpotFilters,
+} from "@/lib/binance-exchange-filters";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
+
+function orderUsesBinanceProxy(): boolean {
+  return Boolean(process.env.BINANCE_PROXY_URL?.trim() && process.env.BINANCE_PROXY_SECRET?.trim());
+}
+
+/** Grava em `LogErro` (backcrypto); não usa console. Falhas de insert são ignoradas para não quebrar a resposta HTTP. */
+async function persistOrderErrorLog(reason: string, payload: Record<string, unknown>): Promise<void> {
+  const origem = `binance-connection/order:${reason}`.slice(0, 512);
+  let msgErro: string;
+  try {
+    msgErro = JSON.stringify({ ...payload, viaProxy: orderUsesBinanceProxy() });
+  } catch {
+    msgErro = "[persistOrderErrorLog] JSON.stringify failed";
+  }
+  try {
+    await cryptoPrisma.logErro.create({
+      data: { origem, msgErro },
+    });
+  } catch {
+    /* evita 500 se a tabela estiver indisponível */
+  }
+}
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 const bodySchema = z
@@ -83,14 +110,21 @@ async function persistUserSpotOrder(
       },
     });
   } catch (e) {
-    console.error("[binance-connection/order] persist", e);
+    await persistOrderErrorLog("persist_failed", {
+      symbol,
+      side,
+      orderType,
+      error: e instanceof Error ? e.message : String(e),
+    });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const diag: Record<string, unknown> = { viaProxy: orderUsesBinanceProxy() };
   try {
     const userId = await getUserId();
     if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    diag.userId = userId;
 
     const jsonBody = await request.json().catch(() => null);
     const parsed = bodySchema.safeParse(jsonBody);
@@ -100,6 +134,9 @@ export async function POST(request: NextRequest) {
 
     const { symbol, side, type, quoteOrderQty, quantity, price, timeInForce } = parsed.data;
     const sym = symbol.toUpperCase();
+    diag.symbol = sym;
+    diag.side = side;
+    diag.type = type;
 
     let allowed = await getKlineSymbolsFromDb(cryptoPrisma);
     if (allowed.length === 0) allowed = [...DEFAULT_SYMBOLS_LIST];
@@ -139,10 +176,20 @@ export async function POST(request: NextRequest) {
       params.quantity = quantity!.trim();
     }
 
-    const filters = await getSymbolSpotFilters(sym, { bypassCache: true });
+    const filters = await getSymbolSpotFiltersForOrder(sym);
 
     if (type === "LIMIT" && params.price) {
       if (!filters.price?.tickSize) {
+        const stale = peekStaleSymbolSpotFilters(sym);
+        await persistOrderErrorLog("exchange_filters_unavailable_price", {
+          symbol: sym,
+          side,
+          type,
+          mergedFilters: { hasPriceTick: false, hasLot: Boolean(filters.lot) },
+          staleInstanceCache: stale
+            ? { hasPriceTick: Boolean(stale.price?.tickSize), hasLot: Boolean(stale.lot) }
+            : null,
+        });
         return NextResponse.json(
           {
             error: "exchange_filters_unavailable",
@@ -155,6 +202,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (type === "LIMIT" && params.quantity && !filters.lot) {
+      const stale = peekStaleSymbolSpotFilters(sym);
+      await persistOrderErrorLog("exchange_filters_unavailable_lot", {
+        symbol: sym,
+        side,
+        type,
+        mergedFilters: { hasPriceTick: Boolean(filters.price?.tickSize), hasLot: false },
+        staleInstanceCache: stale
+          ? { hasPriceTick: Boolean(stale.price?.tickSize), hasLot: Boolean(stale.lot) }
+          : null,
+      });
       return NextResponse.json(
         {
           error: "exchange_filters_unavailable",
@@ -171,12 +228,27 @@ export async function POST(request: NextRequest) {
         const adjN = parseFloat(adjusted);
         const minN = parseFloat(lot.minQty);
         if (!Number.isFinite(adjN) || adjN <= 0) {
+          await persistOrderErrorLog("lot_size_rounds_to_zero", {
+            symbol: sym,
+            side,
+            type,
+            stepSize: lot.stepSize,
+            quantityBefore: params.quantity,
+          });
           return NextResponse.json(
             { error: "binance_error", msg: "LOT_SIZE: quantity rounds to zero for this pair's step size.", code: -1013 },
             { status: 400 }
           );
         }
         if (Number.isFinite(minN) && adjN + 1e-12 < minN) {
+          await persistOrderErrorLog("lot_size_below_min_qty", {
+            symbol: sym,
+            side,
+            type,
+            minQty: lot.minQty,
+            stepSize: lot.stepSize,
+            quantityAfterFloor: adjusted,
+          });
           return NextResponse.json(
             {
               error: "binance_error",
@@ -193,6 +265,14 @@ export async function POST(request: NextRequest) {
     const res = await binanceSignedPost("/api/v3/order", creds.apiKey, creds.apiSecret, params);
     if (!res.ok) {
       const j = res.json as { code?: number; msg?: string } | null;
+      await persistOrderErrorLog("binance_order_http_error", {
+        symbol: sym,
+        side,
+        type,
+        httpStatus: res.status,
+        binanceCode: j?.code,
+        binanceMsg: j?.msg,
+      });
       return NextResponse.json(
         { error: "binance_error", code: j?.code, msg: j?.msg ?? "order_failed" },
         { status: 400 }
@@ -203,7 +283,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, order: res.json });
   } catch (e) {
-    console.error("[binance-connection/order POST]", e);
+    await persistOrderErrorLog("server_error", {
+      ...diag,
+      error: e instanceof Error ? e.message : String(e),
+      stack: e instanceof Error ? e.stack : undefined,
+    });
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }

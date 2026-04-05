@@ -20,8 +20,26 @@ export type SymbolSpotFilters = {
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const symbolFiltersCache = new Map<string, { at: number; value: SymbolSpotFilters }>();
 
+/** Timeout por pedido a exchangeInfo (serverless pode ser lento; evita falhar em silêncio). */
+const EXCHANGE_INFO_FETCH_MS = 22_000;
+const EXCHANGE_INFO_RETRIES = 5;
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Cache em memória mesmo fora do TTL — útil quando o fetch fresco falha em produção. */
+export function peekStaleSymbolSpotFilters(symbol: string): SymbolSpotFilters | null {
+  const hit = symbolFiltersCache.get(symbol.trim().toUpperCase());
+  return hit?.value ?? null;
+}
+
+export function mergeSymbolSpotFilters(a: SymbolSpotFilters, b: SymbolSpotFilters | null): SymbolSpotFilters {
+  if (!b) return a;
+  return {
+    price: a.price ?? b.price,
+    lot: a.lot ?? b.lot,
+  };
 }
 
 export type GetSymbolSpotFiltersOptions = {
@@ -49,11 +67,14 @@ export async function getSymbolSpotFilters(
   const url = `${BINANCE_BASE}/api/v3/exchangeInfo?symbol=${encodeURIComponent(sym)}`;
   const empty: SymbolSpotFilters = { lot: null, price: null };
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < EXCHANGE_INFO_RETRIES; attempt++) {
     try {
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(EXCHANGE_INFO_FETCH_MS),
+      });
       if (!res.ok) {
-        await sleep(200 * (attempt + 1));
+        await sleep(250 * (attempt + 1));
         continue;
       }
       const data = (await res.json()) as {
@@ -94,13 +115,39 @@ export async function getSymbolSpotFilters(
       const value: SymbolSpotFilters = { lot, price };
       symbolFiltersCache.set(sym, { at: Date.now(), value });
       return value;
-    } catch {
-      await sleep(200 * (attempt + 1));
+    } catch (e) {
+      await sleep(300 * (attempt + 1));
+      if (attempt === EXCHANGE_INFO_RETRIES - 1) {
+        console.error("[getSymbolSpotFilters] failed after retries", sym, e);
+      }
     }
   }
 
-  console.error("[getSymbolSpotFilters] failed after retries", sym);
   return empty;
+}
+
+/** Se o fetch vier incompleto ou falhar, preenche com a última entrada em memória desta instância (qualquer par). */
+function mergeWithStaleInstanceCache(sym: string, fresh: SymbolSpotFilters): SymbolSpotFilters {
+  return mergeSymbolSpotFilters(fresh, peekStaleSymbolSpotFilters(sym));
+}
+
+/**
+ * UI (modal): respeita cache TTL; se o fetch falhar ou vier incompleto, complementa com cache expirado na instância.
+ */
+export async function getSymbolSpotFiltersForUi(symbol: string): Promise<SymbolSpotFilters> {
+  const sym = symbol.trim().toUpperCase();
+  const fresh = await getSymbolSpotFilters(sym);
+  return mergeWithStaleInstanceCache(sym, fresh);
+}
+
+/**
+ * Submissão de ordens: tenta exchangeInfo fresco (bypass TTL), depois merge com cache expirado na instância.
+ * Comportamento alinhado para todos os símbolos (sem valores fixos por moeda).
+ */
+export async function getSymbolSpotFiltersForOrder(symbol: string): Promise<SymbolSpotFilters> {
+  const sym = symbol.trim().toUpperCase();
+  const fresh = await getSymbolSpotFilters(sym, { bypassCache: true });
+  return mergeWithStaleInstanceCache(sym, fresh);
 }
 
 /**
