@@ -59,6 +59,7 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
       { value: "low", label: (t as Record<string, string>).fieldLow ?? "Low" },
       { value: "close", label: (t as Record<string, string>).fieldClose ?? "Close" },
       { value: "volume", label: (t as Record<string, string>).fieldVol ?? "Vol" },
+      { value: "volumeUsdt", label: (t as Record<string, string>).fieldVolUsdt ?? "Vol (USDT)" },
       { value: "HL2", label: (t as Record<string, string>).fieldHL2 ?? "HL2" },
       { value: "HLC3", label: (t as Record<string, string>).fieldHLC3 ?? "HLC3" },
       { value: "OHLC4", label: (t as Record<string, string>).fieldOHLC4 ?? "OHLC4" },

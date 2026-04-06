@@ -221,6 +221,7 @@ export default function SistemaDebugPanel() {
   const lang = useCryptoLang();
   const { lang: currentLang, setLang } = useCryptoLangContext();
   const t = getCryptoT(lang).sistema.debug;
+  const tKlines = getCryptoT(lang).sistema.klines as Record<string, string>;
   const {
     showKlinesTable,
     setShowKlinesTable,
@@ -233,6 +234,9 @@ export default function SistemaDebugPanel() {
     aggFastLiveDebugEnabled,
     setAggFastLiveDebugEnabled,
     aggFastLiveDebugSnapshot,
+    spotOrderChartDebugEnabled,
+    setSpotOrderChartDebugEnabled,
+    spotOrderChartDebugPayload,
   } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
@@ -2256,6 +2260,33 @@ export default function SistemaDebugPanel() {
                 />
                 <span>{t.showKlinesTable}</span>
               </label>
+            </section>
+            <section>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={spotOrderChartDebugEnabled}
+                  onChange={(e) => setSpotOrderChartDebugEnabled(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span>{tKlines.spotOrderChartDebugLabel}</span>
+              </label>
+              <p className="text-xs text-zinc-500 mt-1">
+                {(t as Record<string, string>).spotOrderChartDebugInspectHint}
+              </p>
+              {spotOrderChartDebugEnabled &&
+                (spotOrderChartDebugPayload != null ? (
+                  <pre
+                    className="mt-2 max-h-[min(50vh,420px)] overflow-auto rounded-lg border border-amber-200 bg-amber-50/90 p-2 text-[10px] leading-snug text-zinc-800 font-mono whitespace-pre-wrap break-all"
+                    data-spot-order-chart-debug="1"
+                  >
+                    {JSON.stringify(spotOrderChartDebugPayload, null, 2)}
+                  </pre>
+                ) : (
+                  <p className="text-xs text-zinc-500 mt-2">
+                    {(t as Record<string, string>).spotOrderChartDebugInspectEmpty}
+                  </p>
+                ))}
             </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">

@@ -18,14 +18,14 @@ export interface AddFormState {
   chartOption: IndicatorPanel;
   lineWidth: IndicatorLineWidth;
   lineStyle: IndicatorLineStyle;
-  macdFastMaType: "SMA" | "EMA" | "WMA";
+  macdFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdFastPeriod: number;
   macdFastPeriodText: string;
-  macdSlowMaType: "SMA" | "EMA" | "WMA";
+  macdSlowMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdSlowPeriod: number;
   macdSlowPeriodText: string;
   macdSignalLine: boolean;
-  macdSignalMaType: "SMA" | "EMA" | "WMA";
+  macdSignalMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdSignalPeriod: number;
   macdSignalPeriodText: string;
   macdSignalColor: string;
@@ -205,8 +205,8 @@ export interface AddFormState {
   hmaCustomFastPeriodText: string;
   hmaCustomSmoothPeriod: number;
   hmaCustomSmoothPeriodText: string;
-  hmaCustomLongMaType: "SMA" | "EMA" | "WMA";
-  hmaCustomFastMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomLongMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
+  hmaCustomFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
 }
 
@@ -240,14 +240,14 @@ export interface EditFormState {
   mfiLimitColor: string;
   mfiLimitLineWidth: IndicatorLineWidth;
   mfiLimitLineStyle: IndicatorLineStyle;
-  macdFastMaType: "SMA" | "EMA" | "WMA";
+  macdFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdFastPeriod: number;
   macdFastPeriodText: string;
-  macdSlowMaType: "SMA" | "EMA" | "WMA";
+  macdSlowMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdSlowPeriod: number;
   macdSlowPeriodText: string;
   macdSignalLine: boolean;
-  macdSignalMaType: "SMA" | "EMA" | "WMA";
+  macdSignalMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   macdSignalPeriod: number;
   macdSignalPeriodText: string;
   macdSignalColor: string;
@@ -402,8 +402,8 @@ export interface EditFormState {
   hmaCustomFastPeriodText: string;
   hmaCustomSmoothPeriod: number;
   hmaCustomSmoothPeriodText: string;
-  hmaCustomLongMaType: "SMA" | "EMA" | "WMA";
-  hmaCustomFastMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomLongMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
+  hmaCustomFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
   showLastValueOnYAxis: boolean;
   intervals: number[];

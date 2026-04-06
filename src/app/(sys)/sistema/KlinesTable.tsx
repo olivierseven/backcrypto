@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -32,8 +32,12 @@ import {
   groupMinutesToCache2Params,
   isAggFastGroupMinutes,
   isIntervalForbiddenOnDefaultLayout,
+  isGroupMinutesNoSpotOrderMarkers,
   isKlinesDefaultLayoutStorageRaw,
   normalizeAggGroupMinutes,
+  getSpotOrderLabelsVisibleFromStorage,
+  subscribeSpotOrderLabelsVisible,
+  BINANCE_CONNECTION_CHANGED_EVENT,
 } from "./KlinesChartConstants";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
 import { type AggFastBarRowPayload, TRADES_PER_CANDLE } from "@/app/lib/binanceAggRenkoCore";
@@ -86,6 +90,13 @@ import {
   defaultMa2TimeValueForUnit,
 } from "./indicatorsPanel/wma2Period";
 import KlinesChart from "./KlinesChart";
+import type { SpotOrderMarker } from "./klinesChart/types";
+import {
+  buildSpotOrderMarkerTitle,
+  debugSpotOrderPlacement,
+  resolveKlineIndexForSpotOrder,
+  type ChartSpotOrderApiRow,
+} from "@/lib/user-spot-order-chart";
 
 /**
  * Candle Binance: [0] openTime, [1] open, [2] high, [3] low, [4] close, [5] volume (base),
@@ -342,8 +353,26 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const lang = useCryptoLang();
   const t = getCryptoT(lang).sistema.klines;
   const tk = t as Record<string, string>;
-  const { showKlinesTable, addLayoutLoadLog, aggFastLiveDebugEnabled, setAggFastLiveDebugSnapshot } = useSistemaDebug();
-  const { data: headerData, setHeaderData, setIntervalPicker, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt } = useChartHeader();
+  const {
+    showKlinesTable,
+    addLayoutLoadLog,
+    aggFastLiveDebugEnabled,
+    setAggFastLiveDebugSnapshot,
+    spotOrderChartDebugEnabled,
+    setSpotOrderChartDebugPayload,
+  } = useSistemaDebug();
+  const {
+    data: headerData,
+    setHeaderData,
+    setIntervalPicker,
+    setOpenLimitBuyPricesUsdt,
+    setOpenLimitBuyOrdersUsdt,
+    setOpenLimitSellPricesUsdt,
+    setOpenLimitSellOrdersUsdt,
+  } = useChartHeader();
+  /** Evita loop infinito no efeito que faz `setHeaderData({ ...headerData })` — não pode depender de `headerData`. */
+  const headerDataRef = useRef(headerData);
+  headerDataRef.current = headerData;
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { userRegressions, replaceUserRegressionsFromLayout } = useKlinesRegressions();
@@ -401,6 +430,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   /** Tick para re-render da bolinha de status (atualiza a cada 15s). */
   const [, setStatusTick] = useState(0);
+  /** Ordens spot (GET /orders) — dados da API; etiquetas no gráfico são só visualização (`showSpotOrderLabels` / séries). */
+  const [chartSpotOrdersFromApi, setChartSpotOrdersFromApi] = useState<ChartSpotOrderApiRow[]>([]);
+  /** Último resultado do GET /orders (para painel de debug). */
+  const [chartOrdersFetchDebug, setChartOrdersFetchDebug] = useState<{
+    at: string;
+    httpStatus: number | null;
+    ok: boolean;
+    orderCount: number;
+    error?: string;
+    skipped?: string;
+  } | null>(null);
+  /** Aborta GET /orders em voo ao trocar símbolo/série — evita resposta tardia sobrescrever estado `skipped` (ex.: Renko). */
+  const chartSpotOrdersFetchAbortRef = useRef<AbortController | null>(null);
   /** Fuso do utilizador (API aplica a openTime/closeTime); usado para contar fechamento do candle em UTC. */
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const timezoneOffsetRef = useRef(0);
@@ -423,10 +465,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const LIVE_DEBUG_BRICKS_MAX = 2500;
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
   /** GET daily-close-tick: 0,01% do último fecho diário completo (não do tijolo anterior). */
+  /** Incrementado ao ligar/desligar Binance na Conta para voltar a pedir ordens abertas à API (não só no intervalo de 25s). */
+  const [openOrdersRefreshKey, setOpenOrdersRefreshKey] = useState(0);
   const [aggPriceTick, setAggPriceTick] = useState<number | null>(null);
   const [aggPriceTickDiag, setAggPriceTickDiag] = useState<AggFastLivePriceTickDiagnostics | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
+  /** Refs para sync LIMIT `NEW` ↔ Binance a cada 5s (leitura no tick do interval). */
+  const limitSpotSyncOrdersRef = useRef<ChartSpotOrderApiRow[]>([]);
+  const limitSpotSyncSpotRef = useRef<{ ws: string | null; close: string | null }>({ ws: null, close: null });
+  limitSpotSyncOrdersRef.current = chartSpotOrdersFromApi;
+  limitSpotSyncSpotRef.current = { ws: spotWsPrice, close: spot.currentClose };
   /** Último feed vivo: miniTicker e/ou aggTrade atemporal — para “Última atualização” / bolinha não depender só do openTime da última barra em cache. */
   const [spotWsUpdatedAt, setSpotWsUpdatedAt] = useState<number | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
@@ -476,6 +525,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [currentLayoutLabel, setCurrentLayoutLabel] = useState<string | null>(null);
   const [heikinAshiEnabled, setHeikinAshiEnabled] = useState(false);
   const aggSeriesKind = useMemo(() => groupMinutesToAggKind(groupMinutes) ?? "ohlc", [groupMinutes]);
+  const showSpotOrderLabels = useSyncExternalStore(
+    subscribeSpotOrderLabelsVisible,
+    getSpotOrderLabelsVisibleFromStorage,
+    () => true
+  );
   useLayoutEffect(() => {
     setHeikinAshiEnabled(getStoredHeikinAshi());
   }, []);
@@ -713,21 +767,21 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const col = computeMacdColumn(
           dataForInd,
           valueIndex,
-          ind.macdFastMaType ?? "EMA",
+          normalizeMacdMaType(ind.macdFastMaType),
           ind.macdFastPeriod ?? 12,
-          ind.macdSlowMaType ?? "EMA",
+          normalizeMacdMaType(ind.macdSlowMaType),
           ind.macdSlowPeriod ?? 26
         );
         for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
         if (ind.macdSignalLine) {
           const macdColIndex = out[0].length - 1;
           const signalPeriod = Math.max(1, Math.min(500, ind.macdSignalPeriod ?? 9));
-          const signalCol =
-            (ind.macdSignalMaType ?? "EMA") === "EMA"
-              ? computeEmaColumn(out, macdColIndex, signalPeriod)
-              : (ind.macdSignalMaType ?? "EMA") === "WMA"
-                ? computeWmaColumn(out, macdColIndex, signalPeriod)
-                : computeSmaColumn(out, macdColIndex, signalPeriod);
+          const signalCol = computeMaColumn(
+            out as (string | number | null)[][],
+            macdColIndex,
+            normalizeMacdMaType(ind.macdSignalMaType),
+            signalPeriod
+          );
           for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
           if (ind.macdHistogram) {
             const signalColIndex = out[0].length - 1;
@@ -870,12 +924,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                             ind.hmaCustomSmoothPeriod ?? 4,
                             ind.hmaCustomFastPeriod ?? 10,
                             ind.hmaCustomLongPeriod ?? period,
-                            ind.hmaCustomFastMaType ?? "WMA",
-                            ind.hmaCustomLongMaType ?? "WMA",
-                            ind.hmaCustomSmoothMaType ?? "WMA"
+                            normalizeHmaCustomLegMaType(ind.hmaCustomFastMaType),
+                            normalizeHmaCustomLegMaType(ind.hmaCustomLongMaType),
+                            ind.hmaCustomSmoothMaType === "SMA" || ind.hmaCustomSmoothMaType === "EMA" || ind.hmaCustomSmoothMaType === "WMA"
+                              ? ind.hmaCustomSmoothMaType
+                              : "WMA"
                           )
-                      : ind.type === "VWMA"
+                        : ind.type === "VWMA"
                         ? computeVwmaColumn(dataForInd, valueIndex, period)
+                        : ind.type === "LINEAR_FIT"
+                          ? computeLinearFitColumn(dataForInd, valueIndex, period)
+                          : ind.type === "QUADRATIC_FIT"
+                            ? computeQuadraticFitColumn(dataForInd, valueIndex, period)
                         : ind.type === "RSI"
                           ? computeRsiColumn(dataForInd, valueIndex, period)
                           : computeSmaColumn(dataForInd, valueIndex, period);
@@ -973,6 +1033,267 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       signalPosition: s.signalPosition ?? "below",
     }));
   }, [visibleStrategies, strategyResults, layoutAppliedTick]);
+
+  const fetchChartSpotOrders = useCallback(() => {
+    chartSpotOrdersFetchAbortRef.current?.abort();
+    chartSpotOrdersFetchAbortRef.current = null;
+    if (isGroupMinutesNoSpotOrderMarkers(groupMinutes)) {
+      setChartSpotOrdersFromApi([]);
+      setChartOrdersFetchDebug({
+        at: new Date().toISOString(),
+        httpStatus: null,
+        ok: true,
+        orderCount: 0,
+        skipped: "groupMinutes_no_spot_order_markers",
+      });
+      return;
+    }
+    const sym = symbol?.trim();
+    if (!sym) {
+      setChartSpotOrdersFromApi([]);
+      setChartOrdersFetchDebug({
+        at: new Date().toISOString(),
+        httpStatus: null,
+        ok: true,
+        orderCount: 0,
+        skipped: "empty symbol",
+      });
+      return;
+    }
+    const ac = new AbortController();
+    chartSpotOrdersFetchAbortRef.current = ac;
+    fetch(`${API_BASE}/user/binance-connection/orders?symbol=${encodeURIComponent(sym.toUpperCase())}`, {
+      credentials: "include",
+      cache: "no-store",
+      signal: ac.signal,
+    })
+      .then(async (r) => {
+        if (ac.signal.aborted) return;
+        const j = (await r.json().catch(() => ({}))) as { orders?: ChartSpotOrderApiRow[]; error?: string };
+        const orders = Array.isArray(j.orders) ? j.orders : [];
+        setChartOrdersFetchDebug({
+          at: new Date().toISOString(),
+          httpStatus: r.status,
+          ok: r.ok,
+          orderCount: orders.length,
+          error: r.ok ? undefined : typeof j.error === "string" ? j.error : `http_${r.status}`,
+        });
+        if (r.ok) setChartSpotOrdersFromApi(orders);
+      })
+      .catch((e: unknown) => {
+        if (ac.signal.aborted) return;
+        setChartOrdersFetchDebug({
+          at: new Date().toISOString(),
+          httpStatus: null,
+          ok: false,
+          orderCount: 0,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      });
+  }, [symbol, groupMinutes]);
+
+  useEffect(() => {
+    fetchChartSpotOrders();
+  }, [fetchChartSpotOrders]);
+
+  useEffect(() => {
+    const onPlaced = () => fetchChartSpotOrders();
+    window.addEventListener("backcrypto-spot-order-placed", onPlaced);
+    return () => window.removeEventListener("backcrypto-spot-order-placed", onPlaced);
+  }, [fetchChartSpotOrders]);
+
+  useEffect(() => {
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym) return;
+
+    const parseSpotNum = (): number | null => {
+      const { ws, close } = limitSpotSyncSpotRef.current;
+      const spotStr = ws ?? close;
+      if (spotStr == null || String(spotStr).trim() === "") return null;
+      const n = Number.parseFloat(String(spotStr));
+      if (!Number.isFinite(n) || n <= 0) return null;
+      return n;
+    };
+
+    const qualifies = (o: ChartSpotOrderApiRow, spotNum: number): boolean => {
+      if ((o.orderType ?? "").toUpperCase() !== "LIMIT") return false;
+      if ((o.status ?? "").toUpperCase() !== "NEW") return false;
+      const side = (o.side ?? "").toUpperCase();
+      if (side !== "BUY" && side !== "SELL") return false;
+      const limRaw = o.price?.trim() ?? "";
+      if (limRaw === "") return false;
+      const limitNum = Number.parseFloat(limRaw);
+      if (!Number.isFinite(limitNum) || limitNum <= 0) return false;
+      if (side === "BUY") return spotNum < limitNum;
+      return spotNum > limitNum;
+    };
+
+    const spotNum = parseSpotNum();
+    if (spotNum == null) return;
+
+    const hasAny = limitSpotSyncOrdersRef.current.some((o) => qualifies(o, spotNum));
+    if (!hasAny) return;
+
+    const tick = () => {
+      const sn = parseSpotNum();
+      if (sn == null) return;
+      const toSync = limitSpotSyncOrdersRef.current.filter((o) => qualifies(o, sn));
+      if (toSync.length === 0) return;
+      void Promise.all(
+        toSync.map((o) =>
+          fetch(`${API_BASE}/user/binance-connection/order/sync`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ symbol: sym, orderId: o.binanceOrderId }),
+          })
+        )
+      )
+        .then(() => {
+          fetchChartSpotOrders();
+        })
+        .catch(() => {});
+    };
+
+    const id = window.setInterval(tick, 5000);
+    return () => window.clearInterval(id);
+  }, [chartSpotOrdersFromApi, spotWsPrice, spot.currentClose, symbol, fetchChartSpotOrders]);
+
+  const spotOrderMarkers = useMemo((): SpotOrderMarker[] => {
+    if (!showSpotOrderLabels) return [];
+    if (isGroupMinutesNoSpotOrderMarkers(groupMinutes)) return [];
+    if (extendedKlines.length === 0) return [];
+    const symU = symbol.trim().toUpperCase();
+    const baseAsset = symU.endsWith("USDT") && symU.length > 4 ? symU.slice(0, -4) : "";
+    const tFlat = getCryptoT(lang).sistema.klines as Record<string, string>;
+    const byIndex = new Map<number, ChartSpotOrderApiRow[]>();
+    for (const o of chartSpotOrdersFromApi) {
+      const st = (o.status ?? "").toUpperCase();
+      if (st !== "FILLED" && st !== "PARTIALLY_FILLED") continue;
+      if (o.transactTimeMs == null || !Number.isFinite(o.transactTimeMs)) continue;
+      if (o.side !== "BUY" && o.side !== "SELL") continue;
+      const idx = resolveKlineIndexForSpotOrder(extendedKlines, o.transactTimeMs, timezoneOffset);
+      if (idx == null) continue;
+      const list = byIndex.get(idx) ?? [];
+      list.push(o);
+      byIndex.set(idx, list);
+    }
+    const markers: SpotOrderMarker[] = [];
+    for (const [klinesIndex, list] of byIndex) {
+      const sorted = [...list].sort((a, b) => (a.transactTimeMs ?? 0) - (b.transactTimeMs ?? 0));
+      sorted.forEach((o, stackIndex) => {
+        const avgRaw = o.avgPrice?.trim() ?? "";
+        const avgN = avgRaw !== "" ? Number.parseFloat(avgRaw) : NaN;
+        const limRaw = o.price?.trim() ?? "";
+        const limN = limRaw !== "" ? Number.parseFloat(limRaw) : NaN;
+        const avgPrice =
+          Number.isFinite(avgN) && avgN > 0 ? avgN : Number.isFinite(limN) && limN > 0 ? limN : null;
+        markers.push({
+          binanceOrderId: o.binanceOrderId,
+          klinesIndex,
+          side: o.side as "BUY" | "SELL",
+          stackIndex,
+          title: buildSpotOrderMarkerTitle(o, baseAsset, tFlat),
+          avgPrice,
+        });
+      });
+    }
+    return markers;
+  }, [showSpotOrderLabels, groupMinutes, extendedKlines, chartSpotOrdersFromApi, symbol, lang, timezoneOffset]);
+
+  const spotOrderChartDebugSnapshot = useMemo(() => {
+    if (!spotOrderChartDebugEnabled) return null;
+    const tLoc = getCryptoT(lang).sistema.klines as Record<string, string>;
+    const k = extendedKlines;
+    const fmt = (ms: number) => new Date(ms).toISOString();
+    const klinesTimeRange =
+      k.length === 0
+        ? null
+        : {
+            note: tLoc.spotOrderChartDebugKlinesNote ?? "",
+            index0_newest: { open: Number(k[0]?.[0]), close: Number(k[0]?.[6]), openIso: fmt(Number(k[0]?.[0])), closeIso: fmt(Number(k[0]?.[6])) },
+            indexLast_oldest: {
+              open: Number(k[k.length - 1]?.[0]),
+              close: Number(k[k.length - 1]?.[6]),
+              openIso: fmt(Number(k[k.length - 1]?.[0])),
+              closeIso: fmt(Number(k[k.length - 1]?.[6])),
+            },
+          };
+    const ordersAnalysis = chartSpotOrdersFromApi.map((o) => {
+      const st = (o.status ?? "").toUpperCase();
+      const eligible =
+        (st === "FILLED" || st === "PARTIALLY_FILLED") &&
+        o.transactTimeMs != null &&
+        Number.isFinite(o.transactTimeMs) &&
+        (o.side === "BUY" || o.side === "SELL");
+      const tMs = o.transactTimeMs ?? NaN;
+      const placement =
+        Number.isFinite(tMs) && k.length > 0 ? debugSpotOrderPlacement(k, tMs, timezoneOffset) : null;
+      const resolved = Number.isFinite(tMs) ? resolveKlineIndexForSpotOrder(k, tMs, timezoneOffset) : null;
+      let skipReason: string | null = null;
+      if (!eligible) {
+        if (st !== "FILLED" && st !== "PARTIALLY_FILLED") skipReason = `status=${o.status ?? "null"}`;
+        else if (o.transactTimeMs == null || !Number.isFinite(o.transactTimeMs)) skipReason = "transactTimeMs invalid";
+        else if (o.side !== "BUY" && o.side !== "SELL") skipReason = `side=${o.side}`;
+      }
+      return {
+        binanceOrderId: o.binanceOrderId,
+        side: o.side,
+        orderType: o.orderType,
+        status: o.status,
+        eligible,
+        skipReason,
+        transactTimeMs: o.transactTimeMs,
+        transactIso: Number.isFinite(tMs) ? fmt(tMs) : null,
+        createdAt: o.createdAt ?? null,
+        resolvedKlinesIndex: resolved,
+        placement,
+        markerInState: spotOrderMarkers.some((m) => m.binanceOrderId === o.binanceOrderId),
+      };
+    });
+    const ohlc = aggSeriesKind === "ohlc";
+    return {
+      hint: tLoc.spotOrderChartDebugHint ?? "",
+      /** Sempre igual ao que o GET lê no servidor — não é query direta à Binance. */
+      ordersSource: { prismaTable: "UserBinanceSpotOrder", apiRoute: "GET /user/binance-connection/orders" },
+      symbol: symbol.trim().toUpperCase(),
+      aggSeriesKind,
+      groupMinutes,
+      spotOrderMarkersOnChart: {
+        enabledForChartKind: true,
+        note: ohlc ? null : (tLoc.spotOrderChartDebugAggSeriesBarNote ?? ""),
+      },
+      timezoneOffsetHours: timezoneOffset,
+      extendedKlinesCount: k.length,
+      klinesTimeRange,
+      ordersGet: chartOrdersFetchDebug,
+      chartSpotOrdersCount: chartSpotOrdersFromApi.length,
+      spotOrderMarkersCount: spotOrderMarkers.length,
+      spotOrderMarkers,
+      ordersAnalysis,
+    };
+  }, [
+    spotOrderChartDebugEnabled,
+    extendedKlines,
+    chartSpotOrdersFromApi,
+    timezoneOffset,
+    symbol,
+    aggSeriesKind,
+    groupMinutes,
+    spotOrderMarkers,
+    chartOrdersFetchDebug,
+    lang,
+  ]);
+
+  useEffect(() => {
+    setSpotOrderChartDebugPayload(spotOrderChartDebugEnabled ? spotOrderChartDebugSnapshot : null);
+  }, [spotOrderChartDebugEnabled, spotOrderChartDebugSnapshot, setSpotOrderChartDebugPayload]);
+
+  useEffect(() => {
+    return () => {
+      setSpotOrderChartDebugPayload(null);
+    };
+  }, [setSpotOrderChartDebugPayload]);
 
   /** Lista de colunas de indicadores visíveis (cada item = uma coluna no gráfico/tabela). */
   type IchimokuPart = "tenkan" | "kijun" | "spanA" | "spanB" | "chikou";
@@ -1521,7 +1842,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     activeLayoutIsDefault,
   ]);
 
-  const last24h = (() => {
+  /** Só recalcula quando `extendedKlines` muda — evita novo objeto a cada render e loop com `setHeaderData`. */
+  const last24h = useMemo(() => {
     if (extendedKlines.length === 0) return null;
     const first = extendedKlines[0];
     const cutoff = Number(first[0]) - 24 * 60 * 60 * 1000;
@@ -1540,7 +1862,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       volUsd += parseFloat(String(k[7]));
     }
     return { max, min, volBtc, volUsd };
-  })();
+  }, [extendedKlines]);
 
   const headerWidth = chartWidth + Y_AXIS_WIDTH;
   /** Em 100%: 663px. Em 125%: 814px. Em 150%: 964px (+4px por aumento da lupa). */
@@ -1579,7 +1901,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
       : null;
     setHeaderData({
-      ...headerData,
+      ...headerDataRef.current,
       chartContainerWidth,
       priceText: current != null ? formatPriceLikeChart(current) : null,
       lastPriceUsdt: currentNum,
@@ -1590,12 +1912,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
     });
-  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines.length, extendedKlines[0]?.[4], last24h, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart, headerData]);
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart]);
 
   useEffect(() => {
     if (!symbol || symbol.trim().length < 5) {
       setOpenLimitBuyPricesUsdt([]);
       setOpenLimitBuyOrdersUsdt([]);
+      setOpenLimitSellPricesUsdt([]);
+      setOpenLimitSellOrdersUsdt([]);
       return;
     }
     let cancelled = false;
@@ -1606,14 +1930,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         .then(async (res) => {
           const data = await res.json().catch(() => ({}));
           if (cancelled) return;
-          const { prices, orders } = parseSpotOpenOrdersJson(data);
+          const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(data);
           setOpenLimitBuyPricesUsdt(prices);
           setOpenLimitBuyOrdersUsdt(orders);
+          setOpenLimitSellPricesUsdt(sellPrices);
+          setOpenLimitSellOrdersUsdt(sellOrders);
         })
         .catch(() => {
           if (!cancelled) {
             setOpenLimitBuyPricesUsdt([]);
             setOpenLimitBuyOrdersUsdt([]);
+            setOpenLimitSellPricesUsdt([]);
+            setOpenLimitSellOrdersUsdt([]);
           }
         });
     };
@@ -1623,7 +1951,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       cancelled = true;
       clearInterval(id);
     };
-  }, [symbol, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt]);
+  }, [symbol, openOrdersRefreshKey, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt, setOpenLimitSellPricesUsdt, setOpenLimitSellOrdersUsdt]);
+
+  useEffect(() => {
+    const onConn = () => setOpenOrdersRefreshKey((k) => k + 1);
+    window.addEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+    return () => window.removeEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+  }, []);
 
   const onChartDimensionsChange = useCallback((w: number, _h: number, sizePercent: number | undefined) => {
     setChartRequestedWidth((prev) => (prev === w ? prev : w));
@@ -1744,9 +2078,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               adxPart,
               ichimokuPart,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.color,
-              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : (ind.lineWidth ?? "normal"),
-              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : (ind.lineStyle ?? "solid"),
+              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? ind.color ?? "#6366f1") : ind.color,
+              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Donchian" ? (ind.donchianLimitsLineWidth ?? ind.lineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Donchian" ? (ind.donchianLimitsLineStyle ?? ind.lineStyle ?? "solid") : (ind.lineStyle ?? "solid"),
               label: ind.type === "Ichimoku" && ichimokuPart ? `${baseIchimokuLabel} ${ichimokuPartLabel[ichimokuPart]}` : ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
               shortLabel: ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabel[ichimokuPart] : ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
@@ -1875,6 +2209,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             };
             })}
             strategyCandleOverlays={strategyCandleOverlays}
+            spotOrderMarkers={spotOrderMarkers}
             getLayoutExtraConfig={() => ({
               userIndicators,
               userRegressions,

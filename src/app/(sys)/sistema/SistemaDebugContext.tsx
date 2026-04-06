@@ -7,6 +7,7 @@ const LAYOUT_DEBUG_MAX = 40;
 const LAYOUT_DEBUG_STORAGE_KEY = "backcrypto-layout-debug";
 const LAYOUT_SAVE_LOAD_DEBUG_STORAGE_KEY = "backcrypto-layout-save-load-debug";
 const AGG_FAST_LIVE_DEBUG_STORAGE_KEY = "backcrypto-agg-fast-live-debug";
+const SPOT_ORDER_CHART_DEBUG_STORAGE_KEY = "backcrypto-spot-order-chart-debug";
 
 function loadLayoutDebugEnabled(): boolean {
   if (typeof window === "undefined") return false;
@@ -35,6 +36,15 @@ function loadAggFastLiveDebugEnabled(): boolean {
   }
 }
 
+function loadSpotOrderChartDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(SPOT_ORDER_CHART_DEBUG_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface SistemaDebugContextValue {
   showKlinesTable: boolean;
   setShowKlinesTable: (v: boolean) => void;
@@ -51,6 +61,11 @@ interface SistemaDebugContextValue {
   setAggFastLiveDebugEnabled: (v: boolean) => void;
   aggFastLiveDebugSnapshot: AggFastLiveDebugSnapshot | null;
   setAggFastLiveDebugSnapshot: (s: AggFastLiveDebugSnapshot | null) => void;
+  /** Admin › Debug › Inspecionar: JSON de ordens spot no gráfico (KlinesTable preenche quando ativo). */
+  spotOrderChartDebugEnabled: boolean;
+  setSpotOrderChartDebugEnabled: (v: boolean) => void;
+  spotOrderChartDebugPayload: unknown | null;
+  setSpotOrderChartDebugPayload: (p: unknown | null) => void;
 }
 
 const SistemaDebugContext = createContext<SistemaDebugContextValue | null>(null);
@@ -69,6 +84,10 @@ const defaultValue: SistemaDebugContextValue = {
   setAggFastLiveDebugEnabled: () => {},
   aggFastLiveDebugSnapshot: null,
   setAggFastLiveDebugSnapshot: () => {},
+  spotOrderChartDebugEnabled: false,
+  setSpotOrderChartDebugEnabled: () => {},
+  spotOrderChartDebugPayload: null,
+  setSpotOrderChartDebugPayload: () => {},
 };
 
 export function SistemaDebugProvider({ children }: { children: ReactNode }) {
@@ -78,11 +97,14 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
   const [layoutSaveLoadDebugEnabled, setLayoutSaveLoadDebugEnabledState] = useState(false);
   const [aggFastLiveDebugEnabled, setAggFastLiveDebugEnabledState] = useState(false);
   const [aggFastLiveDebugSnapshot, setAggFastLiveDebugSnapshotState] = useState<AggFastLiveDebugSnapshot | null>(null);
+  const [spotOrderChartDebugEnabled, setSpotOrderChartDebugEnabledState] = useState(false);
+  const [spotOrderChartDebugPayload, setSpotOrderChartDebugPayloadState] = useState<unknown | null>(null);
 
   useLayoutEffect(() => {
     setLayoutLoadDebugEnabledState(loadLayoutDebugEnabled());
     setLayoutSaveLoadDebugEnabledState(loadLayoutSaveLoadDebugEnabled());
     setAggFastLiveDebugEnabledState(loadAggFastLiveDebugEnabled());
+    setSpotOrderChartDebugEnabledState(loadSpotOrderChartDebugEnabled());
   }, []);
 
   const setLayoutLoadDebugEnabled = useCallback((v: boolean) => {
@@ -111,6 +133,20 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     if (!v) setAggFastLiveDebugSnapshotState(null);
+  }, []);
+
+  const setSpotOrderChartDebugEnabled = useCallback((v: boolean) => {
+    setSpotOrderChartDebugEnabledState(v);
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(SPOT_ORDER_CHART_DEBUG_STORAGE_KEY, v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+    if (!v) setSpotOrderChartDebugPayloadState(null);
+  }, []);
+
+  const setSpotOrderChartDebugPayload = useCallback((p: unknown | null) => {
+    setSpotOrderChartDebugPayloadState(p);
   }, []);
 
   const setAggFastLiveDebugSnapshot = useCallback((s: AggFastLiveDebugSnapshot | null) => {
@@ -144,6 +180,10 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       setAggFastLiveDebugEnabled,
       aggFastLiveDebugSnapshot,
       setAggFastLiveDebugSnapshot,
+      spotOrderChartDebugEnabled,
+      setSpotOrderChartDebugEnabled,
+      spotOrderChartDebugPayload,
+      setSpotOrderChartDebugPayload,
     }),
     [
       showKlinesTable,
@@ -158,6 +198,10 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       setAggFastLiveDebugEnabled,
       aggFastLiveDebugSnapshot,
       setAggFastLiveDebugSnapshot,
+      spotOrderChartDebugEnabled,
+      setSpotOrderChartDebugEnabled,
+      spotOrderChartDebugPayload,
+      setSpotOrderChartDebugPayload,
     ]
   );
   return (

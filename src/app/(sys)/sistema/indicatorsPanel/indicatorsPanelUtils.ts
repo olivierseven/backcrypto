@@ -41,6 +41,7 @@ export function getFieldLabel(
   if (fieldKey === "low") return k.fieldLow ?? "Low";
   if (fieldKey === "close") return k.fieldClose ?? "Close";
   if (fieldKey === "volume") return k.fieldVol ?? "Vol";
+  if (fieldKey === "volumeUsdt") return k.fieldVolUsdt ?? "Vol (USDT)";
   if (fieldKey === "HL2") return k.fieldHL2 ?? "HL2";
   if (fieldKey === "HLC3") return k.fieldHLC3 ?? "HLC3";
   if (fieldKey === "OHLC4") return k.fieldOHLC4 ?? "OHLC4";
@@ -140,6 +141,14 @@ export function getIndicatorLabel(
   if (isTimeWindowMa2Type(ind.type)) {
     return `${ind.type}(${formatWma2WindowLong(ind, t)}) ${fieldLabel}`;
   }
+  if (ind.type === "LINEAR_FIT") {
+    const k = t as Record<string, string>;
+    return `${k.linearFitLabel ?? "Ajuste Linear"}(${ind.period}) ${fieldLabel}`;
+  }
+  if (ind.type === "QUADRATIC_FIT") {
+    const k = t as Record<string, string>;
+    return `${k.quadraticFitLabel ?? "Ajuste quadrático"}(${ind.period}) ${fieldLabel}`;
+  }
   return `${ind.type}(${ind.period}) ${fieldLabel}`;
 }
 
@@ -153,6 +162,7 @@ export function getFieldShortLetter(
   if (fieldKey === "low") return "L";
   if (fieldKey === "close") return "C";
   if (fieldKey === "volume") return "V";
+  if (fieldKey === "volumeUsdt") return "U";
   if (fieldKey === "HL2") return "2";
   if (fieldKey === "HLC3") return "3";
   if (fieldKey === "OHLC4") return "4";
@@ -234,6 +244,12 @@ export function getIndicatorLabelShort(
     const typesExtra = ft === "WMA" && lt === "WMA" && st === "WMA" ? "" : ` · ${ft}/${lt}/${st}`;
     return `HMA*(${fa},${lo},${sm})${typesExtra} ${letter}`;
   }
+  if (ind.type === "LINEAR_FIT") {
+    return `Lin(${ind.period}) ${letter}`;
+  }
+  if (ind.type === "QUADRATIC_FIT") {
+    return `Quad(${ind.period}) ${letter}`;
+  }
   if (isTimeWindowMa2Type(ind.type)) {
     return `${ind.type}(${formatWma2WindowCompact(ind)}) ${letter}`;
   }
@@ -301,6 +317,8 @@ export function isMovingAverageType(type: string): boolean {
     type === "WMA2" ||
     type === "HMA" ||
     type === "HMA_CUSTOM" ||
-    type === "VWMA"
+    type === "VWMA" ||
+    type === "LINEAR_FIT" ||
+    type === "QUADRATIC_FIT"
   );
 }

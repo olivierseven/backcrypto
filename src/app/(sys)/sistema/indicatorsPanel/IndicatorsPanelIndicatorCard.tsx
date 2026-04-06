@@ -19,6 +19,7 @@ import {
   applyIntervalGroupToggle,
   INDICATOR_INTERVAL_GROUPS,
 } from "./aggIntervalOptions";
+import type { EditFormState } from "./indicatorsPanelTypes";
 
 interface IndicatorsPanelIndicatorCardProps {
   ind: UserIndicatorConfig;
@@ -80,6 +81,17 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     { value: "EMA", label: "EMA" },
     { value: "WMA", label: "WMA" },
   ], []);
+  const macdMaTypeOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "SMA", label: "SMA" },
+      { value: "EMA", label: "EMA" },
+      { value: "WMA", label: "WMA" },
+      { value: "LINEAR_FIT", label: tRecord.linearFitLabel ?? "Ajuste linear" },
+      { value: "QUADRATIC_FIT", label: tRecord.quadraticFitLabel ?? "Ajuste quadrático" },
+    ],
+    [tRecord]
+  );
+  const hmaCustomLegMaTypeOptions: ComboboxOption[] = macdMaTypeOptions;
   const wma2UnitOptions: ComboboxOption[] = useMemo(
     () => [
       { value: "days", label: tRecord.wma2TimeUnitDays ?? "Days" },
@@ -118,7 +130,21 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   return (
     <div className="rounded border border-zinc-200 p-2 space-y-1.5 bg-zinc-50/50">
       <div className="flex items-center gap-2">
-        <span className="w-4 h-4 rounded shrink-0 border border-zinc-300" style={{ backgroundColor: ind.type === "Ichimoku" ? (ind.ichimokuTenkanColor ?? ind.color) : ind.color }} />
+        <span
+          className="w-4 h-4 rounded shrink-0 border border-zinc-300"
+          style={{
+            backgroundColor:
+              ind.type === "Ichimoku"
+                ? (ind.ichimokuTenkanColor ?? ind.color)
+                : ind.type === "Keltner"
+                  ? (ind.keltnerLimitsColor ?? ind.color)
+                  : ind.type === "Bollinger"
+                    ? (ind.bollingerLimitsColor ?? ind.color)
+                    : ind.type === "Donchian"
+                      ? (ind.donchianLimitsColor ?? ind.color)
+                      : ind.color,
+          }}
+        />
         <span className="text-xs font-medium text-zinc-800 truncate flex-1">
           {panelNum != null && <span className="text-zinc-500">({panelNum}) </span>}
           {getIndicatorLabel(ind, t, userIndicators)}
@@ -225,7 +251,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           </>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "Ichimoku" ? (
+            {ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "LINEAR_FIT" || ind.type === "QUADRATIC_FIT" || ind.type === "Ichimoku" ? (
               <span className="text-xs text-zinc-700">{(t as Record<string, string>).chartOptionMain ?? "Main"}</span>
             ) : (
               <Combobox value={editForm.panel} onChange={(v) => setEditForm((f) => (f ? { ...f, panel: v as IndicatorPanel } : f))} options={editPanelOptions} className="flex-1 min-w-0" size="md" aria-label={t.chartOption} />
@@ -235,7 +261,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             <>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdFastMa ?? "Média rápida"}</span>
-                <Combobox value={editForm.macdFastMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdFastMaType: v as "SMA" | "EMA" | "WMA" } : f))} options={maTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdFastMa ?? "MA"} />
+                <Combobox value={editForm.macdFastMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdFastMaType: v as EditFormState["macdFastMaType"] } : f))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdFastMa ?? "MA"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdFastPeriod ?? "Período rápido"}</span>
@@ -247,7 +273,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSlowMa ?? "Média lenta"}</span>
-                <Combobox value={editForm.macdSlowMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdSlowMaType: v as "SMA" | "EMA" | "WMA" } : f))} options={maTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdSlowMa ?? "MA"} />
+                <Combobox value={editForm.macdSlowMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdSlowMaType: v as EditFormState["macdSlowMaType"] } : f))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdSlowMa ?? "MA"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSlowPeriod ?? "Período lento"}</span>
@@ -265,7 +291,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA sinal"}</span>
-                    <Combobox value={editForm.macdSignalMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdSignalMaType: v as "SMA" | "EMA" | "WMA" } : f))} options={maTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdSignalMa ?? "MA"} />
+                    <Combobox value={editForm.macdSignalMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, macdSignalMaType: v as EditFormState["macdSignalMaType"] } : f))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdSignalMa ?? "MA"} />
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSignalPeriod ?? "Período sinal"}</span>
@@ -335,7 +361,12 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}</span>
-                <ColorPaletteCombobox value={editForm.bollingerLimitsColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, bollingerLimitsColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"} />
+                <ColorPaletteCombobox
+                  value={editForm.bollingerLimitsColor}
+                  onChange={(hex) => setEditForm((f) => (f ? { ...f, bollingerLimitsColor: hex, color: hex } : f))}
+                  palette={INDICATOR_COLOR_PALETTE}
+                  aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}
+                />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
@@ -344,14 +375,53 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <Combobox value={editForm.bollingerLimitsLineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, bollingerLimitsLineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle ?? "Estilo"} />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
-                <ColorPaletteCombobox value={editForm.color} onChange={(hex) => setEditForm((f) => (f ? { ...f, color: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).bollingerMiddleColor ?? "Cor da média"}</span>
+                <ColorPaletteCombobox
+                  value={editForm.bollingerMiddleColor}
+                  onChange={(hex) => setEditForm((f) => (f ? { ...f, bollingerMiddleColor: hex } : f))}
+                  palette={INDICATOR_COLOR_PALETTE}
+                  aria-label={(t as Record<string, string>).bollingerMiddleColor ?? "Cor da média"}
+                />
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura média"}</span>
-                <Combobox value={editForm.lineWidth} onChange={(v) => setEditForm((f) => (f ? { ...f, lineWidth: v as IndicatorLineWidth } : f))} options={lineWidthOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineWidth ?? "Espessura"} />
-                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo média"}</span>
-                <Combobox value={editForm.lineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, lineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle ?? "Estilo"} />
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).bollingerMiddleThickness ?? "Espessura da média"}</span>
+                <Combobox
+                  value={editForm.bollingerMiddleLineWidth}
+                  onChange={(v) =>
+                    setEditForm((f) =>
+                      f
+                        ? {
+                            ...f,
+                            bollingerMiddleLineWidth: v as IndicatorLineWidth,
+                            lineWidth: v as IndicatorLineWidth,
+                          }
+                        : f
+                    )
+                  }
+                  options={lineWidthOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).bollingerMiddleThickness ?? "Espessura da média"}
+                />
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).bollingerMiddleStroke ?? "Traço da média"}</span>
+                <Combobox
+                  value={editForm.bollingerMiddleLineStyle}
+                  onChange={(v) =>
+                    setEditForm((f) =>
+                      f
+                        ? {
+                            ...f,
+                            bollingerMiddleLineStyle: v as IndicatorLineStyle,
+                            lineStyle: v as IndicatorLineStyle,
+                          }
+                        : f
+                    )
+                  }
+                  options={lineStyleOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).bollingerMiddleStroke ?? "Traço da média"}
+                />
               </div>
             </>
           ) : ind.type === "Keltner" ? (
@@ -383,13 +453,47 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}</span>
-                <ColorPaletteCombobox value={editForm.keltnerLimitsColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, keltnerLimitsColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"} />
+                <ColorPaletteCombobox
+                  value={editForm.keltnerLimitsColor}
+                  onChange={(hex) => setEditForm((f) => (f ? { ...f, keltnerLimitsColor: hex, color: hex } : f))}
+                  palette={INDICATOR_COLOR_PALETTE}
+                  aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}
+                />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
                 <Combobox value={editForm.keltnerLimitsLineWidth} onChange={(v) => setEditForm((f) => (f ? { ...f, keltnerLimitsLineWidth: v as IndicatorLineWidth } : f))} options={lineWidthOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineWidth ?? "Espessura"} />
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
                 <Combobox value={editForm.keltnerLimitsLineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, keltnerLimitsLineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle ?? "Estilo"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerMiddleColor ?? "Cor da média"}</span>
+                <ColorPaletteCombobox
+                  value={editForm.keltnerMiddleColor}
+                  onChange={(hex) => setEditForm((f) => (f ? { ...f, keltnerMiddleColor: hex } : f))}
+                  palette={INDICATOR_COLOR_PALETTE}
+                  aria-label={(t as Record<string, string>).keltnerMiddleColor ?? "Cor da média"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerMiddleThickness ?? "Espessura da média"}</span>
+                <Combobox
+                  value={editForm.keltnerMiddleLineWidth}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, keltnerMiddleLineWidth: v as IndicatorLineWidth } : f))}
+                  options={lineWidthOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).keltnerMiddleThickness ?? "Espessura da média"}
+                />
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).keltnerMiddleStroke ?? "Traço da média"}</span>
+                <Combobox
+                  value={editForm.keltnerMiddleLineStyle}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, keltnerMiddleLineStyle: v as IndicatorLineStyle } : f))}
+                  options={lineStyleOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).keltnerMiddleStroke ?? "Traço da média"}
+                />
               </div>
             </>
           ) : ind.type === "Donchian" ? (
@@ -427,7 +531,40 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}</span>
-                <ColorPaletteCombobox value={editForm.donchianMiddleColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, donchianMiddleColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"} />
+                <ColorPaletteCombobox
+                  value={editForm.donchianMiddleColor}
+                  onChange={(hex) => setEditForm((f) => (f ? { ...f, donchianMiddleColor: hex, color: hex } : f))}
+                  palette={INDICATOR_COLOR_PALETTE}
+                  aria-label={(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).donchianMiddleThickness ?? "Espessura linha meio"}</span>
+                <Combobox
+                  value={editForm.donchianMiddleLineWidth}
+                  onChange={(v) =>
+                    setEditForm((f) =>
+                      f ? { ...f, donchianMiddleLineWidth: v as IndicatorLineWidth, lineWidth: v as IndicatorLineWidth } : f
+                    )
+                  }
+                  options={lineWidthOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).donchianMiddleThickness ?? "Espessura linha meio"}
+                />
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).donchianMiddleStroke ?? "Traço linha meio"}</span>
+                <Combobox
+                  value={editForm.donchianMiddleLineStyle}
+                  onChange={(v) =>
+                    setEditForm((f) =>
+                      f ? { ...f, donchianMiddleLineStyle: v as IndicatorLineStyle, lineStyle: v as IndicatorLineStyle } : f
+                    )
+                  }
+                  options={lineStyleOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).donchianMiddleStroke ?? "Traço linha meio"}
+                />
               </div>
             </>
           ) : ind.type === "Ichimoku" ? (
@@ -568,8 +705,8 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.hmaCustomLongPeriod ?? "Long MA"}</span>
                 <Combobox
                   value={editForm.hmaCustomLongMaType ?? "WMA"}
-                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomLongMaType: v as "SMA" | "EMA" | "WMA" } : f))}
-                  options={maTypeOptions}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomLongMaType: v as EditFormState["hmaCustomLongMaType"] } : f))}
+                  options={hmaCustomLegMaTypeOptions}
                   className="w-[4.75rem] shrink-0"
                   size="md"
                   aria-label={`${tRecord.hmaCustomLongPeriod ?? "Long MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
@@ -658,8 +795,8 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{tRecord.hmaCustomFastPeriod ?? "Fast MA"}</span>
                 <Combobox
                   value={editForm.hmaCustomFastMaType ?? "WMA"}
-                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomFastMaType: v as "SMA" | "EMA" | "WMA" } : f))}
-                  options={maTypeOptions}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, hmaCustomFastMaType: v as EditFormState["hmaCustomFastMaType"] } : f))}
+                  options={hmaCustomLegMaTypeOptions}
                   className="w-[4.75rem] shrink-0"
                   size="md"
                   aria-label={`${tRecord.hmaCustomFastPeriod ?? "Fast MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
@@ -959,13 +1096,13 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           )}
           </>
           )}
-          {ind.type !== "Ichimoku" && (
+          {ind.type !== "Ichimoku" && ind.type !== "Bollinger" && ind.type !== "Donchian" && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
             <ColorPaletteCombobox value={editForm.color} onChange={(hex) => setEditForm((f) => (f ? { ...f, color: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
           </div>
           )}
-          {!(ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "Ichimoku") && (
+          {!(ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "LINEAR_FIT" || ind.type === "QUADRATIC_FIT" || ind.type === "Ichimoku") && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
             {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? (
@@ -1309,7 +1446,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
               )}
             </>
           )}
-          {ind.type !== "SAR" && ind.type !== "ADX" && ind.type !== "Ichimoku" && (
+          {ind.type !== "SAR" && ind.type !== "ADX" && ind.type !== "Ichimoku" && ind.type !== "Bollinger" && ind.type !== "Donchian" && (
             <>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>

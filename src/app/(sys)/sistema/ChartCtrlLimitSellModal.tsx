@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "@/app/constants";
+import { formatBinanceOrderSubmitUserMessage, type BinanceOrderSubmitErrorJson } from "@/lib/binance-order-submit-error";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { floorQuantityToLotStep } from "@/lib/binance-exchange-filters";
 
@@ -199,12 +200,21 @@ export default function ChartCtrlLimitSellModal({ open, onClose, symbol, limitPr
           timeInForce: "GTC",
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { msg?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as BinanceOrderSubmitErrorJson;
       if (!res.ok) {
-        const msg = typeof data.msg === "string" ? data.msg : data.error ?? "order_failed";
-        throw new Error(msg);
+        throw new Error(
+          formatBinanceOrderSubmitUserMessage(data, {
+            tradingBinanceMinNotional: t.tradingBinanceMinNotional,
+            tradingBinanceNotionalGeneric: t.tradingBinanceNotionalGeneric,
+          }),
+        );
       }
       setPhase("success");
+      try {
+        window.dispatchEvent(new CustomEvent("backcrypto-spot-order-placed"));
+      } catch {
+        /* ignore */
+      }
       onOrdered?.();
     } catch (e: unknown) {
       setErrMsg(e instanceof Error ? e.message : t.tradingError);

@@ -39,9 +39,216 @@ export function computeSmaColumn(
 }
 
 /**
+ * Ajuste linear simples em janela deslizante (dados DESC): para cada índice `i`, usa os `period` valores
+ * de `i` (mais recente) a `i+period-1` (mais antigo). Regressão com x = 0..period-1 do antigo para o recente;
+ * o valor do indicador é a projeção no ponto mais recente (x = period−1), alinhado ao último candle da janela.
+ * Com período 1, equivale ao valor atual do campo (como SMA de 1).
+ */
+export function computeLinearFitColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const p = Math.max(1, Math.round(period));
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    if (p === 1) {
+      const raw = data[i]?.[valueIndex];
+      if (raw == null) {
+        out.push(null);
+        continue;
+      }
+      const v = Number(raw);
+      out.push(Number.isFinite(v) ? v : null);
+      continue;
+    }
+    if (i + p > n) {
+      out.push(null);
+      continue;
+    }
+    let sumX = 0;
+    let sumY = 0;
+    let sumXX = 0;
+    let sumXY = 0;
+    const m = p;
+    let windowOk = true;
+    for (let x = 0; x < p; x++) {
+      const barIdx = i + (p - 1 - x);
+      const raw = data[barIdx]?.[valueIndex];
+      if (raw == null) {
+        windowOk = false;
+        break;
+      }
+      const y = Number(raw);
+      if (!Number.isFinite(y)) {
+        windowOk = false;
+        break;
+      }
+      sumX += x;
+      sumY += y;
+      sumXX += x * x;
+      sumXY += x * y;
+    }
+    if (!windowOk) {
+      out.push(null);
+      continue;
+    }
+    const denom = m * sumXX - sumX * sumX;
+    if (denom === 0) {
+      const lastRaw = data[i]?.[valueIndex];
+      const last = lastRaw != null ? Number(lastRaw) : NaN;
+      out.push(Number.isFinite(last) ? last : null);
+      continue;
+    }
+    const b = (m * sumXY - sumX * sumY) / denom;
+    const a = (sumY - b * sumX) / m;
+    const xNewest = p - 1;
+    out.push(a + b * xNewest);
+  }
+  return out;
+}
+
+/** Resolve sistema 3×3 (eliminção gaussiana) para [a,b,c] em a + b*x + c*x². Retorna null se singular. */
+function solveQuadraticNormalEquations(
+  S0: number,
+  S1: number,
+  S2: number,
+  S3: number,
+  S4: number,
+  T0: number,
+  T1: number,
+  T2: number
+): [number, number, number] | null {
+  const m = [
+    [S0, S1, S2, T0],
+    [S1, S2, S3, T1],
+    [S2, S3, S4, T2],
+  ];
+  const n = 3;
+  for (let col = 0; col < n; col++) {
+    let pivot = col;
+    for (let r = col + 1; r < n; r++) {
+      if (Math.abs(m[r]![col]!) > Math.abs(m[pivot]![col]!)) pivot = r;
+    }
+    if (Math.abs(m[pivot]![col]!) < 1e-14) return null;
+    if (pivot !== col) {
+      const tmp = m[col]!;
+      m[col] = m[pivot]!;
+      m[pivot] = tmp;
+    }
+    const div = m[col]![col]!;
+    for (let c = col; c <= n; c++) m[col]![c]! /= div;
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = m[r]![col]!;
+      if (f === 0) continue;
+      for (let c = col; c <= n; c++) m[r]![c]! -= f * m[col]![c]!;
+    }
+  }
+  return [m[0]![3]!, m[1]![3]!, m[2]![3]!];
+}
+
+/**
+ * Ajuste quadrático em janela deslizante (dados DESC): mesma convenção de `computeLinearFitColumn`, com
+ * y ≈ a + bx + cx² por mínimos quadrados; valor no último candle = a + b(p-1) + c(p-1)².
+ * Período 1: valor isolado; período 2: coincide com o ajuste linear (parábola não fica única com 2 pontos).
+ */
+export function computeQuadraticFitColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const p = Math.max(1, Math.round(period));
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    if (p === 1) {
+      const raw = data[i]?.[valueIndex];
+      if (raw == null) {
+        out.push(null);
+        continue;
+      }
+      const v = Number(raw);
+      out.push(Number.isFinite(v) ? v : null);
+      continue;
+    }
+    if (i + p > n) {
+      out.push(null);
+      continue;
+    }
+    let S0 = 0;
+    let S1 = 0;
+    let S2 = 0;
+    let S3 = 0;
+    let S4 = 0;
+    let T0 = 0;
+    let T1 = 0;
+    let T2 = 0;
+    let windowOk = true;
+    for (let x = 0; x < p; x++) {
+      const barIdx = i + (p - 1 - x);
+      const raw = data[barIdx]?.[valueIndex];
+      if (raw == null) {
+        windowOk = false;
+        break;
+      }
+      const y = Number(raw);
+      if (!Number.isFinite(y)) {
+        windowOk = false;
+        break;
+      }
+      const x2 = x * x;
+      S0 += 1;
+      S1 += x;
+      S2 += x2;
+      S3 += x2 * x;
+      S4 += x2 * x2;
+      T0 += y;
+      T1 += x * y;
+      T2 += x2 * y;
+    }
+    if (!windowOk) {
+      out.push(null);
+      continue;
+    }
+    if (p === 2) {
+      const m2 = 2;
+      const denom = m2 * S2 - S1 * S1;
+      if (Math.abs(denom) < 1e-14) {
+        const lastRaw = data[i]?.[valueIndex];
+        const last = lastRaw != null ? Number(lastRaw) : NaN;
+        out.push(Number.isFinite(last) ? last : null);
+        continue;
+      }
+      const b = (m2 * T1 - S1 * T0) / denom;
+      const a = (T0 - b * S1) / m2;
+      out.push(a + b);
+      continue;
+    }
+    const sol = solveQuadraticNormalEquations(S0, S1, S2, S3, S4, T0, T1, T2);
+    if (sol == null) {
+      const lastRaw = data[i]?.[valueIndex];
+      const last = lastRaw != null ? Number(lastRaw) : NaN;
+      out.push(Number.isFinite(last) ? last : null);
+      continue;
+    }
+    const [a, b, c] = sol;
+    const xN = p - 1;
+    out.push(a + b * xN + c * xN * xN);
+  }
+  return out;
+}
+
+/**
  * Média móvel exponencial (EMA) sobre uma coluna do array de klines (dados DESC).
- * α = 2/(period+1). Inicializa com SMA dos primeiros "period" pontos (em ordem de tempo)
- * e depois EMA[i] = α*value[i] + (1-α)*EMA[i+1] do mais antigo para o mais recente.
+ * α = 2/(period+1). Inicializa com SMA dos primeiros "period" pontos **finitos** em ordem cronológica
+ * (do mais antigo, índice n−1, em direção ao mais recente). O seed fica no candle mais recente dessa
+ * janela (menor índice). Depois EMA[j] = α*value[j] + (1−α)*EMA[j+1] para j &lt; seedIdx.
+ *
+ * Isto corrige o caso em que a coluna tem nulls nos candles mais antigos (ex.: MACD com médias
+ * linear/quadrática nas extremidades da série): a janela fixa [n−period, n−1] ficaria toda nula e a
+ * EMA deixava de existir; o sinal do MACD deve usar os primeiros period valores finitos disponíveis.
  */
 export function computeEmaColumn(
   data: (string | number | null)[][],
@@ -52,23 +259,26 @@ export function computeEmaColumn(
   const out: (number | null)[] = new Array(n).fill(null);
   if (period < 1 || n < period) return out;
   const alpha = 2 / (period + 1);
-  const startIdx = n - period; // primeira janela completa (em ordem tempo: índices startIdx..n-1)
-  let sum = 0;
-  let count = 0;
-  for (let j = startIdx; j < n; j++) {
+
+  const seedValues: number[] = [];
+  const seedIndices: number[] = [];
+  for (let j = n - 1; j >= 0 && seedValues.length < period; j--) {
     const raw = data[j]?.[valueIndex];
-    if (raw != null) {
-      const v = Number(raw);
-      if (Number.isFinite(v)) {
-        sum += v;
-        count += 1;
-      }
-    }
+    if (raw == null) continue;
+    const v = Number(raw);
+    if (!Number.isFinite(v)) continue;
+    seedValues.push(v);
+    seedIndices.push(j);
   }
-  const initial = count > 0 ? sum / count : null;
-  if (initial == null) return out;
-  out[startIdx] = initial;
-  for (let j = startIdx - 1; j >= 0; j--) {
+  if (seedValues.length < period) return out;
+
+  let sumSeed = 0;
+  for (let k = 0; k < period; k++) sumSeed += seedValues[k]!;
+  const initial = sumSeed / period;
+  const seedIdx = Math.min(...seedIndices);
+
+  out[seedIdx] = initial;
+  for (let j = seedIdx - 1; j >= 0; j--) {
     const raw = data[j]?.[valueIndex];
     if (raw != null) {
       const v = Number(raw);
@@ -81,8 +291,6 @@ export function computeEmaColumn(
       out[j] = out[j + 1];
     }
   }
-  // índices sem janela completa (mais antigos que startIdx em tempo = j > startIdx)
-  for (let j = startIdx + 1; j < n; j++) out[j] = null;
   return out;
 }
 
@@ -207,24 +415,19 @@ function computeEmaFromValues(values: (number | null)[], period: number): (numbe
   return out;
 }
 
-/** Tipo de média para cada etapa do Hull MA (Custom). */
-export type HmaCustomMaType = "SMA" | "EMA" | "WMA";
+/** Suavização final do Hull MA (Custom): só SMA / EMA / WMA. */
+export type HmaCustomSmoothMaType = "SMA" | "EMA" | "WMA";
 
-function computeHmaCustomLegColumn(
-  data: (string | number | null)[][],
-  valueIndex: number,
-  period: number,
-  maType: HmaCustomMaType
-): (number | null)[] {
-  if (maType === "SMA") return computeSmaColumn(data, valueIndex, period);
-  if (maType === "EMA") return computeEmaColumn(data, valueIndex, period);
-  return computeWmaColumn(data, valueIndex, period);
-}
+/** Pernas rápida e longa do Hull MA (Custom): alinhado a `MaType` (SMA/EMA/WMA + ajustes). */
+export type HmaCustomLegMaType = "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
+
+/** @deprecated Use HmaCustomLegMaType ou HmaCustomSmoothMaType. */
+export type HmaCustomMaType = HmaCustomSmoothMaType;
 
 function computeHmaCustomSmoothFromRaw(
   raw: (number | null)[],
   period: number,
-  maType: HmaCustomMaType
+  maType: HmaCustomSmoothMaType
 ): (number | null)[] {
   if (maType === "SMA") return computeSmaFromValues(raw, period);
   if (maType === "EMA") return computeEmaFromValues(raw, period);
@@ -232,7 +435,7 @@ function computeHmaCustomSmoothFromRaw(
 }
 
 /**
- * Hull MA (Custom): MA(suavização) de [2×MA(rápida) − MA(longa)]; cada etapa pode ser SMA, EMA ou WMA.
+ * Hull MA (Custom): MA(suavização) de [2×MA(rápida) − MA(longa)]; pernas rápida/longas: SMA/EMA/WMA ou ajustes.
  * Períodos: smooth < fast < long.
  */
 export function normalizeHmaCustomPeriods(
@@ -261,7 +464,7 @@ export function normalizeHmaCustomPeriods(
 
 /**
  * Hull MA (Custom): MA de suavização aplicada a (2×MA(fast) − MA(long));
- * cada perna e a suavização podem ser SMA, EMA ou WMA (default WMA = Hull clássico).
+ * pernas rápida/longas: SMA, EMA, WMA, ajuste linear ou quadrático; suavização: SMA, EMA ou WMA (default WMA = Hull clássico).
  */
 export function computeHmaCustomColumn(
   data: (string | number | null)[][],
@@ -269,17 +472,17 @@ export function computeHmaCustomColumn(
   smoothPeriod: number,
   fastPeriod: number,
   longPeriod: number,
-  fastMaType: HmaCustomMaType = "WMA",
-  longMaType: HmaCustomMaType = "WMA",
-  smoothMaType: HmaCustomMaType = "WMA"
+  fastMaType: HmaCustomLegMaType = "WMA",
+  longMaType: HmaCustomLegMaType = "WMA",
+  smoothMaType: HmaCustomSmoothMaType = "WMA"
 ): (number | null)[] {
   const { hmaCustomSmoothPeriod, hmaCustomFastPeriod, hmaCustomLongPeriod } = normalizeHmaCustomPeriods(
     smoothPeriod,
     fastPeriod,
     longPeriod
   );
-  const legFast = computeHmaCustomLegColumn(data, valueIndex, hmaCustomFastPeriod, fastMaType);
-  const legLong = computeHmaCustomLegColumn(data, valueIndex, hmaCustomLongPeriod, longMaType);
+  const legFast = computeMaColumn(data, valueIndex, fastMaType, hmaCustomFastPeriod);
+  const legLong = computeMaColumn(data, valueIndex, longMaType, hmaCustomLongPeriod);
   const n = data.length;
   const raw: (number | null)[] = [];
   for (let i = 0; i < n; i++) {
@@ -385,8 +588,13 @@ export function computeStdColumn(
         }
       }
     }
-    if (count < 2) {
+    if (count === 0) {
       out.push(null);
+      continue;
+    }
+    /** Um único ponto: variância 0 (necessário para Bollinger com período 1 ou janela com 1 valor válido). */
+    if (count === 1) {
+      out.push(0);
       continue;
     }
     const mean = sum / count;
@@ -430,8 +638,9 @@ export function computeBollingerBands(
   for (let i = 0; i < n; i++) {
     const m = middle[i];
     const s = std[i];
-    if (m != null && s != null && Number.isFinite(m) && Number.isFinite(s)) {
-      const half = zUse * s;
+    if (m != null && Number.isFinite(m)) {
+      const sFin = s != null && Number.isFinite(s) ? s : 0;
+      const half = zUse * sFin;
       upper.push(m + half);
       lower.push(m - half);
     } else {
@@ -746,9 +955,20 @@ export function computeMfiColumn(
   return out;
 }
 
-export type MaType = "SMA" | "EMA" | "WMA";
+export type MaType = "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
 
-function computeMaColumn(
+/** Valida tipo de média/ajuste persistido para MACD (rápida, lenta ou sinal). */
+export function normalizeMacdMaType(t: unknown): MaType {
+  return t === "SMA" || t === "EMA" || t === "WMA" || t === "LINEAR_FIT" || t === "QUADRATIC_FIT" ? t : "EMA";
+}
+
+/** Valida tipo persistido para pernas rápida/lenta do Hull MA (Custom); inválido → WMA. */
+export function normalizeHmaCustomLegMaType(t: unknown): MaType {
+  return t === "SMA" || t === "EMA" || t === "WMA" || t === "LINEAR_FIT" || t === "QUADRATIC_FIT" ? t : "WMA";
+}
+
+/** Média ou ajuste (SMA/EMA/WMA/Ajuste linear/Ajuste quadrático) sobre uma coluna — usado pelo MACD e linha de sinal. */
+export function computeMaColumn(
   data: (string | number | null)[][],
   valueIndex: number,
   maType: MaType,
@@ -756,6 +976,8 @@ function computeMaColumn(
 ): (number | null)[] {
   if (maType === "EMA") return computeEmaColumn(data, valueIndex, period);
   if (maType === "WMA") return computeWmaColumn(data, valueIndex, period);
+  if (maType === "LINEAR_FIT") return computeLinearFitColumn(data, valueIndex, period);
+  if (maType === "QUADRATIC_FIT") return computeQuadraticFitColumn(data, valueIndex, period);
   return computeSmaColumn(data, valueIndex, period);
 }
 

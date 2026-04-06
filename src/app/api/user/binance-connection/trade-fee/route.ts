@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { binanceSignedGet } from "@/lib/binance-user-api";
 import { getUserBinanceCredentials } from "@/lib/user-binance-credentials";
+import { cryptoPrisma } from "@/lib/crypto-db";
+import { DEFAULT_TAKER_COMMISSION_STRING } from "@/lib/binance-default-trade-fee";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -32,6 +34,15 @@ export async function GET(req: NextRequest) {
     const creds = await getUserBinanceCredentials(userId);
     if (!creds) return NextResponse.json({ error: "not_connected" }, { status: 400 });
 
+    const prefRow = await cryptoPrisma.userBinanceConnection.findUnique({
+      where: { userId },
+      select: { feeEstimateTakerFallback: true },
+    });
+    const fb =
+      prefRow?.feeEstimateTakerFallback != null
+        ? prefRow.feeEstimateTakerFallback.toString()
+        : DEFAULT_TAKER_COMMISSION_STRING;
+
     const { ok, json } = await binanceSignedGet("/api/v3/tradeFee", creds.apiKey, creds.apiSecret, { symbol });
     if (!ok || !Array.isArray(json)) {
       const j = json as { code?: number; msg?: string } | null;
@@ -53,8 +64,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       symbol,
-      makerCommission: row.makerCommission ?? "0.001",
-      takerCommission: row.takerCommission ?? "0.001",
+      makerCommission: row.makerCommission ?? fb,
+      takerCommission: row.takerCommission ?? fb,
     });
   } catch (e) {
     console.error("[binance-connection/trade-fee GET]", e);

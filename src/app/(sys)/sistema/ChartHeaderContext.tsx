@@ -40,6 +40,9 @@ export interface ChartHeaderData {
   openLimitBuyPricesUsdt: number[];
   /** Mesmas ordens com id (cancelar no gráfico). */
   openLimitBuyOrdersUsdt: { orderId: string; price: number }[];
+  /** Ordens limite de venda abertas (preços para linhas vermelhas no gráfico). */
+  openLimitSellPricesUsdt: number[];
+  openLimitSellOrdersUsdt: { orderId: string; price: number }[];
   /** Preço USDT no eixo principal onde a mira está fixa; null sem mira ou mira só em painel secundário. */
   crosshairMainPriceUsdt: number | null;
 }
@@ -57,6 +60,8 @@ const defaultData: ChartHeaderData = {
   limitBuyOrderPriceUsdt: null,
   openLimitBuyPricesUsdt: [],
   openLimitBuyOrdersUsdt: [],
+  openLimitSellPricesUsdt: [],
+  openLimitSellOrdersUsdt: [],
   crosshairMainPriceUsdt: null,
 };
 
@@ -91,6 +96,8 @@ function chartHeaderDataEqual(a: ChartHeaderData, b: ChartHeaderData): boolean {
     a.limitBuyOrderPriceUsdt === b.limitBuyOrderPriceUsdt &&
     sameNumberArray(a.openLimitBuyPricesUsdt, b.openLimitBuyPricesUsdt) &&
     sameLimitBuyOrders(a.openLimitBuyOrdersUsdt, b.openLimitBuyOrdersUsdt) &&
+    sameNumberArray(a.openLimitSellPricesUsdt, b.openLimitSellPricesUsdt) &&
+    sameLimitBuyOrders(a.openLimitSellOrdersUsdt, b.openLimitSellOrdersUsdt) &&
     a.crosshairMainPriceUsdt === b.crosshairMainPriceUsdt
   );
 }
@@ -101,6 +108,8 @@ type ChartHeaderContextValue = {
   setLimitBuyOrderPriceUsdt: (v: number | null) => void;
   setOpenLimitBuyPricesUsdt: (v: number[]) => void;
   setOpenLimitBuyOrdersUsdt: (v: { orderId: string; price: number }[]) => void;
+  setOpenLimitSellPricesUsdt: (v: number[]) => void;
+  setOpenLimitSellOrdersUsdt: (v: { orderId: string; price: number }[]) => void;
   setCrosshairMainPriceUsdt: (v: number | null) => void;
   intervalPicker: ChartIntervalPickerRegistration | null;
   setIntervalPicker: (next: ChartIntervalPickerRegistration | null) => void;
@@ -145,6 +154,20 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setOpenLimitSellPricesUsdt = useCallback((v: number[]) => {
+    setData((prev) => {
+      const next = { ...prev, openLimitSellPricesUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
+  const setOpenLimitSellOrdersUsdt = useCallback((v: { orderId: string; price: number }[]) => {
+    setData((prev) => {
+      const next = { ...prev, openLimitSellOrdersUsdt: v };
+      return chartHeaderDataEqual(prev, next) ? prev : next;
+    });
+  }, []);
+
   const setCrosshairMainPriceUsdt = useCallback((v: number | null) => {
     setData((prev) => {
       const next = { ...prev, crosshairMainPriceUsdt: v };
@@ -172,6 +195,8 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
       setLimitBuyOrderPriceUsdt,
       setOpenLimitBuyPricesUsdt,
       setOpenLimitBuyOrdersUsdt,
+      setOpenLimitSellPricesUsdt,
+      setOpenLimitSellOrdersUsdt,
       setCrosshairMainPriceUsdt,
       intervalPicker,
       setIntervalPicker,
@@ -186,6 +211,8 @@ export function ChartHeaderProvider({ children }: { children: ReactNode }) {
       setLimitBuyOrderPriceUsdt,
       setOpenLimitBuyPricesUsdt,
       setOpenLimitBuyOrdersUsdt,
+      setOpenLimitSellPricesUsdt,
+      setOpenLimitSellOrdersUsdt,
       setCrosshairMainPriceUsdt,
       intervalPicker,
       setIntervalPicker,
@@ -208,6 +235,8 @@ export function useChartHeader(): ChartHeaderContextValue {
       setLimitBuyOrderPriceUsdt: () => {},
       setOpenLimitBuyPricesUsdt: () => {},
       setOpenLimitBuyOrdersUsdt: () => {},
+      setOpenLimitSellPricesUsdt: () => {},
+      setOpenLimitSellOrdersUsdt: () => {},
       setCrosshairMainPriceUsdt: () => {},
       intervalPicker: null,
       setIntervalPicker: () => {},

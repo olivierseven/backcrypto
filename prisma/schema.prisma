@@ -153,6 +153,8 @@ model UserBinanceConnection {
   lastVerifiedAt DateTime? @map("last_verified_at")
   /// USDT a gastar por operação (compra): pré-preenchimento nas boletas; opcional.
   defaultQuoteUsdtPerOrder Decimal? @map("default_quote_usdt_per_order") @db.Decimal(20, 8)
+  /// Taxa taker (0–1, ex. 0.001 = 0,1%) para estimativas / fallback quando a API não devolve o par.
+  feeEstimateTakerFallback Decimal? @map("fee_estimate_taker_fallback") @db.Decimal(20, 8)
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 

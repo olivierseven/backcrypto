@@ -29,7 +29,16 @@ type BinanceOpenOrder = {
   orderId?: number | string;
 };
 
-/** GET: ordens limite de compra abertas (LIMIT / LIMIT_MAKER, NEW / PARTIALLY_FILLED) na Binance para o par — preços para linha no gráfico. */
+type OpenLimitRow = { orderId: string; price: number };
+
+const EMPTY_OPEN_LIMITS = {
+  prices: [] as number[],
+  orders: [] as OpenLimitRow[],
+  sellPrices: [] as number[],
+  sellOrders: [] as OpenLimitRow[],
+};
+
+/** GET: ordens limite abertas compra + venda (LIMIT / LIMIT_MAKER, NEW / PARTIALLY_FILLED) — preços para linhas no gráfico. */
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserId();
@@ -47,11 +56,7 @@ export async function GET(request: NextRequest) {
     }
 
     const creds = await getUserBinanceCredentials(userId);
-    if (!creds)
-      return NextResponse.json(
-        { error: "not_connected", prices: [] as number[], orders: [] as { orderId: string; price: number }[] },
-        { status: 200 }
-      );
+    if (!creds) return NextResponse.json({ error: "not_connected", ...EMPTY_OPEN_LIMITS }, { status: 200 });
 
     const res = await binanceSignedGet("/api/v3/openOrders", creds.apiKey, creds.apiSecret, {
       symbol,
@@ -59,18 +64,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ prices: [] as number[], orders: [] as { orderId: string; price: number }[] });
+      return NextResponse.json(EMPTY_OPEN_LIMITS);
     }
 
     const raw = res.json;
     if (!Array.isArray(raw)) {
-      return NextResponse.json({ prices: [] as number[], orders: [] as { orderId: string; price: number }[] });
+      return NextResponse.json(EMPTY_OPEN_LIMITS);
     }
 
-    const orders: { orderId: string; price: number }[] = [];
+    const orders: OpenLimitRow[] = [];
     const prices = new Set<number>();
+    const sellOrders: OpenLimitRow[] = [];
+    const sellPrices = new Set<number>();
+
     for (const o of raw as BinanceOpenOrder[]) {
-      if (String(o.side ?? "").toUpperCase() !== "BUY") continue;
       const t = String(o.type ?? "").toUpperCase();
       if (t !== "LIMIT" && t !== "LIMIT_MAKER") continue;
       const st = String(o.status ?? "").toUpperCase();
@@ -79,18 +86,23 @@ export async function GET(request: NextRequest) {
       if (!Number.isFinite(px) || px <= 0) continue;
       const oid = o.orderId;
       if (oid === undefined || oid === null) continue;
-      prices.add(px);
-      orders.push({ orderId: String(oid), price: px });
+      const side = String(o.side ?? "").toUpperCase();
+      if (side === "BUY") {
+        prices.add(px);
+        orders.push({ orderId: String(oid), price: px });
+      } else if (side === "SELL") {
+        sellPrices.add(px);
+        sellOrders.push({ orderId: String(oid), price: px });
+      }
     }
 
     orders.sort((a, b) => a.price - b.price || a.orderId.localeCompare(b.orderId));
     const sorted = [...prices].sort((a, b) => a - b);
-    return NextResponse.json({ prices: sorted, orders });
+    sellOrders.sort((a, b) => b.price - a.price || a.orderId.localeCompare(b.orderId));
+    const sellSorted = [...sellPrices].sort((a, b) => b - a);
+    return NextResponse.json({ prices: sorted, orders, sellPrices: sellSorted, sellOrders });
   } catch (e) {
     console.error("[binance-connection/spot-open-orders GET]", e);
-    return NextResponse.json(
-      { error: "server_error", prices: [] as number[], orders: [] as { orderId: string; price: number }[] },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "server_error", ...EMPTY_OPEN_LIMITS }, { status: 500 });
   }
 }

@@ -45,7 +45,7 @@ import {
   isTimeWindowMa2Type,
   normalizeMa2TimeValueForUnit,
 } from "./indicatorsPanel/wma2Period";
-import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
+import { normalizeHmaCustomPeriods, normalizeHmaCustomLegMaType, normalizeMacdMaType } from "@/app/api/binance/klines/indicators";
 
 /** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
 export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./indicatorsPanel/index";
@@ -454,9 +454,9 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         bollingerLimitsColor: addForm.bollingerLimitsColor,
         bollingerLimitsLineStyle: addForm.bollingerLimitsLineStyle,
         bollingerLimitsLineWidth: addForm.bollingerLimitsLineWidth,
-        bollingerMiddleColor: addForm.color,
-        bollingerMiddleLineStyle: addForm.lineStyle,
-        bollingerMiddleLineWidth: addForm.lineWidth,
+        bollingerMiddleColor: addForm.bollingerMiddleColor,
+        bollingerMiddleLineStyle: addForm.bollingerMiddleLineStyle,
+        bollingerMiddleLineWidth: addForm.bollingerMiddleLineWidth,
       } : {}),
       ...(addForm.indicatorType === "Keltner" ? {
         keltnerMaType: addForm.keltnerMaType,
@@ -468,15 +468,36 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         keltnerLimitsColor: addForm.keltnerLimitsColor,
         keltnerLimitsLineStyle: addForm.keltnerLimitsLineStyle,
         keltnerLimitsLineWidth: addForm.keltnerLimitsLineWidth,
-        keltnerMiddleColor: addForm.color,
-        keltnerMiddleLineStyle: addForm.lineStyle,
-        keltnerMiddleLineWidth: addForm.lineWidth,
+        keltnerMiddleColor: addForm.keltnerMiddleColor,
+        keltnerMiddleLineStyle: addForm.keltnerMiddleLineStyle,
+        keltnerMiddleLineWidth: addForm.keltnerMiddleLineWidth,
       } : {}),
-      color: addForm.color,
+      color:
+        addForm.indicatorType === "Bollinger"
+          ? addForm.bollingerLimitsColor
+          : addForm.indicatorType === "Keltner"
+            ? addForm.keltnerLimitsColor
+            : addForm.indicatorType === "Donchian"
+              ? addForm.donchianLimitsColor
+              : addForm.color,
       intervals: isTimeWindowMa2Type(addForm.indicatorType) ? [] : currentGroupMinutes != null ? [currentGroupMinutes] : [],
       panel: effectivePanel,
-      lineWidth: addForm.lineWidth,
-      lineStyle: addForm.lineStyle,
+      lineWidth:
+        addForm.indicatorType === "Bollinger"
+          ? addForm.bollingerMiddleLineWidth
+          : addForm.indicatorType === "Keltner"
+            ? addForm.keltnerMiddleLineWidth
+            : addForm.indicatorType === "Donchian"
+              ? addForm.donchianMiddleLineWidth
+              : addForm.lineWidth,
+      lineStyle:
+        addForm.indicatorType === "Bollinger"
+          ? addForm.bollingerMiddleLineStyle
+          : addForm.indicatorType === "Keltner"
+            ? addForm.keltnerMiddleLineStyle
+            : addForm.indicatorType === "Donchian"
+              ? addForm.donchianMiddleLineStyle
+              : addForm.lineStyle,
       ...(addForm.indicatorType === "RSI" ? { rsiFixedScale: addForm.rsiFixedScale, rsiCenterLine: addForm.rsiCenterLine, rsiCenterLineColor: addForm.rsiCenterLineColor, rsiCenterLineWidth: addForm.rsiCenterLineWidth, rsiCenterLineStyle: addForm.rsiCenterLineStyle, rsiLimits: addForm.rsiLimits, rsiLimitUpper: addForm.rsiLimitUpper, rsiLimitLower: addForm.rsiLimitLower, rsiLimitColor: addForm.rsiLimitColor, rsiLimitLineWidth: addForm.rsiLimitLineWidth, rsiLimitLineStyle: addForm.rsiLimitLineStyle } : {}),
       ...(addForm.indicatorType === "MFI" ? { mfiFixedScale: addForm.mfiFixedScale, mfiCenterLine: addForm.mfiCenterLine, mfiCenterLineColor: addForm.mfiCenterLineColor, mfiCenterLineWidth: addForm.mfiCenterLineWidth, mfiCenterLineStyle: addForm.mfiCenterLineStyle, mfiLimits: addForm.mfiLimits, mfiLimitUpper: addForm.mfiLimitUpper, mfiLimitLower: addForm.mfiLimitLower, mfiLimitColor: addForm.mfiLimitColor, mfiLimitLineWidth: addForm.mfiLimitLineWidth, mfiLimitLineStyle: addForm.mfiLimitLineStyle } : {}),
       ...(addForm.indicatorType === "MACD" ? {
@@ -622,14 +643,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
             hmaCustomLongPeriod: hmaParsed.hmaCustomLongPeriod,
             hmaCustomFastPeriod: hmaParsed.hmaCustomFastPeriod,
             hmaCustomSmoothPeriod: hmaParsed.hmaCustomSmoothPeriod,
-            hmaCustomLongMaType:
-              addForm.hmaCustomLongMaType === "SMA" || addForm.hmaCustomLongMaType === "EMA" || addForm.hmaCustomLongMaType === "WMA"
-                ? addForm.hmaCustomLongMaType
-                : "WMA",
-            hmaCustomFastMaType:
-              addForm.hmaCustomFastMaType === "SMA" || addForm.hmaCustomFastMaType === "EMA" || addForm.hmaCustomFastMaType === "WMA"
-                ? addForm.hmaCustomFastMaType
-                : "WMA",
+            hmaCustomLongMaType: normalizeHmaCustomLegMaType(addForm.hmaCustomLongMaType),
+            hmaCustomFastMaType: normalizeHmaCustomLegMaType(addForm.hmaCustomFastMaType),
             hmaCustomSmoothMaType:
               addForm.hmaCustomSmoothMaType === "SMA" || addForm.hmaCustomSmoothMaType === "EMA" || addForm.hmaCustomSmoothMaType === "WMA"
                 ? addForm.hmaCustomSmoothMaType
@@ -717,18 +732,37 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       period: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? 1 : ind.period,
       periodText: ind.type === "VWAP" || isTimeWindowMa2Type(ind.type) ? "1" : String(ind.period),
       fieldKey: ind.type === "VWAP" ? "close" : fieldKey,
-      color: ind.color,
+      color:
+        ind.type === "Bollinger"
+          ? (ind.bollingerLimitsColor ?? ind.color)
+          : ind.type === "Keltner"
+            ? (ind.keltnerLimitsColor ?? ind.color)
+            : ind.type === "Donchian"
+              ? (ind.donchianLimitsColor ?? ind.color)
+              : ind.color,
       panel,
-      lineWidth: (ind.lineWidth === "thin" || ind.lineWidth === "normal" || ind.lineWidth === "thick" ? ind.lineWidth : "normal") as IndicatorLineWidth,
-      lineStyle: (ind.lineStyle === "solid" || ind.lineStyle === "dotted" || ind.lineStyle === "dashed" ? ind.lineStyle : "solid") as IndicatorLineStyle,
-      macdFastMaType: ind.type === "MACD" ? (ind.macdFastMaType === "SMA" || ind.macdFastMaType === "EMA" || ind.macdFastMaType === "WMA" ? ind.macdFastMaType : "EMA") : "EMA",
+      lineWidth: (ind.type === "Bollinger"
+        ? (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal" || ind.bollingerMiddleLineWidth === "thick" ? ind.bollingerMiddleLineWidth : "normal")
+        : ind.type === "Keltner"
+          ? (ind.keltnerMiddleLineWidth === "thin" || ind.keltnerMiddleLineWidth === "normal" || ind.keltnerMiddleLineWidth === "thick" ? ind.keltnerMiddleLineWidth : "normal")
+          : ind.type === "Donchian"
+            ? (ind.donchianMiddleLineWidth === "thin" || ind.donchianMiddleLineWidth === "normal" || ind.donchianMiddleLineWidth === "thick" ? ind.donchianMiddleLineWidth : "normal")
+            : ind.lineWidth === "thin" || ind.lineWidth === "normal" || ind.lineWidth === "thick" ? ind.lineWidth : "normal") as IndicatorLineWidth,
+      lineStyle: (ind.type === "Bollinger"
+        ? (ind.bollingerMiddleLineStyle === "solid" || ind.bollingerMiddleLineStyle === "dotted" || ind.bollingerMiddleLineStyle === "dashed" ? ind.bollingerMiddleLineStyle : "dashed")
+        : ind.type === "Keltner"
+          ? (ind.keltnerMiddleLineStyle === "solid" || ind.keltnerMiddleLineStyle === "dotted" || ind.keltnerMiddleLineStyle === "dashed" ? ind.keltnerMiddleLineStyle : "dashed")
+          : ind.type === "Donchian"
+            ? (ind.donchianMiddleLineStyle === "solid" || ind.donchianMiddleLineStyle === "dotted" || ind.donchianMiddleLineStyle === "dashed" ? ind.donchianMiddleLineStyle : "dashed")
+            : ind.lineStyle === "solid" || ind.lineStyle === "dotted" || ind.lineStyle === "dashed" ? ind.lineStyle : "solid") as IndicatorLineStyle,
+      macdFastMaType: ind.type === "MACD" ? normalizeMacdMaType(ind.macdFastMaType) : "EMA",
       macdFastPeriod: fastP,
       macdFastPeriodText: String(fastP),
-      macdSlowMaType: ind.type === "MACD" ? (ind.macdSlowMaType === "SMA" || ind.macdSlowMaType === "EMA" || ind.macdSlowMaType === "WMA" ? ind.macdSlowMaType : "EMA") : "EMA",
+      macdSlowMaType: ind.type === "MACD" ? normalizeMacdMaType(ind.macdSlowMaType) : "EMA",
       macdSlowPeriod: slowP,
       macdSlowPeriodText: String(slowP),
       macdSignalLine: ind.type === "MACD" ? (ind.macdSignalLine === true) : false,
-      macdSignalMaType: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalMaType === "SMA" || ind.macdSignalMaType === "EMA" || ind.macdSignalMaType === "WMA" ? ind.macdSignalMaType : "EMA") : "EMA",
+      macdSignalMaType: ind.type === "MACD" && ind.macdSignalLine ? normalizeMacdMaType(ind.macdSignalMaType) : "EMA",
       macdSignalPeriod: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalPeriod ?? 9) : 9,
       macdSignalPeriodText: String(ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalPeriod ?? 9) : 9),
       macdSignalColor: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalColor ?? "#ea580c") : "#ea580c",
@@ -826,7 +860,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       donchianLimitsLineWidth: (ind.type === "Donchian" && (ind.donchianLimitsLineWidth === "thin" || ind.donchianLimitsLineWidth === "normal") ? ind.donchianLimitsLineWidth : "normal") as IndicatorLineWidth,
       donchianMiddleColor: ind.type === "Donchian" ? (ind.donchianMiddleColor ?? "#a855f7") : "#a855f7",
       donchianMiddleLineStyle: (ind.type === "Donchian" && (ind.donchianMiddleLineStyle === "solid" || ind.donchianMiddleLineStyle === "dotted" || ind.donchianMiddleLineStyle === "dashed") ? ind.donchianMiddleLineStyle : "dashed") as IndicatorLineStyle,
-      donchianMiddleLineWidth: (ind.type === "Donchian" && (ind.donchianMiddleLineWidth === "thin" || ind.donchianMiddleLineWidth === "normal") ? ind.donchianMiddleLineWidth : "normal") as IndicatorLineWidth,
+      donchianMiddleLineWidth: (ind.type === "Donchian" && (ind.donchianMiddleLineWidth === "thin" || ind.donchianMiddleLineWidth === "normal" || ind.donchianMiddleLineWidth === "thick") ? ind.donchianMiddleLineWidth : "normal") as IndicatorLineWidth,
       ichimokuTenkanPeriod: ind.type === "Ichimoku" ? (typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9) : 9,
       ichimokuTenkanPeriodText: String(ind.type === "Ichimoku" ? (typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9) : 9),
       ichimokuKijunPeriod: ind.type === "Ichimoku" ? (typeof ind.ichimokuKijunPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuKijunPeriod)) : 26) : 26,
@@ -877,7 +911,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       bollingerLimitsLineWidth: (ind.type === "Bollinger" && (ind.bollingerLimitsLineWidth === "thin" || ind.bollingerLimitsLineWidth === "normal") ? ind.bollingerLimitsLineWidth : "normal") as IndicatorLineWidth,
       bollingerMiddleColor: ind.type === "Bollinger" ? (ind.bollingerMiddleColor ?? "#a855f7") : "#a855f7",
       bollingerMiddleLineStyle: (ind.type === "Bollinger" && (ind.bollingerMiddleLineStyle === "solid" || ind.bollingerMiddleLineStyle === "dotted" || ind.bollingerMiddleLineStyle === "dashed") ? ind.bollingerMiddleLineStyle : "dashed") as IndicatorLineStyle,
-      bollingerMiddleLineWidth: (ind.type === "Bollinger" && (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal") ? ind.bollingerMiddleLineWidth : "normal") as IndicatorLineWidth,
+      bollingerMiddleLineWidth: (ind.type === "Bollinger" && (ind.bollingerMiddleLineWidth === "thin" || ind.bollingerMiddleLineWidth === "normal" || ind.bollingerMiddleLineWidth === "thick") ? ind.bollingerMiddleLineWidth : "normal") as IndicatorLineWidth,
       keltnerMaType: ind.type === "Keltner" ? (ind.keltnerMaType === "SMA" || ind.keltnerMaType === "EMA" || ind.keltnerMaType === "WMA" ? ind.keltnerMaType : "EMA") : "EMA",
       keltnerMultiplier: ind.type === "Keltner" ? (typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2) : 2,
       keltnerMultiplierText: String(ind.type === "Keltner" ? (typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2) : 2),
@@ -888,10 +922,10 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       keltnerBandOpacityText: String(Math.round((ind.type === "Keltner" ? (typeof ind.keltnerBandOpacity === "number" ? Math.max(0, Math.min(0.3, ind.keltnerBandOpacity)) : 0.2) : 0.2) * 100)),
       keltnerLimitsColor: ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? "#6366f1") : "#6366f1",
       keltnerLimitsLineStyle: (ind.type === "Keltner" && (ind.keltnerLimitsLineStyle === "solid" || ind.keltnerLimitsLineStyle === "dotted" || ind.keltnerLimitsLineStyle === "dashed") ? ind.keltnerLimitsLineStyle : "solid") as IndicatorLineStyle,
-      keltnerLimitsLineWidth: (ind.type === "Keltner" && (ind.keltnerLimitsLineWidth === "thin" || ind.keltnerLimitsLineWidth === "normal") ? ind.keltnerLimitsLineWidth : "normal") as IndicatorLineWidth,
+      keltnerLimitsLineWidth: (ind.type === "Keltner" && (ind.keltnerLimitsLineWidth === "thin" || ind.keltnerLimitsLineWidth === "normal" || ind.keltnerLimitsLineWidth === "thick") ? ind.keltnerLimitsLineWidth : "normal") as IndicatorLineWidth,
       keltnerMiddleColor: ind.type === "Keltner" ? (ind.keltnerMiddleColor ?? "#a855f7") : "#a855f7",
       keltnerMiddleLineStyle: (ind.type === "Keltner" && (ind.keltnerMiddleLineStyle === "solid" || ind.keltnerMiddleLineStyle === "dotted" || ind.keltnerMiddleLineStyle === "dashed") ? ind.keltnerMiddleLineStyle : "dashed") as IndicatorLineStyle,
-      keltnerMiddleLineWidth: (ind.type === "Keltner" && (ind.keltnerMiddleLineWidth === "thin" || ind.keltnerMiddleLineWidth === "normal") ? ind.keltnerMiddleLineWidth : "normal") as IndicatorLineWidth,
+      keltnerMiddleLineWidth: (ind.type === "Keltner" && (ind.keltnerMiddleLineWidth === "thin" || ind.keltnerMiddleLineWidth === "normal" || ind.keltnerMiddleLineWidth === "thick") ? ind.keltnerMiddleLineWidth : "normal") as IndicatorLineWidth,
       volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : false,
       volumeColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : "#10b981",
       volumeColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : "#ef4444",
@@ -928,18 +962,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       hmaCustomFastPeriodText: String(hmaForEdit ? hmaForEdit.hmaCustomFastPeriod : 10),
       hmaCustomSmoothPeriod: hmaForEdit ? hmaForEdit.hmaCustomSmoothPeriod : 4,
       hmaCustomSmoothPeriodText: String(hmaForEdit ? hmaForEdit.hmaCustomSmoothPeriod : 4),
-      hmaCustomLongMaType:
-        ind.type === "HMA_CUSTOM"
-          ? ind.hmaCustomLongMaType === "SMA" || ind.hmaCustomLongMaType === "EMA" || ind.hmaCustomLongMaType === "WMA"
-            ? ind.hmaCustomLongMaType
-            : "WMA"
-          : "WMA",
-      hmaCustomFastMaType:
-        ind.type === "HMA_CUSTOM"
-          ? ind.hmaCustomFastMaType === "SMA" || ind.hmaCustomFastMaType === "EMA" || ind.hmaCustomFastMaType === "WMA"
-            ? ind.hmaCustomFastMaType
-            : "WMA"
-          : "WMA",
+      hmaCustomLongMaType: ind.type === "HMA_CUSTOM" ? normalizeHmaCustomLegMaType(ind.hmaCustomLongMaType) : "WMA",
+      hmaCustomFastMaType: ind.type === "HMA_CUSTOM" ? normalizeHmaCustomLegMaType(ind.hmaCustomFastMaType) : "WMA",
       hmaCustomSmoothMaType:
         ind.type === "HMA_CUSTOM"
           ? ind.hmaCustomSmoothMaType === "SMA" || ind.hmaCustomSmoothMaType === "EMA" || ind.hmaCustomSmoothMaType === "WMA"
@@ -992,7 +1016,14 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
               ? hmaEditParsed.hmaCustomLongPeriod
               : periodNum,
       fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : editForm.fieldKey,
-      color: editForm.color,
+      color:
+        ind?.type === "Bollinger"
+          ? editForm.bollingerLimitsColor
+          : ind?.type === "Keltner"
+            ? editForm.keltnerLimitsColor
+            : ind?.type === "Donchian"
+              ? editForm.donchianLimitsColor
+              : editForm.color,
       panel: ind?.type === "SAR" || ind?.type === "VWAP" || ind?.type === "Ichimoku" ? "main" : editForm.panel,
       intervals: editForm.intervals ?? [],
       showLastValueOnYAxis: editForm.showLastValueOnYAxis,
@@ -1001,8 +1032,22 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         volumeColorAbove: editForm.volumeColorAbove ?? "#10b981",
         volumeColorBelow: editForm.volumeColorBelow ?? "#ef4444",
       } : {}),
-      lineWidth: editForm.lineWidth,
-      lineStyle: editForm.lineStyle,
+      lineWidth:
+        ind?.type === "Bollinger"
+          ? editForm.bollingerMiddleLineWidth
+          : ind?.type === "Keltner"
+            ? editForm.keltnerMiddleLineWidth
+            : ind?.type === "Donchian"
+              ? editForm.donchianMiddleLineWidth
+              : editForm.lineWidth,
+      lineStyle:
+        ind?.type === "Bollinger"
+          ? editForm.bollingerMiddleLineStyle
+          : ind?.type === "Keltner"
+            ? editForm.keltnerMiddleLineStyle
+            : ind?.type === "Donchian"
+              ? editForm.donchianMiddleLineStyle
+              : editForm.lineStyle,
       ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
       ...(ind?.type === "MFI" ? { mfiFixedScale: editForm.mfiFixedScale, mfiCenterLine: editForm.mfiCenterLine, mfiCenterLineColor: editForm.mfiCenterLineColor, mfiCenterLineWidth: editForm.mfiCenterLineWidth, mfiCenterLineStyle: editForm.mfiCenterLineStyle, mfiLimits: editForm.mfiLimits, mfiLimitUpper: editForm.mfiLimitUpper, mfiLimitLower: editForm.mfiLimitLower, mfiLimitColor: editForm.mfiLimitColor, mfiLimitLineWidth: editForm.mfiLimitLineWidth, mfiLimitLineStyle: editForm.mfiLimitLineStyle } : {}),
       ...(ind?.type === "MACD" ? {
@@ -1141,9 +1186,9 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         bollingerLimitsColor: editForm.bollingerLimitsColor,
         bollingerLimitsLineStyle: editForm.bollingerLimitsLineStyle,
         bollingerLimitsLineWidth: editForm.bollingerLimitsLineWidth,
-        bollingerMiddleColor: editForm.color,
-        bollingerMiddleLineStyle: editForm.lineStyle,
-        bollingerMiddleLineWidth: editForm.lineWidth,
+        bollingerMiddleColor: editForm.bollingerMiddleColor,
+        bollingerMiddleLineStyle: editForm.bollingerMiddleLineStyle,
+        bollingerMiddleLineWidth: editForm.bollingerMiddleLineWidth,
       } : {}),
       ...(ind?.type === "Keltner" ? {
         keltnerMaType: editForm.keltnerMaType,
@@ -1155,9 +1200,9 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         keltnerLimitsColor: editForm.keltnerLimitsColor,
         keltnerLimitsLineStyle: editForm.keltnerLimitsLineStyle,
         keltnerLimitsLineWidth: editForm.keltnerLimitsLineWidth,
-        keltnerMiddleColor: editForm.color,
-        keltnerMiddleLineStyle: editForm.lineStyle,
-        keltnerMiddleLineWidth: editForm.lineWidth,
+        keltnerMiddleColor: editForm.keltnerMiddleColor,
+        keltnerMiddleLineStyle: editForm.keltnerMiddleLineStyle,
+        keltnerMiddleLineWidth: editForm.keltnerMiddleLineWidth,
       } : {}),
       ...(ind != null && isTimeWindowMa2Type(ind.type) && wma2Parsed != null
         ? {
@@ -1173,14 +1218,8 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
             hmaCustomLongPeriod: hmaEditParsed.hmaCustomLongPeriod,
             hmaCustomFastPeriod: hmaEditParsed.hmaCustomFastPeriod,
             hmaCustomSmoothPeriod: hmaEditParsed.hmaCustomSmoothPeriod,
-            hmaCustomLongMaType:
-              editForm.hmaCustomLongMaType === "SMA" || editForm.hmaCustomLongMaType === "EMA" || editForm.hmaCustomLongMaType === "WMA"
-                ? editForm.hmaCustomLongMaType
-                : "WMA",
-            hmaCustomFastMaType:
-              editForm.hmaCustomFastMaType === "SMA" || editForm.hmaCustomFastMaType === "EMA" || editForm.hmaCustomFastMaType === "WMA"
-                ? editForm.hmaCustomFastMaType
-                : "WMA",
+            hmaCustomLongMaType: normalizeHmaCustomLegMaType(editForm.hmaCustomLongMaType),
+            hmaCustomFastMaType: normalizeHmaCustomLegMaType(editForm.hmaCustomFastMaType),
             hmaCustomSmoothMaType:
               editForm.hmaCustomSmoothMaType === "SMA" || editForm.hmaCustomSmoothMaType === "EMA" || editForm.hmaCustomSmoothMaType === "WMA"
                 ? editForm.hmaCustomSmoothMaType

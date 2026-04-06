@@ -173,6 +173,7 @@ exports.Prisma.UserBinanceConnectionScalarFieldEnum = {
   apiKeyLast4: 'apiKeyLast4',
   lastVerifiedAt: 'lastVerifiedAt',
   defaultQuoteUsdtPerOrder: 'defaultQuoteUsdtPerOrder',
+  feeEstimateTakerFallback: 'feeEstimateTakerFallback',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

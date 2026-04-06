@@ -14,7 +14,13 @@ import { DrawOverlay } from "./DrawOverlay";
 import { DrawSegmentHandles, type DrawDraggingPoint } from "./DrawSegmentHandles";
 import { DrawTextInputOverlay } from "./DrawTextInputOverlay";
 import { DEFAULT_TEXT_COLOR } from "../KlinesChartDrawing";
-import type { ChartIndicatorLine, ChartStyle, RegressionOverlayPath, StrategyCandleOverlay } from "./types";
+import type {
+  ChartIndicatorLine,
+  ChartStyle,
+  RegressionOverlayPath,
+  SpotOrderMarker,
+  StrategyCandleOverlay,
+} from "./types";
 
 function lineWidthToStroke(w: "thin" | "normal" | "thick" | undefined): number {
   return w === "thin" ? 0.5 : w === "thick" ? 2 : 1;
@@ -81,6 +87,10 @@ export interface KlinesChartSvgProps {
   /** Pré-visualização Alt: venda limite válida (≥0,1% acima do último). */
   altLimitSellPreviewLineY?: number | null;
   altLimitSellPreviewHex?: string;
+  /** Ordens limite de venda abertas (Binance). */
+  showLimitSellLine?: boolean;
+  limitSellLineYs?: number[];
+  limitSellLineHex?: string;
   chartBgHex: string;
   backgroundTextHex: string;
   formatYAxis: (v: number) => string;
@@ -157,6 +167,8 @@ export interface KlinesChartSvgProps {
   textScale?: number;
   /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
   strategyCandleOverlays?: StrategyCandleOverlay[];
+  /** Etiquetas B/S de ordens spot; com preço médio, ancora no eixo Y nesse preço. */
+  spotOrderMarkers?: SpotOrderMarker[];
   /** Regressões (linear/quadrática) sobre série de indicador no painel principal. */
   regressionOverlayPaths?: RegressionOverlayPath[];
 }
@@ -212,6 +224,9 @@ export function KlinesChartSvg({
   ctrlLimitBuyPreviewHex = "#d97706",
   altLimitSellPreviewLineY = null,
   altLimitSellPreviewHex = "#dc2626",
+  showLimitSellLine = false,
+  limitSellLineYs = [],
+  limitSellLineHex = "#dc2626",
   chartBgHex,
   backgroundTextHex,
   formatYAxis,
@@ -275,6 +290,7 @@ export function KlinesChartSvg({
   t,
   textScale = 1,
   strategyCandleOverlays = [],
+  spotOrderMarkers = [],
   regressionOverlayPaths = [],
   volumeAtPriceData = null,
   volumeAtPriceOpacity = 40,
@@ -550,6 +566,19 @@ export function KlinesChartSvg({
               strokeDasharray="1 2"
             />
           ))}
+        {showLimitSellLine &&
+          limitSellLineYs.map((yy, i) => (
+            <line
+              key={`limit-sell-${i}`}
+              x1={MARGIN_LEFT}
+              y1={yy}
+              x2={MARGIN_LEFT + chartW}
+              y2={yy}
+              stroke={limitSellLineHex}
+              strokeWidth={lineWidthToStroke("thin")}
+              strokeDasharray="1 2"
+            />
+          ))}
         {ctrlLimitBuyPreviewLineY != null && Number.isFinite(ctrlLimitBuyPreviewLineY) && (
           <line
             x1={MARGIN_LEFT}
@@ -685,9 +714,11 @@ export function KlinesChartSvg({
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
                   const limitsStrokeWidth = lineWidthToStroke(ind.bollingerLimitsLineWidth);
                   const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
-                  const middleColor = ind.color ?? "#6366f1";
-                  const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
-                  const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const middleColor = ind.bollingerMiddleColor ?? ind.color ?? "#6366f1";
+                  const middleLw = ind.bollingerMiddleLineWidth ?? ind.lineWidth;
+                  const middleLs = ind.bollingerMiddleLineStyle ?? ind.lineStyle;
+                  const middleStrokeWidth = lineWidthToStroke(middleLw);
+                  const middleDash = middleLs === "dotted" ? "1 2" : middleLs === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
                   const middleD = toPathPanel(middlePts);
@@ -831,9 +862,11 @@ export function KlinesChartSvg({
                   const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
                   const limitsStrokeWidth = lineWidthToStroke(ind.donchianLimitsLineWidth);
                   const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
-                  const middleColor = ind.color ?? "#6366f1";
-                  const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
-                  const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+                  const middleColor = ind.donchianMiddleColor ?? ind.color ?? "#6366f1";
+                  const middleLw = ind.donchianMiddleLineWidth ?? ind.lineWidth;
+                  const middleLs = ind.donchianMiddleLineStyle ?? ind.lineStyle;
+                  const middleStrokeWidth = lineWidthToStroke(middleLw);
+                  const middleDash = middleLs === "dotted" ? "1 2" : middleLs === "dashed" ? "6 4" : undefined;
                   const toPathPanel = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${yPanel(p.val)}`).join(" ");
                   const upperD = toPathPanel(upperPts);
                   const middleD = toPathPanel(middlePts);
@@ -1394,6 +1427,50 @@ export function KlinesChartSvg({
           </g>
         )}
         </g>
+        {spotOrderMarkers.length > 0 && (
+          <g key="spot-order-markers" pointerEvents="auto">
+            {spotOrderMarkers.map((m, mi) => {
+              const i = n - 1 - startIndex - m.klinesIndex;
+              if (i < 0 || i >= windowSlice.length) return null;
+              const k = windowSlice[i];
+              const lowP = parseNum(String(k[3] ?? ""));
+              const wickBottom = y(lowP);
+              const x = cx(i);
+              const bw = Math.max(7, 8 * textScale);
+              const bh = Math.max(10, 11 * textScale);
+              const stack = m.stackIndex ?? 0;
+              const gap = Math.max(1, 1.5 * textScale);
+              const pad = 4 * textScale;
+              const cy = wickBottom + pad + stack * (bh + gap);
+              const letter = m.side === "SELL" ? "S" : "B";
+              const fill = m.side === "SELL" ? "#dc2626" : "#059669";
+              return (
+                <g key={`${m.binanceOrderId}-${mi}`} transform={`translate(${x - bw / 2}, ${cy})`}>
+                  <title>{m.title}</title>
+                  <rect
+                    width={bw}
+                    height={bh}
+                    rx={2 * textScale}
+                    fill={fill}
+                    stroke="#ffffff"
+                    strokeWidth={1}
+                  />
+                  <text
+                    x={bw / 2}
+                    y={bh * 0.72}
+                    textAnchor="middle"
+                    fill="#ffffff"
+                    fontSize={7 * textScale}
+                    fontWeight={700}
+                    fontFamily='system-ui, ui-sans-serif, sans-serif'
+                  >
+                    {letter}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
         {utcDayStartMarkerXs.length > 0 && (
           <g pointerEvents="none">
             {utcDayStartMarkerXs.map((px, mi) => {
@@ -1471,9 +1548,11 @@ export function KlinesChartSvg({
             const bandOpacity = Math.max(0, Math.min(0.3, ind.bollingerBandOpacity ?? 0.2));
             const limitsStrokeWidth = lineWidthToStroke(ind.bollingerLimitsLineWidth);
             const limitsDash = ind.bollingerLimitsLineStyle === "dotted" ? "1 2" : ind.bollingerLimitsLineStyle === "dashed" ? "6 4" : undefined;
-            const middleColor = ind.color ?? "#6366f1";
-            const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
-            const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const middleColor = ind.bollingerMiddleColor ?? ind.color ?? "#6366f1";
+            const middleLw = ind.bollingerMiddleLineWidth ?? ind.lineWidth;
+            const middleLs = ind.bollingerMiddleLineStyle ?? ind.lineStyle;
+            const middleStrokeWidth = lineWidthToStroke(middleLw);
+            const middleDash = middleLs === "dotted" ? "1 2" : middleLs === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
             const middleD = toPath(middlePts);
@@ -1617,9 +1696,11 @@ export function KlinesChartSvg({
             const bandOpacity = Math.max(0, Math.min(0.3, ind.donchianBandOpacity ?? 0.2));
             const limitsStrokeWidth = lineWidthToStroke(ind.donchianLimitsLineWidth);
             const limitsDash = ind.donchianLimitsLineStyle === "dotted" ? "1 2" : ind.donchianLimitsLineStyle === "dashed" ? "6 4" : undefined;
-            const middleColor = ind.color ?? "#6366f1";
-            const middleStrokeWidth = lineWidthToStroke(ind.lineWidth);
-            const middleDash = ind.lineStyle === "dotted" ? "1 2" : ind.lineStyle === "dashed" ? "6 4" : undefined;
+            const middleColor = ind.donchianMiddleColor ?? ind.color ?? "#6366f1";
+            const middleLw = ind.donchianMiddleLineWidth ?? ind.lineWidth;
+            const middleLs = ind.donchianMiddleLineStyle ?? ind.lineStyle;
+            const middleStrokeWidth = lineWidthToStroke(middleLw);
+            const middleDash = middleLs === "dotted" ? "1 2" : middleLs === "dashed" ? "6 4" : undefined;
             const toPath = (pts: { i: number; val: number }[]) => pts.length < 2 ? "" : pts.map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`).join(" ");
             const upperD = toPath(upperPts);
             const middleD = toPath(middlePts);
@@ -1934,13 +2015,19 @@ export function KlinesChartSvg({
           const pctVsPrevStr = pctVsPrev >= 0 ? `+${pctVsPrev.toFixed(2)}%` : pctVsPrev.toFixed(2) + "%";
           const volume = parseNum(String(k[5] ?? ""));
           const volumeUsdt = parseNum(String(k[7] ?? ""));
+          /** `klinesIndex` nos marcadores é índice na série API (0 = mais recente); `crosshairPoint.index` é índice em `fullReversed` (0 = mais antiga). */
+          const klinesIndexNewestFirst = n - 1 - crosshairPoint.index;
+          const spotOrdersHere = spotOrderMarkers
+            .filter((m) => m.klinesIndex === klinesIndexNewestFirst)
+            .sort((a, b) => (a.stackIndex ?? 0) - (b.stackIndex ?? 0));
           const x = cx(localIndex);
           const wickTop = y(highP);
           const bodyBottom = y(Math.min(openP, closeP));
-          const tw = 130;
+          const tk = t as Record<string, string>;
+          const tw = Math.max(130, spotOrdersHere.length > 0 ? 168 : 130);
           const lineH = 11;
           const pad = 6;
-          const numLines = 11;
+          const numLines = 11 + spotOrdersHere.length;
           const th = pad * 2 + lineH * numLines;
           const tx = Math.max(MARGIN_LEFT + 4, Math.min(MARGIN_LEFT + chartW - tw - 4, x - tw / 2));
           const showAbove = wickTop - th - 4 >= MARGIN_TOP;
@@ -1964,6 +2051,20 @@ export function KlinesChartSvg({
               <text x={tx + pad} y={y1 + lineH * 8} className="font-mono" style={{ fontSize }} fill={pctVsPrev >= 0 ? green : red}>{t.vsPrevClose} {pctVsPrevStr}</text>
               <text x={tx + pad} y={y1 + lineH * 9} className="font-mono" style={{ fontSize }} fill="#171717">{t.volumeBtc}: {formatAbbreviated(volume)}</text>
               <text x={tx + pad} y={y1 + lineH * 10} className="font-mono" style={{ fontSize }} fill="#171717">{t.volUsdt}: {formatAbbreviated(volumeUsdt)}</text>
+              {spotOrdersHere.map((m, oi) => {
+                const ap = m.avgPrice;
+                const priceShown =
+                  ap != null && Number.isFinite(ap) && ap > 0 ? fmt(ap) : (tk.spotOrderHoverNoPrice ?? "—");
+                const label =
+                  m.side === "SELL" ? (tk.spotOrderHoverPriceSell ?? "Price (S):") : (tk.spotOrderHoverPriceBuy ?? "Price (B):");
+                const rowY = y1 + lineH * (11 + oi);
+                const col = m.side === "SELL" ? red : green;
+                return (
+                  <text key={m.binanceOrderId} x={tx + pad} y={rowY} className="font-mono" style={{ fontSize }} fill={col}>
+                    {label} {priceShown}
+                  </text>
+                );
+              })}
             </g>
           );
         })()}

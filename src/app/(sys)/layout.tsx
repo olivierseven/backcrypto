@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import nextDynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { cryptoPrisma } from "@/lib/crypto-db";
-import SistemaLayoutClient from "@/app/(sys)/sistema/SistemaLayoutClient";
 import ConnectionErrorView from "@/app/(sys)/sistema/ConnectionErrorView";
 import { AFFILIATE_JWT_COOKIE_NAME, isAffiliatePainelSysPath } from "@/lib/crypto-auth-next";
 import { getLocaleFromRequest } from "@/lib/get-locale-server";
 import { isAffiliateAccountAtivo } from "@/lib/affiliate-account-ativo";
 import { jwtVerify } from "jose";
 import { requireSysUserId } from "./require-sys-user";
+
+/** Import dinâmico: o shell do layout fica num chunk menor; o cliente pesado carrega à parte (alivia ChunkLoadError/timeout com basePath + HMR). */
+const SistemaLayoutClient = nextDynamic(() => import("@/app/(sys)/sistema/SistemaLayoutClient"), {
+  loading: () => (
+    <div className="h-[100dvh] min-h-0 w-full flex flex-col items-center justify-center bg-zinc-50" aria-busy aria-label="Loading">
+      <div className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-600" />
+    </div>
+  ),
+});
 
 const AFF_JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret");
 

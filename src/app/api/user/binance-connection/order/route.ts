@@ -12,6 +12,7 @@ import {
   getSymbolSpotFiltersForOrder,
   peekStaleSymbolSpotFilters,
 } from "@/lib/binance-exchange-filters";
+import { deriveSpotOrderExecutionPriceFromRawJson } from "@/lib/user-spot-order-chart";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 
@@ -95,6 +96,9 @@ async function persistUserSpotOrder(
     const oid = o.orderId;
     if (oid === undefined || oid === null) return;
     const binanceOrderId = String(oid);
+    const priceStored =
+      deriveSpotOrderExecutionPriceFromRawJson(orderJson) ??
+      (typeof o.price === "string" && o.price.trim() !== "" ? o.price : null);
     await cryptoPrisma.userBinanceSpotOrder.create({
       data: {
         userId,
@@ -103,7 +107,7 @@ async function persistUserSpotOrder(
         side,
         orderType,
         status: typeof o.status === "string" ? o.status : null,
-        price: typeof o.price === "string" ? o.price : null,
+        price: priceStored,
         origQty: typeof o.origQty === "string" ? o.origQty : null,
         executedQty: typeof o.executedQty === "string" ? o.executedQty : null,
         rawJson: orderJson as object,
@@ -262,19 +266,67 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const minNotStr = filters.minNotional?.trim() ?? "";
+    if (minNotStr !== "") {
+      const minNot = parseFloat(minNotStr);
+      if (Number.isFinite(minNot) && minNot > 0) {
+        if (type === "LIMIT" && params.price && params.quantity) {
+          const px = parseFloat(params.price);
+          const q = parseFloat(params.quantity);
+          if (Number.isFinite(px) && Number.isFinite(q) && px > 0 && q > 0) {
+            const notional = px * q;
+            if (notional + 1e-12 < minNot) {
+              await persistOrderErrorLog("min_notional_below", {
+                symbol: sym,
+                side,
+                type,
+                notional,
+                minNotional: minNotStr,
+              });
+              return NextResponse.json({ error: "binance_min_notional", minNotional: minNotStr }, { status: 400 });
+            }
+          }
+        }
+        if (type === "MARKET" && side === "BUY" && params.quoteOrderQty) {
+          const quote = parseFloat(params.quoteOrderQty);
+          if (Number.isFinite(quote) && quote > 0 && quote + 1e-12 < minNot) {
+            await persistOrderErrorLog("min_notional_below_market_buy", {
+              symbol: sym,
+              quoteOrderQty: params.quoteOrderQty,
+              minNotional: minNotStr,
+            });
+            return NextResponse.json({ error: "binance_min_notional", minNotional: minNotStr }, { status: 400 });
+          }
+        }
+      }
+    }
+
     const res = await binanceSignedPost("/api/v3/order", creds.apiKey, creds.apiSecret, params);
     if (!res.ok) {
       const j = res.json as { code?: number; msg?: string } | null;
+      const rawMsg = j?.msg ?? "";
       await persistOrderErrorLog("binance_order_http_error", {
         symbol: sym,
         side,
         type,
         httpStatus: res.status,
         binanceCode: j?.code,
-        binanceMsg: j?.msg,
+        binanceMsg: rawMsg,
       });
+      if (/notional/i.test(rawMsg)) {
+        const minStr = filters.minNotional?.trim();
+        return NextResponse.json(
+          {
+            error: "binance_notional",
+            ...(minStr ? { minNotional: minStr } : {}),
+            msg: rawMsg,
+            code: j?.code,
+          },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { error: "binance_error", code: j?.code, msg: j?.msg ?? "order_failed" },
+        { error: "binance_error", code: j?.code, msg: rawMsg || "order_failed" },
         { status: 400 }
       );
     }

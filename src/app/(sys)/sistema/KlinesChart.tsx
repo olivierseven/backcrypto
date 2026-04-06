@@ -50,6 +50,7 @@ import {
   getDrawStorageKey,
   getDrawSharedIntervalsKey,
   MS_PER_DAY,
+  BINANCE_CONNECTION_CHANGED_EVENT,
 } from "./KlinesChartConstants";
 import {
   parseNum,
@@ -134,7 +135,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   pencil: { color: SEGMENT_COLOR_PALETTE[0], pencilStrokeWidth: "medium" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, aggIntervalPicker, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, aggSeriesKind = "ohlc", volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onPriceFormatChange, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, aggIntervalPicker, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], spotOrderMarkers = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, aggSeriesKind = "ohlc", volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onPriceFormatChange, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
   /** Renko/Range/Kagi: eixo temporal e cadência como no gráfico 5m (grades, rótulos, slots à direita). */
   const timeScaleGroupMinutes = aggSeriesKind !== "ohlc" ? 5 : groupMinutes;
   const pathname = usePathname();
@@ -148,6 +149,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     setCrosshairMainPriceUsdt,
     setOpenLimitBuyPricesUsdt,
     setOpenLimitBuyOrdersUsdt,
+    setOpenLimitSellPricesUsdt,
+    setOpenLimitSellOrdersUsdt,
   } = useChartHeader();
   const [chartLimitBuyCancelingKey, setChartLimitBuyCancelingKey] = useState<string | null>(null);
 
@@ -159,13 +162,23 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         credentials: "include",
       });
       const j = await r.json().catch(() => ({}));
-      const { prices, orders } = parseSpotOpenOrdersJson(j);
+      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
       setOpenLimitBuyPricesUsdt(prices);
       setOpenLimitBuyOrdersUsdt(orders);
+      setOpenLimitSellPricesUsdt(sellPrices);
+      setOpenLimitSellOrdersUsdt(sellOrders);
     } catch {
       /* ignore */
     }
-  }, [symbolProp, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt]);
+  }, [symbolProp, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt, setOpenLimitSellPricesUsdt, setOpenLimitSellOrdersUsdt]);
+
+  useEffect(() => {
+    const onConn = () => {
+      void refreshOpenLimitOrders();
+    };
+    window.addEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+    return () => window.removeEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+  }, [refreshOpenLimitOrders]);
 
   const handleChartLimitBuyCancel = useCallback(
     async (orderIds: string[]) => {
@@ -1786,15 +1799,21 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     for (const ind of lines) {
       const col = ind.columnIndex;
       if (col < 12 && ind.type !== "Volume") continue;
-      for (let i = 0; i < windowSlice.length; i++) {
-        const row = windowSlice[i];
-        if (row.length <= col) continue;
-        const raw = row[col];
-        const v = raw != null ? Number(raw) : NaN;
-        if (!Number.isFinite(v)) continue;
-        if (ind.type === "OBV" && Math.abs(v) > 1e11) continue;
-        if (ind.type === "Volume" && v < 0) continue;
-        ext.push(v);
+      const bandCols =
+        ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian"
+          ? [col, col + 1, col + 2]
+          : [col];
+      for (const c of bandCols) {
+        for (let i = 0; i < windowSlice.length; i++) {
+          const row = windowSlice[i];
+          if (row.length <= c) continue;
+          const raw = row[c];
+          const v = raw != null ? Number(raw) : NaN;
+          if (!Number.isFinite(v)) continue;
+          if (ind.type === "OBV" && Math.abs(v) > 1e11) continue;
+          if (ind.type === "Volume" && v < 0) continue;
+          ext.push(v);
+        }
       }
     }
     let min = ext.length ? Math.min(...ext) : 0;
@@ -2185,6 +2204,27 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (orders.length === 0) return [] as { y: number; orderIds: string[] }[];
     const out: { y: number; orderIds: string[] }[] = [];
     for (const price of limitBuyLinesVisible) {
+      const orderIds = orders.filter((o) => sameUsdtLimitPrice(o.price, price)).map((o) => o.orderId);
+      if (orderIds.length > 0) out.push({ y: y(price), orderIds });
+    }
+    return out;
+  })();
+
+  const limitSellPricesMerged = (() => {
+    const uniq = new Set<number>();
+    for (const p of headerData.openLimitSellPricesUsdt) {
+      if (Number.isFinite(p) && p > 0) uniq.add(p);
+    }
+    return [...uniq].sort((a, b) => a - b);
+  })();
+  const limitSellLinesVisible = limitSellPricesMerged.filter((p) => p >= yMin && p <= yMax);
+  const showLimitSellLine = limitSellLinesVisible.length > 0;
+  const limitSellLineYs = limitSellLinesVisible.map((p) => y(p));
+  const limitSellCancelTargets = (() => {
+    const orders = headerData.openLimitSellOrdersUsdt;
+    if (orders.length === 0) return [] as { y: number; orderIds: string[] }[];
+    const out: { y: number; orderIds: string[] }[] = [];
+    for (const price of limitSellLinesVisible) {
       const orderIds = orders.filter((o) => sameUsdtLimitPrice(o.price, price)).map((o) => o.orderId);
       if (orderIds.length > 0) out.push({ y: y(price), orderIds });
     }
@@ -2706,6 +2746,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               showLimitBuyLine={showLimitBuyLine}
               limitBuyLineYs={limitBuyLineYs}
               limitBuyLineHex="#059669"
+              showLimitSellLine={showLimitSellLine}
+              limitSellLineYs={limitSellLineYs}
+              limitSellLineHex="#dc2626"
               ctrlLimitBuyPreviewLineY={ctrlLimitBuyPreviewLineY}
               ctrlLimitBuyPreviewHex="#d97706"
               altLimitSellPreviewLineY={altLimitSellPreviewLineY}
@@ -2781,6 +2824,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               t={t}
               textScale={textScale}
               strategyCandleOverlays={strategyCandleOverlays}
+              spotOrderMarkers={spotOrderMarkers}
               regressionOverlayPaths={regressionOverlayPaths}
             />
             {/* Overlay só no modo crosshair (!drawMode). Em modo desenho o rect do SVG cuida de select (pan + grab) e de desenho (line/rect/fib). */}
@@ -3006,6 +3050,42 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                   </div>
                 );
               })}
+            {pathname === SISTEMA_PATH &&
+              limitSellCancelTargets.length > 0 &&
+              limitSellCancelTargets.map((row, idx) => {
+                const busyKey = [...row.orderIds].sort().join(",");
+                const busy = chartLimitBuyCancelingKey === busyKey;
+                const tk = t as Record<string, string>;
+                const cancelLabel = tk.chartLimitBuyCancelOrder ?? "Cancel";
+                const cancelAria = tk.chartLimitBuyCancelOrderAria ?? cancelLabel;
+                return (
+                  <div
+                    key={`limit-sell-cancel-${busyKey}-${idx}`}
+                    className="pointer-events-auto"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT + 4,
+                      top: row.y - 12,
+                      zIndex: 5,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="crypto-btn shrink-0 rounded border border-red-700/45 bg-white/95 px-1.5 py-0 text-[10px] font-medium leading-tight text-red-900 shadow-sm hover:bg-red-50 disabled:opacity-60 dark:bg-zinc-900/95 dark:hover:bg-zinc-800"
+                      aria-label={cancelAria}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        void handleChartLimitBuyCancel(row.orderIds);
+                      }}
+                    >
+                      {busy ? (tk.tradingHistoryCanceling ?? "…") : cancelLabel}
+                    </button>
+                  </div>
+                );
+              })}
             <div ref={chartYAxisContainerRef} className="contents">
               <KlinesChartYAxis
                 chartHeight={chartHeight}
@@ -3124,8 +3204,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                           }),
                       ]
                     : [];
+                  const LIMIT_SELL_LINE_HEX = "#dc2626";
                   const fromLimit = limitBuyLinesVisible.map((price) => ({ price, color: LIMIT_BUY_LINE_HEX }));
-                  const merged = [...fromDraw, ...fromLimit];
+                  const fromLimitSell = limitSellLinesVisible.map((price) => ({ price, color: LIMIT_SELL_LINE_HEX }));
+                  const merged = [...fromDraw, ...fromLimit, ...fromLimitSell];
                   return merged.length > 0 ? merged : undefined;
                 })()}
               />
@@ -3228,9 +3310,11 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                   )
                     .then(async (r) => {
                       const j = await r.json().catch(() => ({}));
-                      const { prices, orders } = parseSpotOpenOrdersJson(j);
+                      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
                       setOpenLimitBuyPricesUsdt(prices);
                       setOpenLimitBuyOrdersUsdt(orders);
+                      setOpenLimitSellPricesUsdt(sellPrices);
+                      setOpenLimitSellOrdersUsdt(sellOrders);
                     })
                     .catch(() => {});
                 }}
@@ -3241,7 +3325,23 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 symbol={altLimitSellConfirm?.symbol ?? ""}
                 limitPrice={altLimitSellConfirm?.price ?? 0}
                 lang={lang}
-                onOrdered={() => {}}
+                onOrdered={() => {
+                  const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                  if (!s) return;
+                  void fetch(
+                    `${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`,
+                    { credentials: "include" }
+                  )
+                    .then(async (r) => {
+                      const j = await r.json().catch(() => ({}));
+                      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
+                      setOpenLimitBuyPricesUsdt(prices);
+                      setOpenLimitBuyOrdersUsdt(orders);
+                      setOpenLimitSellPricesUsdt(sellPrices);
+                      setOpenLimitSellOrdersUsdt(sellOrders);
+                    })
+                    .catch(() => {});
+                }}
               />
             </>
           )}

@@ -211,6 +211,56 @@ export function chartMinutesForTimeWindowMa2(groupMinutes: number): number {
   const n = Math.floor(Number(groupMinutes));
   return Math.max(1, Number.isFinite(n) && n > 0 ? n : 1);
 }
+
+/** 6h, 8h, 12h, 1D, 3D, 1w, 1month — sem marcadores nem tooltip de ordens spot no gráfico OHLC. */
+const GROUP_MINUTES_NO_SPOT_ORDER_MARKERS = new Set<number>([360, 480, 720, 1440, 4320, 10080, 43200]);
+
+export function isGroupMinutesNoSpotOrderMarkers(groupMinutes: number): boolean {
+  return GROUP_MINUTES_NO_SPOT_ORDER_MARKERS.has(Math.floor(Number(groupMinutes)));
+}
+
+/** Preferência: mostrar etiquetas B/S de ordens spot no gráfico (localStorage + evento para o mesmo separador). */
+export const KLINE_SPOT_ORDER_LABELS_VISIBLE_KEY = "backcrypto-klines-spot-order-labels-visible";
+export const SPOT_ORDER_LABELS_VISIBILITY_EVENT = "backcrypto-spot-order-labels-visibility";
+
+/** Conta: utilizador ligou ou desligou a Binance — voltar a consultar ordens abertas na exchange (linhas no gráfico). */
+export const BINANCE_CONNECTION_CHANGED_EVENT = "backcrypto-binance-connection-changed";
+
+export function getSpotOrderLabelsVisibleFromStorage(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const v = window.localStorage.getItem(KLINE_SPOT_ORDER_LABELS_VISIBLE_KEY);
+    if (v === null) return true;
+    return v === "1";
+  } catch {
+    return true;
+  }
+}
+
+export function setSpotOrderLabelsVisibleInStorage(visible: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(KLINE_SPOT_ORDER_LABELS_VISIBLE_KEY, visible ? "1" : "0");
+    window.dispatchEvent(new Event(SPOT_ORDER_LABELS_VISIBILITY_EVENT));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function subscribeSpotOrderLabelsVisible(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === KLINE_SPOT_ORDER_LABELS_VISIBLE_KEY || e.key === null) onStoreChange();
+  };
+  const onCustom = () => onStoreChange();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(SPOT_ORDER_LABELS_VISIBILITY_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(SPOT_ORDER_LABELS_VISIBILITY_EVENT, onCustom);
+  };
+}
+
 export const KLINE_VOLUME_AT_PRICE_KEY = "backcrypto-klines-volume-at-price";
 /** Largura máxima (px) das barras do volume no preço; o usuário pode reduzir até 70% via escala. */
 export const VOLUME_AT_PRICE_MAX_WIDTH_PX = 120;

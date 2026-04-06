@@ -45,7 +45,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
+  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
@@ -238,6 +238,17 @@ export interface StrategyCandleOverlay {
   signalPosition?: "below" | "above";
 }
 
+/** Etiqueta B/S no gráfico na barra onde a ordem spot foi executada (tempo Binance). */
+export type SpotOrderMarker = {
+  binanceOrderId: string;
+  klinesIndex: number;
+  side: "BUY" | "SELL";
+  stackIndex: number;
+  title: string;
+  /** Preço médio de execução (USDT) para o painel OHLC ao passar o rato na vela; etiqueta B/S continua abaixo do pavio. */
+  avgPrice?: number | null;
+};
+
 export type KlinesChartProps = {
   klines: Kline[];
   groupMinutes: number;
@@ -266,6 +277,8 @@ export type KlinesChartProps = {
   onOpenSymbolPanel?: () => void;
   /** Quando aplicado, pinta o candle com a cor da estratégia se a condição for verdadeira. */
   strategyCandleOverlays?: StrategyCandleOverlay[];
+  /** Ordens spot do utilizador: etiqueta B/S na barra de execução; com `avgPrice`, posiciona no preço médio. */
+  spotOrderMarkers?: SpotOrderMarker[];
   /** Gráfico em modo Heikin Ashi (OHLC suavizado). */
   heikinAshi?: boolean;
   /** Alterna modo Heikin Ashi; ao ativar, a tabela e o gráfico passam a usar OHLC Heikin Ashi. */

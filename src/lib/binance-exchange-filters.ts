@@ -15,6 +15,8 @@ export type PriceFilter = {
 export type SymbolSpotFilters = {
   lot: LotSizeFilter | null;
   price: PriceFilter | null;
+  /** `MIN_NOTIONAL.minNotional` (valor mínimo da ordem em USDT em pares USDT). */
+  minNotional: string | null;
 };
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -37,6 +39,7 @@ export function mergeSymbolSpotFilters(a: SymbolSpotFilters, b: SymbolSpotFilter
   return {
     price: a.price ?? b.price,
     lot: a.lot ?? b.lot,
+    minNotional: a.minNotional ?? b.minNotional ?? null,
   };
 }
 
@@ -58,11 +61,16 @@ export async function getSymbolSpotFilters(
   if (!opts?.bypassCache) {
     const hit = symbolFiltersCache.get(sym);
     if (hit && now - hit.at < CACHE_TTL_MS) {
-      return hit.value;
+      const v = hit.value;
+      return {
+        lot: v.lot,
+        price: v.price,
+        minNotional: v.minNotional ?? null,
+      };
     }
   }
 
-  const empty: SymbolSpotFilters = { lot: null, price: null };
+  const empty: SymbolSpotFilters = { lot: null, price: null, minNotional: null };
 
   for (let attempt = 0; attempt < EXCHANGE_INFO_RETRIES; attempt++) {
     try {
@@ -81,12 +89,18 @@ export async function getSymbolSpotFilters(
             tickSize?: string;
             minPrice?: string;
             maxPrice?: string;
+            minNotional?: string;
           }[];
         }[];
       };
       const filters = data.symbols?.[0]?.filters ?? [];
       const lotRaw = filters.find((f) => f.filterType === "LOT_SIZE");
       const priceRaw = filters.find((f) => f.filterType === "PRICE_FILTER");
+      const notionalRaw = filters.find((f) => f.filterType === "MIN_NOTIONAL");
+      const minNotional =
+        typeof notionalRaw?.minNotional === "string" && notionalRaw.minNotional.trim() !== ""
+          ? notionalRaw.minNotional.trim()
+          : null;
 
       let lot: LotSizeFilter | null = null;
       if (lotRaw?.stepSize && lotRaw?.minQty) {
@@ -106,7 +120,7 @@ export async function getSymbolSpotFilters(
         };
       }
 
-      const value: SymbolSpotFilters = { lot, price };
+      const value: SymbolSpotFilters = { lot, price, minNotional };
       symbolFiltersCache.set(sym, { at: Date.now(), value });
       return value;
     } catch (e) {

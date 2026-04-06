@@ -17,9 +17,15 @@ const postSchema = z.object({
   consentAccepted: z.literal(true),
 });
 
-const patchSchema = z.object({
-  defaultQuoteUsdtPerOrder: z.union([z.null(), z.number().positive().max(1_000_000_000)]),
-});
+const patchSchema = z
+  .object({
+    defaultQuoteUsdtPerOrder: z.union([z.null(), z.number().positive().max(1_000_000_000)]).optional(),
+    /** Taxa taker 0–1 (ex. 0.001); null = usar defeito global nas estimativas. */
+    feeEstimateTakerFallback: z.union([z.null(), z.number().min(0).max(0.05)]).optional(),
+  })
+  .refine((d) => d.defaultQuoteUsdtPerOrder !== undefined || d.feeEstimateTakerFallback !== undefined, {
+    message: "no_fields",
+  });
 
 async function getUserId(): Promise<string | null> {
   const token = (await cookies()).get(COOKIE)?.value;
@@ -40,7 +46,13 @@ export async function GET() {
 
     const row = await cryptoPrisma.userBinanceConnection.findUnique({
       where: { userId },
-      select: { apiKeyLast4: true, lastVerifiedAt: true, createdAt: true, defaultQuoteUsdtPerOrder: true },
+      select: {
+        apiKeyLast4: true,
+        lastVerifiedAt: true,
+        createdAt: true,
+        defaultQuoteUsdtPerOrder: true,
+        feeEstimateTakerFallback: true,
+      },
     });
     if (!row) {
       return NextResponse.json({ connected: false });
@@ -52,6 +64,8 @@ export async function GET() {
       connectedAt: row.createdAt.toISOString(),
       defaultQuoteUsdtPerOrder:
         row.defaultQuoteUsdtPerOrder != null ? row.defaultQuoteUsdtPerOrder.toString() : null,
+      feeEstimateTakerFallback:
+        row.feeEstimateTakerFallback != null ? row.feeEstimateTakerFallback.toString() : null,
     });
   } catch (e) {
     console.error("[binance-connection GET]", e);
@@ -160,7 +174,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { defaultQuoteUsdtPerOrder } = parsed.data;
+    const { defaultQuoteUsdtPerOrder, feeEstimateTakerFallback } = parsed.data;
 
     const existing = await cryptoPrisma.userBinanceConnection.findUnique({
       where: { userId },
@@ -170,18 +184,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "not_connected" }, { status: 400 });
     }
 
+    const data: { defaultQuoteUsdtPerOrder?: null | number; feeEstimateTakerFallback?: null | number } = {};
+    if (defaultQuoteUsdtPerOrder !== undefined) {
+      data.defaultQuoteUsdtPerOrder = defaultQuoteUsdtPerOrder === null ? null : defaultQuoteUsdtPerOrder;
+    }
+    if (feeEstimateTakerFallback !== undefined) {
+      data.feeEstimateTakerFallback =
+        feeEstimateTakerFallback === null ? null : feeEstimateTakerFallback;
+    }
+
     await cryptoPrisma.userBinanceConnection.update({
       where: { userId },
-      data: {
-        defaultQuoteUsdtPerOrder: defaultQuoteUsdtPerOrder === null ? null : defaultQuoteUsdtPerOrder,
-      },
+      data,
     });
 
     revalidatePath(`${APP_CRYPTO_ROUTE_PREFIX}/conta`, "layout");
+    const updated = await cryptoPrisma.userBinanceConnection.findUnique({
+      where: { userId },
+      select: { defaultQuoteUsdtPerOrder: true, feeEstimateTakerFallback: true },
+    });
     return NextResponse.json({
       success: true,
       defaultQuoteUsdtPerOrder:
-        defaultQuoteUsdtPerOrder === null ? null : String(defaultQuoteUsdtPerOrder),
+        updated?.defaultQuoteUsdtPerOrder != null ? updated.defaultQuoteUsdtPerOrder.toString() : null,
+      feeEstimateTakerFallback:
+        updated?.feeEstimateTakerFallback != null ? updated.feeEstimateTakerFallback.toString() : null,
     });
   } catch (e) {
     console.error("[binance-connection PATCH]", e);

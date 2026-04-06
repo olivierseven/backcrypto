@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE } from "@/app/constants";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
 import { useChartHeader } from "./ChartHeaderContext";
 import { isValidLimitBuyPriceVsLast, LIMIT_MIN_DISTANCE_FROM_MARKET } from "@/lib/binance-limit-buy-validation";
 import { parseSpotOpenOrdersJson } from "@/lib/spot-open-orders-client";
+import { DEFAULT_TAKER_COMMISSION_RATE } from "@/lib/binance-default-trade-fee";
+import { formatBinanceOrderSubmitUserMessage, type BinanceOrderSubmitErrorJson } from "@/lib/binance-order-submit-error";
+import { BINANCE_CONNECTION_CHANGED_EVENT } from "./KlinesChartConstants";
 
 function canCancelBinanceOrder(status: string | null, canceledAt: string | null): boolean {
   if (canceledAt) return false;
@@ -85,8 +88,8 @@ function IconEye({ className }: { className?: string }) {
     <svg
       className={className}
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -106,8 +109,8 @@ function IconEyeOff({ className }: { className?: string }) {
     <svg
       className={className}
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -143,7 +146,14 @@ export default function TradingOrderSheet({
   lang: CryptoLang;
 }) {
   const t = getCryptoT(lang).sistema.klines as Record<string, string>;
-  const { data: headerData, setLimitBuyOrderPriceUsdt, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt } = useChartHeader();
+  const {
+    data: headerData,
+    setLimitBuyOrderPriceUsdt,
+    setOpenLimitBuyPricesUsdt,
+    setOpenLimitBuyOrdersUsdt,
+    setOpenLimitSellPricesUsdt,
+    setOpenLimitSellOrdersUsdt,
+  } = useChartHeader();
   const livePriceText = headerData.priceText;
   const lastPriceUsdt = headerData.lastPriceUsdt;
   const [orderKind, setOrderKind] = useState<"market" | "limit" | "history">("market");
@@ -163,7 +173,7 @@ export default function TradingOrderSheet({
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState(false);
   const [balancesErrorDetail, setBalancesErrorDetail] = useState<string | null>(null);
-  const [takerCommission, setTakerCommission] = useState(0.001);
+  const [takerCommission, setTakerCommission] = useState(DEFAULT_TAKER_COMMISSION_RATE);
   const [sheetOpaque, setSheetOpaque] = useState(false);
   const [historyOrders, setHistoryOrders] = useState<
     {
@@ -192,21 +202,21 @@ export default function TradingOrderSheet({
   const sheetUi = useMemo(() => {
     if (sheetOpaque) {
       return {
-        card: "relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white/70 shadow-xl border border-zinc-200/70",
-        header: "sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-200/70 bg-zinc-100/70 rounded-t-2xl",
-        eyeBtn: "rounded-md border border-zinc-300/70 bg-zinc-200/70 p-1.5 text-zinc-800 hover:bg-zinc-300/70",
-        closeBtn: "text-sm font-medium text-zinc-800 rounded-md border border-zinc-300/70 bg-zinc-200/70 px-2.5 py-1.5 hover:bg-zinc-300/70",
-        unsupported: "text-sm text-amber-800 bg-amber-50/70 border border-amber-200/70 rounded-lg px-3 py-2",
+        card: "relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-xl sm:rounded-xl bg-white/70 shadow-xl border border-zinc-200/70",
+        header: "sticky top-0 z-10 flex items-center justify-between gap-1.5 px-3 py-2 border-b border-zinc-200/70 bg-zinc-100/70 rounded-t-xl",
+        eyeBtn: "rounded-md border border-zinc-300/70 bg-zinc-200/70 p-1 text-zinc-800 hover:bg-zinc-300/70",
+        closeBtn: "text-xs font-medium text-zinc-800 rounded-md border border-zinc-300/70 bg-zinc-200/70 px-2 py-1 hover:bg-zinc-300/70",
+        unsupported: "text-xs text-amber-800 bg-amber-50/70 border border-amber-200/70 rounded-md px-2 py-1.5",
         toggleWrap: "flex rounded-lg border border-zinc-200/70 p-0.5 bg-zinc-50/70",
-        toggleWrapGrid: "grid grid-cols-3 gap-0.5 rounded-lg border border-zinc-200/70 p-0.5 bg-zinc-50/70",
+        toggleWrapGrid: "grid grid-cols-3 gap-0.5 rounded-md border border-zinc-200/70 p-0.5 bg-zinc-50/70",
         toggleActive: "bg-white/70 shadow-sm border-zinc-200/70 text-zinc-900",
         toggleInactiveHover: "hover:bg-zinc-100/70",
         balanceErr: "border-amber-200/70 bg-amber-50/70",
         balanceOk: "border-zinc-100/70 bg-zinc-50/70",
         lastPrice: "border-zinc-100/70 bg-zinc-50/70",
-        input: "w-full font-mono text-sm text-zinc-900 bg-white/70 border border-zinc-300/70 rounded-lg px-3 py-2",
-        emeraldBox: "mt-2 space-y-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-2.5 py-2",
-        emeraldBoxSpace: "space-y-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-2.5 py-2",
+        input: "w-full font-mono text-sm text-zinc-900 bg-white/70 border border-zinc-300/70 rounded-md px-2.5 py-1.5",
+        emeraldBox: "mt-1.5 space-y-1 rounded-md border border-emerald-200/70 bg-emerald-50/70 px-2 py-1.5",
+        emeraldBoxSpace: "space-y-1 rounded-md border border-emerald-200/70 bg-emerald-50/70 px-2 py-1.5",
         msgOk: "bg-emerald-50/70 text-emerald-800 border border-emerald-200/70",
         msgErr: "bg-red-50/70 text-red-800 border border-red-200/70",
         submitBuy: "bg-emerald-600/70 hover:bg-emerald-700/70",
@@ -214,21 +224,21 @@ export default function TradingOrderSheet({
       };
     }
     return {
-      card: "relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white shadow-xl border border-zinc-200",
-      header: "sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 border-b border-zinc-200 bg-zinc-100 rounded-t-2xl",
-      eyeBtn: "rounded-md border border-zinc-300 bg-zinc-200 p-1.5 text-zinc-800 hover:bg-zinc-300",
-      closeBtn: "text-sm font-medium text-zinc-800 rounded-md border border-zinc-300 bg-zinc-200 px-2.5 py-1.5 hover:bg-zinc-300",
-      unsupported: "text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2",
+      card: "relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-xl sm:rounded-xl bg-white shadow-xl border border-zinc-200",
+      header: "sticky top-0 z-10 flex items-center justify-between gap-1.5 px-3 py-2 border-b border-zinc-200 bg-zinc-100 rounded-t-xl",
+      eyeBtn: "rounded-md border border-zinc-300 bg-zinc-200 p-1 text-zinc-800 hover:bg-zinc-300",
+      closeBtn: "text-xs font-medium text-zinc-800 rounded-md border border-zinc-300 bg-zinc-200 px-2 py-1 hover:bg-zinc-300",
+      unsupported: "text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5",
       toggleWrap: "flex rounded-lg border border-zinc-200 p-0.5 bg-zinc-50",
-      toggleWrapGrid: "grid grid-cols-3 gap-0.5 rounded-lg border border-zinc-200 p-0.5 bg-zinc-50",
+      toggleWrapGrid: "grid grid-cols-3 gap-0.5 rounded-md border border-zinc-200 p-0.5 bg-zinc-50",
       toggleActive: "bg-white shadow-sm border-zinc-200 text-zinc-900",
       toggleInactiveHover: "hover:bg-zinc-100",
       balanceErr: "border-amber-200 bg-amber-50",
       balanceOk: "border-zinc-100 bg-zinc-50",
       lastPrice: "border-zinc-100 bg-zinc-50",
-      input: "w-full font-mono text-sm text-zinc-900 bg-white border border-zinc-300 rounded-lg px-3 py-2",
-      emeraldBox: "mt-2 space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2",
-      emeraldBoxSpace: "space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2",
+      input: "w-full font-mono text-sm text-zinc-900 bg-white border border-zinc-300 rounded-md px-2.5 py-1.5",
+      emeraldBox: "mt-1.5 space-y-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5",
+      emeraldBoxSpace: "space-y-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1.5",
       msgOk: "bg-emerald-50 text-emerald-800 border border-emerald-200",
       msgErr: "bg-red-50 text-red-800 border border-red-200",
       submitBuy: "bg-emerald-600 hover:bg-emerald-700",
@@ -239,6 +249,38 @@ export default function TradingOrderSheet({
   const sym = symbol.trim().toUpperCase();
   const baseAsset = sym.endsWith("USDT") && sym.length > 4 ? sym.slice(0, -4) : sym;
   const isUsdtPair = sym.endsWith("USDT") && sym.length > 4;
+
+  const refreshSpotOpenOrdersForChart = useCallback(async () => {
+    if (!isUsdtPair) return;
+    try {
+      const r = await fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(sym)}`, {
+        credentials: "include",
+      });
+      const j = await r.json().catch(() => ({}));
+      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
+      setOpenLimitBuyPricesUsdt(prices);
+      setOpenLimitBuyOrdersUsdt(orders);
+      setOpenLimitSellPricesUsdt(sellPrices);
+      setOpenLimitSellOrdersUsdt(sellOrders);
+    } catch {
+      /* ignore */
+    }
+  }, [
+    isUsdtPair,
+    sym,
+    setOpenLimitBuyPricesUsdt,
+    setOpenLimitBuyOrdersUsdt,
+    setOpenLimitSellPricesUsdt,
+    setOpenLimitSellOrdersUsdt,
+  ]);
+
+  useEffect(() => {
+    const onConn = () => {
+      void refreshSpotOpenOrdersForChart();
+    };
+    window.addEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+    return () => window.removeEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+  }, [refreshSpotOpenOrdersForChart]);
 
   useEffect(() => {
     if (!isUsdtPair || side !== "BUY" || orderKind !== "limit") {
@@ -364,14 +406,34 @@ export default function TradingOrderSheet({
   useEffect(() => {
     if (!isUsdtPair) return;
     let cancelled = false;
-    fetch(`${API_BASE}/user/binance-connection/trade-fee?symbol=${encodeURIComponent(sym)}`, { credentials: "include" })
-      .then(async (res) => {
+    (async () => {
+      let base = DEFAULT_TAKER_COMMISSION_RATE;
+      try {
+        const cr = await fetch(`${API_BASE}/user/binance-connection`, { credentials: "include" });
+        const cj = (await cr.json().catch(() => ({}))) as {
+          connected?: boolean;
+          feeEstimateTakerFallback?: string | null;
+        };
+        if (!cancelled && cr.ok && cj.connected && cj.feeEstimateTakerFallback != null && String(cj.feeEstimateTakerFallback).trim() !== "") {
+          const x = parseFloat(String(cj.feeEstimateTakerFallback));
+          if (Number.isFinite(x) && x >= 0 && x < 1) base = x;
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setTakerCommission(base);
+      try {
+        const res = await fetch(`${API_BASE}/user/binance-connection/trade-fee?symbol=${encodeURIComponent(sym)}`, {
+          credentials: "include",
+        });
         const data = (await res.json().catch(() => ({}))) as { takerCommission?: string };
         if (cancelled || !res.ok) return;
-        const t = parseFloat(String(data.takerCommission ?? "0.001"));
+        const t = parseFloat(String(data.takerCommission ?? DEFAULT_TAKER_COMMISSION_RATE));
         if (Number.isFinite(t) && t >= 0 && t < 1) setTakerCommission(t);
-      })
-      .catch(() => {});
+      } catch {
+        /* mantém base (defeito ou preferência Conta) */
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -506,9 +568,11 @@ export default function TradingOrderSheet({
       void fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(sym)}`, { credentials: "include" })
         .then(async (r) => {
           const j = await r.json().catch(() => ({}));
-          const { prices, orders } = parseSpotOpenOrdersJson(j);
+          const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
           setOpenLimitBuyPricesUsdt(prices);
           setOpenLimitBuyOrdersUsdt(orders);
+          setOpenLimitSellPricesUsdt(sellPrices);
+          setOpenLimitSellOrdersUsdt(sellOrders);
         })
         .catch(() => {});
     } catch (e: unknown) {
@@ -587,20 +651,31 @@ export default function TradingOrderSheet({
         credentials: "include",
         body: JSON.stringify(body),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as BinanceOrderSubmitErrorJson;
       if (!res.ok) {
-        const msg = typeof data.msg === "string" ? data.msg : data.error ?? "error";
-        throw new Error(msg);
+        throw new Error(
+          formatBinanceOrderSubmitUserMessage(data, {
+            tradingBinanceMinNotional: t.tradingBinanceMinNotional,
+            tradingBinanceNotionalGeneric: t.tradingBinanceNotionalGeneric,
+          }),
+        );
       }
       void fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(sym)}`, { credentials: "include" })
         .then(async (r) => {
           const j = await r.json().catch(() => ({}));
-          const { prices, orders } = parseSpotOpenOrdersJson(j);
+          const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
           setOpenLimitBuyPricesUsdt(prices);
           setOpenLimitBuyOrdersUsdt(orders);
+          setOpenLimitSellPricesUsdt(sellPrices);
+          setOpenLimitSellOrdersUsdt(sellOrders);
         })
         .catch(() => {});
       setMessage({ type: "ok", text: t.tradingSuccess });
+      try {
+        window.dispatchEvent(new CustomEvent("backcrypto-spot-order-placed"));
+      } catch {
+        /* ignore */
+      }
       setTimeout(() => onClose(), 1500);
     } catch (e: unknown) {
       setMessage({ type: "err", text: e instanceof Error ? e.message : t.tradingError });
@@ -617,15 +692,15 @@ export default function TradingOrderSheet({
   return (
     <div
       data-no-clear-crosshair
-      className="fixed inset-0 z-[1250] flex items-end sm:items-center justify-start pl-3 pr-2 pt-2 pb-[max(4rem,calc(env(safe-area-inset-bottom,0px)+3.25rem))] sm:px-4 sm:py-4 bg-transparent"
+      className="fixed inset-0 z-[1250] flex items-end sm:items-center justify-start pl-2 pr-2 pt-1.5 pb-[max(3.5rem,calc(env(safe-area-inset-bottom,0px)+2.75rem))] sm:px-3 sm:py-3 bg-transparent"
       role="dialog"
       aria-modal
     >
       <button type="button" className="absolute inset-0 cursor-default" aria-label={t.tradingClose} onClick={onClose} />
       <div className={sheetUi.card}>
         <div className={sheetUi.header}>
-          <h2 className={`text-base font-semibold min-w-0 flex-1 ${side === "BUY" ? "text-emerald-700" : "text-red-700"}`}>{title}</h2>
-          <div className="flex items-center gap-2 shrink-0">
+          <h2 className={`text-sm font-semibold leading-tight min-w-0 flex-1 ${side === "BUY" ? "text-emerald-700" : "text-red-700"}`}>{title}</h2>
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               aria-pressed={sheetOpaque}
@@ -643,7 +718,7 @@ export default function TradingOrderSheet({
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-3 space-y-3">
           {!isUsdtPair ? (
             <p className={sheetUi.unsupported}>{t.tradingPairUnsupported}</p>
           ) : (
@@ -652,7 +727,7 @@ export default function TradingOrderSheet({
                 <button
                   type="button"
                   onClick={() => setOrderKind("market")}
-                  className={`min-w-0 py-2 px-0.5 sm:px-1 text-xs sm:text-sm font-medium rounded-md transition-colors border border-transparent ${
+                  className={`min-w-0 py-1.5 px-0.5 sm:px-1 text-xs font-medium rounded-md transition-colors border border-transparent ${
                     orderKind === "market"
                       ? sheetUi.toggleActive
                       : `text-zinc-600 ${sheetUi.toggleInactiveHover}`
@@ -663,7 +738,7 @@ export default function TradingOrderSheet({
                 <button
                   type="button"
                   onClick={() => setOrderKind("limit")}
-                  className={`min-w-0 py-2 px-0.5 sm:px-1 text-xs sm:text-sm font-medium rounded-md transition-colors border border-transparent ${
+                  className={`min-w-0 py-1.5 px-0.5 sm:px-1 text-xs font-medium rounded-md transition-colors border border-transparent ${
                     orderKind === "limit"
                       ? sheetUi.toggleActive
                       : `text-zinc-600 ${sheetUi.toggleInactiveHover}`
@@ -674,7 +749,7 @@ export default function TradingOrderSheet({
                 <button
                   type="button"
                   onClick={() => setOrderKind("history")}
-                  className={`min-w-0 py-2 px-0.5 sm:px-1 text-xs sm:text-sm font-medium rounded-md transition-colors border border-transparent ${
+                  className={`min-w-0 py-1.5 px-0.5 sm:px-1 text-xs font-medium rounded-md transition-colors border border-transparent ${
                     orderKind === "history"
                       ? sheetUi.toggleActive
                       : `text-zinc-600 ${sheetUi.toggleInactiveHover}`
@@ -685,14 +760,14 @@ export default function TradingOrderSheet({
               </div>
 
               <div
-                className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${
+                className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 ${
                   balancesError ? sheetUi.balanceErr : sheetUi.balanceOk
                 }`}
               >
                 <span className="text-xs font-medium text-zinc-600">
                   {t.tradingSpotAvailable.replace("{asset}", side === "BUY" ? "USDT" : baseAsset)}
                 </span>
-                <span className="font-mono text-sm text-zinc-900 tabular-nums shrink-0 text-right max-w-[58%] break-words">
+                <span className="font-mono text-xs text-zinc-900 tabular-nums shrink-0 text-right max-w-[58%] break-words">
                   {balancesLoading
                     ? t.tradingBalancesLoading
                     : balancesError
@@ -702,26 +777,26 @@ export default function TradingOrderSheet({
               </div>
 
               {(orderKind === "market" || orderKind === "limit") && (
-                <div className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${sheetUi.lastPrice}`}>
+                <div className={`flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 ${sheetUi.lastPrice}`}>
                   <span className="text-xs font-medium text-zinc-600">{t.tradingMarketLastPriceLabel}</span>
-                  <span className="font-mono text-sm text-zinc-900 tabular-nums shrink-0">{livePriceText ?? "—"}</span>
+                  <span className="font-mono text-xs text-zinc-900 tabular-nums shrink-0">{livePriceText ?? "—"}</span>
                 </div>
               )}
 
               {orderKind === "history" && (
-                <div className="space-y-2">
-                  {historyLoading && <p className="text-sm text-zinc-600">{t.tradingHistoryLoading}</p>}
+                <div className="space-y-1.5">
+                  {historyLoading && <p className="text-xs text-zinc-600">{t.tradingHistoryLoading}</p>}
                   {historyError && !historyLoading && (
-                    <p className={`text-sm rounded-lg px-3 py-2 ${sheetUi.msgErr}`}>{t.tradingHistoryErr}</p>
+                    <p className={`text-xs rounded-md px-2 py-1.5 ${sheetUi.msgErr}`}>{t.tradingHistoryErr}</p>
                   )}
                   {!historyLoading && !historyError && historyOrders.length === 0 && (
-                    <p className="text-sm text-zinc-600">{t.tradingHistoryEmpty}</p>
+                    <p className="text-xs text-zinc-600">{t.tradingHistoryEmpty}</p>
                   )}
-                  <ul className="max-h-[min(40vh,320px)] space-y-2 overflow-y-auto pr-0.5">
+                  <ul className="max-h-[min(36vh,280px)] space-y-1.5 overflow-y-auto pr-0.5">
                     {historyOrders.map((o) => (
                       <li
                         key={o.binanceOrderId}
-                        className={`rounded-lg border px-2.5 py-2 ${sheetUi.balanceOk}`}
+                        className={`rounded-md border px-2 py-1.5 ${sheetUi.balanceOk}`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 space-y-0.5">
@@ -766,7 +841,7 @@ export default function TradingOrderSheet({
 
               {orderKind === "market" && side === "BUY" && (
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
                     <label className="text-xs font-medium text-zinc-600" htmlFor="market-buy-usdt">
                       {t.tradingQuoteAmount}
                     </label>
@@ -790,7 +865,7 @@ export default function TradingOrderSheet({
                     }}
                     disabled={balancesLoading || balancesError || usdtFreeNum <= 0}
                     aria-label={t.tradingUsdtSpendSliderAria}
-                    className="w-full h-2 mb-2 rounded-lg accent-emerald-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                    className="w-full h-1.5 mb-1.5 rounded-md accent-emerald-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                   />
                   <input
                     id="market-buy-usdt"
@@ -811,7 +886,7 @@ export default function TradingOrderSheet({
                     placeholder="0.00"
                     className={sheetUi.input}
                   />
-                  <p className="text-[11px] text-zinc-500 mt-1">{t.tradingHintBuyMarketUsdt}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500 mt-0.5">{t.tradingHintBuyMarketUsdt}</p>
                   {marketBuyEstimate != null && (
                     <div className={sheetUi.emeraldBox}>
                       <div className="flex items-start justify-between gap-2 text-[11px] text-zinc-700">
@@ -843,7 +918,7 @@ export default function TradingOrderSheet({
 
               {orderKind === "market" && side === "SELL" && (
                 <div>
-                  <label className="block text-xs font-medium text-zinc-600 mb-1">
+                  <label className="block text-xs font-medium text-zinc-600 mb-0.5">
                     {t.tradingQuantity.replace("{base}", baseAsset)}
                   </label>
                   <input
@@ -854,14 +929,14 @@ export default function TradingOrderSheet({
                     placeholder="0.00000000"
                     className={sheetUi.input}
                   />
-                  <p className="text-[11px] text-zinc-500 mt-1">{t.tradingHintSellMarketBase}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500 mt-0.5">{t.tradingHintSellMarketBase}</p>
                 </div>
               )}
 
               {orderKind === "limit" && side === "BUY" && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1">{t.tradingPrice}</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-0.5">{t.tradingPrice}</label>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -872,7 +947,7 @@ export default function TradingOrderSheet({
                     />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
                       <label className="text-xs font-medium text-zinc-600" htmlFor="limit-buy-usdt">
                         {t.tradingQuoteAmount}
                       </label>
@@ -896,7 +971,7 @@ export default function TradingOrderSheet({
                       }}
                       disabled={balancesLoading || balancesError || usdtFreeNum <= 0}
                       aria-label={t.tradingUsdtSpendSliderAria}
-                      className="w-full h-2 mb-2 rounded-lg accent-emerald-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                      className="w-full h-1.5 mb-1.5 rounded-md accent-emerald-600 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     />
                     <input
                       id="limit-buy-usdt"
@@ -917,7 +992,7 @@ export default function TradingOrderSheet({
                       placeholder="0.00"
                       className={sheetUi.input}
                     />
-                    <p className="text-[11px] text-zinc-500 mt-1">
+                    <p className="text-[10px] leading-snug text-zinc-500 mt-0.5">
                       {t.tradingHintLimitBuyUsdt.replace("{base}", baseAsset)}
                     </p>
                   </div>
@@ -947,15 +1022,15 @@ export default function TradingOrderSheet({
                       <p className="text-[10px] leading-snug text-zinc-500">{t.tradingMarketBuyEstDisclaimer}</p>
                     </div>
                   )}
-                  <p className="text-[11px] text-zinc-500">{t.tradingHintLimitGtc}</p>
-                  <p className="text-[11px] text-zinc-500">{t.tradingHintLimitPriceBandBuy}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500">{t.tradingHintLimitGtc}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500">{t.tradingHintLimitPriceBandBuy}</p>
                 </div>
               )}
 
               {orderKind === "limit" && side === "SELL" && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1">{t.tradingPrice}</label>
+                    <label className="block text-xs font-medium text-zinc-600 mb-0.5">{t.tradingPrice}</label>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -966,7 +1041,7 @@ export default function TradingOrderSheet({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-600 mb-1">
+                    <label className="block text-xs font-medium text-zinc-600 mb-0.5">
                       {t.tradingQuantity.replace("{base}", baseAsset)}
                     </label>
                     <input
@@ -978,14 +1053,14 @@ export default function TradingOrderSheet({
                       className={sheetUi.input}
                     />
                   </div>
-                  <p className="text-[11px] text-zinc-500">{t.tradingHintLimitGtc}</p>
-                  <p className="text-[11px] text-zinc-500">{t.tradingHintLimitPriceBandSell}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500">{t.tradingHintLimitGtc}</p>
+                  <p className="text-[10px] leading-snug text-zinc-500">{t.tradingHintLimitPriceBandSell}</p>
                 </div>
               )}
 
               {message && (
                 <p
-                  className={`text-sm rounded-lg px-3 py-2 ${
+                  className={`text-xs rounded-md px-2.5 py-1.5 ${
                     message.type === "ok" ? sheetUi.msgOk : sheetUi.msgErr
                   }`}
                 >
@@ -998,7 +1073,7 @@ export default function TradingOrderSheet({
                   type="button"
                   onClick={() => void submit()}
                   disabled={submitting || !isUsdtPair}
-                  className={`w-full py-2.5 rounded-lg font-medium text-white disabled:opacity-50 ${
+                  className={`w-full py-2 rounded-md text-sm font-medium text-white disabled:opacity-50 ${
                     side === "BUY" ? sheetUi.submitBuy : sheetUi.submitSell
                   }`}
                 >

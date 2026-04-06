@@ -13,7 +13,7 @@ import { normalizeHmaCustomPeriods } from "@/app/api/binance/klines/indicators";
 import { defaultMa2TimeValueForUnit, isTimeWindowMa2Type, normalizeMa2TimeValueForUnit } from "./indicatorsPanel/wma2Period";
 import { getIndicatorColumnStart } from "./regression/indicatorsColumnStart";
 
-export type UserIndicatorType = "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF" | "Ichimoku";
+export type UserIndicatorType = "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "ADX" | "CCI" | "CMF" | "Ichimoku";
 
 /** Unidade da janela temporal para SMA2 / EMA2 / WMA2 (campos `wma2TimeUnit` / `wma2TimeValue`). */
 export type Wma2TimeUnit = "days" | "hours" | "minutes";
@@ -31,6 +31,8 @@ export type IndicatorFieldKey =
   | "low"
   | "close"
   | "volume"
+  /** Volume em ativo de cotação (coluna 7), ex.: USDT — alinha ao painel Volume em USDT. */
+  | "volumeUsdt"
   | "HL2"    // (high+low)/2
   | "HLC3"   // (high+low+close)/3
   | "OHLC4"  // (open+high+low+close)/4
@@ -89,18 +91,18 @@ export interface UserIndicatorConfig {
   mfiLimitColor?: string;
   mfiLimitLineWidth?: IndicatorLineWidth;
   mfiLimitLineStyle?: IndicatorLineStyle;
-  /** Só para MACD: tipo da média rápida (SMA | EMA | WMA). */
-  macdFastMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para MACD: tipo da média rápida (incl. Ajuste linear / quadrático). */
+  macdFastMaType?: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   /** Só para MACD: período da média rápida. */
   macdFastPeriod?: number;
   /** Só para MACD: tipo da média lenta. */
-  macdSlowMaType?: "SMA" | "EMA" | "WMA";
+  macdSlowMaType?: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   /** Só para MACD: período da média lenta. */
   macdSlowPeriod?: number;
   /** Só para MACD: exibir linha de sinal (MA aplicada à linha MACD). */
   macdSignalLine?: boolean;
-  /** Só para MACD: tipo da média da linha de sinal (SMA | EMA | WMA). */
-  macdSignalMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para MACD: tipo da média da linha de sinal. */
+  macdSignalMaType?: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   /** Só para MACD: período da linha de sinal. */
   macdSignalPeriod?: number;
   /** Só para MACD: cor da linha de sinal. */
@@ -311,10 +313,10 @@ export interface UserIndicatorConfig {
   hmaCustomFastPeriod?: number;
   /** Só para HMA_CUSTOM: período da MA de suavização (menor que a rápida). */
   hmaCustomSmoothPeriod?: number;
-  /** Só para HMA_CUSTOM: tipo da MA na etapa rápida (SMA | EMA | WMA). */
-  hmaCustomFastMaType?: "SMA" | "EMA" | "WMA";
+  /** Só para HMA_CUSTOM: tipo da MA na etapa rápida (incl. ajuste linear/quadrático). */
+  hmaCustomFastMaType?: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   /** Só para HMA_CUSTOM: tipo da MA na etapa longa. */
-  hmaCustomLongMaType?: "SMA" | "EMA" | "WMA";
+  hmaCustomLongMaType?: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   /** Só para HMA_CUSTOM: tipo da MA na suavização final. */
   hmaCustomSmoothMaType?: "SMA" | "EMA" | "WMA";
 }
@@ -325,6 +327,7 @@ const FIELD_KEY_TO_INDEX: Record<string, number> = {
   low: 3,
   close: 4,
   volume: 5,
+  volumeUsdt: 7,
 };
 
 /**
@@ -382,7 +385,7 @@ function saveToStorage(_list: UserIndicatorConfig[]) {
   /* Indicadores persistem só no layout (banco). Não usar localStorage. */
 }
 
-const VALID_INDICATOR_TYPES = ["SMA", "SMA2", "EMA", "EMA2", "WMA", "WMA2", "HMA", "HMA_CUSTOM", "VWMA", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "AD", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI", "CMF", "Ichimoku"] as const;
+const VALID_INDICATOR_TYPES = ["SMA", "SMA2", "EMA", "EMA2", "WMA", "WMA2", "HMA", "HMA_CUSTOM", "VWMA", "LINEAR_FIT", "QUADRATIC_FIT", "RSI", "MFI", "MACD", "Stochastic", "WilliamsR", "OBV", "AD", "SAR", "ATR", "VWAP", "Bollinger", "Keltner", "Donchian", "Volume", "ADX", "CCI", "CMF", "Ichimoku"] as const;
 
 function safePeriod(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return Math.max(1, Math.round(v));
@@ -495,12 +498,12 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     mfiLimitColor: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitColor ?? "#dc2626") : undefined,
     mfiLimitLineWidth: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitLineWidth === "thin" || u.mfiLimitLineWidth === "normal" || u.mfiLimitLineWidth === "thick" ? u.mfiLimitLineWidth : "normal") : undefined,
     mfiLimitLineStyle: u.type === "MFI" && u.mfiLimits ? (u.mfiLimitLineStyle === "solid" || u.mfiLimitLineStyle === "dotted" || u.mfiLimitLineStyle === "dashed" ? u.mfiLimitLineStyle : "dotted") : undefined,
-    macdFastMaType: u.type === "MACD" ? (u.macdFastMaType === "SMA" || u.macdFastMaType === "EMA" || u.macdFastMaType === "WMA" ? u.macdFastMaType : "EMA") : undefined,
+    macdFastMaType: u.type === "MACD" ? (u.macdFastMaType === "SMA" || u.macdFastMaType === "EMA" || u.macdFastMaType === "WMA" || u.macdFastMaType === "LINEAR_FIT" || u.macdFastMaType === "QUADRATIC_FIT" ? u.macdFastMaType : "EMA") : undefined,
     macdFastPeriod: u.type === "MACD" ? (typeof u.macdFastPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdFastPeriod))) : 12) : undefined,
-    macdSlowMaType: u.type === "MACD" ? (u.macdSlowMaType === "SMA" || u.macdSlowMaType === "EMA" || u.macdSlowMaType === "WMA" ? u.macdSlowMaType : "EMA") : undefined,
+    macdSlowMaType: u.type === "MACD" ? (u.macdSlowMaType === "SMA" || u.macdSlowMaType === "EMA" || u.macdSlowMaType === "WMA" || u.macdSlowMaType === "LINEAR_FIT" || u.macdSlowMaType === "QUADRATIC_FIT" ? u.macdSlowMaType : "EMA") : undefined,
     macdSlowPeriod: u.type === "MACD" ? (typeof u.macdSlowPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSlowPeriod))) : 26) : undefined,
     macdSignalLine: u.type === "MACD" ? (u.macdSignalLine === true) : undefined,
-    macdSignalMaType: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalMaType === "SMA" || u.macdSignalMaType === "EMA" || u.macdSignalMaType === "WMA" ? u.macdSignalMaType : "EMA") : undefined,
+    macdSignalMaType: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalMaType === "SMA" || u.macdSignalMaType === "EMA" || u.macdSignalMaType === "WMA" || u.macdSignalMaType === "LINEAR_FIT" || u.macdSignalMaType === "QUADRATIC_FIT" ? u.macdSignalMaType : "EMA") : undefined,
     macdSignalPeriod: u.type === "MACD" && u.macdSignalLine ? (typeof u.macdSignalPeriod === "number" ? Math.max(1, Math.min(500, Math.round(u.macdSignalPeriod))) : 9) : undefined,
     macdSignalColor: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalColor ?? "#ea580c") : undefined,
     macdSignalLineWidth: u.type === "MACD" && u.macdSignalLine ? (u.macdSignalLineWidth === "thin" || u.macdSignalLineWidth === "normal" || u.macdSignalLineWidth === "thick" ? u.macdSignalLineWidth : "normal") : undefined,
@@ -547,7 +550,12 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     donchianLimitsLineWidth: u.type === "Donchian" ? (u.donchianLimitsLineWidth === "thin" || u.donchianLimitsLineWidth === "normal" || u.donchianLimitsLineWidth === "thick" ? u.donchianLimitsLineWidth : "normal") : undefined,
     donchianMiddleColor: u.type === "Donchian" ? (u.donchianMiddleColor ?? "#a855f7") : undefined,
     donchianMiddleLineStyle: u.type === "Donchian" ? (u.donchianMiddleLineStyle === "solid" || u.donchianMiddleLineStyle === "dotted" || u.donchianMiddleLineStyle === "dashed" ? u.donchianMiddleLineStyle : "dashed") : undefined,
-    donchianMiddleLineWidth: u.type === "Donchian" ? (u.donchianMiddleLineWidth === "thin" || u.donchianMiddleLineWidth === "normal" || u.donchianMiddleLineWidth === "thick" ? u.donchianMiddleLineWidth : "normal") : undefined,
+    donchianMiddleLineWidth:
+      u.type === "Donchian"
+        ? u.donchianMiddleLineWidth === "thin" || u.donchianMiddleLineWidth === "normal" || u.donchianMiddleLineWidth === "thick"
+          ? u.donchianMiddleLineWidth
+          : "normal"
+        : undefined,
     keltnerMaType: u.type === "Keltner" ? (u.keltnerMaType === "SMA" || u.keltnerMaType === "EMA" || u.keltnerMaType === "WMA" ? u.keltnerMaType : "EMA") : undefined,
     keltnerMultiplier: u.type === "Keltner" ? (typeof u.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, u.keltnerMultiplier)) : 2) : undefined,
     keltnerShowUpper: u.type === "Keltner" ? (u.keltnerShowUpper !== false) : undefined,
@@ -629,13 +637,13 @@ export function normalizeIndicatorListFromLayout(parsed: unknown): UserIndicator
     hmaCustomSmoothPeriod: hmaCustomNorm ? hmaCustomNorm.hmaCustomSmoothPeriod : undefined,
     hmaCustomFastMaType:
       u.type === "HMA_CUSTOM"
-        ? ru.hmaCustomFastMaType === "SMA" || ru.hmaCustomFastMaType === "EMA" || ru.hmaCustomFastMaType === "WMA"
+        ? ru.hmaCustomFastMaType === "SMA" || ru.hmaCustomFastMaType === "EMA" || ru.hmaCustomFastMaType === "WMA" || ru.hmaCustomFastMaType === "LINEAR_FIT" || ru.hmaCustomFastMaType === "QUADRATIC_FIT"
           ? ru.hmaCustomFastMaType
           : "WMA"
         : undefined,
     hmaCustomLongMaType:
       u.type === "HMA_CUSTOM"
-        ? ru.hmaCustomLongMaType === "SMA" || ru.hmaCustomLongMaType === "EMA" || ru.hmaCustomLongMaType === "WMA"
+        ? ru.hmaCustomLongMaType === "SMA" || ru.hmaCustomLongMaType === "EMA" || ru.hmaCustomLongMaType === "WMA" || ru.hmaCustomLongMaType === "LINEAR_FIT" || ru.hmaCustomLongMaType === "QUADRATIC_FIT"
           ? ru.hmaCustomLongMaType
           : "WMA"
         : undefined,

@@ -80,6 +80,9 @@ export const cryptoTranslations = {
       binancePlaceholderSecret: "Paste secret once; it is not shown again",
       binanceConnectSuccess: "Binance connected successfully.",
       binanceDisconnectedSuccess: "Binance connection removed.",
+      binanceSpotOrderLabelsOnChart: "Show buy/sell order labels on the chart",
+      binanceSpotOrderLabelsOnChartHint:
+        "B/S markers on candles for spot orders placed through this app (when the timeframe shows them).",
       binanceDefaultUsdtLabel: "Default USDT per buy (spot)",
       binanceDefaultUsdtHint:
         "Optional. When set, buy order sheets pre-fill this USDT amount (capped by your available USDT).",
@@ -89,6 +92,15 @@ export const cryptoTranslations = {
       binanceDefaultUsdtSaved: "Default amount saved.",
       binanceDefaultUsdtCleared: "Default amount removed.",
       binanceDefaultUsdtInvalid: "Enter a positive number (USDT).",
+      binanceFeeFallbackLabel: "Estimated taker fee (fallback)",
+      binanceFeeFallbackHint:
+        "Used for order-sheet fee estimates and when filling missing values from the Binance tradeFee API. Enter as percent (e.g. 0.1 = 0.1%). Leave empty and save to use the built-in default (0.1%). Max 5%.",
+      binanceFeeFallbackPlaceholder: "e.g. 0.1",
+      binanceFeeFallbackSave: "Save",
+      binanceFeeFallbackClear: "Clear",
+      binanceFeeFallbackSaved: "Fee fallback saved.",
+      binanceFeeFallbackCleared: "Fee fallback removed (default 0.1%).",
+      binanceFeeFallbackInvalid: "Enter a positive percent up to 5, or leave empty and save to clear.",
       validation: {
         empty: "Nickname cannot be empty",
         allowedChars: "Allowed: letters, numbers, . _ -",
@@ -960,6 +972,23 @@ export const cryptoTranslations = {
         chartTypeArea: "Area",
         chartTypeHeikinAshi: "Heikin Ashi",
         chartTypeHeikinDisabledAgg: "Heikin Ashi only applies to classic OHLC candles",
+        spotOrderMarkerSideBuy: "Buy",
+        spotOrderMarkerSideSell: "Sell",
+        spotOrderMarkerTotal: "Total (USDT)",
+        spotOrderMarkerQty: "Filled",
+        spotOrderMarkerAvg: "Avg price",
+        spotOrderMarkerFee: "Fee",
+        spotOrderMarkerTime: "Time",
+        spotOrderHoverPriceBuy: "Price (B):",
+        spotOrderHoverPriceSell: "Price (S):",
+        spotOrderHoverNoPrice: "—",
+        spotOrderChartDebugLabel: "Debug: spot orders on chart",
+        spotOrderChartDebugHint:
+          "JSON below: orders come from our DB table UserBinanceSpotOrder (GET /user/binance-connection/orders — rows created when orders are sent via this app). Markers work on every chart type: per-order placement uses each bar’s open/close (utc+tz / utc / utc−tz). Index 0 = newest bar (OHLC candle or Renko/Range/Kagi brick). Times align with the loaded series (timezone offset on open/close).",
+        spotOrderChartDebugKlinesNote:
+          "index0 = newest bar in array; indexLast = oldest loaded. open/close ms match the chart (user timezone offset applied like GET /api/binance/klines).",
+        spotOrderChartDebugAggSeriesBarNote:
+          "Atemporal chart: each row is a brick/bar (not a time candle). The marker is drawn on the bar whose [open,close] interval best matches the order time — same placement rule as OHLC.",
         chartTypeRenko5: "Renko (5)",
         chartTypeRange5: "Range (5)",
         chartTypeKagi5: "Kagi (5)",
@@ -1375,6 +1404,10 @@ export const cryptoTranslations = {
         tradingValidationBuyUsdt: "Enter a USDT amount.",
         tradingValidationQty: "Enter quantity.",
         tradingValidationLimit: "Enter price and quantity.",
+        tradingBinanceMinNotional:
+          "Order value is below the minimum for this pair. Binance requires at least {min} USDT (notional) per order on this symbol.",
+        tradingBinanceNotionalGeneric:
+          "Order value is too low for this pair (Binance minimum notional). Increase the USDT amount or quantity.",
         indicatorsPanelTitle: "Indicators",
         noIndicatorsYet: "No saved indicators. Use \"Add indicator\" in the menu to create one.",
         noIndicatorsForTimeframe: "No indicators for this timeframe. Edit an indicator and set \"Show on\" to include this period or \"All timeframes\".",
@@ -1487,7 +1520,9 @@ export const cryptoTranslations = {
         bollingerShortLower: "Lo",
         bollingerBandOpacity: "Band opacity (0–30%)",
         bollingerLimitsColor: "Bands color",
-        bollingerMiddleColor: "Middle color",
+        bollingerMiddleColor: "Middle line color",
+        bollingerMiddleThickness: "Middle line thickness",
+        bollingerMiddleStroke: "Middle line style",
         donchianLabel: "Donchian Channels",
         donchianShowUpper: "Upper channel",
         donchianShowLower: "Lower channel",
@@ -1498,7 +1533,11 @@ export const cryptoTranslations = {
         donchianBandOpacity: "Band opacity",
         donchianLimitsColor: "Channels color",
         donchianMiddleColor: "Middle line color",
+        donchianMiddleThickness: "Middle line thickness",
+        donchianMiddleStroke: "Middle line style",
         ichimokuLabel: "Ichimoku",
+        linearFitLabel: "Linear fit",
+        quadraticFitLabel: "Quadratic fit",
         ichimokuTenkanPeriod: "Tenkan period",
         ichimokuKijunPeriod: "Kijun period",
         ichimokuSpanBPeriod: "Span B period",
@@ -1516,6 +1555,9 @@ export const cryptoTranslations = {
         keltnerShortMiddle: "Mid",
         keltnerShortLower: "Lo",
         keltnerLimitsColor: "Bands color",
+        keltnerMiddleColor: "Middle line (EMA) color",
+        keltnerMiddleThickness: "Middle line thickness",
+        keltnerMiddleStroke: "Middle line style",
         indicatorType: "Type",
         indicatorGroupMovingAverages: "Moving Averages",
         indicatorGroupMomentum: "Momentum",
@@ -1534,6 +1576,65 @@ export const cryptoTranslations = {
         lineStyleDotted: "Dotted",
         lineStyleDashed: "Dashed",
         addIndicator: "Add",
+        indicatorTheoryHeading: "Theory and typical use",
+        indicatorTheorySMA:
+          "The simple moving average (SMA) is the arithmetic mean of the last N closes—one of the oldest smoothing tools in technical analysis. On dailies, 20 (roughly one month), 50 (quarter), 100 and 200 (long-term filter) are standard references; intraday traders often use 5, 9 or 20 bars aligned to the session. The slope summarizes bias: up-sloping MA favors long-biased context, down-sloping favors shorts; price frequently reacts at the MA as dynamic support or resistance. Famous crosses such as the 50/200 “golden” or “death” cross are slow and heavily lagging—they work better in sustained trends than in ranges, where price whips back and forth through the lines. Treat the SMA as trend and mean-reversion context, pair it with structure or triggers for entries, and avoid using any MA cross as a sole signal without regime awareness.",
+        indicatorTheorySMA2:
+          "SMA2 applies the same arithmetic average as the SMA, but the lookback can be defined by elapsed time (hours, days) instead of only a fixed candle count—useful when you want a horizon tied to the clock or session rather than bar number alone. The interpretation matches the SMA: noise reduction, trend framing, and a rolling reference level. Choose the time span to align with your higher-timeframe thesis or intraday session; the same limitations apply—lag after sharp moves, whipsaw in balance areas, and the need to combine with price action or momentum for timing rather than relying on the line alone.",
+        indicatorTheoryEMA:
+          "The exponential moving average gives exponentially decreasing weight to older prices, so it reacts faster than an SMA of the same length. It underpins many modern tools (for example MACD’s 12- and 26-period EMAs) and common presets such as 8, 9, 12, 21, 26, 50 and 200. Typical readings: pullbacks to a rising EMA in an uptrend, EMA slope as momentum, and short/long EMA crosses as a coarse regime switch. Because it is more responsive, it generates more noise in sideways markets than a slow SMA—filter with trend (higher timeframe, ADX, or structure) and prefer setups where price, short EMA and long EMA align with a clear directional environment.",
+        indicatorTheoryEMA2:
+          "EMA2 is a second exponential average with its own period or time window. The usual pattern is pairing two EMAs (e.g. 9 and 21 on intraday charts, or 50 and 200 on dailies) to separate short- from long-term trend: while the short EMA stays above the long EMA, many traders treat the backdrop as bullish until that relationship breaks. The pair remains lagging; use it as bias or regime context and combine with entry rules (breakouts, retests, oscillators) rather than trading every crossover in isolation—especially in chop, where EMAs cross repeatedly.",
+        indicatorTheoryWMA:
+          "The weighted moving average assigns linearly increasing weights to the most recent candles—the latest bar weighs most. It sits between the SMA and EMA in spirit: more responsive than an equal-weight SMA, less ubiquitous than the EMA in retail defaults. Periods are chosen like other MAs (for instance 20 or 50). Use it when you want one line that stresses recent prices without going to an extremely short EMA; in ranges it will still flip often—combine with volatility or trend filters the same way you would for any moving average.",
+        indicatorTheoryWMA2:
+          "WMA2 combines the weighted MA logic with a time-based window option alongside classic period length, similar in goal to SMA2/EMA2: anchor the average to a calendar or session span while keeping extra weight on the newest bars. Interpretation follows the WMA; align the window with your analysis horizon and validate signals with volume, levels, or higher-timeframe direction.",
+        indicatorTheoryHMA:
+          "The Hull moving average (Alan Hull, 2005) uses nested weighted moving averages to reduce lag while preserving a smooth line—often described as quicker to turn than a standard MA of comparable length. A 16-period HMA is frequently cited as a starting point, with N scaled to the chart interval. It is used for trend identification and crossover strategies; no MA removes whipsaw in tight ranges—pair with a regime measure (e.g. ADX, range detection) and avoid treating every slope change as a standalone entry without confirmation.",
+        indicatorTheoryHMA_CUSTOM:
+          "Custom Hull-style settings let you adjust long, fast and smoothing stages inside the Hull construction. The purpose stays the same: a responsive trend line with controlled smoothness. Parameters should match the asset’s volatility and timeframe; guard against overfitting to historical wiggles—use the line as a visual trend aid with the same contextual discipline as other moving averages.",
+        indicatorTheoryVWMA:
+          "The volume-weighted moving average weights each period’s price by that period’s volume, so levels where more capital traded count more than thin prints. For the same N, compare VWMA to a simple MA: divergence between them shows volume concentrated away from the equal-weight mean. Common lengths mirror other MAs (20, 50). Sustained trade above the VWMA can suggest acceptance above a participation-weighted mean; below, the opposite. It does not predict direction by itself—combine with trend, key levels, and volume behavior for a full picture.",
+        indicatorTheoryRSI:
+          "The Relative Strength Index (RSI), developed by J. Welles Wilder (1978), compares average gains to average losses over N periods and normalizes the result on a 0–100 scale. The 14-period length is the most widely used default; shorter periods make the indicator more sensitive, while longer periods smooth noise. Wilder’s classic zones are 70 (overbought) and 30 (oversold), although many traders adopt 80/20 to flag more selective extremes. An essential nuance: a high RSI does not imply an automatic sell—in strong uptrends the RSI can remain overbought for long stretches, reflecting strength rather than an imminent reversal. More robust readings include regular and hidden divergences (price makes new extremes without RSI confirmation, hinting at weakening or continuation with less momentum), failure swings (internal RSI patterns that can precede turns without depending directly on price), and the 50 level as a balance line: crosses aligned with the higher-timeframe trend can suggest momentum resuming. In practice the RSI works best as a context and momentum gauge, not an isolated trigger; extreme readings should be treated as price stress to confirm with market structure, higher timeframes or volume.",
+        indicatorTheoryMFI:
+          "Gene Quong’s Money Flow Index (1989) is a 0–100 oscillator built from “money flow” (typical price × volume) over N periods—think of it as an RSI where volume weights the move. Length 14 is common. Bands mirror RSI practice: 80/20 or 70/30 for stretched readings, with the extra question of whether volume confirms: if price rallies but MFI lags, participation may be thin. MFI can remain pinned high or low in persistent trends like RSI. Use it for confirmation, divergence, and pressure context alongside price action—not as an isolated overbought/oversold trigger.",
+        indicatorTheoryMACD:
+          "The MACD (Moving Average Convergence Divergence), created by Gerald Appel, is the difference between two exponential moving averages—a shorter and a longer one—typically 12- and 26-period EMAs on the close. That difference is the MACD line. A 9-period EMA of the MACD line is then computed as the signal line; the histogram is the distance between MACD and signal. The 12/26/9 setup has become the market standard, balancing sensitivity and smoothing. Main readings: MACD crossing the signal (possible momentum shift); MACD crossing the zero line (flip in the relationship between the fast and slow averages—directional bias); histogram expanding or contracting (acceleration or deceleration of the move); divergences versus price (possible weakening or continuation with less thrust). By construction MACD inherits moving-average lag—it works better in directional markets and produces more noise in sideways periods. Good practices: use it as a momentum gauge inside directional context (clear trend, meaningful levels); avoid trading isolated crosses in consolidation (high false-signal rate); weight signals that align with the higher timeframe more heavily. In short, MACD works best as a momentum reader and trend confirmation tool, not a standalone trigger—its value lies in how acceleration interacts with market direction.",
+        indicatorTheoryStochastic:
+          "George Lane’s stochastic oscillator compares the close to the high–low range over N periods: %K is the raw position, %D is smoothed—commonly 14,3,3 (14 for %K, 3-bar smoothing for %K and %D); 5,3,3 is popular on faster charts. Reference bands 80/20 (or 70/30) mark stretched zones. Signals include %K crossing %D, band extremes, and divergence. In strong trends the oscillator can hug the upper zone for a long time—Lane’s teaching often emphasized trend alignment until momentum diverges. Use stochastics with higher-timeframe bias and structure; fading a trend only because %K is “overbought” is a common mistake.",
+        indicatorTheoryWilliamsR:
+          "Larry Williams’ %R places the close within the recent high–low range on a −100 to 0 scale (often 14 periods)—the same conceptual family as the stochastic, inverted. Typical reference lines are −20 (overbought) and −80 (oversold), analogous to 80/20. It is a fast, noisy oscillator: useful for timing within a trend or range, poor as a lone counter-trend signal against a strong impulse. Confirmation from price structure or a higher timeframe reduces false fades.",
+        indicatorTheoryOBV:
+          "Joseph Granville’s on-balance volume cumulatively adds volume on up closes and subtracts on down closes, producing an unbounded running total—there are no fixed overbought levels. The core ideas are trend and divergence: when price makes a higher high but OBV does not, participation may be weakening; when both rise together, volume confirms the trend. OBV is relational, not a price oracle—reporting differences (session vs 24h, splits, thin markets) can distort series. Use OBV as confirmation or early warning alongside price, not as a timing law by itself.",
+        indicatorTheoryAD:
+          "Marc Chaikin’s Accumulation/Distribution line estimates whether traders are accumulating or distributing by weighting each bar with where the close sits in the range and with volume. Like OBV, it is cumulative without universal numeric bands—read trend, slope, and divergence versus price. Rising A/D during an advance supports accumulation; if price rises but A/D rolls over, sellers may be absorbing rallies. Combine with trend, support/resistance, and OBV-style caution on data quality; A/D is participation insight, not a standalone entry trigger.",
+        indicatorTheorySAR:
+          "J. Welles Wilder’s parabolic SAR (“stop and reverse”) prints a trailing stop dot above or below price; when price trades through the dot, the system flips from long to short or the reverse. Default acceleration factor starts at 0.02, steps up each new extreme, and caps at 0.2—higher acceleration hugs price tighter but flips constantly in ranges. SAR is explicitly trend-following: strong in directional markets, noisy in sideways chop. Use it for stop discipline or as a trend-state flag, not as the only entry rule without checking regime (ADX, range vs trend).",
+        indicatorTheoryATR:
+          "The Average True Range (ATR), introduced by J. Welles Wilder, measures volatility by averaging the true range over N periods (14 is the usual default). True range is the largest of: (high − low), |high − previous close|, and |low − previous close|—capturing gaps and wider swings between sessions. ATR does not indicate direction; it reflects the typical scale of price movement, so it should always be read together with structure or the prevailing trend. Main uses: risk management—place stops and targets at multiples of ATR (for example 1×–2×), scaling to current volatility instead of fixed distances; position sizing—calibrate size so risk stays consistent (higher ATR often implies a smaller position, and vice versa); volatility regime—rising ATR points to expansion (common around breakouts, accelerations or panic), falling ATR points to compression that can precede stronger moves after quiet ranges. Good practices: avoid stops that are too tight when ATR is high (noise is more likely to tag them); adapt tactics to the regime (expansion vs compression); compare current ATR to a historical average or baseline to see whether volatility is “expensive” or “cheap.” In short, ATR is a core volatility and risk tool, not a directional signal—its strength is aligning decisions with the market’s pace.",
+        indicatorTheoryVWAP:
+          "Volume-weighted average price (VWAP) is cumulative typical price × volume divided by cumulative volume over an anchor—usually the trading session or calendar day, resetting each period. Institutions often benchmark execution against VWAP; intraday traders interpret sustained price above session VWAP as relative strength versus the day’s volume-weighted mean, and below as relative weakness. Anchored VWAP from a swing high/low is another common variant. VWAP is not a guaranteed edge: in strong trends price can hug one side all day—combine with opening range, liquidity, and structure.",
+        indicatorTheoryBollinger:
+          "John Bollinger’s bands use a middle band (typically 20-period SMA) and outer bands at ±k standard deviations—k = 2 is the classic default; 1.5 or 2.5 adjust sensitivity. Bandwidth expands and contracts with volatility; a “squeeze” (narrow bands) often precedes a volatility expansion. Price at the upper band is not automatically a sell—in persistent trends, price can “walk the band.” Related tools: %B (where price sits inside the bands) and bandwidth for squeeze scans. Use Bollinger Bands for volatility regime and mean-reversion vs breakout framing, not as fixed reversal lines without context.",
+        indicatorTheoryKeltner:
+          "Keltner-style channels (descended from Chester Keltner, later modified by others) center an EMA (often 20) and offset the envelope by ±k × ATR—frequently k = 2. Because width ties to ATR, bands widen with realized volatility differently than Bollinger’s standard-deviation width. Traders use band touches for trend-continuation vs mean-reversion ideas depending on regime; tighter k brings bands closer. Confirm with trend bias, volume, and structure—do not assume every touch is a fade or a breakout without context.",
+        indicatorTheoryDonchian:
+          "Richard Donchian’s channel marks the highest high and lowest low over N bars; the midline averages them. The 20-period Donchian became famous in systematic trend-following (e.g. Turtle-style entries on N-bar breakouts, exits on shorter breakouts). Any N maps to your intended holding period. Signals are structural: new highs/lows for the window; false breakouts are frequent in ranges—filter with ADX, volume, or session logic. The Donchian is a breakout and structure tool, not a mean-reversion oscillator.",
+        indicatorTheoryVolume:
+          "Volume counts contracts or shares per bar. Compare raw volume to a moving average of volume (often 20 bars) to compute relative volume—spikes flag unusual participation. Climactic volume can mark exhaustion or the start of a new initiative; volume expanding in the direction of the trend generally validates it, while breakouts on very low relative volume invite doubt. In fragmented markets (e.g. crypto across venues) interpret volume as imperfect but still useful confirmation alongside price structure and liquidity.",
+        indicatorTheoryADX:
+          "The Average Directional Index belongs to J. Welles Wilder’s Directional Movement System: it is derived from the +DI and −DI lines, usually with period 14 (the most common default). ADX scores trend strength from 0 to 100—it does not indicate direction. For bias, read +DI versus −DI (+DI above −DI suggests buying pressure; −DI above +DI suggests selling pressure). Rough guide: below 20 often means a range or weak trend; 20–25 trend structure emerging; above 25 a clearer trend; readings in the 40–50 zone can reflect a strong trend that may eventually exhaust if stretched. The slope of ADX matters: rising ADX means the trend is gaining strength; falling ADX suggests fading strength, consolidation or a possible regime shift. Combine ADX with directional context (moving averages, price structure); be cautious trading breakouts when ADX is very low (more false breaks), and note price/ADX divergences as potential weakness. It works best as a market-regime filter (trending vs choppy), not as a standalone entry signal.",
+        indicatorTheoryCCI:
+          "Donald Lambert’s Commodity Channel Index measures how far price deviates from its mean over N periods (14 is standard), scaled by mean deviation. Historically, a large share of values often fell between +100 and −100 in stationary series—crypto can violate that. Traders use crosses of the zero line, excursions beyond ±100 or ±200, and divergences. High CCI is not “like RSI overbought” in the same way—it can stay elevated in a strong trend. Treat CCI as a momentum/cycle gauge with trend filters and levels, not as a mechanical buy/sell at fixed thresholds.",
+        indicatorTheoryCMF:
+          "Marc Chaikin’s Chaikin Money Flow (CMF) measures buying and selling pressure by combining price and volume: it sums money flow volume over N periods (typically 21) and divides by the sum of volume over the same window, yielding a normalized reading of accumulation versus distribution. Interpretation centers on the zero line—readings above 0 suggest net buying (accumulation), below 0 net selling (distribution). Persistence matters more than isolated spikes: CMF held above or below zero indicates sustained flow, while rapid oscillations around zero often reflect indecision or a sideways market. Key ideas include divergences (price makes new highs or lows without CMF confirmation—possible weakening or loss of volume “sponsorship”) and trend confirmation (CMF aligned with price direction reinforces the move). Limitations: CMF is a flow gauge, not a precision timing trigger; gaps and the nature of the asset (e.g. fragmented or less reliable volume) can distort the series; it works best alongside price structure and other trend or momentum tools. In short, CMF is a thermometer of capital flow—useful to validate moves and should be integrated into a broader analytical context for trading decisions.",
+        indicatorTheoryLINEAR_FIT:
+          "Linear fit (rolling least squares) applies ordinary least-squares regression to the last N values of the chosen field (same window idea as a moving average). For each bar, the line is fitted with time running from oldest to newest within the window; the plotted value is the regression estimate at the newest bar—i.e. the endpoint of the fit, not the midpoint. A rising line suggests upward drift in that window, a falling line downward drift; slope and distance from price can be read like a smoothed trend proxy. It is still a lagging, descriptive tool: use it with structure, volatility, and confirmation rather than as a lone timing signal.",
+        indicatorTheoryQUADRATIC_FIT:
+          "Quadratic fit uses the same rolling window as linear fit, but models price as a parabola (y ≈ a + bx + cx²) by least squares. The plotted value is the estimate at the newest bar (endpoint of the curve). It can bend with curvature in the window—useful when a straight line is too rigid; it also reacts more to recent curvature and can overshoot in noisy ranges. Period 2 falls back to the linear endpoint (two points do not fix a unique parabola). Like linear fit, it is descriptive and lagging—combine with structure and other filters.",
+        indicatorTheoryIchimoku:
+          "Ichimoku Kinko Hyo (Goichi Hosoda; widely published 1969) is a multi-horizon system: Tenkan (conversion), Kijun (base), Senkou Span A/B forming the Kumo cloud, and Chikou (lagging line). Classic Japanese equities used 9, 26 and 52; many FX and crypto traders keep 9/26/52 or adjust (e.g. longer Span B on 24/7 markets). The cloud projects support/resistance forward; price above a thick bullish cloud often indicates a strong regime, below a bearish cloud the opposite. Tenkan/Kijun (TK) cross adds short- vs medium-term balance inside that picture. Read components together—reducing Ichimoku to one line without cloud and lagging context loses most of its logic.",
         defaultModelMaxIndicators: "Maximum 2 indicators on default model. Save to a layout (1–7) to add more.",
         defaultModelMaxStrategies: "Only one strategy on default model. Save to a layout (1–7) to add more.",
         showOn: "Show on",
@@ -1558,6 +1659,7 @@ export const cryptoTranslations = {
         fieldHLCC4: "HLCC4",
         fieldInUse: "(in use)",
         fieldVol: "Vol",
+        fieldVolUsdt: "Vol (USDT)",
         fieldIndSma1: "IND_SMA_1",
         changeTimeframesShow: "Change timeframes",
         changeTimeframesHide: "Hide options",
@@ -1658,6 +1760,9 @@ export const cryptoTranslations = {
         refresh: "Clear panel",
         activeIndicators: "Active indicators",
         showKlinesTable: "Show klines table (validation)",
+        spotOrderChartDebugInspectHint:
+          "JSON updates while the chart page is open (KlinesTable must be mounted).",
+        spotOrderChartDebugInspectEmpty: "No data yet — open the chart page.",
         fastLastUpdateTitle: "Fast last update (1m)",
         fastLastUpdateHint: "Updates every 5 seconds (reads last openTime from BinanceKlineFast).",
         fastLastMinuteLabel: "Last minute (openTime)",
@@ -2029,6 +2134,9 @@ export const cryptoTranslations = {
       binancePlaceholderSecret: "Cole a secret uma vez; ela não é exibida de novo",
       binanceConnectSuccess: "Binance conectada com sucesso.",
       binanceDisconnectedSuccess: "Conexão Binance removida.",
+      binanceSpotOrderLabelsOnChart: "Mostrar etiquetas de compra/venda no gráfico",
+      binanceSpotOrderLabelsOnChartHint:
+        "Marcadores B/S nas velas para ordens spot feitas por esta app (quando o intervalo as mostrar).",
       binanceDefaultUsdtLabel: "USDT padrão por compra (spot)",
       binanceDefaultUsdtHint:
         "Opcional. Se definido, as boletas de compra pré-preenchêm esse valor em USDT (limitado ao saldo disponível).",
@@ -2038,6 +2146,15 @@ export const cryptoTranslations = {
       binanceDefaultUsdtSaved: "Valor padrão salvo.",
       binanceDefaultUsdtCleared: "Valor padrão removido.",
       binanceDefaultUsdtInvalid: "Informe um número positivo (USDT).",
+      binanceFeeFallbackLabel: "Taxa taker estimada (fallback)",
+      binanceFeeFallbackHint:
+        "Usada nas estimativas de taxa nas boletas e quando a API tradeFee da Binance não devolve o par. Indique em percentagem (ex.: 0,1 = 0,1%). Deixe vazio e salve para usar o defeito interno (0,1%). Máx. 5%.",
+      binanceFeeFallbackPlaceholder: "ex.: 0,1",
+      binanceFeeFallbackSave: "Salvar",
+      binanceFeeFallbackClear: "Limpar",
+      binanceFeeFallbackSaved: "Fallback de taxa salvo.",
+      binanceFeeFallbackCleared: "Fallback de taxa removido (defeito 0,1%).",
+      binanceFeeFallbackInvalid: "Indique uma percentagem positiva até 5 ou deixe vazio e salve para limpar.",
       validation: {
         empty: "Nickname não pode ser vazio",
         allowedChars: "Permitido: letras, números, . _ -",
@@ -2904,6 +3021,23 @@ export const cryptoTranslations = {
         chartTypeArea: "Área",
         chartTypeHeikinAshi: "Heikin Ashi",
         chartTypeHeikinDisabledAgg: "Heikin Ashi só se aplica a velas OHLC clássicas",
+        spotOrderMarkerSideBuy: "Compra",
+        spotOrderMarkerSideSell: "Venda",
+        spotOrderMarkerTotal: "Total (USDT)",
+        spotOrderMarkerQty: "Executado",
+        spotOrderMarkerAvg: "Preço médio",
+        spotOrderMarkerFee: "Taxa",
+        spotOrderMarkerTime: "Hora",
+        spotOrderHoverPriceBuy: "Preço (B):",
+        spotOrderHoverPriceSell: "Preço (S):",
+        spotOrderHoverNoPrice: "—",
+        spotOrderChartDebugLabel: "Debug: ordens spot no gráfico",
+        spotOrderChartDebugHint:
+          "JSON abaixo: ordens vêm da tabela UserBinanceSpotOrder (GET /user/binance-connection/orders — só linhas de ordens enviadas por esta app). Marcadores em qualquer tipo de gráfico: colocação usa open/close de cada barra (utc+tz / utc / utc−tz). Índice 0 = barra mais recente (vela OHLC ou tijolo Renko/Range/Kagi). Tempos alinhados à série carregada (offset nas open/close).",
+        spotOrderChartDebugKlinesNote:
+          "índice 0 = barra mais recente no array; último = mais antiga carregada. open/close em ms como no gráfico (offset do utilizador).",
+        spotOrderChartDebugAggSeriesBarNote:
+          "Gráfico atemporal: cada linha é um tijolo/barra (não é vela por tempo). O marcador vai para o tijolo cujo intervalo [open,close] melhor coincide com a hora da ordem — mesma regra que no OHLC.",
         chartTypeRenko5: "Renko (5)",
         chartTypeRange5: "Range (5)",
         chartTypeKagi5: "Kagi (5)",
@@ -3321,6 +3455,10 @@ export const cryptoTranslations = {
         tradingValidationBuyUsdt: "Informe o valor em USDT.",
         tradingValidationQty: "Informe a quantidade.",
         tradingValidationLimit: "Informe preço e quantidade.",
+        tradingBinanceMinNotional:
+          "O valor da ordem está abaixo do mínimo deste par. A Binance exige pelo menos {min} USDT (notional) por ordem neste símbolo.",
+        tradingBinanceNotionalGeneric:
+          "O valor da ordem é demasiado baixo para este par (mínimo notional da Binance). Aumente o montante em USDT ou a quantidade.",
         indicatorsPanelTitle: "Indicadores",
         noIndicatorsYet: "Nenhum indicador salvo. Use \"Adicionar indicador\" no menu para criar.",
         noIndicatorsForTimeframe: "Nenhum indicador para este timeframe. Edite um indicador e em \"Mostrar em\" inclua este período ou \"Todos os tempos\".",
@@ -3434,6 +3572,8 @@ export const cryptoTranslations = {
         bollingerBandOpacity: "Opacidade da banda (0–30%)",
         bollingerLimitsColor: "Cor das bandas",
         bollingerMiddleColor: "Cor da média",
+        bollingerMiddleThickness: "Espessura da média",
+        bollingerMiddleStroke: "Traço da média",
         donchianLabel: "Canais de Donchian",
         donchianShowUpper: "Canal superior",
         donchianShowLower: "Canal inferior",
@@ -3444,7 +3584,11 @@ export const cryptoTranslations = {
         donchianBandOpacity: "Opacidade da faixa",
         donchianLimitsColor: "Cor dos canais",
         donchianMiddleColor: "Cor da linha do meio",
+        donchianMiddleThickness: "Espessura da linha do meio",
+        donchianMiddleStroke: "Traço da linha do meio",
         ichimokuLabel: "Ichimoku",
+        linearFitLabel: "Ajuste Linear",
+        quadraticFitLabel: "Ajuste quadrático",
         ichimokuTenkanPeriod: "Período Tenkan",
         ichimokuKijunPeriod: "Período Kijun",
         ichimokuSpanBPeriod: "Período Span B",
@@ -3462,6 +3606,9 @@ export const cryptoTranslations = {
         keltnerShortMiddle: "Mid",
         keltnerShortLower: "Inf",
         keltnerLimitsColor: "Cor das bandas",
+        keltnerMiddleColor: "Cor da média (EMA)",
+        keltnerMiddleThickness: "Espessura da média",
+        keltnerMiddleStroke: "Traço da média",
         indicatorType: "Tipo",
         indicatorGroupMovingAverages: "Médias móveis",
         indicatorGroupMomentum: "Momentum",
@@ -3480,6 +3627,65 @@ export const cryptoTranslations = {
         lineStyleDotted: "Pontilhado",
         lineStyleDashed: "Tracejado",
         addIndicator: "Adicionar",
+        indicatorTheoryHeading: "Teoria e uso típico",
+        indicatorTheorySMA:
+          "A média móvel simples (SMA) é a média aritmética dos últimos N fechamentos—uma das ferramentas de suavização mais antigas da análise técnica. No diário, 20 (cerca de um mês), 50 (trimestre), 100 e 200 (filtro de longo prazo) são referências muito usadas; no intraday, 5, 9 ou 20 barras alinhadas à sessão são comuns. A inclinação resume o viés: SMA ascendente favorece contexto comprador, descendente vendedor; o preço costuma reagir na média como suporte ou resistência dinâmicos. Cruzamentos famosos como 50/200 (“golden” ou “death” cross) são lentos e cheios de atraso—funcionam melhor em tendências persistentes do que em faixas, onde o preço oscila através das linhas. Trate a SMA como contexto de tendência e de média; combine com gatilhos ou estrutura para entrada e não use qualquer cruzamento isolado sem enxergar o regime do mercado.",
+        indicatorTheorySMA2:
+          "A SMA2 aplica a mesma média aritmética da SMA, mas o recorte pode ser por tempo decorrido (horas, dias) e não só número fixo de candles—útil quando o horizonte deve seguir o relógio ou a sessão em vez da contagem de barras. A interpretação é a mesma da SMA: reduzir ruído, enquadrar tendência e servir de referência móvel. Ajuste o intervalo ao viés do timeframe maior ou ao dia de negociação; valem as mesmas ressalvas: atraso após movimentos bruscos, ruído em consolidações e a necessidade de combinar com price action ou momentum para o timing.",
+        indicatorTheoryEMA:
+          "A média móvel exponencial aplica pesos que decrescem exponencialmente para preços mais antigos, reagindo mais rápido que uma SMA do mesmo comprimento. Ela sustenta muitas ferramentas modernas (por exemplo as EMAs 12 e 26 do MACD) e presets como 8, 9, 12, 21, 26, 50 e 200. Leituras típicas: repiques até uma EMA ascendente em alta, inclinação da EMA como momentum, cruzamentos entre EMA curta e longa como mudança grosseira de regime. Por ser mais sensível, gera mais sinais em lateral do que uma SMA lenta—filtre com tendência (timeframe maior, ADX ou estrutura) e prefira cenários em que preço, EMA curta e longa convergem com um ambiente direcional claro.",
+        indicatorTheoryEMA2:
+          "A EMA2 é uma segunda média exponencial com período ou janela próprios. O padrão é emparelhar duas EMAs (ex.: 9 e 21 no intraday, ou 50 e 200 no diário) para separar tendência de curto e longo prazo: enquanto a curta permanece acima da longa, muitos operadores tratam o pano de fundo como comprador até essa relação inverter. O par continua atrasado; use-o como viés ou regime e combine com regras de entrada (rompimentos, retestes, osciladores) em vez de operar todo cruzamento isoladamente—especialmente em mercado lateral, onde as EMAs se cruzam sem parar.",
+        indicatorTheoryWMA:
+          "A média móvel ponderada atribui pesos linearmente crescentes aos candles mais recentes—o último pesa mais. Fica, em espírito, entre a SMA e a EMA: mais ágil que uma SMA de pesos iguais, menos padrão que a EMA nas plataformas. Períodos seguem a lógica das outras médias (por exemplo 20 ou 50). Use-a quando quiser uma linha que enfatize o recente sem ir a uma EMA extremamente curta; em faixas ela ainda oscila—combine com filtros de volatilidade ou tendência como faria com qualquer média.",
+        indicatorTheoryWMA2:
+          "A WMA2 une a lógica da WMA a uma janela por tempo além do período em barras, no mesmo espírito da SMA2/EMA2: ancorar a média a um intervalo de calendário ou sessão mantendo peso extra nos candles novos. A leitura segue a WMA; alinhe a janela ao horizonte de análise e valide com volume, níveis ou direção do timeframe maior.",
+        indicatorTheoryHMA:
+          "A Hull moving average (Alan Hull, 2005) usa médias móveis ponderadas aninhadas para reduzir atraso com linha ainda suave—costuma-se dizer que vira mais cedo que uma MA clássica de comprimento parecido. Cita-se muito 16 períodos como ponto de partida, ajustando N ao gráfico. Serve para identificar tendência e sistemas de cruzamento; nenhuma média elimina ruído em faixa estreita—combine com medida de regime (ex.: ADX, detecção de lateral) e não trate toda mudança de inclinação como entrada única sem confirmação.",
+        indicatorTheoryHMA_CUSTOM:
+          "A Hull customizável permite ajustar etapas longa, rápida e de suavização dentro da receita Hull. O objetivo permanece: linha de tendência responsiva e suave. Os parâmetros devem combinar com a volatilidade do ativo e o timeframe; evite otimizar em excesso o passado—use como apoio visual com a mesma disciplina contextual das outras médias.",
+        indicatorTheoryVWMA:
+          "A média móvel ponderada por volume pesa cada preço pelo volume daquele período, dando mais peso a níveis onde houve mais negócio. Para o mesmo N, compare VWMA com SMA: divergência entre elas indica concentração de volume fora da média simples. Comprimentos costumam espelhar outras médias (20, 50). Permanência do preço acima da VWMA pode sugerir aceitação acima de uma média ponderada pela participação; abaixo, o oposto. Sozinha não define direção—combine com tendência, níveis e comportamento do volume.",
+        indicatorTheoryRSI:
+          "O Índice de Força Relativa (RSI), desenvolvido por J. Welles Wilder (1978), compara a média de ganhos com a média de perdas ao longo de N períodos e normaliza o resultado numa escala de 0 a 100. O período 14 é o padrão mais utilizado; períodos menores tornam o indicador mais sensível, enquanto períodos maiores suavizam o ruído. As zonas clássicas propostas por Wilder são 70 (sobrecompra) e 30 (sobrevenda), embora muitos traders adotem 80/20 para identificar extremos mais seletivos. Ainda assim, uma nuance essencial: RSI elevado não implica venda automática. Em tendências de alta fortes, o indicador pode permanecer em sobrecompra por períodos prolongados, refletindo força—não necessariamente reversão iminente. Interpretações mais robustas incluem divergências (regulares e ocultas): quando o preço faz novos extremos sem confirmação do RSI, sugerindo possível enfraquecimento ou continuação com menor momentum; failure swings: padrões internos do RSI que podem antecipar mudanças sem depender diretamente só do preço; e o nível 50 como linha de equilíbrio—cruzamentos alinhados com a tendência maior podem indicar retomada de momentum. Na prática, o RSI funciona melhor como indicador de contexto e momentum, não como gatilho isolado. Leituras extremas devem ser vistas como condições de estresse do preço, a serem confirmadas por estrutura de mercado, tendência em timeframes superiores ou volume.",
+        indicatorTheoryMFI:
+          "O Money Flow Index de Gene Quong (1989) é um oscilador 0–100 construído a partir do “money flow” (preço típico × volume) em N períodos—pense num RSI em que o volume pesa o movimento. Comprimento 14 é comum. As faixas seguem a lógica do RSI: 80/20 ou 70/30 para leituras esticadas, com a pergunta extra se o volume confirma: se o preço sobe e o MFI não acompanha, a participação pode estar fraca. Como o RSI, pode ficar extremo em tendência persistente. Use-o para confirmação, divergência e contexto de pressão junto com o preço—não como gatilho isolado de sobrecompra/sobrevenda.",
+        indicatorTheoryMACD:
+          "O MACD (Moving Average Convergence Divergence), criado por Gerald Appel, deriva da diferença entre duas médias móveis exponenciais — uma mais curta e outra mais longa, tipicamente EMA 12 e EMA 26 aplicadas ao fechamento. Essa diferença forma a linha MACD. Em seguida calcula-se uma EMA de 9 períodos dessa linha, chamada linha de sinal; o histograma representa a distância entre MACD e sinal. A configuração 12/26/9 tornou-se o padrão de mercado, equilibrando sensibilidade e suavização. Principais leituras: cruzamento do MACD com o sinal (possível mudança de momentum); cruzamento da linha zero (inversão da relação entre a média curta e a longa — viés direcional); expansão ou contração do histograma (aceleração ou desaceleração do movimento); divergências com o preço (possíveis sinais de enfraquecimento ou continuação com menor força). Por construção, o MACD herda o atraso das médias móveis, respondendo melhor em mercados direcionais e gerando mais ruído em períodos laterais. Boas práticas: utilizar como indicador de momentum dentro de um contexto direcional (tendência definida, níveis relevantes); evitar operar cruzamentos isolados em consolidação (alta incidência de falsos sinais); dar mais peso a sinais alinhados com o timeframe maior. Em síntese, o MACD funciona melhor como leitor de momentum e confirmação de tendência, não como gatilho isolado — seu valor está na leitura da dinâmica entre aceleração e direção do mercado.",
+        indicatorTheoryStochastic:
+          "O estocástico de George Lane compara o fechamento à faixa máxima–mínima em N períodos: %K é a posição bruta, %D é suavizada—em geral 14,3,3 (14 para %K, suavização 3 em %K e %D); 5,3,3 é popular em gráficos mais rápidos. Bandas 80/20 (ou 70/30) marcam zonas esticadas. Sinais incluem %K cruzando %D, extremos nas bandas e divergências. Em tendência forte o oscilador pode colar na zona alta por muito tempo—o próprio Lane enfatizava alinhamento com a tendência até aparecer divergência. Use o estocástico com viés do timeframe maior e estrutura; desmerecer a tendência só porque %K está “sobrecomprado” é erro comum.",
+        indicatorTheoryWilliamsR:
+          "O %R de Larry Williams coloca o fechamento dentro da faixa máxima–mínima recente numa escala de −100 a 0 (muitas vezes 14 períodos)—a mesma família conceitual do estocástico, invertida. Linhas de referência típicas são −20 (sobrecompra) e −80 (sobrevenda), análogas ao racional 80/20. É um oscilador rápido e ruidoso: serve para timing dentro de tendência ou faixa, não como sinal contrário isolado contra um impulso forte. Confirmação por estrutura de preço ou timeframe maior reduz fades falsos.",
+        indicatorTheoryOBV:
+          "O on-balance volume de Joseph Granville soma volume em fechamentos de alta e subtrai em baixas, gerando um total acumulado sem teto—não existem níveis fixos de sobrecompra. O núcleo da leitura é tendência e divergência: quando o preço faz máxima maior e o OBV não acompanha, a participação pode estar enfraquecendo; quando ambos sobem juntos, o volume confirma a tendência. O OBV é relacional, não um oráculo de preço—diferenças de apuração (sessão vs 24h, splits, mercados finos) podem distorcer a série. Use como confirmação ou alerta precoce junto do preço, não como lei de timing isolada.",
+        indicatorTheoryAD:
+          "A linha de acumulação/distribuição de Marc Chaikin estima se há acumulação ou distribuição pesando cada barra pela posição do fechamento na faixa e pelo volume. Como o OBV, é acumulativa e sem faixas universais—leia inclinação, tendência e divergência frente ao preço. A/D subindo em alta apoia acumulação; se o preço sobe e o A/D vira para baixo, vendedores podem estar absorvendo. Combine com tendência, suporte/resistência e a mesma cautela de qualidade de dados do OBV; é insight de participação, não gatilho de entrada sozinho.",
+        indicatorTheorySAR:
+          "O SAR parabólico de J. Welles Wilder (“stop and reverse”) desenha um stop dinâmico acima ou abaixo do preço; quando o preço cruza o ponto, o sistema inverte de comprado para vendido ou o contrário. O fator de aceleração padrão começa em 0,02, aumenta a cada novo extremo e limita em 0,2—aceleração maior cola mais no preço mas dispara mais ruído em faixa. O SAR é explicitamente seguidor de tendência: forte em movimentos direcionais, ruim em lateral com pontos trocando o tempo todo. Use para disciplina de stop ou estado de tendência, não como única regra de entrada sem checar regime (ADX, lateral vs tendência).",
+        indicatorTheoryATR:
+          "O Average True Range (ATR), proposto por J. Welles Wilder, mede a volatilidade ao calcular a média do true range ao longo de N períodos (14 é o padrão). O true range é definido como o maior entre: (alta − baixa), |alta − fechamento anterior| e |baixa − fechamento anterior|, capturando gaps e movimentos mais amplos entre sessões. O ATR não indica direção, apenas o tamanho típico das variações de preço; por isso deve sempre ser interpretado em conjunto com a estrutura ou tendência vigente. Principais aplicações: gestão de risco (stops e alvos em múltiplos do ATR, ex.: 1× a 2×), ajustando-se à volatilidade atual em vez de usar distâncias fixas; dimensionamento de posição para manter risco consistente (quanto maior o ATR, em geral menor a posição, e vice-versa); leitura de regime—ATR subindo aponta expansão de volatilidade (frequente em rompimentos, acelerações ou pânico), ATR caindo aponta compressão, podendo anteceder movimentos mais fortes após períodos de baixa amplitude. Boas práticas: evitar stops muito curtos em ambientes de ATR elevado; ajustar a estratégia ao regime (expansão vs compressão); comparar o ATR atual a uma média ou referência histórica para entender se o mercado está “caro” ou “barato” em termos de movimento. Em resumo, o ATR é uma ferramenta essencial de volatilidade e controle de risco, não um indicador direcional—sua força está em adaptar decisões ao ritmo do mercado.",
+        indicatorTheoryVWAP:
+          "O VWAP é o preço médio ponderado pelo volume acumulado numa âncora—em geral a sessão de negociação ou o dia civil, reiniciando a cada período. Instituições frequentemente comparam execução ao VWAP; no intradiário, preço sustentado acima do VWAP da sessão pode ler-se como força relativa frente à média “justa” do dia negociada, e abaixo como fraqueza. Existem VWAPs ancorados em máximas/mínimas importantes. O VWAP não é edge garantido: em tendência forte o preço pode ficar de um lado o dia inteiro—combine com abertura, liquidez e estrutura.",
+        indicatorTheoryBollinger:
+          "As bandas de Bollinger usam linha central (em geral SMA de 20) e bandas externas a ±k desvios-padrão—k = 2 é o padrão clássico de John Bollinger; 1,5 ou 2,5 ajustam sensibilidade. A largura expande e contrai com a volatilidade; um “aperto” (bandas estreitas) frequentemente antecede expansão. Preço na banda superior não é venda automática—em tendência firme o preço pode “caminhar” pela banda. Ferramentas relacionadas: %B (onde o preço está dentro das bandas) e largura de banda para caçar apertos. Use as bandas para regime de volatilidade e enquadramento reversão à média vs continuação, não como linhas fixas de reversão sem contexto.",
+        indicatorTheoryKeltner:
+          "Canais no estilo Keltner (de Chester Keltner, depois adaptados por outros) centram uma EMA (muitas vezes 20) e deslocam o envelope em ±k × ATR—frequentemente k = 2. Como a largura depende do ATR, ela reage à volatilidade realizada de forma diferente das bandas de Bollinger (desvio-padrão). Toques nas bandas podem sugerir continuação ou reversão à média conforme o regime; k menor aproxima as bandas. Confirme com viés de tendência, volume e estrutura—não presuma que todo toque é fade ou rompimento.",
+        indicatorTheoryDonchian:
+          "O canal de Richard Donchian marca a máxima e a mínima dos últimos N candles; a linha do meio é a média entre elas. O Donchian de 20 períodos ficou famoso em sistemas sistemáticos de tendência (ex.: regras estilo Turtle de entrada em rompimento de N barras e saída em rompimento mais curto). Qualquer N alinha ao prazo pretendido da operação. Os sinais são estruturais: novas máximas/mínimas do período; rompimentos falsos são frequentes em faixa—filtre com ADX, volume ou lógica de sessão. É ferramenta de rompimento e estrutura, não oscilador de reversão à média.",
+        indicatorTheoryVolume:
+          "O volume conta contratos ou ações por barra. Compare o volume bruto à média móvel do volume (muitas vezes 20 barras) para obter volume relativo—picos destacam participação incomum. Volume climático pode marcar exaustão ou início de novo movimento; volume crescendo a favor da tendência costuma validá-la, rompimentos com volume relativo fraco levantam dúvida. Em mercados fragmentados (ex.: cripto em várias exchanges) trate o volume como imperfeito mas ainda útil junto de estrutura de preço e liquidez.",
+        indicatorTheoryADX:
+          "O ADX (Average Directional Index) faz parte do sistema de Movimento Direcional de Wilder: é calculado a partir das linhas +DI e −DI, em geral com período 14 (o default mais difundido). O ADX quantifica a força da tendência numa escala de 0 a 100, não a direção. Para viés, analise +DI frente a −DI (+DI acima de −DI sugere predominância compradora; −DI acima de +DI, vendedora). Leitura típica: abaixo de 20, lateralização ou tendência fraca; entre 20 e 25, início de estrutura tendencial; acima de 25, tendência mais definida; na faixa de 40–50 o movimento pode estar forte e, se esticado, sujeito a exaustão. A inclinação do ADX importa tanto quanto o nível: subindo, ganho de força na tendência atual; caindo, perda de força, possível consolidação ou mudança de regime. Combine com contexto direcional (médias móveis, price action); evite operar só rompimentos com ADX muito baixo (maior risco de falso sinal) e observe divergências entre preço e ADX. Funciona melhor como filtro de regime (tendência vs lateral) do que como gatilho isolado de entrada.",
+        indicatorTheoryCCI:
+          "O Commodity Channel Index de Donald Lambert mede o quanto o preço se afasta da média em N períodos (14 é padrão), escalado pelo desvio médio. Historicamente, boa parte dos valores costumava ficar entre +100 e −100 em séries mais estacionárias—em cripto isso pode quebrar. Usam-se cruzamentos da linha zero, excursões além de ±100 ou ±200 e divergências. CCI alto não é “sobrecompra” como no RSI—pode permanecer elevado em tendência forte. Trate o CCI como medidor de momentum/ciclo com filtros de tendência e níveis, não como compra/venda mecânica em patamares fixos.",
+        indicatorTheoryCMF:
+          "O Chaikin Money Flow (CMF), desenvolvido por Marc Chaikin, mede a pressão de compra e venda ao combinar preço e volume: soma o money flow volume ao longo de N períodos (tipicamente 21) e divide pela soma do volume no mesmo intervalo, produzindo uma leitura normalizada de acumulação versus distribuição. A interpretação gira em torno da linha zero: acima de 0 predomina pressão compradora (acumulação); abaixo de 0, pressão vendedora (distribuição). Mais relevante que picos isolados é a persistência: CMF sustentado acima ou abaixo de zero indica fluxo consistente; oscilações rápidas em torno de zero tendem a refletir indecisão ou mercado lateral. Leituras importantes incluem divergências (preço faz novas máximas ou mínimas sem confirmação do CMF—possível enfraquecimento do movimento por falta de patrocínio de volume) e confirmação de tendência (CMF alinhado à direção do preço reforça a validade do movimento). Limitações e cuidados: o CMF não é gatilho de timing preciso, e sim indicador de fluxo; pode ser influenciado por gaps e pela natureza do ativo (por exemplo mercados com volume fragmentado ou menos confiável); funciona melhor combinado com estrutura de preço e outros indicadores de tendência ou momentum. Em resumo, o CMF é um termômetro de fluxo de capital, útil para validar movimentos, mas deve ser integrado a um contexto mais amplo para decisões operacionais.",
+        indicatorTheoryLINEAR_FIT:
+          "O Ajuste Linear aplica regressão linear pelos mínimos quadrados (janela deslizante) aos últimos N valores do campo escolhido—mesma ideia de período que numa média móvel. Para cada vela, a reta é ajustada com o tempo do mais antigo ao mais recente da janela; o valor desenhado é a estimativa no ponto mais recente, ou seja, o último valor da reta ajustada, não o ponto médio. Uma linha ascendente sugere deriva de alta na janela, descendente deriva de baixa; inclinação e afastamento do preço funcionam como referência de tendência suavizada. Continua a ser ferramenta descritiva e atrasada: use com estrutura, volatilidade e confirmação, não como único gatilho de entrada.",
+        indicatorTheoryQUADRATIC_FIT:
+          "O Ajuste quadrático usa a mesma janela deslizante que o linear, mas modela o preço como parábola (y ≈ a + bx + cx²) por mínimos quadrados. O valor desenhado é a estimativa na vela mais recente (extremo da curva). Pode acompanhar curvatura na janela quando a reta é rígida demais; também reage mais à forma recente e pode exagerar em mercados ruidosos. Com período 2, coincide com o ajuste linear (dois pontos não definem parábola única). Como o linear, é descritivo e atrasado—combine com estrutura e outros filtros.",
+        indicatorTheoryIchimoku:
+          "O Ichimoku Kinko Hyo (Goichi Hosoda; divulgação ampla em 1969) é um sistema multi-horizonte: Tenkan (conversão), Kijun (base), Senkou Span A/B formando a nuvem Kumo, e Chikou (linha atrasada). O mercado acionário japonês clássico usava 9, 26 e 52; em FX e cripto muitos mantêm 9/26/52 ou ajustam (ex.: Span B mais longo em mercado 24/7). A nuvem projeta suporte e resistência à frente; preço acima de uma nuvem altista espessa costuma indicar regime forte, abaixo de nuvem baixista o oposto. O cruzamento Tenkan/Kijun (TK) adiciona balanço de curto vs médio prazo dentro desse quadro. Leia os componentes em conjunto—reduzir o Ichimoku a um único cruzamento sem nuvem e linha atrasada descarta a maior parte da lógica.",
         defaultModelMaxIndicators: "Máximo 2 indicadores no modelo default. Salve em um layout (1–7) para adicionar mais.",
         defaultModelMaxStrategies: "Só uma estratégia no modelo default. Salve em um layout (1–7) para adicionar mais.",
         showOn: "Mostrar em",
@@ -3504,6 +3710,7 @@ export const cryptoTranslations = {
         fieldHLCC4: "HLCC4",
         fieldInUse: "(em uso)",
         fieldVol: "Vol",
+        fieldVolUsdt: "Vol (USDT)",
         fieldIndSma1: "IND_SMA_1",
         changeTimeframesShow: "Alterar tempos",
         changeTimeframesHide: "Ocultar opções",
@@ -3604,6 +3811,9 @@ export const cryptoTranslations = {
         refresh: "Zerar painel",
         activeIndicators: "Indicadores ativos",
         showKlinesTable: "Mostrar tabela de klines (validação)",
+        spotOrderChartDebugInspectHint:
+          "O JSON atualiza com a página do gráfico aberta (KlinesTable montado).",
+        spotOrderChartDebugInspectEmpty: "Sem dados ainda — abra a página do gráfico.",
         fastLastUpdateTitle: "Última atualização (Fast 1m)",
         fastLastUpdateHint: "Atualiza a cada 5 segundos (lê o último openTime da BinanceKlineFast).",
         fastLastMinuteLabel: "Último minuto (openTime)",

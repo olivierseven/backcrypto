@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE } from "@/app/constants";
 import { getCryptoT, type CryptoLang } from "@/app/lib/translations";
+import {
+  getSpotOrderLabelsVisibleFromStorage,
+  setSpotOrderLabelsVisibleInStorage,
+  SPOT_ORDER_LABELS_VISIBILITY_EVENT,
+  BINANCE_CONNECTION_CHANGED_EVENT,
+} from "@/app/(sys)/sistema/KlinesChartConstants";
 
 const API = `${API_BASE}/user/binance-connection`;
 
@@ -17,6 +23,26 @@ function parseDecimalInput(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Taxa decimal Binance (ex. 0.001) → percentagem para o campo (ex. "0.1"). */
+function takerRateToPercentInput(rateStr: string | null | undefined): string {
+  if (rateStr == null || String(rateStr).trim() === "") return "";
+  const r = parseFloat(String(rateStr));
+  if (!Number.isFinite(r) || r < 0) return "";
+  const pct = r * 100;
+  if (!Number.isFinite(pct)) return "";
+  return pct % 1 === 0 ? String(pct) : pct.toFixed(4).replace(/\.?0+$/, "");
+}
+
+/** Entrada em % (ex. 0.1) → taxa decimal; null se vazio (limpar preferência). */
+function percentInputToTakerRate(raw: string): number | null | "empty" {
+  const s = raw.trim();
+  if (s === "") return "empty";
+  const pct = parseDecimalInput(s);
+  if (pct == null || pct <= 0) return null;
+  if (pct > 5) return null;
+  return pct / 100;
+}
+
 type Status =
   | { state: "loading" }
   | { state: "disconnected" }
@@ -26,6 +52,7 @@ type Status =
       lastVerifiedAt: string | null;
       connectedAt: string;
       defaultQuoteUsdtPerOrder: string | null;
+      feeEstimateTakerFallback: string | null;
     };
 
 type BalanceRow = { asset: string; free: string; locked: string; total: string };
@@ -42,6 +69,20 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [defaultUsdtDraft, setDefaultUsdtDraft] = useState("");
   const [savingDefaultUsdt, setSavingDefaultUsdt] = useState(false);
+  const [feeFallbackPercentDraft, setFeeFallbackPercentDraft] = useState("");
+  const [savingFeeFallback, setSavingFeeFallback] = useState(false);
+  const [spotOrderLabelsVisible, setSpotOrderLabelsVisible] = useState(true);
+
+  useEffect(() => {
+    setSpotOrderLabelsVisible(getSpotOrderLabelsVisibleFromStorage());
+    const sync = () => setSpotOrderLabelsVisible(getSpotOrderLabelsVisibleFromStorage());
+    window.addEventListener("storage", sync);
+    window.addEventListener(SPOT_ORDER_LABELS_VISIBILITY_EVENT, sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(SPOT_ORDER_LABELS_VISIBILITY_EVENT, sync);
+    };
+  }, []);
 
   const loadStatus = useCallback(async () => {
     setStatus({ state: "loading" });
@@ -57,21 +98,29 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
           data.defaultQuoteUsdtPerOrder != null && String(data.defaultQuoteUsdtPerOrder).trim() !== ""
             ? String(data.defaultQuoteUsdtPerOrder).trim()
             : null;
+        const feeFb =
+          data.feeEstimateTakerFallback != null && String(data.feeEstimateTakerFallback).trim() !== ""
+            ? String(data.feeEstimateTakerFallback).trim()
+            : null;
         setStatus({
           state: "connected",
           apiKeyLast4: data.apiKeyLast4,
           lastVerifiedAt: data.lastVerifiedAt ?? null,
           connectedAt: data.connectedAt,
           defaultQuoteUsdtPerOrder: def,
+          feeEstimateTakerFallback: feeFb,
         });
         setDefaultUsdtDraft(def ?? "");
+        setFeeFallbackPercentDraft(takerRateToPercentInput(feeFb));
       } else {
         setStatus({ state: "disconnected" });
         setDefaultUsdtDraft("");
+        setFeeFallbackPercentDraft("");
       }
     } catch {
       setStatus({ state: "disconnected" });
       setDefaultUsdtDraft("");
+      setFeeFallbackPercentDraft("");
     }
   }, []);
 
@@ -119,6 +168,11 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
       setConsent(false);
       setMessage({ type: "success", text: t.binanceConnectSuccess });
       await loadStatus();
+      try {
+        window.dispatchEvent(new CustomEvent(BINANCE_CONNECTION_CHANGED_EVENT));
+      } catch {
+        /* ignore */
+      }
       if (data.balancesSample?.nonZeroCount != null) {
         void refreshBalances();
       }
@@ -155,6 +209,65 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
       setMessage({ type: "error", text: err instanceof Error ? err.message : t.binanceErrorGeneric });
     } finally {
       setSavingDefaultUsdt(false);
+    }
+  }
+
+  async function handleSaveFeeFallback() {
+    if (savingFeeFallback || savingDefaultUsdt || submitting) return;
+    const conv = percentInputToTakerRate(feeFallbackPercentDraft);
+    if (conv === null) {
+      setMessage({ type: "error", text: t.binanceFeeFallbackInvalid });
+      return;
+    }
+    setSavingFeeFallback(true);
+    setMessage(null);
+    try {
+      const body: { feeEstimateTakerFallback: number | null } =
+        conv === "empty" ? { feeEstimateTakerFallback: null } : { feeEstimateTakerFallback: conv };
+      const res = await fetch(API, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error === "not_connected" ? t.binanceErrorGeneric : t.binanceErrorGeneric);
+      }
+      setMessage({
+        type: "success",
+        text: conv === "empty" ? t.binanceFeeFallbackCleared : t.binanceFeeFallbackSaved,
+      });
+      await loadStatus();
+    } catch (err: unknown) {
+      setMessage({ type: "error", text: err instanceof Error ? err.message : t.binanceErrorGeneric });
+    } finally {
+      setSavingFeeFallback(false);
+    }
+  }
+
+  async function handleClearFeeFallback() {
+    if (savingFeeFallback || savingDefaultUsdt || submitting) return;
+    setSavingFeeFallback(true);
+    setMessage(null);
+    try {
+      const res = await fetch(API, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ feeEstimateTakerFallback: null }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "clear_failed");
+      }
+      setFeeFallbackPercentDraft("");
+      setMessage({ type: "success", text: t.binanceFeeFallbackCleared });
+      await loadStatus();
+    } catch {
+      setMessage({ type: "error", text: t.binanceErrorGeneric });
+    } finally {
+      setSavingFeeFallback(false);
     }
   }
 
@@ -196,6 +309,11 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
       setBalances(null);
       setStatus({ state: "disconnected" });
       setMessage({ type: "success", text: t.binanceDisconnectedSuccess });
+      try {
+        window.dispatchEvent(new CustomEvent(BINANCE_CONNECTION_CHANGED_EVENT));
+      } catch {
+        /* ignore */
+      }
     } catch (err: unknown) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : t.binanceErrorGeneric });
     } finally {
@@ -294,6 +412,22 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
               {submitting ? "…" : t.binanceDisconnect}
             </button>
           </div>
+          <label className="flex items-start gap-2 cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={spotOrderLabelsVisible}
+              onChange={(e) => {
+                const v = e.target.checked;
+                setSpotOrderLabelsVisible(v);
+                setSpotOrderLabelsVisibleInStorage(v);
+              }}
+              className="mt-0.5 rounded border-zinc-300 shrink-0"
+            />
+            <span className="min-w-0">
+              <span className="text-sm text-zinc-800 block leading-snug">{t.binanceSpotOrderLabelsOnChart}</span>
+              <span className="text-xs text-zinc-600 leading-snug">{t.binanceSpotOrderLabelsOnChartHint}</span>
+            </span>
+          </label>
           <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3 space-y-2">
             <label className="block text-xs font-medium text-zinc-800">{t.binanceDefaultUsdtLabel}</label>
             <p className="text-xs text-zinc-600 leading-snug">{t.binanceDefaultUsdtHint}</p>
@@ -322,6 +456,38 @@ export default function BinanceConnectionCard({ language }: { language: CryptoLa
                 className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 font-medium px-3 py-2 text-sm disabled:opacity-50"
               >
                 {t.binanceDefaultUsdtClear}
+              </button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3 space-y-2">
+            <label className="block text-xs font-medium text-zinc-800">{t.binanceFeeFallbackLabel}</label>
+            <p className="text-xs text-zinc-600 leading-snug">{t.binanceFeeFallbackHint}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                value={feeFallbackPercentDraft}
+                onChange={(e) => setFeeFallbackPercentDraft(e.target.value)}
+                placeholder={t.binanceFeeFallbackPlaceholder}
+                className="min-w-[8rem] flex-1 px-3 py-2 rounded-lg border border-zinc-300 bg-white text-sm font-mono"
+              />
+              <span className="text-xs text-zinc-500 shrink-0">%</span>
+              <button
+                type="button"
+                onClick={() => void handleSaveFeeFallback()}
+                disabled={savingFeeFallback || submitting}
+                className="crypto-btn rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium px-3 py-2 text-sm disabled:opacity-50"
+              >
+                {savingFeeFallback ? "…" : t.binanceFeeFallbackSave}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleClearFeeFallback()}
+                disabled={savingFeeFallback || submitting || !status.feeEstimateTakerFallback}
+                className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 font-medium px-3 py-2 text-sm disabled:opacity-50"
+              >
+                {t.binanceFeeFallbackClear}
               </button>
             </div>
           </div>

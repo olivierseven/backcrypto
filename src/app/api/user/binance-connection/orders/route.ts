@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { cryptoPrisma } from "@/lib/crypto-db";
 import { DEFAULT_SYMBOLS_LIST, getKlineSymbolsFromDb } from "@/app/lib/kline-symbols";
+import { parseSpotOrderRawJson } from "@/lib/user-spot-order-chart";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -18,7 +19,7 @@ async function getUserId(): Promise<string | null> {
   }
 }
 
-/** GET: ordens spot registadas pela app para o par (histórico + cancelamento). */
+/** GET: lê só `UserBinanceSpotOrder` (Prisma) — ordens gravadas quando o utilizador envia ordem via esta app (`POST …/order`). Não lista ordens da exchange que não passaram pela app. */
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserId();
@@ -52,23 +53,36 @@ export async function GET(request: NextRequest) {
         price: true,
         origQty: true,
         executedQty: true,
+        rawJson: true,
         canceledAt: true,
         createdAt: true,
       },
     });
 
     return NextResponse.json({
-      orders: rows.map((o) => ({
-        binanceOrderId: o.binanceOrderId,
-        side: o.side,
-        orderType: o.orderType,
-        status: o.status,
-        price: o.price,
-        origQty: o.origQty,
-        executedQty: o.executedQty,
-        canceledAt: o.canceledAt?.toISOString() ?? null,
-        createdAt: o.createdAt.toISOString(),
-      })),
+      orders: rows.map((o) => {
+        const parsed = parseSpotOrderRawJson(o.rawJson);
+        const transactTimeMs =
+          parsed.transactTimeMs != null && Number.isFinite(parsed.transactTimeMs)
+            ? parsed.transactTimeMs
+            : o.createdAt.getTime();
+        return {
+          binanceOrderId: o.binanceOrderId,
+          side: o.side,
+          orderType: o.orderType,
+          status: o.status,
+          price: o.price,
+          origQty: o.origQty,
+          executedQty: o.executedQty,
+          transactTimeMs,
+          quoteQty: parsed.quoteQty,
+          avgPrice: parsed.avgPrice,
+          commission: parsed.commission,
+          commissionAsset: parsed.commissionAsset,
+          canceledAt: o.canceledAt?.toISOString() ?? null,
+          createdAt: o.createdAt.toISOString(),
+        };
+      }),
     });
   } catch (e) {
     console.error("[binance-connection/orders GET]", e);

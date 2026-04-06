@@ -6333,10 +6333,12 @@ export namespace Prisma {
 
   export type UserBinanceConnectionAvgAggregateOutputType = {
     defaultQuoteUsdtPerOrder: Decimal | null
+    feeEstimateTakerFallback: Decimal | null
   }
 
   export type UserBinanceConnectionSumAggregateOutputType = {
     defaultQuoteUsdtPerOrder: Decimal | null
+    feeEstimateTakerFallback: Decimal | null
   }
 
   export type UserBinanceConnectionMinAggregateOutputType = {
@@ -6347,6 +6349,7 @@ export namespace Prisma {
     apiKeyLast4: string | null
     lastVerifiedAt: Date | null
     defaultQuoteUsdtPerOrder: Decimal | null
+    feeEstimateTakerFallback: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6359,6 +6362,7 @@ export namespace Prisma {
     apiKeyLast4: string | null
     lastVerifiedAt: Date | null
     defaultQuoteUsdtPerOrder: Decimal | null
+    feeEstimateTakerFallback: Decimal | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -6371,6 +6375,7 @@ export namespace Prisma {
     apiKeyLast4: number
     lastVerifiedAt: number
     defaultQuoteUsdtPerOrder: number
+    feeEstimateTakerFallback: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -6379,10 +6384,12 @@ export namespace Prisma {
 
   export type UserBinanceConnectionAvgAggregateInputType = {
     defaultQuoteUsdtPerOrder?: true
+    feeEstimateTakerFallback?: true
   }
 
   export type UserBinanceConnectionSumAggregateInputType = {
     defaultQuoteUsdtPerOrder?: true
+    feeEstimateTakerFallback?: true
   }
 
   export type UserBinanceConnectionMinAggregateInputType = {
@@ -6393,6 +6400,7 @@ export namespace Prisma {
     apiKeyLast4?: true
     lastVerifiedAt?: true
     defaultQuoteUsdtPerOrder?: true
+    feeEstimateTakerFallback?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6405,6 +6413,7 @@ export namespace Prisma {
     apiKeyLast4?: true
     lastVerifiedAt?: true
     defaultQuoteUsdtPerOrder?: true
+    feeEstimateTakerFallback?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -6417,6 +6426,7 @@ export namespace Prisma {
     apiKeyLast4?: true
     lastVerifiedAt?: true
     defaultQuoteUsdtPerOrder?: true
+    feeEstimateTakerFallback?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -6516,6 +6526,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt: Date | null
     defaultQuoteUsdtPerOrder: Decimal | null
+    feeEstimateTakerFallback: Decimal | null
     createdAt: Date
     updatedAt: Date
     _count: UserBinanceConnectionCountAggregateOutputType | null
@@ -6547,6 +6558,7 @@ export namespace Prisma {
     apiKeyLast4?: boolean
     lastVerifiedAt?: boolean
     defaultQuoteUsdtPerOrder?: boolean
+    feeEstimateTakerFallback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -6560,6 +6572,7 @@ export namespace Prisma {
     apiKeyLast4?: boolean
     lastVerifiedAt?: boolean
     defaultQuoteUsdtPerOrder?: boolean
+    feeEstimateTakerFallback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -6573,6 +6586,7 @@ export namespace Prisma {
     apiKeyLast4?: boolean
     lastVerifiedAt?: boolean
     defaultQuoteUsdtPerOrder?: boolean
+    feeEstimateTakerFallback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -6586,11 +6600,12 @@ export namespace Prisma {
     apiKeyLast4?: boolean
     lastVerifiedAt?: boolean
     defaultQuoteUsdtPerOrder?: boolean
+    feeEstimateTakerFallback?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserBinanceConnectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "payloadEnc" | "payloadIv" | "payloadTag" | "apiKeyLast4" | "lastVerifiedAt" | "defaultQuoteUsdtPerOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["userBinanceConnection"]>
+  export type UserBinanceConnectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "payloadEnc" | "payloadIv" | "payloadTag" | "apiKeyLast4" | "lastVerifiedAt" | "defaultQuoteUsdtPerOrder" | "feeEstimateTakerFallback" | "createdAt" | "updatedAt", ExtArgs["result"]["userBinanceConnection"]>
   export type UserBinanceConnectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -6617,6 +6632,10 @@ export namespace Prisma {
        * USDT a gastar por operação (compra): pré-preenchimento nas boletas; opcional.
        */
       defaultQuoteUsdtPerOrder: Prisma.Decimal | null
+      /**
+       * Taxa taker (0–1, ex. 0.001 = 0,1%) para estimativas / fallback quando a API não devolve o par.
+       */
+      feeEstimateTakerFallback: Prisma.Decimal | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["userBinanceConnection"]>
@@ -7050,6 +7069,7 @@ export namespace Prisma {
     readonly apiKeyLast4: FieldRef<"UserBinanceConnection", 'String'>
     readonly lastVerifiedAt: FieldRef<"UserBinanceConnection", 'DateTime'>
     readonly defaultQuoteUsdtPerOrder: FieldRef<"UserBinanceConnection", 'Decimal'>
+    readonly feeEstimateTakerFallback: FieldRef<"UserBinanceConnection", 'Decimal'>
     readonly createdAt: FieldRef<"UserBinanceConnection", 'DateTime'>
     readonly updatedAt: FieldRef<"UserBinanceConnection", 'DateTime'>
   }
@@ -46886,6 +46906,7 @@ export namespace Prisma {
     apiKeyLast4: 'apiKeyLast4',
     lastVerifiedAt: 'lastVerifiedAt',
     defaultQuoteUsdtPerOrder: 'defaultQuoteUsdtPerOrder',
+    feeEstimateTakerFallback: 'feeEstimateTakerFallback',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -48069,6 +48090,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFilter<"UserBinanceConnection"> | string
     lastVerifiedAt?: DateTimeNullableFilter<"UserBinanceConnection"> | Date | string | null
     defaultQuoteUsdtPerOrder?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
     updatedAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -48082,6 +48104,7 @@ export namespace Prisma {
     apiKeyLast4?: SortOrder
     lastVerifiedAt?: SortOrderInput | SortOrder
     defaultQuoteUsdtPerOrder?: SortOrderInput | SortOrder
+    feeEstimateTakerFallback?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -48098,6 +48121,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFilter<"UserBinanceConnection"> | string
     lastVerifiedAt?: DateTimeNullableFilter<"UserBinanceConnection"> | Date | string | null
     defaultQuoteUsdtPerOrder?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: DecimalNullableFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
     updatedAt?: DateTimeFilter<"UserBinanceConnection"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -48111,6 +48135,7 @@ export namespace Prisma {
     apiKeyLast4?: SortOrder
     lastVerifiedAt?: SortOrderInput | SortOrder
     defaultQuoteUsdtPerOrder?: SortOrderInput | SortOrder
+    feeEstimateTakerFallback?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserBinanceConnectionCountOrderByAggregateInput
@@ -48131,6 +48156,7 @@ export namespace Prisma {
     apiKeyLast4?: StringWithAggregatesFilter<"UserBinanceConnection"> | string
     lastVerifiedAt?: DateTimeNullableWithAggregatesFilter<"UserBinanceConnection"> | Date | string | null
     defaultQuoteUsdtPerOrder?: DecimalNullableWithAggregatesFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: DecimalNullableWithAggregatesFilter<"UserBinanceConnection"> | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeWithAggregatesFilter<"UserBinanceConnection"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"UserBinanceConnection"> | Date | string
   }
@@ -51545,6 +51571,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt?: Date | string | null
     defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: Decimal | DecimalJsLike | number | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutBinanceConnectionInput
@@ -51558,6 +51585,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt?: Date | string | null
     defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: Decimal | DecimalJsLike | number | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -51569,6 +51597,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutBinanceConnectionNestedInput
@@ -51582,6 +51611,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -51594,6 +51624,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt?: Date | string | null
     defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: Decimal | DecimalJsLike | number | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -51605,6 +51636,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -51617,6 +51649,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -55716,12 +55749,14 @@ export namespace Prisma {
     apiKeyLast4?: SortOrder
     lastVerifiedAt?: SortOrder
     defaultQuoteUsdtPerOrder?: SortOrder
+    feeEstimateTakerFallback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type UserBinanceConnectionAvgOrderByAggregateInput = {
     defaultQuoteUsdtPerOrder?: SortOrder
+    feeEstimateTakerFallback?: SortOrder
   }
 
   export type UserBinanceConnectionMaxOrderByAggregateInput = {
@@ -55732,6 +55767,7 @@ export namespace Prisma {
     apiKeyLast4?: SortOrder
     lastVerifiedAt?: SortOrder
     defaultQuoteUsdtPerOrder?: SortOrder
+    feeEstimateTakerFallback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -55744,12 +55780,14 @@ export namespace Prisma {
     apiKeyLast4?: SortOrder
     lastVerifiedAt?: SortOrder
     defaultQuoteUsdtPerOrder?: SortOrder
+    feeEstimateTakerFallback?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type UserBinanceConnectionSumOrderByAggregateInput = {
     defaultQuoteUsdtPerOrder?: SortOrder
+    feeEstimateTakerFallback?: SortOrder
   }
 
   export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -60017,6 +60055,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt?: Date | string | null
     defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: Decimal | DecimalJsLike | number | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -60028,6 +60067,7 @@ export namespace Prisma {
     apiKeyLast4: string
     lastVerifiedAt?: Date | string | null
     defaultQuoteUsdtPerOrder?: Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: Decimal | DecimalJsLike | number | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -60472,6 +60512,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -60483,6 +60524,7 @@ export namespace Prisma {
     apiKeyLast4?: StringFieldUpdateOperationsInput | string
     lastVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     defaultQuoteUsdtPerOrder?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    feeEstimateTakerFallback?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

@@ -28,10 +28,43 @@ type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
   { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "HMA_CUSTOM", labelKey: "hmaCustomLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
   { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
-  { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }] },
+  { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }, { value: "LINEAR_FIT", labelKey: "linearFitLabel" }, { value: "QUADRATIC_FIT", labelKey: "quadraticFitLabel" }] },
   { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
   { groupLabelKey: "indicatorGroupVolatilityChannels", types: [{ value: "ATR", labelKey: "atrLabel" }, { value: "Bollinger", labelKey: "bollingerLabel" }, { value: "Keltner", labelKey: "keltnerLabel" }, { value: "Donchian", labelKey: "donchianLabel" }] },
 ];
+
+/** Chave em `sistema.klines` para o texto teórico de cada tipo (PT/EN em translations). */
+const INDICATOR_THEORY_I18N_KEY: Record<UserIndicatorType, string> = {
+  SMA: "indicatorTheorySMA",
+  SMA2: "indicatorTheorySMA2",
+  EMA: "indicatorTheoryEMA",
+  EMA2: "indicatorTheoryEMA2",
+  WMA: "indicatorTheoryWMA",
+  WMA2: "indicatorTheoryWMA2",
+  HMA: "indicatorTheoryHMA",
+  HMA_CUSTOM: "indicatorTheoryHMA_CUSTOM",
+  VWMA: "indicatorTheoryVWMA",
+  LINEAR_FIT: "indicatorTheoryLINEAR_FIT",
+  QUADRATIC_FIT: "indicatorTheoryQUADRATIC_FIT",
+  RSI: "indicatorTheoryRSI",
+  MFI: "indicatorTheoryMFI",
+  MACD: "indicatorTheoryMACD",
+  Stochastic: "indicatorTheoryStochastic",
+  WilliamsR: "indicatorTheoryWilliamsR",
+  OBV: "indicatorTheoryOBV",
+  AD: "indicatorTheoryAD",
+  SAR: "indicatorTheorySAR",
+  ATR: "indicatorTheoryATR",
+  VWAP: "indicatorTheoryVWAP",
+  Bollinger: "indicatorTheoryBollinger",
+  Keltner: "indicatorTheoryKeltner",
+  Donchian: "indicatorTheoryDonchian",
+  Volume: "indicatorTheoryVolume",
+  ADX: "indicatorTheoryADX",
+  CCI: "indicatorTheoryCCI",
+  CMF: "indicatorTheoryCMF",
+  Ichimoku: "indicatorTheoryIchimoku",
+};
 
 export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddFormProps) {
   const [ichimokuColorOpen, setIchimokuColorOpen] = useState<IchimokuColorLine | null>(null);
@@ -158,6 +191,17 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     { value: "EMA", label: "EMA" },
     { value: "WMA", label: "WMA" },
   ], []);
+  const macdMaTypeOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "SMA", label: "SMA" },
+      { value: "EMA", label: "EMA" },
+      { value: "WMA", label: "WMA" },
+      { value: "LINEAR_FIT", label: tRecord.linearFitLabel ?? "Ajuste linear" },
+      { value: "QUADRATIC_FIT", label: tRecord.quadraticFitLabel ?? "Ajuste quadrático" },
+    ],
+    [tRecord]
+  );
+  const hmaCustomLegMaTypeOptions: ComboboxOption[] = macdMaTypeOptions;
   const volumeSourceOptions: ComboboxOption[] = useMemo(() => [
     { value: "base", label: tRecord.volumeBaseLabel ?? "Vol (base)" },
     { value: "usdt", label: tRecord.volumeUsdtLabel ?? "Vol (USDT)" },
@@ -172,7 +216,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
   );
 
   const chartOptionValue: string =
-    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA"
+    form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA" || form.indicatorType === "LINEAR_FIT" || form.indicatorType === "QUADRATIC_FIT"
       ? "main"
       : form.indicatorType === "Volume"
         ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
@@ -566,6 +610,26 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           chartOption: "main",
         };
       }
+      if (newType === "LINEAR_FIT") {
+        return {
+          ...prev,
+          indicatorType: "LINEAR_FIT",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+        };
+      }
+      if (newType === "QUADRATIC_FIT") {
+        return {
+          ...prev,
+          indicatorType: "QUADRATIC_FIT",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: "main",
+        };
+      }
       if (isTimeWindowMa2Type(newType)) {
         return {
           ...prev,
@@ -751,8 +815,8 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <span className="text-xs font-medium text-zinc-600 sm:w-28 shrink-0">{tRecord.hmaCustomLongPeriod ?? "Long MA"}</span>
             <Combobox
               value={form.hmaCustomLongMaType}
-              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomLongMaType: v as "SMA" | "EMA" | "WMA" }))}
-              options={maTypeOptions}
+              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomLongMaType: v as AddFormState["hmaCustomLongMaType"] }))}
+              options={hmaCustomLegMaTypeOptions}
               className="w-full sm:w-[5.5rem] shrink-0"
               size="lg"
               aria-label={`${tRecord.hmaCustomLongPeriod ?? "Long MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
@@ -791,8 +855,8 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <span className="text-xs font-medium text-zinc-600 sm:w-28 shrink-0">{tRecord.hmaCustomFastPeriod ?? "Fast MA"}</span>
             <Combobox
               value={form.hmaCustomFastMaType}
-              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomFastMaType: v as "SMA" | "EMA" | "WMA" }))}
-              options={maTypeOptions}
+              onChange={(v) => setForm((prev) => ({ ...prev, hmaCustomFastMaType: v as AddFormState["hmaCustomFastMaType"] }))}
+              options={hmaCustomLegMaTypeOptions}
               className="w-full sm:w-[5.5rem] shrink-0"
               size="lg"
               aria-label={`${tRecord.hmaCustomFastPeriod ?? "Fast MA"} — ${tRecord.hmaCustomMaTypeAria ?? "Averaging type"}`}
@@ -870,7 +934,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Bollinger" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA" || form.indicatorType === "Ichimoku" || isTimeWindowMa2Type(form.indicatorType)) && (
+      {!(form.indicatorType === "SAR" || form.indicatorType === "VWAP" || form.indicatorType === "Keltner" || form.indicatorType === "Donchian" || form.indicatorType === "HMA" || form.indicatorType === "HMA_CUSTOM" || form.indicatorType === "VWMA" || form.indicatorType === "LINEAR_FIT" || form.indicatorType === "QUADRATIC_FIT" || form.indicatorType === "Ichimoku" || isTimeWindowMa2Type(form.indicatorType)) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.chartOption}</span>
           <Combobox
@@ -1394,13 +1458,28 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}</span>
-            <ColorPaletteCombobox value={form.bollingerLimitsColor} onChange={(hex) => setForm((prev) => ({ ...prev, bollingerLimitsColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"} />
+            <ColorPaletteCombobox
+              value={form.bollingerLimitsColor}
+              onChange={(hex) => setForm((prev) => ({ ...prev, bollingerLimitsColor: hex, color: hex }))}
+              palette={INDICATOR_COLOR_PALETTE}
+              aria-label={(t as Record<string, string>).bollingerLimitsColor ?? "Cor bandas"}
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
             <Combobox value={form.bollingerLimitsLineWidth} onChange={(v) => setForm((p) => ({ ...p, bollingerLimitsLineWidth: v as typeof form.bollingerLimitsLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
             <Combobox value={form.bollingerLimitsLineStyle} onChange={(v) => setForm((p) => ({ ...p, bollingerLimitsLineStyle: v as typeof form.bollingerLimitsLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerMiddleColor ?? "Cor da média"}</span>
+            <ColorPaletteCombobox value={form.bollingerMiddleColor} onChange={(hex) => setForm((prev) => ({ ...prev, bollingerMiddleColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).bollingerMiddleColor ?? "Cor da média"} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerMiddleThickness ?? "Espessura da média"}</span>
+            <Combobox value={form.bollingerMiddleLineWidth} onChange={(v) => setForm((p) => ({ ...p, bollingerMiddleLineWidth: v as typeof form.bollingerMiddleLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).bollingerMiddleThickness ?? "Espessura"} />
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).bollingerMiddleStroke ?? "Traço da média"}</span>
+            <Combobox value={form.bollingerMiddleLineStyle} onChange={(v) => setForm((p) => ({ ...p, bollingerMiddleLineStyle: v as typeof form.bollingerMiddleLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).bollingerMiddleStroke ?? "Traço"} />
           </div>
         </>
       )}
@@ -1442,13 +1521,47 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}</span>
-            <ColorPaletteCombobox value={form.keltnerLimitsColor} onChange={(hex) => setForm((prev) => ({ ...prev, keltnerLimitsColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"} />
+            <ColorPaletteCombobox
+              value={form.keltnerLimitsColor}
+              onChange={(hex) => setForm((prev) => ({ ...prev, keltnerLimitsColor: hex, color: hex }))}
+              palette={INDICATOR_COLOR_PALETTE}
+              aria-label={(t as Record<string, string>).keltnerLimitsColor ?? "Cor bandas"}
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura bandas"}</span>
             <Combobox value={form.keltnerLimitsLineWidth} onChange={(v) => setForm((p) => ({ ...p, keltnerLimitsLineWidth: v as typeof form.keltnerLimitsLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo bandas"}</span>
             <Combobox value={form.keltnerLimitsLineStyle} onChange={(v) => setForm((p) => ({ ...p, keltnerLimitsLineStyle: v as typeof form.keltnerLimitsLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMiddleColor ?? "Cor da média"}</span>
+            <ColorPaletteCombobox
+              value={form.keltnerMiddleColor}
+              onChange={(hex) => setForm((prev) => ({ ...prev, keltnerMiddleColor: hex }))}
+              palette={INDICATOR_COLOR_PALETTE}
+              aria-label={(t as Record<string, string>).keltnerMiddleColor ?? "Cor da média"}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMiddleThickness ?? "Espessura da média"}</span>
+            <Combobox
+              value={form.keltnerMiddleLineWidth}
+              onChange={(v) => setForm((p) => ({ ...p, keltnerMiddleLineWidth: v as typeof form.keltnerMiddleLineWidth }))}
+              options={lineWidthOptions}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).keltnerMiddleThickness ?? "Espessura da média"}
+            />
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).keltnerMiddleStroke ?? "Traço da média"}</span>
+            <Combobox
+              value={form.keltnerMiddleLineStyle}
+              onChange={(v) => setForm((p) => ({ ...p, keltnerMiddleLineStyle: v as typeof form.keltnerMiddleLineStyle }))}
+              options={lineStyleOptions}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).keltnerMiddleStroke ?? "Traço da média"}
+            />
           </div>
         </>
       )}
@@ -1497,7 +1610,36 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}</span>
-            <ColorPaletteCombobox value={form.donchianMiddleColor} onChange={(hex) => setForm((prev) => ({ ...prev, donchianMiddleColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"} />
+            <ColorPaletteCombobox
+              value={form.donchianMiddleColor}
+              onChange={(hex) => setForm((prev) => ({ ...prev, donchianMiddleColor: hex, color: hex }))}
+              palette={INDICATOR_COLOR_PALETTE}
+              aria-label={(t as Record<string, string>).donchianMiddleColor ?? "Cor linha meio"}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianMiddleThickness ?? "Espessura linha meio"}</span>
+            <Combobox
+              value={form.donchianMiddleLineWidth}
+              onChange={(v) =>
+                setForm((p) => ({ ...p, donchianMiddleLineWidth: v as typeof form.donchianMiddleLineWidth, lineWidth: v as typeof form.lineWidth }))
+              }
+              options={lineWidthOptions}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).donchianMiddleThickness ?? "Espessura linha meio"}
+            />
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).donchianMiddleStroke ?? "Traço linha meio"}</span>
+            <Combobox
+              value={form.donchianMiddleLineStyle}
+              onChange={(v) =>
+                setForm((p) => ({ ...p, donchianMiddleLineStyle: v as typeof form.donchianMiddleLineStyle, lineStyle: v as typeof form.lineStyle }))
+              }
+              options={lineStyleOptions}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).donchianMiddleStroke ?? "Traço linha meio"}
+            />
           </div>
         </>
       )}
@@ -1560,7 +1702,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdFastMa ?? "Média rápida"}</span>
-            <Combobox value={form.macdFastMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdFastMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdFastMa ?? "MA"} />
+            <Combobox value={form.macdFastMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdFastMaType: v as AddFormState["macdFastMaType"] }))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdFastMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdFastPeriod ?? "Período rápido"}</span>
@@ -1572,7 +1714,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSlowMa ?? "Média lenta"}</span>
-            <Combobox value={form.macdSlowMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSlowMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSlowMa ?? "MA"} />
+            <Combobox value={form.macdSlowMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSlowMaType: v as AddFormState["macdSlowMaType"] }))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSlowMa ?? "MA"} />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSlowPeriod ?? "Período lento"}</span>
@@ -1600,7 +1742,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA da sinal"}</span>
-                <Combobox value={form.macdSignalMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSignalMaType: v as "SMA" | "EMA" | "WMA" }))} options={maTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSignalMa ?? "MA"} />
+                <Combobox value={form.macdSignalMaType} onChange={(v) => setForm((prev) => ({ ...prev, macdSignalMaType: v as AddFormState["macdSignalMaType"] }))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSignalMa ?? "MA"} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalPeriod ?? "Período sinal"}</span>
@@ -1639,14 +1781,14 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </>
       )}
 
-      {form.indicatorType !== "Ichimoku" && (
+      {form.indicatorType !== "Ichimoku" && form.indicatorType !== "Bollinger" && form.indicatorType !== "Donchian" && form.indicatorType !== "Keltner" && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
           <ColorPaletteCombobox value={form.color} onChange={(hex) => setForm((prev) => ({ ...prev, color: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
         </div>
       )}
 
-      {(form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Ichimoku") && (
+      {(form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "Bollinger" && form.indicatorType !== "Donchian" && form.indicatorType !== "Keltner") && (
         <>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
@@ -1796,6 +1938,12 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       >
         {t.addIndicator}
       </button>
+      <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+        <p className="text-xs font-semibold text-zinc-800 mb-1.5">{tRecord.indicatorTheoryHeading}</p>
+        <div className="max-h-72 overflow-y-auto pr-1 text-xs text-zinc-600 leading-relaxed [scrollbar-gutter:stable]">
+          {tRecord[INDICATOR_THEORY_I18N_KEY[form.indicatorType]] ?? ""}
+        </div>
+      </div>
     </div>
   );
 }
