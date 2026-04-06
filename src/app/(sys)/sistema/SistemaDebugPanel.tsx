@@ -93,12 +93,21 @@ function aggDeltaPctLooksOk(
   return Math.abs(ad - exp) <= tol;
 }
 
+function formatAggDebugVolume(v: number): string {
+  if (!Number.isFinite(v)) return "—";
+  if (v === 0) return "0";
+  return v.toLocaleString(undefined, { maximumFractionDigits: 8 });
+}
+
 function AggDebugRowsTable({
   rows,
   colTimeLabel,
   colOhlcLabel,
   colDeltaLabel,
   colExpectedShortLabel,
+  colVolBaseLabel,
+  colVolQuoteLabel,
+  colTradesLabel,
   chartKind,
   brickHeight,
   groupSize,
@@ -109,6 +118,9 @@ function AggDebugRowsTable({
   colOhlcLabel: string;
   colDeltaLabel: string;
   colExpectedShortLabel: string;
+  colVolBaseLabel: string;
+  colVolQuoteLabel: string;
+  colTradesLabel: string;
   chartKind: AggChartKind;
   brickHeight: number | null;
   groupSize: number;
@@ -132,6 +144,15 @@ function AggDebugRowsTable({
             </th>
             <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
               {colExpectedShortLabel}
+            </th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
+              {colVolBaseLabel}
+            </th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
+              {colVolQuoteLabel}
+            </th>
+            <th className="text-right p-1.5 border-b border-zinc-200 font-medium text-zinc-600 whitespace-nowrap">
+              {colTradesLabel}
             </th>
           </tr>
         </thead>
@@ -159,6 +180,15 @@ function AggDebugRowsTable({
                 </td>
                 <td className="p-1 font-mono text-right align-top whitespace-nowrap text-zinc-600">
                   {!tickRenko || expAbs == null ? "—" : `${expAbs.toFixed(5)}%`}
+                </td>
+                <td className="p-1 font-mono text-right align-top whitespace-nowrap text-zinc-700 tabular-nums">
+                  {formatAggDebugVolume(r.volume)}
+                </td>
+                <td className="p-1 font-mono text-right align-top whitespace-nowrap text-zinc-700 tabular-nums">
+                  {formatAggDebugVolume(r.quoteAssetVolume)}
+                </td>
+                <td className="p-1 font-mono text-right align-top whitespace-nowrap text-zinc-700 tabular-nums">
+                  {Number.isFinite(r.numberOfTrades) ? String(r.numberOfTrades) : "—"}
                 </td>
               </tr>
             );
@@ -1546,6 +1576,14 @@ export default function SistemaDebugPanel() {
                         {new Date(aggFastLiveDebugSnapshot.at).toLocaleString()}
                       </div>
                       <div>
+                        <span className="text-zinc-500">
+                          {(t as Record<string, string>).aggLiveLastPeriodicCacheOk ?? "Last cache refresh (5 min), OK"}:
+                        </span>{" "}
+                        {aggFastLiveDebugSnapshot.lastPeriodicCacheRefreshOkAt != null
+                          ? new Date(aggFastLiveDebugSnapshot.lastPeriodicCacheRefreshOkAt).toLocaleString()
+                          : "—"}
+                      </div>
+                      <div>
                         {aggFastLiveDebugSnapshot.symbol} · {aggFastLiveDebugSnapshot.tierShortLabel} ·{" "}
                         {aggFastLiveDebugSnapshot.interval} · {aggFastLiveDebugSnapshot.chartKind}
                       </div>
@@ -1655,6 +1693,9 @@ export default function SistemaDebugPanel() {
                           colOhlcLabel={(t as Record<string, string>).aggLiveColOhlc ?? "O · H · L · C"}
                           colDeltaLabel={(t as Record<string, string>).aggLiveColDeltaPct ?? "Δ% O→C"}
                           colExpectedShortLabel={(t as Record<string, string>).aggLiveColExpectedAbs ?? "≈ |Δ| esp."}
+                          colVolBaseLabel={(t as Record<string, string>).aggLiveColVolBase ?? "Vol (base)"}
+                          colVolQuoteLabel={(t as Record<string, string>).aggLiveColVolQuote ?? "Vol (USDT)"}
+                          colTradesLabel={(t as Record<string, string>).aggLiveColTrades ?? "Trades"}
                           chartKind={aggFastLiveDebugSnapshot.chartKind}
                           brickHeight={aggFastLiveDebugSnapshot.brickHeight}
                           groupSize={aggFastLiveDebugSnapshot.groupSize}
@@ -1671,6 +1712,9 @@ export default function SistemaDebugPanel() {
                           colOhlcLabel={(t as Record<string, string>).aggLiveColOhlc ?? "O · H · L · C"}
                           colDeltaLabel={(t as Record<string, string>).aggLiveColDeltaPct ?? "Δ% O→C"}
                           colExpectedShortLabel={(t as Record<string, string>).aggLiveColExpectedAbs ?? "≈ |Δ| esp."}
+                          colVolBaseLabel={(t as Record<string, string>).aggLiveColVolBase ?? "Vol (base)"}
+                          colVolQuoteLabel={(t as Record<string, string>).aggLiveColVolQuote ?? "Vol (USDT)"}
+                          colTradesLabel={(t as Record<string, string>).aggLiveColTrades ?? "Trades"}
                           chartKind={aggFastLiveDebugSnapshot.chartKind}
                           brickHeight={aggFastLiveDebugSnapshot.brickHeight}
                           groupSize={aggFastLiveDebugSnapshot.groupSize}

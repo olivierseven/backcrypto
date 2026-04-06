@@ -38,13 +38,32 @@ import { Prisma } from "@/lib/prisma-bio-client";
 import {
   aggregateFastBarsFrom5TickBricksToTier,
   aggregateFastBarsFromTradeCountRows,
+  RENKO_BASE_TICKS,
   RENKO_CACHE_TICK_INTERVALS,
   TRADE_CACHE_TRADE_INTERVALS,
+  TRADE_CACHE_BASE_TRADES,
   type FastBarSourceRow,
   type RenkoCacheTickInterval,
   type TradeCacheTradeInterval,
 } from "@/app/lib/renkoKlineCache2Build";
 import type { AggChartKind } from "./KlinesChartConstants";
+
+/**
+ * Quantas linhas do tier base (5 ticks ou 500 trades por emissão do motor / VPS) compõem uma barra no tier de exibição.
+ * Ex.: P50 → 10 tijolos base; 500T → 1; 5kT → 10 linhas de 500 trades.
+ */
+export function aggDisplayTierBaseLineCount(cache2: { chartKind: AggChartKind; interval: string }): number {
+  if (cache2.chartKind === "trades500") {
+    const m = /^(\d+)trades$/.exec(cache2.interval.trim());
+    const tr = m ? Number(m[1]) : TRADE_CACHE_TRADE_INTERVALS[0];
+    if (!Number.isFinite(tr) || tr < 1) return 1;
+    return Math.max(1, Math.round(tr / TRADE_CACHE_BASE_TRADES));
+  }
+  const m = /^(\d+)ticks$/.exec(cache2.interval.trim());
+  const ticks = m ? Number(m[1]) : RENKO_BASE_TICKS;
+  if (!Number.isFinite(ticks) || ticks < RENKO_BASE_TICKS) return 1;
+  return Math.max(1, Math.round(ticks / RENKO_BASE_TICKS));
+}
 
 /**
  * Mesmo formato que GET /api/binance/agg-fast-bars (rowToKline + applyTimezoneOffset).
@@ -80,6 +99,36 @@ export function aggPayloadToDisplayKline(p: AggFastBarRowPayload, timezoneOffset
     row[10],
     row[11],
   ];
+}
+
+/**
+ * Indica se o snapshot do GET kline-cache2 trouxe uma **linha nova** (ou janela distinta) face ao que já tínhamos.
+ * Usado para não refazer merge nem reconectar aggTrade quando o cache na BD não mudou (evita zerar volume/tempo real).
+ */
+export function aggCacheHasNewServerLine(
+  prev: readonly (readonly (string | number | null)[])[],
+  next: readonly (readonly (string | number | null)[])[],
+): boolean {
+  if (next.length === 0) {
+    return prev.length > 0;
+  }
+  if (prev.length === 0) {
+    return true;
+  }
+  if (next.length !== prev.length) {
+    return true;
+  }
+  const headNext = Number(next[0]?.[0]);
+  const headPrev = Number(prev[0]?.[0]);
+  if (Number.isFinite(headNext) && Number.isFinite(headPrev) && headNext !== headPrev) {
+    return true;
+  }
+  const tailNext = Number(next[next.length - 1]?.[0]);
+  const tailPrev = Number(prev[prev.length - 1]?.[0]);
+  if (Number.isFinite(tailNext) && Number.isFinite(tailPrev) && tailNext !== tailPrev) {
+    return true;
+  }
+  return false;
 }
 
 /**

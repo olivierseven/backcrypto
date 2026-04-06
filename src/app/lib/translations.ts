@@ -1888,10 +1888,14 @@ export const cryptoTranslations = {
         aggLiveSideBuyTaker: "Buy",
         aggLiveSideSellTaker: "Sell",
         aggLiveColOhlc: "O · H · L · C",
-        aggLiveColDeltaPct: "╬ö% (O→C)",
-        aggLiveColExpectedAbs: "≈ esp. |╬ö%| (n× brick ÷ open)",
+        aggLiveColDeltaPct: "Δ% (O→C)",
+        aggLiveColExpectedAbs: "≈ esp. |Δ%| (n× brick ÷ open)",
+        aggLiveColVolBase: "Vol (base)",
+        aggLiveColVolQuote: "Vol (USDT)",
+        aggLiveColTrades: "Trades",
         aggLiveEmpty: "Select an atemporal interval on the chart (e.g. Renko P25) and wait for trades.",
         aggLiveUpdated: "Updated",
+        aggLiveLastPeriodicCacheOk: "Last kline-cache2 refresh (5 min), success",
         aggLiveStatsLine:
           "{baseTier} → {tierShort}: {groupSize} base bricks per chart candle · remainder {remainder} · aggTrades {bufferTotal} (ring) · base bricks {baseTotal}",
         aggLiveTickBrickLine:
@@ -3939,10 +3943,14 @@ export const cryptoTranslations = {
         aggLiveSideBuyTaker: "Compra",
         aggLiveSideSellTaker: "Venda",
         aggLiveColOhlc: "O · H · L · C",
-        aggLiveColDeltaPct: "╬ö% (A→F)",
-        aggLiveColExpectedAbs: "≈ esp. |╬ö%| (n× tijolo ÷ open)",
+        aggLiveColDeltaPct: "Δ% (A→F)",
+        aggLiveColExpectedAbs: "≈ esp. |Δ%| (n× tijolo ÷ open)",
+        aggLiveColVolBase: "Vol (base)",
+        aggLiveColVolQuote: "Vol (USDT)",
+        aggLiveColTrades: "Negócios",
         aggLiveEmpty: "Escolha um intervalo atemporal no gráfico (ex. Renko P25) e aguarde trades.",
         aggLiveUpdated: "Atualizado",
+        aggLiveLastPeriodicCacheOk: "Último refresh kline-cache2 (5 min), com sucesso",
         aggLiveStatsLine:
           "{baseTier} → {tierShort}: {groupSize} tijolos base por vela · resto {remainder} · aggTrades {bufferTotal} (anel) · tijolos base {baseTotal}",
         aggLiveTickBrickLine:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE } from "@/app/constants";
 import { defaultTickFromDailyClose } from "@/app/lib/binanceDefaultTick";
 import type { AggFastLivePriceTickDiagnostics } from "./aggFastLiveDebug";
@@ -28,6 +28,7 @@ import {
   type RangeRef,
   type RenkoClassic2xRef,
   type RenkoRef,
+  type TradeAcc,
   type TradeCountCandleRef,
 } from "@/app/lib/binanceAggRenkoCore";
 
@@ -98,6 +99,11 @@ export function useAggFastTradeLive(opts: {
   cacheReadyForAggWs: boolean;
   /** Mudança de intervalo força fechar e recriar o WebSocket (mesmo símbolo). */
   groupMinutes: number;
+  /**
+   * Incrementado pelo pai após refresh periódico do cache (gráficos atemporais) para fechar e voltar a abrir o aggTrade.
+   * @default 0
+   */
+  periodicWsReconnectKey?: number;
   onLiveFlush: (rows: AggFastBarRowPayload[]) => void;
   /** Chamado quando chega aggTrade válido (atemporal vivo); throttle interno — p.ex. “Última atualização” / bolinha. */
   onLiveAggActivity?: () => void;
@@ -110,6 +116,18 @@ export function useAggFastTradeLive(opts: {
   onPriceTickResolved?: (tick: number | null) => void;
   /** Origem do tick + erros da API (painel Agg live). */
   onPriceTickDiagnostics?: (d: AggFastLivePriceTickDiagnostics | null) => void;
+  /**
+   * Volume em formação na tijolo/barra atual (acc antes de fechar) — para gráfico atemporal / volume no preço.
+   * Throttle ~200 ms no stream aggTrade.
+   */
+  onFormingAccVolumes?: (v: { volBase: number; volQuote: number; trades: number }) => void;
+  /**
+   * Linhas do tier base (5 ticks / 500 trades) por barra no tier de exibição (ex.: P50 → 10). Se 1, só `acc`.
+   * Com >1, o volume em formação = soma dos tijolos base já fechados na janela atual + acc (não zera a cada tijolo base).
+   */
+  displayTierBaseLineCount?: number;
+  /** `openTime` da cabeça do GET cache — quando muda (nova linha no servidor), repõe a janela do tier. */
+  serverCacheHeadOpenTimeMs?: number | null;
 }) {
   const {
     enabled,
@@ -124,9 +142,16 @@ export function useAggFastTradeLive(opts: {
     onRawAggTrade,
     onPriceTickResolved,
     onPriceTickDiagnostics,
+    onFormingAccVolumes,
+    displayTierBaseLineCount: displayTierBaseLineCountOpt,
+    serverCacheHeadOpenTimeMs = null,
     cacheReadyForAggWs,
     groupMinutes,
+    periodicWsReconnectKey = 0,
   } = opts;
+  const displayTierBaseLineCount = displayTierBaseLineCountOpt ?? 1;
+  const displayTierBaseLineCountRef = useRef(displayTierBaseLineCount);
+  displayTierBaseLineCountRef.current = displayTierBaseLineCount;
   const sym = symbol.trim().toUpperCase();
   const renkoRef = useRef<RenkoRef>(emptyRenkoRef());
   const rangeRef = useRef<RangeRef>(emptyRangeRef());
@@ -145,11 +170,20 @@ export function useAggFastTradeLive(opts: {
   const onRawAggTradeRef = useRef(onRawAggTrade);
   const onPriceTickResolvedRef = useRef(onPriceTickResolved);
   const onPriceTickDiagnosticsRef = useRef(onPriceTickDiagnostics);
+  const onFormingAccVolumesRef = useRef(onFormingAccVolumes);
+  const lastFormingAccEmitMsRef = useRef(0);
+  /** Soma volume dos tijolos base já fechados na janela atual do tier de exibição (ex.: 9×5t antes do 10.º em P50). */
+  const tierPartialVolBaseRef = useRef(0);
+  const tierPartialVolQuoteRef = useRef(0);
+  const tierPartialTradesRef = useRef(0);
+  /** Quantos tijolos base fechados na janela atual; ao atingir `displayTierBaseLineCount`, zera parciais (vela do tier fechou). */
+  const tierClosedBaseLinesRef = useRef(0);
   onLiveFlushRef.current = onLiveFlush;
   onLiveAggActivityRef.current = onLiveAggActivity;
   onRawAggTradeRef.current = onRawAggTrade;
   onPriceTickResolvedRef.current = onPriceTickResolved;
   onPriceTickDiagnosticsRef.current = onPriceTickDiagnostics;
+  onFormingAccVolumesRef.current = onFormingAccVolumes;
   klinesRef.current = klines;
   symRef.current = sym;
   klinesSourceRef.current = klinesSourceSymbol;
@@ -157,6 +191,14 @@ export function useAggFastTradeLive(opts: {
   aggKindRef.current = aggKind;
   const serverNewestFromCacheRef = useRef(serverNewestKlineFromCache);
   serverNewestFromCacheRef.current = serverNewestKlineFromCache;
+
+  /**
+   * Evita alinhar o motor ao merge em **cada** `setKlines` ao vivo — `sync*RefFromLatestDbClose` zera sempre `acc`,
+   * o que apagava volume em formação. Só reaplicar quando a âncora do **GET cache** muda (nova linha no servidor)
+   * ou na primeira vez que temos fecho válido sem ainda ter sincronizado.
+   */
+  const lastMotorAnchorFingerprintRef = useRef<string | null>(null);
+  const motorAnchorSyncReadyRef = useRef(false);
 
   /** True apenas se GET daily-close-tick devolveu tick válido (canónico). */
   const apiTickOkRef = useRef(false);
@@ -211,12 +253,22 @@ export function useAggFastTradeLive(opts: {
 
   useEffect(() => {
     pendingRef.current = [];
+    lastFormingAccEmitMsRef.current = 0;
+    lastMotorAnchorFingerprintRef.current = null;
+    motorAnchorSyncReadyRef.current = false;
     renkoRef.current = emptyRenkoRef();
     rangeRef.current = emptyRangeRef();
     kagiRef.current = emptyKagiRef();
     renko2xRef.current = emptyRenkoClassic2xRef();
     tradeCountRef.current = emptyTradeCountCandleRef();
   }, [sym, aggKind]);
+
+  useEffect(() => {
+    tierPartialVolBaseRef.current = 0;
+    tierPartialVolQuoteRef.current = 0;
+    tierPartialTradesRef.current = 0;
+    tierClosedBaseLinesRef.current = 0;
+  }, [sym, aggKind, displayTierBaseLineCount, serverCacheHeadOpenTimeMs]);
 
   useEffect(() => {
     if (!enabled || !sym) {
@@ -301,12 +353,46 @@ export function useAggFastTradeLive(opts: {
     applyFallbackTickFromRefs,
   ]);
 
+  const serverAnchorFingerprint = useMemo(() => {
+    const s = serverNewestKlineFromCache;
+    if (s == null || s.length === 0 || s[0] == null || s[4] == null) return null;
+    const ot = Number(s[0]);
+    const cl = Number(s[4]);
+    if (!Number.isFinite(ot) || !Number.isFinite(cl)) return null;
+    return `${ot}|${cl}`;
+  }, [serverNewestKlineFromCache]);
+
+  /** `0` → `1` quando aparece a primeira vela — reaplica âncora só nessa transição se ainda não houver fingerprint do servidor (merge só). */
+  const hasAnyKlineRow = klines.length > 0 ? 1 : 0;
+
   useEffect(() => {
     if (!enabled || !sym) return;
     const klinesOk = klinesSourceSymbol != null && klinesSourceSymbol.trim().toUpperCase() === sym;
-    const merged0 = klines.length > 0 ? klines[0] : undefined;
-    const close = syncCloseFromMergedAndServer(klinesOk, merged0, serverNewestKlineFromCache);
+    const merged0 = klinesRef.current.length > 0 ? klinesRef.current[0] : undefined;
+    const srv = serverNewestFromCacheRef.current;
+
+    const fp =
+      srv != null && srv.length > 0 && srv[0] != null && srv[4] != null
+        ? `${Number(srv[0])}|${Number(srv[4])}`
+        : null;
+
+    if (fp != null && fp === lastMotorAnchorFingerprintRef.current && motorAnchorSyncReadyRef.current) {
+      return;
+    }
+    if (
+      fp == null &&
+      lastMotorAnchorFingerprintRef.current === "__merged__" &&
+      motorAnchorSyncReadyRef.current
+    ) {
+      return;
+    }
+
+    const close = syncCloseFromMergedAndServer(klinesOk, merged0, srv);
     const c = close != null && Number.isFinite(close) ? close : null;
+    if (c == null) {
+      return;
+    }
+
     if (aggKind === "renko") {
       syncRenkoRefFromLatestDbClose(renkoRef.current, c);
     } else if (aggKind === "range") {
@@ -315,12 +401,23 @@ export function useAggFastTradeLive(opts: {
       syncKagiRefFromLatestDbClose(kagiRef.current, c);
     } else if (aggKind === "renko2x") {
       syncRenkoClassic2xRefFromLatestDbClose(renko2xRef.current, c);
-      const inferred = inferRenkoDirectionFromKlines(klines);
-      if (inferred != null) renko2xRef.current.lastUp = inferred;
     } else {
       syncTradeCountRefFromLatestDbClose(tradeCountRef.current, c);
     }
-  }, [enabled, sym, klines, klinesSourceSymbol, aggKind, serverNewestKlineFromCache]);
+
+    if (fp != null) {
+      lastMotorAnchorFingerprintRef.current = fp;
+    } else {
+      lastMotorAnchorFingerprintRef.current = "__merged__";
+    }
+    motorAnchorSyncReadyRef.current = true;
+  }, [enabled, sym, klinesSourceSymbol, aggKind, serverAnchorFingerprint, hasAnyKlineRow]);
+
+  useEffect(() => {
+    if (!enabled || !sym || aggKind !== "renko2x") return;
+    const inferred = inferRenkoDirectionFromKlines(klinesRef.current);
+    if (inferred != null) renko2xRef.current.lastUp = inferred;
+  }, [enabled, sym, aggKind, klines]);
 
   /** aggTrade: só após GET kline-cache2/klines concluir (`cacheReadyForAggWs`). `groupMinutes` na dependência recria o WS ao mudar intervalo. */
   useEffect(() => {
@@ -406,6 +503,44 @@ export function useAggFastTradeLive(opts: {
             pendingRef.current.push({ symbol: sym, ...row.persist });
           }
         }
+        const gsz = displayTierBaseLineCountRef.current;
+        const closedBatch = pendingRef.current.slice();
+        if (gsz > 1 && closedBatch.length > 0) {
+          for (const row of closedBatch) {
+            tierPartialVolBaseRef.current += row.volume;
+            tierPartialVolQuoteRef.current += row.quoteAssetVolume;
+            tierPartialTradesRef.current += row.numberOfTrades;
+            tierClosedBaseLinesRef.current += 1;
+            if (tierClosedBaseLinesRef.current >= gsz) {
+              tierPartialVolBaseRef.current = 0;
+              tierPartialVolQuoteRef.current = 0;
+              tierPartialTradesRef.current = 0;
+              tierClosedBaseLinesRef.current = 0;
+            }
+          }
+        }
+        const formingCb = onFormingAccVolumesRef.current;
+        if (formingCb) {
+          const emitMs = Date.now();
+          if (emitMs - lastFormingAccEmitMsRef.current >= 200) {
+            lastFormingAccEmitMsRef.current = emitMs;
+            let acc: TradeAcc;
+            if (kind === "renko") acc = renkoRef.current.acc;
+            else if (kind === "range") acc = rangeRef.current.acc;
+            else if (kind === "kagi") acc = kagiRef.current.acc;
+            else if (kind === "renko2x") acc = renko2xRef.current.acc;
+            else acc = tradeCountRef.current.acc;
+            if (gsz <= 1) {
+              formingCb({ volBase: acc.volBase, volQuote: acc.volQuote, trades: acc.trades });
+            } else {
+              formingCb({
+                volBase: tierPartialVolBaseRef.current + acc.volBase,
+                volQuote: tierPartialVolQuoteRef.current + acc.volQuote,
+                trades: tierPartialTradesRef.current + acc.trades,
+              });
+            }
+          }
+        }
         if (pendingRef.current.length > 0) {
           const rows = pendingRef.current.splice(0, pendingRef.current.length);
           onLiveFlushRef.current(rows);
@@ -440,7 +575,7 @@ export function useAggFastTradeLive(opts: {
         /* ignore */
       }
     };
-  }, [enabled, sym, tickSize, aggKind, groupMinutes, cacheReadyForAggWs]);
+  }, [enabled, sym, tickSize, aggKind, groupMinutes, cacheReadyForAggWs, periodicWsReconnectKey]);
 
   useEffect(() => {
     if (!enabled || !sym) return;

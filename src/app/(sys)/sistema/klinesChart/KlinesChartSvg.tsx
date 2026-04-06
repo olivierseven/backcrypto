@@ -1908,7 +1908,8 @@ export function KlinesChartSvg({
           const volTop = MARGIN_TOP + (chartH * 2) / 3;
           const volH = chartH / 3;
           const volBottom = volTop + volH;
-          const VOL_COL = 5;
+          /** Coluna 7 = quote asset volume (USDT em pares USDT); coluna 5 = volume na base (muito pequeno em BTC, etc.). */
+          const VOL_COL = 7;
           let maxVol = 0;
           for (let i = 0; i < windowSlice.length; i++) {
             const v = windowSlice[i][VOL_COL];

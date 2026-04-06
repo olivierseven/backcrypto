@@ -3133,7 +3133,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     ? (() => {
                       const lastRow = windowSlice[windowN - 1];
                       if (!lastRow) return undefined;
-                      const v = lastRow[5];
+                      const v = lastRow[7];
                       const num = v != null ? (typeof v === "number" ? v : Number(v)) : NaN;
                       return Number.isFinite(num) ? formatAbbreviated(num) : undefined;
                     })()

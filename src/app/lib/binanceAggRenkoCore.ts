@@ -190,7 +190,9 @@ export function stepRenkoTable(ref: RenkoRef, p: number, closeEventMs: number, t
       lo = hl.low;
     }
     const atMsForRow = multi ? closeEventMs + i : closeEventMs;
-    rows.push(buildPersistRow(item.o, item.c, atMsForRow, !multi, ref.acc, hi, lo));
+    /** Vários tijolos no mesmo aggTrade: um único `acc` — atribuir stats ao último tijolo para o total bater com o negócio (merge VPS). */
+    const withStats = !multi || i === pending.length - 1;
+    rows.push(buildPersistRow(item.o, item.c, atMsForRow, withStats, ref.acc, hi, lo));
   }
 
   if (pending.length > 0) {
@@ -331,7 +333,8 @@ export function stepRenkoClassic2xTable(ref: RenkoClassic2xRef, p: number, close
       }
     }
     const atMsForRow = multi ? closeEventMs + i : closeEventMs;
-    rows.push(buildPersistRow(item.o, item.c, atMsForRow, !multi, ref.acc, hi, lo));
+    const withStats = !multi || i === pending.length - 1;
+    rows.push(buildPersistRow(item.o, item.c, atMsForRow, withStats, ref.acc, hi, lo));
   }
 
   if (pending.length > 0) {

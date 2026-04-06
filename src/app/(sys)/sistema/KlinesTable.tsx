@@ -49,6 +49,8 @@ import {
 import {
   aggFastLiveBrickLogicalKey,
   liveSourcePayloadsToTierPayloadsForMerge,
+  aggCacheHasNewServerLine,
+  aggDisplayTierBaseLineCount,
   mergeAggFastServerAndLive,
 } from "./aggFastKlineMerge";
 import { useAggFastTradeLive, type AggFastWsKind } from "./useAggFastTradeLive";
@@ -121,6 +123,9 @@ type Kline = [
 ];
 
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
+
+/** Gráficos atemporais (Renko/Range/Kagi/…): GET kline-cache2 + reconexão aggTrade para alinhar ao servidor. */
+const AGG_ATEMPORAL_CACHE_REFRESH_MS = 5 * 60 * 1000;
 
 /** Alinhado ao `limit` do GET kline-cache2 e ao `maxBars` do merge agg; acima disto refetch do cache. */
 const AGG_KLINE_CACHE_LIMIT = 1000;
@@ -464,20 +469,35 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const liveDebugBrickSeqRef = useRef(0);
   const LIVE_DEBUG_BRICKS_MAX = 2500;
   const pendingAggPersistRef = useRef<AggFastBarRowPayload[]>([]);
-  /** GET daily-close-tick: 0,01% do último fecho diário completo (não do tijolo anterior). */
   /** Incrementado ao ligar/desligar Binance na Conta para voltar a pedir ordens abertas à API (não só no intervalo de 25s). */
   const [openOrdersRefreshKey, setOpenOrdersRefreshKey] = useState(0);
+  /** GET daily-close-tick: 0,01% do último fecho diário completo (não do tijolo anterior). */
   const [aggPriceTick, setAggPriceTick] = useState<number | null>(null);
   const [aggPriceTickDiag, setAggPriceTickDiag] = useState<AggFastLivePriceTickDiagnostics | null>(null);
+  /** Incrementado após refresh periódico do cache agg — força reconexão do WebSocket aggTrade em `useAggFastTradeLive`. */
+  const [aggPeriodicWsReconnectKey, setAggPeriodicWsReconnectKey] = useState(0);
+  /** Momento (Date.now) do último GET kline-cache2 do intervalo de 5 min que terminou com sucesso (debug agg live). */
+  const [lastAggPeriodicCacheRefreshOkAt, setLastAggPeriodicCacheRefreshOkAt] = useState<number | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
-  /** Refs para sync LIMIT `NEW` ↔ Binance a cada 5s (leitura no tick do interval). */
+  /** Refs para sync LIMIT (estado ainda aberto na BD) ↔ Binance a cada 5s — não filtrar por “preço já cruzou”: senão vendas acima do mercado nunca iniciavam o intervalo até depois do fill. */
   const limitSpotSyncOrdersRef = useRef<ChartSpotOrderApiRow[]>([]);
-  const limitSpotSyncSpotRef = useRef<{ ws: string | null; close: string | null }>({ ws: null, close: null });
   limitSpotSyncOrdersRef.current = chartSpotOrdersFromApi;
-  limitSpotSyncSpotRef.current = { ws: spotWsPrice, close: spot.currentClose };
   /** Último feed vivo: miniTicker e/ou aggTrade atemporal — para “Última atualização” / bolinha não depender só do openTime da última barra em cache. */
   const [spotWsUpdatedAt, setSpotWsUpdatedAt] = useState<number | null>(null);
+  /** Vela em formação: volume base / quote (USDT) / nº trades atualizados pelo stream `@kline_<interval>` (Binance). */
+  const [liveCandleVolumes, setLiveCandleVolumes] = useState<{
+    openTime: number;
+    baseVol: string;
+    quoteVol: string;
+    trades: number;
+  } | null>(null);
+  /** Renko/Range/Kagi/…: volume acumulado na barra em formação (aggTrade → TradeAcc), para volume no preço no gráfico atemporal. */
+  const [aggFormingAccVolumes, setAggFormingAccVolumes] = useState<{
+    baseVol: string;
+    quoteVol: string;
+    trades: number;
+  } | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
   const [priceFormatAbbreviated, setPriceFormatAbbreviated] = useState(false);
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
@@ -489,7 +509,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const aggFastLiveDebugEnabledRef = useRef(aggFastLiveDebugEnabled);
   aggFastLiveDebugEnabledRef.current = aggFastLiveDebugEnabled;
   const lastKlinesFetchSymbolRef = useRef<string | null>(null);
-  const fetchKlinesRef = useRef<() => Promise<void>>(async () => {});
+  const fetchKlinesRef = useRef<(force?: boolean) => Promise<boolean>>(async () => false);
+  /** Quando o GET periódico kline-cache2 não trouxe linha nova, não incrementar `aggPeriodicWsReconnectKey` (evita WS agg a repor refs e zerar live). */
+  const skipAggPeriodicWsReconnectRef = useRef(false);
   symbolRef.current = symbol;
 
   const pushAggFastLiveDebug = useCallback(() => {
@@ -513,10 +535,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         symbolRef.current,
         tierShort,
         aggPriceTick,
-        aggPriceTickDiag
+        aggPriceTickDiag,
+        lastAggPeriodicCacheRefreshOkAt
       )
     );
-  }, [setAggFastLiveDebugSnapshot, aggPriceTick, aggPriceTickDiag]);
+  }, [setAggFastLiveDebugSnapshot, aggPriceTick, aggPriceTickDiag, lastAggPeriodicCacheRefreshOkAt]);
   const chartWrapRef = useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = useState(600);
   const [chartContainerHeight, setChartContainerHeight] = useState(0);
@@ -673,24 +696,37 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const klinesWithSpot = useMemo((): Kline[] => {
     // Renko / Range / Kagi: não substituir OHLC pelo spot — evita distorcer o que veio do modelo (brick/amplitude). No mercado real podem existir gaps; aqui só preservamos a série agregada tal como calculada.
     if (aggSeriesKind !== "ohlc") return klines;
-    if (spotWsPrice == null || klines.length === 0) return klines;
-    const p = Number(spotWsPrice);
-    if (!Number.isFinite(p)) return klines;
+    if (klines.length === 0) return klines;
     const first = klines[0] as (string | number)[];
+    const ot = Number(first[0]);
+    const hasLiveVol =
+      liveCandleVolumes != null && Number.isFinite(ot) && liveCandleVolumes.openTime === ot;
+    if (spotWsPrice == null && !hasLiveVol) return klines;
+
     const out = [...klines] as unknown as (string | number)[][];
     const next0 = [...first] as (string | number)[];
-    // OHLC: [1]=open [2]=high [3]=low [4]=close. Só usa spotWsHigh/spotWsLow se os klines forem do símbolo atual (evita mínima do ETH no candle de BTC).
-    const baseHigh = Number(next0[2]);
-    const baseLow = Number(next0[3]);
-    next0[4] = spotWsPrice;
-    const useWsExtremes = lastKlinesFetchSymbolRef.current === symbol;
-    const hi = useWsExtremes && spotWsHigh != null ? spotWsHigh : (Number.isFinite(baseHigh) ? Math.max(baseHigh, p) : p);
-    const lo = useWsExtremes && spotWsLow != null ? spotWsLow : (Number.isFinite(baseLow) ? Math.min(baseLow, p) : p);
-    next0[2] = String(hi);
-    next0[3] = String(lo);
+    if (hasLiveVol) {
+      next0[5] = liveCandleVolumes.baseVol;
+      next0[7] = liveCandleVolumes.quoteVol;
+      next0[8] = liveCandleVolumes.trades;
+    }
+    if (spotWsPrice != null) {
+      const p = Number(spotWsPrice);
+      if (Number.isFinite(p)) {
+        // OHLC: [1]=open [2]=high [3]=low [4]=close. Só usa spotWsHigh/spotWsLow se os klines forem do símbolo atual (evita mínima do ETH no candle de BTC).
+        const baseHigh = Number(next0[2]);
+        const baseLow = Number(next0[3]);
+        next0[4] = spotWsPrice;
+        const useWsExtremes = lastKlinesFetchSymbolRef.current === symbol;
+        const hi = useWsExtremes && spotWsHigh != null ? spotWsHigh : (Number.isFinite(baseHigh) ? Math.max(baseHigh, p) : p);
+        const lo = useWsExtremes && spotWsLow != null ? spotWsLow : (Number.isFinite(baseLow) ? Math.min(baseLow, p) : p);
+        next0[2] = String(hi);
+        next0[3] = String(lo);
+      }
+    }
     out[0] = next0;
     return out as unknown as Kline[];
-  }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol, aggSeriesKind]);
+  }, [klines, spotWsPrice, spotWsHigh, spotWsLow, symbol, aggSeriesKind, liveCandleVolumes]);
 
   /**
    * Renko/Range/Kagi/Renko2×/trades: mesma linha “em formação” do gráfico (open = close do tijolo mais recente do modelo,
@@ -719,15 +755,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     forming[2] = String(hi);
     forming[3] = String(lo);
     forming[4] = spotWsPrice;
-    forming[5] = "0";
+    forming[5] = aggFormingAccVolumes != null ? aggFormingAccVolumes.baseVol : "0";
     forming[6] = displayOt;
-    forming[7] = "0";
-    forming[8] = 0;
+    forming[7] = aggFormingAccVolumes != null ? aggFormingAccVolumes.quoteVol : "0";
+    forming[8] = aggFormingAccVolumes != null ? aggFormingAccVolumes.trades : 0;
     forming[9] = "0";
     forming[10] = "0";
     forming[11] = 0;
     return [forming as Kline, ...klines];
-  }, [aggSeriesKind, klinesWithSpot, klines, spotWsPrice, groupMinutes, symbol]);
+  }, [aggSeriesKind, klinesWithSpot, klines, spotWsPrice, groupMinutes, symbol, aggFormingAccVolumes]);
 
   const heikinAshiKlines = useMemo(() => computeHeikinAshi(klinesWithSpot), [klinesWithSpot]);
   const baseForIndicators = heikinAshiEnabled && aggSeriesKind === "ohlc" ? heikinAshiKlines : klinesWithAggForming;
@@ -1106,38 +1142,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     const sym = symbol?.trim().toUpperCase();
     if (!sym) return;
 
-    const parseSpotNum = (): number | null => {
-      const { ws, close } = limitSpotSyncSpotRef.current;
-      const spotStr = ws ?? close;
-      if (spotStr == null || String(spotStr).trim() === "") return null;
-      const n = Number.parseFloat(String(spotStr));
-      if (!Number.isFinite(n) || n <= 0) return null;
-      return n;
-    };
-
-    const qualifies = (o: ChartSpotOrderApiRow, spotNum: number): boolean => {
+    /** Ordens que ainda podem estar abertas na exchange: LIMIT com estado não terminal na BD. */
+    const needsBinanceSync = (o: ChartSpotOrderApiRow): boolean => {
       if ((o.orderType ?? "").toUpperCase() !== "LIMIT") return false;
-      if ((o.status ?? "").toUpperCase() !== "NEW") return false;
+      const st = (o.status ?? "").toUpperCase();
+      if (st !== "NEW" && st !== "PARTIALLY_FILLED") return false;
       const side = (o.side ?? "").toUpperCase();
-      if (side !== "BUY" && side !== "SELL") return false;
-      const limRaw = o.price?.trim() ?? "";
-      if (limRaw === "") return false;
-      const limitNum = Number.parseFloat(limRaw);
-      if (!Number.isFinite(limitNum) || limitNum <= 0) return false;
-      if (side === "BUY") return spotNum < limitNum;
-      return spotNum > limitNum;
+      return side === "BUY" || side === "SELL";
     };
 
-    const spotNum = parseSpotNum();
-    if (spotNum == null) return;
-
-    const hasAny = limitSpotSyncOrdersRef.current.some((o) => qualifies(o, spotNum));
-    if (!hasAny) return;
+    const hasPending = limitSpotSyncOrdersRef.current.some(needsBinanceSync);
+    if (!hasPending) return;
 
     const tick = () => {
-      const sn = parseSpotNum();
-      if (sn == null) return;
-      const toSync = limitSpotSyncOrdersRef.current.filter((o) => qualifies(o, sn));
+      const toSync = limitSpotSyncOrdersRef.current.filter(needsBinanceSync);
       if (toSync.length === 0) return;
       void Promise.all(
         toSync.map((o) =>
@@ -1155,9 +1173,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         .catch(() => {});
     };
 
+    void tick();
     const id = window.setInterval(tick, 5000);
     return () => window.clearInterval(id);
-  }, [chartSpotOrdersFromApi, spotWsPrice, spot.currentClose, symbol, fetchChartSpotOrders]);
+  }, [chartSpotOrdersFromApi, symbol, fetchChartSpotOrders]);
 
   const spotOrderMarkers = useMemo((): SpotOrderMarker[] => {
     if (!showSpotOrderLabels) return [];
@@ -1398,7 +1417,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => cancelAnimationFrame(id);
   }, [klines.length, chartWidth, groupMinutes]);
 
-  const fetchKlines = async () => {
+  const fetchKlines = async (force = false): Promise<boolean> => {
     const requestedSymbol = symbolRef.current;
     const gmNorm = normalizeAggGroupMinutes(groupMinutes);
     const cache2 = groupMinutesToCache2Params(gmNorm);
@@ -1417,7 +1436,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
         const body = await res.json();
         const list = Array.isArray(body.klines) ? body.klines : [];
-        if (symbolRef.current !== requestedSymbol) return;
+        if (symbolRef.current !== requestedSymbol) return false;
+        const prevServer = serverAggKlinesRef.current;
+        const shouldApplyCache =
+          force || prevServer.length === 0 || aggCacheHasNewServerLine(prevServer, list);
+        if (!shouldApplyCache) {
+          skipAggPeriodicWsReconnectRef.current = true;
+          return true;
+        }
+        skipAggPeriodicWsReconnectRef.current = false;
         lastKlinesFetchSymbolRef.current = requestedSymbol;
         const tzForMerge =
           typeof body.timezoneOffset === "number" ? Math.max(-12, Math.min(12, body.timezoneOffset)) : timezoneOffset;
@@ -1454,45 +1481,46 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
         const lastUtc = list.length > 0 && list[0][0] != null ? Number(list[0][0]) : null;
         setLastUpdate(lastUtc != null ? new Date(lastUtc) : new Date());
-      } else {
-        const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
-        const res = await fetch(
-          `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`,
-          { cache: "no-store" }
-        );
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.details || err.error || `HTTP ${res.status}`);
-        }
-        const body = await res.json();
-        const list = Array.isArray(body) ? body : (body.klines ?? []);
-        if (symbolRef.current !== requestedSymbol) return;
-        lastKlinesFetchSymbolRef.current = requestedSymbol;
-        serverAggKlinesRef.current = [];
-        setServerNewestKlineFromCache(null);
-        liveAggRowsByOpenTimeRef.current.clear();
-        liveWsRawTradesRef.current = [];
-        liveDebugClosedBricksRef.current = [];
-        liveDebugBrickSeqRef.current = 0;
-        setKlines(list);
-        setKlinesDataSymbol(requestedSymbol);
-        if (list.length > 0) {
-          const row0 = list[0] as (string | number)[];
-          const h = Number(row0[2]);
-          const l = Number(row0[3]);
-          if (Number.isFinite(h) && Number.isFinite(l)) {
-            setSpotWsHigh(h);
-            setSpotWsLow(l);
-          }
-        }
-        const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
-        setNeedsRefresh(refreshFlag);
-        if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
-          setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
-        }
-        const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
-        setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
+        return true;
       }
+      const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param ?? "1M";
+      const res = await fetch(
+        `${API_BASE}/binance/klines?symbol=${encodeURIComponent(requestedSymbol)}&interval=${intervalParam}&limit=1000`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.details || err.error || `HTTP ${res.status}`);
+      }
+      const body = await res.json();
+      const list = Array.isArray(body) ? body : (body.klines ?? []);
+      if (symbolRef.current !== requestedSymbol) return false;
+      lastKlinesFetchSymbolRef.current = requestedSymbol;
+      serverAggKlinesRef.current = [];
+      setServerNewestKlineFromCache(null);
+      liveAggRowsByOpenTimeRef.current.clear();
+      liveWsRawTradesRef.current = [];
+      liveDebugClosedBricksRef.current = [];
+      liveDebugBrickSeqRef.current = 0;
+      setKlines(list);
+      setKlinesDataSymbol(requestedSymbol);
+      if (list.length > 0) {
+        const row0 = list[0] as (string | number)[];
+        const h = Number(row0[2]);
+        const l = Number(row0[3]);
+        if (Number.isFinite(h) && Number.isFinite(l)) {
+          setSpotWsHigh(h);
+          setSpotWsLow(l);
+        }
+      }
+      const refreshFlag = !Array.isArray(body) && body.needsRefresh === true;
+      setNeedsRefresh(refreshFlag);
+      if (!Array.isArray(body) && typeof body.timezoneOffset === "number") {
+        setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
+      }
+      const lastUtc = !Array.isArray(body) && body.lastUpdateUtc != null ? Number(body.lastUpdateUtc) : null;
+      setLastUpdate(lastUtc != null ? new Date(lastUtc) : (list.length > 0 && list[0][0] != null ? new Date(Number(list[0][0])) : new Date()));
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : t.errorLoad);
       setKlines([]);
@@ -1504,6 +1532,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       liveDebugClosedBricksRef.current = [];
       liveDebugBrickSeqRef.current = 0;
       setNeedsRefresh(false);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -1521,9 +1550,22 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   useEffect(() => {
     if (!aggFastLiveDebugEnabled) return;
     pushAggFastLiveDebug();
-  }, [aggPriceTick, aggPriceTickDiag, aggFastLiveDebugEnabled, pushAggFastLiveDebug]);
+  }, [aggPriceTick, aggPriceTickDiag, aggFastLiveDebugEnabled, pushAggFastLiveDebug, lastAggPeriodicCacheRefreshOkAt]);
 
   const aggWsKind = groupMinutesToAggKind(groupMinutes);
+  const aggCache2ParamsForLive = useMemo(
+    () => groupMinutesToCache2Params(normalizeAggGroupMinutes(groupMinutes)),
+    [groupMinutes]
+  );
+  const displayTierBaseLineCount = useMemo(
+    () => (aggCache2ParamsForLive != null ? aggDisplayTierBaseLineCount(aggCache2ParamsForLive) : 1),
+    [aggCache2ParamsForLive]
+  );
+  const serverCacheHeadOpenTimeMs = useMemo(() => {
+    if (serverNewestKlineFromCache == null || serverNewestKlineFromCache[0] == null) return null;
+    const t = Number(serverNewestKlineFromCache[0]);
+    return Number.isFinite(t) ? t : null;
+  }, [serverNewestKlineFromCache]);
   const aggCacheReadyForWs =
     klinesDataSymbol != null && klinesDataSymbol.trim().toUpperCase() === symbol.trim().toUpperCase();
   useAggFastTradeLive({
@@ -1533,6 +1575,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     klinesSourceSymbol: klinesDataSymbol,
     cacheReadyForAggWs: aggCacheReadyForWs,
     groupMinutes,
+    periodicWsReconnectKey: aggPeriodicWsReconnectKey,
     timezoneOffsetHours: timezoneOffset,
     klines,
     serverNewestKlineFromCache,
@@ -1574,7 +1617,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     },
     onPriceTickResolved: setAggPriceTick,
     onPriceTickDiagnostics: setAggPriceTickDiag,
+    onFormingAccVolumes: (v) => {
+      setAggFormingAccVolumes({
+        baseVol: String(v.volBase),
+        quoteVol: String(v.volQuote),
+        trades: v.trades,
+      });
+    },
+    displayTierBaseLineCount,
+    serverCacheHeadOpenTimeMs,
   });
+
+  useLayoutEffect(() => {
+    setAggFormingAccVolumes(null);
+  }, [symbol, groupMinutes, serverCacheHeadOpenTimeMs]);
 
   useVpsFlushNotify({
     enabled: aggWsKind != null && timeframeRestored && VPS_FLUSH_WS_URL.length > 0,
@@ -1582,7 +1638,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     symbol,
     groupMinutes,
     onFlush: () => {
-      void fetchKlinesRef.current();
+      void fetchKlinesRef.current(true);
     },
   });
 
@@ -1648,11 +1704,25 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setSpotWsHigh(null);
     setSpotWsLow(null);
     fetchKlines();
-    /** Gráficos temporais: refresh periódico. Atemporais (agg): barras vêm do WS; só refetch ao limite ou visibilidade/VPS. */
+    /** Temporais: refresh a cada 1 min. Atemporais: GET kline-cache2 a cada 5 min e reconexão aggTrade (via `aggPeriodicWsReconnectKey`). */
+    setLastAggPeriodicCacheRefreshOkAt(null);
     const aggAtemporal = isAggFastGroupMinutes(groupMinutes);
-    const interval = aggAtemporal ? null : window.setInterval(fetchKlines, REFRESH_MS);
+    const interval = aggAtemporal
+      ? window.setInterval(() => {
+          void fetchKlinesRef.current()
+            .then((ok) => {
+              if (ok) setLastAggPeriodicCacheRefreshOkAt(Date.now());
+            })
+            .finally(() => {
+              if (!skipAggPeriodicWsReconnectRef.current) {
+                setAggPeriodicWsReconnectKey((k) => k + 1);
+              }
+              skipAggPeriodicWsReconnectRef.current = false;
+            });
+        }, AGG_ATEMPORAL_CACHE_REFRESH_MS)
+      : window.setInterval(fetchKlines, REFRESH_MS);
     return () => {
-      if (interval != null) window.clearInterval(interval);
+      window.clearInterval(interval);
     };
   }, [groupMinutes, symbol, timeframeRestored]);
 
@@ -1665,7 +1735,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     prevAggKlineCountForLimitRef.current = n;
     if (prev == null) return;
     if (n >= AGG_KLINE_CACHE_LIMIT && prev < AGG_KLINE_CACHE_LIMIT) {
-      void fetchKlinesRef.current();
+      void fetchKlinesRef.current(true);
     }
   }, [klines.length, groupMinutes, timeframeRestored]);
 
@@ -1801,11 +1871,83 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     };
   }, [symbol, groupMinutes]);
 
+  // Volume da vela em formação (base + quote USDT) em tempo real — stream kline Binance; o GET só traz acumulado no último poll.
+  useEffect(() => {
+    const sym = symbol.trim();
+    if (!sym) return;
+    if (aggSeriesKind !== "ohlc") return;
+    if (isAggFastGroupMinutes(groupMinutes)) return;
+    const intervalParam = intervalOptions.find((o) => o.value === groupMinutes)?.param;
+    if (!intervalParam) return;
+
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const reconnectDelayRef = { current: 1000 };
+    let ws: WebSocket | null = null;
+
+    const connect = () => {
+      if (!alive) return;
+      const streamSym = sym.toLowerCase();
+      const url = `wss://stream.binance.com:9443/ws/${streamSym}@kline_${intervalParam}`;
+      try {
+        ws = new WebSocket(url);
+        ws.onmessage = (ev) => {
+          if (!alive) return;
+          try {
+            const msg = JSON.parse(String(ev.data)) as {
+              e?: string;
+              k?: { t?: number; v?: string; q?: string; n?: number };
+            };
+            if (msg.e !== "kline" || msg.k == null) return;
+            const k = msg.k;
+            const openTime = k.t;
+            if (typeof openTime !== "number") return;
+            setLiveCandleVolumes({
+              openTime,
+              baseVol: String(k.v ?? "0"),
+              quoteVol: String(k.q ?? "0"),
+              trades: typeof k.n === "number" && Number.isFinite(k.n) ? k.n : 0,
+            });
+          } catch {
+            /* ignore */
+          }
+        };
+        ws.onclose = () => {
+          if (!alive) return;
+          const delay = reconnectDelayRef.current;
+          reconnectDelayRef.current = Math.min(30000, Math.round(reconnectDelayRef.current * 1.5));
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(connect, delay);
+        };
+        ws.onerror = () => {};
+      } catch {
+        const delay = reconnectDelayRef.current;
+        reconnectDelayRef.current = Math.min(30000, Math.round(reconnectDelayRef.current * 1.5));
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(connect, delay);
+      }
+    };
+
+    setLiveCandleVolumes(null);
+    connect();
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      setLiveCandleVolumes(null);
+      try {
+        ws?.close();
+      } catch {
+        /* ignore */
+      }
+      ws = null;
+    };
+  }, [symbol, groupMinutes, aggSeriesKind, intervalOptions]);
+
   // Ao voltar para a aba, atualiza na hora (evita depender do timer com aba em segundo plano)
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
-        fetchKlines();
+        void fetchKlines(true);
         fetchSpot();
       }
     };
@@ -1988,7 +2130,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           type="button"
           onClick={() => {
             setLoading(true);
-            fetchKlines();
+            void fetchKlines(true);
           }}
           className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2"
         >

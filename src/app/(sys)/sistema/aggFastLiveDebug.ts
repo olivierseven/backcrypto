@@ -80,6 +80,8 @@ export type AggFastLiveDebugSnapshot = {
   priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null;
   /** Sugestões quando tudo vazio ou inconsistente. */
   diagnostics: AggFastLiveDiagItem[];
+  /** Último GET kline-cache2 do intervalo de 5 min (atemporais) que terminou com sucesso; null se nunca correu ou falhou sempre. */
+  lastPeriodicCacheRefreshOkAt: number | null;
 };
 
 const MAX_RAW_WS_TRADES = 120;
@@ -170,7 +172,8 @@ export function buildAggFastLiveDebugSnapshot(
   symbol: string,
   tierShortLabel: string,
   priceTick: number | null,
-  priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null
+  priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null,
+  lastPeriodicCacheRefreshOkAt: number | null = null
 ): AggFastLiveDebugSnapshot {
   const rowsSorted = [...closedBricksFromEngine].sort(
     (a, b) => a.openTime - b.openTime || a.closeTime - b.closeTime || a.open - b.open
@@ -267,5 +270,6 @@ export function buildAggFastLiveDebugSnapshot(
     chartTierRowsNewestFirst: chartForTable.slice(-MAX_CHART_ROWS).reverse(),
     priceTickDiagnostics,
     diagnostics,
+    lastPeriodicCacheRefreshOkAt,
   };
 }
