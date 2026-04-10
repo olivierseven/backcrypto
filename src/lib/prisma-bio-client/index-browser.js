@@ -225,6 +225,7 @@ exports.Prisma.ChartLayoutScalarFieldEnum = {
   strategies: 'strategies',
   regressions: 'regressions',
   others: 'others',
+  robots: 'robots',
   name: 'name',
   updatedAt: 'updatedAt'
 };

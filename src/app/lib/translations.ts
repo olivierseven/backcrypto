@@ -1326,7 +1326,8 @@ export const cryptoTranslations = {
         robotsErrNoneBuySelected: "Add at least one combined strategy for buy.",
         robotsErrNoneSellSelected: "Add at least one combined strategy for sell.",
         robotsErrValidation: "Could not validate strategies. Check indicators and references.",
-        robotsListIntro: "Robots saved in this browser.",
+        robotsListIntro:
+          "Robots sync with the current chart layout slot (server) when you are logged in; local storage is used as a cache and when no layout robots payload is loaded.",
         robotsListEmpty: "No robots yet. Use Add robot to configure one.",
         robotsApplySaved: "Activate robot",
         robotsDeactivateSaved: "Deactivate robot",
@@ -3605,7 +3606,8 @@ export const cryptoTranslations = {
         robotsErrNoneBuySelected: "Adicione pelo menos uma estratégia combinada para compra.",
         robotsErrNoneSellSelected: "Adicione pelo menos uma estratégia combinada para venda.",
         robotsErrValidation: "Não foi possível validar as estratégias. Verifique indicadores e referências.",
-        robotsListIntro: "Robôs guardados neste navegador.",
+        robotsListIntro:
+          "Os robôs sincronizam com o slot de layout do gráfico (servidor) com sessão iniciada; o navegador guarda em cache e quando o layout não traz robôs.",
         robotsListEmpty: "Ainda não há robôs. Use Adicionar robô para configurar.",
         robotsApplySaved: "Ativar robô",
         robotsDeactivateSaved: "Desativar robô",

@@ -24,7 +24,8 @@ export function mergeColumnsToConfig(
   indicators: JsonValue,
   strategies: JsonValue,
   others?: JsonValue,
-  regressions?: JsonValue
+  regressions?: JsonValue,
+  robots?: JsonValue
 ): Record<string, unknown> {
   const layoutObj = layout != null && typeof layout === "object" && !Array.isArray(layout) ? (layout as Record<string, unknown>) : {};
   const { userRegressions: legacyRegressions, ...layoutRest } = layoutObj;
@@ -37,7 +38,7 @@ export function mergeColumnsToConfig(
   const strategiesList = Array.isArray(strategiesObj.strategies) ? strategiesObj.strategies : [];
   const appliedIds = Array.isArray(strategiesObj.appliedStrategyIds) ? strategiesObj.appliedStrategyIds : [];
   const othersObj = others != null && typeof others === "object" && !Array.isArray(others) ? (others as Record<string, unknown>) : {};
-  return {
+  const base: Record<string, unknown> = {
     ...layoutRest,
     userIndicators: indicatorsArr,
     userRegressions,
@@ -45,6 +46,20 @@ export function mergeColumnsToConfig(
     appliedStrategyIds: appliedIds,
     ...othersObj,
   };
+  /**
+   * `robots === undefined`: não enviar (ex.: modelo default em ChartModels — não sobrescrever localStorage).
+   * `robots === null` ou objeto: vindo de ChartLayout; `null` = ainda sem dados → lista/exec vazios.
+   */
+  if (robots !== undefined) {
+    const robotsObj =
+      robots != null && typeof robots === "object" && !Array.isArray(robots) ? (robots as Record<string, unknown>) : {};
+    base.savedRobots = Array.isArray(robotsObj.savedRobots) ? robotsObj.savedRobots : [];
+    base.robotBuyExecMap =
+      robotsObj.buyExecMap != null && typeof robotsObj.buyExecMap === "object" && !Array.isArray(robotsObj.buyExecMap)
+        ? robotsObj.buyExecMap
+        : {};
+  }
+  return base;
 }
 
 /** Extrai colunas a partir do config único (POST legado com `config` único). */
@@ -54,8 +69,9 @@ export function splitConfigToColumns(config: Record<string, unknown>): {
   strategies: { strategies: unknown[]; appliedStrategyIds: string[] };
   regressions: unknown[];
   others: Record<string, unknown>;
+  robots: Record<string, unknown> | null;
 } {
-  const { userIndicators, userRegressions, strategies: strategiesList, appliedStrategyIds, ...rest } = config;
+  const { userIndicators, userRegressions, strategies: strategiesList, appliedStrategyIds, savedRobots, robotBuyExecMap, ...rest } = config;
   const others: Record<string, unknown> = {};
   const layout: Record<string, unknown> = {};
   for (const key of Object.keys(rest)) {
@@ -65,6 +81,16 @@ export function splitConfigToColumns(config: Record<string, unknown>): {
       layout[key] = rest[key];
     }
   }
+  const hasRobots = Array.isArray(savedRobots) || (robotBuyExecMap != null && typeof robotBuyExecMap === "object" && !Array.isArray(robotBuyExecMap));
+  const robots: Record<string, unknown> | null = hasRobots
+    ? {
+        savedRobots: Array.isArray(savedRobots) ? savedRobots : [],
+        buyExecMap:
+          robotBuyExecMap != null && typeof robotBuyExecMap === "object" && !Array.isArray(robotBuyExecMap)
+            ? robotBuyExecMap
+            : {},
+      }
+    : null;
   return {
     layout,
     indicators: Array.isArray(userIndicators) ? userIndicators : [],
@@ -74,5 +100,6 @@ export function splitConfigToColumns(config: Record<string, unknown>): {
     },
     regressions: Array.isArray(userRegressions) ? userRegressions : [],
     others,
+    robots,
   };
 }

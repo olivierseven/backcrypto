@@ -224,7 +224,7 @@ model AffiliateCoupon {
 }
 
 // Layouts do usuário (slots 1–7 apenas). Slot 0 não existe aqui; fica em ChartModels.
-// Fonte da verdade: layout, indicators, strategies. (Coluna config foi removida do banco.)
+// Fonte da verdade: layout, indicators, strategies, regressions, others, robots. (Coluna config foi removida do banco.)
 model ChartLayout {
   userId      String   @map("user_id")
   slot        Int      // 1–7 (Layout 1 … 7 por usuário)
@@ -233,6 +233,8 @@ model ChartLayout {
   strategies  Json?    // { strategies: Strategy[], appliedStrategyIds: string[] }
   regressions Json?    // array userRegressions (separado do layout)
   others      Json?    // configs rápidas: visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset (não inclui draw-segments)
+  /// Robôs do sistema (lista + mapa B· por candle): { savedRobots: SavedRobot[], buyExecMap?: Record<robotId, Record<openTime, 1>> }
+  robots      Json?
   name        String?  @db.VarChar(24) // Nome customizado (máx. 24 caracteres)
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)

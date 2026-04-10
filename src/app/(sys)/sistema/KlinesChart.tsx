@@ -114,6 +114,7 @@ import ChartCtrlLimitBuyModal from "./ChartCtrlLimitBuyModal";
 import ChartCtrlLimitSellModal from "./ChartCtrlLimitSellModal";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { getSessionTabId } from "./sessionTabId";
+import { applyRobotsFromMergedLayoutConfig, getRobotsColumnPayloadForChartLayout } from "./robotsStorage";
 
 export type { ChartIndicatorLine } from "./klinesChart/types";
 
@@ -1126,7 +1127,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
       credentials: "include",
-      body: JSON.stringify({ slot, layout, indicators, strategies, regressions }),
+      body: JSON.stringify({
+        slot,
+        layout,
+        indicators,
+        strategies,
+        regressions,
+        robots: getRobotsColumnPayloadForChartLayout(),
+      }),
     });
     if (!res.ok) {
       setSavedLayoutsError((t as Record<string, string>).saveError ?? t.loadError);
@@ -1221,7 +1229,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
-          body: JSON.stringify({ slot, layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol }),
+          body: JSON.stringify({
+            slot,
+            layout: layoutCol,
+            indicators: indicatorsCol,
+            strategies: strategiesCol,
+            regressions: regressionsCol,
+            robots: getRobotsColumnPayloadForChartLayout(),
+          }),
         }).catch(() => {});
       }
     } catch {
@@ -1339,6 +1354,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (useCandleBody != null) setCandleBodyStyle(useCandleBody);
     if (typeof localPrefs.drawingsVisible === "boolean") setDrawingsVisible(localPrefs.drawingsVisible);
     else if (typeof c.drawingsVisible === "boolean") setDrawingsVisible(c.drawingsVisible);
+    applyRobotsFromMergedLayoutConfig(c);
     onLayoutConfigLoadedRef.current?.(c, slot, source);
   };
 

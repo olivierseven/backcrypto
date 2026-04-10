@@ -1,11 +1,24 @@
 /** Persistência de robôs (Meus robôs) — partilhado entre RobotsPanel e KlinesTable. */
 
+import { API_BASE } from "@/app/constants";
+import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import { getSessionTabId } from "./sessionTabId";
+
 export const ROBOTS_STORAGE_KEY = "crypto_sistema_robots_v1";
 
 /** Marca execução de compra por robô e openTime do candle (evita mais de uma compra no mesmo candle). */
 export const ROBOT_BUY_EXEC_STORAGE_KEY = "crypto_sistema_robot_buy_exec_v1";
 
 export const ROBOTS_CHANGED_EVENT = "crypto-sistema-robots-changed";
+
+/** Mesmo separador que `storage` para o mapa B· quando o layout aplica robôs vindos da API. */
+export const ROBOT_BUY_EXEC_CHANGED_EVENT = "crypto-sistema-robot-buy-exec-changed";
+
+/** Corpo da coluna `robots` em `ChartLayout` (slots 1–7). */
+export type ChartLayoutRobotsColumn = {
+  savedRobots: SavedRobot[];
+  buyExecMap: RobotBuyExecMap;
+};
 
 /** Percentual máximo do spot (1–100, passo 1%). */
 export const ROBOT_MAX_SPOT_MIN = 1;
@@ -210,11 +223,70 @@ export function loadSavedRobots(): SavedRobot[] {
   }
 }
 
-export function persistSavedRobots(list: SavedRobot[]) {
+export function getRobotsColumnPayloadForChartLayout(): ChartLayoutRobotsColumn {
+  return { savedRobots: loadSavedRobots(), buyExecMap: loadRobotBuyExecMap() };
+}
+
+let syncRobotsLayoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Envia lista + buyExec para o layout atual (slot 1–7) na coluna `robots`. */
+export function scheduleSyncRobotsColumnToChartLayoutApi(): void {
+  if (typeof window === "undefined") return;
+  if (syncRobotsLayoutTimer != null) clearTimeout(syncRobotsLayoutTimer);
+  syncRobotsLayoutTimer = setTimeout(() => {
+    syncRobotsLayoutTimer = null;
+    void syncRobotsColumnToChartLayoutApi();
+  }, 400);
+}
+
+export async function syncRobotsColumnToChartLayoutApi(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    if (!raw || raw === "default") return;
+    const slot = Number(raw);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
+    const robots = getRobotsColumnPayloadForChartLayout();
+    const str = JSON.stringify(robots);
+    if (str.length > 28 * 1024) return;
+    await fetch(`${API_BASE}/chart-layouts`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+      credentials: "include",
+      body: JSON.stringify({ slot, robots }),
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Aplica `savedRobots` / `robotBuyExecMap` vindos do config fundido do GET chart-layouts (sem PATCH). */
+export function applyRobotsFromMergedLayoutConfig(config: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
+  if (!("savedRobots" in config) && !("robotBuyExecMap" in config)) return;
+  try {
+    const rawList = config.savedRobots;
+    const list: SavedRobot[] = Array.isArray(rawList)
+      ? rawList.map((x) => normalizeRobot(x)).filter((x): x is SavedRobot => x != null)
+      : [];
+    const rawExec = config.robotBuyExecMap;
+    const buyExecMap: RobotBuyExecMap =
+      rawExec != null && typeof rawExec === "object" && !Array.isArray(rawExec) ? (rawExec as RobotBuyExecMap) : {};
+    window.localStorage.setItem(ROBOTS_STORAGE_KEY, JSON.stringify(list));
+    window.localStorage.setItem(ROBOT_BUY_EXEC_STORAGE_KEY, JSON.stringify(buyExecMap));
+    window.dispatchEvent(new CustomEvent(ROBOTS_CHANGED_EVENT));
+    window.dispatchEvent(new CustomEvent(ROBOT_BUY_EXEC_CHANGED_EVENT));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function persistSavedRobots(list: SavedRobot[], opts?: { skipChartLayoutSync?: boolean }) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(ROBOTS_STORAGE_KEY, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent(ROBOTS_CHANGED_EVENT));
+    if (!opts?.skipChartLayoutSync) scheduleSyncRobotsColumnToChartLayoutApi();
   } catch {
     /* ignore */
   }
@@ -233,10 +305,12 @@ export function loadRobotBuyExecMap(): RobotBuyExecMap {
   }
 }
 
-export function persistRobotBuyExecMap(map: RobotBuyExecMap) {
+export function persistRobotBuyExecMap(map: RobotBuyExecMap, opts?: { skipChartLayoutSync?: boolean }) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(ROBOT_BUY_EXEC_STORAGE_KEY, JSON.stringify(map));
+    window.dispatchEvent(new CustomEvent(ROBOT_BUY_EXEC_CHANGED_EVENT));
+    if (!opts?.skipChartLayoutSync) scheduleSyncRobotsColumnToChartLayoutApi();
   } catch {
     /* ignore */
   }

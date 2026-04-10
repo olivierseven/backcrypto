@@ -16,6 +16,7 @@ import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, collectSeriesKeys, type Strategy } from "./strategies/strategiesTypes";
 import {
   ROBOTS_CHANGED_EVENT,
+  ROBOT_BUY_EXEC_CHANGED_EVENT,
   ROBOT_BUY_EXEC_STORAGE_KEY,
   ROBOTS_STORAGE_KEY,
   loadRobotBuyExecMap,
@@ -1158,9 +1159,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (e.key === ROBOT_BUY_EXEC_STORAGE_KEY || e.key === null) refreshExec();
     };
     window.addEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
+    window.addEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
     window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
+      window.removeEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
       window.removeEventListener("storage", onStorage);
     };
   }, []);
