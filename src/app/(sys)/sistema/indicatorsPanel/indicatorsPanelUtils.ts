@@ -4,6 +4,14 @@ import { clampMa2TimeWindowUserValue, defaultMa2TimeValueForUnit, isTimeWindowMa
 
 export type KlinesT = ReturnType<typeof getCryptoT>["sistema"]["klines"];
 
+function parseUserFieldRef(fieldKey: IndicatorFieldKey): { id: string; part: string | null } | null {
+  if (!fieldKey.startsWith("user_")) return null;
+  const raw = fieldKey.slice(5);
+  const sep = raw.indexOf(":");
+  if (sep < 0) return { id: raw, part: null };
+  return { id: raw.slice(0, sep), part: raw.slice(sep + 1) || null };
+}
+
 function wma2WindowValue(ind: UserIndicatorConfig): { unit: Wma2TimeUnit; value: number } {
   const unit: Wma2TimeUnit =
     ind.wma2TimeUnit === "days" || ind.wma2TimeUnit === "hours" || ind.wma2TimeUnit === "minutes" ? ind.wma2TimeUnit : "hours";
@@ -46,15 +54,35 @@ export function getFieldLabel(
   if (fieldKey === "HLC3") return k.fieldHLC3 ?? "HLC3";
   if (fieldKey === "OHLC4") return k.fieldOHLC4 ?? "OHLC4";
   if (fieldKey === "HLCC4") return k.fieldHLCC4 ?? "HLCC4";
-  if (fieldKey.startsWith("user_")) {
-    const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
+  const ref = parseUserFieldRef(fieldKey);
+  if (ref != null) {
+    const u = userIndicators.find((i) => i.id === ref.id);
     if (u) {
+      const partLabel = (() => {
+        if (!ref.part) return "";
+        const kk = t as Record<string, string>;
+        if (ref.part === "upper") return ` (${kk.regressionBollingerUpper ?? "Upper"})`;
+        if (ref.part === "middle") return ` (${kk.regressionBollingerMiddle ?? "Middle"})`;
+        if (ref.part === "lower") return ` (${kk.regressionBollingerLower ?? "Lower"})`;
+        if (ref.part === "signal" || ref.part === "sig") return ` (${kk.macdSignalLabel?.replace("{period}", String(u.macdSignalPeriod ?? u.diffSignalPeriod ?? 9)) ?? "Signal"})`;
+        if (ref.part === "hist" || ref.part === "histogram") return ` (${kk.macdHistogramLabel ?? "Histogram"})`;
+        if (ref.part === "d") return " (%D)";
+        if (ref.part === "plusDi") return " (+DI)";
+        if (ref.part === "minusDi") return " (-DI)";
+        if (ref.part === "adx") return " (ADX)";
+        if (ref.part === "tenkan") return " (Tenkan)";
+        if (ref.part === "kijun") return " (Kijun)";
+        if (ref.part === "spanA") return " (Span A)";
+        if (ref.part === "spanB") return " (Span B)";
+        if (ref.part === "chikou") return " (Chikou)";
+        return ` (${ref.part})`;
+      })();
       const p = isTimeWindowMa2Type(u.type)
         ? formatWma2WindowLong(u, t)
         : u.type === "HMA_CUSTOM"
           ? `${u.hmaCustomFastPeriod ?? 10},${u.hmaCustomLongPeriod ?? u.period ?? 20},${u.hmaCustomSmoothPeriod ?? 4},${u.hmaCustomFastMaType ?? "WMA"},${u.hmaCustomLongMaType ?? "WMA"},${u.hmaCustomSmoothMaType ?? "WMA"}`
           : String(u.period);
-      return `${u.type}(${p}) ${getFieldLabel(u.fieldKey, t, userIndicators)}`;
+      return `${u.type}(${p}) ${getFieldLabel(u.fieldKey, t, userIndicators)}${partLabel}`;
     }
   }
   return String(fieldKey);
@@ -70,6 +98,11 @@ export function getIndicatorLabel(
     const fast = ind.macdFastPeriod ?? 12;
     const slow = ind.macdSlowPeriod ?? 26;
     return `MACD(${fast},${slow}) ${fieldLabel}`;
+  }
+  if (ind.type === "DIFF") {
+    const first = getFieldLabel(ind.diffFirstFieldKey ?? "close", t, userIndicators);
+    const second = getFieldLabel(ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", t, userIndicators);
+    return `DIFF(${second}-${first})`;
   }
   if (ind.type === "Stochastic") {
     return `Stoch %K(${ind.period}) ${fieldLabel}`;
@@ -167,9 +200,28 @@ export function getFieldShortLetter(
   if (fieldKey === "HLC3") return "3";
   if (fieldKey === "OHLC4") return "4";
   if (fieldKey === "HLCC4") return "C"; // (H+L+2*C)/4
-  if (fieldKey.startsWith("user_")) {
-    const u = userIndicators.find((i) => i.id === fieldKey.slice(5));
-    if (u) return getFieldShortLetter(u.fieldKey, userIndicators);
+  const ref = parseUserFieldRef(fieldKey);
+  if (ref != null) {
+    const u = userIndicators.find((i) => i.id === ref.id);
+    if (u) {
+      const base = getFieldShortLetter(u.fieldKey, userIndicators);
+      if (!ref.part) return base;
+      if (ref.part === "upper") return "U";
+      if (ref.part === "middle") return "M";
+      if (ref.part === "lower") return "L";
+      if (ref.part === "signal" || ref.part === "sig") return "S";
+      if (ref.part === "hist" || ref.part === "histogram") return "H";
+      if (ref.part === "d") return "D";
+      if (ref.part === "plusDi") return "+";
+      if (ref.part === "minusDi") return "-";
+      if (ref.part === "adx") return "X";
+      if (ref.part === "tenkan") return "T";
+      if (ref.part === "kijun") return "K";
+      if (ref.part === "spanA") return "A";
+      if (ref.part === "spanB") return "B";
+      if (ref.part === "chikou") return "C";
+      return base;
+    }
   }
   return String(fieldKey).charAt(0).toUpperCase();
 }
@@ -183,6 +235,11 @@ export function getIndicatorLabelShort(
     const fast = ind.macdFastPeriod ?? 12;
     const slow = ind.macdSlowPeriod ?? 26;
     return `MACD(${fast},${slow}) ${letter}`;
+  }
+  if (ind.type === "DIFF") {
+    const a = getFieldShortLetter(ind.diffFirstFieldKey ?? "close", userIndicators);
+    const b = getFieldShortLetter(ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", userIndicators);
+    return `DIFF(${b}-${a})`;
   }
   if (ind.type === "Stochastic") {
     return `%K(${ind.period}) ${letter}`;
@@ -261,16 +318,16 @@ export function getIndicatorLabelSignal(
   ind: UserIndicatorConfig,
   t: KlinesT
 ): string {
-  const period = ind.macdSignalPeriod ?? 9;
+  const period = ind.type === "DIFF" ? (ind.diffSignalPeriod ?? 9) : (ind.macdSignalPeriod ?? 9);
   const k = t as Record<string, string>;
-  const template = k.macdSignalLabel ?? "MACD Signal({period})";
+  const template = ind.type === "DIFF" ? (k.diffSignalLabel ?? "DIFF Signal({period})") : (k.macdSignalLabel ?? "MACD Signal({period})");
   return template.replace("{period}", String(period));
 }
 
 /** Rótulo curto da linha de sinal (ex.: "MACD Sig(9)"). */
 export function getIndicatorLabelShortSignal(ind: UserIndicatorConfig): string {
-  const period = ind.macdSignalPeriod ?? 9;
-  return `MACD Sig(${period})`;
+  const period = ind.type === "DIFF" ? (ind.diffSignalPeriod ?? 9) : (ind.macdSignalPeriod ?? 9);
+  return ind.type === "DIFF" ? `DIFF Sig(${period})` : `MACD Sig(${period})`;
 }
 
 /** Rótulo da linha %D do Stochastic (ex.: "Stoch %D(3)"). */

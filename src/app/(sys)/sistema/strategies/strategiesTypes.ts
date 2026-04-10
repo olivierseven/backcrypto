@@ -1,17 +1,19 @@
+import type { UserIndicatorConfig } from "../KlinesIndicatorsContext";
+
 /** Operador de comparação entre dois operandos. */
 export type StrategyOperator = ">" | "<" | "=" | ">=" | "<=" | "<>";
 
-/** Indexador de período: 0 = valor atual da linha, -1 = 1 candle anterior, -2 = 2 anteriores, etc. (0 a -7). */
-export const STRATEGY_OFFSET_MIN = -7;
+/** Indexador de período: 0 = valor atual da linha, -1 = 1 candle anterior, -2 = 2 anteriores, etc. (0 a -20). */
+export const STRATEGY_OFFSET_MIN = -20;
 export const STRATEGY_OFFSET_MAX = 0;
 
-/** Para CROSSOVER/CROSSUNDER: quantos candles após o cruzamento a condição continua válida (0 = só no candle do cruzamento, 7 = até 7 candles depois). */
+/** Para CROSSOVER/CROSSUNDER: quantos candles após o cruzamento a condição continua válida (0 = só no candle do cruzamento, até 20 candles depois). */
 export const STRATEGY_BARSAFTER_MIN = 0;
-export const STRATEGY_BARSAFTER_MAX = 7;
+export const STRATEGY_BARSAFTER_MAX = 20;
 
 /** Operando: série (coluna do candle/indicador, com offset opcional) ou constante numérica. */
 export type StrategyOperand =
-  | { type: "series"; seriesKey: string; /** 0 = atual, -1 = anterior, ... -7. Default 0. */ offset?: number }
+  | { type: "series"; seriesKey: string; /** 0 = atual, -1 = anterior, … até STRATEGY_OFFSET_MIN. Default 0. */ offset?: number }
   | { type: "constant"; value: number };
 
 /** Tipo de condição folha: comparação, cruzamento acima ou abaixo. */
@@ -26,7 +28,7 @@ export interface StrategyConditionNode {
   left: StrategyOperand;
   operator: StrategyOperator;
   right: StrategyOperand;
-  /** Só para kind crossover/crossunder: 0 = só no candle do cruzamento, 1..7 = válido até N candles depois. */
+  /** Só para kind crossover/crossunder: 0 = só no candle do cruzamento, 1..STRATEGY_BARSAFTER_MAX = válido até N candles depois. */
   barsAfter?: number;
 }
 
@@ -156,7 +158,7 @@ export function createCombinedCondition(stratKey: string): StrategyConditionNode
   };
 }
 
-/** Cria condição CROSSOVER (duas séries; barsAfter 0..7). */
+/** Cria condição CROSSOVER (duas séries; barsAfter 0..STRATEGY_BARSAFTER_MAX). */
 export function createEmptyCrossoverCondition(): StrategyConditionNode {
   return {
     type: "condition",
@@ -270,6 +272,53 @@ export function strategiesForContext(
   });
 }
 
+/** Indicador visível no intervalo do gráfico/estratégia (espelha o filtro do editor de estratégias). */
+export function indicatorVisibleAtInterval(ind: UserIndicatorConfig, intervalMinutes: number): boolean {
+  if (ind.intervals.length === 1 && ind.intervals[0] === 0) return false;
+  if (ind.intervals.length === 0) return true;
+  return ind.intervals.includes(intervalMinutes);
+}
+
+/**
+ * Verifica se a seriesKey corresponde a uma coluna que existe para este indicador
+ * (ex.: MACD :sig só com linha de sinal; BB só :upper/:middle/:lower).
+ */
+export function isValidIndicatorSeriesKey(seriesKey: string, ind: UserIndicatorConfig, intervalMinutes: number): boolean {
+  if (!indicatorVisibleAtInterval(ind, intervalMinutes)) return false;
+  const raw = seriesKey.slice(4);
+  const [id, part] = raw.split(":");
+  if (id !== ind.id) return false;
+  if (!part) {
+    if (ind.type === "Bollinger" || ind.type === "Donchian" || ind.type === "Keltner" || ind.type === "ADX" || ind.type === "Ichimoku") {
+      return false;
+    }
+    return true;
+  }
+  switch (ind.type) {
+    case "MACD":
+      if (part === "sig") return !!ind.macdSignalLine;
+      if (part === "hist") return !!(ind.macdSignalLine && ind.macdHistogram);
+      return false;
+    case "DIFF":
+      if (part === "sig") return !!ind.diffSignalLine;
+      if (part === "hist") return !!(ind.diffSignalLine && ind.diffHistogram);
+      return false;
+    case "Stochastic":
+      if (part === "d") return !!ind.stochDLine;
+      return false;
+    case "Bollinger":
+    case "Keltner":
+    case "Donchian":
+      return part === "upper" || part === "middle" || part === "lower";
+    case "ADX":
+      return part === "plusDi" || part === "minusDi" || part === "adx";
+    case "Ichimoku":
+      return part === "tenkan" || part === "kijun" || part === "spanA" || part === "spanB" || part === "chikou";
+    default:
+      return false;
+  }
+}
+
 /** Coleta todas as seriesKey usadas na árvore (ex.: "close", "ind_xyz", "strat_<id>"). */
 export function collectSeriesKeys(node: StrategyNode): string[] {
   const keys: string[] = [];
@@ -286,31 +335,50 @@ export function collectSeriesKeys(node: StrategyNode): string[] {
   return keys;
 }
 
+export type ValidateStrategyReferencesOpts = {
+  /** Com a lista completa, valida coluna (:sig, :hist) e intervalo "Mostrar em" como no editor. */
+  userIndicators?: UserIndicatorConfig[];
+};
+
 /**
  * Valida se todos os indicadores e estratégias referenciados na estratégia existem (coluna disponível).
  * indicatorIds = Set dos id dos indicadores atuais (ex.: userIndicators.map(i => i.id)).
  * strategyIds = Set dos id das estratégias que têm coluna (ex.: appliedStrategyIds); usado para estratégias combinadas (refs "strat_<id>").
+ * Com opts.userIndicators, exige também série válida (MACD :sig só com linha de sinal, etc.) e intervalo da estratégia.
  * Retorna { ok: true } ou { ok: false, missingIds: string[] }.
  */
 export function validateStrategyReferences(
   strategy: Strategy,
   indicatorIds: Set<string>,
-  strategyIds?: Set<string>
+  strategyIds?: Set<string>,
+  opts?: ValidateStrategyReferencesOpts
 ): { ok: true } | { ok: false; missingIds: string[] } {
   const keys = collectSeriesKeys(strategy.root);
   const missingIds: string[] = [];
   const stratIds = strategyIds ?? new Set<string>();
+  const intervalMinutes = strategy.intervalMinutes;
+  const deep = opts?.userIndicators !== undefined;
+  const userIndicators = opts?.userIndicators;
+
   for (const key of keys) {
     if (key.startsWith("ind_")) {
-      // Suporta sub-séries como "ind_<id>:sig", "ind_<id>:hist", "ind_<id>:d"
       const raw = key.slice(4);
       const id = raw.split(":")[0] ?? "";
-      if (id && !indicatorIds.has(id)) missingIds.push(id);
+      if (!id) continue;
+
+      if (deep && userIndicators) {
+        const ind = userIndicators.find((i) => i.id === id);
+        if (!ind || !isValidIndicatorSeriesKey(key, ind, intervalMinutes)) {
+          missingIds.push(id);
+        }
+      } else if (!indicatorIds.has(id)) {
+        missingIds.push(id);
+      }
     } else if (key.startsWith("strat_")) {
       const id = key.slice(6) ?? "";
       if (id && !stratIds.has(id)) missingIds.push(id);
     }
   }
-  if (missingIds.length > 0) return { ok: false, missingIds };
+  if (missingIds.length > 0) return { ok: false, missingIds: [...new Set(missingIds)] };
   return { ok: true };
 }

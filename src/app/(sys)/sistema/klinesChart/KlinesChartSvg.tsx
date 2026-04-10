@@ -98,15 +98,19 @@ export interface KlinesChartSvgProps {
   hasPanel3: boolean;
   hasPanel4: boolean;
   hasPanel5: boolean;
+  hasPanel6: boolean;
+  hasPanel7: boolean;
   panel2Top: number;
   panel3Top: number;
   panel4Top: number;
   panel5Top: number;
-  panelTop: (p: "panel2" | "panel3" | "panel4" | "panel5") => number;
-  panelHeight: (p: "panel2" | "panel3" | "panel4" | "panel5") => number;
-  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5", { min: number; max: number }>;
+  panel6Top: number;
+  panel7Top: number;
+  panelTop: (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => number;
+  panelHeight: (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => number;
+  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7", { min: number; max: number }>;
   indicatorLines: ChartIndicatorLine[];
-  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5";
+  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7";
   yValInPanel: (val: number, top: number, h: number, pMin: number, pMax: number) => number;
   hasIndicatorStrip: boolean;
   isDarkBg: boolean;
@@ -150,7 +154,7 @@ export interface KlinesChartSvgProps {
   /** Com mão ativa: arrastar no retângulo (fora de segmento) navega candles. Delta: + = futuro, - = passado. Velocidade limitada no SVG. */
   onSelectToolPan?: (deltaCandles: number) => void;
   /** Clique no número (2)(3)… na faixa de indicadores: permuta painéis secundários adjacentes. */
-  onSwapSecondaryPanel?: (panel: "panel2" | "panel3" | "panel4" | "panel5") => void;
+  onSwapSecondaryPanel?: (panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => void;
   /** Chamado quando o usuário clica no gráfico para desenhar (segmento ou Fibonacci), para fechar a caixa de opções. */
   onChartDrawClick?: () => void;
   /** Chamado quando um novo segmento é criado (segundo clique). Recebe o índice do novo segmento para selecioná-lo e abrir opções. */
@@ -234,10 +238,14 @@ export function KlinesChartSvg({
   hasPanel3,
   hasPanel4,
   hasPanel5,
+  hasPanel6,
+  hasPanel7,
   panel2Top,
   panel3Top,
   panel4Top,
   panel5Top,
+  panel6Top,
+  panel7Top,
   panelTop,
   panelHeight,
   panelExtents,
@@ -379,7 +387,7 @@ export function KlinesChartSvg({
   const showCrosshairValues =
     crosshairPoint !== null && crosshairPoint.index >= 0 && crosshairPoint.index < fullReversed.length;
 
-  const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4" | "panel5", topY: number, lines: ChartIndicatorLine[]) => (
+  const strip = (panelKey: "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7", topY: number, lines: ChartIndicatorLine[]) => (
     <div
       key={panelKey}
       className="absolute left-0 z-10 flex items-end gap-1 flex-wrap pointer-events-none"
@@ -397,7 +405,7 @@ export function KlinesChartSvg({
     >
       {panelKey !== "main" && (() => {
         const num = panelKey.replace("panel", "");
-        const otherNum = panelKey === "panel5" ? "4" : String(Number(num) + 1);
+        const otherNum = panelKey === "panel7" ? "6" : String(Number(num) + 1);
         const ariaTpl = t.swapSecondaryPanelAria ?? "Swap panel {a} with panel {b}";
         const ariaLabel = ariaTpl.replace("{a}", num).replace("{b}", otherNum);
         const chipStyle = {
@@ -486,6 +494,8 @@ export function KlinesChartSvg({
           {hasPanel3 && strip("panel3", panel3Top, indicatorLines.filter((ind) => getPanel(ind) === "panel3"))}
           {hasPanel4 && strip("panel4", panel4Top, indicatorLines.filter((ind) => getPanel(ind) === "panel4"))}
           {hasPanel5 && strip("panel5", panel5Top, indicatorLines.filter((ind) => getPanel(ind) === "panel5"))}
+          {hasPanel6 && strip("panel6", panel6Top, indicatorLines.filter((ind) => getPanel(ind) === "panel6"))}
+          {hasPanel7 && strip("panel7", panel7Top, indicatorLines.filter((ind) => getPanel(ind) === "panel7"))}
         </>
       )}
       <svg
@@ -513,6 +523,8 @@ export function KlinesChartSvg({
           {hasPanel3 && <clipPath id={`${plotClipId}-panel3`}><rect x={MARGIN_LEFT} y={panelTop("panel3")} width={chartW} height={panelHeight("panel3")} /></clipPath>}
           {hasPanel4 && <clipPath id={`${plotClipId}-panel4`}><rect x={MARGIN_LEFT} y={panelTop("panel4")} width={chartW} height={panelHeight("panel4")} /></clipPath>}
           {hasPanel5 && <clipPath id={`${plotClipId}-panel5`}><rect x={MARGIN_LEFT} y={panelTop("panel5")} width={chartW} height={panelHeight("panel5")} /></clipPath>}
+          {hasPanel6 && <clipPath id={`${plotClipId}-panel6`}><rect x={MARGIN_LEFT} y={panelTop("panel6")} width={chartW} height={panelHeight("panel6")} /></clipPath>}
+          {hasPanel7 && <clipPath id={`${plotClipId}-panel7`}><rect x={MARGIN_LEFT} y={panelTop("panel7")} width={chartW} height={panelHeight("panel7")} /></clipPath>}
         </defs>
         {showSecondaryAxis && (
           <>
@@ -654,8 +666,8 @@ export function KlinesChartSvg({
             </>
           );
         })()}
-        {(["panel2", "panel3", "panel4", "panel5"] as const).map((panelId) => {
-          const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : panelId === "panel4" ? hasPanel4 : hasPanel5;
+        {(["panel2", "panel3", "panel4", "panel5", "panel6", "panel7"] as const).map((panelId) => {
+          const hasPanel = panelId === "panel2" ? hasPanel2 : panelId === "panel3" ? hasPanel3 : panelId === "panel4" ? hasPanel4 : panelId === "panel5" ? hasPanel5 : panelId === "panel6" ? hasPanel6 : hasPanel7;
           const top = panelTop(panelId);
           const h = panelHeight(panelId);
           if (!hasPanel || h <= 0) return null;
@@ -1018,7 +1030,7 @@ export function KlinesChartSvg({
                   const barW = Math.max(1, gap * 0.6);
                   const colorAbove = ind.histogramColorAbove ?? "#10b981";
                   const colorBelow = ind.histogramColorBelow ?? "#ef4444";
-                  const panelId = (["panel2", "panel3", "panel4", "panel5"] as const).find((p) => getPanel(ind) === p) ?? "panel2";
+                  const panelId = (["panel2", "panel3", "panel4", "panel5", "panel6", "panel7"] as const).find((p) => getPanel(ind) === p) ?? "panel2";
                   const panelBottomY = panelTop(panelId) + panelHeight(panelId);
                   return (
                     <g key={indIdx}>
@@ -1963,8 +1975,12 @@ export function KlinesChartSvg({
             crossY = Math.max(MARGIN_TOP, Math.min(MARGIN_TOP + chartH, crossY));
           }
           const tableTop = MARGIN_TOP + chartH;
-          const chartBottom = hasPanel5
-            ? panelTop("panel5") + panelHeight("panel5")
+          const chartBottom = hasPanel7
+            ? panelTop("panel7") + panelHeight("panel7")
+            : hasPanel6
+              ? panelTop("panel6") + panelHeight("panel6")
+              : hasPanel5
+                ? panelTop("panel5") + panelHeight("panel5")
             : hasPanel4
               ? panelTop("panel4") + panelHeight("panel4")
               : hasPanel3
@@ -1973,10 +1989,14 @@ export function KlinesChartSvg({
                   ? panelTop("panel2") + panelHeight("panel2")
                   : tableTop;
           const openTimeMs = crosshairPoint.index >= 0 && crosshairPoint.index < n ? Number(fullReversed[crosshairPoint.index][0]) : null;
+          /** Mesmo índice que a coluna «Bar» na tabela de klines (1 = mais antiga na série, n = mais recente). */
+          const barTableNumber = crosshairPoint.index + 1;
+          const barIndexFontSize = Math.max(7, Math.round(fontSize * 0.72));
           const boxPad = 6;
           const lineH = 10;
-          const boxW = 72;
-          const boxH = lineH * 2 + boxPad * 2;
+          const boxW = 96;
+          const lineCount = openTimeMs != null ? 2 : 1;
+          const boxH = lineH * lineCount + boxPad * 2;
           const boxX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW - boxW, crossX - boxW / 2));
           const boxY = tableTop + 2;
           return (
@@ -1984,17 +2004,37 @@ export function KlinesChartSvg({
               <line x1={crossX} y1={MARGIN_TOP} x2={crossX} y2={chartBottom} stroke={lineTableHex} strokeWidth={1} strokeDasharray="4 2" />
               <line x1={MARGIN_LEFT} y1={crossY} x2={MARGIN_LEFT + chartW} y2={crossY} stroke={lineTableHex} strokeWidth={1} strokeDasharray="4 2" />
               <circle cx={crossX} cy={crossY} r={3} fill={lineTableHex} stroke="none" />
-              {openTimeMs != null && (
-                <g>
-                  <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
-                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
-                    {formatDateYyyyMmDd(openTimeMs)}
+              <g>
+                <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
+                {openTimeMs != null ? (
+                  <>
+                    <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
+                      {formatDateYyyyMmDd(openTimeMs)}
+                    </text>
+                    <text
+                      x={boxX + boxW / 2}
+                      y={boxY + boxPad + lineH * 2 - 1}
+                      textAnchor="middle"
+                      className="font-mono"
+                      fill="#ffffff"
+                    >
+                      <tspan style={{ fontSize }}>{formatTimeLabel(openTimeMs)}</tspan>
+                      <tspan style={{ fontSize: barIndexFontSize }} fill="#e5e5e5">{` (${barTableNumber})`}</tspan>
+                    </text>
+                  </>
+                ) : (
+                  <text
+                    x={boxX + boxW / 2}
+                    y={boxY + boxPad + lineH - 1}
+                    textAnchor="middle"
+                    className="font-mono"
+                    style={{ fontSize: barIndexFontSize }}
+                    fill="#e5e5e5"
+                  >
+                    ({barTableNumber})
                   </text>
-                  <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="font-mono" style={{ fontSize }} fill="#ffffff">
-                    {formatTimeLabel(openTimeMs)}
-                  </text>
-                </g>
-              )}
+                )}
+              </g>
             </g>
           );
         })()}
@@ -2170,8 +2210,12 @@ export function KlinesChartSvg({
         )}
         </g>
         {drawingsVisible && (() => {
-          const extendedBottomY = hasPanel5
-            ? panelTop("panel5") + panelHeight("panel5")
+          const extendedBottomY = hasPanel7
+            ? panelTop("panel7") + panelHeight("panel7")
+            : hasPanel6
+              ? panelTop("panel6") + panelHeight("panel6")
+              : hasPanel5
+                ? panelTop("panel5") + panelHeight("panel5")
             : hasPanel4
               ? panelTop("panel4") + panelHeight("panel4")
               : hasPanel3

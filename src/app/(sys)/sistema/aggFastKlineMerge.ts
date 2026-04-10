@@ -139,7 +139,7 @@ export function mergeAggFastServerAndLive(
   serverKlines: readonly (readonly (string | number | null)[])[],
   liveRows: Iterable<AggFastBarRowPayload>,
   timezoneOffsetHours: number,
-  maxBars = 1000
+  maxBars = 5000
 ): (string | number | null)[][] {
   const m = new Map<number, (string | number | null)[]>();
   for (const row of serverKlines) {

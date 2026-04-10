@@ -1239,7 +1239,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   }, [chartLayoutSave]);
 
   const onSwapSecondaryPanel = useCallback(
-    (panel: "panel2" | "panel3" | "panel4" | "panel5") => {
+    (panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => {
       swapAdjacentSecondaryPanels(panel, (next) => chartLayoutSave?.saveLayoutNow("indicators", next));
     },
     [swapAdjacentSecondaryPanels, chartLayoutSave]
@@ -1704,20 +1704,24 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const windowN = windowSlice.length;
   if (windowN === 0) return null;
 
-  const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" =>
-    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5") ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
+  const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7" =>
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
   const hasPanel5 = indicatorLines.some((ind) => getPanel(ind) === "panel5");
-  const hasAnySecondaryPanel = hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5;
+  const hasPanel6 = indicatorLines.some((ind) => getPanel(ind) === "panel6");
+  const hasPanel7 = indicatorLines.some((ind) => getPanel(ind) === "panel7");
+  const hasAnySecondaryPanel = hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 || hasPanel6 || hasPanel7;
   const mainToPanelGap = hasAnySecondaryPanel ? MAIN_TO_PANEL_GAP : 0;
   const gap2_3 = hasPanel2 && hasPanel3 ? PANEL_GAP : 0;
   const gap3_4 = hasPanel3 && hasPanel4 ? PANEL_GAP : 0;
   const gap4_5 = hasPanel4 && hasPanel5 ? PANEL_GAP : 0;
+  const gap5_6 = hasPanel5 && hasPanel6 ? PANEL_GAP : 0;
+  const gap6_7 = hasPanel6 && hasPanel7 ? PANEL_GAP : 0;
   const marginBottom = MARGIN_BOTTOM_TABLE;
   const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
-  const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0) + (hasPanel5 ? 1 : 0);
+  const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0) + (hasPanel5 ? 1 : 0) + (hasPanel6 ? 1 : 0) + (hasPanel7 ? 1 : 0);
 
   /** Teto do plot (600px em 100%, 750px em 125%). Largura máxima total do chart = 660px (600 + 60 eixo). */
   const MAX_PLOT_WIDTH_BASE = 600;
@@ -1750,7 +1754,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const panel3Height = hasPanel3 ? chartH * PANEL_TO_MAIN_RATIO : 0;
   const panel4Height = hasPanel4 ? chartH * PANEL_TO_MAIN_RATIO : 0;
   const panel5Height = hasPanel5 ? chartH * PANEL_TO_MAIN_RATIO : 0;
-  const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + gap2_3 + gap3_4 + gap4_5 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
+  const panel6Height = hasPanel6 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel7Height = hasPanel7 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + panel6Height + panel7Height + gap2_3 + gap3_4 + gap4_5 + gap5_6 + gap6_7 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
 
   /** Escala dos textos (indicadores e eixo Y): reduz quando o plot está reduzido; aumento global (~25%). */
   const textScale = Math.min(1.15, Math.max(0.7, Math.min(1, displayPlotWidth / maxPlotWidth)) * 1.25);
@@ -1762,11 +1768,17 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
   const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
   const panel5Top = panel4Top + panel4Height + (hasPanel4 ? PANEL_GAP : 0);
-  const panelTop = (p: "panel2" | "panel3" | "panel4" | "panel5") => p === "panel2" ? panel2Top : p === "panel3" ? panel3Top : p === "panel4" ? panel4Top : panel5Top;
-  const panelHeight = (p: "panel2" | "panel3" | "panel4" | "panel5") => p === "panel2" ? panel2Height : p === "panel3" ? panel3Height : p === "panel4" ? panel4Height : panel5Height;
+  const panel6Top = panel5Top + panel5Height + (hasPanel5 ? PANEL_GAP : 0);
+  const panel7Top = panel6Top + panel6Height + (hasPanel6 ? PANEL_GAP : 0);
+  const panelTop = (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => p === "panel2" ? panel2Top : p === "panel3" ? panel3Top : p === "panel4" ? panel4Top : p === "panel5" ? panel5Top : p === "panel6" ? panel6Top : panel7Top;
+  const panelHeight = (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => p === "panel2" ? panel2Height : p === "panel3" ? panel3Height : p === "panel4" ? panel4Height : p === "panel5" ? panel5Height : p === "panel6" ? panel6Height : panel7Height;
   const tableTop = MARGIN_TOP + chartH;
-  const chartBottom = hasPanel5
-    ? panelTop("panel5") + panelHeight("panel5")
+  const chartBottom = hasPanel7
+    ? panelTop("panel7") + panelHeight("panel7")
+    : hasPanel6
+      ? panelTop("panel6") + panelHeight("panel6")
+      : hasPanel5
+        ? panelTop("panel5") + panelHeight("panel5")
     : hasPanel4
       ? panelTop("panel4") + panelHeight("panel4")
       : hasPanel3
@@ -1779,7 +1791,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const t = (val - pMin) / range;
     return top + h - Math.max(0, Math.min(1, t)) * h;
   };
-  const buildPanelExtent = (panelKey: "panel2" | "panel3" | "panel4" | "panel5") => {
+  const buildPanelExtent = (panelKey: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => {
     const lines = indicatorLines.filter((ind) => getPanel(ind) === panelKey);
     const hasObv = lines.some((ind) => ind.type === "OBV");
     const useFixedScale =
@@ -1848,18 +1860,22 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (hasVolume && min < 0) min = 0;
     return { min, max };
   };
-  const panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5", { min: number; max: number }> = {
+  const panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7", { min: number; max: number }> = {
     panel2: buildPanelExtent("panel2"),
     panel3: buildPanelExtent("panel3"),
     panel4: buildPanelExtent("panel4"),
     panel5: buildPanelExtent("panel5"),
+    panel6: buildPanelExtent("panel6"),
+    panel7: buildPanelExtent("panel7"),
   };
   const yRsiPanel2 = (rsi: number) => yValInPanel(rsi, panel2Top, panel2Height, panelExtents.panel2.min, panelExtents.panel2.max);
   const yRsiPanel3 = (rsi: number) => yValInPanel(rsi, panel3Top, panel3Height, panelExtents.panel3.min, panelExtents.panel3.max);
   const yRsiPanel4 = (rsi: number) => yValInPanel(rsi, panel4Top, panel4Height, panelExtents.panel4.min, panelExtents.panel4.max);
   const yRsiPanel5 = (rsi: number) => yValInPanel(rsi, panel5Top, panel5Height, panelExtents.panel5.min, panelExtents.panel5.max);
-  const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4" | "panel5") =>
-    panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : panel === "panel4" ? yRsiPanel4(rsi) : yRsiPanel5(rsi);
+  const yRsiPanel6 = (rsi: number) => yValInPanel(rsi, panel6Top, panel6Height, panelExtents.panel6.min, panelExtents.panel6.max);
+  const yRsiPanel7 = (rsi: number) => yValInPanel(rsi, panel7Top, panel7Height, panelExtents.panel7.min, panelExtents.panel7.max);
+  const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") =>
+    panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : panel === "panel4" ? yRsiPanel4(rsi) : panel === "panel5" ? yRsiPanel5(rsi) : panel === "panel6" ? yRsiPanel6(rsi) : yRsiPanel7(rsi);
   const invisibleEndEffective = Math.max(invisibleCandlesEnd, maxRegForecastBars);
   const totalSlots = windowN + invisibleEndEffective;
   const gap = chartW / totalSlots;
@@ -2760,10 +2776,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               hasPanel3={hasPanel3}
               hasPanel4={hasPanel4}
               hasPanel5={hasPanel5}
+              hasPanel6={hasPanel6}
+              hasPanel7={hasPanel7}
               panel2Top={panel2Top}
               panel3Top={panel3Top}
               panel4Top={panel4Top}
               panel5Top={panel5Top}
+              panel6Top={panel6Top}
+              panel7Top={panel7Top}
               panelTop={panelTop}
               panelHeight={panelHeight}
               panelExtents={panelExtents}
@@ -2964,7 +2984,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                     setCrosshairDragging(false);
                   }) : undefined}
                 />
-                {hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 ? (
+                {hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 || hasPanel6 || hasPanel7 ? (
                   <div
                     role="presentation"
                     style={{
@@ -2985,7 +3005,9 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                       const inPanel3 = hasPanel3 && py >= panel3Top && py < panel3Top + panel3Height;
                       const inPanel4 = hasPanel4 && py >= panel4Top && py < panel4Top + panel4Height;
                       const inPanel5 = hasPanel5 && py >= panel5Top && py < panel5Top + panel5Height;
-                      if (!inPanel2 && !inPanel3 && !inPanel4 && !inPanel5) return;
+                      const inPanel6 = hasPanel6 && py >= panel6Top && py < panel6Top + panel6Height;
+                      const inPanel7 = hasPanel7 && py >= panel7Top && py < panel7Top + panel7Height;
+                      if (!inPanel2 && !inPanel3 && !inPanel4 && !inPanel5 && !inPanel6 && !inPanel7) return;
                       const idx = Math.max(0, Math.min(n - 1, Math.round((px - MARGIN_LEFT) / gap - 0.5) + startIndex));
                       const close = parseNum(String(fullReversed[idx]?.[4] ?? 0));
                       let panelValue: number;
@@ -2998,9 +3020,15 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                       } else if (inPanel4) {
                         const { min, max } = panelExtents.panel4;
                         panelValue = min + (1 - (py - panel4Top) / panel4Height) * (max - min);
-                      } else {
+                      } else if (inPanel5) {
                         const { min, max } = panelExtents.panel5;
                         panelValue = min + (1 - (py - panel5Top) / panel5Height) * (max - min);
+                      } else if (inPanel6) {
+                        const { min, max } = panelExtents.panel6;
+                        panelValue = min + (1 - (py - panel6Top) / panel6Height) * (max - min);
+                      } else {
+                        const { min, max } = panelExtents.panel7;
+                        panelValue = min + (1 - (py - panel7Top) / panel7Height) * (max - min);
                       }
                       const newPoint = { index: idx, price: close, panelClickY: py, panelValue };
                       const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
@@ -3103,11 +3131,15 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 hasPanel3={hasPanel3}
                 hasPanel4={hasPanel4}
                 hasPanel5={hasPanel5}
+                hasPanel6={hasPanel6}
+                hasPanel7={hasPanel7}
                 panelExtents={panelExtents}
                 yRsiPanel2={yRsiPanel2}
                 yRsiPanel3={yRsiPanel3}
                 yRsiPanel4={yRsiPanel4}
                 yRsiPanel5={yRsiPanel5}
+                yRsiPanel6={yRsiPanel6}
+                yRsiPanel7={yRsiPanel7}
                 yRsiByPanel={yRsiByPanel}
                 showLastClose={showLastClose}
                 lastCloseY={lastCloseY}

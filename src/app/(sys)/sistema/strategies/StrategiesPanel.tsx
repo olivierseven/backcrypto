@@ -219,7 +219,17 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const { hideStatusBar } = useAppBarSafe();
   const { userIndicators, currentGroupMinutes } = useKlinesIndicators();
   const { symbol } = useChartSymbol();
-  const { strategies, appliedStrategyIds, addStrategy, updateStrategy, removeStrategy, applyStrategy, unapplyStrategy, isApplied } = useStrategies();
+  const {
+    strategies,
+    appliedStrategyIds,
+    replaceAppliedStrategyIds,
+    addStrategy,
+    updateStrategy,
+    removeStrategy,
+    applyStrategy,
+    unapplyStrategy,
+    isApplied,
+  } = useStrategies();
   const chartLayoutSave = useChartLayoutSave();
   /** Estratégias combinadas atualmente aplicadas. */
   const appliedCombinedStrategies = useMemo(
@@ -269,6 +279,9 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const chartIntervalMinutes = currentGroupMinutes ?? 5;
   const chartIntervalLabel = intervalMinutesToLabel(chartIntervalMinutes);
 
+  const indicatorIdsSet = useMemo(() => new Set(userIndicators.map((i) => i.id)), [userIndicators]);
+  const allStrategyIdsSet = useMemo(() => new Set(strategies.map((x) => x.id)), [strategies]);
+
   /** Persiste no banco apenas appliedStrategyIds (ativação/inativação por estratégia). */
   const saveActivationToServer = useCallback(async (nextAppliedIds: string[]) => {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
@@ -286,6 +299,27 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
       /* ignore */
     }
   }, []);
+
+  /** Referências inválidas (indicador apagado, etc.): remove da tabela ao vivo e persiste. */
+  useEffect(() => {
+    if (strategies.length === 0 || appliedStrategyIds.length === 0) return;
+    const next = appliedStrategyIds.filter((id) => {
+      const s = strategies.find((x) => x.id === id);
+      if (!s) return false;
+      return validateStrategyReferences(s, indicatorIdsSet, allStrategyIdsSet, { userIndicators }).ok;
+    });
+    if (next.length === appliedStrategyIds.length) return;
+    replaceAppliedStrategyIds(next);
+    void saveActivationToServer(next);
+  }, [
+    strategies,
+    appliedStrategyIds,
+    indicatorIdsSet,
+    allStrategyIdsSet,
+    userIndicators,
+    replaceAppliedStrategyIds,
+    saveActivationToServer,
+  ]);
 
   /** Estratégias a exibir: do símbolo atual ou aplicáveis a qualquer símbolo. */
   const visibleStrategies = useMemo(
@@ -305,8 +339,8 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
-    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
-  const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : 1);
+    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
+  const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : p === "panel6" ? 6 : p === "panel7" ? 7 : 1);
   /** Intervalo efetivo para filtrar séries: ao editar, usa o intervalo da estratégia; ao criar, usa o do gráfico. */
   const effectiveIntervalMinutes = editingStrategyId
     ? (strategies.find((s) => s.id === editingStrategyId)?.intervalMinutes ?? chartIntervalMinutes)
@@ -404,6 +438,17 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
           opts.push({ key: `ind_${ind.id}:hist`, label: `(${num}) ${histLabel}` });
         }
       }
+      if (ind.type === "DIFF" && ind.diffSignalLine) {
+        const tk = tKlines as Record<string, string>;
+        const sigLabel = tk.diffSignalLabel
+          ? String(tk.diffSignalLabel).replace("{period}", String(ind.diffSignalPeriod ?? 9))
+          : `DIFF Signal(${ind.diffSignalPeriod ?? 9})`;
+        opts.push({ key: `ind_${ind.id}:sig`, label: `(${num}) ${sigLabel}` });
+        if (ind.diffHistogram) {
+          const histLabel = tk.diffHistogramLabel ?? "DIFF (histogram)";
+          opts.push({ key: `ind_${ind.id}:hist`, label: `(${num}) ${histLabel}` });
+        }
+      }
       // - Stochastic: %D
       if (ind.type === "Stochastic" && ind.stochDLine) {
         const dLabel = (tKlines as Record<string, string>).stochDLabel
@@ -425,7 +470,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   const seriesOptionsForForm = addStrategyMode === "combined" ? seriesOptionsCombined : seriesOptions;
 
-  const canUseCombinedMode = visibleStrategies.length >= 2;
+  const canUseCombinedMode = visibleStrategies.length >= 1;
 
   const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
   const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
@@ -640,10 +685,15 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 {listNormals.map((s) => {
                   const applied = isApplied(s.id);
                   const blocked = blockedNormalIds.has(s.id);
+                  const blockTitle = (t as Record<string, string>).strategyBlockedByCombined ?? "Desative a estratégia combinada para editar, aplicar ou excluir.";
+                  const refsOk = validateStrategyReferences(s, indicatorIdsSet, allStrategyIdsSet, { userIndicators }).ok;
+                  const applyTitle = blocked
+                    ? blockTitle
+                    : !refsOk
+                      ? ((t as Record<string, string>).strategyApplyDisabledHint ?? "")
+                      : undefined;
                   const onApply = () => {
-                    const indicatorIds = new Set(userIndicators.map((i) => i.id));
-                    const strategyIds = new Set(appliedStrategyIds);
-                    const result = validateStrategyReferences(s, indicatorIds, strategyIds);
+                    const result = validateStrategyReferences(s, indicatorIdsSet, allStrategyIdsSet, { userIndicators });
                     if (!result.ok) {
                       const lines = result.missingIds.map((id) =>
                         (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).")
@@ -662,7 +712,6 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                     unapplyStrategy(s.id);
                     saveActivationToServer(appliedStrategyIds.filter((id) => id !== s.id));
                   };
-                  const blockTitle = (t as Record<string, string>).strategyBlockedByCombined ?? "Desative a estratégia combinada para editar, aplicar ou excluir.";
                   return (
                     <li
                       key={s.id}
@@ -711,6 +760,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                             onClick={() => !blocked && onApply()}
                             disabled={blocked}
                             className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                            title={applyTitle}
                           >
                             {t.applyStrategy}
                           </button>
@@ -739,11 +789,12 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                 )}
                 {listCombined.map((s) => {
                   const applied = isApplied(s.id);
+                  const refsOk = validateStrategyReferences(s, indicatorIdsSet, allStrategyIdsSet, { userIndicators }).ok;
+                  const applyTitle = !refsOk
+                    ? ((t as Record<string, string>).strategyApplyDisabledHint ?? "")
+                    : undefined;
                   const onApply = () => {
-                    const indicatorIds = new Set(userIndicators.map((i) => i.id));
-                    // Combinada referencia outras estratégias por strat_<id>: basta existirem (o gráfico as avalia como dependência).
-                    const strategyIds = new Set(strategies.map((x) => x.id));
-                    const result = validateStrategyReferences(s, indicatorIds, strategyIds);
+                    const result = validateStrategyReferences(s, indicatorIdsSet, allStrategyIdsSet, { userIndicators });
                     if (!result.ok) {
                       const msgTpl = (t as Record<string, string>).strategyApplyErrorMissingColumn ?? (t.strategyApplyErrorMissingIndicator ?? "Could not find indicator (id: {id}).");
                       const lines = result.missingIds.map((id) => msgTpl.replace("{id}", id));
@@ -799,6 +850,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                             type="button"
                             onClick={onApply}
                             className="text-xs px-2 py-1 rounded bg-violet-600 text-white hover:bg-violet-700"
+                            title={applyTitle}
                           >
                             {t.applyStrategy}
                           </button>
@@ -846,7 +898,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
                   type="button"
                   onClick={() => canUseCombinedMode && setAddStrategyMode("combined")}
                   disabled={!canUseCombinedMode}
-                  title={!canUseCombinedMode ? ((t as Record<string, string>).needTwoStrategiesForCombined ?? "") : undefined}
+                  title={!canUseCombinedMode ? ((t as Record<string, string>).needOneStrategyForCombined ?? "") : undefined}
                   className={`text-xs px-2.5 py-1.5 flex-1 border-l border-zinc-300 ${addStrategyMode === "combined" ? "bg-zinc-200 font-medium text-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"} ${!canUseCombinedMode ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {(t as Record<string, string>).strategyModeCombined ?? "Combinado"}
@@ -854,7 +906,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
               </div>
               {!canUseCombinedMode && (
                 <p className="text-xs text-zinc-500">
-                  {(t as Record<string, string>).needTwoStrategiesForCombined ?? "Crie pelo menos 2 estratégias neste símbolo para usar o modo combinado."}
+                  {(t as Record<string, string>).needOneStrategyForCombined ?? "Crie pelo menos uma estratégia neste símbolo para usar o modo combinado."}
                 </p>
               )}
             </div>
@@ -1140,6 +1192,59 @@ function GroupEditor({
   );
 }
 
+/** Exibição estável do número guardado na estratégia (sem forçar estado intermédio). */
+function formatStrategyConstant(n: number): string {
+  if (!Number.isFinite(n)) return "0";
+  if (Object.is(n, -0)) return "0";
+  return String(n);
+}
+
+/**
+ * Input de constante: permite apagar o valor e digitar "-" / "." sem o controlled
+ * `Number('')` / `Number('-')` → 0 que impedia edição com `type="number"`.
+ */
+function ConstantOperandNumberField({
+  value,
+  onChange,
+  className,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  className?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const display = focused ? draft : formatStrategyConstant(value);
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      autoComplete="off"
+      className={className}
+      value={display}
+      onFocus={() => {
+        setFocused(true);
+        setDraft(formatStrategyConstant(value));
+      }}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={(e) => {
+        setFocused(false);
+        const t = e.currentTarget.value.replace(",", ".").trim();
+        let next: number;
+        if (t === "" || t === "-" || t === "." || t === "-.") {
+          next = 0;
+        } else {
+          const raw = Number(t);
+          next = Number.isNaN(raw) ? 0 : Math.round(raw * 100) / 100;
+        }
+        onChange(next);
+      }}
+    />
+  );
+}
+
 function OperandInput({
   operand,
   onChange,
@@ -1160,7 +1265,7 @@ function OperandInput({
   hideOffset?: boolean;
   /** Modo combinado: só estratégia (sem constante nem select série/valor). */
   seriesOnly?: boolean;
-  /** Quando true, desabilita opções de offset -1 a -7 (modelo default). */
+  /** Quando true, desabilita opções de offset -1 a STRATEGY_OFFSET_MIN (modelo default). */
   disableNegativeOffsets?: boolean;
 }) {
   const isSeries = operand.type === "series";
@@ -1223,15 +1328,9 @@ function OperandInput({
           )}
         </>
       ) : (
-        <input
-          type="number"
-          step="0.01"
+        <ConstantOperandNumberField
           value={operand.value}
-          onChange={(e) => {
-            const raw = Number(e.target.value);
-            const value = Number.isNaN(raw) ? 0 : Math.round(raw * 100) / 100;
-            onChange({ type: "constant", value });
-          }}
+          onChange={(v) => onChange({ type: "constant", value: v })}
           className="w-20 text-xs border border-zinc-300 rounded px-1.5 py-1"
         />
       )}
@@ -1407,7 +1506,7 @@ function ConditionRow({
                 <select
                   value={barsAfter}
                   onChange={(e) => onUpdate({ barsAfter: Number(e.target.value) })}
-                  className="text-xs border border-zinc-300 rounded px-1 py-1 w-10"
+                  className="text-xs border border-zinc-300 rounded px-1 py-1 min-w-[2.75rem]"
                 >
                   {Array.from({ length: STRATEGY_BARSAFTER_MAX - STRATEGY_BARSAFTER_MIN + 1 }, (_, i) => i).map((v) => (
                     <option key={v} value={v}>{v === 0 ? "0" : `-${v}`}</option>

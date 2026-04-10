@@ -5,12 +5,13 @@ type IndicatorLabelT = Parameters<typeof getIndicatorLabel>[1];
 import { getIndicatorColumnStart } from "./indicatorsColumnStart";
 
 /** Painel onde a linha do indicador é desenhada (como em KlinesTable ao montar ChartIndicatorLine). */
-export function chartLinePanelForUserIndicator(ind: UserIndicatorConfig): "main" | "panel2" | "panel3" | "panel4" | "panel5" {
+export function chartLinePanelForUserIndicator(ind: UserIndicatorConfig): "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7" {
   return (
     ind.panel ??
     (ind.type === "RSI" ||
     ind.type === "MFI" ||
     ind.type === "MACD" ||
+    ind.type === "DIFF" ||
     ind.type === "Stochastic" ||
     ind.type === "WilliamsR" ||
     ind.type === "OBV" ||

@@ -34,6 +34,18 @@ export interface AddFormState {
   macdHistogram: boolean;
   macdHistogramColorAbove: string;
   macdHistogramColorBelow: string;
+  diffFirstFieldKey: IndicatorFieldKey;
+  diffSecondFieldKey: IndicatorFieldKey;
+  diffSignalLine: boolean;
+  diffSignalMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
+  diffSignalPeriod: number;
+  diffSignalPeriodText: string;
+  diffSignalColor: string;
+  diffSignalLineWidth: IndicatorLineWidth;
+  diffSignalLineStyle: IndicatorLineStyle;
+  diffHistogram: boolean;
+  diffHistogramColorAbove: string;
+  diffHistogramColorBelow: string;
   rsiFixedScale: boolean;
   rsiCenterLine: boolean;
   rsiCenterLineColor: string;
@@ -256,6 +268,18 @@ export interface EditFormState {
   macdHistogram: boolean;
   macdHistogramColorAbove: string;
   macdHistogramColorBelow: string;
+  diffFirstFieldKey: IndicatorFieldKey;
+  diffSecondFieldKey: IndicatorFieldKey;
+  diffSignalLine: boolean;
+  diffSignalMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
+  diffSignalPeriod: number;
+  diffSignalPeriodText: string;
+  diffSignalColor: string;
+  diffSignalLineWidth: IndicatorLineWidth;
+  diffSignalLineStyle: IndicatorLineStyle;
+  diffHistogram: boolean;
+  diffHistogramColorAbove: string;
+  diffHistogramColorBelow: string;
   stochLimits: boolean;
   stochLimitUpper: number;
   stochLimitLower: number;
@@ -416,11 +440,11 @@ export interface IndicatorsPanelContextValue {
   firstEnabledFieldValue: IndicatorFieldKey;
   fieldOptionsVisibleForAdd: FieldOption[];
   firstEnabledFieldValueForAdd: IndicatorFieldKey;
-  panelsWithSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
-  panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
-  panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean };
-  indicatorCountByPanel: { main: number; panel2: number; panel3: number; panel4: number; panel5: number };
-  /** Modo free: painéis 3, 4 e 5 não podem ser selecionados. */
+  panelsWithSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean; panel6: boolean; panel7: boolean };
+  panelsFreeForSecondary: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean; panel6: boolean; panel7: boolean };
+  panelsFreeForSecondaryEdit: { panel2: boolean; panel3: boolean; panel4: boolean; panel5: boolean; panel6: boolean; panel7: boolean };
+  indicatorCountByPanel: { main: number; panel2: number; panel3: number; panel4: number; panel5: number; panel6: number; panel7: number };
+  /** Modo free: painéis 3+ não podem ser selecionados. */
   isFreeUser?: boolean;
   MAIN_MAX_INDICATORS: number;
   SECONDARY_MAX_INDICATORS: number;

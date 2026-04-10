@@ -44,8 +44,8 @@ export interface ChartIndicatorLine {
   shortLabel?: string;
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
-  /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
+  /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD/DIFF, OBV e demais usam escala automática no painel. */
+  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "DIFF" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
@@ -67,8 +67,8 @@ export interface ChartIndicatorLine {
   adxLimitColor?: string;
   adxLimitLineWidth?: "thin" | "normal" | "thick";
   adxLimitLineStyle?: "solid" | "dotted" | "dashed";
-  /** Onde renderizar: main ou panel2/panel3/panel4 (para RSI). */
-  panel?: "main" | "panel2" | "panel3" | "panel4" | "panel5";
+  /** Onde renderizar: main ou painéis secundários (panel2–panel7). */
+  panel?: "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7";
   /** Só para RSI: true = escala fixa 0–100 no eixo Y; false ou ausente (para não-RSI) = escala automática. */
   rsiFixedScale?: boolean;
   /** Só para RSI: desenhar linha horizontal em 50%. */

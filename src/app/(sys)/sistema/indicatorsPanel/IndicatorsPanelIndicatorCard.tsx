@@ -62,8 +62,8 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   const firstForEdit = (visibleForEdit[0]?.value ?? (ind.type === "WilliamsR" ? "close" : firstEnabledFieldValue)) as IndicatorFieldKey;
   const editFieldValue = (visibleForEdit.some((o) => o.value === editForm?.fieldKey) ? editForm!.fieldKey : firstForEdit) as string;
 
-  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? "panel2" : "main");
-  const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : null;
+  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? "panel2" : "main");
+  const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : panel === "panel6" ? "6" : panel === "panel7" ? "7" : null;
 
   const tRecord = t as Record<string, string>;
   const lineWidthOptions: ComboboxOption[] = useMemo(() => [
@@ -105,13 +105,17 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     const p3 = tRecord.chartOptionPanel3 ?? "Panel 3";
     const p4 = tRecord.chartOptionPanel4 ?? "Panel 4";
     const p5 = tRecord.chartOptionPanel5 ?? "Panel 5";
+    const p6 = tRecord.chartOptionPanel6 ?? "Panel 6";
+    const p7 = tRecord.chartOptionPanel7 ?? "Panel 7";
     const main = tRecord.chartOptionMain ?? "Main";
-    if (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume") {
+    if (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume") {
       const opts: ComboboxOption[] = [];
       if (panelsFreeForSecondaryEdit.panel2) opts.push({ value: "panel2", label: p2 });
       if (panelsFreeForSecondaryEdit.panel3) opts.push({ value: "panel3", label: p3 });
       if (panelsFreeForSecondaryEdit.panel4) opts.push({ value: "panel4", label: p4 });
       if (panelsFreeForSecondaryEdit.panel5) opts.push({ value: "panel5", label: p5 });
+      if (panelsFreeForSecondaryEdit.panel6) opts.push({ value: "panel6", label: p6 });
+      if (panelsFreeForSecondaryEdit.panel7) opts.push({ value: "panel7", label: p7 });
       return opts;
     }
     return [
@@ -120,6 +124,8 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
       { value: "panel3", label: (isFreeUser ? "🔒 " : "") + p3, disabled: (indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS && editForm?.panel !== "panel3") || isFreeUser },
       { value: "panel4", label: (isFreeUser ? "🔒 " : "") + p4, disabled: (indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS && editForm?.panel !== "panel4") || isFreeUser },
       { value: "panel5", label: (isFreeUser ? "🔒 " : "") + p5, disabled: (indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS && editForm?.panel !== "panel5") || isFreeUser },
+      { value: "panel6", label: (isFreeUser ? "🔒 " : "") + p6, disabled: (indicatorCountByPanel.panel6 >= SECONDARY_MAX_INDICATORS && editForm?.panel !== "panel6") || isFreeUser },
+      { value: "panel7", label: (isFreeUser ? "🔒 " : "") + p7, disabled: (indicatorCountByPanel.panel7 >= SECONDARY_MAX_INDICATORS && editForm?.panel !== "panel7") || isFreeUser },
     ];
   }, [ind.type, indicatorCountByPanel, panelsFreeForSecondaryEdit, isFreeUser, editForm?.panel, tRecord]);
   const volumeSourceOptions: ComboboxOption[] = useMemo(() => [
@@ -328,6 +334,57 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
                     <ColorPaletteCombobox value={editForm.macdHistogramColorBelow} onChange={(hex) => setEditForm((f) => (f ? { ...f, macdHistogramColorBelow: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : ind.type === "DIFF" ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).diffFirstInputLabel ?? "Entrada 1 (A)"}</span>
+                <Combobox value={editForm.diffFirstFieldKey} onChange={(v) => setEditForm((f) => (f ? { ...f, diffFirstFieldKey: v as IndicatorFieldKey } : f))} options={visibleForEdit.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))} className="flex-1 min-w-0" size="md" aria-label={(t as Record<string, string>).diffFirstInputLabel ?? "Entrada 1"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2 (B)"}</span>
+                <Combobox value={editForm.diffSecondFieldKey} onChange={(v) => setEditForm((f) => (f ? { ...f, diffSecondFieldKey: v as IndicatorFieldKey, fieldKey: v as IndicatorFieldKey } : f))} options={visibleForEdit.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))} className="flex-1 min-w-0" size="md" aria-label={(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2"} />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.diffSignalLine} onChange={(e) => setEditForm((f) => (f ? { ...f, diffSignalLine: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdSignalLineLabel ?? "Linha de sinal"}</span>
+              </label>
+              {editForm.diffSignalLine && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA sinal"}</span>
+                    <Combobox value={editForm.diffSignalMaType} onChange={(v) => setEditForm((f) => (f ? { ...f, diffSignalMaType: v as EditFormState["diffSignalMaType"] } : f))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.macdSignalMa ?? "MA"} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSignalPeriod ?? "Período sinal"}</span>
+                    <div className="flex items-center gap-1">
+                      <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, diffSignalPeriod: Math.max(1, f.diffSignalPeriod - 1), diffSignalPeriodText: String(Math.max(1, f.diffSignalPeriod - 1)) } : f))} className="stepper-btn">−</StepperButton>
+                      <input type="text" inputMode="numeric" value={editForm.diffSignalPeriodText} onChange={(e) => setEditForm((f) => (f ? { ...f, diffSignalPeriodText: e.target.value.replace(/[^\d]/g, "") } : f))} onBlur={() => { const n = Number(editForm.diffSignalPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 9; setEditForm((f) => (f ? { ...f, diffSignalPeriod: v, diffSignalPeriodText: String(v) } : f)); }} className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1" />
+                      <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, diffSignalPeriod: Math.min(500, f.diffSignalPeriod + 1), diffSignalPeriodText: String(Math.min(500, f.diffSignalPeriod + 1)) } : f))} className="stepper-btn">+</StepperButton>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <ColorPaletteCombobox value={editForm.diffSignalColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, diffSignalColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+                  </div>
+                </div>
+              )}
+              <label className={`flex items-center gap-2 ${editForm.diffSignalLine ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}>
+                <input type="checkbox" checked={editForm.diffHistogram} disabled={!editForm.diffSignalLine} onChange={(e) => setEditForm((f) => (f ? { ...f, diffHistogram: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)"}</span>
+              </label>
+              {editForm.diffSignalLine && editForm.diffHistogram && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
+                    <ColorPaletteCombobox value={editForm.diffHistogramColorAbove} onChange={(hex) => setEditForm((f) => (f ? { ...f, diffHistogramColorAbove: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima"} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
+                    <ColorPaletteCombobox value={editForm.diffHistogramColorBelow} onChange={(hex) => setEditForm((f) => (f ? { ...f, diffHistogramColorBelow: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
                   </div>
                 </div>
               )}

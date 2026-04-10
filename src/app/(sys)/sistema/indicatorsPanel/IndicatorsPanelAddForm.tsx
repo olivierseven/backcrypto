@@ -27,7 +27,7 @@ type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 /** Grupos e tipos para o combobox de tipo de indicador (mesma ordem e labels do select antigo). */
 const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
   { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "HMA_CUSTOM", labelKey: "hmaCustomLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
-  { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
+  { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "DIFF", labelKey: "diffLabel" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
   { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }, { value: "LINEAR_FIT", labelKey: "linearFitLabel" }, { value: "QUADRATIC_FIT", labelKey: "quadraticFitLabel" }] },
   { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
   { groupLabelKey: "indicatorGroupVolatilityChannels", types: [{ value: "ATR", labelKey: "atrLabel" }, { value: "Bollinger", labelKey: "bollingerLabel" }, { value: "Keltner", labelKey: "keltnerLabel" }, { value: "Donchian", labelKey: "donchianLabel" }] },
@@ -49,6 +49,7 @@ const INDICATOR_THEORY_I18N_KEY: Record<UserIndicatorType, string> = {
   RSI: "indicatorTheoryRSI",
   MFI: "indicatorTheoryMFI",
   MACD: "indicatorTheoryMACD",
+  DIFF: "indicatorTheoryDIFF",
   Stochastic: "indicatorTheoryStochastic",
   WilliamsR: "indicatorTheoryWilliamsR",
   OBV: "indicatorTheoryOBV",
@@ -129,23 +130,31 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     return form.indicatorType;
   })();
 
-  const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5;
+  const hasFreePanelForSecondary =
+    panelsFreeForSecondary.panel2 ||
+    panelsFreeForSecondary.panel3 ||
+    panelsFreeForSecondary.panel4 ||
+    panelsFreeForSecondary.panel5 ||
+    panelsFreeForSecondary.panel6 ||
+    panelsFreeForSecondary.panel7;
   const firstFreePanelForSecondary: IndicatorPanel =
-    panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2";
+    panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : panelsFreeForSecondary.panel6 ? "panel6" : panelsFreeForSecondary.panel7 ? "panel7" : "panel2";
 
   /** Volume só pode ir em painel vazio (0 indicadores). Modo free: apenas painel 2. */
   const hasEmptyPanelForVolume = isFreeUser
     ? indicatorCountByPanel.panel2 === 0
-    : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0);
+    : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0 || indicatorCountByPanel.panel6 === 0 || indicatorCountByPanel.panel7 === 0);
   const firstEmptyPanelForVolume: IndicatorPanel = isFreeUser
     ? (indicatorCountByPanel.panel2 === 0 ? "panel2" : "panel2")
-    : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : "panel2");
+    : (indicatorCountByPanel.panel2 === 0 ? "panel2" : indicatorCountByPanel.panel3 === 0 ? "panel3" : indicatorCountByPanel.panel4 === 0 ? "panel4" : indicatorCountByPanel.panel5 === 0 ? "panel5" : indicatorCountByPanel.panel6 === 0 ? "panel6" : indicatorCountByPanel.panel7 === 0 ? "panel7" : "panel2");
 
   const chartPanelOptions: ComboboxOption[] = useMemo(() => {
     const p2 = tRecord.chartOptionPanel2 ?? "Panel 2";
     const p3 = tRecord.chartOptionPanel3 ?? "Panel 3";
     const p4 = tRecord.chartOptionPanel4 ?? "Panel 4";
     const p5 = tRecord.chartOptionPanel5 ?? "Panel 5";
+    const p6 = tRecord.chartOptionPanel6 ?? "Panel 6";
+    const p7 = tRecord.chartOptionPanel7 ?? "Panel 7";
     const main = tRecord.chartOptionMain ?? "Main";
     const none = tRecord.chartOptionNoPanelAvailable ?? "Nenhum painel disponível";
     if (form.indicatorType === "Volume") {
@@ -154,17 +163,21 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       if (!isFreeUser && indicatorCountByPanel.panel3 === 0) opts.push({ value: "panel3", label: p3 });
       if (!isFreeUser && indicatorCountByPanel.panel4 === 0) opts.push({ value: "panel4", label: p4 });
       if (!isFreeUser && indicatorCountByPanel.panel5 === 0) opts.push({ value: "panel5", label: p5 });
-      const hasEmpty = isFreeUser ? indicatorCountByPanel.panel2 === 0 : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0);
+      if (!isFreeUser && indicatorCountByPanel.panel6 === 0) opts.push({ value: "panel6", label: p6 });
+      if (!isFreeUser && indicatorCountByPanel.panel7 === 0) opts.push({ value: "panel7", label: p7 });
+      const hasEmpty = isFreeUser ? indicatorCountByPanel.panel2 === 0 : (indicatorCountByPanel.panel2 === 0 || indicatorCountByPanel.panel3 === 0 || indicatorCountByPanel.panel4 === 0 || indicatorCountByPanel.panel5 === 0 || indicatorCountByPanel.panel6 === 0 || indicatorCountByPanel.panel7 === 0);
       if (!hasEmpty) opts.push({ value: "", label: none });
       return opts;
     }
-    if (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") {
+    if (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") {
       const opts: ComboboxOption[] = [];
       if (panelsFreeForSecondary.panel2) opts.push({ value: "panel2", label: p2 });
       if (panelsFreeForSecondary.panel3) opts.push({ value: "panel3", label: p3 });
       if (panelsFreeForSecondary.panel4) opts.push({ value: "panel4", label: p4 });
       if (panelsFreeForSecondary.panel5) opts.push({ value: "panel5", label: p5 });
-      if (!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5) opts.push({ value: "", label: none });
+      if (panelsFreeForSecondary.panel6) opts.push({ value: "panel6", label: p6 });
+      if (panelsFreeForSecondary.panel7) opts.push({ value: "panel7", label: p7 });
+      if (!panelsFreeForSecondary.panel2 && !panelsFreeForSecondary.panel3 && !panelsFreeForSecondary.panel4 && !panelsFreeForSecondary.panel5 && !panelsFreeForSecondary.panel6 && !panelsFreeForSecondary.panel7) opts.push({ value: "", label: none });
       return opts;
     }
     return [
@@ -173,6 +186,8 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       { value: "panel3", label: (isFreeUser ? "🔒 " : "") + p3, disabled: indicatorCountByPanel.panel3 >= SECONDARY_MAX_INDICATORS || isFreeUser },
       { value: "panel4", label: (isFreeUser ? "🔒 " : "") + p4, disabled: indicatorCountByPanel.panel4 >= SECONDARY_MAX_INDICATORS || isFreeUser },
       { value: "panel5", label: (isFreeUser ? "🔒 " : "") + p5, disabled: indicatorCountByPanel.panel5 >= SECONDARY_MAX_INDICATORS || isFreeUser },
+      { value: "panel6", label: (isFreeUser ? "🔒 " : "") + p6, disabled: indicatorCountByPanel.panel6 >= SECONDARY_MAX_INDICATORS || isFreeUser },
+      { value: "panel7", label: (isFreeUser ? "🔒 " : "") + p7, disabled: indicatorCountByPanel.panel7 >= SECONDARY_MAX_INDICATORS || isFreeUser },
     ];
   }, [form.indicatorType, indicatorCountByPanel, panelsFreeForSecondary, isFreeUser, tRecord]);
 
@@ -220,12 +235,13 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       ? "main"
       : form.indicatorType === "Volume"
         ? (form.chartOption === "panel2" && indicatorCountByPanel.panel2 === 0) || (form.chartOption === "panel3" && indicatorCountByPanel.panel3 === 0) || (form.chartOption === "panel4" && indicatorCountByPanel.panel4 === 0) || (form.chartOption === "panel5" && indicatorCountByPanel.panel5 === 0)
+          || (form.chartOption === "panel6" && indicatorCountByPanel.panel6 === 0) || (form.chartOption === "panel7" && indicatorCountByPanel.panel7 === 0)
           ? form.chartOption
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF"
-          ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5)
+        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF"
+          ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5) || (form.chartOption === "panel6" && panelsFreeForSecondary.panel6) || (form.chartOption === "panel7" && panelsFreeForSecondary.panel7)
             ? form.chartOption
             : hasFreePanelForSecondary
               ? firstFreePanelForSecondary
@@ -234,7 +250,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
 
   const setType = (newType: UserIndicatorType) => {
     setForm((prev) => {
-      const freePanel: IndicatorPanel = panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : "panel2";
+      const freePanel: IndicatorPanel = panelsFreeForSecondary.panel2 ? "panel2" : panelsFreeForSecondary.panel3 ? "panel3" : panelsFreeForSecondary.panel4 ? "panel4" : panelsFreeForSecondary.panel5 ? "panel5" : panelsFreeForSecondary.panel6 ? "panel6" : panelsFreeForSecondary.panel7 ? "panel7" : "panel2";
       if (newType === "RSI") {
         return {
           ...prev,
@@ -296,6 +312,30 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           macdHistogram: false,
           macdHistogramColorAbove: "#059669",
           macdHistogramColorBelow: "#dc2626",
+        };
+      }
+      if (newType === "DIFF") {
+        const first = firstEnabledFieldValueForAdd;
+        const second = first === "close" ? "open" : "close";
+        return {
+          ...prev,
+          indicatorType: "DIFF",
+          period: 1,
+          periodText: "1",
+          fieldKey: second,
+          diffFirstFieldKey: first,
+          diffSecondFieldKey: second,
+          chartOption: freePanel,
+          diffSignalLine: false,
+          diffSignalMaType: "EMA",
+          diffSignalPeriod: 9,
+          diffSignalPeriodText: "9",
+          diffSignalColor: "#ea580c",
+          diffSignalLineWidth: "normal",
+          diffSignalLineStyle: "dashed",
+          diffHistogram: false,
+          diffHistogramColorAbove: "#059669",
+          diffHistogramColorBelow: "#dc2626",
         };
       }
       if (newType === "Stochastic") {
@@ -948,7 +988,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "Ichimoku" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "DIFF" && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
           <Combobox
@@ -1050,7 +1090,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "MACD" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "HMA_CUSTOM" && form.indicatorType !== "Bollinger" && form.indicatorType !== "Donchian" && !isTimeWindowMa2Type(form.indicatorType) && (
+      {form.indicatorType !== "MACD" && form.indicatorType !== "DIFF" && form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "HMA_CUSTOM" && form.indicatorType !== "Bollinger" && form.indicatorType !== "Donchian" && !isTimeWindowMa2Type(form.indicatorType) && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.period}</span>
           <div className="flex items-center gap-1">
@@ -1695,6 +1735,87 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
             <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).sarPointSize ?? "Tamanho do ponto"}</span>
             <Combobox value={form.sarPointSize} onChange={(v) => setForm((prev) => ({ ...prev, sarPointSize: v as "thin" | "normal" }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).sarPointSize ?? "Tamanho"} />
           </div>
+        </>
+      )}
+
+      {form.indicatorType === "DIFF" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).diffFirstInputLabel ?? "Entrada 1 (A)"}</span>
+            <Combobox
+              value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.diffFirstFieldKey) ? form.diffFirstFieldKey : firstEnabledFieldValueForAdd) as string}
+              onChange={(v) => setForm((prev) => ({ ...prev, diffFirstFieldKey: v as IndicatorFieldKey }))}
+              options={fieldOptionsVisibleForAdd.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).diffFirstInputLabel ?? "Entrada 1"}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2 (B)"}</span>
+            <Combobox
+              value={(fieldOptionsVisibleForAdd.some((o) => o.value === form.diffSecondFieldKey) ? form.diffSecondFieldKey : firstEnabledFieldValueForAdd) as string}
+              onChange={(v) => setForm((prev) => ({ ...prev, diffSecondFieldKey: v as IndicatorFieldKey, fieldKey: v as IndicatorFieldKey }))}
+              options={fieldOptionsVisibleForAdd.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2"}
+            />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.diffSignalLine} onChange={(e) => setForm((prev) => ({ ...prev, diffSignalLine: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).macdSignalLineLabel ?? "Linha de sinal"}</span>
+          </label>
+          <label className={`flex items-center gap-2 ${form.diffSignalLine ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}>
+            <input
+              type="checkbox"
+              checked={form.diffHistogram}
+              disabled={!form.diffSignalLine}
+              onChange={(e) => setForm((prev) => ({ ...prev, diffHistogram: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)"}</span>
+          </label>
+          {form.diffSignalLine && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA da sinal"}</span>
+                <Combobox value={form.diffSignalMaType} onChange={(v) => setForm((prev) => ({ ...prev, diffSignalMaType: v as AddFormState["diffSignalMaType"] }))} options={macdMaTypeOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).macdSignalMa ?? "MA"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdSignalPeriod ?? "Período sinal"}</span>
+                <div className="flex items-center gap-1">
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, diffSignalPeriod: Math.max(1, prev.diffSignalPeriod - 1), diffSignalPeriodText: String(Math.max(1, prev.diffSignalPeriod - 1)) }))} className="stepper-btn">−</StepperButton>
+                  <input type="text" inputMode="numeric" value={form.diffSignalPeriodText} onChange={(e) => setForm((prev) => ({ ...prev, diffSignalPeriodText: e.target.value.replace(/[^\d]/g, "") }))} onBlur={() => { const n = Number(form.diffSignalPeriodText); const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(500, Math.round(n))) : 9; setForm((prev) => ({ ...prev, diffSignalPeriod: v, diffSignalPeriodText: String(v) })); }} className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5" />
+                  <StepperButton onStep={() => setForm((prev) => ({ ...prev, diffSignalPeriod: Math.min(500, prev.diffSignalPeriod + 1), diffSignalPeriodText: String(Math.min(500, prev.diffSignalPeriod + 1)) }))} className="stepper-btn">+</StepperButton>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <ColorPaletteCombobox value={form.diffSignalColor} onChange={(hex) => setForm((prev) => ({ ...prev, diffSignalColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Espessura"}</span>
+                <Combobox value={form.diffSignalLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, diffSignalLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Estilo"}</span>
+                <Combobox value={form.diffSignalLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, diffSignalLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
+              </div>
+            </div>
+          )}
+          {form.diffSignalLine && form.diffHistogram && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>
+                <ColorPaletteCombobox value={form.diffHistogramColorAbove} onChange={(hex) => setForm((prev) => ({ ...prev, diffHistogramColorAbove: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo de 0"}</span>
+                <ColorPaletteCombobox value={form.diffHistogramColorBelow} onChange={(hex) => setForm((prev) => ({ ...prev, diffHistogramColorBelow: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={(t as Record<string, string>).macdHistogramColorBelow ?? "Cor abaixo"} />
+              </div>
+            </div>
+          )}
         </>
       )}
 

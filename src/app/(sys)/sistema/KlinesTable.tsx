@@ -6,7 +6,7 @@ import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
-import { useKlinesIndicators, getDataAndValueIndexForIndicator } from "./KlinesIndicatorsContext";
+import { useKlinesIndicators, getDataAndValueIndexForIndicator, type UserIndicatorConfig } from "./KlinesIndicatorsContext";
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
 import { useChartHeader } from "./ChartHeaderContext";
@@ -14,6 +14,35 @@ import { parseSpotOpenOrdersJson } from "@/lib/spot-open-orders-client";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { useStrategies } from "./strategies/StrategiesContext";
 import { legacyToRoot, strategiesForContext, validateStrategyReferences, collectSeriesKeys, type Strategy } from "./strategies/strategiesTypes";
+import {
+  ROBOTS_CHANGED_EVENT,
+  ROBOT_BUY_EXEC_STORAGE_KEY,
+  ROBOTS_STORAGE_KEY,
+  loadRobotBuyExecMap,
+  loadSavedRobots,
+  persistRobotBuyExecMap,
+  type RobotBuyExecMap,
+  type SavedRobot,
+} from "./robotsStorage";
+import {
+  CRYPTO_SISTEMA_BACKTEST_ERROR_EVENT,
+  CRYPTO_SISTEMA_BACKTEST_RUN_EVENT,
+  loadBacktestRange,
+  resolveBacktestFeeRatePerSide,
+} from "./backtestStorage";
+import { runRobotBacktest } from "./robotBacktest";
+import RobotBacktestResultModal from "./RobotBacktestResultModal";
+import { getRobotPosition } from "./robotPositionStorage";
+import { buyerRefAllowsNextBuy, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
+import {
+  computeRobotMarketBuyQuoteUsdt,
+  dispatchRobotPositionBuy,
+  dispatchRobotPositionSellClear,
+  dispatchSpotOrderPlaced,
+  parseMarketOrderFill,
+  submitRobotMarketBuyOrder,
+  submitRobotMarketSellOrder,
+} from "./robotLiveOrders";
 import { evaluateNode } from "./strategies/strategyEvaluator";
 import {
   Y_AXIS_WIDTH,
@@ -128,7 +157,7 @@ const REFRESH_MS = 1 * 60 * 1000; // 1 min
 const AGG_ATEMPORAL_CACHE_REFRESH_MS = 5 * 60 * 1000;
 
 /** Alinhado ao `limit` do GET kline-cache2 e ao `maxBars` do merge agg; acima disto refetch do cache. */
-const AGG_KLINE_CACHE_LIMIT = 1000;
+const AGG_KLINE_CACHE_LIMIT = 5000;
 
 const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] = [
   { value: 1, label: "1m", param: "1m" },
@@ -381,7 +410,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const { symbol, openSymbolPanel } = useChartSymbol();
   const { userIndicators, setCurrentGroupMinutes, replaceUserIndicatorsFromLayout } = useKlinesIndicators();
   const { userRegressions, replaceUserRegressionsFromLayout } = useKlinesRegressions();
-  const { strategies, appliedStrategyIds, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout } = useStrategies();
+  const {
+    strategies,
+    appliedStrategyIds,
+    replaceStrategiesFromLayout,
+    replaceAppliedStrategyIdsFromLayout,
+    replaceAppliedStrategyIds,
+  } = useStrategies();
   const intervalOptions = useMemo(() => getIntervalOptions(), []);
   const aggIntervalPicker = useMemo(() => {
     const tickSection = (kindIdx: 0 | 1 | 2 | 3, ck: "renko" | "range" | "kagi" | "renko2x") =>
@@ -831,6 +866,40 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             }
           }
         }
+      } else if (ind.type === "DIFF") {
+        const first = getDataAndValueIndexForIndicator(data, ind.diffFirstFieldKey ?? "close", userIndicators);
+        const second = getDataAndValueIndexForIndicator(data, ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", userIndicators);
+        const diffCol: (number | null)[] = [];
+        for (let i = 0; i < out.length; i++) {
+          const a = first.data[i]?.[first.valueIndex];
+          const b = second.data[i]?.[second.valueIndex];
+          const av = a != null ? Number(a) : NaN;
+          const bv = b != null ? Number(b) : NaN;
+          diffCol.push(Number.isFinite(av) && Number.isFinite(bv) ? (bv - av) : null);
+        }
+        for (let i = 0; i < out.length; i++) out[i].push(diffCol[i] ?? null);
+        if (ind.diffSignalLine) {
+          const diffColIndex = out[0].length - 1;
+          const signalPeriod = Math.max(1, Math.min(500, ind.diffSignalPeriod ?? 9));
+          const signalCol = computeMaColumn(
+            out as (string | number | null)[][],
+            diffColIndex,
+            normalizeMacdMaType(ind.diffSignalMaType),
+            signalPeriod
+          );
+          for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
+          if (ind.diffHistogram) {
+            const signalColIndex = out[0].length - 1;
+            for (let i = 0; i < out.length; i++) {
+              const diffVal = out[i][diffColIndex];
+              const sigVal = out[i][signalColIndex];
+              const hist = diffVal != null && sigVal != null && Number.isFinite(Number(diffVal)) && Number.isFinite(Number(sigVal))
+                ? (Number(diffVal) - Number(sigVal))
+                : null;
+              out[i].push(hist);
+            }
+          }
+        }
       } else if (ind.type === "Stochastic") {
         const kCol = computeStochasticKColumn(dataForInd, period, valueIndex);
         for (let i = 0; i < out.length; i++) out[i].push(kCol[i] ?? null);
@@ -986,8 +1055,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     let col = 12;
     for (let i = 0; i < indicatorIndex; i++) {
       const ind = userIndicators[i];
-      if (ind.type === "MACD") {
-        col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
+      if (ind.type === "MACD" || ind.type === "DIFF") {
+        col += 1 + (ind.type === "MACD" ? (ind.macdSignalLine ? 1 : 0) : (ind.diffSignalLine ? 1 : 0)) + (ind.type === "MACD" ? (ind.macdHistogram ? 1 : 0) : (ind.diffHistogram ? 1 : 0));
       } else if (ind.type === "Stochastic") {
         col += 1 + (ind.stochDLine ? 1 : 0);
       } else if (ind.type === "WilliamsR") {
@@ -1053,6 +1122,444 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     }
     return map;
   }, [visibleStrategiesEvaluationOrder, extendedKlines, userIndicators, getIndicatorColumnStart, layoutAppliedTick]);
+
+  const strategyResultsRef = useRef(strategyResults);
+  strategyResultsRef.current = strategyResults;
+  const appliedStrategyIdsRef = useRef(appliedStrategyIds);
+  appliedStrategyIdsRef.current = appliedStrategyIds;
+
+  /** Lista de aplicadas antes do backtest; reposta ao fechar o modal se tivermos auto-aplicado estratégias do robô. */
+  const backtestRestoreAppliedRef = useRef<string[] | null>(null);
+  const backtestDidAutoApplyStrategiesRef = useRef(false);
+  const robotLiveBuyInFlightRef = useRef<Set<string>>(new Set());
+  const robotLiveSellInFlightRef = useRef<Set<string>>(new Set());
+  const robotLiveFlattenInFlightRef = useRef<Set<string>>(new Set());
+  /** Zerar: após sinal, alerta até sair; chave `robotId::SYMBOL`. */
+  const robotFlattenArmedRef = useRef<Record<string, true>>({});
+  const robotBuyEdgesSinceFlatRef = useRef<Record<string, number>>({});
+  const robotBuyAccumulationActiveRef = useRef<Record<string, true>>({});
+  const robotBuyPrevSignalRef = useRef<Record<string, boolean>>({});
+  /** Fim do último efeito: havia posição neste robô+par. */
+  const robotBuyHadPositionEndRef = useRef<Record<string, boolean>>({});
+
+  const [savedRobots, setSavedRobots] = useState<SavedRobot[]>(() =>
+    typeof window !== "undefined" ? loadSavedRobots() : []
+  );
+  const [buyExecMap, setBuyExecMap] = useState<RobotBuyExecMap>(() =>
+    typeof window !== "undefined" ? loadRobotBuyExecMap() : {}
+  );
+  const buyExecMapRef = useRef(buyExecMap);
+  buyExecMapRef.current = buyExecMap;
+  useEffect(() => {
+    const refreshRobots = () => setSavedRobots(loadSavedRobots());
+    const refreshExec = () => setBuyExecMap(loadRobotBuyExecMap());
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === ROBOTS_STORAGE_KEY || e.key === null) refreshRobots();
+      if (e.key === ROBOT_BUY_EXEC_STORAGE_KEY || e.key === null) refreshExec();
+    };
+    window.addEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  const [backtestModal, setBacktestModal] = useState<{
+    robot: SavedRobot;
+    result: Extract<ReturnType<typeof runRobotBacktest>, { ok: true }>;
+  } | null>(null);
+
+  const closeBacktestModal = useCallback(() => {
+    if (backtestDidAutoApplyStrategiesRef.current && backtestRestoreAppliedRef.current != null) {
+      flushSync(() => {
+        replaceAppliedStrategyIds(backtestRestoreAppliedRef.current!);
+      });
+    }
+    backtestDidAutoApplyStrategiesRef.current = false;
+    backtestRestoreAppliedRef.current = null;
+    setBacktestModal(null);
+  }, [replaceAppliedStrategyIds]);
+
+  const runBacktestForRobot = useCallback(
+    async (robotId: string) => {
+      const robot = savedRobots.find((r) => r.id === robotId);
+      if (!robot) {
+        window.dispatchEvent(
+          new CustomEvent(CRYPTO_SISTEMA_BACKTEST_ERROR_EVENT, {
+            detail: { message: tk.backtestErrNoRobot ?? "Robot not found." },
+          })
+        );
+        return;
+      }
+
+      if (backtestDidAutoApplyStrategiesRef.current && backtestRestoreAppliedRef.current != null) {
+        flushSync(() => {
+          replaceAppliedStrategyIds(backtestRestoreAppliedRef.current!);
+        });
+        backtestDidAutoApplyStrategiesRef.current = false;
+        backtestRestoreAppliedRef.current = null;
+      }
+      setBacktestModal(null);
+
+      const prevApplied = [...appliedStrategyIdsRef.current];
+      backtestRestoreAppliedRef.current = prevApplied;
+
+      const robotStrategyIds = [
+        ...new Set([
+          ...robot.buyCombinedStrategyIds,
+          ...robot.sellCombinedStrategyIds,
+          ...robot.flattenCombinedStrategyIds,
+          ...(robot.postFlattenSignalSellCombinedStrategyIds ?? []),
+        ]),
+      ];
+      const missingStrategyIds = robotStrategyIds.filter((id) => !prevApplied.includes(id));
+
+      if (missingStrategyIds.length > 0) {
+        backtestDidAutoApplyStrategiesRef.current = true;
+        flushSync(() => {
+          replaceAppliedStrategyIds([...prevApplied, ...missingStrategyIds]);
+        });
+      } else {
+        backtestDidAutoApplyStrategiesRef.current = false;
+      }
+
+      const range = loadBacktestRange();
+      const feeRatePerSide = await resolveBacktestFeeRatePerSide(range.feePercentPerSide);
+      const resultsMap = strategyResultsRef.current;
+      const out = runRobotBacktest({
+        robot,
+        klines: extendedKlines,
+        strategyResults: resultsMap,
+        startBar: range.startBar,
+        endBar: range.endBar,
+        spotUsdtForSimulation: range.spotUsdtFree,
+        feeRatePerSide,
+        slippagePercent: range.slippagePercent,
+        executionMode: range.executionMode,
+      });
+      if (!out.ok) {
+        if (backtestDidAutoApplyStrategiesRef.current && backtestRestoreAppliedRef.current != null) {
+          flushSync(() => {
+            replaceAppliedStrategyIds(backtestRestoreAppliedRef.current!);
+          });
+        }
+        backtestDidAutoApplyStrategiesRef.current = false;
+        backtestRestoreAppliedRef.current = null;
+        const key = out.error;
+        const msg =
+          key === "backtestBuyerOnly"
+            ? (tk.backtestErrBuyerOnly ?? "Backtest is only available for buyer robots.")
+            : key === "backtestNoKlines"
+              ? (tk.backtestErrNoKlines ?? "No candle data loaded.")
+              : key === "backtestMissingStrategies"
+                ? (tk.backtestErrMissingStrategies ??
+                  "Apply all strategies used by this robot to the chart so columns are evaluated.")
+                : out.error;
+        window.dispatchEvent(new CustomEvent(CRYPTO_SISTEMA_BACKTEST_ERROR_EVENT, { detail: { message: msg } }));
+        return;
+      }
+      setBacktestModal({ robot, result: out });
+    },
+    [savedRobots, extendedKlines, tk, replaceAppliedStrategyIds]
+  );
+
+  useEffect(() => {
+    const fn = (e: Event) => {
+      const id = (e as CustomEvent<{ robotId?: string }>).detail?.robotId;
+      if (typeof id === "string" && id.length > 0) void runBacktestForRobot(id);
+    };
+    window.addEventListener(CRYPTO_SISTEMA_BACKTEST_RUN_EVENT, fn);
+    return () => window.removeEventListener(CRYPTO_SISTEMA_BACKTEST_RUN_EVENT, fn);
+  }, [runBacktestForRobot]);
+
+  const activeBuyerRobots = useMemo(
+    () => savedRobots.filter((r) => r.isActive && r.side === "buyer" && r.buyCombinedStrategyIds.length > 0),
+    [savedRobots]
+  );
+
+  const robotBuyOrTrue = useCallback((robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => {
+    for (const id of robot.buyCombinedStrategyIds) {
+      if (results.get(id)?.[rowIndex]) return true;
+    }
+    return false;
+  }, []);
+
+  const robotSellOrTrue = useCallback((robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => {
+    for (const id of robot.sellCombinedStrategyIds) {
+      if (results.get(id)?.[rowIndex]) return true;
+    }
+    return false;
+  }, []);
+
+  const robotFlattenOrTrue = useCallback((robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => {
+    const ids = robot.flattenCombinedStrategyIds ?? [];
+    for (const id of ids) {
+      if (results.get(id)?.[rowIndex]) return true;
+    }
+    return false;
+  }, []);
+
+  const robotPostFlattenSellOrTrue = useCallback(
+    (robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => {
+      const ids = robot.postFlattenSignalSellCombinedStrategyIds ?? [];
+      for (const id of ids) {
+        if (results.get(id)?.[rowIndex]) return true;
+      }
+      return false;
+    },
+    []
+  );
+
+  /**
+   * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
+   * Zerar: primeiro sinal arma alerta; primeira vela com fecho ≤ médio → venda a mercado; depois venda por sinal e compra.
+   * Compra: N-ésimo sinal (sem posição) liga acumulação; compra em velas seguidas até ao teto ou falha da regra de perna.
+   * Coluna B· só marca 1 após compra aceite na API.
+   */
+  useEffect(() => {
+    if (extendedKlines.length === 0 || activeBuyerRobots.length === 0) return;
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym || !sym.endsWith("USDT")) return;
+    const ot = String(extendedKlines[0][0]);
+    const refClose = Number(extendedKlines[0]?.[4]);
+    const refPx = Number.isFinite(refClose) && refClose > 0 ? refClose : null;
+
+    const armRef = robotFlattenArmedRef.current;
+    const edgesRef = robotBuyEdgesSinceFlatRef.current;
+    const accumRef = robotBuyAccumulationActiveRef.current;
+    const prevSigRef = robotBuyPrevSignalRef.current;
+    const hadPosEndRef = robotBuyHadPositionEndRef.current;
+
+    const syncBuyAccumForRobot = (robot: SavedRobot) => {
+      const kArm = `${robot.id}::${sym}`;
+      const posArm = getRobotPosition(robot.id, sym);
+      const flat = !posArm || posArm.totalBaseQty <= 1e-12;
+      const hadPosEndPrev = hadPosEndRef[kArm] === true;
+      if (flat && hadPosEndPrev) {
+        delete edgesRef[kArm];
+        delete accumRef[kArm];
+        delete prevSigRef[kArm];
+      }
+      const buySig = robotBuyOrTrue(robot, 0, strategyResults);
+      const prevS = prevSigRef[kArm] === true;
+      if (flat && buySig && !prevS) {
+        const nextE = (edgesRef[kArm] ?? 0) + 1;
+        edgesRef[kArm] = nextE;
+        const nStart = Math.min(
+          5,
+          Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber ?? 1))
+        );
+        if (nextE >= nStart) accumRef[kArm] = true;
+      }
+      prevSigRef[kArm] = buySig;
+    };
+
+    for (const robot of activeBuyerRobots) {
+      const posArm = getRobotPosition(robot.id, sym);
+      const kArm = `${robot.id}::${sym}`;
+      const flattenIds = robot.flattenCombinedStrategyIds ?? [];
+      if (!posArm || posArm.totalBaseQty <= 1e-12) {
+        delete armRef[kArm];
+      } else if (flattenIds.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults)) {
+        armRef[kArm] = true;
+      }
+      syncBuyAccumForRobot(robot);
+    }
+
+    let shouldRun = false;
+    for (const robot of activeBuyerRobots) {
+      const flattenArmed = armRef[`${robot.id}::${sym}`] === true;
+      if (flattenArmed && refPx != null) {
+        const pos = getRobotPosition(robot.id, sym);
+        if (
+          pos &&
+          pos.totalBaseQty > 1e-12 &&
+          pos.avgBuyPrice > 0 &&
+          longFlattenCloseAtOrBelowAvg(refPx, pos.avgBuyPrice)
+        ) {
+          const k = `${robot.id}::${ot}::flat`;
+          if (!robotLiveFlattenInFlightRef.current.has(k)) shouldRun = true;
+        }
+      }
+      const flattenArmedForSell = armRef[`${robot.id}::${sym}`] === true;
+      const postArmSellWants =
+        flattenArmedForSell &&
+        (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0 &&
+        robotPostFlattenSellOrTrue(robot, 0, strategyResults);
+      if (robotSellOrTrue(robot, 0, strategyResults) || postArmSellWants) {
+        const pos = getRobotPosition(robot.id, sym);
+        if (pos && pos.totalBaseQty > 1e-12) {
+          const k = `${robot.id}::${ot}::sell`;
+          if (!robotLiveSellInFlightRef.current.has(k)) shouldRun = true;
+        }
+      }
+      const kBuy = `${robot.id}::${sym}`;
+      const acc = accumRef[kBuy] === true;
+      if (acc && !buyExecMapRef.current[robot.id]?.[ot]) {
+        const posBuy = getRobotPosition(robot.id, sym);
+        const buyKeyInflight = `${robot.id}::${ot}::buy`;
+        if (refPx == null || !buyerRefAllowsNextBuy(refPx, posBuy?.lastBuyFillPrice)) {
+          delete accumRef[kBuy];
+        } else if (!robotLiveBuyInFlightRef.current.has(buyKeyInflight)) {
+          shouldRun = true;
+        }
+      }
+    }
+
+    for (const robot of activeBuyerRobots) {
+      const p = getRobotPosition(robot.id, sym);
+      hadPosEndRef[`${robot.id}::${sym}`] = Boolean(p && p.totalBaseQty > 1e-12);
+    }
+
+    if (!shouldRun) return;
+
+    let cancelled = false;
+    void (async () => {
+      const connRes = await fetch(`${API_BASE}/user/binance-connection`, { credentials: "include" });
+      const connJson = (await connRes.json().catch(() => ({}))) as { connected?: boolean };
+      if (cancelled || !connRes.ok || connJson.connected !== true) return;
+
+      const balRes = await fetch(`${API_BASE}/user/binance-connection/balances`, { credentials: "include" });
+      const balJson = (await balRes.json().catch(() => ({}))) as {
+        balances?: { asset: string; free: string }[];
+      };
+      if (cancelled || !balRes.ok) return;
+      const list = Array.isArray(balJson.balances) ? balJson.balances : [];
+      const usdtRow = list.find((b) => b.asset === "USDT");
+      const spotUsdtFree = usdtRow ? parseFloat(usdtRow.free) : NaN;
+      if (!Number.isFinite(spotUsdtFree) || spotUsdtFree <= 0) return;
+
+      for (const robot of activeBuyerRobots) {
+        if (cancelled) return;
+
+        const armRefLive = robotFlattenArmedRef.current;
+        const kArmLive = `${robot.id}::${sym}`;
+        const posArmLive = getRobotPosition(robot.id, sym);
+        const flattenIdsLive = robot.flattenCombinedStrategyIds ?? [];
+        if (!posArmLive || posArmLive.totalBaseQty <= 1e-12) {
+          delete armRefLive[kArmLive];
+        } else if (flattenIdsLive.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults)) {
+          armRefLive[kArmLive] = true;
+        }
+
+        const flattenArmedLive = armRefLive[kArmLive] === true;
+        if (flattenArmedLive && refPx != null) {
+          const posFlat = getRobotPosition(robot.id, sym);
+          if (
+            posFlat &&
+            posFlat.totalBaseQty > 1e-12 &&
+            posFlat.avgBuyPrice > 0 &&
+            longFlattenCloseAtOrBelowAvg(refPx, posFlat.avgBuyPrice)
+          ) {
+            const flatKey = `${robot.id}::${ot}::flat`;
+            if (!robotLiveFlattenInFlightRef.current.has(flatKey)) {
+              robotLiveFlattenInFlightRef.current.add(flatKey);
+              try {
+                const out = await submitRobotMarketSellOrder(sym, posFlat.totalBaseQty);
+                if (out.ok) {
+                  delete armRefLive[kArmLive];
+                  const kb = `${robot.id}::${sym}`;
+                  delete robotBuyEdgesSinceFlatRef.current[kb];
+                  delete robotBuyAccumulationActiveRef.current[kb];
+                  delete robotBuyPrevSignalRef.current[kb];
+                  delete robotBuyHadPositionEndRef.current[kb];
+                  dispatchRobotPositionSellClear(robot.id, sym);
+                  dispatchSpotOrderPlaced();
+                }
+              } finally {
+                robotLiveFlattenInFlightRef.current.delete(flatKey);
+              }
+            }
+          }
+        }
+
+        const postArmSellAsync =
+          flattenArmedLive &&
+          (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0 &&
+          robotPostFlattenSellOrTrue(robot, 0, strategyResults);
+        if (robotSellOrTrue(robot, 0, strategyResults) || postArmSellAsync) {
+          const posPre = getRobotPosition(robot.id, sym);
+          if (posPre && posPre.totalBaseQty > 1e-12) {
+            const sellKey = `${robot.id}::${ot}::sell`;
+            if (robotLiveSellInFlightRef.current.has(sellKey)) continue;
+            robotLiveSellInFlightRef.current.add(sellKey);
+            try {
+              const out = await submitRobotMarketSellOrder(sym, posPre.totalBaseQty);
+              if (out.ok) {
+                const kb = `${robot.id}::${sym}`;
+                delete robotFlattenArmedRef.current[kb];
+                delete robotBuyEdgesSinceFlatRef.current[kb];
+                delete robotBuyAccumulationActiveRef.current[kb];
+                delete robotBuyPrevSignalRef.current[kb];
+                delete robotBuyHadPositionEndRef.current[kb];
+                dispatchRobotPositionSellClear(robot.id, sym);
+                dispatchSpotOrderPlaced();
+              }
+            } finally {
+              robotLiveSellInFlightRef.current.delete(sellKey);
+            }
+          }
+        }
+
+        const kAccum = `${robot.id}::${sym}`;
+        if (robotBuyAccumulationActiveRef.current[kAccum] !== true) continue;
+        if (buyExecMapRef.current[robot.id]?.[ot]) continue;
+        const buyKey = `${robot.id}::${ot}::buy`;
+        if (robotLiveBuyInFlightRef.current.has(buyKey)) continue;
+
+        const refCloseLive = Number(extendedKlines[0]?.[4]);
+        const refPxLive = Number.isFinite(refCloseLive) && refCloseLive > 0 ? refCloseLive : null;
+        const pos = getRobotPosition(robot.id, sym);
+        if (refPxLive == null || !buyerRefAllowsNextBuy(refPxLive, pos?.lastBuyFillPrice)) {
+          delete robotBuyAccumulationActiveRef.current[kAccum];
+          continue;
+        }
+
+        const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos);
+        if (quoteUsdt == null) {
+          delete robotBuyAccumulationActiveRef.current[kAccum];
+          continue;
+        }
+
+        robotLiveBuyInFlightRef.current.add(buyKey);
+        try {
+          const out = await submitRobotMarketBuyOrder(sym, quoteUsdt);
+          if (!out.ok) continue;
+          const fill = parseMarketOrderFill(out.order);
+          if (fill) {
+            dispatchRobotPositionBuy(robot.id, sym, fill.quoteUsdt, fill.baseQty);
+          }
+          setBuyExecMap((prev) => {
+            if (prev[robot.id]?.[ot]) return prev;
+            const next = { ...prev };
+            const per = { ...(next[robot.id] ?? {}) };
+            per[ot] = 1;
+            next[robot.id] = per;
+            persistRobotBuyExecMap(next);
+            return next;
+          });
+          dispatchSpotOrderPlaced();
+        } finally {
+          robotLiveBuyInFlightRef.current.delete(buyKey);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    extendedKlines,
+    strategyResults,
+    activeBuyerRobots,
+    symbol,
+    buyExecMap,
+    robotBuyOrTrue,
+    robotSellOrTrue,
+    robotFlattenOrTrue,
+    robotPostFlattenSellOrTrue,
+  ]);
 
   /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Se houver alguma estratégia combinada aplicada, só as combinadas têm efeito (as normais ficam desabilitadas). */
   const strategyCandleOverlays = useMemo(() => {
@@ -1349,6 +1856,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
       if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
       if (ind.type === "MACD" && ind.macdHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
+      if (ind.type === "DIFF" && ind.diffSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
+      if (ind.type === "DIFF" && ind.diffHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
       if (ind.type === "Stochastic" && ind.stochDLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
       /* Bollinger: single entry with columnIndex = first of 3 cols (upper, middle, lower) */
     }
@@ -1427,7 +1936,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (cache2 != null) {
         const { chartKind, interval } = cache2;
         const res = await fetch(
-          `${API_BASE}/binance/kline-cache2-bars?symbol=${encodeURIComponent(requestedSymbol)}&chartKind=${encodeURIComponent(chartKind)}&interval=${encodeURIComponent(interval)}&limit=1000`,
+          `${API_BASE}/binance/kline-cache2-bars?symbol=${encodeURIComponent(requestedSymbol)}&chartKind=${encodeURIComponent(chartKind)}&interval=${encodeURIComponent(interval)}&limit=${AGG_KLINE_CACHE_LIMIT}`,
           { cache: "no-store", credentials: "include" }
         );
         if (!res.ok) {
@@ -1462,7 +1971,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             liveAggRowsByOpenTimeRef.current.values(),
             cache2
           );
-          setKlines(mergeAggFastServerAndLive(list, tierLive, tzForMerge) as Kline[]);
+          setKlines(mergeAggFastServerAndLive(list, tierLive, tzForMerge, AGG_KLINE_CACHE_LIMIT) as Kline[]);
           pushAggFastLiveDebug();
         }
         setKlinesDataSymbol(requestedSymbol);
@@ -1605,7 +2114,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
       const tierLive = liveSourcePayloadsToTierPayloadsForMerge(m.values(), c2);
       setKlines(
-        mergeAggFastServerAndLive(serverAggKlinesRef.current, tierLive, timezoneOffsetRef.current) as Kline[]
+        mergeAggFastServerAndLive(
+          serverAggKlinesRef.current,
+          tierLive,
+          timezoneOffsetRef.current,
+          AGG_KLINE_CACHE_LIMIT
+        ) as Kline[]
       );
       pushAggFastLiveDebug();
     },
@@ -2141,6 +2655,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   }
 
   return (
+    <>
     <div
       className={`flex flex-col min-h-0 pt-1 px-0 pb-4 ${chartReportedSizePercent >= 125 ? "" : "w-full"}`}
       style={chartReportedSizePercent >= 125 ? { width: chartContainerMaxWidth, minWidth: chartContainerMaxWidth } : undefined}
@@ -2220,18 +2735,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               adxPart,
               ichimokuPart,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? ind.color ?? "#6366f1") : ind.color,
-              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Donchian" ? (ind.donchianLimitsLineWidth ?? ind.lineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
-              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Donchian" ? (ind.donchianLimitsLineStyle ?? ind.lineStyle ?? "solid") : (ind.lineStyle ?? "solid"),
+              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : ind.type === "DIFF" ? (ind.diffSignalColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? ind.color ?? "#6366f1") : ind.color,
+              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : ind.type === "DIFF" ? (ind.diffSignalLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Donchian" ? (ind.donchianLimitsLineWidth ?? ind.lineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : ind.type === "DIFF" ? (ind.diffSignalLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Donchian" ? (ind.donchianLimitsLineStyle ?? ind.lineStyle ?? "solid") : (ind.lineStyle ?? "solid"),
               label: ind.type === "Ichimoku" && ichimokuPart ? `${baseIchimokuLabel} ${ichimokuPartLabel[ichimokuPart]}` : ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
-              shortLabel: ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabel[ichimokuPart] : ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? "MACD Hist" : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
+              shortLabel: ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabel[ichimokuPart] : ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? (ind.type === "DIFF" ? "DIFF Hist" : "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
               display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "CCI" && ind.cciAsHistogram ? "histogram" as const : ind.type === "CMF" && ind.cmfAsHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
               volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : undefined,
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
-              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
-              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
+              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
+              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorBelow ?? "#dc2626") : (ind.macdHistogramColorBelow ?? "#dc2626")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -2408,9 +2923,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 slot !== 0 && config.appliedStrategyIds !== undefined && Array.isArray(config.appliedStrategyIds)
                   ? config.appliedStrategyIds.filter((x): x is string => typeof x === "string")
                   : null;
+              const indicatorsForValidation = (Array.isArray(indicatorsFromLayout) ? indicatorsFromLayout : userIndicators) as UserIndicatorConfig[];
               const indicatorIds = new Set<string>(
-                (Array.isArray(indicatorsFromLayout) ? indicatorsFromLayout : userIndicators).map((i: unknown) => (i && typeof i === "object" && typeof (i as { id?: unknown }).id === "string") ? String((i as { id: string }).id) : "").filter(Boolean)
+                indicatorsForValidation.map((i) => (i && typeof i === "object" && typeof i.id === "string" ? String(i.id) : "")).filter(Boolean)
               );
+              const layoutGroupMinutes = typeof config.groupMinutes === "number" ? config.groupMinutes : groupMinutes;
               const strategiesList: Strategy[] = strategiesFromLayoutRaw
                 ? strategiesFromLayoutRaw.map((s: unknown) => legacyToRoot(s as Strategy & { conditions?: unknown; combineWith?: unknown }))
                 : strategies;
@@ -2425,11 +2942,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                       const strategyIdsForValidation = st.isCombined
                         ? new Set(strategiesList.map((s) => s.id))
                         : appliedIdsSet;
-                      return validateStrategyReferences(st, indicatorIds, strategyIdsForValidation).ok;
+                      const stForValidation: Strategy = { ...st, intervalMinutes: layoutGroupMinutes };
+                      return validateStrategyReferences(stForValidation, indicatorIds, strategyIdsForValidation, {
+                        userIndicators: indicatorsForValidation,
+                      }).ok;
                     })
                   : null;
-
-              const layoutGroupMinutes = typeof config.groupMinutes === "number" ? config.groupMinutes : groupMinutes;
               if (config.strategies !== undefined) {
                 const raw = config.strategies as { intervalMinutes?: number; applyToAllSymbols?: boolean; symbol?: string }[];
                 const forContext = raw.map((s) => ({
@@ -2514,8 +3032,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               <th className="px-3 py-2 font-medium text-right">{t.takerBuyQuote}</th>
               {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart, ichimokuPart }, idx) => {
                 const ichimokuPartLabels: Record<IchimokuPart, string> = { tenkan: "Tenkan", kijun: "Kijun", spanA: "Span A", spanB: "Span B", chikou: "Chikou" };
-                const headerBorderColor = ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : isSignal ? (ind.macdSignalColor ?? "#ea580c") : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color;
-                const headerLabel = ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabels[ichimokuPart] : ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "Ichimoku" ? `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26}/${ind.ichimokuSpanBPeriod ?? 52})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`;
+                const headerBorderColor = ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : isSignal ? (ind.type === "DIFF" ? (ind.diffSignalColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color;
+                const headerLabel = ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabels[ichimokuPart] : ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : ind.type === "DIFF" ? `DIFF Sig(${ind.diffSignalPeriod ?? 9})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "DIFF" ? "DIFF(B-A)" : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "Ichimoku" ? `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26}/${ind.ichimokuSpanBPeriod ?? 52})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`;
                 return (
                 <th
                   key={`${ind.id}-${adxPart ?? ichimokuPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}
@@ -2531,6 +3049,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   className="px-3 py-2 font-medium text-right text-xs border-l-2 border-l-violet-300 bg-violet-50/50"
                 >
                   {strategy.name}
+                </th>
+              ))}
+              {activeBuyerRobots.map((robot) => (
+                <th
+                  key={`robot_buy_exec_${robot.id}`}
+                  className="px-3 py-2 font-medium text-center text-xs border-l-2 border-l-amber-300 bg-amber-50/60 tabular-nums"
+                  title={
+                    (tk as Record<string, string>).robotsTableBuyExecHint ??
+                    "Buyer robot: 1 after buy executed on this candle (only once per candle). Older rows: 1 if buy OR was true."
+                  }
+                >
+                  {(tk as Record<string, string>).robotsTableBuyExecCol?.replace("{id}", robot.id.slice(-6)) ??
+                    `B·${robot.id.slice(-6)}`}
                 </th>
               ))}
             </tr>
@@ -2583,11 +3114,28 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   </td>
                 );
               });
+              const robotBuyExecCols = activeBuyerRobots.map((robot) => {
+                const ot = String(k[0]);
+                const latched = buyExecMap[robot.id]?.[ot] === 1;
+                const cond = robotBuyOrTrue(robot, i, strategyResults);
+                const v = i === 0 ? (latched ? 1 : 0) : cond ? 1 : 0;
+                return (
+                  <td
+                    key={`robot_buy_exec_${robot.id}`}
+                    className={`px-3 py-1.5 text-center font-mono text-xs border-l border-l-amber-200 tabular-nums ${
+                      v === 1 ? "text-amber-900 bg-amber-50/50 font-semibold" : "text-zinc-400"
+                    }`}
+                  >
+                    {v}
+                  </td>
+                );
+              });
               return (
                 <tr key={i} className="border-t border-zinc-100 hover:bg-zinc-50">
                   {baseCols}
                   {userCols}
                   {strategyCols}
+                  {robotBuyExecCols}
                 </tr>
               );
             })}
@@ -2596,5 +3144,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       </div>
       )}
     </div>
+    <RobotBacktestResultModal
+      open={backtestModal != null}
+      onClose={closeBacktestModal}
+      robot={backtestModal?.robot ?? null}
+      result={backtestModal?.result ?? null}
+      isAdmin={isAdmin}
+      t={tk}
+    />
+    </>
   );
 }

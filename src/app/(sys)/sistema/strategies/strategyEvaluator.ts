@@ -91,8 +91,8 @@ export function getSeriesValue(
     const ind = userIndicators[indIdx];
     const extraOffset = (() => {
       if (!part) return 0;
-      if (part === "sig") return ind.type === "MACD" ? 1 : null;
-      if (part === "hist") return ind.type === "MACD" ? 2 : null;
+      if (part === "sig") return ind.type === "MACD" || ind.type === "DIFF" ? 1 : null;
+      if (part === "hist") return ind.type === "MACD" || ind.type === "DIFF" ? 2 : null;
       if (part === "d") return ind.type === "Stochastic" ? 1 : null;
       if (part === "upper") return ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" ? 0 : null;
       if (part === "middle") return ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" ? 1 : null;

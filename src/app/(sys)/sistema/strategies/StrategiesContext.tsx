@@ -30,6 +30,8 @@ interface StrategiesContextValue {
   replaceStrategiesFromLayout: (raw: unknown) => void;
   /** Restaura lista de IDs aplicados a partir do layout. */
   replaceAppliedStrategyIdsFromLayout: (raw: unknown) => void;
+  /** Substitui a lista de aplicadas (ex.: remover várias com referências inválidas de uma vez). */
+  replaceAppliedStrategyIds: (ids: string[]) => void;
 }
 
 const StrategiesContext = createContext<StrategiesContextValue | null>(null);
@@ -94,6 +96,11 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
     setAppliedStrategyIds(ids);
   }, []);
 
+  const replaceAppliedStrategyIds = useCallback((ids: string[]) => {
+    setAppliedStrategyIds(ids);
+    setAppliedStrategyIdsTick((t) => t + 1);
+  }, []);
+
   const value = useMemo(
     () => ({
       strategies,
@@ -108,8 +115,23 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
       isApplied,
       replaceStrategiesFromLayout,
       replaceAppliedStrategyIdsFromLayout,
+      replaceAppliedStrategyIds,
     }),
-    [strategies, addStrategy, updateStrategy, removeStrategy, strategyCreatedTick, appliedStrategyIdsTick, appliedStrategyIds, applyStrategy, unapplyStrategy, isApplied, replaceStrategiesFromLayout, replaceAppliedStrategyIdsFromLayout]
+    [
+      strategies,
+      addStrategy,
+      updateStrategy,
+      removeStrategy,
+      strategyCreatedTick,
+      appliedStrategyIdsTick,
+      appliedStrategyIds,
+      applyStrategy,
+      unapplyStrategy,
+      isApplied,
+      replaceStrategiesFromLayout,
+      replaceAppliedStrategyIdsFromLayout,
+      replaceAppliedStrategyIds,
+    ]
   );
 
   return (
@@ -135,6 +157,7 @@ export function useStrategies(): StrategiesContextValue {
       isApplied: () => false,
       replaceStrategiesFromLayout: () => {},
       replaceAppliedStrategyIdsFromLayout: () => {},
+      replaceAppliedStrategyIds: () => {},
     };
   }
   return ctx;

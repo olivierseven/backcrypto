@@ -22,6 +22,8 @@ const MobileAsciiKeyboard = dynamic(() => import("./MobileAsciiKeyboard"), { ssr
 import { KlinesIndicatorsProvider } from "./KlinesIndicatorsContext";
 import { KlinesRegressionsProvider } from "./regression/KlinesRegressionsContext";
 import RegressionsPanel from "./RegressionsPanel";
+import RobotsPanel from "./RobotsPanel";
+import BacktestPanel from "./BacktestPanel";
 import { SistemaDebugProvider } from "./SistemaDebugContext";
 import { ChartHeaderProvider } from "./ChartHeaderContext";
 import HeaderIntervalDropdown from "./HeaderIntervalDropdown";
@@ -30,6 +32,7 @@ import IndicatorsPanel from "./IndicatorsPanel";
 import DrawingsPanel from "./DrawingsPanel";
 import { StrategiesProvider, useStrategies } from "./strategies/StrategiesContext";
 import StrategiesPanel from "./strategies/StrategiesPanel";
+import { CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT } from "./backtestStorage";
 import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
 import { ChartSaveLoadProvider, useChartSaveLoad } from "./ChartSaveLoadContext";
 import SaveLoadPanel from "./SaveLoadPanel";
@@ -37,6 +40,7 @@ import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
 import SingleTabGuard from "./SingleTabGuard";
 import TrialNotificationModal from "./TrialNotificationModal";
 import SistemaTradingFooter from "./SistemaTradingFooter";
+import RobotTradingMonitor from "./RobotTradingMonitor";
 
 function SistemaHeaderCard() {
   const lang = useCryptoLang();
@@ -113,6 +117,8 @@ function SistemaHeader({
   onDrawingsClick,
   onMyRegressionsClick,
   onAddRegressionClick,
+  onMyRobotsClick,
+  onAddRobotClick,
   addStrategyDisabled = false,
   topBarGapClass = "",
 }: {
@@ -125,6 +131,8 @@ function SistemaHeader({
   onDrawingsClick: () => void;
   onMyRegressionsClick: () => void;
   onAddRegressionClick: () => void;
+  onMyRobotsClick: () => void;
+  onAddRobotClick: () => void;
   addStrategyDisabled?: boolean;
   topBarGapClass?: string;
 }) {
@@ -393,6 +401,20 @@ function SistemaHeader({
               >
                 {(t as Record<string, string>).menuAddStrategy ?? "Create strategy"}
               </button>
+              <button
+                type="button"
+                onClick={onMyRobotsClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuMyRobots ?? "My robots"}
+              </button>
+              <button
+                type="button"
+                onClick={onAddRobotClick}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded"
+              >
+                {(t as Record<string, string>).menuAddRobot ?? "Add robot"}
+              </button>
             </div>
             <button
               type="button"
@@ -406,7 +428,7 @@ function SistemaHeader({
                 <button
                   type="button"
                   onClick={() => { openSavePanel(); onMenuToggle(false); }}
-                  className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                  className="w-full flex items-center gap-2 text-left px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 border-t border-zinc-100 mt-1 pt-2"
                 >
                   <svg className="w-4 h-4 shrink-0 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -497,6 +519,22 @@ export default function SistemaLayoutClient({
   const [drawingsPanelOpen, setDrawingsPanelOpen] = useState(false);
   const [regressionsPanelOpen, setRegressionsPanelOpen] = useState(false);
   const [regressionsPanelInitialView, setRegressionsPanelInitialView] = useState<"list" | "add">("list");
+  const [robotsPanelOpen, setRobotsPanelOpen] = useState(false);
+  const [robotsPanelInitialView, setRobotsPanelInitialView] = useState<"list" | "add">("list");
+  const [backtestPanelOpen, setBacktestPanelOpen] = useState(false);
+  const [backtestInitialRobotId, setBacktestInitialRobotId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onOpenBacktestFromList = (e: Event) => {
+      const id = (e as CustomEvent<{ robotId?: string }>).detail?.robotId;
+      setRobotsPanelOpen(false);
+      setMenuOpen(false);
+      setBacktestInitialRobotId(typeof id === "string" && id.length > 0 ? id : null);
+      setBacktestPanelOpen(true);
+    };
+    window.addEventListener(CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT, onOpenBacktestFromList);
+    return () => window.removeEventListener(CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT, onOpenBacktestFromList);
+  }, []);
 
   useEffect(() => {
     if (Capacitor?.isNativePlatform?.()) {
@@ -547,11 +585,30 @@ export default function SistemaLayoutClient({
     setMenuOpen(false);
   };
 
+  const openMyRobots = () => {
+    setRobotsPanelInitialView("list");
+    setRobotsPanelOpen(true);
+    setMenuOpen(false);
+  };
+  const openAddRobot = () => {
+    setRobotsPanelInitialView("add");
+    setRobotsPanelOpen(true);
+    setMenuOpen(false);
+  };
+
+  const closeBacktestPanel = () => {
+    setBacktestPanelOpen(false);
+    setBacktestInitialRobotId(null);
+  };
+
   const handleMenuToggle = (open: boolean) => {
     setIndicatorsPanelOpen(false);
     setStrategiesPanelOpen(false);
     setDrawingsPanelOpen(false);
     setRegressionsPanelOpen(false);
+    setRobotsPanelOpen(false);
+    setBacktestPanelOpen(false);
+    setBacktestInitialRobotId(null);
     setMenuOpen(open);
   };
 
@@ -576,6 +633,12 @@ export default function SistemaLayoutClient({
             onDrawingsClick={openDrawings}
             onMyRegressionsClick={openMyRegressions}
             onAddRegressionClick={openAddRegression}
+            onMyRobotsClick={openMyRobots}
+            onAddRobotClick={openAddRobot}
+            backtestPanelOpen={backtestPanelOpen}
+            setBacktestPanelOpen={setBacktestPanelOpen}
+            backtestInitialRobotId={backtestInitialRobotId}
+            closeBacktestPanel={closeBacktestPanel}
             indicatorsPanelOpen={indicatorsPanelOpen}
             setIndicatorsPanelOpen={setIndicatorsPanelOpen}
             strategiesPanelOpen={strategiesPanelOpen}
@@ -584,9 +647,12 @@ export default function SistemaLayoutClient({
             setDrawingsPanelOpen={setDrawingsPanelOpen}
             regressionsPanelOpen={regressionsPanelOpen}
             setRegressionsPanelOpen={setRegressionsPanelOpen}
+            robotsPanelOpen={robotsPanelOpen}
+            setRobotsPanelOpen={setRobotsPanelOpen}
             indicatorsPanelInitialView={indicatorsPanelInitialView}
             strategiesPanelInitialView={strategiesPanelInitialView}
             regressionsPanelInitialView={regressionsPanelInitialView}
+            robotsPanelInitialView={robotsPanelInitialView}
             isSistemaChartPage={isSistemaChartPage}
             scrollContainerRef={scrollContainerRef}
             topBarGapClass={topBarGapClass}
@@ -613,6 +679,12 @@ function SistemaLayoutInner({
   onDrawingsClick,
   onMyRegressionsClick,
   onAddRegressionClick,
+  onMyRobotsClick,
+  onAddRobotClick,
+  backtestPanelOpen,
+  setBacktestPanelOpen,
+  backtestInitialRobotId,
+  closeBacktestPanel,
   indicatorsPanelOpen,
   setIndicatorsPanelOpen,
   strategiesPanelOpen,
@@ -621,9 +693,12 @@ function SistemaLayoutInner({
   setDrawingsPanelOpen,
   regressionsPanelOpen,
   setRegressionsPanelOpen,
+  robotsPanelOpen,
+  setRobotsPanelOpen,
   indicatorsPanelInitialView,
   strategiesPanelInitialView,
   regressionsPanelInitialView,
+  robotsPanelInitialView,
   isSistemaChartPage,
   scrollContainerRef,
   topBarGapClass,
@@ -640,6 +715,12 @@ function SistemaLayoutInner({
   onDrawingsClick: () => void;
   onMyRegressionsClick: () => void;
   onAddRegressionClick: () => void;
+  onMyRobotsClick: () => void;
+  onAddRobotClick: () => void;
+  backtestPanelOpen: boolean;
+  setBacktestPanelOpen: (v: boolean) => void;
+  backtestInitialRobotId: string | null;
+  closeBacktestPanel: () => void;
   indicatorsPanelOpen: boolean;
   setIndicatorsPanelOpen: (v: boolean) => void;
   strategiesPanelOpen: boolean;
@@ -648,9 +729,12 @@ function SistemaLayoutInner({
   setDrawingsPanelOpen: (v: boolean) => void;
   regressionsPanelOpen: boolean;
   setRegressionsPanelOpen: (v: boolean) => void;
+  robotsPanelOpen: boolean;
+  setRobotsPanelOpen: (v: boolean) => void;
   indicatorsPanelInitialView: "list" | "add";
   strategiesPanelInitialView: "list" | "add";
   regressionsPanelInitialView: "list" | "add";
+  robotsPanelInitialView: "list" | "add";
   isSistemaChartPage: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   topBarGapClass: string;
@@ -679,6 +763,12 @@ function SistemaLayoutInner({
               onDrawingsClick={onDrawingsClick}
               onMyRegressionsClick={onMyRegressionsClick}
               onAddRegressionClick={onAddRegressionClick}
+              onMyRobotsClick={onMyRobotsClick}
+              onAddRobotClick={onAddRobotClick}
+              backtestPanelOpen={backtestPanelOpen}
+              setBacktestPanelOpen={setBacktestPanelOpen}
+              backtestInitialRobotId={backtestInitialRobotId}
+              closeBacktestPanel={closeBacktestPanel}
               addStrategyDisabled={addStrategyDisabled}
               topBarGapClass={topBarGapClass}
               indicatorsPanelOpen={indicatorsPanelOpen}
@@ -689,9 +779,12 @@ function SistemaLayoutInner({
               setDrawingsPanelOpen={setDrawingsPanelOpen}
               regressionsPanelOpen={regressionsPanelOpen}
               setRegressionsPanelOpen={setRegressionsPanelOpen}
+              robotsPanelOpen={robotsPanelOpen}
+              setRobotsPanelOpen={setRobotsPanelOpen}
               indicatorsPanelInitialView={indicatorsPanelInitialView}
               strategiesPanelInitialView={strategiesPanelInitialView}
               regressionsPanelInitialView={regressionsPanelInitialView}
+              robotsPanelInitialView={robotsPanelInitialView}
               isSistemaChartPage={isSistemaChartPage}
               scrollContainerRef={scrollContainerRef}
               isAdmin={isAdmin}
@@ -716,6 +809,12 @@ function SistemaLayoutContent({
   onDrawingsClick,
   onMyRegressionsClick,
   onAddRegressionClick,
+  onMyRobotsClick,
+  onAddRobotClick,
+  backtestPanelOpen,
+  setBacktestPanelOpen,
+  backtestInitialRobotId,
+  closeBacktestPanel,
   addStrategyDisabled,
   topBarGapClass,
   indicatorsPanelOpen,
@@ -726,9 +825,12 @@ function SistemaLayoutContent({
   setDrawingsPanelOpen,
   regressionsPanelOpen,
   setRegressionsPanelOpen,
+  robotsPanelOpen,
+  setRobotsPanelOpen,
   indicatorsPanelInitialView,
   strategiesPanelInitialView,
   regressionsPanelInitialView,
+  robotsPanelInitialView,
   isSistemaChartPage,
   scrollContainerRef,
   isAdmin,
@@ -744,6 +846,12 @@ function SistemaLayoutContent({
   onDrawingsClick: () => void;
   onMyRegressionsClick: () => void;
   onAddRegressionClick: () => void;
+  onMyRobotsClick: () => void;
+  onAddRobotClick: () => void;
+  backtestPanelOpen: boolean;
+  setBacktestPanelOpen: (v: boolean) => void;
+  backtestInitialRobotId: string | null;
+  closeBacktestPanel: () => void;
   addStrategyDisabled: boolean;
   topBarGapClass: string;
   indicatorsPanelOpen: boolean;
@@ -754,9 +862,12 @@ function SistemaLayoutContent({
   setDrawingsPanelOpen: (v: boolean) => void;
   regressionsPanelOpen: boolean;
   setRegressionsPanelOpen: (v: boolean) => void;
+  robotsPanelOpen: boolean;
+  setRobotsPanelOpen: (v: boolean) => void;
   indicatorsPanelInitialView: "list" | "add";
   strategiesPanelInitialView: "list" | "add";
   regressionsPanelInitialView: "list" | "add";
+  robotsPanelInitialView: "list" | "add";
   isSistemaChartPage: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   isAdmin: boolean;
@@ -778,6 +889,8 @@ function SistemaLayoutContent({
                 onDrawingsClick={onDrawingsClick}
                 onMyRegressionsClick={onMyRegressionsClick}
                 onAddRegressionClick={onAddRegressionClick}
+                onMyRobotsClick={onMyRobotsClick}
+                onAddRobotClick={onAddRobotClick}
                 addStrategyDisabled={addStrategyDisabled}
                 topBarGapClass={topBarGapClass}
               />
@@ -793,6 +906,7 @@ function SistemaLayoutContent({
                   {children}
                 </div>
                 {isSistemaChartPage && <SistemaTradingFooter />}
+                {isSistemaChartPage && <RobotTradingMonitor />}
               </div>
               {indicatorsPanelOpen && (
                 <>
@@ -832,6 +946,29 @@ function SistemaLayoutContent({
                     onClick={() => setRegressionsPanelOpen(false)}
                   />
                   <RegressionsPanel initialView={regressionsPanelInitialView} onClose={() => setRegressionsPanelOpen(false)} isFreeUser={isFreeUser} />
+                </>
+              )}
+              {robotsPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[1300]"
+                    aria-hidden
+                    onClick={() => setRobotsPanelOpen(false)}
+                  />
+                  <RobotsPanel initialView={robotsPanelInitialView} onClose={() => setRobotsPanelOpen(false)} />
+                </>
+              )}
+              {isSistemaChartPage && backtestPanelOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[1300]"
+                    aria-hidden
+                    onClick={closeBacktestPanel}
+                  />
+                  <BacktestPanel
+                    initialRobotId={backtestInitialRobotId}
+                    onClose={closeBacktestPanel}
+                  />
                 </>
               )}
               {panelView && (

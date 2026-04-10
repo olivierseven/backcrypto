@@ -35,12 +35,16 @@ export interface KlinesChartYAxisProps {
   hasPanel3: boolean;
   hasPanel4: boolean;
   hasPanel5: boolean;
-  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5", { min: number; max: number }>;
+  hasPanel6: boolean;
+  hasPanel7: boolean;
+  panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7", { min: number; max: number }>;
   yRsiPanel2: (v: number) => number;
   yRsiPanel3: (v: number) => number;
   yRsiPanel4: (v: number) => number;
   yRsiPanel5: (v: number) => number;
-  yRsiByPanel: (val: number, panel: "panel2" | "panel3" | "panel4" | "panel5") => number;
+  yRsiPanel6: (v: number) => number;
+  yRsiPanel7: (v: number) => number;
+  yRsiByPanel: (val: number, panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => number;
   showLastClose: boolean;
   lastCloseY: number;
   lastClose: number;
@@ -54,7 +58,7 @@ export interface KlinesChartYAxisProps {
   indicatorLines: ChartIndicatorLine[];
   klines: unknown[][];
   n: number;
-  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5";
+  getPanel: (ind: ChartIndicatorLine) => "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7";
   yMin: number;
   yMax: number;
   crosshairPoint: { index: number; price: number; panelClickY?: number; panelValue?: number } | null;
@@ -88,11 +92,15 @@ export function KlinesChartYAxis({
   hasPanel3,
   hasPanel4,
   hasPanel5,
+  hasPanel6,
+  hasPanel7,
   panelExtents,
   yRsiPanel2,
   yRsiPanel3,
   yRsiPanel4,
   yRsiPanel5,
+  yRsiPanel6,
+  yRsiPanel7,
   yRsiByPanel,
   showLastClose,
   lastCloseY,
@@ -270,6 +278,42 @@ export function KlinesChartYAxis({
               </text>
             ));
           })()}
+        {hasPanel6 &&
+          (() => {
+            const { min, max } = panelExtents.panel6;
+            const r = max - min || 1;
+            const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel6" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
+            return ticks.map((v) => (
+              <text key={`p6-${v}`} x={textX} y={yRsiPanel6(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+                {fmt(v)}
+              </text>
+            ));
+          })()}
+        {hasPanel7 &&
+          (() => {
+            const { min, max } = panelExtents.panel7;
+            const r = max - min || 1;
+            const ticks = [min, min + r * 0.25, min + r * 0.5, min + r * 0.75, max];
+            const isObvPanel = indicatorLines.some((ind) => getPanel(ind) === "panel7" && ind.type === "OBV");
+            const fmt = (val: number) =>
+              val >= 0 && val <= 100 && val === Math.round(val)
+                ? String(val)
+                : isObvPanel && formatObvValue
+                  ? formatObvValue(val)
+                  : (formatPanelValue ? formatPanelValue(val) : formatYAxis(val));
+            return ticks.map((v) => (
+              <text key={`p7-${v}`} x={textX} y={yRsiPanel7(v) + 4} textAnchor="start" className="font-mono" style={{ fontSize }} fill={footerYAxisTextHex}>
+                {fmt(v)}
+              </text>
+            ));
+          })()}
         {volumeOnPrice && volumeLabelValue != null && volumeLabelY != null && volumeLabelColor != null && (
           <g>
             <rect
@@ -337,7 +381,7 @@ export function KlinesChartYAxis({
               if (!show) return [];
             }
             const lastValY =
-              panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel2" || panelKey === "panel3" || panelKey === "panel4" || panelKey === "panel5" ? panelKey : "panel2");
+              panelKey === "main" ? y(lastVal) : yRsiByPanel(lastVal, panelKey === "panel2" || panelKey === "panel3" || panelKey === "panel4" || panelKey === "panel5" || panelKey === "panel6" || panelKey === "panel7" ? panelKey : "panel2");
             const ext = panelKey === "main" ? null : panelExtents[panelKey];
             const inRange =
               panelKey === "main" ? lastVal >= yMin && lastVal <= yMax : ext != null && lastVal >= ext.min && lastVal <= ext.max;

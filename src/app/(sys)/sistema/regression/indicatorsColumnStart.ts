@@ -7,6 +7,8 @@ export function getIndicatorColumnStart(userIndicators: UserIndicatorConfig[], i
     const ind = userIndicators[i];
     if (ind.type === "MACD") {
       col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
+    } else if (ind.type === "DIFF") {
+      col += 1 + (ind.diffSignalLine ? 1 : 0) + (ind.diffHistogram ? 1 : 0);
     } else if (ind.type === "Stochastic") {
       col += 1 + (ind.stochDLine ? 1 : 0);
     } else if (ind.type === "WilliamsR") {
