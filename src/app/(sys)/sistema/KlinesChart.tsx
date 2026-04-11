@@ -2869,11 +2869,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
                 <div
                   ref={crosshairOverlayDivRef}
                   role="presentation"
-                  title={
-                    pathname === SISTEMA_PATH
-                      ? `${(t as Record<string, string>).tradingCtrlLimitBuyHint ?? ""} ${(t as Record<string, string>).tradingAltLimitSellHint ?? ""}`.trim()
-                      : undefined
-                  }
                   style={{
                     position: "absolute",
                     left: MARGIN_LEFT,

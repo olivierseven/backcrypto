@@ -10,9 +10,9 @@ export function computeRobotMarketBuyQuoteUsdt(
   spotUsdtFree: number,
   position: RobotOpenPosition | null
 ): number | null {
-  const spotRef = robot.referenceSpotUsdtFree;
-  if (spotRef == null || !Number.isFinite(spotRef) || spotRef < 0) return null;
-  const maxSpendUsdt = (spotRef * robot.maxSpotPercent) / 100;
+  /** Teto = % do USDT livre atual (Binance), não saldo congelado na ativação. */
+  if (!Number.isFinite(spotUsdtFree) || spotUsdtFree < 0) return null;
+  const maxSpendUsdt = (spotUsdtFree * robot.maxSpotPercent) / 100;
   const quoteInPosition = position?.totalQuoteSpent ?? 0;
   const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
   let opUsdt =

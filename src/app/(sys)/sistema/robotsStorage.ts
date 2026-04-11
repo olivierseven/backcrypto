@@ -28,9 +28,14 @@ export const ROBOT_MAX_SPOT_MAX = 100;
 export const ROBOT_STOP_LOSS_PCT_MIN = 0.1;
 export const ROBOT_STOP_LOSS_PCT_MAX = 5;
 
-/** Em qual ocorrência (borda) do sinal de compra (sem posição) começa a acumulação em velas seguidas: 1–5. */
+/** Quantos ‘sinais’ antes de ligar a acumulação: uma vez por vela sem posição em que o sinal de compra é verdadeiro (1–5). */
 export const ROBOT_BUY_ACCUM_START_SIGNAL_MIN = 1;
 export const ROBOT_BUY_ACCUM_START_SIGNAL_MAX = 5;
+
+/** Janela de acumulação: mínimo, máximo e valor por omissão (configurável por robô). */
+export const ROBOT_BUY_ACCUM_MAX_CANDLES_MIN = 1;
+export const ROBOT_BUY_ACCUM_MAX_CANDLES_MAX = 20;
+export const ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT = 7;
 
 export type RobotSide = "buyer" | "seller";
 
@@ -73,10 +78,15 @@ export interface SavedRobot {
   /** Se mode === "fixed": USDT por operação (≥ 0, ≤ teto quando aplicável). */
   buyOperationFixedUsdt: number;
   /**
-   * Comprador: após o N-ésimo sinal de compra (transição para verdadeiro sem posição), o robô compra até ao teto,
+   * Comprador: após a N-ésima vela sem posição em que o sinal de compra é verdadeiro, o robô compra até ao teto,
    * no máximo uma compra por vela; se numa vela o preço não permitir compra (≤ última compra), para a sequência.
    */
   buyAccumulationStartOnSignalNumber: number;
+  /**
+   * Comprador: após ligar a acumulação, no máximo este número de velas consecutivas com até uma tentativa
+   * de compra por vela (o sinal pode ficar falso). Entre ROBOT_BUY_ACCUM_MAX_CANDLES_MIN e MAX.
+   */
+  buyAccumMaxCandles: number;
   /** Ativa venda a mercado quando a perda ≥ limite (robô comprador). */
   stopLossEnabled: boolean;
   /** `percent`: perda vs preço médio de compra (%). `fixed`: perda em USDT (valor absoluto). */
@@ -94,8 +104,7 @@ export interface SavedRobot {
   /** Limite em USDT de ganho não realizado (valor atual − custo). */
   stopGainFixedUsdt: number;
   /**
-   * USDT livre no spot no momento da ativação — referência fixa para o teto do robô enquanto `isActive`.
-   * Não segue o saldo em tempo real após ativar.
+   * Legado: já não usado para o teto (teto = % do USDT livre em tempo real). Mantido para compat. JSON; pode ser null.
    */
   referenceSpotUsdtFree: number | null;
 }
@@ -154,6 +163,14 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
     Math.max(ROBOT_BUY_ACCUM_START_SIGNAL_MIN, startSigRaw)
   );
+  const maxCandlesRaw =
+    typeof x.buyAccumMaxCandles === "number" && Number.isFinite(x.buyAccumMaxCandles)
+      ? Math.floor(x.buyAccumMaxCandles)
+      : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
+  const buyAccumMaxCandles = Math.min(
+    ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+    Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesRaw)
+  );
   const stopLossEnabled = typeof x.stopLossEnabled === "boolean" ? x.stopLossEnabled : false;
   const stopLossMode: RobotStopLossMode = x.stopLossMode === "fixed" ? "fixed" : "percent";
   const slPctRaw =
@@ -198,6 +215,7 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     buyOperationPercent,
     buyOperationFixedUsdt,
     buyAccumulationStartOnSignalNumber,
+    buyAccumMaxCandles,
     stopLossEnabled,
     stopLossMode,
     stopLossPercent,

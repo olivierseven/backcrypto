@@ -16,6 +16,9 @@ import {
 } from "./strategies/strategiesTypes";
 import { CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT } from "./backtestStorage";
 import {
+  ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
   ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
   ROBOT_BUY_ACCUM_START_SIGNAL_MIN,
   ROBOT_MAX_SPOT_MAX,
@@ -129,6 +132,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
   const [buyAccumulationStartOnSignalNumber, setBuyAccumulationStartOnSignalNumber] = useState(
     ROBOT_BUY_ACCUM_START_SIGNAL_MIN
   );
+  const [buyAccumMaxCandles, setBuyAccumMaxCandles] = useState(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
 
   useEffect(() => {
     setView(initialView);
@@ -183,17 +187,8 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     return savedRobots.find((r) => r.id === editingRobotId) ?? null;
   }, [editingRobotId, savedRobots]);
 
-  /** Saldo live ou referência congelada na ativação (robô ativo em edição). */
-  const spotForRobotBudget = useMemo(() => {
-    if (
-      editingRobot?.isActive &&
-      editingRobot.referenceSpotUsdtFree != null &&
-      Number.isFinite(editingRobot.referenceSpotUsdtFree)
-    ) {
-      return editingRobot.referenceSpotUsdtFree;
-    }
-    return spotUsdtFree;
-  }, [editingRobot, spotUsdtFree]);
+  /** USDT livre spot (atualizado ao carregar saldos) — teto do robô é sempre % deste valor. */
+  const spotForRobotBudget = spotUsdtFree;
 
   const maxSpendUsdt = useMemo(() => {
     if (spotForRobotBudget == null || !Number.isFinite(spotForRobotBudget) || spotForRobotBudget < 0) {
@@ -201,21 +196,6 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     }
     return (spotForRobotBudget * maxSpotPercent) / 100;
   }, [spotForRobotBudget, maxSpotPercent]);
-
-  /** Robôs ativos antigos sem referência: gravar uma vez com o primeiro saldo lido. */
-  useEffect(() => {
-    if (view !== "add" || !editingRobotId) return;
-    if (spotUsdtFree == null || !Number.isFinite(spotUsdtFree)) return;
-    setSavedRobots((prev) => {
-      const r = prev.find((x) => x.id === editingRobotId);
-      if (!r?.isActive || r.referenceSpotUsdtFree != null) return prev;
-      const next = prev.map((rob) =>
-        rob.id === editingRobotId ? { ...rob, referenceSpotUsdtFree: spotUsdtFree } : rob
-      );
-      persistSavedRobots(next);
-      return next;
-    });
-  }, [view, editingRobotId, spotUsdtFree]);
 
   const onMaxSpotSlider = useCallback(
     (v: number) => {
@@ -388,6 +368,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setStopGainFixedInput("25");
     setRobotAlias("");
     setBuyAccumulationStartOnSignalNumber(ROBOT_BUY_ACCUM_START_SIGNAL_MIN);
+    setBuyAccumMaxCandles(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
     setErrorMsg(null);
   }, []);
 
@@ -440,6 +421,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         : ROBOT_BUY_ACCUM_START_SIGNAL_MIN;
     setBuyAccumulationStartOnSignalNumber(
       Math.min(ROBOT_BUY_ACCUM_START_SIGNAL_MAX, Math.max(ROBOT_BUY_ACCUM_START_SIGNAL_MIN, accumN))
+    );
+    const maxCandlesN =
+      typeof robot.buyAccumMaxCandles === "number" && Number.isFinite(robot.buyAccumMaxCandles)
+        ? Math.floor(robot.buyAccumMaxCandles)
+        : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
+    setBuyAccumMaxCandles(
+      Math.min(ROBOT_BUY_ACCUM_MAX_CANDLES_MAX, Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesN))
     );
     setErrorMsg(null);
     setView("add");
@@ -578,6 +566,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
             Math.max(ROBOT_BUY_ACCUM_START_SIGNAL_MIN, Math.floor(buyAccumulationStartOnSignalNumber))
           )
         : ROBOT_BUY_ACCUM_START_SIGNAL_MIN;
+    const buyAccumMaxCandlesClamped =
+      side === "buyer"
+        ? Math.min(
+            ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+            Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(buyAccumMaxCandles))
+          )
+        : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
 
     if (editingRobotId) {
       const prev = savedRobots.find((r) => r.id === editingRobotId);
@@ -624,7 +619,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         postFlattenSignalSellCombinedStrategyIds: newPostSellIds,
         postFlattenSignalBuyCombinedStrategyIds: newPostBuyIds,
         isActive: prev.isActive,
-        referenceSpotUsdtFree: prev.isActive ? (prev.referenceSpotUsdtFree ?? null) : null,
+        referenceSpotUsdtFree: null,
         maxSpotPercent,
         buyOperationMode,
         buyOperationPercent: buyOperationMode === "percent" ? pct : 0,
@@ -640,6 +635,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         stopGainFixedUsdt:
           side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
         buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
+        buyAccumMaxCandles: buyAccumMaxCandlesClamped,
       };
       const nextList = savedRobots.map((r) => (r.id === editingRobotId ? updated : r));
       setSavedRobots(nextList);
@@ -676,6 +672,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
       stopGainFixedUsdt:
         side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
       buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
+      buyAccumMaxCandles: buyAccumMaxCandlesClamped,
     };
     const nextList = [entry, ...savedRobots];
     setSavedRobots(nextList);
@@ -695,7 +692,6 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
       setErrorMsg(t.robotsErrSpotRef ?? "Could not read spot USDT to set the reference.");
       return;
     }
-    const snapshot = Math.max(0, ref);
     const ids = [
       ...new Set([
         ...robot.buyCombinedStrategyIds,
@@ -707,7 +703,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     ];
     if (!activateCombinedIds(ids)) return;
     const next = savedRobots.map((r) =>
-      r.id === robot.id ? { ...r, isActive: true, referenceSpotUsdtFree: snapshot } : r
+      r.id === robot.id ? { ...r, isActive: true, referenceSpotUsdtFree: null } : r
     );
     setSavedRobots(next);
     persistSavedRobots(next);
@@ -777,7 +773,6 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                 {errorMsg}
               </div>
             )}
-            <p className="text-xs text-zinc-600">{t.robotsListIntro ?? "Saved robots for this browser."}</p>
             <button
               type="button"
               onClick={openAddTabNew}
@@ -877,6 +872,22 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                               Math.max(
                                 ROBOT_BUY_ACCUM_START_SIGNAL_MIN,
                                 Math.floor(r.buyAccumulationStartOnSignalNumber ?? 1)
+                              )
+                            )
+                          )
+                        )}
+                      </p>
+                    )}
+                    {r.side === "buyer" && (
+                      <p className="text-[10px] text-violet-800">
+                        {(t.robotsListBuyAccumMaxCandles ?? "Sequential buy window: up to {n} candles.").replace(
+                          "{n}",
+                          String(
+                            Math.min(
+                              ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+                              Math.max(
+                                ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
+                                Math.floor(r.buyAccumMaxCandles ?? ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT)
                               )
                             )
                           )
@@ -1370,9 +1381,9 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                         {formatUsdt2(spotForRobotBudget)} USDT
                       </span>
                     </div>
-                    {editingRobot?.isActive && editingRobot.referenceSpotUsdtFree != null && (
+                    {editingRobot?.isActive && (
                       <p className="text-[10px] text-zinc-500 leading-snug">
-                        {t.robotsSpotBalanceFrozenHint ?? "Frozen at activation — not live balance."}
+                        {t.robotsSpotBalanceDynamicHint ?? "Robot budget uses your current free USDT (updates when balances load)."}
                       </p>
                     )}
                     <div className="flex justify-between gap-2 items-baseline">
@@ -1527,6 +1538,39 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                   </select>
                   <p className="text-[10px] text-zinc-600 leading-snug">
                     {t.robotsBuyAccumStartSignalHint ?? ""}
+                  </p>
+                </div>
+              )}
+
+              {side === "buyer" && (
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-zinc-800" htmlFor="robot-buy-accum-max-candles">
+                    {t.robotsBuyAccumMaxCandlesLabel ?? "Max consecutive candles to try buys"}
+                  </label>
+                  <select
+                    id="robot-buy-accum-max-candles"
+                    value={buyAccumMaxCandles}
+                    onChange={(e) =>
+                      setBuyAccumMaxCandles(
+                        Math.min(
+                          ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+                          Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Number(e.target.value))
+                        )
+                      )
+                    }
+                    className="w-full text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-900"
+                  >
+                    {Array.from(
+                      { length: ROBOT_BUY_ACCUM_MAX_CANDLES_MAX - ROBOT_BUY_ACCUM_MAX_CANDLES_MIN + 1 },
+                      (_, i) => ROBOT_BUY_ACCUM_MAX_CANDLES_MIN + i
+                    ).map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-zinc-600 leading-snug">
+                    {t.robotsBuyAccumMaxCandlesHint ?? ""}
                   </p>
                 </div>
               )}

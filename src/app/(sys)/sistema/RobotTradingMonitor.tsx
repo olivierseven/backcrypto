@@ -11,8 +11,8 @@ import {
   loadSavedRobots,
   type SavedRobot,
 } from "./robotsStorage";
+import { dispatchRobotPositionSellClear } from "./robotLiveOrders";
 import {
-  clearRobotPosition,
   getRobotPosition,
   loadRobotPositionMap,
   type RobotOpenPosition,
@@ -51,6 +51,8 @@ export default function RobotTradingMonitor() {
   const [lines, setLines] = useState<LineState[]>([]);
   const [robotsTick, setRobotsTick] = useState(0);
   const [posTick, setPosTick] = useState(0);
+  /** Utilizador pediu esquecer posição (ex.: venda manual na Binance); aguarda confirmação. */
+  const [pendingClearRobotId, setPendingClearRobotId] = useState<string | null>(null);
   const stopInFlightRef = useRef<Set<string>>(new Set());
   const lastStopAtRef = useRef<Map<string, number>>(new Map());
 
@@ -119,7 +121,7 @@ export default function RobotTradingMonitor() {
           }),
         });
         if (res.ok) {
-          clearRobotPosition(id, sym);
+          dispatchRobotPositionSellClear(id, sym);
           setPosTick((x) => x + 1);
           lastStopAtRef.current.set(id, now);
           try {
@@ -173,32 +175,95 @@ export default function RobotTradingMonitor() {
     return () => window.clearInterval(id);
   }, [symbol, lastPrice, activeBuyerRobots, tryStops, posTick]);
 
+  useEffect(() => {
+    if (
+      pendingClearRobotId != null &&
+      !lines.some((l) => l.robotId === pendingClearRobotId)
+    ) {
+      setPendingClearRobotId(null);
+    }
+  }, [lines, pendingClearRobotId]);
+
   if (lines.length === 0) return null;
+
+  const symLabel = symbol?.trim().toUpperCase() ?? "";
+
+  const handleConfirmForgetPosition = () => {
+    if (!pendingClearRobotId || !symLabel) return;
+    dispatchRobotPositionSellClear(pendingClearRobotId, symLabel);
+    setPendingClearRobotId(null);
+    setPosTick((x) => x + 1);
+  };
 
   return (
     <div
-      className="pointer-events-none fixed left-2 z-[1250] max-w-[min(100vw-1rem,22rem)] rounded-lg border border-zinc-200 bg-white/95 px-2 py-1.5 text-[10px] shadow-md sm:text-[11px]"
+      className="pointer-events-auto fixed left-2 z-[1250] max-w-[min(100vw-1rem,22rem)] rounded-lg border border-zinc-200 bg-white/95 px-2 py-1.5 text-[10px] shadow-md sm:text-[11px]"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
       aria-live="polite"
     >
       <p className="font-semibold text-zinc-700 mb-1">{t.robotsPnlHudTitle ?? "Robot position (avg buy)"}</p>
-      <ul className="space-y-0.5 font-mono tabular-nums text-zinc-800">
+      <ul className="space-y-1 font-mono tabular-nums text-zinc-800">
         {lines.map((ln) => (
-          <li key={ln.robotId} className="leading-snug">
-            <span className="text-zinc-500">#{ln.robotId.slice(-6)}</span>{" "}
-            <span className="text-zinc-600">{t.robotsPnlAvg ?? "avg"}</span> {ln.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
-            <span className={ln.pnlPct >= 0 ? "text-emerald-700" : "text-red-700"}>
-              {ln.pnlPct >= 0 ? "+" : ""}
-              {ln.pnlPct.toFixed(2)}%
-            </span>
-            {" · "}
-            <span className={ln.pnlUsdt >= 0 ? "text-emerald-700" : "text-red-700"}>
-              {ln.pnlUsdt >= 0 ? "+" : ""}
-              {ln.pnlUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-            </span>
+          <li key={ln.robotId} className="leading-snug flex items-start gap-1.5">
+            <div className="min-w-0 flex-1">
+              <span className="text-zinc-500">#{ln.robotId.slice(-6)}</span>{" "}
+              <span className="text-zinc-600">{t.robotsPnlAvg ?? "avg"}</span> {ln.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
+              <span className={ln.pnlPct >= 0 ? "text-emerald-700" : "text-red-700"}>
+                {ln.pnlPct >= 0 ? "+" : ""}
+                {ln.pnlPct.toFixed(2)}%
+              </span>
+              {" · "}
+              <span className={ln.pnlUsdt >= 0 ? "text-emerald-700" : "text-red-700"}>
+                {ln.pnlUsdt >= 0 ? "+" : ""}
+                {ln.pnlUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+              </span>
+            </div>
+            <button
+              type="button"
+              className="pointer-events-auto shrink-0 rounded border border-zinc-300 bg-white px-1 py-0 text-[11px] font-sans font-medium leading-none text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+              aria-label={t.robotsPnlHudForgetAria ?? "Forget tracked position"}
+              title={t.robotsPnlHudForgetTitle ?? "Forget position"}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingClearRobotId(ln.robotId);
+              }}
+            >
+              ×
+            </button>
           </li>
         ))}
       </ul>
+      {pendingClearRobotId != null && (
+        <div className="mt-2 border-t border-zinc-200 pt-2 space-y-2" role="dialog" aria-labelledby="robot-pnl-forget-heading">
+          <p id="robot-pnl-forget-heading" className="text-[10px] text-zinc-700 leading-snug font-sans">
+            {(t.robotsPnlHudForgetConfirmMessage ?? "")
+              .replace("{symbol}", symLabel)
+              .replace("{id}", pendingClearRobotId.slice(-6))}
+          </p>
+          <div className="flex flex-wrap items-center justify-end gap-2 font-sans">
+            <button
+              type="button"
+              className="rounded border border-zinc-300 bg-white px-2 py-1 text-[10px] font-medium text-zinc-700 hover:bg-zinc-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingClearRobotId(null);
+              }}
+            >
+              {t.robotsPnlHudForgetCancel ?? "Cancel"}
+            </button>
+            <button
+              type="button"
+              className="rounded border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-medium text-red-900 hover:bg-red-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConfirmForgetPosition();
+              }}
+            >
+              {t.robotsPnlHudForgetConfirm ?? "Clear tracker"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,12 @@
 import type { Kline } from "./klinesChart/types";
 import { clampBacktestExecutionMode, clampSlippagePercent, type BacktestExecutionMode } from "./backtestStorage";
-import { buyerRefAllowsNextBuy, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
-import type { SavedRobot } from "./robotsStorage";
+import { buyerAllowsMarketBuyOrder, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
+import {
+  ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
+  type SavedRobot,
+} from "./robotsStorage";
 
 /** Saída total simulada na vela (tabela admin do backtest). */
 export type RobotBacktestExitReason = "stop" | "flatten" | "signal_sell" | "post_arm_sell";
@@ -227,6 +232,13 @@ export function runRobotBacktest(params: {
   const spotRef =
     Number.isFinite(spotUsdtForSimulation) && spotUsdtForSimulation >= 0 ? spotUsdtForSimulation : 50_000;
   const maxSpendUsdt = (spotRef * robot.maxSpotPercent) / 100;
+  const buyAccumMaxCandlesForRobot = Math.min(
+    ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+    Math.max(
+      ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
+      Math.floor(robot.buyAccumMaxCandles ?? ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT)
+    )
+  );
   const startOpenTimeMs = Number(klines[Math.max(0, n - startBar)]?.[0]) || null;
   const endOpenTimeMs = Number(klines[Math.max(0, n - endBar)]?.[0]) || null;
   const totalHours =
@@ -273,10 +285,11 @@ export function runRobotBacktest(params: {
   let lastBuyFillPrice: number | null = null;
   /** Zerar: o primeiro sinal (e seguintes com posição) mantém alerta; venda na primeira vela com fecho ≤ médio. */
   let flattenArmed = false;
-  /** Acumulação de compras: bordas do sinal sem posição; compras em velas seguidas até ao teto ou falha da regra de perna. */
+  /** Acumulação de compras: cada vela sem posição com sinal de compra verdadeiro conta um sinal; depois até N velas seguidas tenta comprar (1/vela), com ou sem sinal, até ao teto ou fim da janela. */
   let buyEdgesSinceFlat = 0;
   let buyAccumulationActive = false;
-  let prevBuySignalBar = false;
+  let buyAccumLastOpenTime: string | null = null;
+  let buyAccumCandlesInWindow = 0;
 
   /** Património: caixa + valor da posição ao preço de venda efetivo (fecho com slippage a favor do mercado). */
   const equityUsdtNow = (sellMark: number) =>
@@ -318,6 +331,17 @@ export function runRobotBacktest(params: {
     lastCloseInRange = close;
     const ot = String(k[0]);
     const open = parseOpen(k) ?? close;
+
+    if (buyAccumulationActive && buyAccumLastOpenTime !== null && buyAccumLastOpenTime !== ot) {
+      buyAccumCandlesInWindow += 1;
+      buyAccumLastOpenTime = ot;
+      if (buyAccumCandlesInWindow > buyAccumMaxCandlesForRobot) {
+        buyAccumulationActive = false;
+        buyAccumLastOpenTime = null;
+        buyAccumCandlesInWindow = 0;
+      }
+    }
+
     const buyRefPx = executionMode === "optimistic" ? Math.min(open, close) : close;
     const sellRefPx = executionMode === "optimistic" ? Math.max(open, close) : close;
     const buyPx = buyRefPx * (1 + slipDec);
@@ -344,13 +368,17 @@ export function runRobotBacktest(params: {
       Number.isFinite(robot.buyAccumulationStartOnSignalNumber)
         ? Math.min(5, Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber)))
         : 1;
-    if (flatAtStart && buySig && !prevBuySignalBar) {
+    if (flatAtStart && buySig) {
       buyEdgesSinceFlat += 1;
       if (buyEdgesSinceFlat >= nAccumStart) {
+        const wasAccum = buyAccumulationActive;
         buyAccumulationActive = true;
+        if (!wasAccum) {
+          buyAccumLastOpenTime = ot;
+          buyAccumCandlesInWindow = 1;
+        }
       }
     }
-    prevBuySignalBar = buySig;
 
     if (baseQty <= 1e-12) {
       flattenArmed = false;
@@ -587,11 +615,9 @@ export function runRobotBacktest(params: {
       flattenArmed = false;
     }
 
-    // 5) Compra: acumulação ativa → até uma compra por vela até ao teto; regra de perna falha → para a sequência.
+    // 5) Compra: acumulação ativa → até uma compra por vela até ao teto ou fim da janela; sinal pode estar falso; gate de preço falha só nesta vela.
     if (buyAccumulationActive && !boughtThisOpenTime.has(ot)) {
-      if (!buyerRefAllowsNextBuy(buyPx, lastBuyFillPrice)) {
-        buyAccumulationActive = false;
-      } else {
+      if (buyerAllowsMarketBuyOrder(close, open, lastBuyFillPrice)) {
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
         let opUsdt =
           robot.buyOperationMode === "fixed"
@@ -616,9 +642,13 @@ export function runRobotBacktest(params: {
             lastBuyFillPrice = buyPx;
           } else {
             buyAccumulationActive = false;
+            buyAccumLastOpenTime = null;
+            buyAccumCandlesInWindow = 0;
           }
         } else {
           buyAccumulationActive = false;
+          buyAccumLastOpenTime = null;
+          buyAccumCandlesInWindow = 0;
         }
       }
     }
@@ -626,7 +656,8 @@ export function runRobotBacktest(params: {
     if (hadPosAtBarStart && baseQty <= 1e-12) {
       buyEdgesSinceFlat = 0;
       buyAccumulationActive = false;
-      prevBuySignalBar = false;
+      buyAccumLastOpenTime = null;
+      buyAccumCandlesInWindow = 0;
     }
 
     const avgAfter = baseQty > 1e-12 ? quoteInPosition / baseQty : null;

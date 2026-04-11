@@ -1326,8 +1326,6 @@ export const cryptoTranslations = {
         robotsErrNoneBuySelected: "Add at least one combined strategy for buy.",
         robotsErrNoneSellSelected: "Add at least one combined strategy for sell.",
         robotsErrValidation: "Could not validate strategies. Check indicators and references.",
-        robotsListIntro:
-          "Robots sync with the current chart layout slot (server) when you are logged in; local storage is used as a cache and when no layout robots payload is loaded.",
         robotsListEmpty: "No robots yet. Use Add robot to configure one.",
         robotsApplySaved: "Activate robot",
         robotsDeactivateSaved: "Deactivate robot",
@@ -1361,7 +1359,7 @@ export const cryptoTranslations = {
         robotsListPostFlattenBuyLine: "Buy after arm: {n} strategies",
         robotsMandatoryLegRuleTitle: "Fixed price rule (always on, not optional)",
         robotsMandatoryLegRuleBuyer:
-          "Buyer: on each new buy signal, a buy only runs if the reference price (latest candle close) is less than or equal to the last buy fill price. After a full exit, the next buy has no prior leg. Live and backtest.",
+          "Buyer: a market buy is only sent when the latest candle’s close is at or below that candle’s open, and—after a prior buy in the same run—also at or below the last recorded buy fill. The exchange fill price is not part of this gate. After a full exit, the next buy has no prior leg. Live and backtest.",
         robotsMandatoryLegRuleSeller:
           "Seller: the opposite rule applies — a new sell only if the reference price is greater than or equal to the last sell fill. Seller live trading is not wired yet; the rule is documented for parity.",
         robotsMaxSpotPercentLabel: "Maximum spot (%)",
@@ -1369,12 +1367,17 @@ export const cryptoTranslations = {
         robotsBuyPerOperationHint: "Cannot exceed the maximum above. Default is 0% of that maximum.",
         robotsBuyAccumStartSignalLabel: "Start sequential buys from buy signal #",
         robotsBuyAccumStartSignalHint:
-          "While flat, each time buy strategies go from false to true counts as one signal. After the Nth such edge, the robot buys at most once per candle until it reaches max spend or the mandatory leg rule blocks a candle (reference close must be ≤ last buy fill). After a full exit, counting restarts.",
+          "While flat, each candle where buy strategies are true counts as one signal (including consecutive true candles). After the Nth such candle, the robot keeps trying for up to the consecutive-candle limit you set below (1–20, default 7)—at most one market attempt per candle—even if the buy signal goes false, until max spend, that window ends, or the price gate blocks that candle (close ≤ open; stacking buys also close ≤ last fill). After a full exit, counting restarts.",
+        robotsBuyAccumMaxCandlesLabel: "Max consecutive candles to try buys (after N signals)",
+        robotsBuyAccumMaxCandlesHint:
+          "How many candles in a row may get one buy attempt each (1–20). Default 7. Independent of the buy signal staying true after accumulation starts.",
         robotsListBuyAccumStart: "Sequential buys start after buy signal #{n}.",
+        robotsListBuyAccumMaxCandles: "Sequential buy window: up to {n} candles.",
         robotsParamsSummary: "Max spot {max}% · Per operation {buy}% of max",
         robotsParamsSummaryFixed: "Max spot {max}% · {usdt} USDT per operation",
         robotsSpotBalanceLabel: "Spot USDT (free)",
-        robotsSpotBalanceFrozenHint: "Frozen at activation — not live balance.",
+        robotsSpotBalanceDynamicHint:
+          "Robot max spend uses your current free USDT (refreshes when balances load), not a snapshot from activation.",
         robotsErrSpotRef: "Could not read spot USDT to set the reference. Try again after balances load.",
         robotsBacktestRun: "Backtest",
         settingsTabGeneral: "General",
@@ -1479,7 +1482,7 @@ export const cryptoTranslations = {
         robotsBuyPercentUsdtLabel: "≈ USDT per operation",
         robotsTableBuyExecCol: "B·{id}",
         robotsTableBuyExecHint:
-          "Buyer B· column: 1 = a buy executed on that candle (at most one per candle while building toward max spend). 0 = none. Accumulation starts after the Nth buy-signal edge while flat (robot setting). If the leg rule blocks a candle, the run stops until full exit. Older rows: 1 if any buy strategy was true on that candle.",
+          "Buyer B· column: 1 = a buy executed on that candle (at most one per candle during the accumulation window). 0 = none. Accumulation starts after the Nth flat candle with a true buy signal (robot setting); then up to the robot’s configured number of consecutive candles (1–20) may be tried without requiring the signal to stay true. Stops at max spend, after that window, or full exit. Older rows: 1 if any buy strategy was true on that candle.",
         robotsStopLossEnable: "Stop loss (market sell)",
         robotsStopLossIntro:
           "While you hold base from robot buys, unrealized PnL is updated every second. If loss reaches the limit below, a market sell is sent. Buys must be recorded via the robot execution event.",
@@ -1504,6 +1507,12 @@ export const cryptoTranslations = {
         robotsListStopGainFixed: "Stop gain: {usdt} USDT",
         robotsPnlHudTitle: "Robot (avg buy)",
         robotsPnlAvg: "avg",
+        robotsPnlHudForgetTitle: "Forget tracked position",
+        robotsPnlHudForgetAria: "Forget tracked position for this robot",
+        robotsPnlHudForgetConfirmMessage:
+          "Remove the tracked position for robot #{id} on {symbol}? Use this if you already sold on Binance outside the app. PnL and stop loss/gain here use this tracker until the next robot buy is recorded.",
+        robotsPnlHudForgetCancel: "Cancel",
+        robotsPnlHudForgetConfirm: "Clear tracker",
         robotsErrInvalidFixed: "Enter a valid USDT amount.",
         robotsErrFixedExceedsMax: "Amount cannot exceed the robot max spend ({max} USDT).",
         menuDrawings: "Drawings",
@@ -3606,8 +3615,6 @@ export const cryptoTranslations = {
         robotsErrNoneBuySelected: "Adicione pelo menos uma estratégia combinada para compra.",
         robotsErrNoneSellSelected: "Adicione pelo menos uma estratégia combinada para venda.",
         robotsErrValidation: "Não foi possível validar as estratégias. Verifique indicadores e referências.",
-        robotsListIntro:
-          "Os robôs sincronizam com o slot de layout do gráfico (servidor) com sessão iniciada; o navegador guarda em cache e quando o layout não traz robôs.",
         robotsListEmpty: "Ainda não há robôs. Use Adicionar robô para configurar.",
         robotsApplySaved: "Ativar robô",
         robotsDeactivateSaved: "Desativar robô",
@@ -3641,7 +3648,7 @@ export const cryptoTranslations = {
         robotsListPostFlattenBuyLine: "Compra pós-alertas: {n} estratégias",
         robotsMandatoryLegRuleTitle: "Regra de preço fixa (sempre ativa, não é opção)",
         robotsMandatoryLegRuleBuyer:
-          "Comprador: em cada novo sinal de compra, só compra se o preço de referência (fecho da vela mais recente) for menor ou igual ao preço efetivo da última compra. Depois de zerar a posição, a próxima compra não tem perna anterior. Vale em live e no backtest.",
+          "Comprador: só se envia compra a mercado se o fecho da vela mais recente for ≤ à abertura dessa vela e, se já houve compra na mesma sequência, também ≤ ao preço registado da última compra. O preço de execução na Binance não entra nesta regra. Depois de zerar a posição, a próxima compra não tem perna anterior. Vale em live e no backtest.",
         robotsMandatoryLegRuleSeller:
           "Vendedor: vale a regra inversa — nova venda só se o preço de referência for maior ou igual ao da última venda. O live do vendedor ainda não está ligado; a regra fica descrita para manter o mesmo critério.",
         robotsMaxSpotPercentLabel: "Percentual máximo do spot (%)",
@@ -3649,12 +3656,17 @@ export const cryptoTranslations = {
         robotsBuyPerOperationHint: "Não pode ser maior que o máximo acima. Por defeito 0% do máximo.",
         robotsBuyAccumStartSignalLabel: "Começar compras em sequência a partir do sinal de compra n.º",
         robotsBuyAccumStartSignalHint:
-          "Sem posição, cada vez que as estratégias de compra passam de falsas a verdadeiras conta como um sinal. Depois do N-ésimo, o robô compra no máximo uma vez por vela até ao teto ou até a regra de perna bloquear (fecho de referência ≤ última compra). Depois de zerar, a contagem recomeça.",
+          "Sem posição, cada vela em que as estratégias de compra estão verdadeiras conta como um sinal (velas seguidas com sinal contam uma cada). Depois da N-ésima, o robô continua a tentar durante no máximo o número de velas consecutivas que definires abaixo (1–20, omissão 7)—no máximo uma tentativa de mercado por vela—mesmo que o sinal de compra passe a falso, até ao teto, ao fim dessa janela ou ao critério de preço falhar nessa vela (fecho ≤ abertura; em sequência também fecho ≤ última compra). Depois de zerar, a contagem recomeça.",
+        robotsBuyAccumMaxCandlesLabel: "Máximo de velas consecutivas para tentar compras (após N sinais)",
+        robotsBuyAccumMaxCandlesHint:
+          "Quantas velas seguidas podem ter no máximo uma tentativa de compra cada (1–20). Omissão 7. Não depende do sinal de compra continuar verdadeiro depois de ligar a acumulação.",
         robotsListBuyAccumStart: "Compras em sequência começam após o sinal de compra n.º {n}.",
+        robotsListBuyAccumMaxCandles: "Janela de compras em sequência: até {n} velas.",
         robotsParamsSummary: "Spot máx. {max}% · Por operação {buy}% do máx.",
         robotsParamsSummaryFixed: "Spot máx. {max}% · {usdt} USDT por operação",
         robotsSpotBalanceLabel: "Spot USDT (livre)",
-        robotsSpotBalanceFrozenHint: "Congelado na ativação — não é o saldo em tempo real.",
+        robotsSpotBalanceDynamicHint:
+          "O teto do robô usa o USDT livre atual (atualiza quando os saldos carregam), não um valor congelado na ativação.",
         robotsErrSpotRef: "Não foi possível ler o USDT spot para definir a referência. Tenta de novo depois de carregar os saldos.",
         robotsBacktestRun: "Backtest",
         settingsTabGeneral: "Geral",
@@ -3759,7 +3771,7 @@ export const cryptoTranslations = {
         robotsBuyPercentUsdtLabel: "≈ USDT por operação",
         robotsTableBuyExecCol: "B·{id}",
         robotsTableBuyExecHint:
-          "Coluna B· comprador: 1 = houve compra nessa vela (no máximo uma por vela enquanto acumula até ao teto). 0 = nenhuma. A acumulação começa após o N-ésimo sinal de compra sem posição (definição do robô). Se a regra de perna falhar numa vela, a sequência para até zerar. Linhas antigas: 1 se alguma estratégia de compra foi verdadeira nessa vela.",
+          "Coluna B· comprador: 1 = houve compra nessa vela (no máximo uma por vela na janela de acumulação). 0 = nenhuma. A acumulação começa após a N-ésima vela sem posição com sinal verdadeiro; depois pode tentar até ao máximo de velas consecutivas configurado no robô (1–20) sem exigir que o sinal continue verdadeiro. Para ao teto, após essa janela ou ao zerar. Linhas antigas: 1 se alguma estratégia de compra foi verdadeira nessa vela.",
         robotsStopLossEnable: "Stop loss (venda a mercado)",
         robotsStopLossIntro:
           "Enquanto tiveres base das compras do robô, o PnL não realizado atualiza a cada segundo. Se a perda atingir o limite abaixo, envia-se venda a mercado. As compras têm de ser registadas pelo evento de execução do robô.",
@@ -3784,6 +3796,12 @@ export const cryptoTranslations = {
         robotsListStopGainFixed: "Stop gain: {usdt} USDT",
         robotsPnlHudTitle: "Robô (média compra)",
         robotsPnlAvg: "média",
+        robotsPnlHudForgetTitle: "Esquecer posição registada",
+        robotsPnlHudForgetAria: "Esquecer posição registada deste robô",
+        robotsPnlHudForgetConfirmMessage:
+          "Remover a posição registada do robô #{id} em {symbol}? Usa se já vendeste na Binance fora da app. O PnL e os stops aqui usam este registo até à próxima compra do robô ser gravada.",
+        robotsPnlHudForgetCancel: "Cancelar",
+        robotsPnlHudForgetConfirm: "Limpar registo",
         robotsErrInvalidFixed: "Indique um valor USDT válido.",
         robotsErrFixedExceedsMax: "O valor não pode ultrapassar o máximo do robô ({max} USDT).",
         menuDrawings: "Desenhos",

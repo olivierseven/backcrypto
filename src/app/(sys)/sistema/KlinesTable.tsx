@@ -17,6 +17,9 @@ import { legacyToRoot, strategiesForContext, validateStrategyReferences, collect
 import {
   ROBOTS_CHANGED_EVENT,
   ROBOT_BUY_EXEC_CHANGED_EVENT,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+  ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
   ROBOT_BUY_EXEC_STORAGE_KEY,
   ROBOTS_STORAGE_KEY,
   loadRobotBuyExecMap,
@@ -34,7 +37,7 @@ import {
 import { runRobotBacktest } from "./robotBacktest";
 import RobotBacktestResultModal from "./RobotBacktestResultModal";
 import { getRobotPosition } from "./robotPositionStorage";
-import { buyerRefAllowsNextBuy, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
+import { buyerAllowsMarketBuyOrder, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
 import {
   computeRobotMarketBuyQuoteUsdt,
   dispatchRobotPositionBuy,
@@ -1139,7 +1142,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const robotFlattenArmedRef = useRef<Record<string, true>>({});
   const robotBuyEdgesSinceFlatRef = useRef<Record<string, number>>({});
   const robotBuyAccumulationActiveRef = useRef<Record<string, true>>({});
-  const robotBuyPrevSignalRef = useRef<Record<string, boolean>>({});
+  /** Por robô+par: último `openTime` visto durante acumulação (janela de velas). */
+  const robotBuyAccumLastOtRef = useRef<Record<string, string>>({});
+  /** Por robô+par: índice da vela atual dentro da janela de acumulação (1…buyAccumMaxCandles). */
+  const robotBuyAccumCandleIndexRef = useRef<Record<string, number>>({});
+  /** Por robô+par: `openTime` das velas já contadas como “sinal de compra” enquanto sem posição (uma contagem por vela). */
+  const robotBuySignalCountedOpenTimesRef = useRef<Record<string, Set<string>>>({});
   /** Fim do último efeito: havia posição neste robô+par. */
   const robotBuyHadPositionEndRef = useRef<Record<string, boolean>>({});
 
@@ -1317,7 +1325,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
    * Zerar: primeiro sinal arma alerta; primeira vela com fecho ≤ médio → venda a mercado; depois venda por sinal e compra.
-   * Compra: N-ésimo sinal (sem posição) liga acumulação; compra em velas seguidas até ao teto ou falha da regra de perna.
+   * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela.
    * Coluna B· só marca 1 após compra aceite na API.
    */
   useEffect(() => {
@@ -1326,12 +1334,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     if (!sym || !sym.endsWith("USDT")) return;
     const ot = String(extendedKlines[0][0]);
     const refClose = Number(extendedKlines[0]?.[4]);
+    const refOpenRaw = Number(extendedKlines[0]?.[1]);
     const refPx = Number.isFinite(refClose) && refClose > 0 ? refClose : null;
+    const refOpen = Number.isFinite(refOpenRaw) && refOpenRaw > 0 ? refOpenRaw : null;
 
     const armRef = robotFlattenArmedRef.current;
     const edgesRef = robotBuyEdgesSinceFlatRef.current;
     const accumRef = robotBuyAccumulationActiveRef.current;
-    const prevSigRef = robotBuyPrevSignalRef.current;
+    const countedOtRef = robotBuySignalCountedOpenTimesRef.current;
     const hadPosEndRef = robotBuyHadPositionEndRef.current;
 
     const syncBuyAccumForRobot = (robot: SavedRobot) => {
@@ -1342,20 +1352,28 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (flat && hadPosEndPrev) {
         delete edgesRef[kArm];
         delete accumRef[kArm];
-        delete prevSigRef[kArm];
+        delete countedOtRef[kArm];
+        delete robotBuyAccumLastOtRef.current[kArm];
+        delete robotBuyAccumCandleIndexRef.current[kArm];
       }
       const buySig = robotBuyOrTrue(robot, 0, strategyResults);
-      const prevS = prevSigRef[kArm] === true;
-      if (flat && buySig && !prevS) {
-        const nextE = (edgesRef[kArm] ?? 0) + 1;
-        edgesRef[kArm] = nextE;
-        const nStart = Math.min(
-          5,
-          Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber ?? 1))
-        );
-        if (nextE >= nStart) accumRef[kArm] = true;
+      if (flat && buySig) {
+        let seen = countedOtRef[kArm];
+        if (!seen) {
+          seen = new Set<string>();
+          countedOtRef[kArm] = seen;
+        }
+        if (!seen.has(ot)) {
+          seen.add(ot);
+          const nextE = (edgesRef[kArm] ?? 0) + 1;
+          edgesRef[kArm] = nextE;
+          const nStart = Math.min(
+            5,
+            Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber ?? 1))
+          );
+          if (nextE >= nStart) accumRef[kArm] = true;
+        }
       }
-      prevSigRef[kArm] = buySig;
     };
 
     for (const robot of activeBuyerRobots) {
@@ -1368,6 +1386,32 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         armRef[kArm] = true;
       }
       syncBuyAccumForRobot(robot);
+    }
+
+    for (const robot of activeBuyerRobots) {
+      const kArm = `${robot.id}::${sym}`;
+      if (accumRef[kArm] !== true) continue;
+      const maxCandles = Math.min(
+        ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+        Math.max(
+          ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
+          Math.floor(robot.buyAccumMaxCandles ?? ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT)
+        )
+      );
+      const lastOt = robotBuyAccumLastOtRef.current[kArm];
+      if (lastOt === undefined) {
+        robotBuyAccumLastOtRef.current[kArm] = ot;
+        robotBuyAccumCandleIndexRef.current[kArm] = 1;
+      } else if (lastOt !== ot) {
+        const nextIdx = (robotBuyAccumCandleIndexRef.current[kArm] ?? 1) + 1;
+        robotBuyAccumLastOtRef.current[kArm] = ot;
+        robotBuyAccumCandleIndexRef.current[kArm] = nextIdx;
+        if (nextIdx > maxCandles) {
+          delete accumRef[kArm];
+          delete robotBuyAccumLastOtRef.current[kArm];
+          delete robotBuyAccumCandleIndexRef.current[kArm];
+        }
+      }
     }
 
     let shouldRun = false;
@@ -1402,9 +1446,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (acc && !buyExecMapRef.current[robot.id]?.[ot]) {
         const posBuy = getRobotPosition(robot.id, sym);
         const buyKeyInflight = `${robot.id}::${ot}::buy`;
-        if (refPx == null || !buyerRefAllowsNextBuy(refPx, posBuy?.lastBuyFillPrice)) {
-          delete accumRef[kBuy];
-        } else if (!robotLiveBuyInFlightRef.current.has(buyKeyInflight)) {
+        const priceOk =
+          refPx != null &&
+          refOpen != null &&
+          buyerAllowsMarketBuyOrder(refPx, refOpen, posBuy?.lastBuyFillPrice);
+        if (priceOk && !robotLiveBuyInFlightRef.current.has(buyKeyInflight)) {
           shouldRun = true;
         }
       }
@@ -1427,11 +1473,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const balJson = (await balRes.json().catch(() => ({}))) as {
         balances?: { asset: string; free: string }[];
       };
-      if (cancelled || !balRes.ok) return;
-      const list = Array.isArray(balJson.balances) ? balJson.balances : [];
-      const usdtRow = list.find((b) => b.asset === "USDT");
-      const spotUsdtFree = usdtRow ? parseFloat(usdtRow.free) : NaN;
-      if (!Number.isFinite(spotUsdtFree) || spotUsdtFree <= 0) return;
+      if (cancelled) return;
+      let spotUsdtFree = NaN;
+      if (balRes.ok) {
+        const list = Array.isArray(balJson.balances) ? balJson.balances : [];
+        const usdtRow = list.find((b) => b.asset === "USDT");
+        if (usdtRow) {
+          const n = parseFloat(usdtRow.free);
+          if (Number.isFinite(n)) spotUsdtFree = n;
+        }
+      }
+      /** Compras a mercado precisam de USDT livre; vendas/flatten usam só a posição em base — não bloquear sell com USDT = 0. */
+      const spotUsdtOkForBuy = Number.isFinite(spotUsdtFree) && spotUsdtFree > 0;
 
       for (const robot of activeBuyerRobots) {
         if (cancelled) return;
@@ -1465,7 +1518,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   const kb = `${robot.id}::${sym}`;
                   delete robotBuyEdgesSinceFlatRef.current[kb];
                   delete robotBuyAccumulationActiveRef.current[kb];
-                  delete robotBuyPrevSignalRef.current[kb];
+                  delete robotBuyAccumLastOtRef.current[kb];
+                  delete robotBuyAccumCandleIndexRef.current[kb];
+                  delete robotBuySignalCountedOpenTimesRef.current[kb];
                   delete robotBuyHadPositionEndRef.current[kb];
                   dispatchRobotPositionSellClear(robot.id, sym);
                   dispatchSpotOrderPlaced();
@@ -1494,7 +1549,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 delete robotFlattenArmedRef.current[kb];
                 delete robotBuyEdgesSinceFlatRef.current[kb];
                 delete robotBuyAccumulationActiveRef.current[kb];
-                delete robotBuyPrevSignalRef.current[kb];
+                delete robotBuyAccumLastOtRef.current[kb];
+                delete robotBuyAccumCandleIndexRef.current[kb];
+                delete robotBuySignalCountedOpenTimesRef.current[kb];
                 delete robotBuyHadPositionEndRef.current[kb];
                 dispatchRobotPositionSellClear(robot.id, sym);
                 dispatchSpotOrderPlaced();
@@ -1505,6 +1562,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           }
         }
 
+        if (!spotUsdtOkForBuy) continue;
+
         const kAccum = `${robot.id}::${sym}`;
         if (robotBuyAccumulationActiveRef.current[kAccum] !== true) continue;
         if (buyExecMapRef.current[robot.id]?.[ot]) continue;
@@ -1512,16 +1571,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (robotLiveBuyInFlightRef.current.has(buyKey)) continue;
 
         const refCloseLive = Number(extendedKlines[0]?.[4]);
+        const refOpenLiveRaw = Number(extendedKlines[0]?.[1]);
         const refPxLive = Number.isFinite(refCloseLive) && refCloseLive > 0 ? refCloseLive : null;
+        const refOpenLive = Number.isFinite(refOpenLiveRaw) && refOpenLiveRaw > 0 ? refOpenLiveRaw : null;
         const pos = getRobotPosition(robot.id, sym);
-        if (refPxLive == null || !buyerRefAllowsNextBuy(refPxLive, pos?.lastBuyFillPrice)) {
-          delete robotBuyAccumulationActiveRef.current[kAccum];
+        if (refPxLive == null || refOpenLive == null || !buyerAllowsMarketBuyOrder(refPxLive, refOpenLive, pos?.lastBuyFillPrice)) {
           continue;
         }
 
         const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos);
         if (quoteUsdt == null) {
           delete robotBuyAccumulationActiveRef.current[kAccum];
+          delete robotBuyAccumLastOtRef.current[kAccum];
+          delete robotBuyAccumCandleIndexRef.current[kAccum];
           continue;
         }
 
