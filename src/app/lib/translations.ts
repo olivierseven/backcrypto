@@ -1981,8 +1981,10 @@ export const cryptoTranslations = {
         saveLayoutConfirmConfirm: "Confirm",
         upgradePlanModalTitle: "Upgrade your plan",
         upgradePlanModalMessage: "Saving and loading layouts are available on paid plans. Upgrade to access these features.",
-        anotherSessionActive: "The app is already open in another tab or window.",
-        anotherSessionActiveHint: "Close the other tab or click below to use this tab instead.",
+        anotherSessionActive:
+          "This tab is not among the active sessions (concurrent tab limit reached). It may have been replaced when another tab opened.",
+        anotherSessionActiveHint:
+          "Close another tab if you already have several open, or click below to reclaim access on this tab.",
         anotherSessionActiveRetry: "Use this tab",
         upgradePlanCta: "View plans",
       },
@@ -4270,8 +4272,10 @@ export const cryptoTranslations = {
         saveLayoutConfirmConfirm: "Confirmar",
         upgradePlanModalTitle: "Atualize seu plano",
         upgradePlanModalMessage: "Salvar e carregar layouts estão disponíveis em planos pagos. Atualize para acessar essas funcionalidades.",
-        anotherSessionActive: "O aplicativo já está aberto em outra aba ou janela.",
-        anotherSessionActiveHint: "Feche a outra aba ou clique abaixo para usar esta aba.",
+        anotherSessionActive:
+          "Esta aba não está entre as sessões ativas (limite de abas simultâneas). Pode ter sido substituída ao abrir outra aba.",
+        anotherSessionActiveHint:
+          "Feche outra aba se já tiver várias abertas, ou clique abaixo para recuperar o acesso nesta aba.",
         anotherSessionActiveRetry: "Usar esta aba",
         upgradePlanCta: "Ver planos",
       },

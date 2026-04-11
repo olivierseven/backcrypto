@@ -1,5 +1,5 @@
-// GET /api/session/claim — reivindica a sessão ativa para esta aba (header X-Tab-Id).
-// Retorna 200 se esta aba for a ativa; 409 se outra aba já estiver ativa (evita múltiplas abas).
+// GET /api/session/claim — reivindica um slot de sessão para esta aba (header X-Tab-Id).
+// Retorna 200 se a aba estiver nos slots ativos; 409 se estiver em cooldown (LRU) até forçar.
 // No primeiro acesso (sem nenhum crédito), cria o trial lite (1 coin / 1 dia) para o usuário virar lite.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";

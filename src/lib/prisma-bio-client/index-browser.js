@@ -162,7 +162,9 @@ exports.Prisma.UserScalarFieldEnum = {
   activeTabId: 'activeTabId',
   activeTabUpdatedAt: 'activeTabUpdatedAt',
   previousTabId: 'previousTabId',
-  previousTabUpdatedAt: 'previousTabUpdatedAt'
+  previousTabUpdatedAt: 'previousTabUpdatedAt',
+  sessionTabSlots: 'sessionTabSlots',
+  sessionEvictedTabs: 'sessionEvictedTabs'
 };
 
 exports.Prisma.UserBinanceConnectionScalarFieldEnum = {
@@ -698,15 +700,15 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
-};
-
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
 };
 exports.Role = exports.$Enums.Role = {
   user: 'user',

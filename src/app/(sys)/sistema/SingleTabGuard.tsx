@@ -13,8 +13,8 @@ interface SingleTabGuardProps {
 }
 
 /**
- * Garante apenas uma aba ativa por usuário (controle via banco).
- * Se outra aba já estiver ativa, mostra mensagem. Senão, renderiza os filhos e envia heartbeat.
+ * Garante no máximo N abas ativas por utilizador (default 2, controle via banco).
+ * Abas expulsas por LRU recebem 409 até ao cooldown ou "Usar esta aba".
  */
 export default function SingleTabGuard({ children }: SingleTabGuardProps) {
   const lang = useCryptoLang();

@@ -120,10 +120,12 @@ model User {
   progress             Int         @default(0)
   language             AppLanguage @default(en)
   timezoneOffset       Int         @default(0) // UTC offset in hours, -12 to +12
-  activeTabId          String?     @map("active_tab_id") // Uma aba ativa por usuário (controle via banco)
+  activeTabId          String?     @map("active_tab_id") // Legado — migração lazy para session_tab_slots
   activeTabUpdatedAt   DateTime?   @map("active_tab_updated_at")
-  previousTabId        String?     @map("previous_tab_id") // Aba que acabou de ser substituída (bloqueada por ~60s)
+  previousTabId        String?     @map("previous_tab_id") // Legado — migração lazy para session_evicted_tabs
   previousTabUpdatedAt DateTime?   @map("previous_tab_updated_at")
+  sessionTabSlots      Json?       @map("session_tab_slots") // [{ id, at }] — até N abas (SISTEMA_MAX_SESSION_TABS, default 2)
+  sessionEvictedTabs   Json?       @map("session_evicted_tabs") // [{ id, until }] — cooldown após LRU
 
   accessRequests      AccessRequest[]
   coinLedger          CoinLedgerEntry[]

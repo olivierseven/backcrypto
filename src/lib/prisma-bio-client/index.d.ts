@@ -4527,6 +4527,8 @@ export namespace Prisma {
     activeTabUpdatedAt: number
     previousTabId: number
     previousTabUpdatedAt: number
+    sessionTabSlots: number
+    sessionEvictedTabs: number
     _all: number
   }
 
@@ -4685,6 +4687,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: true
     previousTabId?: true
     previousTabUpdatedAt?: true
+    sessionTabSlots?: true
+    sessionEvictedTabs?: true
     _all?: true
   }
 
@@ -4816,6 +4820,8 @@ export namespace Prisma {
     activeTabUpdatedAt: Date | null
     previousTabId: string | null
     previousTabUpdatedAt: Date | null
+    sessionTabSlots: JsonValue | null
+    sessionEvictedTabs: JsonValue | null
     _count: UserCountAggregateOutputType | null
     _avg: UserAvgAggregateOutputType | null
     _sum: UserSumAggregateOutputType | null
@@ -4879,6 +4885,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: boolean
     previousTabId?: boolean
     previousTabUpdatedAt?: boolean
+    sessionTabSlots?: boolean
+    sessionEvictedTabs?: boolean
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
     coinWallet?: boolean | User$coinWalletArgs<ExtArgs>
@@ -4938,6 +4946,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: boolean
     previousTabId?: boolean
     previousTabUpdatedAt?: boolean
+    sessionTabSlots?: boolean
+    sessionEvictedTabs?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4982,6 +4992,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: boolean
     previousTabId?: boolean
     previousTabUpdatedAt?: boolean
+    sessionTabSlots?: boolean
+    sessionEvictedTabs?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -5026,9 +5038,11 @@ export namespace Prisma {
     activeTabUpdatedAt?: boolean
     previousTabId?: boolean
     previousTabUpdatedAt?: boolean
+    sessionTabSlots?: boolean
+    sessionEvictedTabs?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language" | "timezoneOffset" | "activeTabId" | "activeTabUpdatedAt" | "previousTabId" | "previousTabUpdatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "emailEnc" | "emailIv" | "emailTag" | "emailSearchHash" | "emailVerifiedAt" | "name" | "passwordHash" | "specialCodeHash" | "specialExpiresAt" | "createdAt" | "updatedAt" | "role" | "tier" | "nickname" | "nicknameChanges" | "avatarId" | "avatarBorder" | "avatarSkinTone" | "avatarColorTone" | "sevenPoints" | "ganhoSimulado" | "userLevel" | "position" | "tmp" | "isDeleted" | "dataExclusao" | "dataExpiracao" | "pushToken" | "pushTokenUpdated" | "notifyMegaSena" | "notifyLotofacil" | "notifyQuina" | "hideStatusBar" | "progress" | "language" | "timezoneOffset" | "activeTabId" | "activeTabUpdatedAt" | "previousTabId" | "previousTabUpdatedAt" | "sessionTabSlots" | "sessionEvictedTabs", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     accessRequests?: boolean | User$accessRequestsArgs<ExtArgs>
     coinLedger?: boolean | User$coinLedgerArgs<ExtArgs>
@@ -5109,6 +5123,8 @@ export namespace Prisma {
       activeTabUpdatedAt: Date | null
       previousTabId: string | null
       previousTabUpdatedAt: Date | null
+      sessionTabSlots: Prisma.JsonValue | null
+      sessionEvictedTabs: Prisma.JsonValue | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -5587,6 +5603,8 @@ export namespace Prisma {
     readonly activeTabUpdatedAt: FieldRef<"User", 'DateTime'>
     readonly previousTabId: FieldRef<"User", 'String'>
     readonly previousTabUpdatedAt: FieldRef<"User", 'DateTime'>
+    readonly sessionTabSlots: FieldRef<"User", 'Json'>
+    readonly sessionEvictedTabs: FieldRef<"User", 'Json'>
   }
     
 
@@ -46904,7 +46922,9 @@ export namespace Prisma {
     activeTabId: 'activeTabId',
     activeTabUpdatedAt: 'activeTabUpdatedAt',
     previousTabId: 'previousTabId',
-    previousTabUpdatedAt: 'previousTabUpdatedAt'
+    previousTabUpdatedAt: 'previousTabUpdatedAt',
+    sessionTabSlots: 'sessionTabSlots',
+    sessionEvictedTabs: 'sessionEvictedTabs'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -47560,14 +47580,6 @@ export namespace Prisma {
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
-  };
-
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
-
-
   export const JsonNullValueFilter: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull,
@@ -47575,6 +47587,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -47861,6 +47881,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     previousTabId?: StringNullableFilter<"User"> | string | null
     previousTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    sessionTabSlots?: JsonNullableFilter<"User">
+    sessionEvictedTabs?: JsonNullableFilter<"User">
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -47919,6 +47941,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: SortOrderInput | SortOrder
     previousTabId?: SortOrderInput | SortOrder
     previousTabUpdatedAt?: SortOrderInput | SortOrder
+    sessionTabSlots?: SortOrderInput | SortOrder
+    sessionEvictedTabs?: SortOrderInput | SortOrder
     accessRequests?: AccessRequestOrderByRelationAggregateInput
     coinLedger?: CoinLedgerEntryOrderByRelationAggregateInput
     coinWallet?: UserCoinWalletOrderByWithRelationInput
@@ -47980,6 +48004,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     previousTabId?: StringNullableFilter<"User"> | string | null
     previousTabUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    sessionTabSlots?: JsonNullableFilter<"User">
+    sessionEvictedTabs?: JsonNullableFilter<"User">
     accessRequests?: AccessRequestListRelationFilter
     coinLedger?: CoinLedgerEntryListRelationFilter
     coinWallet?: XOR<UserCoinWalletNullableScalarRelationFilter, UserCoinWalletWhereInput> | null
@@ -48038,6 +48064,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: SortOrderInput | SortOrder
     previousTabId?: SortOrderInput | SortOrder
     previousTabUpdatedAt?: SortOrderInput | SortOrder
+    sessionTabSlots?: SortOrderInput | SortOrder
+    sessionEvictedTabs?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -48090,6 +48118,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     previousTabId?: StringNullableWithAggregatesFilter<"User"> | string | null
     previousTabUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    sessionTabSlots?: JsonNullableWithAggregatesFilter<"User">
+    sessionEvictedTabs?: JsonNullableWithAggregatesFilter<"User">
   }
 
   export type UserBinanceConnectionWhereInput = {
@@ -51260,6 +51290,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -51318,6 +51350,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -51376,6 +51410,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -51434,6 +51470,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -51492,6 +51530,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type UserUpdateManyMutationInput = {
@@ -51536,6 +51576,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -51580,6 +51622,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type UserBinanceConnectionCreateInput = {
@@ -55298,6 +55342,29 @@ export namespace Prisma {
     notIn?: $Enums.AppLanguage[] | ListEnumAppLanguageFieldRefInput<$PrismaModel>
     not?: NestedEnumAppLanguageFilter<$PrismaModel> | $Enums.AppLanguage
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type AccessRequestListRelationFilter = {
     every?: AccessRequestWhereInput
@@ -55476,6 +55543,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: SortOrder
     previousTabId?: SortOrder
     previousTabUpdatedAt?: SortOrder
+    sessionTabSlots?: SortOrder
+    sessionEvictedTabs?: SortOrder
   }
 
   export type UserAvgOrderByAggregateInput = {
@@ -55749,6 +55818,32 @@ export namespace Prisma {
     _min?: NestedEnumAppLanguageFilter<$PrismaModel>
     _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
 
   export type DecimalNullableFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
@@ -55830,29 +55925,6 @@ export namespace Prisma {
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type UserBinanceSpotOrderUserIdSymbolBinanceOrderIdCompoundUniqueInput = {
     userId: string
@@ -55904,32 +55976,6 @@ export namespace Prisma {
     executedQty?: SortOrder
     canceledAt?: SortOrder
     createdAt?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type AffiliateCouponListRelationFilter = {
@@ -59495,6 +59541,29 @@ export namespace Prisma {
     _min?: NestedEnumAppLanguageFilter<$PrismaModel>
     _max?: NestedEnumAppLanguageFilter<$PrismaModel>
   }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedDecimalNullableFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
@@ -59521,29 +59590,6 @@ export namespace Prisma {
     _sum?: NestedDecimalNullableFilter<$PrismaModel>
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
-  }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumSenderTypeFilter<$PrismaModel = never> = {
@@ -60635,6 +60681,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -60692,6 +60740,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -60765,6 +60815,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -60822,6 +60874,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -60879,6 +60933,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -60936,6 +60992,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -61009,6 +61067,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -61066,6 +61126,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -61249,6 +61311,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -61306,6 +61370,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -61379,6 +61445,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -61436,6 +61504,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -61493,6 +61563,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -61550,6 +61622,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -61623,6 +61697,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -61680,6 +61756,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -61737,6 +61815,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -61794,6 +61874,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -61867,6 +61949,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -61924,6 +62008,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -61981,6 +62067,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -62038,6 +62126,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -62111,6 +62201,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -62168,6 +62260,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -62225,6 +62319,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -62282,6 +62378,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -62355,6 +62453,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -62412,6 +62512,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -62469,6 +62571,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -62526,6 +62630,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -62599,6 +62705,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -62656,6 +62764,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -62747,6 +62857,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -62804,6 +62916,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -62893,6 +63007,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -62950,6 +63066,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -63007,6 +63125,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
@@ -63064,6 +63184,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
     checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
@@ -63183,6 +63305,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
@@ -63240,6 +63364,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
     checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -63384,6 +63510,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -63441,6 +63569,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -63549,6 +63679,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -63606,6 +63738,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -63663,6 +63797,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -63720,6 +63856,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -63793,6 +63931,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -63850,6 +63990,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -63907,6 +64049,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -63964,6 +64108,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -64037,6 +64183,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -64094,6 +64242,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
@@ -64303,6 +64453,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
@@ -64360,6 +64512,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: Date | string | null
     previousTabId?: string | null
     previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
     coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
     coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
@@ -64433,6 +64587,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
@@ -64490,6 +64646,8 @@ export namespace Prisma {
     activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
     previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
     accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
     coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
     coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
