@@ -127,20 +127,21 @@ model User {
   sessionTabSlots      Json?       @map("session_tab_slots") // [{ id, at }] — até N abas (SISTEMA_MAX_SESSION_TABS, default 2)
   sessionEvictedTabs   Json?       @map("session_evicted_tabs") // [{ id, until }] — cooldown após LRU
 
-  accessRequests      AccessRequest[]
-  coinLedger          CoinLedgerEntry[]
-  coinWallet          UserCoinWallet?
-  checkoutSessions    StripeCheckoutSession[]
-  pagarMeOrders       PagarMeOrder[]
-  passwordResetTokens PasswordResetToken[]
-  verificationTokens  EmailVerificationToken[]
-  walletCredits       WalletCredit[]
-  notifications       UserNotification[]
-  chartLayouts        ChartLayout[]
-  chartModels         ChartModel[]
-  stripePlanPayments  StripePlanPayment[]
-  binanceConnection   UserBinanceConnection?
-  binanceSpotOrders   UserBinanceSpotOrder[]
+  accessRequests             AccessRequest[]
+  coinLedger                 CoinLedgerEntry[]
+  coinWallet                 UserCoinWallet?
+  checkoutSessions           StripeCheckoutSession[]
+  pagarMeOrders              PagarMeOrder[]
+  passwordResetTokens        PasswordResetToken[]
+  verificationTokens         EmailVerificationToken[]
+  walletCredits              WalletCredit[]
+  notifications              UserNotification[]
+  chartLayouts               ChartLayout[]
+  chartModels                ChartModel[]
+  stripePlanPayments         StripePlanPayment[]
+  binanceConnection          UserBinanceConnection?
+  binanceSpotOrders          UserBinanceSpotOrder[]
+  robotSpotPerformanceEvents RobotSpotPerformanceEvent[]
 
   @@schema("backcrypto")
 }
@@ -187,6 +188,34 @@ model UserBinanceSpotOrder {
   @@unique([userId, symbol, binanceOrderId])
   @@index([userId, createdAt(sort: Desc)])
   @@map("UserBinanceSpotOrder")
+  @@schema("backcrypto")
+}
+
+/// Execuções spot atribuídas a um robô (métricas reais vs backtest).
+model RobotSpotPerformanceEvent {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  robotId            String   @map("robot_id") @db.VarChar(64)
+  robotAliasSnapshot String?  @map("robot_alias_snapshot") @db.VarChar(160)
+  symbol             String   @db.VarChar(32)
+  side               String   @db.VarChar(8)
+  /// OPEN_BUY | FLATTEN | SIGNAL_SELL | STOP_LOSS | STOP_GAIN
+  executionRole      String   @map("execution_role") @db.VarChar(32)
+  binanceOrderId     String   @map("binance_order_id") @db.VarChar(32)
+  executedQtyBase    String?  @map("executed_qty_base") @db.VarChar(64)
+  quoteQtyUsdt       String?  @map("quote_qty_usdt") @db.VarChar(64)
+  avgPrice           String?  @map("avg_price") @db.VarChar(64)
+  feeUsdt            String?  @map("fee_usdt") @db.VarChar(64)
+  realizedPnlUsdt    String?  @map("realized_pnl_usdt") @db.VarChar(64)
+  rawJson            Json?    @map("raw_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, binanceOrderId])
+  @@index([userId, robotId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("RobotSpotPerformanceEvent")
   @@schema("backcrypto")
 }
 

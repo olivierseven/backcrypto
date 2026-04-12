@@ -112,6 +112,46 @@ export interface SavedRobot {
 /** robotId → openTime (string) → 1 */
 export type RobotBuyExecMap = Record<string, Record<string, 1>>;
 
+/** Ids de estratégias combinadas referenciadas pelo robô (compra, venda, flatten, pós-flatten). */
+export function collectRobotReferencedCombinedIds(robot: SavedRobot): string[] {
+  return [
+    ...robot.buyCombinedStrategyIds,
+    ...robot.sellCombinedStrategyIds,
+    ...robot.flattenCombinedStrategyIds,
+    ...robot.postFlattenSignalSellCombinedStrategyIds,
+    ...robot.postFlattenSignalBuyCombinedStrategyIds,
+  ];
+}
+
+/** true se todas as estratégias referenciadas existem em `applied` (robô pode receber sinais). */
+export function activeRobotHasAllReferencedStrategiesApplied(
+  robot: SavedRobot,
+  applied: ReadonlySet<string>
+): boolean {
+  for (const id of collectRobotReferencedCombinedIds(robot)) {
+    if (!applied.has(id)) return false;
+  }
+  return true;
+}
+
+/**
+ * Robôs com `isActive` deixam de estar ativos se falta alguma estratégia combinada aplicada.
+ * Persiste e dispara `ROBOTS_CHANGED_EVENT` quando altera.
+ */
+export function deactivateRobotsIfMissingAppliedStrategies(appliedIds: readonly string[]): void {
+  if (typeof window === "undefined") return;
+  const applied = new Set(appliedIds);
+  const list = loadSavedRobots();
+  let changed = false;
+  const next = list.map((r) => {
+    if (!r.isActive) return r;
+    if (activeRobotHasAllReferencedStrategiesApplied(r, applied)) return r;
+    changed = true;
+    return { ...r, isActive: false, referenceSpotUsdtFree: null };
+  });
+  if (changed) persistSavedRobots(next);
+}
+
 export function normalizeRobot(raw: unknown): SavedRobot | null {
   if (raw == null || typeof raw !== "object") return null;
   const x = raw as Record<string, unknown>;

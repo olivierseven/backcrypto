@@ -196,6 +196,24 @@ exports.Prisma.UserBinanceSpotOrderScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.RobotSpotPerformanceEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  robotId: 'robotId',
+  robotAliasSnapshot: 'robotAliasSnapshot',
+  symbol: 'symbol',
+  side: 'side',
+  executionRole: 'executionRole',
+  binanceOrderId: 'binanceOrderId',
+  executedQtyBase: 'executedQtyBase',
+  quoteQtyUsdt: 'quoteQtyUsdt',
+  avgPrice: 'avgPrice',
+  feeUsdt: 'feeUsdt',
+  realizedPnlUsdt: 'realizedPnlUsdt',
+  rawJson: 'rawJson',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.AffiliateAccountScalarFieldEnum = {
   id: 'id',
   emailEnc: 'emailEnc',
@@ -777,6 +795,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   UserBinanceConnection: 'UserBinanceConnection',
   UserBinanceSpotOrder: 'UserBinanceSpotOrder',
+  RobotSpotPerformanceEvent: 'RobotSpotPerformanceEvent',
   AffiliateAccount: 'AffiliateAccount',
   AffiliateCoupon: 'AffiliateCoupon',
   ChartLayout: 'ChartLayout',

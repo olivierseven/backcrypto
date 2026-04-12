@@ -13,6 +13,8 @@ import {
   peekStaleSymbolSpotFilters,
 } from "@/lib/binance-exchange-filters";
 import { deriveSpotOrderExecutionPriceFromRawJson } from "@/lib/user-spot-order-chart";
+import { parseBinanceOrderResponseForPerformance } from "@/lib/robot-spot-performance-from-order";
+import { Prisma } from "@/lib/prisma-bio-client";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 
@@ -48,8 +50,17 @@ const bodySchema = z
     quantity: z.string().trim().optional(),
     price: z.string().trim().optional(),
     timeInForce: z.enum(["GTC"]).optional(),
+    robotId: z.string().trim().min(1).max(64).optional(),
+    robotAlias: z.string().trim().max(160).optional(),
+    executionRole: z.enum(["OPEN_BUY", "FLATTEN", "SIGNAL_SELL", "STOP_LOSS", "STOP_GAIN"]).optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.robotId && !data.executionRole) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "robot_requires_execution_role" });
+    }
+    if (data.executionRole && !data.robotId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "execution_role_requires_robot_id" });
+    }
     if (data.type === "LIMIT") {
       if (!data.price || !data.quantity) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "limit_requires_price_quantity" });
@@ -123,6 +134,52 @@ async function persistUserSpotOrder(
   }
 }
 
+async function persistRobotSpotPerformanceEvent(
+  userId: string,
+  symbol: string,
+  input: {
+    robotId: string;
+    robotAlias: string | null;
+    executionRole: string;
+    side: string;
+    orderJson: unknown;
+  }
+): Promise<void> {
+  try {
+    if (typeof orderJson !== "object" || orderJson === null) return;
+    const o = orderJson as Record<string, unknown>;
+    const oid = o.orderId;
+    if (oid === undefined || oid === null) return;
+    const binanceOrderId = String(oid);
+    const metrics = parseBinanceOrderResponseForPerformance(orderJson);
+    await cryptoPrisma.robotSpotPerformanceEvent.create({
+      data: {
+        userId,
+        robotId: input.robotId,
+        robotAliasSnapshot: input.robotAlias?.trim() || null,
+        symbol,
+        side: input.side,
+        executionRole: input.executionRole,
+        binanceOrderId,
+        executedQtyBase: metrics.executedQtyBase,
+        quoteQtyUsdt: metrics.quoteQtyUsdt,
+        avgPrice: metrics.avgPrice,
+        feeUsdt: metrics.feeUsdt,
+        realizedPnlUsdt: null,
+        rawJson: orderJson as object,
+      },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return;
+    }
+    await persistOrderErrorLog("robot_performance_persist_failed", {
+      symbol,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const diag: Record<string, unknown> = { viaProxy: orderUsesBinanceProxy() };
   try {
@@ -136,7 +193,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "invalid_body", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { symbol, side, type, quoteOrderQty, quantity, price, timeInForce } = parsed.data;
+    const { symbol, side, type, quoteOrderQty, quantity, price, timeInForce, robotId, robotAlias, executionRole } =
+      parsed.data;
     const sym = symbol.toUpperCase();
     diag.symbol = sym;
     diag.side = side;
@@ -332,6 +390,16 @@ export async function POST(request: NextRequest) {
     }
 
     await persistUserSpotOrder(userId, sym, side, type, res.json);
+
+    if (robotId && executionRole) {
+      await persistRobotSpotPerformanceEvent(userId, sym, {
+        robotId: robotId.trim(),
+        robotAlias: robotAlias?.trim() ?? null,
+        executionRole,
+        side,
+        orderJson: res.json,
+      });
+    }
 
     return NextResponse.json({ success: true, order: res.json });
   } catch (e) {

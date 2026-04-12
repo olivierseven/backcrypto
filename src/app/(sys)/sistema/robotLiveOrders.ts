@@ -5,6 +5,16 @@ import type { SavedRobot } from "./robotsStorage";
 import type { RobotOpenPosition } from "./robotPositionStorage";
 import { ROBOT_POSITION_BUY_EVENT, ROBOT_POSITION_SELL_CLEAR_EVENT } from "./robotPositionStorage";
 
+/** Papel da execução — gravado em `RobotSpotPerformanceEvent` (relatório vs backtest). */
+export type RobotOrderExecutionRole = "OPEN_BUY" | "FLATTEN" | "SIGNAL_SELL" | "STOP_LOSS" | "STOP_GAIN";
+
+export type RobotOrderContext = {
+  robotId: string;
+  /** Snapshot para histórico (pode ser vazio). */
+  robotAlias: string;
+  executionRole: RobotOrderExecutionRole;
+};
+
 export function computeRobotMarketBuyQuoteUsdt(
   robot: SavedRobot,
   spotUsdtFree: number,
@@ -49,7 +59,8 @@ export function parseMarketOrderFill(order: unknown): { quoteUsdt: number; baseQ
 
 export async function submitRobotMarketBuyOrder(
   symbol: string,
-  quoteUsdt: number
+  quoteUsdt: number,
+  ctx?: RobotOrderContext
 ): Promise<{ ok: true; order: unknown } | { ok: false }> {
   let qStr: string;
   try {
@@ -66,6 +77,13 @@ export async function submitRobotMarketBuyOrder(
       side: "BUY",
       type: "MARKET",
       quoteOrderQty: qStr,
+      ...(ctx
+        ? {
+            robotId: ctx.robotId,
+            robotAlias: ctx.robotAlias,
+            executionRole: ctx.executionRole,
+          }
+        : {}),
     }),
   });
   const data = (await res.json().catch(() => ({}))) as { success?: boolean; order?: unknown };
@@ -75,7 +93,8 @@ export async function submitRobotMarketBuyOrder(
 
 export async function submitRobotMarketSellOrder(
   symbol: string,
-  baseQty: number
+  baseQty: number,
+  ctx?: RobotOrderContext
 ): Promise<{ ok: true; order: unknown } | { ok: false }> {
   let qtyStr: string;
   try {
@@ -92,6 +111,13 @@ export async function submitRobotMarketSellOrder(
       side: "SELL",
       type: "MARKET",
       quantity: qtyStr,
+      ...(ctx
+        ? {
+            robotId: ctx.robotId,
+            robotAlias: ctx.robotAlias,
+            executionRole: ctx.executionRole,
+          }
+        : {}),
     }),
   });
   const data = (await res.json().catch(() => ({}))) as { success?: boolean; order?: unknown };

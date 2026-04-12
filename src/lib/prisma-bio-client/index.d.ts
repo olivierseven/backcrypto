@@ -29,6 +29,11 @@ export type UserBinanceConnection = $Result.DefaultSelection<Prisma.$UserBinance
  */
 export type UserBinanceSpotOrder = $Result.DefaultSelection<Prisma.$UserBinanceSpotOrderPayload>
 /**
+ * Model RobotSpotPerformanceEvent
+ * Execuções spot atribuídas a um robô (métricas reais vs backtest).
+ */
+export type RobotSpotPerformanceEvent = $Result.DefaultSelection<Prisma.$RobotSpotPerformanceEventPayload>
+/**
  * Model AffiliateAccount
  * Conta de afiliado (login separado do User). E-mail criptografado + emailSearchHash + passwordHash (bcrypt), como User.
  */
@@ -465,6 +470,16 @@ export class PrismaClient<
     * ```
     */
   get userBinanceSpotOrder(): Prisma.UserBinanceSpotOrderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.robotSpotPerformanceEvent`: Exposes CRUD operations for the **RobotSpotPerformanceEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RobotSpotPerformanceEvents
+    * const robotSpotPerformanceEvents = await prisma.robotSpotPerformanceEvent.findMany()
+    * ```
+    */
+  get robotSpotPerformanceEvent(): Prisma.RobotSpotPerformanceEventDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.affiliateAccount`: Exposes CRUD operations for the **AffiliateAccount** model.
@@ -1239,6 +1254,7 @@ export namespace Prisma {
     User: 'User',
     UserBinanceConnection: 'UserBinanceConnection',
     UserBinanceSpotOrder: 'UserBinanceSpotOrder',
+    RobotSpotPerformanceEvent: 'RobotSpotPerformanceEvent',
     AffiliateAccount: 'AffiliateAccount',
     AffiliateCoupon: 'AffiliateCoupon',
     ChartLayout: 'ChartLayout',
@@ -1290,7 +1306,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "userBinanceConnection" | "userBinanceSpotOrder" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
+      modelProps: "user" | "userBinanceConnection" | "userBinanceSpotOrder" | "robotSpotPerformanceEvent" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1513,6 +1529,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserBinanceSpotOrderCountArgs<ExtArgs>
             result: $Utils.Optional<UserBinanceSpotOrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      RobotSpotPerformanceEvent: {
+        payload: Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>
+        fields: Prisma.RobotSpotPerformanceEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RobotSpotPerformanceEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RobotSpotPerformanceEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          findFirst: {
+            args: Prisma.RobotSpotPerformanceEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RobotSpotPerformanceEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          findMany: {
+            args: Prisma.RobotSpotPerformanceEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>[]
+          }
+          create: {
+            args: Prisma.RobotSpotPerformanceEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          createMany: {
+            args: Prisma.RobotSpotPerformanceEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RobotSpotPerformanceEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>[]
+          }
+          delete: {
+            args: Prisma.RobotSpotPerformanceEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          update: {
+            args: Prisma.RobotSpotPerformanceEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.RobotSpotPerformanceEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RobotSpotPerformanceEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RobotSpotPerformanceEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.RobotSpotPerformanceEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotSpotPerformanceEventPayload>
+          }
+          aggregate: {
+            args: Prisma.RobotSpotPerformanceEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRobotSpotPerformanceEvent>
+          }
+          groupBy: {
+            args: Prisma.RobotSpotPerformanceEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RobotSpotPerformanceEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RobotSpotPerformanceEventCountArgs<ExtArgs>
+            result: $Utils.Optional<RobotSpotPerformanceEventCountAggregateOutputType> | number
           }
         }
       }
@@ -4057,6 +4147,7 @@ export namespace Prisma {
     user?: UserOmit
     userBinanceConnection?: UserBinanceConnectionOmit
     userBinanceSpotOrder?: UserBinanceSpotOrderOmit
+    robotSpotPerformanceEvent?: RobotSpotPerformanceEventOmit
     affiliateAccount?: AffiliateAccountOmit
     affiliateCoupon?: AffiliateCouponOmit
     chartLayout?: ChartLayoutOmit
@@ -4182,6 +4273,7 @@ export namespace Prisma {
     chartModels: number
     stripePlanPayments: number
     binanceSpotOrders: number
+    robotSpotPerformanceEvents: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4197,6 +4289,7 @@ export namespace Prisma {
     chartModels?: boolean | UserCountOutputTypeCountChartModelsArgs
     stripePlanPayments?: boolean | UserCountOutputTypeCountStripePlanPaymentsArgs
     binanceSpotOrders?: boolean | UserCountOutputTypeCountBinanceSpotOrdersArgs
+    robotSpotPerformanceEvents?: boolean | UserCountOutputTypeCountRobotSpotPerformanceEventsArgs
   }
 
   // Custom InputTypes
@@ -4292,6 +4385,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountBinanceSpotOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserBinanceSpotOrderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountRobotSpotPerformanceEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RobotSpotPerformanceEventWhereInput
   }
 
 
@@ -4901,6 +5001,7 @@ export namespace Prisma {
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
     binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
+    robotSpotPerformanceEvents?: boolean | User$robotSpotPerformanceEventsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -5058,6 +5159,7 @@ export namespace Prisma {
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
     binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
+    robotSpotPerformanceEvents?: boolean | User$robotSpotPerformanceEventsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5080,6 +5182,7 @@ export namespace Prisma {
       stripePlanPayments: Prisma.$StripePlanPaymentPayload<ExtArgs>[]
       binanceConnection: Prisma.$UserBinanceConnectionPayload<ExtArgs> | null
       binanceSpotOrders: Prisma.$UserBinanceSpotOrderPayload<ExtArgs>[]
+      robotSpotPerformanceEvents: Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5533,6 +5636,7 @@ export namespace Prisma {
     stripePlanPayments<T extends User$stripePlanPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, User$stripePlanPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     binanceConnection<T extends User$binanceConnectionArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceConnectionArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     binanceSpotOrders<T extends User$binanceSpotOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceSpotOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    robotSpotPerformanceEvents<T extends User$robotSpotPerformanceEventsArgs<ExtArgs> = {}>(args?: Subset<T, User$robotSpotPerformanceEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6316,6 +6420,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: UserBinanceSpotOrderScalarFieldEnum | UserBinanceSpotOrderScalarFieldEnum[]
+  }
+
+  /**
+   * User.robotSpotPerformanceEvents
+   */
+  export type User$robotSpotPerformanceEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    where?: RobotSpotPerformanceEventWhereInput
+    orderBy?: RobotSpotPerformanceEventOrderByWithRelationInput | RobotSpotPerformanceEventOrderByWithRelationInput[]
+    cursor?: RobotSpotPerformanceEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RobotSpotPerformanceEventScalarFieldEnum | RobotSpotPerformanceEventScalarFieldEnum[]
   }
 
   /**
@@ -8659,6 +8787,1193 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserBinanceSpotOrderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RobotSpotPerformanceEvent
+   */
+
+  export type AggregateRobotSpotPerformanceEvent = {
+    _count: RobotSpotPerformanceEventCountAggregateOutputType | null
+    _min: RobotSpotPerformanceEventMinAggregateOutputType | null
+    _max: RobotSpotPerformanceEventMaxAggregateOutputType | null
+  }
+
+  export type RobotSpotPerformanceEventMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    robotId: string | null
+    robotAliasSnapshot: string | null
+    symbol: string | null
+    side: string | null
+    executionRole: string | null
+    binanceOrderId: string | null
+    executedQtyBase: string | null
+    quoteQtyUsdt: string | null
+    avgPrice: string | null
+    feeUsdt: string | null
+    realizedPnlUsdt: string | null
+    createdAt: Date | null
+  }
+
+  export type RobotSpotPerformanceEventMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    robotId: string | null
+    robotAliasSnapshot: string | null
+    symbol: string | null
+    side: string | null
+    executionRole: string | null
+    binanceOrderId: string | null
+    executedQtyBase: string | null
+    quoteQtyUsdt: string | null
+    avgPrice: string | null
+    feeUsdt: string | null
+    realizedPnlUsdt: string | null
+    createdAt: Date | null
+  }
+
+  export type RobotSpotPerformanceEventCountAggregateOutputType = {
+    id: number
+    userId: number
+    robotId: number
+    robotAliasSnapshot: number
+    symbol: number
+    side: number
+    executionRole: number
+    binanceOrderId: number
+    executedQtyBase: number
+    quoteQtyUsdt: number
+    avgPrice: number
+    feeUsdt: number
+    realizedPnlUsdt: number
+    rawJson: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RobotSpotPerformanceEventMinAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    robotAliasSnapshot?: true
+    symbol?: true
+    side?: true
+    executionRole?: true
+    binanceOrderId?: true
+    executedQtyBase?: true
+    quoteQtyUsdt?: true
+    avgPrice?: true
+    feeUsdt?: true
+    realizedPnlUsdt?: true
+    createdAt?: true
+  }
+
+  export type RobotSpotPerformanceEventMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    robotAliasSnapshot?: true
+    symbol?: true
+    side?: true
+    executionRole?: true
+    binanceOrderId?: true
+    executedQtyBase?: true
+    quoteQtyUsdt?: true
+    avgPrice?: true
+    feeUsdt?: true
+    realizedPnlUsdt?: true
+    createdAt?: true
+  }
+
+  export type RobotSpotPerformanceEventCountAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    robotAliasSnapshot?: true
+    symbol?: true
+    side?: true
+    executionRole?: true
+    binanceOrderId?: true
+    executedQtyBase?: true
+    quoteQtyUsdt?: true
+    avgPrice?: true
+    feeUsdt?: true
+    realizedPnlUsdt?: true
+    rawJson?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RobotSpotPerformanceEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RobotSpotPerformanceEvent to aggregate.
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotSpotPerformanceEvents to fetch.
+     */
+    orderBy?: RobotSpotPerformanceEventOrderByWithRelationInput | RobotSpotPerformanceEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RobotSpotPerformanceEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotSpotPerformanceEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotSpotPerformanceEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RobotSpotPerformanceEvents
+    **/
+    _count?: true | RobotSpotPerformanceEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RobotSpotPerformanceEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RobotSpotPerformanceEventMaxAggregateInputType
+  }
+
+  export type GetRobotSpotPerformanceEventAggregateType<T extends RobotSpotPerformanceEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateRobotSpotPerformanceEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRobotSpotPerformanceEvent[P]>
+      : GetScalarType<T[P], AggregateRobotSpotPerformanceEvent[P]>
+  }
+
+
+
+
+  export type RobotSpotPerformanceEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RobotSpotPerformanceEventWhereInput
+    orderBy?: RobotSpotPerformanceEventOrderByWithAggregationInput | RobotSpotPerformanceEventOrderByWithAggregationInput[]
+    by: RobotSpotPerformanceEventScalarFieldEnum[] | RobotSpotPerformanceEventScalarFieldEnum
+    having?: RobotSpotPerformanceEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RobotSpotPerformanceEventCountAggregateInputType | true
+    _min?: RobotSpotPerformanceEventMinAggregateInputType
+    _max?: RobotSpotPerformanceEventMaxAggregateInputType
+  }
+
+  export type RobotSpotPerformanceEventGroupByOutputType = {
+    id: string
+    userId: string
+    robotId: string
+    robotAliasSnapshot: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase: string | null
+    quoteQtyUsdt: string | null
+    avgPrice: string | null
+    feeUsdt: string | null
+    realizedPnlUsdt: string | null
+    rawJson: JsonValue | null
+    createdAt: Date
+    _count: RobotSpotPerformanceEventCountAggregateOutputType | null
+    _min: RobotSpotPerformanceEventMinAggregateOutputType | null
+    _max: RobotSpotPerformanceEventMaxAggregateOutputType | null
+  }
+
+  type GetRobotSpotPerformanceEventGroupByPayload<T extends RobotSpotPerformanceEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RobotSpotPerformanceEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RobotSpotPerformanceEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RobotSpotPerformanceEventGroupByOutputType[P]>
+            : GetScalarType<T[P], RobotSpotPerformanceEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RobotSpotPerformanceEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    robotAliasSnapshot?: boolean
+    symbol?: boolean
+    side?: boolean
+    executionRole?: boolean
+    binanceOrderId?: boolean
+    executedQtyBase?: boolean
+    quoteQtyUsdt?: boolean
+    avgPrice?: boolean
+    feeUsdt?: boolean
+    realizedPnlUsdt?: boolean
+    rawJson?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotSpotPerformanceEvent"]>
+
+  export type RobotSpotPerformanceEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    robotAliasSnapshot?: boolean
+    symbol?: boolean
+    side?: boolean
+    executionRole?: boolean
+    binanceOrderId?: boolean
+    executedQtyBase?: boolean
+    quoteQtyUsdt?: boolean
+    avgPrice?: boolean
+    feeUsdt?: boolean
+    realizedPnlUsdt?: boolean
+    rawJson?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotSpotPerformanceEvent"]>
+
+  export type RobotSpotPerformanceEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    robotAliasSnapshot?: boolean
+    symbol?: boolean
+    side?: boolean
+    executionRole?: boolean
+    binanceOrderId?: boolean
+    executedQtyBase?: boolean
+    quoteQtyUsdt?: boolean
+    avgPrice?: boolean
+    feeUsdt?: boolean
+    realizedPnlUsdt?: boolean
+    rawJson?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotSpotPerformanceEvent"]>
+
+  export type RobotSpotPerformanceEventSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    robotAliasSnapshot?: boolean
+    symbol?: boolean
+    side?: boolean
+    executionRole?: boolean
+    binanceOrderId?: boolean
+    executedQtyBase?: boolean
+    quoteQtyUsdt?: boolean
+    avgPrice?: boolean
+    feeUsdt?: boolean
+    realizedPnlUsdt?: boolean
+    rawJson?: boolean
+    createdAt?: boolean
+  }
+
+  export type RobotSpotPerformanceEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "robotId" | "robotAliasSnapshot" | "symbol" | "side" | "executionRole" | "binanceOrderId" | "executedQtyBase" | "quoteQtyUsdt" | "avgPrice" | "feeUsdt" | "realizedPnlUsdt" | "rawJson" | "createdAt", ExtArgs["result"]["robotSpotPerformanceEvent"]>
+  export type RobotSpotPerformanceEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type RobotSpotPerformanceEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type RobotSpotPerformanceEventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $RobotSpotPerformanceEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RobotSpotPerformanceEvent"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      robotId: string
+      robotAliasSnapshot: string | null
+      symbol: string
+      side: string
+      /**
+       * OPEN_BUY | FLATTEN | SIGNAL_SELL | STOP_LOSS | STOP_GAIN
+       */
+      executionRole: string
+      binanceOrderId: string
+      executedQtyBase: string | null
+      quoteQtyUsdt: string | null
+      avgPrice: string | null
+      feeUsdt: string | null
+      realizedPnlUsdt: string | null
+      rawJson: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["robotSpotPerformanceEvent"]>
+    composites: {}
+  }
+
+  type RobotSpotPerformanceEventGetPayload<S extends boolean | null | undefined | RobotSpotPerformanceEventDefaultArgs> = $Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload, S>
+
+  type RobotSpotPerformanceEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RobotSpotPerformanceEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RobotSpotPerformanceEventCountAggregateInputType | true
+    }
+
+  export interface RobotSpotPerformanceEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RobotSpotPerformanceEvent'], meta: { name: 'RobotSpotPerformanceEvent' } }
+    /**
+     * Find zero or one RobotSpotPerformanceEvent that matches the filter.
+     * @param {RobotSpotPerformanceEventFindUniqueArgs} args - Arguments to find a RobotSpotPerformanceEvent
+     * @example
+     * // Get one RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RobotSpotPerformanceEventFindUniqueArgs>(args: SelectSubset<T, RobotSpotPerformanceEventFindUniqueArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RobotSpotPerformanceEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RobotSpotPerformanceEventFindUniqueOrThrowArgs} args - Arguments to find a RobotSpotPerformanceEvent
+     * @example
+     * // Get one RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RobotSpotPerformanceEventFindUniqueOrThrowArgs>(args: SelectSubset<T, RobotSpotPerformanceEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RobotSpotPerformanceEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventFindFirstArgs} args - Arguments to find a RobotSpotPerformanceEvent
+     * @example
+     * // Get one RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RobotSpotPerformanceEventFindFirstArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventFindFirstArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RobotSpotPerformanceEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventFindFirstOrThrowArgs} args - Arguments to find a RobotSpotPerformanceEvent
+     * @example
+     * // Get one RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RobotSpotPerformanceEventFindFirstOrThrowArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RobotSpotPerformanceEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvents = await prisma.robotSpotPerformanceEvent.findMany()
+     * 
+     * // Get first 10 RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvents = await prisma.robotSpotPerformanceEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const robotSpotPerformanceEventWithIdOnly = await prisma.robotSpotPerformanceEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RobotSpotPerformanceEventFindManyArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RobotSpotPerformanceEvent.
+     * @param {RobotSpotPerformanceEventCreateArgs} args - Arguments to create a RobotSpotPerformanceEvent.
+     * @example
+     * // Create one RobotSpotPerformanceEvent
+     * const RobotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.create({
+     *   data: {
+     *     // ... data to create a RobotSpotPerformanceEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends RobotSpotPerformanceEventCreateArgs>(args: SelectSubset<T, RobotSpotPerformanceEventCreateArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RobotSpotPerformanceEvents.
+     * @param {RobotSpotPerformanceEventCreateManyArgs} args - Arguments to create many RobotSpotPerformanceEvents.
+     * @example
+     * // Create many RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RobotSpotPerformanceEventCreateManyArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RobotSpotPerformanceEvents and returns the data saved in the database.
+     * @param {RobotSpotPerformanceEventCreateManyAndReturnArgs} args - Arguments to create many RobotSpotPerformanceEvents.
+     * @example
+     * // Create many RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RobotSpotPerformanceEvents and only return the `id`
+     * const robotSpotPerformanceEventWithIdOnly = await prisma.robotSpotPerformanceEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RobotSpotPerformanceEventCreateManyAndReturnArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RobotSpotPerformanceEvent.
+     * @param {RobotSpotPerformanceEventDeleteArgs} args - Arguments to delete one RobotSpotPerformanceEvent.
+     * @example
+     * // Delete one RobotSpotPerformanceEvent
+     * const RobotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.delete({
+     *   where: {
+     *     // ... filter to delete one RobotSpotPerformanceEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RobotSpotPerformanceEventDeleteArgs>(args: SelectSubset<T, RobotSpotPerformanceEventDeleteArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RobotSpotPerformanceEvent.
+     * @param {RobotSpotPerformanceEventUpdateArgs} args - Arguments to update one RobotSpotPerformanceEvent.
+     * @example
+     * // Update one RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RobotSpotPerformanceEventUpdateArgs>(args: SelectSubset<T, RobotSpotPerformanceEventUpdateArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RobotSpotPerformanceEvents.
+     * @param {RobotSpotPerformanceEventDeleteManyArgs} args - Arguments to filter RobotSpotPerformanceEvents to delete.
+     * @example
+     * // Delete a few RobotSpotPerformanceEvents
+     * const { count } = await prisma.robotSpotPerformanceEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RobotSpotPerformanceEventDeleteManyArgs>(args?: SelectSubset<T, RobotSpotPerformanceEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RobotSpotPerformanceEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RobotSpotPerformanceEventUpdateManyArgs>(args: SelectSubset<T, RobotSpotPerformanceEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RobotSpotPerformanceEvents and returns the data updated in the database.
+     * @param {RobotSpotPerformanceEventUpdateManyAndReturnArgs} args - Arguments to update many RobotSpotPerformanceEvents.
+     * @example
+     * // Update many RobotSpotPerformanceEvents
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RobotSpotPerformanceEvents and only return the `id`
+     * const robotSpotPerformanceEventWithIdOnly = await prisma.robotSpotPerformanceEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RobotSpotPerformanceEventUpdateManyAndReturnArgs>(args: SelectSubset<T, RobotSpotPerformanceEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RobotSpotPerformanceEvent.
+     * @param {RobotSpotPerformanceEventUpsertArgs} args - Arguments to update or create a RobotSpotPerformanceEvent.
+     * @example
+     * // Update or create a RobotSpotPerformanceEvent
+     * const robotSpotPerformanceEvent = await prisma.robotSpotPerformanceEvent.upsert({
+     *   create: {
+     *     // ... data to create a RobotSpotPerformanceEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RobotSpotPerformanceEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RobotSpotPerformanceEventUpsertArgs>(args: SelectSubset<T, RobotSpotPerformanceEventUpsertArgs<ExtArgs>>): Prisma__RobotSpotPerformanceEventClient<$Result.GetResult<Prisma.$RobotSpotPerformanceEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RobotSpotPerformanceEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventCountArgs} args - Arguments to filter RobotSpotPerformanceEvents to count.
+     * @example
+     * // Count the number of RobotSpotPerformanceEvents
+     * const count = await prisma.robotSpotPerformanceEvent.count({
+     *   where: {
+     *     // ... the filter for the RobotSpotPerformanceEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends RobotSpotPerformanceEventCountArgs>(
+      args?: Subset<T, RobotSpotPerformanceEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RobotSpotPerformanceEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RobotSpotPerformanceEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RobotSpotPerformanceEventAggregateArgs>(args: Subset<T, RobotSpotPerformanceEventAggregateArgs>): Prisma.PrismaPromise<GetRobotSpotPerformanceEventAggregateType<T>>
+
+    /**
+     * Group by RobotSpotPerformanceEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotSpotPerformanceEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RobotSpotPerformanceEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RobotSpotPerformanceEventGroupByArgs['orderBy'] }
+        : { orderBy?: RobotSpotPerformanceEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RobotSpotPerformanceEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRobotSpotPerformanceEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RobotSpotPerformanceEvent model
+   */
+  readonly fields: RobotSpotPerformanceEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RobotSpotPerformanceEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RobotSpotPerformanceEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RobotSpotPerformanceEvent model
+   */
+  interface RobotSpotPerformanceEventFieldRefs {
+    readonly id: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly userId: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly robotId: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly robotAliasSnapshot: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly symbol: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly side: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly executionRole: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly binanceOrderId: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly executedQtyBase: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly quoteQtyUsdt: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly avgPrice: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly feeUsdt: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly realizedPnlUsdt: FieldRef<"RobotSpotPerformanceEvent", 'String'>
+    readonly rawJson: FieldRef<"RobotSpotPerformanceEvent", 'Json'>
+    readonly createdAt: FieldRef<"RobotSpotPerformanceEvent", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RobotSpotPerformanceEvent findUnique
+   */
+  export type RobotSpotPerformanceEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotSpotPerformanceEvent to fetch.
+     */
+    where: RobotSpotPerformanceEventWhereUniqueInput
+  }
+
+  /**
+   * RobotSpotPerformanceEvent findUniqueOrThrow
+   */
+  export type RobotSpotPerformanceEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotSpotPerformanceEvent to fetch.
+     */
+    where: RobotSpotPerformanceEventWhereUniqueInput
+  }
+
+  /**
+   * RobotSpotPerformanceEvent findFirst
+   */
+  export type RobotSpotPerformanceEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotSpotPerformanceEvent to fetch.
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotSpotPerformanceEvents to fetch.
+     */
+    orderBy?: RobotSpotPerformanceEventOrderByWithRelationInput | RobotSpotPerformanceEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RobotSpotPerformanceEvents.
+     */
+    cursor?: RobotSpotPerformanceEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotSpotPerformanceEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotSpotPerformanceEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RobotSpotPerformanceEvents.
+     */
+    distinct?: RobotSpotPerformanceEventScalarFieldEnum | RobotSpotPerformanceEventScalarFieldEnum[]
+  }
+
+  /**
+   * RobotSpotPerformanceEvent findFirstOrThrow
+   */
+  export type RobotSpotPerformanceEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotSpotPerformanceEvent to fetch.
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotSpotPerformanceEvents to fetch.
+     */
+    orderBy?: RobotSpotPerformanceEventOrderByWithRelationInput | RobotSpotPerformanceEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RobotSpotPerformanceEvents.
+     */
+    cursor?: RobotSpotPerformanceEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotSpotPerformanceEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotSpotPerformanceEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RobotSpotPerformanceEvents.
+     */
+    distinct?: RobotSpotPerformanceEventScalarFieldEnum | RobotSpotPerformanceEventScalarFieldEnum[]
+  }
+
+  /**
+   * RobotSpotPerformanceEvent findMany
+   */
+  export type RobotSpotPerformanceEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotSpotPerformanceEvents to fetch.
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotSpotPerformanceEvents to fetch.
+     */
+    orderBy?: RobotSpotPerformanceEventOrderByWithRelationInput | RobotSpotPerformanceEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RobotSpotPerformanceEvents.
+     */
+    cursor?: RobotSpotPerformanceEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotSpotPerformanceEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotSpotPerformanceEvents.
+     */
+    skip?: number
+    distinct?: RobotSpotPerformanceEventScalarFieldEnum | RobotSpotPerformanceEventScalarFieldEnum[]
+  }
+
+  /**
+   * RobotSpotPerformanceEvent create
+   */
+  export type RobotSpotPerformanceEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RobotSpotPerformanceEvent.
+     */
+    data: XOR<RobotSpotPerformanceEventCreateInput, RobotSpotPerformanceEventUncheckedCreateInput>
+  }
+
+  /**
+   * RobotSpotPerformanceEvent createMany
+   */
+  export type RobotSpotPerformanceEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RobotSpotPerformanceEvents.
+     */
+    data: RobotSpotPerformanceEventCreateManyInput | RobotSpotPerformanceEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RobotSpotPerformanceEvent createManyAndReturn
+   */
+  export type RobotSpotPerformanceEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many RobotSpotPerformanceEvents.
+     */
+    data: RobotSpotPerformanceEventCreateManyInput | RobotSpotPerformanceEventCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RobotSpotPerformanceEvent update
+   */
+  export type RobotSpotPerformanceEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RobotSpotPerformanceEvent.
+     */
+    data: XOR<RobotSpotPerformanceEventUpdateInput, RobotSpotPerformanceEventUncheckedUpdateInput>
+    /**
+     * Choose, which RobotSpotPerformanceEvent to update.
+     */
+    where: RobotSpotPerformanceEventWhereUniqueInput
+  }
+
+  /**
+   * RobotSpotPerformanceEvent updateMany
+   */
+  export type RobotSpotPerformanceEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RobotSpotPerformanceEvents.
+     */
+    data: XOR<RobotSpotPerformanceEventUpdateManyMutationInput, RobotSpotPerformanceEventUncheckedUpdateManyInput>
+    /**
+     * Filter which RobotSpotPerformanceEvents to update
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * Limit how many RobotSpotPerformanceEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RobotSpotPerformanceEvent updateManyAndReturn
+   */
+  export type RobotSpotPerformanceEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * The data used to update RobotSpotPerformanceEvents.
+     */
+    data: XOR<RobotSpotPerformanceEventUpdateManyMutationInput, RobotSpotPerformanceEventUncheckedUpdateManyInput>
+    /**
+     * Filter which RobotSpotPerformanceEvents to update
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * Limit how many RobotSpotPerformanceEvents to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RobotSpotPerformanceEvent upsert
+   */
+  export type RobotSpotPerformanceEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RobotSpotPerformanceEvent to update in case it exists.
+     */
+    where: RobotSpotPerformanceEventWhereUniqueInput
+    /**
+     * In case the RobotSpotPerformanceEvent found by the `where` argument doesn't exist, create a new RobotSpotPerformanceEvent with this data.
+     */
+    create: XOR<RobotSpotPerformanceEventCreateInput, RobotSpotPerformanceEventUncheckedCreateInput>
+    /**
+     * In case the RobotSpotPerformanceEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RobotSpotPerformanceEventUpdateInput, RobotSpotPerformanceEventUncheckedUpdateInput>
+  }
+
+  /**
+   * RobotSpotPerformanceEvent delete
+   */
+  export type RobotSpotPerformanceEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
+    /**
+     * Filter which RobotSpotPerformanceEvent to delete.
+     */
+    where: RobotSpotPerformanceEventWhereUniqueInput
+  }
+
+  /**
+   * RobotSpotPerformanceEvent deleteMany
+   */
+  export type RobotSpotPerformanceEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RobotSpotPerformanceEvents to delete
+     */
+    where?: RobotSpotPerformanceEventWhereInput
+    /**
+     * Limit how many RobotSpotPerformanceEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RobotSpotPerformanceEvent without action
+   */
+  export type RobotSpotPerformanceEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotSpotPerformanceEvent
+     */
+    select?: RobotSpotPerformanceEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotSpotPerformanceEvent
+     */
+    omit?: RobotSpotPerformanceEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotSpotPerformanceEventInclude<ExtArgs> | null
   }
 
 
@@ -46965,6 +48280,27 @@ export namespace Prisma {
   export type UserBinanceSpotOrderScalarFieldEnum = (typeof UserBinanceSpotOrderScalarFieldEnum)[keyof typeof UserBinanceSpotOrderScalarFieldEnum]
 
 
+  export const RobotSpotPerformanceEventScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    robotId: 'robotId',
+    robotAliasSnapshot: 'robotAliasSnapshot',
+    symbol: 'symbol',
+    side: 'side',
+    executionRole: 'executionRole',
+    binanceOrderId: 'binanceOrderId',
+    executedQtyBase: 'executedQtyBase',
+    quoteQtyUsdt: 'quoteQtyUsdt',
+    avgPrice: 'avgPrice',
+    feeUsdt: 'feeUsdt',
+    realizedPnlUsdt: 'realizedPnlUsdt',
+    rawJson: 'rawJson',
+    createdAt: 'createdAt'
+  };
+
+  export type RobotSpotPerformanceEventScalarFieldEnum = (typeof RobotSpotPerformanceEventScalarFieldEnum)[keyof typeof RobotSpotPerformanceEventScalarFieldEnum]
+
+
   export const AffiliateAccountScalarFieldEnum: {
     id: 'id',
     emailEnc: 'emailEnc',
@@ -47897,6 +49233,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentListRelationFilter
     binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
     binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -47957,6 +49294,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentOrderByRelationAggregateInput
     binanceConnection?: UserBinanceConnectionOrderByWithRelationInput
     binanceSpotOrders?: UserBinanceSpotOrderOrderByRelationAggregateInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -48020,6 +49358,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentListRelationFilter
     binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
     binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventListRelationFilter
   }, "id" | "emailSearchHash" | "nickname">
 
   export type UserOrderByWithAggregationInput = {
@@ -48298,6 +49637,112 @@ export namespace Prisma {
     rawJson?: JsonNullableWithAggregatesFilter<"UserBinanceSpotOrder">
     canceledAt?: DateTimeNullableWithAggregatesFilter<"UserBinanceSpotOrder"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"UserBinanceSpotOrder"> | Date | string
+  }
+
+  export type RobotSpotPerformanceEventWhereInput = {
+    AND?: RobotSpotPerformanceEventWhereInput | RobotSpotPerformanceEventWhereInput[]
+    OR?: RobotSpotPerformanceEventWhereInput[]
+    NOT?: RobotSpotPerformanceEventWhereInput | RobotSpotPerformanceEventWhereInput[]
+    id?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    userId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotAliasSnapshot?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    symbol?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    side?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executionRole?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    binanceOrderId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executedQtyBase?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    quoteQtyUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    avgPrice?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    feeUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    realizedPnlUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    rawJson?: JsonNullableFilter<"RobotSpotPerformanceEvent">
+    createdAt?: DateTimeFilter<"RobotSpotPerformanceEvent"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type RobotSpotPerformanceEventOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    robotAliasSnapshot?: SortOrderInput | SortOrder
+    symbol?: SortOrder
+    side?: SortOrder
+    executionRole?: SortOrder
+    binanceOrderId?: SortOrder
+    executedQtyBase?: SortOrderInput | SortOrder
+    quoteQtyUsdt?: SortOrderInput | SortOrder
+    avgPrice?: SortOrderInput | SortOrder
+    feeUsdt?: SortOrderInput | SortOrder
+    realizedPnlUsdt?: SortOrderInput | SortOrder
+    rawJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type RobotSpotPerformanceEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_binanceOrderId?: RobotSpotPerformanceEventUserIdBinanceOrderIdCompoundUniqueInput
+    AND?: RobotSpotPerformanceEventWhereInput | RobotSpotPerformanceEventWhereInput[]
+    OR?: RobotSpotPerformanceEventWhereInput[]
+    NOT?: RobotSpotPerformanceEventWhereInput | RobotSpotPerformanceEventWhereInput[]
+    userId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotAliasSnapshot?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    symbol?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    side?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executionRole?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    binanceOrderId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executedQtyBase?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    quoteQtyUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    avgPrice?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    feeUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    realizedPnlUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    rawJson?: JsonNullableFilter<"RobotSpotPerformanceEvent">
+    createdAt?: DateTimeFilter<"RobotSpotPerformanceEvent"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_binanceOrderId">
+
+  export type RobotSpotPerformanceEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    robotAliasSnapshot?: SortOrderInput | SortOrder
+    symbol?: SortOrder
+    side?: SortOrder
+    executionRole?: SortOrder
+    binanceOrderId?: SortOrder
+    executedQtyBase?: SortOrderInput | SortOrder
+    quoteQtyUsdt?: SortOrderInput | SortOrder
+    avgPrice?: SortOrderInput | SortOrder
+    feeUsdt?: SortOrderInput | SortOrder
+    realizedPnlUsdt?: SortOrderInput | SortOrder
+    rawJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: RobotSpotPerformanceEventCountOrderByAggregateInput
+    _max?: RobotSpotPerformanceEventMaxOrderByAggregateInput
+    _min?: RobotSpotPerformanceEventMinOrderByAggregateInput
+  }
+
+  export type RobotSpotPerformanceEventScalarWhereWithAggregatesInput = {
+    AND?: RobotSpotPerformanceEventScalarWhereWithAggregatesInput | RobotSpotPerformanceEventScalarWhereWithAggregatesInput[]
+    OR?: RobotSpotPerformanceEventScalarWhereWithAggregatesInput[]
+    NOT?: RobotSpotPerformanceEventScalarWhereWithAggregatesInput | RobotSpotPerformanceEventScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    userId?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    robotId?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    robotAliasSnapshot?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    symbol?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    side?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    executionRole?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    binanceOrderId?: StringWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string
+    executedQtyBase?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    quoteQtyUsdt?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    avgPrice?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    feeUsdt?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    realizedPnlUsdt?: StringNullableWithAggregatesFilter<"RobotSpotPerformanceEvent"> | string | null
+    rawJson?: JsonNullableWithAggregatesFilter<"RobotSpotPerformanceEvent">
+    createdAt?: DateTimeWithAggregatesFilter<"RobotSpotPerformanceEvent"> | Date | string
   }
 
   export type AffiliateAccountWhereInput = {
@@ -51306,6 +52751,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -51366,6 +52812,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -51426,6 +52873,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -51486,6 +52934,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -51824,6 +53273,131 @@ export namespace Prisma {
     executedQty?: NullableStringFieldUpdateOperationsInput | string | null
     rawJson?: NullableJsonNullValueInput | InputJsonValue
     canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventCreateInput = {
+    id?: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutRobotSpotPerformanceEventsInput
+  }
+
+  export type RobotSpotPerformanceEventUncheckedCreateInput = {
+    id?: string
+    userId: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type RobotSpotPerformanceEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutRobotSpotPerformanceEventsNestedInput
+  }
+
+  export type RobotSpotPerformanceEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventCreateManyInput = {
+    id?: string
+    userId: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type RobotSpotPerformanceEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -55448,6 +57022,12 @@ export namespace Prisma {
     none?: UserBinanceSpotOrderWhereInput
   }
 
+  export type RobotSpotPerformanceEventListRelationFilter = {
+    every?: RobotSpotPerformanceEventWhereInput
+    some?: RobotSpotPerformanceEventWhereInput
+    none?: RobotSpotPerformanceEventWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -55498,6 +57078,10 @@ export namespace Prisma {
   }
 
   export type UserBinanceSpotOrderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RobotSpotPerformanceEventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -55975,6 +57559,63 @@ export namespace Prisma {
     origQty?: SortOrder
     executedQty?: SortOrder
     canceledAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RobotSpotPerformanceEventUserIdBinanceOrderIdCompoundUniqueInput = {
+    userId: string
+    binanceOrderId: string
+  }
+
+  export type RobotSpotPerformanceEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    robotAliasSnapshot?: SortOrder
+    symbol?: SortOrder
+    side?: SortOrder
+    executionRole?: SortOrder
+    binanceOrderId?: SortOrder
+    executedQtyBase?: SortOrder
+    quoteQtyUsdt?: SortOrder
+    avgPrice?: SortOrder
+    feeUsdt?: SortOrder
+    realizedPnlUsdt?: SortOrder
+    rawJson?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RobotSpotPerformanceEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    robotAliasSnapshot?: SortOrder
+    symbol?: SortOrder
+    side?: SortOrder
+    executionRole?: SortOrder
+    binanceOrderId?: SortOrder
+    executedQtyBase?: SortOrder
+    quoteQtyUsdt?: SortOrder
+    avgPrice?: SortOrder
+    feeUsdt?: SortOrder
+    realizedPnlUsdt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RobotSpotPerformanceEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    robotAliasSnapshot?: SortOrder
+    symbol?: SortOrder
+    side?: SortOrder
+    executionRole?: SortOrder
+    binanceOrderId?: SortOrder
+    executedQtyBase?: SortOrder
+    quoteQtyUsdt?: SortOrder
+    avgPrice?: SortOrder
+    feeUsdt?: SortOrder
+    realizedPnlUsdt?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -58232,6 +59873,13 @@ export namespace Prisma {
     connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
   }
 
+  export type RobotSpotPerformanceEventCreateNestedManyWithoutUserInput = {
+    create?: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput> | RobotSpotPerformanceEventCreateWithoutUserInput[] | RobotSpotPerformanceEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotSpotPerformanceEventCreateOrConnectWithoutUserInput | RobotSpotPerformanceEventCreateOrConnectWithoutUserInput[]
+    createMany?: RobotSpotPerformanceEventCreateManyUserInputEnvelope
+    connect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+  }
+
   export type AccessRequestUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -58326,6 +59974,13 @@ export namespace Prisma {
     connectOrCreate?: UserBinanceSpotOrderCreateOrConnectWithoutUserInput | UserBinanceSpotOrderCreateOrConnectWithoutUserInput[]
     createMany?: UserBinanceSpotOrderCreateManyUserInputEnvelope
     connect?: UserBinanceSpotOrderWhereUniqueInput | UserBinanceSpotOrderWhereUniqueInput[]
+  }
+
+  export type RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput> | RobotSpotPerformanceEventCreateWithoutUserInput[] | RobotSpotPerformanceEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotSpotPerformanceEventCreateOrConnectWithoutUserInput | RobotSpotPerformanceEventCreateOrConnectWithoutUserInput[]
+    createMany?: RobotSpotPerformanceEventCreateManyUserInputEnvelope
+    connect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -58576,6 +60231,20 @@ export namespace Prisma {
     deleteMany?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
   }
 
+  export type RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput> | RobotSpotPerformanceEventCreateWithoutUserInput[] | RobotSpotPerformanceEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotSpotPerformanceEventCreateOrConnectWithoutUserInput | RobotSpotPerformanceEventCreateOrConnectWithoutUserInput[]
+    upsert?: RobotSpotPerformanceEventUpsertWithWhereUniqueWithoutUserInput | RobotSpotPerformanceEventUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RobotSpotPerformanceEventCreateManyUserInputEnvelope
+    set?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    disconnect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    delete?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    connect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    update?: RobotSpotPerformanceEventUpdateWithWhereUniqueWithoutUserInput | RobotSpotPerformanceEventUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RobotSpotPerformanceEventUpdateManyWithWhereWithoutUserInput | RobotSpotPerformanceEventUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RobotSpotPerformanceEventScalarWhereInput | RobotSpotPerformanceEventScalarWhereInput[]
+  }
+
   export type AccessRequestUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<AccessRequestCreateWithoutUserInput, AccessRequestUncheckedCreateWithoutUserInput> | AccessRequestCreateWithoutUserInput[] | AccessRequestUncheckedCreateWithoutUserInput[]
     connectOrCreate?: AccessRequestCreateOrConnectWithoutUserInput | AccessRequestCreateOrConnectWithoutUserInput[]
@@ -58764,6 +60433,20 @@ export namespace Prisma {
     deleteMany?: UserBinanceSpotOrderScalarWhereInput | UserBinanceSpotOrderScalarWhereInput[]
   }
 
+  export type RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput> | RobotSpotPerformanceEventCreateWithoutUserInput[] | RobotSpotPerformanceEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotSpotPerformanceEventCreateOrConnectWithoutUserInput | RobotSpotPerformanceEventCreateOrConnectWithoutUserInput[]
+    upsert?: RobotSpotPerformanceEventUpsertWithWhereUniqueWithoutUserInput | RobotSpotPerformanceEventUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RobotSpotPerformanceEventCreateManyUserInputEnvelope
+    set?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    disconnect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    delete?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    connect?: RobotSpotPerformanceEventWhereUniqueInput | RobotSpotPerformanceEventWhereUniqueInput[]
+    update?: RobotSpotPerformanceEventUpdateWithWhereUniqueWithoutUserInput | RobotSpotPerformanceEventUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RobotSpotPerformanceEventUpdateManyWithWhereWithoutUserInput | RobotSpotPerformanceEventUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RobotSpotPerformanceEventScalarWhereInput | RobotSpotPerformanceEventScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutBinanceConnectionInput = {
     create?: XOR<UserCreateWithoutBinanceConnectionInput, UserUncheckedCreateWithoutBinanceConnectionInput>
     connectOrCreate?: UserCreateOrConnectWithoutBinanceConnectionInput
@@ -58798,6 +60481,20 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutBinanceSpotOrdersInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBinanceSpotOrdersInput, UserUpdateWithoutBinanceSpotOrdersInput>, UserUncheckedUpdateWithoutBinanceSpotOrdersInput>
+  }
+
+  export type UserCreateNestedOneWithoutRobotSpotPerformanceEventsInput = {
+    create?: XOR<UserCreateWithoutRobotSpotPerformanceEventsInput, UserUncheckedCreateWithoutRobotSpotPerformanceEventsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRobotSpotPerformanceEventsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutRobotSpotPerformanceEventsNestedInput = {
+    create?: XOR<UserCreateWithoutRobotSpotPerformanceEventsInput, UserUncheckedCreateWithoutRobotSpotPerformanceEventsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRobotSpotPerformanceEventsInput
+    upsert?: UserUpsertWithoutRobotSpotPerformanceEventsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutRobotSpotPerformanceEventsInput, UserUpdateWithoutRobotSpotPerformanceEventsInput>, UserUncheckedUpdateWithoutRobotSpotPerformanceEventsInput>
   }
 
   export type AffiliateCouponCreateNestedManyWithoutAffiliateAccountInput = {
@@ -60191,6 +61888,50 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RobotSpotPerformanceEventCreateWithoutUserInput = {
+    id?: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type RobotSpotPerformanceEventUncheckedCreateWithoutUserInput = {
+    id?: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type RobotSpotPerformanceEventCreateOrConnectWithoutUserInput = {
+    where: RobotSpotPerformanceEventWhereUniqueInput
+    create: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput>
+  }
+
+  export type RobotSpotPerformanceEventCreateManyUserInputEnvelope = {
+    data: RobotSpotPerformanceEventCreateManyUserInput | RobotSpotPerformanceEventCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AccessRequestUpsertWithWhereUniqueWithoutUserInput = {
     where: AccessRequestWhereUniqueInput
     update: XOR<AccessRequestUpdateWithoutUserInput, AccessRequestUncheckedUpdateWithoutUserInput>
@@ -60639,6 +62380,43 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"UserBinanceSpotOrder"> | Date | string
   }
 
+  export type RobotSpotPerformanceEventUpsertWithWhereUniqueWithoutUserInput = {
+    where: RobotSpotPerformanceEventWhereUniqueInput
+    update: XOR<RobotSpotPerformanceEventUpdateWithoutUserInput, RobotSpotPerformanceEventUncheckedUpdateWithoutUserInput>
+    create: XOR<RobotSpotPerformanceEventCreateWithoutUserInput, RobotSpotPerformanceEventUncheckedCreateWithoutUserInput>
+  }
+
+  export type RobotSpotPerformanceEventUpdateWithWhereUniqueWithoutUserInput = {
+    where: RobotSpotPerformanceEventWhereUniqueInput
+    data: XOR<RobotSpotPerformanceEventUpdateWithoutUserInput, RobotSpotPerformanceEventUncheckedUpdateWithoutUserInput>
+  }
+
+  export type RobotSpotPerformanceEventUpdateManyWithWhereWithoutUserInput = {
+    where: RobotSpotPerformanceEventScalarWhereInput
+    data: XOR<RobotSpotPerformanceEventUpdateManyMutationInput, RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type RobotSpotPerformanceEventScalarWhereInput = {
+    AND?: RobotSpotPerformanceEventScalarWhereInput | RobotSpotPerformanceEventScalarWhereInput[]
+    OR?: RobotSpotPerformanceEventScalarWhereInput[]
+    NOT?: RobotSpotPerformanceEventScalarWhereInput | RobotSpotPerformanceEventScalarWhereInput[]
+    id?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    userId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    robotAliasSnapshot?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    symbol?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    side?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executionRole?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    binanceOrderId?: StringFilter<"RobotSpotPerformanceEvent"> | string
+    executedQtyBase?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    quoteQtyUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    avgPrice?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    feeUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    realizedPnlUsdt?: StringNullableFilter<"RobotSpotPerformanceEvent"> | string | null
+    rawJson?: JsonNullableFilter<"RobotSpotPerformanceEvent">
+    createdAt?: DateTimeFilter<"RobotSpotPerformanceEvent"> | Date | string
+  }
+
   export type UserCreateWithoutBinanceConnectionInput = {
     id?: string
     emailEnc: string
@@ -60696,6 +62474,7 @@ export namespace Prisma {
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBinanceConnectionInput = {
@@ -60755,6 +62534,7 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBinanceConnectionInput = {
@@ -60830,6 +62610,7 @@ export namespace Prisma {
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBinanceConnectionInput = {
@@ -60889,6 +62670,7 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutBinanceSpotOrdersInput = {
@@ -60948,6 +62730,7 @@ export namespace Prisma {
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutBinanceSpotOrdersInput = {
@@ -61007,6 +62790,7 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutBinanceSpotOrdersInput = {
@@ -61082,6 +62866,7 @@ export namespace Prisma {
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBinanceSpotOrdersInput = {
@@ -61141,6 +62926,263 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutRobotSpotPerformanceEventsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutRobotSpotPerformanceEventsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutRobotSpotPerformanceEventsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutRobotSpotPerformanceEventsInput, UserUncheckedCreateWithoutRobotSpotPerformanceEventsInput>
+  }
+
+  export type UserUpsertWithoutRobotSpotPerformanceEventsInput = {
+    update: XOR<UserUpdateWithoutRobotSpotPerformanceEventsInput, UserUncheckedUpdateWithoutRobotSpotPerformanceEventsInput>
+    create: XOR<UserCreateWithoutRobotSpotPerformanceEventsInput, UserUncheckedCreateWithoutRobotSpotPerformanceEventsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutRobotSpotPerformanceEventsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutRobotSpotPerformanceEventsInput, UserUncheckedUpdateWithoutRobotSpotPerformanceEventsInput>
+  }
+
+  export type UserUpdateWithoutRobotSpotPerformanceEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutRobotSpotPerformanceEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AffiliateCouponCreateWithoutAffiliateAccountInput = {
@@ -61326,6 +63368,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartLayoutsInput = {
@@ -61385,6 +63428,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartLayoutsInput = {
@@ -61460,6 +63504,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartLayoutsInput = {
@@ -61519,6 +63564,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutChartModelsInput = {
@@ -61578,6 +63624,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChartModelsInput = {
@@ -61637,6 +63684,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChartModelsInput = {
@@ -61712,6 +63760,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChartModelsInput = {
@@ -61771,6 +63820,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -61830,6 +63880,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -61889,6 +63940,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -61964,6 +64016,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -62023,6 +64076,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAccessRequestsInput = {
@@ -62082,6 +64136,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAccessRequestsInput = {
@@ -62141,6 +64196,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAccessRequestsInput = {
@@ -62216,6 +64272,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAccessRequestsInput = {
@@ -62275,6 +64332,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutVerificationTokensInput = {
@@ -62334,6 +64392,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutVerificationTokensInput = {
@@ -62393,6 +64452,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutVerificationTokensInput = {
@@ -62468,6 +64528,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutVerificationTokensInput = {
@@ -62527,6 +64588,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutPasswordResetTokensInput = {
@@ -62586,6 +64648,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -62645,6 +64708,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -62720,6 +64784,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -62779,6 +64844,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CoinLedgerEntryCreateWithoutWalletInput = {
@@ -62872,6 +64938,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinWalletInput = {
@@ -62931,6 +64998,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinWalletInput = {
@@ -63022,6 +65090,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinWalletInput = {
@@ -63081,6 +65150,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCoinLedgerInput = {
@@ -63140,6 +65210,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCoinLedgerInput = {
@@ -63199,6 +65270,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCoinLedgerInput = {
@@ -63320,6 +65392,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCoinLedgerInput = {
@@ -63379,6 +65452,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCoinWalletUpsertWithoutEntriesInput = {
@@ -63525,6 +65599,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWalletCreditsInput = {
@@ -63584,6 +65659,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWalletCreditsInput = {
@@ -63694,6 +65770,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWalletCreditsInput = {
@@ -63753,6 +65830,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutCheckoutSessionsInput = {
@@ -63812,6 +65890,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCheckoutSessionsInput = {
@@ -63871,6 +65950,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCheckoutSessionsInput = {
@@ -63946,6 +66026,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCheckoutSessionsInput = {
@@ -64005,6 +66086,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutStripePlanPaymentsInput = {
@@ -64064,6 +66146,7 @@ export namespace Prisma {
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutStripePlanPaymentsInput = {
@@ -64123,6 +66206,7 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutStripePlanPaymentsInput = {
@@ -64198,6 +66282,7 @@ export namespace Prisma {
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutStripePlanPaymentsInput = {
@@ -64257,6 +66342,7 @@ export namespace Prisma {
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AffiliateMonthAggInvoiceCreateWithoutMonthAggInput = {
@@ -64468,6 +66554,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutPagarMeOrdersInput = {
@@ -64527,6 +66614,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutPagarMeOrdersInput = {
@@ -64602,6 +66690,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPagarMeOrdersInput = {
@@ -64661,6 +66750,7 @@ export namespace Prisma {
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AffiliatePayoutProfileCreateWithoutAffiliateApplicationInput = {
@@ -64990,6 +67080,23 @@ export namespace Prisma {
     executedQty?: string | null
     rawJson?: NullableJsonNullValueInput | InputJsonValue
     canceledAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type RobotSpotPerformanceEventCreateManyUserInput = {
+    id?: string
+    robotId: string
+    robotAliasSnapshot?: string | null
+    symbol: string
+    side: string
+    executionRole: string
+    binanceOrderId: string
+    executedQtyBase?: string | null
+    quoteQtyUsdt?: string | null
+    avgPrice?: string | null
+    feeUsdt?: string | null
+    realizedPnlUsdt?: string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
   }
 
@@ -65430,6 +67537,57 @@ export namespace Prisma {
     executedQty?: NullableStringFieldUpdateOperationsInput | string | null
     rawJson?: NullableJsonNullValueInput | InputJsonValue
     canceledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    robotAliasSnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    symbol?: StringFieldUpdateOperationsInput | string
+    side?: StringFieldUpdateOperationsInput | string
+    executionRole?: StringFieldUpdateOperationsInput | string
+    binanceOrderId?: StringFieldUpdateOperationsInput | string
+    executedQtyBase?: NullableStringFieldUpdateOperationsInput | string | null
+    quoteQtyUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    avgPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    feeUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    realizedPnlUsdt?: NullableStringFieldUpdateOperationsInput | string | null
+    rawJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

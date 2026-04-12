@@ -109,6 +109,7 @@ export default function RobotTradingMonitor() {
           stopInFlightRef.current.delete(id);
           return;
         }
+        const executionRole = stopLossTrigger ? "STOP_LOSS" : "STOP_GAIN";
         const res = await fetch(`${API_BASE}/user/binance-connection/order`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -118,6 +119,9 @@ export default function RobotTradingMonitor() {
             side: "SELL",
             type: "MARKET",
             quantity: qtyStr,
+            robotId: robot.id,
+            robotAlias: robot.alias ?? "",
+            executionRole,
           }),
         });
         if (res.ok) {

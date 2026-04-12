@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { Strategy } from "./strategiesTypes";
 import { legacyToRoot } from "./strategiesTypes";
+import { deactivateRobotsIfMissingAppliedStrategies } from "../robotsStorage";
 
 interface StrategiesContextValue {
   strategies: Strategy[];
@@ -66,7 +67,11 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
 
   const removeStrategy = useCallback((id: string) => {
     setStrategies((prev) => prev.filter((s) => s.id !== id));
-    setAppliedStrategyIds((prev) => prev.filter((x) => x !== id));
+    setAppliedStrategyIds((prev) => {
+      const next = prev.filter((x) => x !== id);
+      deactivateRobotsIfMissingAppliedStrategies(next);
+      return next;
+    });
   }, []);
 
   const applyStrategy = useCallback((id: string) => {
@@ -75,7 +80,11 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const unapplyStrategy = useCallback((id: string) => {
-    setAppliedStrategyIds((prev) => prev.filter((x) => x !== id));
+    setAppliedStrategyIds((prev) => {
+      const next = prev.filter((x) => x !== id);
+      deactivateRobotsIfMissingAppliedStrategies(next);
+      return next;
+    });
     setAppliedStrategyIdsTick((t) => t + 1);
   }, []);
 
@@ -94,11 +103,13 @@ export function StrategiesProvider({ children }: { children: ReactNode }) {
     if (!Array.isArray(raw)) return;
     const ids = raw.filter((x): x is string => typeof x === "string");
     setAppliedStrategyIds(ids);
+    deactivateRobotsIfMissingAppliedStrategies(ids);
   }, []);
 
   const replaceAppliedStrategyIds = useCallback((ids: string[]) => {
     setAppliedStrategyIds(ids);
     setAppliedStrategyIdsTick((t) => t + 1);
+    deactivateRobotsIfMissingAppliedStrategies(ids);
   }, []);
 
   const value = useMemo(

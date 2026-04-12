@@ -1512,7 +1512,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             if (!robotLiveFlattenInFlightRef.current.has(flatKey)) {
               robotLiveFlattenInFlightRef.current.add(flatKey);
               try {
-                const out = await submitRobotMarketSellOrder(sym, posFlat.totalBaseQty);
+                const out = await submitRobotMarketSellOrder(sym, posFlat.totalBaseQty, {
+                  robotId: robot.id,
+                  robotAlias: robot.alias ?? "",
+                  executionRole: "FLATTEN",
+                });
                 if (out.ok) {
                   delete armRefLive[kArmLive];
                   const kb = `${robot.id}::${sym}`;
@@ -1543,7 +1547,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             if (robotLiveSellInFlightRef.current.has(sellKey)) continue;
             robotLiveSellInFlightRef.current.add(sellKey);
             try {
-              const out = await submitRobotMarketSellOrder(sym, posPre.totalBaseQty);
+              const out = await submitRobotMarketSellOrder(sym, posPre.totalBaseQty, {
+                robotId: robot.id,
+                robotAlias: robot.alias ?? "",
+                executionRole: "SIGNAL_SELL",
+              });
               if (out.ok) {
                 const kb = `${robot.id}::${sym}`;
                 delete robotFlattenArmedRef.current[kb];
@@ -1589,7 +1597,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
         robotLiveBuyInFlightRef.current.add(buyKey);
         try {
-          const out = await submitRobotMarketBuyOrder(sym, quoteUsdt);
+          const out = await submitRobotMarketBuyOrder(sym, quoteUsdt, {
+            robotId: robot.id,
+            robotAlias: robot.alias ?? "",
+            executionRole: "OPEN_BUY",
+          });
           if (!out.ok) continue;
           const fill = parseMarketOrderFill(out.order);
           if (fill) {

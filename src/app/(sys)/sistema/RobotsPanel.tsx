@@ -15,6 +15,7 @@ import {
   type Strategy,
 } from "./strategies/strategiesTypes";
 import { CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT } from "./backtestStorage";
+import RobotLiveReportModal from "./RobotLiveReportModal";
 import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
   ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
@@ -128,6 +129,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
   const [balancesError, setBalancesError] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedRobots, setSavedRobots] = useState<SavedRobot[]>([]);
+  const [reportRobot, setReportRobot] = useState<SavedRobot | null>(null);
   const [robotAlias, setRobotAlias] = useState("");
   const [buyAccumulationStartOnSignalNumber, setBuyAccumulationStartOnSignalNumber] = useState(
     ROBOT_BUY_ACCUM_START_SIGNAL_MIN
@@ -743,11 +745,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setSavedRobots(next);
     persistSavedRobots(next);
     if (editingRobotId === robot.id) resetAddForm();
+    if (reportRobot?.id === robot.id) setReportRobot(null);
   };
 
   const title = t.robotsPanelTitle ?? "Robots";
 
   return (
+    <>
     <div
       className={`fixed inset-y-0 left-0 z-[1301] flex flex-col bg-white border-r border-zinc-200 shadow-xl overflow-hidden w-[66.666vw] sm:w-[33.333vw] max-w-[400px] ${hideStatusBar === false ? "crypto-status-bar-reserve" : ""}`}
       role="dialog"
@@ -948,6 +952,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                       {t.robotsEdit ?? "Edit"}
                     </button>
                     <div className="flex flex-col gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setReportRobot(r)}
+                        className="text-xs px-2 py-1.5 rounded border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 w-full"
+                      >
+                        {t.robotsLiveReportButton ?? "Report"}
+                      </button>
                       {r.side === "buyer" && r.buyCombinedStrategyIds.length > 0 && (
                         <button
                           type="button"
@@ -1754,5 +1765,16 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         )}
       </div>
     </div>
+    {reportRobot ? (
+      <RobotLiveReportModal
+        key={reportRobot.id}
+        open
+        onClose={() => setReportRobot(null)}
+        robot={reportRobot}
+        symbolFilter={symbol?.trim() ? symbol.trim().toUpperCase() : null}
+        t={t}
+      />
+    ) : null}
+    </>
   );
 }
