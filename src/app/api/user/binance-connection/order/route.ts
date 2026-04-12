@@ -145,6 +145,7 @@ async function persistRobotSpotPerformanceEvent(
     orderJson: unknown;
   }
 ): Promise<void> {
+  const orderJson = input.orderJson;
   try {
     if (typeof orderJson !== "object" || orderJson === null) return;
     const o = orderJson as Record<string, unknown>;
