@@ -1338,16 +1338,19 @@ export const cryptoTranslations = {
         robotsSellAfterBuyHint: "For buyer robots, sell only executes after a previous buy.",
         robotsPickFlattenCombinedLabel: "Flatten strategies (optional)",
         robotsFlattenHintBuyer:
-          "While you hold a position, the first flatten signal arms an alert that stays on until the position closes—even if later candles have the flatten strategies false. The first candle whose close is less than or equal to your average buy price triggers a full MARKET sell (live: latest candle close vs stored average). Normal sell strategies keep working while the alert is armed; breakeven can still fire first on the same path. Backtest uses the same rule on each bar’s close; gross sell price is capped at the average so optimistic bars do not add profit on this path.",
+          "While you hold a position, the first flatten signal arms an alert that stays on until the position closes—even if later candles have the flatten strategies false. The first candle whose close is at or below your breakeven threshold (average buy × (1 + buffer %)) triggers a full MARKET sell (live: latest candle close vs stored average). Buffer 0% is the former “close ≤ average”. Normal sell strategies keep working while the alert is armed; breakeven can still fire first on the same path. Backtest uses the same rule on each bar’s close; gross sell price is capped at that threshold in optimistic mode.",
         robotsFlattenHintSeller:
           "Optional list is saved; live flatten is not executed for seller robots in this version.",
         robotsChosenFlattenStrategies: "Selected flatten strategies",
         robotsFlattenOptionalEmpty: "None — flatten is optional.",
         robotsFlattenColumnsLabel: "Flatten (market at breakeven)",
         robotsFlattenCountSuffix: " · {n} flatten",
+        robotsFlattenBreakevenBufferLabel: "Breakeven vs average buy (%)",
+        robotsFlattenBreakevenBufferHint:
+          "Threshold = average buy × (1 + this %). Range −1% to +1%, step 0.1. Example: +0.2% allows exit when close ≤ average × 1.002 (slightly above average). −0.2% requires close ≤ average × 0.998. 0% matches the previous rule (close ≤ average).",
         robotsPickPostFlattenSellLabel: "Sell strategies after flatten signal (optional)",
         robotsPostFlattenSellHint:
-          "Buyer: only while the flatten alert is armed (same combined strategies as breakeven above). If any of these strategies is true on a candle, the robot sends a full MARKET sell. Breakeven (close ≤ average) can still fire first on the same path.",
+          "Buyer: only while the flatten alert is armed (same combined strategies as breakeven above). If any of these strategies is true on a candle, the robot sends a full MARKET sell. Automatic breakeven (close vs threshold) can still fire first on the same path.",
         robotsChosenPostFlattenSellStrategies: "Selected sell-after-arm strategies",
         robotsPostFlattenSellOptionalEmpty: "None — only automatic breakeven applies when flatten is armed.",
         robotsPickPostFlattenBuyLabel: "Buy strategies after flatten signal (optional)",
@@ -3657,16 +3660,19 @@ export const cryptoTranslations = {
         robotsSellAfterBuyHint: "Para robôs compradores, a venda só executa após uma compra anterior.",
         robotsPickFlattenCombinedLabel: "Estratégias de zerar (opcional)",
         robotsFlattenHintBuyer:
-          "Com posição aberta, o primeiro sinal de zerar deixa o robô em alerta até fechar a posição — mesmo que nas velas seguintes as estratégias de zerar fiquem falsas. Na primeira vela em que o fecho for menor ou igual ao preço médio de compra, envia venda a mercado da posição inteira (live: fecho da vela mais recente vs médio guardado). As estratégias de venda normais continuam ativas com o alerta ligado; o breakeven pode disparar primeiro no mesmo fluxo. No backtest: mesma regra no fecho de cada vela; bruto de venda limitado ao médio para o modo otimista não acrescentar lucro neste caminho.",
+          "Com posição aberta, o primeiro sinal de zerar deixa o robô em alerta até fechar a posição — mesmo que nas velas seguintes as estratégias de zerar fiquem falsas. Na primeira vela em que o fecho estiver ao ou abaixo do limiar de breakeven (médio de compra × (1 + buffer %)), envia venda a mercado da posição inteira (live: fecho da vela mais recente vs médio guardado). Buffer 0% corresponde à regra antiga (fecho ≤ médio). As estratégias de venda normais continuam ativas com o alerta ligado; o breakeven pode disparar primeiro no mesmo fluxo. No backtest: mesma regra no fecho de cada vela; bruto de venda limitado a esse limiar no modo otimista.",
         robotsFlattenHintSeller:
           "A lista é guardada; nesta versão o zerar em tempo real não corre para robô vendedor.",
         robotsChosenFlattenStrategies: "Estratégias de zerar selecionadas",
         robotsFlattenOptionalEmpty: "Nenhuma — zerar é opcional.",
         robotsFlattenColumnsLabel: "Zerar (mercado no breakeven)",
         robotsFlattenCountSuffix: " · {n} zerar",
+        robotsFlattenBreakevenBufferLabel: "Breakeven vs médio de compra (%)",
+        robotsFlattenBreakevenBufferHint:
+          "Limiar = médio de compra × (1 + este %). Intervalo −1% a +1%, passo 0,1. Ex.: +0,2% permite saída com fecho ≤ médio × 1,002 (ligeiramente acima do médio). −0,2% exige fecho ≤ médio × 0,998. 0% mantém a regra anterior (fecho ≤ médio).",
         robotsPickPostFlattenSellLabel: "Estratégias de venda após sinal de zerar (opcional)",
         robotsPostFlattenSellHint:
-          "Comprador: só enquanto o alerta de zerar estiver armado (mesmas estratégias combinadas do breakeven acima). Se alguma destas for verdadeira numa vela, o robô envia venda a mercado da posição inteira. O breakeven (fecho ≤ médio) pode disparar antes no mesmo modo.",
+          "Comprador: só enquanto o alerta de zerar estiver armado (mesmas estratégias combinadas do breakeven acima). Se alguma destas for verdadeira numa vela, o robô envia venda a mercado da posição inteira. O breakeven automático (fecho vs limiar) pode disparar antes no mesmo modo.",
         robotsChosenPostFlattenSellStrategies: "Estratégias de venda pós-alertas selecionadas",
         robotsPostFlattenSellOptionalEmpty: "Nenhuma — com zerar armado só corre o breakeven automático por preço.",
         robotsPickPostFlattenBuyLabel: "Estratégias de compra após sinal de zerar (opcional)",

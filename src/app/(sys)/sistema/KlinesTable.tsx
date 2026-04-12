@@ -37,7 +37,7 @@ import {
 import { runRobotBacktest } from "./robotBacktest";
 import RobotBacktestResultModal from "./RobotBacktestResultModal";
 import { getRobotPosition } from "./robotPositionStorage";
-import { buyerAllowsMarketBuyOrder, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
+import { buyerAllowsMarketBuyOrder, longFlattenCloseBreakeven } from "./robotPriceLegRules";
 import {
   computeNominalBuyOperationUsdt,
   computeRobotMarketBuyQuoteUsdt,
@@ -1327,7 +1327,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
-   * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ médio → venda FLATTEN a mercado. Venda por sinal normal e opcionais “após zerar” continuam a poder disparar com o alerta ligado (flatten primeiro no async). Depois compra.
+   * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ limiar breakeven (médio × (1+buffer%)) → venda FLATTEN a mercado. Venda por sinal normal e opcionais “após zerar” continuam a poder disparar com o alerta ligado (flatten primeiro no async). Depois compra.
    * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela. Na sequência, a 1.ª operação define a fatia USDT (% ou fixo sobre o teto na altura); as seguintes repetem essa fatia até ao máximo (ex.: 300,300,300,100).
    * Coluna B· só marca 1 após compra aceite na API.
    */
@@ -1429,7 +1429,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           pos &&
           pos.totalBaseQty > 1e-12 &&
           pos.avgBuyPrice > 0 &&
-          longFlattenCloseAtOrBelowAvg(refPx, pos.avgBuyPrice)
+          longFlattenCloseBreakeven(refPx, pos.avgBuyPrice, robot.flattenBreakevenBufferPercent ?? 0)
         ) {
           const k = `${robot.id}::${ot}::flat`;
           if (!robotLiveFlattenInFlightRef.current.has(k)) shouldRun = true;
@@ -1513,7 +1513,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             posFlat &&
             posFlat.totalBaseQty > 1e-12 &&
             posFlat.avgBuyPrice > 0 &&
-            longFlattenCloseAtOrBelowAvg(refPx, posFlat.avgBuyPrice)
+            longFlattenCloseBreakeven(refPx, posFlat.avgBuyPrice, robot.flattenBreakevenBufferPercent ?? 0)
           ) {
             const flatKey = `${robot.id}::${ot}::flat`;
             if (!robotLiveFlattenInFlightRef.current.has(flatKey)) {

@@ -37,6 +37,10 @@ export const ROBOT_BUY_ACCUM_MAX_CANDLES_MIN = 1;
 export const ROBOT_BUY_ACCUM_MAX_CANDLES_MAX = 20;
 export const ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT = 7;
 
+/** Breakeven (zerar): desvio % vs médio de compra — mínimo, máximo e passo (UI). */
+export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN = -1;
+export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX = 1;
+
 export type RobotSide = "buyer" | "seller";
 
 export type RobotBuyOperationMode = "percent" | "fixed";
@@ -53,7 +57,7 @@ export interface SavedRobot {
   sellCombinedStrategyIds: string[];
   /**
    * Opcional: “zerar” — comprador: o primeiro sinal com posição arma alerta até fechar (velas com sinal falso não desarmam);
-   * a primeira vela com fecho ≤ médio de compra dispara venda a mercado. A venda por sinal normal continua independente do alerta.
+   * a primeira vela com fecho ≤ limiar de breakeven (médio com buffer %) dispara venda a mercado. A venda por sinal normal continua independente do alerta.
    * Robô vendedor: reservado (live).
    */
   flattenCombinedStrategyIds: string[];
@@ -67,6 +71,11 @@ export interface SavedRobot {
    * verdadeira (espelho da venda pós-sinal do comprador; live do vendedor ainda não ligado).
    */
   postFlattenSignalBuyCombinedStrategyIds: string[];
+  /**
+   * Comprador, venda “zerar” (breakeven): desvio % vs preço médio de compra (-1 … +1).
+   * 0 = fecho ≤ médio; +0,2 ⇒ permite saída com fecho até ~0,2% acima do médio; −0,2 exige fecho mais abaixo.
+   */
+  flattenBreakevenBufferPercent: number;
   createdAt: number;
   /** Se as estratégias deste robô estão aplicadas na tabela (só muda em Meus robôs). */
   isActive: boolean;
@@ -237,6 +246,17 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
   const refRaw = x.referenceSpotUsdtFree;
   const referenceSpotUsdtFree =
     typeof refRaw === "number" && Number.isFinite(refRaw) && refRaw >= 0 ? refRaw : null;
+  const bufRaw =
+    typeof x.flattenBreakevenBufferPercent === "number" && Number.isFinite(x.flattenBreakevenBufferPercent)
+      ? x.flattenBreakevenBufferPercent
+      : 0;
+  const flattenBreakevenBufferPercent = Math.min(
+    ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+    Math.max(
+      ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN,
+      Math.round(bufRaw * 10) / 10
+    )
+  );
   const aliasRaw = x.alias;
   const alias =
     typeof aliasRaw === "string" ? aliasRaw.trim().slice(0, 80) : "";
@@ -249,6 +269,7 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     flattenCombinedStrategyIds: [...new Set(flattenIds)],
     postFlattenSignalSellCombinedStrategyIds: [...new Set(postSellIds)],
     postFlattenSignalBuyCombinedStrategyIds: [...new Set(postBuyIds)],
+    flattenBreakevenBufferPercent,
     createdAt: x.createdAt,
     isActive,
     maxSpotPercent,

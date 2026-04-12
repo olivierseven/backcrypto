@@ -35,11 +35,29 @@ export function sellerRefAllowsNextSell(refPrice: number, lastSellFillPrice: num
 }
 
 /**
- * Zerar (alerta armado): fecho ≤ preço médio de compra — primeira vela que cumpre dispara a venda a mercado.
+ * Preço limite para breakeven (zerar): médio × (1 + buffer%/100). Buffer ∈ [-1, +1] tipicamente.
+ */
+export function flattenBreakevenThresholdPrice(avgBuyPrice: number, bufferPercentVsAvg: number): number {
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return NaN;
+  const b = Math.min(1, Math.max(-1, bufferPercentVsAvg));
+  return avgBuyPrice * (1 + b / 100);
+}
+
+/**
+ * Zerar (alerta armado): fecho ≤ limite de breakeven (médio com desvio configurável). Buffer 0 = comportamento antigo (≤ médio).
  * O alerta permanece armado com posição aberta até fechar, mesmo que estratégias de zerar voltem a falso.
  */
-export function longFlattenCloseAtOrBelowAvg(closePrice: number, avgBuyPrice: number): boolean {
+export function longFlattenCloseBreakeven(
+  closePrice: number,
+  avgBuyPrice: number,
+  bufferPercentVsAvg: number
+): boolean {
   if (!Number.isFinite(closePrice) || closePrice <= 0) return false;
-  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return false;
-  return closePrice <= avgBuyPrice * (1 + ROBOT_PRICE_LEG_REL_EPS);
+  const th = flattenBreakevenThresholdPrice(avgBuyPrice, bufferPercentVsAvg);
+  if (!Number.isFinite(th) || th <= 0) return false;
+  return closePrice <= th * (1 + ROBOT_PRICE_LEG_REL_EPS);
+}
+
+export function longFlattenCloseAtOrBelowAvg(closePrice: number, avgBuyPrice: number): boolean {
+  return longFlattenCloseBreakeven(closePrice, avgBuyPrice, 0);
 }

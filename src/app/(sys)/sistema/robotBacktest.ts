@@ -1,6 +1,10 @@
 import type { Kline } from "./klinesChart/types";
 import { clampBacktestExecutionMode, clampSlippagePercent, type BacktestExecutionMode } from "./backtestStorage";
-import { buyerAllowsMarketBuyOrder, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
+import {
+  buyerAllowsMarketBuyOrder,
+  flattenBreakevenThresholdPrice,
+  longFlattenCloseBreakeven,
+} from "./robotPriceLegRules";
 import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
   ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
@@ -170,7 +174,7 @@ export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
  * Simula o robô comprador no fechamento de cada vela, do candle mais antigo ao mais recente do intervalo.
  * Regra fixa: nova compra só se o preço de execução da compra (buyPx) for ≤ ao da compra anterior no ciclo; reinicia ao zerar posição.
  * `barNum` na tabela: 1 = vela mais antiga carregada, `length` = mais recente.
- * Stop, zerar (alerta mantém-se com posição até fechar; venda na 1.ª vela com fecho ≤ médio; min(sellPx, médio) no bruto),
+ * Stop, zerar (alerta mantém-se com posição até fechar; venda na 1.ª vela com fecho ≤ limiar breakeven; min(sellPx, limiar) no bruto),
  * venda por estratégias só com alerta armado, venda por sinal normal e compra (acumulação: fatia da 1.ª compra repetida até ao teto).
  * Comissão: `feeRatePerSide` sobre o nocional de cada compra e sobre o bruto de cada venda.
  * Slippage: compra ao preço `close×(1+s)`, venda/stop ao `close×(1−s)` com `s` = slippage % / 100.
@@ -284,7 +288,7 @@ export function runRobotBacktest(params: {
   let lastSellPxInRange = 0;
   /** Preço da última compra executada no ciclo atual; zera com a posição (regra: próxima compra só se buyPx ≤ este). */
   let lastBuyFillPrice: number | null = null;
-  /** Zerar: após o primeiro sinal com posição o alerta fica armado até fechar; velas seguintes com sinal falso não desarmam. Saída: fecho ≤ médio (e vendas opcionais pós-alertas); venda por sinal normal continua avaliada no mesmo ciclo. */
+  /** Zerar: após o primeiro sinal com posição o alerta fica armado até fechar; velas seguintes com sinal falso não desarmam. Saída: fecho ≤ limiar breakeven (e vendas opcionais pós-alertas); venda por sinal normal continua avaliada no mesmo ciclo. */
   let flattenArmed = false;
   /** Acumulação de compras: cada vela sem posição com sinal de compra verdadeiro conta um sinal; depois até N velas seguidas tenta comprar (1/vela), com ou sem sinal, até ao teto ou fim da janela. */
   let buyEdgesSinceFlat = 0;
@@ -461,15 +465,16 @@ export function runRobotBacktest(params: {
       }
     }
 
-    // 2) Zerar: alerta armado; primeira vela com fecho ≤ médio de compra.
+    // 2) Zerar: alerta armado; primeira vela com fecho ≤ limite de breakeven (médio + buffer % configurável).
     if (baseQty > 1e-12 && flattenArmed) {
       const avgExit = quoteInPosition / baseQty;
-      if (longFlattenCloseAtOrBelowAvg(close, avgExit)) {
+      const flatBuf = robot.flattenBreakevenBufferPercent ?? 0;
+      if (longFlattenCloseBreakeven(close, avgExit, flatBuf)) {
         const baseBefore = baseQty;
         const costBefore = quoteInPosition;
         if (avgBuyPriceAtExit == null) avgBuyPriceAtExit = avgExit;
-        /** Breakeven: não realizar lucro bruto vs custo — teto do preço efetivo = médio (ainda pode perder pela taxa de venda). */
-        const effFlatPx = Math.min(sellPx, avgExit);
+        /** Breakeven: teto do preço efetivo = limite (médio com buffer); modo otimista não acrescenta lucro acima disso. */
+        const effFlatPx = Math.min(sellPx, flattenBreakevenThresholdPrice(avgExit, flatBuf));
         const grossProceeds = baseQty * effFlatPx;
         const feeSell = grossProceeds * f;
         const netProceeds = grossProceeds - feeSell;

@@ -22,6 +22,8 @@ import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
   ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
   ROBOT_BUY_ACCUM_START_SIGNAL_MIN,
+  ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+  ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN,
   ROBOT_MAX_SPOT_MAX,
   ROBOT_MAX_SPOT_MIN,
   ROBOT_STOP_LOSS_PCT_MAX,
@@ -135,6 +137,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     ROBOT_BUY_ACCUM_START_SIGNAL_MIN
   );
   const [buyAccumMaxCandles, setBuyAccumMaxCandles] = useState(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+  const [flattenBreakevenBufferPercent, setFlattenBreakevenBufferPercent] = useState(0);
 
   useEffect(() => {
     setView(initialView);
@@ -371,6 +374,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setRobotAlias("");
     setBuyAccumulationStartOnSignalNumber(ROBOT_BUY_ACCUM_START_SIGNAL_MIN);
     setBuyAccumMaxCandles(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+    setFlattenBreakevenBufferPercent(0);
     setErrorMsg(null);
   }, []);
 
@@ -430,6 +434,16 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
     setBuyAccumMaxCandles(
       Math.min(ROBOT_BUY_ACCUM_MAX_CANDLES_MAX, Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesN))
+    );
+    const buf =
+      typeof robot.flattenBreakevenBufferPercent === "number" && Number.isFinite(robot.flattenBreakevenBufferPercent)
+        ? robot.flattenBreakevenBufferPercent
+        : 0;
+    setFlattenBreakevenBufferPercent(
+      Math.min(
+        ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+        Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(buf * 10) / 10)
+      )
     );
     setErrorMsg(null);
     setView("add");
@@ -575,6 +589,10 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
             Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(buyAccumMaxCandles))
           )
         : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
+    const flattenBreakevenBufferClamped = Math.min(
+      ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+      Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(flattenBreakevenBufferPercent * 10) / 10)
+    );
 
     if (editingRobotId) {
       const prev = savedRobots.find((r) => r.id === editingRobotId);
@@ -638,6 +656,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
           side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
         buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
         buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+        flattenBreakevenBufferPercent: side === "buyer" ? flattenBreakevenBufferClamped : 0,
       };
       const nextList = savedRobots.map((r) => (r.id === editingRobotId ? updated : r));
       setSavedRobots(nextList);
@@ -675,6 +694,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
       buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
       buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+      flattenBreakevenBufferPercent: side === "buyer" ? flattenBreakevenBufferClamped : 0,
     };
     const nextList = [entry, ...savedRobots];
     setSavedRobots(nextList);
@@ -1234,6 +1254,38 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                   </ul>
                 )}
               </div>
+
+              {side === "buyer" && (
+                <div className="mt-2">
+                  <p className="text-xs font-medium text-zinc-700 mb-1">
+                    {t.robotsFlattenBreakevenBufferLabel ?? "Breakeven vs average (%)"}
+                  </p>
+                  <p className="text-[10px] text-zinc-500 mb-1.5">
+                    {t.robotsFlattenBreakevenBufferHint ?? ""}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN}
+                      max={ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX}
+                      step={0.1}
+                      value={flattenBreakevenBufferPercent}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        if (!Number.isFinite(v)) return;
+                        setFlattenBreakevenBufferPercent(
+                          Math.min(
+                            ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+                            Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(v * 10) / 10)
+                          )
+                        );
+                      }}
+                      className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
+                    />
+                    <span className="text-xs text-zinc-500">%</span>
+                  </div>
+                </div>
+              )}
 
               {side === "buyer" && (
                 <div>
