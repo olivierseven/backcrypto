@@ -7,6 +7,7 @@ import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
   type SavedRobot,
 } from "./robotsStorage";
+import { computeNominalBuyOperationUsdt } from "./robotLiveOrders";
 
 /** Saída total simulada na vela (tabela admin do backtest). */
 export type RobotBacktestExitReason = "stop" | "flatten" | "signal_sell" | "post_arm_sell";
@@ -170,7 +171,7 @@ export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
  * Regra fixa: nova compra só se o preço de execução da compra (buyPx) for ≤ ao da compra anterior no ciclo; reinicia ao zerar posição.
  * `barNum` na tabela: 1 = vela mais antiga carregada, `length` = mais recente.
  * Stop, zerar (alerta mantém-se com posição até fechar; venda na 1.ª vela com fecho ≤ médio; min(sellPx, médio) no bruto),
- * venda por estratégias só com alerta armado, venda por sinal normal e compra.
+ * venda por estratégias só com alerta armado, venda por sinal normal e compra (acumulação: fatia da 1.ª compra repetida até ao teto).
  * Comissão: `feeRatePerSide` sobre o nocional de cada compra e sobre o bruto de cada venda.
  * Slippage: compra ao preço `close×(1+s)`, venda/stop ao `close×(1−s)` com `s` = slippage % / 100.
  */
@@ -290,6 +291,8 @@ export function runRobotBacktest(params: {
   let buyAccumulationActive = false;
   let buyAccumLastOpenTime: string | null = null;
   let buyAccumCandlesInWindow = 0;
+  /** Fatia USDT por operação na janela de acumulação (1.ª compra define; próximas repetem até ao teto). */
+  let buySequentialSliceUsdt: number | null = null;
 
   /** Património: caixa + valor da posição ao preço de venda efetivo (fecho com slippage a favor do mercado). */
   const equityUsdtNow = (sellMark: number) =>
@@ -339,6 +342,7 @@ export function runRobotBacktest(params: {
         buyAccumulationActive = false;
         buyAccumLastOpenTime = null;
         buyAccumCandlesInWindow = 0;
+        buySequentialSliceUsdt = null;
       }
     }
 
@@ -621,11 +625,10 @@ export function runRobotBacktest(params: {
     if (buyAccumulationActive && !boughtThisOpenTime.has(ot)) {
       if (buyerAllowsMarketBuyOrder(close, open, lastBuyFillPrice)) {
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
-        let opUsdt =
-          robot.buyOperationMode === "fixed"
-            ? Math.min(robot.buyOperationFixedUsdt, maxSpendUsdt)
-            : (maxSpendUsdt * Math.min(robot.buyOperationPercent, robot.maxSpotPercent)) / 100;
-        opUsdt = Math.min(opUsdt, virtualFree, roomBelowRobotMax);
+        if (buySequentialSliceUsdt == null || !Number.isFinite(buySequentialSliceUsdt) || buySequentialSliceUsdt <= 0) {
+          buySequentialSliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendUsdt);
+        }
+        let opUsdt = Math.min(buySequentialSliceUsdt, virtualFree, roomBelowRobotMax);
         if (opUsdt > 1e-8) {
           const feeBuy = opUsdt * f;
           const netQuote = opUsdt - feeBuy;
@@ -646,11 +649,13 @@ export function runRobotBacktest(params: {
             buyAccumulationActive = false;
             buyAccumLastOpenTime = null;
             buyAccumCandlesInWindow = 0;
+            buySequentialSliceUsdt = null;
           }
         } else {
           buyAccumulationActive = false;
           buyAccumLastOpenTime = null;
           buyAccumCandlesInWindow = 0;
+          buySequentialSliceUsdt = null;
         }
       }
     }
@@ -660,6 +665,7 @@ export function runRobotBacktest(params: {
       buyAccumulationActive = false;
       buyAccumLastOpenTime = null;
       buyAccumCandlesInWindow = 0;
+      buySequentialSliceUsdt = null;
     }
 
     const avgAfter = baseQty > 1e-12 ? quoteInPosition / baseQty : null;

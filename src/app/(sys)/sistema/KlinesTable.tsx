@@ -39,6 +39,7 @@ import RobotBacktestResultModal from "./RobotBacktestResultModal";
 import { getRobotPosition } from "./robotPositionStorage";
 import { buyerAllowsMarketBuyOrder, longFlattenCloseAtOrBelowAvg } from "./robotPriceLegRules";
 import {
+  computeNominalBuyOperationUsdt,
   computeRobotMarketBuyQuoteUsdt,
   dispatchRobotPositionBuy,
   dispatchRobotPositionSellClear,
@@ -1146,6 +1147,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const robotBuyAccumLastOtRef = useRef<Record<string, string>>({});
   /** Por robô+par: índice da vela atual dentro da janela de acumulação (1…buyAccumMaxCandles). */
   const robotBuyAccumCandleIndexRef = useRef<Record<string, number>>({});
+  /** Por robô+par: USDT por operação na janela (1.ª compra define %/fixo do teto; próximas repetem até ao máximo). */
+  const robotBuySequentialSliceUsdtRef = useRef<Record<string, number>>({});
   /** Por robô+par: `openTime` das velas já contadas como “sinal de compra” enquanto sem posição (uma contagem por vela). */
   const robotBuySignalCountedOpenTimesRef = useRef<Record<string, Set<string>>>({});
   /** Fim do último efeito: havia posição neste robô+par. */
@@ -1325,7 +1328,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
    * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ médio → venda FLATTEN a mercado. Venda por sinal normal e opcionais “após zerar” continuam a poder disparar com o alerta ligado (flatten primeiro no async). Depois compra.
-   * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela.
+   * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela. Na sequência, a 1.ª operação define a fatia USDT (% ou fixo sobre o teto na altura); as seguintes repetem essa fatia até ao máximo (ex.: 300,300,300,100).
    * Coluna B· só marca 1 após compra aceite na API.
    */
   useEffect(() => {
@@ -1355,6 +1358,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         delete countedOtRef[kArm];
         delete robotBuyAccumLastOtRef.current[kArm];
         delete robotBuyAccumCandleIndexRef.current[kArm];
+        delete robotBuySequentialSliceUsdtRef.current[kArm];
       }
       const buySig = robotBuyOrTrue(robot, 0, strategyResults);
       if (flat && buySig) {
@@ -1411,6 +1415,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           delete accumRef[kArm];
           delete robotBuyAccumLastOtRef.current[kArm];
           delete robotBuyAccumCandleIndexRef.current[kArm];
+          delete robotBuySequentialSliceUsdtRef.current[kArm];
         }
       }
     }
@@ -1526,6 +1531,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   delete robotBuyAccumulationActiveRef.current[kb];
                   delete robotBuyAccumLastOtRef.current[kb];
                   delete robotBuyAccumCandleIndexRef.current[kb];
+                  delete robotBuySequentialSliceUsdtRef.current[kb];
                   delete robotBuySignalCountedOpenTimesRef.current[kb];
                   delete robotBuyHadPositionEndRef.current[kb];
                   dispatchRobotPositionSellClear(robot.id, sym);
@@ -1561,6 +1567,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 delete robotBuyAccumulationActiveRef.current[kb];
                 delete robotBuyAccumLastOtRef.current[kb];
                 delete robotBuyAccumCandleIndexRef.current[kb];
+                delete robotBuySequentialSliceUsdtRef.current[kb];
                 delete robotBuySignalCountedOpenTimesRef.current[kb];
                 delete robotBuyHadPositionEndRef.current[kb];
                 dispatchRobotPositionSellClear(robot.id, sym);
@@ -1589,11 +1596,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           continue;
         }
 
-        const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos);
+        const maxSpendNow = (spotUsdtFree * robot.maxSpotPercent) / 100;
+        let sliceUsdt = robotBuySequentialSliceUsdtRef.current[kAccum];
+        if (sliceUsdt === undefined || !Number.isFinite(sliceUsdt) || sliceUsdt <= 0) {
+          sliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendNow);
+          if (sliceUsdt > 1e-8) robotBuySequentialSliceUsdtRef.current[kAccum] = sliceUsdt;
+        }
+        const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos, sliceUsdt);
         if (quoteUsdt == null) {
           delete robotBuyAccumulationActiveRef.current[kAccum];
           delete robotBuyAccumLastOtRef.current[kAccum];
           delete robotBuyAccumCandleIndexRef.current[kAccum];
+          delete robotBuySequentialSliceUsdtRef.current[kAccum];
           continue;
         }
 

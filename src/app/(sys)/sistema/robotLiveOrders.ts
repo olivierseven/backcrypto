@@ -15,21 +15,43 @@ export type RobotOrderContext = {
   executionRole: RobotOrderExecutionRole;
 };
 
+/**
+ * Valor nominal de uma operação (USDT) em função do teto atual do robô: % do teto ou USDT fixo (até ao teto).
+ * Na sequência de acumulação, este valor é calculado uma vez por ciclo e reutilizado em cada vela.
+ */
+export function computeNominalBuyOperationUsdt(robot: SavedRobot, maxSpendUsdt: number): number {
+  if (!Number.isFinite(maxSpendUsdt) || maxSpendUsdt <= 0) return 0;
+  if (robot.buyOperationMode === "fixed") {
+    return Math.min(Math.max(0, robot.buyOperationFixedUsdt), maxSpendUsdt);
+  }
+  return (maxSpendUsdt * Math.min(robot.buyOperationPercent, robot.maxSpotPercent)) / 100;
+}
+
+/**
+ * @param sequentialSliceUsdt — quando definido (compras em sequência), cada vela usa `min(fatia, livre, espaço até ao teto)` em vez de recalcular % sobre o saldo livre atual.
+ */
 export function computeRobotMarketBuyQuoteUsdt(
   robot: SavedRobot,
   spotUsdtFree: number,
-  position: RobotOpenPosition | null
+  position: RobotOpenPosition | null,
+  sequentialSliceUsdt?: number | null
 ): number | null {
   /** Teto = % do USDT livre atual (Binance), não saldo congelado na ativação. */
   if (!Number.isFinite(spotUsdtFree) || spotUsdtFree < 0) return null;
   const maxSpendUsdt = (spotUsdtFree * robot.maxSpotPercent) / 100;
   const quoteInPosition = position?.totalQuoteSpent ?? 0;
   const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
-  let opUsdt =
-    robot.buyOperationMode === "fixed"
-      ? Math.min(robot.buyOperationFixedUsdt, maxSpendUsdt)
-      : (maxSpendUsdt * Math.min(robot.buyOperationPercent, robot.maxSpotPercent)) / 100;
-  opUsdt = Math.min(opUsdt, spotUsdtFree, roomBelowRobotMax);
+  let opUsdt: number;
+  if (
+    sequentialSliceUsdt != null &&
+    Number.isFinite(sequentialSliceUsdt) &&
+    sequentialSliceUsdt > 0
+  ) {
+    opUsdt = Math.min(sequentialSliceUsdt, spotUsdtFree, roomBelowRobotMax);
+  } else {
+    opUsdt = computeNominalBuyOperationUsdt(robot, maxSpendUsdt);
+    opUsdt = Math.min(opUsdt, spotUsdtFree, roomBelowRobotMax);
+  }
   if (opUsdt <= 1e-8) return null;
   return opUsdt;
 }

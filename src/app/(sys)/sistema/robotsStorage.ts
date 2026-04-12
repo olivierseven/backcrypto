@@ -72,11 +72,11 @@ export interface SavedRobot {
   isActive: boolean;
   /** Percentual máximo do spot (1–100). */
   maxSpotPercent: number;
-  /** Modo da quantidade por operação: % do teto ou USDT fixo (≤ teto). */
+  /** Modo da quantidade por operação: % do teto ou USDT fixo (≤ teto). Na acumulação, a 1.ª compra define a fatia em USDT; as seguintes repetem até ao máximo do robô. */
   buyOperationMode: RobotBuyOperationMode;
-  /** Se mode === "percent": % do máximo (0..maxSpotPercent). */
+  /** Se mode === "percent": % do teto (0..maxSpotPercent); na sequência usa-se sempre essa fatia em USDT calculada na 1.ª operação. */
   buyOperationPercent: number;
-  /** Se mode === "fixed": USDT por operação (≥ 0, ≤ teto quando aplicável). */
+  /** Se mode === "fixed": USDT por operação (≥ 0, ≤ teto); na sequência repete-se o mesmo montante até ao máximo. */
   buyOperationFixedUsdt: number;
   /**
    * Comprador: após a N-ésima vela sem posição em que o sinal de compra é verdadeiro, o robô compra até ao teto,
