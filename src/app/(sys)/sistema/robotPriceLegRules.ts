@@ -36,6 +36,7 @@ export function sellerRefAllowsNextSell(refPrice: number, lastSellFillPrice: num
 
 /**
  * Zerar (alerta armado): fecho ≤ preço médio de compra — primeira vela que cumpre dispara a venda a mercado.
+ * O alerta permanece armado com posição aberta até fechar, mesmo que estratégias de zerar voltem a falso.
  */
 export function longFlattenCloseAtOrBelowAvg(closePrice: number, avgBuyPrice: number): boolean {
   if (!Number.isFinite(closePrice) || closePrice <= 0) return false;

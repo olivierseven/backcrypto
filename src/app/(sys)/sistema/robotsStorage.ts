@@ -52,7 +52,8 @@ export interface SavedRobot {
   buyCombinedStrategyIds: string[];
   sellCombinedStrategyIds: string[];
   /**
-   * Opcional: “zerar” — comprador: o sinal arma alerta; a primeira vela com fecho ≤ médio de compra dispara venda a mercado.
+   * Opcional: “zerar” — comprador: o primeiro sinal com posição arma alerta até fechar (velas com sinal falso não desarmam);
+   * a primeira vela com fecho ≤ médio de compra dispara venda a mercado. A venda por sinal normal continua independente do alerta.
    * Robô vendedor: reservado (live).
    */
   flattenCombinedStrategyIds: string[];

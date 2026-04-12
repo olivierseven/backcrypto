@@ -169,7 +169,7 @@ export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
  * Simula o robô comprador no fechamento de cada vela, do candle mais antigo ao mais recente do intervalo.
  * Regra fixa: nova compra só se o preço de execução da compra (buyPx) for ≤ ao da compra anterior no ciclo; reinicia ao zerar posição.
  * `barNum` na tabela: 1 = vela mais antiga carregada, `length` = mais recente.
- * Stop, zerar (primeiro sinal arma alerta; venda na 1.ª vela com fecho ≤ médio; min(sellPx, médio) no bruto),
+ * Stop, zerar (alerta mantém-se com posição até fechar; venda na 1.ª vela com fecho ≤ médio; min(sellPx, médio) no bruto),
  * venda por estratégias só com alerta armado, venda por sinal normal e compra.
  * Comissão: `feeRatePerSide` sobre o nocional de cada compra e sobre o bruto de cada venda.
  * Slippage: compra ao preço `close×(1+s)`, venda/stop ao `close×(1−s)` com `s` = slippage % / 100.
@@ -283,7 +283,7 @@ export function runRobotBacktest(params: {
   let lastSellPxInRange = 0;
   /** Preço da última compra executada no ciclo atual; zera com a posição (regra: próxima compra só se buyPx ≤ este). */
   let lastBuyFillPrice: number | null = null;
-  /** Zerar: o primeiro sinal (e seguintes com posição) mantém alerta; venda na primeira vela com fecho ≤ médio. */
+  /** Zerar: após o primeiro sinal com posição o alerta fica armado até fechar; velas seguintes com sinal falso não desarmam. Saída: fecho ≤ médio (e vendas opcionais pós-alertas); venda por sinal normal continua avaliada no mesmo ciclo. */
   let flattenArmed = false;
   /** Acumulação de compras: cada vela sem posição com sinal de compra verdadeiro conta um sinal; depois até N velas seguidas tenta comprar (1/vela), com ou sem sinal, até ao teto ou fim da janela. */
   let buyEdgesSinceFlat = 0;
@@ -382,8 +382,10 @@ export function runRobotBacktest(params: {
 
     if (baseQty <= 1e-12) {
       flattenArmed = false;
-    } else if (robotFlattenOrTrue(robot, i, strategyResults)) {
-      flattenArmed = true;
+    } else {
+      const flattenHit =
+        (robot.flattenCombinedStrategyIds ?? []).length > 0 && robotFlattenOrTrue(robot, i, strategyResults);
+      flattenArmed = flattenArmed || flattenHit;
     }
 
     // 1) Stops (loss/gain) — fecha posição completa

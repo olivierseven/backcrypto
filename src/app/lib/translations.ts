@@ -1338,7 +1338,7 @@ export const cryptoTranslations = {
         robotsSellAfterBuyHint: "For buyer robots, sell only executes after a previous buy.",
         robotsPickFlattenCombinedLabel: "Flatten strategies (optional)",
         robotsFlattenHintBuyer:
-          "While you hold a position, the first flatten signal (and any later one while you stay in the trade) arms an alert. The first candle whose close is less than or equal to your average buy price triggers a full MARKET sell (live: latest candle close vs stored average). Backtest uses the same rule on each bar’s close; gross sell price is capped at the average so optimistic bars do not add profit on this path.",
+          "While you hold a position, the first flatten signal arms an alert that stays on until the position closes—even if later candles have the flatten strategies false. The first candle whose close is less than or equal to your average buy price triggers a full MARKET sell (live: latest candle close vs stored average). Normal sell strategies keep working while the alert is armed; breakeven can still fire first on the same path. Backtest uses the same rule on each bar’s close; gross sell price is capped at the average so optimistic bars do not add profit on this path.",
         robotsFlattenHintSeller:
           "Optional list is saved; live flatten is not executed for seller robots in this version.",
         robotsChosenFlattenStrategies: "Selected flatten strategies",
@@ -3657,7 +3657,7 @@ export const cryptoTranslations = {
         robotsSellAfterBuyHint: "Para robôs compradores, a venda só executa após uma compra anterior.",
         robotsPickFlattenCombinedLabel: "Estratégias de zerar (opcional)",
         robotsFlattenHintBuyer:
-          "Com posição aberta, o primeiro sinal de zerar (e os seguintes enquanto mantiver posição) deixa o robô em alerta. Na primeira vela em que o fecho for menor ou igual ao preço médio de compra, envia venda a mercado da posição inteira (live: fecho da vela mais recente vs médio guardado). No backtest: mesma regra no fecho de cada vela; bruto de venda limitado ao médio para o modo otimista não acrescentar lucro neste caminho.",
+          "Com posição aberta, o primeiro sinal de zerar deixa o robô em alerta até fechar a posição — mesmo que nas velas seguintes as estratégias de zerar fiquem falsas. Na primeira vela em que o fecho for menor ou igual ao preço médio de compra, envia venda a mercado da posição inteira (live: fecho da vela mais recente vs médio guardado). As estratégias de venda normais continuam ativas com o alerta ligado; o breakeven pode disparar primeiro no mesmo fluxo. No backtest: mesma regra no fecho de cada vela; bruto de venda limitado ao médio para o modo otimista não acrescentar lucro neste caminho.",
         robotsFlattenHintSeller:
           "A lista é guardada; nesta versão o zerar em tempo real não corre para robô vendedor.",
         robotsChosenFlattenStrategies: "Estratégias de zerar selecionadas",

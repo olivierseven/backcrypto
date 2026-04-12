@@ -1324,7 +1324,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
-   * Zerar: primeiro sinal arma alerta; primeira vela com fecho ≤ médio → venda a mercado; depois venda por sinal e compra.
+   * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ médio → venda FLATTEN a mercado. Venda por sinal normal e opcionais “após zerar” continuam a poder disparar com o alerta ligado (flatten primeiro no async). Depois compra.
    * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela.
    * Coluna B· só marca 1 após compra aceite na API.
    */
@@ -1382,8 +1382,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const flattenIds = robot.flattenCombinedStrategyIds ?? [];
       if (!posArm || posArm.totalBaseQty <= 1e-12) {
         delete armRef[kArm];
-      } else if (flattenIds.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults)) {
-        armRef[kArm] = true;
+      } else {
+        const flattenHit = flattenIds.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults);
+        if (armRef[kArm] === true || flattenHit) armRef[kArm] = true;
       }
       syncBuyAccumForRobot(robot);
     }
@@ -1495,8 +1496,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const flattenIdsLive = robot.flattenCombinedStrategyIds ?? [];
         if (!posArmLive || posArmLive.totalBaseQty <= 1e-12) {
           delete armRefLive[kArmLive];
-        } else if (flattenIdsLive.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults)) {
-          armRefLive[kArmLive] = true;
+        } else {
+          const flattenHitLive = flattenIdsLive.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults);
+          if (armRefLive[kArmLive] === true || flattenHitLive) armRefLive[kArmLive] = true;
         }
 
         const flattenArmedLive = armRefLive[kArmLive] === true;
