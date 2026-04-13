@@ -102,8 +102,10 @@ export function aggPayloadToDisplayKline(p: AggFastBarRowPayload, timezoneOffset
 }
 
 /**
- * Indica se o snapshot do GET kline-cache2 difere do que já tínhamos (nova barra, janela distinta ou OHLCV atualizado na mesma chave).
- * Sem comparar OHLCV, o refresh de 5 min ignorava correções no cache com os mesmos openTimes — o gráfico só mudava com F5.
+ * Indica se o snapshot GET kline-cache2 deve substituir o que já tínhamos e permitir reconexão WS.
+ * Compara só o **último candle formado** (índice 1; índice 0 é o em formação, orderBy openTime desc),
+ * pelo mesmo `openTime` na lista anterior — **OHLC** (cols 1–4). Diferenças só na linha 0 não contam.
+ * Janela com tamanho distinto ou sem linha correspondente → mudança (recarregar).
  */
 export function aggCacheHasNewServerLine(
   prev: readonly (readonly (string | number | null)[])[],
@@ -118,17 +120,18 @@ export function aggCacheHasNewServerLine(
   if (next.length !== prev.length) {
     return true;
   }
-  for (let i = 0; i < next.length; i++) {
-    const p = prev[i];
-    const q = next[i];
-    if (!p || !q) return true;
-    const otP = Number(p[0]);
-    const otQ = Number(q[0]);
-    if (!Number.isFinite(otP) || !Number.isFinite(otQ) || otP !== otQ) return true;
-    const upto = Math.min(6, p.length, q.length);
-    for (let c = 1; c < upto; c++) {
-      if (String(p[c]) !== String(q[c])) return true;
-    }
+  if (next.length < 2) {
+    // Só uma barra no topo (em formação); não usar OHLC para disparar refresh periódico.
+    return false;
+  }
+  const formed = next[1];
+  if (!formed) return true;
+  const targetOt = Number(formed[0]);
+  if (!Number.isFinite(targetOt)) return true;
+  const prevRow = prev.find((r) => r != null && Number(r[0]) === targetOt) ?? null;
+  if (!prevRow) return true;
+  for (let c = 1; c <= 4; c++) {
+    if (String(prevRow[c]) !== String(formed[c])) return true;
   }
   return false;
 }
