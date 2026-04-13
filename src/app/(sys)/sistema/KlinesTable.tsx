@@ -83,7 +83,6 @@ import {
 import {
   aggFastLiveBrickLogicalKey,
   liveSourcePayloadsToTierPayloadsForMerge,
-  aggCacheHasNewServerLine,
   aggDisplayTierBaseLineCount,
   mergeAggFastServerAndLive,
 } from "./aggFastKlineMerge";
@@ -155,10 +154,28 @@ type Kline = [
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
 
 /** Gráficos atemporais (Renko/Range/Kagi/…): GET kline-cache2 + reconexão aggTrade para alinhar ao servidor. */
-const AGG_ATEMPORAL_CACHE_REFRESH_MS = 5 * 60 * 1000;
+const AGG_ATEMPORAL_CACHE_REFRESH_MS = 2 * 60 * 1000;
+const AGG_CACHE_REFRESH_WINDOW_MS = 60 * 60 * 1000; // 1h
 
 /** Alinhado ao `limit` do GET kline-cache2 e ao `maxBars` do merge agg; acima disto refetch do cache. */
 const AGG_KLINE_CACHE_LIMIT = 5000;
+
+function mergeRecentCacheWindow(
+  prev: readonly Kline[],
+  next: readonly Kline[],
+  windowMs: number
+): Kline[] {
+  if (prev.length === 0) return [...next];
+  if (next.length === 0) return [...prev];
+  const newestOpenTime = Number(next[0]?.[0]);
+  if (!Number.isFinite(newestOpenTime)) return [...next];
+  const cutoff = newestOpenTime - windowMs;
+  const recent = next.filter((row) => Number(row[0]) >= cutoff);
+  const olderPrev = prev.filter((row) => Number(row[0]) < cutoff);
+  return [...recent, ...olderPrev]
+    .sort((a, b) => Number(b[0]) - Number(a[0]))
+    .slice(0, AGG_KLINE_CACHE_LIMIT);
+}
 
 const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] = [
   { value: 1, label: "1m", param: "1m" },
@@ -2037,37 +2054,30 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const body = await res.json();
         const list = Array.isArray(body.klines) ? body.klines : [];
         if (symbolRef.current !== requestedSymbol) return false;
-        const prevServer = serverAggKlinesRef.current;
-        const shouldApplyCache =
-          force || prevServer.length === 0 || aggCacheHasNewServerLine(prevServer, list);
-        if (!shouldApplyCache) {
-          skipAggPeriodicWsReconnectRef.current = true;
-          return true;
-        }
+        const prevServer = serverAggKlinesRef.current as Kline[];
+        const mergedServer =
+          force || prevServer.length === 0
+            ? (list as Kline[])
+            : mergeRecentCacheWindow(prevServer, list as Kline[], AGG_CACHE_REFRESH_WINDOW_MS);
+        // Refresh periódico (5 min): considerar sempre mudança e reaplicar cache para realinhar WS.
         skipAggPeriodicWsReconnectRef.current = false;
         lastKlinesFetchSymbolRef.current = requestedSymbol;
-        const tzForMerge =
-          typeof body.timezoneOffset === "number" ? Math.max(-12, Math.min(12, body.timezoneOffset)) : timezoneOffset;
-        serverAggKlinesRef.current = list as Kline[];
-        setServerNewestKlineFromCache(list.length > 0 ? (list[0] as (string | number)[]) : null);
+        serverAggKlinesRef.current = mergedServer;
+        setServerNewestKlineFromCache(mergedServer.length > 0 ? (mergedServer[0] as (string | number)[]) : null);
         const aggLive = isAggFastGroupMinutes(groupMinutes);
-        if (!aggLive) {
-          liveAggRowsByOpenTimeRef.current.clear();
-          liveWsRawTradesRef.current = [];
-          liveDebugClosedBricksRef.current = [];
-          liveDebugBrickSeqRef.current = 0;
-          setKlines(list as Kline[]);
-        } else {
-          const tierLive = liveSourcePayloadsToTierPayloadsForMerge(
-            liveAggRowsByOpenTimeRef.current.values(),
-            cache2
-          );
-          setKlines(mergeAggFastServerAndLive(list, tierLive, tzForMerge, AGG_KLINE_CACHE_LIMIT) as Kline[]);
+        // Ao receber snapshot novo do cache2, limpar live acumulado para refletir exatamente o servidor
+        // e depois realinhar via reconexão do WS aggTrade.
+        liveAggRowsByOpenTimeRef.current.clear();
+        liveWsRawTradesRef.current = [];
+        liveDebugClosedBricksRef.current = [];
+        liveDebugBrickSeqRef.current = 0;
+        setKlines(mergedServer);
+        if (aggLive) {
           pushAggFastLiveDebug();
         }
         setKlinesDataSymbol(requestedSymbol);
-        if (list.length > 0) {
-          const row0 = list[0] as (string | number)[];
+        if (mergedServer.length > 0) {
+          const row0 = mergedServer[0] as (string | number)[];
           const h = Number(row0[2]);
           const l = Number(row0[3]);
           if (Number.isFinite(h) && Number.isFinite(l)) {
@@ -2079,7 +2089,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (typeof body.timezoneOffset === "number") {
           setTimezoneOffset(Math.max(-12, Math.min(12, body.timezoneOffset)));
         }
-        const lastUtc = list.length > 0 && list[0][0] != null ? Number(list[0][0]) : null;
+        const lastUtc = mergedServer.length > 0 && mergedServer[0][0] != null ? Number(mergedServer[0][0]) : null;
         setLastUpdate(lastUtc != null ? new Date(lastUtc) : new Date());
         return true;
       }
