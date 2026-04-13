@@ -1,7 +1,7 @@
 import type { Kline } from "./klinesChart/types";
 import { clampBacktestExecutionMode, clampSlippagePercent, type BacktestExecutionMode } from "./backtestStorage";
 import {
-  buyerAllowsMarketBuyOrder,
+  buyerAllowsAccumulationBuy,
   flattenBreakevenThresholdPrice,
   longFlattenCloseBreakeven,
 } from "./robotPriceLegRules";
@@ -626,9 +626,9 @@ export function runRobotBacktest(params: {
       flattenArmed = false;
     }
 
-    // 5) Compra: acumulação ativa → até uma compra por vela até ao teto ou fim da janela; sinal pode estar falso; gate de preço falha só nesta vela.
+    // 5) Compra: acumulação ativa → até uma compra por vela até ao teto ou fim da janela; sinal pode estar falso; 1.ª compra fecho≤abertura; seguintes só vs última compra.
     if (buyAccumulationActive && !boughtThisOpenTime.has(ot)) {
-      if (buyerAllowsMarketBuyOrder(close, open, lastBuyFillPrice)) {
+      if (buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice)) {
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
         if (buySequentialSliceUsdt == null || !Number.isFinite(buySequentialSliceUsdt) || buySequentialSliceUsdt <= 0) {
           buySequentialSliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendUsdt);

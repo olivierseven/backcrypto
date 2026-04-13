@@ -1362,7 +1362,7 @@ export const cryptoTranslations = {
         robotsListPostFlattenBuyLine: "Buy after arm: {n} strategies",
         robotsMandatoryLegRuleTitle: "Fixed price rule (always on, not optional)",
         robotsMandatoryLegRuleBuyer:
-          "Buyer: a market buy is only sent when the latest candle’s close is at or below that candle’s open, and—after a prior buy in the same run—also at or below the last recorded buy fill. The exchange fill price is not part of this gate. After a full exit, the next buy has no prior leg. Live and backtest.",
+          "Buyer (sequential buys): enough buy-signal candles opens the window. The first market buy only needs a valid latest close/open; entry timing comes from those signals. On each later candle in the window, the close must be strictly below the last recorded buy fill to add size—at most one attempt per candle. The exchange fill price is not part of this gate. After a full exit, counting restarts. Live and backtest.",
         robotsMandatoryLegRuleSeller:
           "Seller: the opposite rule applies — a new sell only if the reference price is greater than or equal to the last sell fill. Seller live trading is not wired yet; the rule is documented for parity.",
         robotsMaxSpotPercentLabel: "Maximum spot (%)",
@@ -1370,7 +1370,7 @@ export const cryptoTranslations = {
         robotsBuyPerOperationHint: "Cannot exceed the maximum above. Default is 0% of that maximum.",
         robotsBuyAccumStartSignalLabel: "Start sequential buys from buy signal #",
         robotsBuyAccumStartSignalHint:
-          "While flat, each candle where buy strategies are true counts as one signal (including consecutive true candles). After the Nth such candle, the robot keeps trying for up to the consecutive-candle limit you set below (1–20, default 7)—at most one market attempt per candle—even if the buy signal goes false, until max spend, that window ends, or the price gate blocks that candle (close ≤ open; stacking buys also close ≤ last fill). After a full exit, counting restarts.",
+          "While flat, each candle where buy strategies are true counts as one signal (including consecutive true candles). After the Nth such candle, the robot keeps trying for up to the consecutive-candle limit you set below (1–20, default 7)—at most one market attempt per candle—even if the buy signal goes false, until max spend, that window ends, or the price gate blocks that candle (first buy: valid prices only; later buys: close strictly below last buy). After a full exit, counting restarts.",
         robotsBuyAccumMaxCandlesLabel: "Max consecutive candles to try buys (after N signals)",
         robotsBuyAccumMaxCandlesHint:
           "How many candles in a row may get one buy attempt each (1–20). Default 7. Independent of the buy signal staying true after accumulation starts.",
@@ -3684,7 +3684,7 @@ export const cryptoTranslations = {
         robotsListPostFlattenBuyLine: "Compra pós-alertas: {n} estratégias",
         robotsMandatoryLegRuleTitle: "Regra de preço fixa (sempre ativa, não é opção)",
         robotsMandatoryLegRuleBuyer:
-          "Comprador: só se envia compra a mercado se o fecho da vela mais recente for ≤ à abertura dessa vela e, se já houve compra na mesma sequência, também ≤ ao preço registado da última compra. O preço de execução na Binance não entra nesta regra. Depois de zerar a posição, a próxima compra não tem perna anterior. Vale em live e no backtest.",
+          "Comprador (compras em sequência): após N velas com sinal de compra abre-se a janela. A primeira ordem a mercado só exige fecho e abertura válidos; o timing vem dos sinais. Em cada vela seguinte na janela, o fecho tem de estar estritamente abaixo da última compra registada para aumentar posição — no máximo uma tentativa por vela. O fill na Binance não entra nesta regra. Depois de zerar, a contagem recomeça. Live e backtest.",
         robotsMandatoryLegRuleSeller:
           "Vendedor: vale a regra inversa — nova venda só se o preço de referência for maior ou igual ao da última venda. O live do vendedor ainda não está ligado; a regra fica descrita para manter o mesmo critério.",
         robotsMaxSpotPercentLabel: "Percentual máximo do spot (%)",
@@ -3692,7 +3692,7 @@ export const cryptoTranslations = {
         robotsBuyPerOperationHint: "Não pode ser maior que o máximo acima. Por defeito 0% do máximo.",
         robotsBuyAccumStartSignalLabel: "Começar compras em sequência a partir do sinal de compra n.º",
         robotsBuyAccumStartSignalHint:
-          "Sem posição, cada vela em que as estratégias de compra estão verdadeiras conta como um sinal (velas seguidas com sinal contam uma cada). Depois da N-ésima, o robô continua a tentar durante no máximo o número de velas consecutivas que definires abaixo (1–20, omissão 7)—no máximo uma tentativa de mercado por vela—mesmo que o sinal de compra passe a falso, até ao teto, ao fim dessa janela ou ao critério de preço falhar nessa vela (fecho ≤ abertura; em sequência também fecho ≤ última compra). Depois de zerar, a contagem recomeça.",
+          "Sem posição, cada vela em que as estratégias de compra estão verdadeiras conta como um sinal (velas seguidas com sinal contam uma cada). Depois da N-ésima, o robô continua a tentar durante no máximo o número de velas consecutivas que definires abaixo (1–20, omissão 7)—no máximo uma tentativa de mercado por vela—mesmo que o sinal de compra passe a falso, até ao teto, ao fim dessa janela ou ao critério de preço falhar nessa vela (1.ª compra: só preços válidos; seguintes: fecho estritamente abaixo da última compra). Depois de zerar, a contagem recomeça.",
         robotsBuyAccumMaxCandlesLabel: "Máximo de velas consecutivas para tentar compras (após N sinais)",
         robotsBuyAccumMaxCandlesHint:
           "Quantas velas seguidas podem ter no máximo uma tentativa de compra cada (1–20). Omissão 7. Não depende do sinal de compra continuar verdadeiro depois de ligar a acumulação.",

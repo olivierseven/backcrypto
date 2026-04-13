@@ -27,6 +27,27 @@ export function buyerAllowsMarketBuyOrder(
   return buyerRefAllowsNextBuy(refPrice, lastBuyFillPrice);
 }
 
+/**
+ * Janela de acumulação (várias compras, no máximo uma por vela no live):
+ * - **Primeira** compra: o critério de entrada é o sinal das estratégias (contagem de velas com sinal antes de ligar a janela); aqui só exigimos preços de referência válidos (fecho/abertura > 0), sem fecho ≤ abertura.
+ * - **Seguintes**: só se o preço de referência estiver **estritamente abaixo** do último fill registado (nova vela com “dip” vs última compra).
+ */
+export function buyerAllowsAccumulationBuy(
+  refPrice: number,
+  candleOpen: number,
+  lastBuyFillPrice: number | null | undefined
+): boolean {
+  if (!Number.isFinite(refPrice) || refPrice <= 0) return false;
+  if (!Number.isFinite(candleOpen) || candleOpen <= 0) return false;
+
+  const hasPriorBuy =
+    lastBuyFillPrice != null && Number.isFinite(lastBuyFillPrice) && lastBuyFillPrice > 0;
+  if (!hasPriorBuy) {
+    return true;
+  }
+  return refPrice < lastBuyFillPrice * (1 - ROBOT_PRICE_LEG_REL_EPS);
+}
+
 /** Para robô vendedor (execução futura): nova venda só se o preço de referência ≥ última venda. */
 export function sellerRefAllowsNextSell(refPrice: number, lastSellFillPrice: number | null | undefined): boolean {
   if (lastSellFillPrice == null || !Number.isFinite(lastSellFillPrice) || lastSellFillPrice <= 0) return true;

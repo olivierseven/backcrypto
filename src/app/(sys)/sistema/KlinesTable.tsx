@@ -37,7 +37,7 @@ import {
 import { runRobotBacktest } from "./robotBacktest";
 import RobotBacktestResultModal from "./RobotBacktestResultModal";
 import { getRobotPosition } from "./robotPositionStorage";
-import { buyerAllowsMarketBuyOrder, longFlattenCloseBreakeven } from "./robotPriceLegRules";
+import { buyerAllowsAccumulationBuy, longFlattenCloseBreakeven } from "./robotPriceLegRules";
 import {
   computeNominalBuyOperationUsdt,
   computeRobotMarketBuyQuoteUsdt,
@@ -1375,7 +1375,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
    * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ limiar breakeven (médio × (1+buffer%)) → venda FLATTEN a mercado. Sinais de estratégia avaliam a última vela fechada e a em formação ([1] e [0]); openTime da ordem prioriza o fecho. Venda por sinal normal e pós-alertas com alerta ligado (flatten primeiro no async). Depois compra.
-   * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela. Na sequência, a 1.ª operação define a fatia USDT (% ou fixo sobre o teto na altura); as seguintes repetem essa fatia até ao máximo (ex.: 300,300,300,100).
+   * Compra: N velas com sinal (sem posição) ligam acumulação; até `buyAccumMaxCandles` velas tenta no máximo 1 compra/vela; 1.ª: só preços válidos (entrada pelos sinais); seguintes: fecho estritamente abaixo da última compra. Para ao teto USDT ou fim da janela. A 1.ª operação define a fatia USDT; as seguintes repetem até ao máximo.
    * Coluna B· só marca 1 após compra aceite na API.
    */
   useEffect(() => {
@@ -1506,7 +1506,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const priceOk =
           refPx != null &&
           refOpen != null &&
-          buyerAllowsMarketBuyOrder(refPx, refOpen, posBuy?.lastBuyFillPrice);
+          buyerAllowsAccumulationBuy(refPx, refOpen, posBuy?.lastBuyFillPrice);
         if (priceOk && !robotLiveBuyInFlightRef.current.has(buyKeyInflight)) {
           shouldRun = true;
         }
@@ -1649,7 +1649,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const refPxLive = Number.isFinite(refCloseLive) && refCloseLive > 0 ? refCloseLive : null;
         const refOpenLive = Number.isFinite(refOpenLiveRaw) && refOpenLiveRaw > 0 ? refOpenLiveRaw : null;
         const pos = getRobotPosition(robot.id, sym);
-        if (refPxLive == null || refOpenLive == null || !buyerAllowsMarketBuyOrder(refPxLive, refOpenLive, pos?.lastBuyFillPrice)) {
+        if (refPxLive == null || refOpenLive == null || !buyerAllowsAccumulationBuy(refPxLive, refOpenLive, pos?.lastBuyFillPrice)) {
           continue;
         }
 
