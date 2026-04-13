@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 import { ASSET_PREFIX } from "@/app/constants";
 import { AggDerivedInfoButton, AggDerivedInfoModal, type AggDerivedKind } from "./AggDerivedInfoModal";
 import {
-  KLINE_LAST_LAYOUT_KEY,
+  getKlineLastLayoutStorage,
   SIDEBAR_WIDTH,
   groupMinutesToAggKind,
   isAggFastGroupMinutes,
@@ -355,7 +355,7 @@ export function KlinesChartSidebar({
     return () => window.removeEventListener(MOBILE_ASCII_KEYBOARD_PREF_EVENT, onPref);
   }, []);
   const currentIntervalLabel = intervalLabel ?? intervalOptions.find((o) => o.value === groupMinutes)?.label ?? "—";
-  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const rawLayout = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
   const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
   const defaultLayoutIntervalLockHint = (t as Record<string, string>).defaultLayoutIntervalLockedHint ?? "";
   const intervalDisabledOnDefault = (value: number) => isDefaultModel && isIntervalForbiddenOnDefaultLayout(value);

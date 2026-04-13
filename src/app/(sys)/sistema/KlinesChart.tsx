@@ -42,7 +42,7 @@ import {
   CHART_SIZE_PERCENT_MAX,
   CHART_SIZE_PERCENT_DEFAULT,
   CHART_SIZE_PERCENT_STEP,
-  KLINE_LAST_LAYOUT_KEY,
+  getKlineLastLayoutStorage,
   setKlineLastLayoutStorage,
   KLINE_DRAW_SEGMENTS_KEY,
   KLINE_DRAW_VISIBLE_KEY,
@@ -742,7 +742,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
         prefsWriteSkippedRef.current = true;
         return;
       }
-      const layoutRaw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+      const layoutRaw = getKlineLastLayoutStorage();
       const slotNum = layoutRaw != null && layoutRaw !== "default" && layoutRaw !== "0" ? Number(layoutRaw) : 0;
       if (Number.isInteger(slotNum) && slotNum >= 1 && slotNum <= 7) return;
       window.localStorage.setItem(
@@ -793,7 +793,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     othersPushTimeoutRef.current = setTimeout(() => {
       othersPushTimeoutRef.current = null;
       if (Date.now() - layoutAppliedAtRef.current < 2000) return;
-      const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+      const raw = getKlineLastLayoutStorage();
       const slot = raw === "default" || raw === "0" || raw == null ? 0 : Math.min(7, Math.max(1, Number(raw) || 0));
 
       if (slot >= 1 && slot <= 7) {
@@ -833,7 +833,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   // Usuário free: sempre layout default; forçar localStorage e não usar slot 1–7.
   useEffect(() => {
     if (!isFreeUser || typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    const raw = getKlineLastLayoutStorage();
     if (raw !== "default" && raw !== "0") {
       setKlineLastLayoutStorage("default");
       setShowUpgradeModal(true);
@@ -859,7 +859,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const done = () => {
       if (!cancelled) setLayoutApplied(true);
     };
-    let raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+    let raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
     if (isFreeUser) {
       raw = "default";
       if (typeof window !== "undefined") setKlineLastLayoutStorage("default");
@@ -1199,7 +1199,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = "indicators" | "regressions" (array), "strategies" { strategies, appliedStrategyIds }. */
   const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies" | "regressions", payload?: unknown) => {
     try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+      const raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
       if (!raw || raw === "default") return;
       const slot = Number(raw);
       if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;

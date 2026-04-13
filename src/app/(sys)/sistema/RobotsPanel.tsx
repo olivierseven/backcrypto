@@ -8,7 +8,7 @@ import { getCryptoT } from "@/app/lib/translations";
 import { useChartSymbol } from "./ChartSymbolContext";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { useStrategies } from "./strategies/StrategiesContext";
-import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import { getKlineLastLayoutStorage } from "./KlinesChartConstants";
 import {
   strategiesForContext,
   validateStrategyReferences,
@@ -259,7 +259,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
   }, [combinedForContext, postFlattenBuyChosenIds]);
 
   const saveActivationToServer = useCallback(async (nextAppliedIds: string[]) => {
-    const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+    const raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
     if (!raw || raw === "default") return;
     const slot = Number(raw);
     if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;

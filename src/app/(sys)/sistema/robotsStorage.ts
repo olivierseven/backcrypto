@@ -1,7 +1,7 @@
 /** Persistência de robôs (Meus robôs) — partilhado entre RobotsPanel e KlinesTable. */
 
 import { API_BASE } from "@/app/constants";
-import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import { getKlineLastLayoutStorage } from "./KlinesChartConstants";
 import { getSessionTabId } from "./sessionTabId";
 
 export const ROBOTS_STORAGE_KEY = "crypto_sistema_robots_v1";
@@ -322,7 +322,7 @@ export function scheduleSyncRobotsColumnToChartLayoutApi(): void {
 export async function syncRobotsColumnToChartLayoutApi(): Promise<void> {
   if (typeof window === "undefined") return;
   try {
-    const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    const raw = getKlineLastLayoutStorage();
     if (!raw || raw === "default") return;
     const slot = Number(raw);
     if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;

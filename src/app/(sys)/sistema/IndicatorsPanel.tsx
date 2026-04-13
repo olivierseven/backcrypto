@@ -30,7 +30,7 @@ import {
   useIndicatorsPanelFields,
 } from "./indicatorsPanel/index";
 import {
-  KLINE_LAST_LAYOUT_KEY,
+  getKlineLastLayoutStorage,
   DEFAULT_MODEL_MAX_INDICATORS,
   DEFAULT_LAYOUT_ALLOWED_INDICATOR_TYPES,
   isKlinesDefaultLayoutStorageRaw,
@@ -393,7 +393,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     (addForm.chartOption === "panel7" && indicatorCountByPanel.panel7 > 0);
   const isDefaultModel =
     typeof window !== "undefined" &&
-    isKlinesDefaultLayoutStorageRaw(window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY));
+    isKlinesDefaultLayoutStorageRaw(getKlineLastLayoutStorage());
   const indicatorCountForCurrentTimeframe = useMemo(
     () => userIndicators.filter((i) => indicatorAppliesToCurrentChartTimeframe(i, currentGroupMinutes)).length,
     [userIndicators, currentGroupMinutes],

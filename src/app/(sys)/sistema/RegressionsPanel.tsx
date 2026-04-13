@@ -6,7 +6,7 @@ import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
 import { API_BASE } from "@/app/constants";
 import { ColorPaletteCombobox } from "./components/ColorPaletteCombobox";
-import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import { getKlineLastLayoutStorage } from "./KlinesChartConstants";
 import { getSessionTabId } from "./sessionTabId";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
 import { INDICATOR_COLOR_PALETTE, INTERVAL_OPTIONS } from "./indicatorsPanel/indicatorsPanelConstants";
@@ -102,7 +102,7 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
   const { currentGroupMinutes, userIndicators } = useKlinesIndicators();
   const { userRegressions, addRegression, updateRegression, removeRegression } = useKlinesRegressions();
 
-  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const rawLayout = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
   const isDefaultModel = rawLayout === "default" || rawLayout === "0";
 
   const sourceOptions = useMemo(() => {
@@ -155,7 +155,7 @@ export default function RegressionsPanel({ initialView = "list", onClose, isFree
   /** PATCH só na coluna `regressions` (slot 1–7); não passa pelo JSON `layout`. */
   const persistRegressionsColumn = useCallback((next: UserRegressionConfig[]) => {
     if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    const raw = getKlineLastLayoutStorage();
     if (!raw || raw === "default") return;
     const slot = Number(raw);
     if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;

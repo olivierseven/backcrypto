@@ -50,17 +50,41 @@ export const KLINE_PREFS_KEY = "backcrypto-klines-prefs";
 /** Preferência do usuário: quantidade de candles, tipo de gráfico, exibir/ocultar desenhos (e magnético em KLINE_DRAW_MAGNETIC_KEY). Carregar do localStorage tem preferência sobre o layout. */
 export const KLINE_LOCAL_PREFS_KEY = "backcrypto-klines-local-prefs";
 export const KLINE_LAST_LAYOUT_KEY = "backcrypto-klines-last-layout";
-/** Disparado após `setKlineLastLayoutStorage` (mesmo separador de tabs). */
+/**
+ * Slot do layout ativo: **sessionStorage** (por aba), não localStorage — assim cada separador pode ter um layout diferente no mesmo utilizador.
+ * Migração: na 1.ª leitura por aba, se session estiver vazio, copia-se o valor legado do localStorage para essa aba apenas.
+ */
 export const KLINES_LAYOUT_SLOT_CHANGED_EVENT = "backcrypto-klines-layout-slot";
 
-/** Slot 0 (modelo default): `null`, `"default"` ou `"0"` no localStorage. */
+/** Slot 0 (modelo default): `null`, `"default"` ou `"0"` no storage. */
 export function isKlinesDefaultLayoutStorageRaw(raw: string | null): boolean {
   return raw == null || raw === "default" || raw === "0";
 }
 
+/** Lê o layout ativo nesta aba (sessionStorage, com fallback único ao legado em localStorage). */
+export function getKlineLastLayoutStorage(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    let v = window.sessionStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    if (v != null && v !== "") return v;
+    const legacy = window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY);
+    if (legacy != null && legacy !== "") {
+      window.sessionStorage.setItem(KLINE_LAST_LAYOUT_KEY, legacy);
+      return legacy;
+    }
+  } catch {
+    /* private mode / quota */
+  }
+  return null;
+}
+
 export function setKlineLastLayoutStorage(value: string): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, value);
+  try {
+    window.sessionStorage.setItem(KLINE_LAST_LAYOUT_KEY, value);
+  } catch {
+    /* ignore */
+  }
   window.dispatchEvent(new Event(KLINES_LAYOUT_SLOT_CHANGED_EVENT));
 }
 /** Máximo de indicadores permitidos quando o layout ativo é um modelo default (ChartModel). */

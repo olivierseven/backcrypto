@@ -55,7 +55,7 @@ import {
   KLINE_HEIKIN_ASHI_KEY,
   KLINE_VOLUME_AT_PRICE_KEY,
   KLINE_AGG_SERIES_KEY,
-  KLINE_LAST_LAYOUT_KEY,
+  getKlineLastLayoutStorage,
   KLINES_LAYOUT_SLOT_CHANGED_EVENT,
   CACHE2_TICK_KIND_STRIDE,
   GROUP_MINUTES_CACHE2_BASE,
@@ -95,20 +95,16 @@ const AGG_PERSIST_FLUSH_MS = 10_000;
 
 function subscribeKlinesLayoutDefault(callback: () => void) {
   if (typeof window === "undefined") return () => {};
-  const onStorage = (e: StorageEvent) => {
-    if (e.key === KLINE_LAST_LAYOUT_KEY || e.key === null) callback();
-  };
-  window.addEventListener("storage", onStorage);
+  /** Layout ativo é por aba (sessionStorage); não escutar `storage` do localStorage para não sincronizar entre separadores. */
   window.addEventListener(KLINES_LAYOUT_SLOT_CHANGED_EVENT, callback);
   return () => {
-    window.removeEventListener("storage", onStorage);
     window.removeEventListener(KLINES_LAYOUT_SLOT_CHANGED_EVENT, callback);
   };
 }
 
 function snapshotKlinesLayoutIsDefault(): boolean {
   if (typeof window === "undefined") return true;
-  return isKlinesDefaultLayoutStorageRaw(window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY));
+  return isKlinesDefaultLayoutStorageRaw(getKlineLastLayoutStorage());
 }
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */

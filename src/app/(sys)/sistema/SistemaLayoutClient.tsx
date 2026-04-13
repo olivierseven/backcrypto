@@ -36,7 +36,7 @@ import { CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT } from "./backtestStorage";
 import { ChartLayoutSaveProvider } from "./ChartLayoutSaveContext";
 import { ChartSaveLoadProvider, useChartSaveLoad } from "./ChartSaveLoadContext";
 import SaveLoadPanel from "./SaveLoadPanel";
-import { KLINE_LAST_LAYOUT_KEY } from "./KlinesChartConstants";
+import { getKlineLastLayoutStorage } from "./KlinesChartConstants";
 import SingleTabGuard from "./SingleTabGuard";
 import TrialNotificationModal from "./TrialNotificationModal";
 import SistemaTradingFooter from "./SistemaTradingFooter";
@@ -743,7 +743,7 @@ function SistemaLayoutInner({
   children: React.ReactNode;
 }) {
   const { strategies } = useStrategies();
-  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const rawLayout = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
   const isDefaultModel = rawLayout === "default" || rawLayout === "0";
   const addStrategyDisabled = isDefaultModel && strategies.length >= 1;
 

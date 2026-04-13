@@ -11,7 +11,7 @@ import { useKlinesIndicators } from "../KlinesIndicatorsContext";
 import { getIndicatorLabel } from "../IndicatorsPanel";
 import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
-import { KLINE_LAST_LAYOUT_KEY, DEFAULT_MODEL_MAX_STRATEGIES, isKlinesDefaultLayoutStorageRaw } from "../KlinesChartConstants";
+import { getKlineLastLayoutStorage, DEFAULT_MODEL_MAX_STRATEGIES, isKlinesDefaultLayoutStorageRaw } from "../KlinesChartConstants";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
@@ -284,7 +284,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   /** Persiste no banco apenas appliedStrategyIds (ativação/inativação por estratégia). */
   const saveActivationToServer = useCallback(async (nextAppliedIds: string[]) => {
-    const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+    const raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
     if (!raw || raw === "default") return;
     const slot = Number(raw);
     if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
@@ -472,7 +472,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
 
   const canUseCombinedMode = visibleStrategies.length >= 1;
 
-  const rawLayout = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
+  const rawLayout = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
   const isDefaultModel = isKlinesDefaultLayoutStorageRaw(rawLayout);
   const defaultModelMaxStrategiesReached = isDefaultModel && strategies.length >= DEFAULT_MODEL_MAX_STRATEGIES;
 
