@@ -548,6 +548,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const fetchKlinesRef = useRef<(force?: boolean) => Promise<boolean>>(async () => false);
   /** Quando o GET periódico kline-cache2 não trouxe linha nova, não incrementar `aggPeriodicWsReconnectKey` (evita WS agg a repor refs e zerar live). */
   const skipAggPeriodicWsReconnectRef = useRef(false);
+  /** `document.visibilityState === hidden` em gráfico atemporal — para refetch ao voltar (timers em segundo plano atrasam). */
+  const aggAtemporalTabHiddenAtRef = useRef<number | null>(null);
   symbolRef.current = symbol;
 
   const pushAggFastLiveDebug = useCallback(() => {
@@ -2327,6 +2329,35 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => {
       window.clearInterval(interval);
     };
+  }, [groupMinutes, symbol, timeframeRestored]);
+
+  /** Atemporais: ao regressar à aba após ≥45s em fundo, forçar GET cache2 (complementa o intervalo de 5 min com throttling do browser). */
+  useEffect(() => {
+    if (!timeframeRestored) return;
+    if (!isAggFastGroupMinutes(groupMinutes)) return;
+    const afterFetch = () => {
+      if (!skipAggPeriodicWsReconnectRef.current) {
+        setAggPeriodicWsReconnectKey((k) => k + 1);
+      }
+      skipAggPeriodicWsReconnectRef.current = false;
+    };
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        aggAtemporalTabHiddenAtRef.current = Date.now();
+        return;
+      }
+      const h = aggAtemporalTabHiddenAtRef.current;
+      aggAtemporalTabHiddenAtRef.current = null;
+      if (h == null) return;
+      if (Date.now() - h < 45_000) return;
+      void fetchKlinesRef.current(true)
+        .then((ok) => {
+          if (ok) setLastAggPeriodicCacheRefreshOkAt(Date.now());
+        })
+        .finally(afterFetch);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, [groupMinutes, symbol, timeframeRestored]);
 
   /** Modo agg: quando o número de barras fundidas atinge o limite do cache, recuperar do servidor (persistência + ordenação). */
