@@ -151,6 +151,38 @@ type Kline = [
   ...(number | null)[], // 12+ indicadores (ex.: IND_SMA_1)
 ];
 
+/**
+ * Live: linha 0 = vela em formação (close ao vivo); linha 1 = última fechada. Muitos sinais só batem no fecho —
+ * nesse momento passam a aparecer na linha 1. Ordem [1,0] ao escolher openTime: prioriza o candle fechado.
+ */
+function robotLiveStrategyRowIndices(klineLen: number): number[] {
+  return klineLen >= 2 ? [1, 0] : [0];
+}
+
+function robotStrategyTrueOnAnyLiveRow(
+  robot: SavedRobot,
+  klines: Kline[],
+  strategyResults: Map<string, boolean[]>,
+  test: (robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => boolean
+): boolean {
+  for (const i of robotLiveStrategyRowIndices(klines.length)) {
+    if (test(robot, i, strategyResults)) return true;
+  }
+  return false;
+}
+
+function robotLivePickOpenTimeWhere(
+  robot: SavedRobot,
+  klines: Kline[],
+  strategyResults: Map<string, boolean[]>,
+  test: (robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => boolean
+): string | null {
+  for (const i of robotLiveStrategyRowIndices(klines.length)) {
+    if (test(robot, i, strategyResults)) return String(klines[i][0]);
+  }
+  return null;
+}
+
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
 
 /** Gráficos atemporais (Renko/Range/Kagi/…): GET kline-cache2 + reconexão aggTrade para alinhar ao servidor. */
@@ -1342,7 +1374,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
-   * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ limiar breakeven (médio × (1+buffer%)) → venda FLATTEN a mercado. Venda por sinal normal e opcionais “após zerar” continuam a poder disparar com o alerta ligado (flatten primeiro no async). Depois compra.
+   * Zerar: primeiro sinal com posição arma alerta (mantém-se até zerar, mesmo que velas seguintes tenham sinal falso); fecho ≤ limiar breakeven (médio × (1+buffer%)) → venda FLATTEN a mercado. Sinais de estratégia avaliam a última vela fechada e a em formação ([1] e [0]); openTime da ordem prioriza o fecho. Venda por sinal normal e pós-alertas com alerta ligado (flatten primeiro no async). Depois compra.
    * Compra: N-ésima vela com sinal de compra verdadeiro (sem posição) liga acumulação; até `buyAccumMaxCandles` velas seguidas tenta comprar (1/vela), com ou sem sinal; envia MARKET só se fecho ≤ abertura e (em sequência) fecho ≤ última compra; para ao teto USDT ou fim da janela. Na sequência, a 1.ª operação define a fatia USDT (% ou fixo sobre o teto na altura); as seguintes repetem essa fatia até ao máximo (ex.: 300,300,300,100).
    * Coluna B· só marca 1 após compra aceite na API.
    */
@@ -1375,7 +1407,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         delete robotBuyAccumCandleIndexRef.current[kArm];
         delete robotBuySequentialSliceUsdtRef.current[kArm];
       }
-      const buySig = robotBuyOrTrue(robot, 0, strategyResults);
+      const buySig = robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotBuyOrTrue);
       if (flat && buySig) {
         let seen = countedOtRef[kArm];
         if (!seen) {
@@ -1402,7 +1434,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (!posArm || posArm.totalBaseQty <= 1e-12) {
         delete armRef[kArm];
       } else {
-        const flattenHit = flattenIds.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults);
+        const flattenHit =
+          flattenIds.length > 0 &&
+          robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue);
         if (armRef[kArm] === true || flattenHit) armRef[kArm] = true;
       }
       syncBuyAccumForRobot(robot);
@@ -1451,14 +1485,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
       }
       const flattenArmedForSell = armRef[`${robot.id}::${sym}`] === true;
-      const postArmSellWants =
-        flattenArmedForSell &&
-        (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0 &&
-        robotPostFlattenSellOrTrue(robot, 0, strategyResults);
-      if (robotSellOrTrue(robot, 0, strategyResults) || postArmSellWants) {
+      const sellOtNormal = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
+      const sellOtPost =
+        flattenArmedForSell && (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0
+          ? robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotPostFlattenSellOrTrue)
+          : null;
+      const sellSignalOt = sellOtNormal ?? sellOtPost;
+      if (sellSignalOt != null) {
         const pos = getRobotPosition(robot.id, sym);
         if (pos && pos.totalBaseQty > 1e-12) {
-          const k = `${robot.id}::${ot}::sell`;
+          const k = `${robot.id}::${sellSignalOt}::sell`;
           if (!robotLiveSellInFlightRef.current.has(k)) shouldRun = true;
         }
       }
@@ -1517,7 +1553,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (!posArmLive || posArmLive.totalBaseQty <= 1e-12) {
           delete armRefLive[kArmLive];
         } else {
-          const flattenHitLive = flattenIdsLive.length > 0 && robotFlattenOrTrue(robot, 0, strategyResults);
+          const flattenHitLive =
+            flattenIdsLive.length > 0 &&
+            robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue);
           if (armRefLive[kArmLive] === true || flattenHitLive) armRefLive[kArmLive] = true;
         }
 
@@ -1559,14 +1597,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           }
         }
 
-        const postArmSellAsync =
-          flattenArmedLive &&
-          (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0 &&
-          robotPostFlattenSellOrTrue(robot, 0, strategyResults);
-        if (robotSellOrTrue(robot, 0, strategyResults) || postArmSellAsync) {
+        if (cancelled) continue;
+
+        const sellOtNormalLive = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
+        const sellOtPostLive =
+          flattenArmedLive && (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0
+            ? robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotPostFlattenSellOrTrue)
+            : null;
+        const sellSignalOtLive = sellOtNormalLive ?? sellOtPostLive;
+        if (sellSignalOtLive != null) {
           const posPre = getRobotPosition(robot.id, sym);
           if (posPre && posPre.totalBaseQty > 1e-12) {
-            const sellKey = `${robot.id}::${ot}::sell`;
+            const sellKey = `${robot.id}::${sellSignalOtLive}::sell`;
             if (robotLiveSellInFlightRef.current.has(sellKey)) continue;
             robotLiveSellInFlightRef.current.add(sellKey);
             try {
