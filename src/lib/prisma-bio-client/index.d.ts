@@ -49,6 +49,11 @@ export type AffiliateCoupon = $Result.DefaultSelection<Prisma.$AffiliateCouponPa
  */
 export type ChartLayout = $Result.DefaultSelection<Prisma.$ChartLayoutPayload>
 /**
+ * Model RobotLiveSession
+ * Estado live do robô (motor + relatório JSON de ações) enquanto o robô está **ativo**. Apagado ao desativar.
+ */
+export type RobotLiveSession = $Result.DefaultSelection<Prisma.$RobotLiveSessionPayload>
+/**
  * Model ChartModel
  * 
  */
@@ -510,6 +515,16 @@ export class PrismaClient<
     * ```
     */
   get chartLayout(): Prisma.ChartLayoutDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.robotLiveSession`: Exposes CRUD operations for the **RobotLiveSession** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RobotLiveSessions
+    * const robotLiveSessions = await prisma.robotLiveSession.findMany()
+    * ```
+    */
+  get robotLiveSession(): Prisma.RobotLiveSessionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.chartModel`: Exposes CRUD operations for the **ChartModel** model.
@@ -1258,6 +1273,7 @@ export namespace Prisma {
     AffiliateAccount: 'AffiliateAccount',
     AffiliateCoupon: 'AffiliateCoupon',
     ChartLayout: 'ChartLayout',
+    RobotLiveSession: 'RobotLiveSession',
     ChartModel: 'ChartModel',
     UserNotification: 'UserNotification',
     AccessRequest: 'AccessRequest',
@@ -1306,7 +1322,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "userBinanceConnection" | "userBinanceSpotOrder" | "robotSpotPerformanceEvent" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
+      modelProps: "user" | "userBinanceConnection" | "userBinanceSpotOrder" | "robotSpotPerformanceEvent" | "affiliateAccount" | "affiliateCoupon" | "chartLayout" | "robotLiveSession" | "chartModel" | "userNotification" | "accessRequest" | "emailVerificationToken" | "passwordResetToken" | "userCoinWallet" | "coinLedgerEntry" | "walletCredit" | "stripeEvent" | "stripeCheckoutSession" | "stripePlanPayment" | "affiliatePlanPaymentMonthAgg" | "affiliateMonthAggInvoice" | "pagarMeOrder" | "binanceKline" | "binanceKlineFast" | "binanceRenkoFast" | "binanceRangeFast" | "binanceKagiFast" | "binanceRenko2xFast" | "binanceTradeCountFast" | "binanceKlineMonth" | "binanceKlineCache" | "binanceKlineCache2" | "binanceKlineGap" | "appConfig" | "logErro" | "klineSymbol" | "affiliateApplication" | "affiliatePayoutProfile"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1825,6 +1841,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ChartLayoutCountArgs<ExtArgs>
             result: $Utils.Optional<ChartLayoutCountAggregateOutputType> | number
+          }
+        }
+      }
+      RobotLiveSession: {
+        payload: Prisma.$RobotLiveSessionPayload<ExtArgs>
+        fields: Prisma.RobotLiveSessionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RobotLiveSessionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RobotLiveSessionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          findFirst: {
+            args: Prisma.RobotLiveSessionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RobotLiveSessionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          findMany: {
+            args: Prisma.RobotLiveSessionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>[]
+          }
+          create: {
+            args: Prisma.RobotLiveSessionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          createMany: {
+            args: Prisma.RobotLiveSessionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RobotLiveSessionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>[]
+          }
+          delete: {
+            args: Prisma.RobotLiveSessionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          update: {
+            args: Prisma.RobotLiveSessionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.RobotLiveSessionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RobotLiveSessionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RobotLiveSessionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>[]
+          }
+          upsert: {
+            args: Prisma.RobotLiveSessionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RobotLiveSessionPayload>
+          }
+          aggregate: {
+            args: Prisma.RobotLiveSessionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRobotLiveSession>
+          }
+          groupBy: {
+            args: Prisma.RobotLiveSessionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RobotLiveSessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RobotLiveSessionCountArgs<ExtArgs>
+            result: $Utils.Optional<RobotLiveSessionCountAggregateOutputType> | number
           }
         }
       }
@@ -4151,6 +4241,7 @@ export namespace Prisma {
     affiliateAccount?: AffiliateAccountOmit
     affiliateCoupon?: AffiliateCouponOmit
     chartLayout?: ChartLayoutOmit
+    robotLiveSession?: RobotLiveSessionOmit
     chartModel?: ChartModelOmit
     userNotification?: UserNotificationOmit
     accessRequest?: AccessRequestOmit
@@ -4271,6 +4362,7 @@ export namespace Prisma {
     notifications: number
     chartLayouts: number
     chartModels: number
+    robotLiveSessions: number
     stripePlanPayments: number
     binanceSpotOrders: number
     robotSpotPerformanceEvents: number
@@ -4287,6 +4379,7 @@ export namespace Prisma {
     notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
     chartLayouts?: boolean | UserCountOutputTypeCountChartLayoutsArgs
     chartModels?: boolean | UserCountOutputTypeCountChartModelsArgs
+    robotLiveSessions?: boolean | UserCountOutputTypeCountRobotLiveSessionsArgs
     stripePlanPayments?: boolean | UserCountOutputTypeCountStripePlanPaymentsArgs
     binanceSpotOrders?: boolean | UserCountOutputTypeCountBinanceSpotOrdersArgs
     robotSpotPerformanceEvents?: boolean | UserCountOutputTypeCountRobotSpotPerformanceEventsArgs
@@ -4371,6 +4464,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountChartModelsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ChartModelWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountRobotLiveSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RobotLiveSessionWhereInput
   }
 
   /**
@@ -4998,6 +5098,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
+    robotLiveSessions?: boolean | User$robotLiveSessionsArgs<ExtArgs>
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
     binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
@@ -5156,6 +5257,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     chartLayouts?: boolean | User$chartLayoutsArgs<ExtArgs>
     chartModels?: boolean | User$chartModelsArgs<ExtArgs>
+    robotLiveSessions?: boolean | User$robotLiveSessionsArgs<ExtArgs>
     stripePlanPayments?: boolean | User$stripePlanPaymentsArgs<ExtArgs>
     binanceConnection?: boolean | User$binanceConnectionArgs<ExtArgs>
     binanceSpotOrders?: boolean | User$binanceSpotOrdersArgs<ExtArgs>
@@ -5179,6 +5281,7 @@ export namespace Prisma {
       notifications: Prisma.$UserNotificationPayload<ExtArgs>[]
       chartLayouts: Prisma.$ChartLayoutPayload<ExtArgs>[]
       chartModels: Prisma.$ChartModelPayload<ExtArgs>[]
+      robotLiveSessions: Prisma.$RobotLiveSessionPayload<ExtArgs>[]
       stripePlanPayments: Prisma.$StripePlanPaymentPayload<ExtArgs>[]
       binanceConnection: Prisma.$UserBinanceConnectionPayload<ExtArgs> | null
       binanceSpotOrders: Prisma.$UserBinanceSpotOrderPayload<ExtArgs>[]
@@ -5633,6 +5736,7 @@ export namespace Prisma {
     notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserNotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     chartLayouts<T extends User$chartLayoutsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartLayoutsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartLayoutPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     chartModels<T extends User$chartModelsArgs<ExtArgs> = {}>(args?: Subset<T, User$chartModelsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChartModelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    robotLiveSessions<T extends User$robotLiveSessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$robotLiveSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     stripePlanPayments<T extends User$stripePlanPaymentsArgs<ExtArgs> = {}>(args?: Subset<T, User$stripePlanPaymentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StripePlanPaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     binanceConnection<T extends User$binanceConnectionArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceConnectionArgs<ExtArgs>>): Prisma__UserBinanceConnectionClient<$Result.GetResult<Prisma.$UserBinanceConnectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     binanceSpotOrders<T extends User$binanceSpotOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$binanceSpotOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserBinanceSpotOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6353,6 +6457,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ChartModelScalarFieldEnum | ChartModelScalarFieldEnum[]
+  }
+
+  /**
+   * User.robotLiveSessions
+   */
+  export type User$robotLiveSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    where?: RobotLiveSessionWhereInput
+    orderBy?: RobotLiveSessionOrderByWithRelationInput | RobotLiveSessionOrderByWithRelationInput[]
+    cursor?: RobotLiveSessionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RobotLiveSessionScalarFieldEnum | RobotLiveSessionScalarFieldEnum[]
   }
 
   /**
@@ -13329,6 +13457,1086 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ChartLayoutInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RobotLiveSession
+   */
+
+  export type AggregateRobotLiveSession = {
+    _count: RobotLiveSessionCountAggregateOutputType | null
+    _min: RobotLiveSessionMinAggregateOutputType | null
+    _max: RobotLiveSessionMaxAggregateOutputType | null
+  }
+
+  export type RobotLiveSessionMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    robotId: string | null
+    symbol: string | null
+    openedAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RobotLiveSessionMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    robotId: string | null
+    symbol: string | null
+    openedAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RobotLiveSessionCountAggregateOutputType = {
+    id: number
+    userId: number
+    robotId: number
+    symbol: number
+    openedAt: number
+    payload: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RobotLiveSessionMinAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    symbol?: true
+    openedAt?: true
+    updatedAt?: true
+  }
+
+  export type RobotLiveSessionMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    symbol?: true
+    openedAt?: true
+    updatedAt?: true
+  }
+
+  export type RobotLiveSessionCountAggregateInputType = {
+    id?: true
+    userId?: true
+    robotId?: true
+    symbol?: true
+    openedAt?: true
+    payload?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RobotLiveSessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RobotLiveSession to aggregate.
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotLiveSessions to fetch.
+     */
+    orderBy?: RobotLiveSessionOrderByWithRelationInput | RobotLiveSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RobotLiveSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotLiveSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotLiveSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RobotLiveSessions
+    **/
+    _count?: true | RobotLiveSessionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RobotLiveSessionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RobotLiveSessionMaxAggregateInputType
+  }
+
+  export type GetRobotLiveSessionAggregateType<T extends RobotLiveSessionAggregateArgs> = {
+        [P in keyof T & keyof AggregateRobotLiveSession]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRobotLiveSession[P]>
+      : GetScalarType<T[P], AggregateRobotLiveSession[P]>
+  }
+
+
+
+
+  export type RobotLiveSessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RobotLiveSessionWhereInput
+    orderBy?: RobotLiveSessionOrderByWithAggregationInput | RobotLiveSessionOrderByWithAggregationInput[]
+    by: RobotLiveSessionScalarFieldEnum[] | RobotLiveSessionScalarFieldEnum
+    having?: RobotLiveSessionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RobotLiveSessionCountAggregateInputType | true
+    _min?: RobotLiveSessionMinAggregateInputType
+    _max?: RobotLiveSessionMaxAggregateInputType
+  }
+
+  export type RobotLiveSessionGroupByOutputType = {
+    id: string
+    userId: string
+    robotId: string
+    symbol: string
+    openedAt: Date
+    payload: JsonValue
+    updatedAt: Date
+    _count: RobotLiveSessionCountAggregateOutputType | null
+    _min: RobotLiveSessionMinAggregateOutputType | null
+    _max: RobotLiveSessionMaxAggregateOutputType | null
+  }
+
+  type GetRobotLiveSessionGroupByPayload<T extends RobotLiveSessionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RobotLiveSessionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RobotLiveSessionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RobotLiveSessionGroupByOutputType[P]>
+            : GetScalarType<T[P], RobotLiveSessionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RobotLiveSessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    symbol?: boolean
+    openedAt?: boolean
+    payload?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotLiveSession"]>
+
+  export type RobotLiveSessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    symbol?: boolean
+    openedAt?: boolean
+    payload?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotLiveSession"]>
+
+  export type RobotLiveSessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    symbol?: boolean
+    openedAt?: boolean
+    payload?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["robotLiveSession"]>
+
+  export type RobotLiveSessionSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    robotId?: boolean
+    symbol?: boolean
+    openedAt?: boolean
+    payload?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RobotLiveSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "robotId" | "symbol" | "openedAt" | "payload" | "updatedAt", ExtArgs["result"]["robotLiveSession"]>
+  export type RobotLiveSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type RobotLiveSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type RobotLiveSessionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $RobotLiveSessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RobotLiveSession"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      robotId: string
+      symbol: string
+      openedAt: Date
+      payload: Prisma.JsonValue
+      updatedAt: Date
+    }, ExtArgs["result"]["robotLiveSession"]>
+    composites: {}
+  }
+
+  type RobotLiveSessionGetPayload<S extends boolean | null | undefined | RobotLiveSessionDefaultArgs> = $Result.GetResult<Prisma.$RobotLiveSessionPayload, S>
+
+  type RobotLiveSessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RobotLiveSessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RobotLiveSessionCountAggregateInputType | true
+    }
+
+  export interface RobotLiveSessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RobotLiveSession'], meta: { name: 'RobotLiveSession' } }
+    /**
+     * Find zero or one RobotLiveSession that matches the filter.
+     * @param {RobotLiveSessionFindUniqueArgs} args - Arguments to find a RobotLiveSession
+     * @example
+     * // Get one RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RobotLiveSessionFindUniqueArgs>(args: SelectSubset<T, RobotLiveSessionFindUniqueArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RobotLiveSession that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RobotLiveSessionFindUniqueOrThrowArgs} args - Arguments to find a RobotLiveSession
+     * @example
+     * // Get one RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RobotLiveSessionFindUniqueOrThrowArgs>(args: SelectSubset<T, RobotLiveSessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RobotLiveSession that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionFindFirstArgs} args - Arguments to find a RobotLiveSession
+     * @example
+     * // Get one RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RobotLiveSessionFindFirstArgs>(args?: SelectSubset<T, RobotLiveSessionFindFirstArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RobotLiveSession that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionFindFirstOrThrowArgs} args - Arguments to find a RobotLiveSession
+     * @example
+     * // Get one RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RobotLiveSessionFindFirstOrThrowArgs>(args?: SelectSubset<T, RobotLiveSessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RobotLiveSessions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RobotLiveSessions
+     * const robotLiveSessions = await prisma.robotLiveSession.findMany()
+     * 
+     * // Get first 10 RobotLiveSessions
+     * const robotLiveSessions = await prisma.robotLiveSession.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const robotLiveSessionWithIdOnly = await prisma.robotLiveSession.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RobotLiveSessionFindManyArgs>(args?: SelectSubset<T, RobotLiveSessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RobotLiveSession.
+     * @param {RobotLiveSessionCreateArgs} args - Arguments to create a RobotLiveSession.
+     * @example
+     * // Create one RobotLiveSession
+     * const RobotLiveSession = await prisma.robotLiveSession.create({
+     *   data: {
+     *     // ... data to create a RobotLiveSession
+     *   }
+     * })
+     * 
+     */
+    create<T extends RobotLiveSessionCreateArgs>(args: SelectSubset<T, RobotLiveSessionCreateArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RobotLiveSessions.
+     * @param {RobotLiveSessionCreateManyArgs} args - Arguments to create many RobotLiveSessions.
+     * @example
+     * // Create many RobotLiveSessions
+     * const robotLiveSession = await prisma.robotLiveSession.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RobotLiveSessionCreateManyArgs>(args?: SelectSubset<T, RobotLiveSessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RobotLiveSessions and returns the data saved in the database.
+     * @param {RobotLiveSessionCreateManyAndReturnArgs} args - Arguments to create many RobotLiveSessions.
+     * @example
+     * // Create many RobotLiveSessions
+     * const robotLiveSession = await prisma.robotLiveSession.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RobotLiveSessions and only return the `id`
+     * const robotLiveSessionWithIdOnly = await prisma.robotLiveSession.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RobotLiveSessionCreateManyAndReturnArgs>(args?: SelectSubset<T, RobotLiveSessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RobotLiveSession.
+     * @param {RobotLiveSessionDeleteArgs} args - Arguments to delete one RobotLiveSession.
+     * @example
+     * // Delete one RobotLiveSession
+     * const RobotLiveSession = await prisma.robotLiveSession.delete({
+     *   where: {
+     *     // ... filter to delete one RobotLiveSession
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RobotLiveSessionDeleteArgs>(args: SelectSubset<T, RobotLiveSessionDeleteArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RobotLiveSession.
+     * @param {RobotLiveSessionUpdateArgs} args - Arguments to update one RobotLiveSession.
+     * @example
+     * // Update one RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RobotLiveSessionUpdateArgs>(args: SelectSubset<T, RobotLiveSessionUpdateArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RobotLiveSessions.
+     * @param {RobotLiveSessionDeleteManyArgs} args - Arguments to filter RobotLiveSessions to delete.
+     * @example
+     * // Delete a few RobotLiveSessions
+     * const { count } = await prisma.robotLiveSession.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RobotLiveSessionDeleteManyArgs>(args?: SelectSubset<T, RobotLiveSessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RobotLiveSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RobotLiveSessions
+     * const robotLiveSession = await prisma.robotLiveSession.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RobotLiveSessionUpdateManyArgs>(args: SelectSubset<T, RobotLiveSessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RobotLiveSessions and returns the data updated in the database.
+     * @param {RobotLiveSessionUpdateManyAndReturnArgs} args - Arguments to update many RobotLiveSessions.
+     * @example
+     * // Update many RobotLiveSessions
+     * const robotLiveSession = await prisma.robotLiveSession.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RobotLiveSessions and only return the `id`
+     * const robotLiveSessionWithIdOnly = await prisma.robotLiveSession.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RobotLiveSessionUpdateManyAndReturnArgs>(args: SelectSubset<T, RobotLiveSessionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RobotLiveSession.
+     * @param {RobotLiveSessionUpsertArgs} args - Arguments to update or create a RobotLiveSession.
+     * @example
+     * // Update or create a RobotLiveSession
+     * const robotLiveSession = await prisma.robotLiveSession.upsert({
+     *   create: {
+     *     // ... data to create a RobotLiveSession
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RobotLiveSession we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RobotLiveSessionUpsertArgs>(args: SelectSubset<T, RobotLiveSessionUpsertArgs<ExtArgs>>): Prisma__RobotLiveSessionClient<$Result.GetResult<Prisma.$RobotLiveSessionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RobotLiveSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionCountArgs} args - Arguments to filter RobotLiveSessions to count.
+     * @example
+     * // Count the number of RobotLiveSessions
+     * const count = await prisma.robotLiveSession.count({
+     *   where: {
+     *     // ... the filter for the RobotLiveSessions we want to count
+     *   }
+     * })
+    **/
+    count<T extends RobotLiveSessionCountArgs>(
+      args?: Subset<T, RobotLiveSessionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RobotLiveSessionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RobotLiveSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RobotLiveSessionAggregateArgs>(args: Subset<T, RobotLiveSessionAggregateArgs>): Prisma.PrismaPromise<GetRobotLiveSessionAggregateType<T>>
+
+    /**
+     * Group by RobotLiveSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RobotLiveSessionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RobotLiveSessionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RobotLiveSessionGroupByArgs['orderBy'] }
+        : { orderBy?: RobotLiveSessionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RobotLiveSessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRobotLiveSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RobotLiveSession model
+   */
+  readonly fields: RobotLiveSessionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RobotLiveSession.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RobotLiveSessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RobotLiveSession model
+   */
+  interface RobotLiveSessionFieldRefs {
+    readonly id: FieldRef<"RobotLiveSession", 'String'>
+    readonly userId: FieldRef<"RobotLiveSession", 'String'>
+    readonly robotId: FieldRef<"RobotLiveSession", 'String'>
+    readonly symbol: FieldRef<"RobotLiveSession", 'String'>
+    readonly openedAt: FieldRef<"RobotLiveSession", 'DateTime'>
+    readonly payload: FieldRef<"RobotLiveSession", 'Json'>
+    readonly updatedAt: FieldRef<"RobotLiveSession", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RobotLiveSession findUnique
+   */
+  export type RobotLiveSessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotLiveSession to fetch.
+     */
+    where: RobotLiveSessionWhereUniqueInput
+  }
+
+  /**
+   * RobotLiveSession findUniqueOrThrow
+   */
+  export type RobotLiveSessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotLiveSession to fetch.
+     */
+    where: RobotLiveSessionWhereUniqueInput
+  }
+
+  /**
+   * RobotLiveSession findFirst
+   */
+  export type RobotLiveSessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotLiveSession to fetch.
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotLiveSessions to fetch.
+     */
+    orderBy?: RobotLiveSessionOrderByWithRelationInput | RobotLiveSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RobotLiveSessions.
+     */
+    cursor?: RobotLiveSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotLiveSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotLiveSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RobotLiveSessions.
+     */
+    distinct?: RobotLiveSessionScalarFieldEnum | RobotLiveSessionScalarFieldEnum[]
+  }
+
+  /**
+   * RobotLiveSession findFirstOrThrow
+   */
+  export type RobotLiveSessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotLiveSession to fetch.
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotLiveSessions to fetch.
+     */
+    orderBy?: RobotLiveSessionOrderByWithRelationInput | RobotLiveSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RobotLiveSessions.
+     */
+    cursor?: RobotLiveSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotLiveSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotLiveSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RobotLiveSessions.
+     */
+    distinct?: RobotLiveSessionScalarFieldEnum | RobotLiveSessionScalarFieldEnum[]
+  }
+
+  /**
+   * RobotLiveSession findMany
+   */
+  export type RobotLiveSessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which RobotLiveSessions to fetch.
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RobotLiveSessions to fetch.
+     */
+    orderBy?: RobotLiveSessionOrderByWithRelationInput | RobotLiveSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RobotLiveSessions.
+     */
+    cursor?: RobotLiveSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RobotLiveSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RobotLiveSessions.
+     */
+    skip?: number
+    distinct?: RobotLiveSessionScalarFieldEnum | RobotLiveSessionScalarFieldEnum[]
+  }
+
+  /**
+   * RobotLiveSession create
+   */
+  export type RobotLiveSessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RobotLiveSession.
+     */
+    data: XOR<RobotLiveSessionCreateInput, RobotLiveSessionUncheckedCreateInput>
+  }
+
+  /**
+   * RobotLiveSession createMany
+   */
+  export type RobotLiveSessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RobotLiveSessions.
+     */
+    data: RobotLiveSessionCreateManyInput | RobotLiveSessionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RobotLiveSession createManyAndReturn
+   */
+  export type RobotLiveSessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * The data used to create many RobotLiveSessions.
+     */
+    data: RobotLiveSessionCreateManyInput | RobotLiveSessionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RobotLiveSession update
+   */
+  export type RobotLiveSessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RobotLiveSession.
+     */
+    data: XOR<RobotLiveSessionUpdateInput, RobotLiveSessionUncheckedUpdateInput>
+    /**
+     * Choose, which RobotLiveSession to update.
+     */
+    where: RobotLiveSessionWhereUniqueInput
+  }
+
+  /**
+   * RobotLiveSession updateMany
+   */
+  export type RobotLiveSessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RobotLiveSessions.
+     */
+    data: XOR<RobotLiveSessionUpdateManyMutationInput, RobotLiveSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which RobotLiveSessions to update
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * Limit how many RobotLiveSessions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RobotLiveSession updateManyAndReturn
+   */
+  export type RobotLiveSessionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * The data used to update RobotLiveSessions.
+     */
+    data: XOR<RobotLiveSessionUpdateManyMutationInput, RobotLiveSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which RobotLiveSessions to update
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * Limit how many RobotLiveSessions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RobotLiveSession upsert
+   */
+  export type RobotLiveSessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RobotLiveSession to update in case it exists.
+     */
+    where: RobotLiveSessionWhereUniqueInput
+    /**
+     * In case the RobotLiveSession found by the `where` argument doesn't exist, create a new RobotLiveSession with this data.
+     */
+    create: XOR<RobotLiveSessionCreateInput, RobotLiveSessionUncheckedCreateInput>
+    /**
+     * In case the RobotLiveSession was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RobotLiveSessionUpdateInput, RobotLiveSessionUncheckedUpdateInput>
+  }
+
+  /**
+   * RobotLiveSession delete
+   */
+  export type RobotLiveSessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
+    /**
+     * Filter which RobotLiveSession to delete.
+     */
+    where: RobotLiveSessionWhereUniqueInput
+  }
+
+  /**
+   * RobotLiveSession deleteMany
+   */
+  export type RobotLiveSessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RobotLiveSessions to delete
+     */
+    where?: RobotLiveSessionWhereInput
+    /**
+     * Limit how many RobotLiveSessions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RobotLiveSession without action
+   */
+  export type RobotLiveSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RobotLiveSession
+     */
+    select?: RobotLiveSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RobotLiveSession
+     */
+    omit?: RobotLiveSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RobotLiveSessionInclude<ExtArgs> | null
   }
 
 
@@ -48346,6 +49554,19 @@ export namespace Prisma {
   export type ChartLayoutScalarFieldEnum = (typeof ChartLayoutScalarFieldEnum)[keyof typeof ChartLayoutScalarFieldEnum]
 
 
+  export const RobotLiveSessionScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    robotId: 'robotId',
+    symbol: 'symbol',
+    openedAt: 'openedAt',
+    payload: 'payload',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RobotLiveSessionScalarFieldEnum = (typeof RobotLiveSessionScalarFieldEnum)[keyof typeof RobotLiveSessionScalarFieldEnum]
+
+
   export const ChartModelScalarFieldEnum: {
     userId: 'userId',
     slot: 'slot',
@@ -49230,6 +50451,7 @@ export namespace Prisma {
     notifications?: UserNotificationListRelationFilter
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
+    robotLiveSessions?: RobotLiveSessionListRelationFilter
     stripePlanPayments?: StripePlanPaymentListRelationFilter
     binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
     binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
@@ -49291,6 +50513,7 @@ export namespace Prisma {
     notifications?: UserNotificationOrderByRelationAggregateInput
     chartLayouts?: ChartLayoutOrderByRelationAggregateInput
     chartModels?: ChartModelOrderByRelationAggregateInput
+    robotLiveSessions?: RobotLiveSessionOrderByRelationAggregateInput
     stripePlanPayments?: StripePlanPaymentOrderByRelationAggregateInput
     binanceConnection?: UserBinanceConnectionOrderByWithRelationInput
     binanceSpotOrders?: UserBinanceSpotOrderOrderByRelationAggregateInput
@@ -49355,6 +50578,7 @@ export namespace Prisma {
     notifications?: UserNotificationListRelationFilter
     chartLayouts?: ChartLayoutListRelationFilter
     chartModels?: ChartModelListRelationFilter
+    robotLiveSessions?: RobotLiveSessionListRelationFilter
     stripePlanPayments?: StripePlanPaymentListRelationFilter
     binanceConnection?: XOR<UserBinanceConnectionNullableScalarRelationFilter, UserBinanceConnectionWhereInput> | null
     binanceSpotOrders?: UserBinanceSpotOrderListRelationFilter
@@ -49971,6 +51195,72 @@ export namespace Prisma {
     robots?: JsonNullableWithAggregatesFilter<"ChartLayout">
     name?: StringNullableWithAggregatesFilter<"ChartLayout"> | string | null
     updatedAt?: DateTimeWithAggregatesFilter<"ChartLayout"> | Date | string
+  }
+
+  export type RobotLiveSessionWhereInput = {
+    AND?: RobotLiveSessionWhereInput | RobotLiveSessionWhereInput[]
+    OR?: RobotLiveSessionWhereInput[]
+    NOT?: RobotLiveSessionWhereInput | RobotLiveSessionWhereInput[]
+    id?: StringFilter<"RobotLiveSession"> | string
+    userId?: StringFilter<"RobotLiveSession"> | string
+    robotId?: StringFilter<"RobotLiveSession"> | string
+    symbol?: StringFilter<"RobotLiveSession"> | string
+    openedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+    payload?: JsonFilter<"RobotLiveSession">
+    updatedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type RobotLiveSessionOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    symbol?: SortOrder
+    openedAt?: SortOrder
+    payload?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type RobotLiveSessionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_robotId_symbol?: RobotLiveSessionUserIdRobotIdSymbolCompoundUniqueInput
+    AND?: RobotLiveSessionWhereInput | RobotLiveSessionWhereInput[]
+    OR?: RobotLiveSessionWhereInput[]
+    NOT?: RobotLiveSessionWhereInput | RobotLiveSessionWhereInput[]
+    userId?: StringFilter<"RobotLiveSession"> | string
+    robotId?: StringFilter<"RobotLiveSession"> | string
+    symbol?: StringFilter<"RobotLiveSession"> | string
+    openedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+    payload?: JsonFilter<"RobotLiveSession">
+    updatedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_robotId_symbol">
+
+  export type RobotLiveSessionOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    symbol?: SortOrder
+    openedAt?: SortOrder
+    payload?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RobotLiveSessionCountOrderByAggregateInput
+    _max?: RobotLiveSessionMaxOrderByAggregateInput
+    _min?: RobotLiveSessionMinOrderByAggregateInput
+  }
+
+  export type RobotLiveSessionScalarWhereWithAggregatesInput = {
+    AND?: RobotLiveSessionScalarWhereWithAggregatesInput | RobotLiveSessionScalarWhereWithAggregatesInput[]
+    OR?: RobotLiveSessionScalarWhereWithAggregatesInput[]
+    NOT?: RobotLiveSessionScalarWhereWithAggregatesInput | RobotLiveSessionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RobotLiveSession"> | string
+    userId?: StringWithAggregatesFilter<"RobotLiveSession"> | string
+    robotId?: StringWithAggregatesFilter<"RobotLiveSession"> | string
+    symbol?: StringWithAggregatesFilter<"RobotLiveSession"> | string
+    openedAt?: DateTimeWithAggregatesFilter<"RobotLiveSession"> | Date | string
+    payload?: JsonWithAggregatesFilter<"RobotLiveSession">
+    updatedAt?: DateTimeWithAggregatesFilter<"RobotLiveSession"> | Date | string
   }
 
   export type ChartModelWhereInput = {
@@ -52748,6 +54038,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -52809,6 +54100,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -52870,6 +54162,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -52931,6 +54224,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -53652,6 +54946,75 @@ export namespace Prisma {
     others?: NullableJsonNullValueInput | InputJsonValue
     robots?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionCreateInput = {
+    id?: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutRobotLiveSessionsInput
+  }
+
+  export type RobotLiveSessionUncheckedCreateInput = {
+    id?: string
+    userId: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type RobotLiveSessionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutRobotLiveSessionsNestedInput
+  }
+
+  export type RobotLiveSessionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionCreateManyInput = {
+    id?: string
+    userId: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type RobotLiveSessionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -57005,6 +58368,12 @@ export namespace Prisma {
     none?: ChartModelWhereInput
   }
 
+  export type RobotLiveSessionListRelationFilter = {
+    every?: RobotLiveSessionWhereInput
+    some?: RobotLiveSessionWhereInput
+    none?: RobotLiveSessionWhereInput
+  }
+
   export type StripePlanPaymentListRelationFilter = {
     every?: StripePlanPaymentWhereInput
     some?: StripePlanPaymentWhereInput
@@ -57070,6 +58439,10 @@ export namespace Prisma {
   }
 
   export type ChartModelOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RobotLiveSessionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -57742,6 +59115,89 @@ export namespace Prisma {
   export type ChartLayoutSumOrderByAggregateInput = {
     slot?: SortOrder
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type RobotLiveSessionUserIdRobotIdSymbolCompoundUniqueInput = {
+    userId: string
+    robotId: string
+    symbol: string
+  }
+
+  export type RobotLiveSessionCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    symbol?: SortOrder
+    openedAt?: SortOrder
+    payload?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RobotLiveSessionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    symbol?: SortOrder
+    openedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RobotLiveSessionMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    robotId?: SortOrder
+    symbol?: SortOrder
+    openedAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
 
   export type ChartModelUserIdSlotCompoundUniqueInput = {
     userId: string
@@ -58077,29 +59533,6 @@ export namespace Prisma {
     amount?: SortOrder
     consumed?: SortOrder
   }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type StripeEventCountOrderByAggregateInput = {
     id?: SortOrder
@@ -58121,32 +59554,6 @@ export namespace Prisma {
     type?: SortOrder
     receivedAt?: SortOrder
     processedAt?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EnumCheckoutStatusFilter<$PrismaModel = never> = {
@@ -59853,6 +61260,13 @@ export namespace Prisma {
     connect?: ChartModelWhereUniqueInput | ChartModelWhereUniqueInput[]
   }
 
+  export type RobotLiveSessionCreateNestedManyWithoutUserInput = {
+    create?: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput> | RobotLiveSessionCreateWithoutUserInput[] | RobotLiveSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotLiveSessionCreateOrConnectWithoutUserInput | RobotLiveSessionCreateOrConnectWithoutUserInput[]
+    createMany?: RobotLiveSessionCreateManyUserInputEnvelope
+    connect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+  }
+
   export type StripePlanPaymentCreateNestedManyWithoutUserInput = {
     create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
     connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
@@ -59954,6 +61368,13 @@ export namespace Prisma {
     connectOrCreate?: ChartModelCreateOrConnectWithoutUserInput | ChartModelCreateOrConnectWithoutUserInput[]
     createMany?: ChartModelCreateManyUserInputEnvelope
     connect?: ChartModelWhereUniqueInput | ChartModelWhereUniqueInput[]
+  }
+
+  export type RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput> | RobotLiveSessionCreateWithoutUserInput[] | RobotLiveSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotLiveSessionCreateOrConnectWithoutUserInput | RobotLiveSessionCreateOrConnectWithoutUserInput[]
+    createMany?: RobotLiveSessionCreateManyUserInputEnvelope
+    connect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
   }
 
   export type StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput = {
@@ -60193,6 +61614,20 @@ export namespace Prisma {
     deleteMany?: ChartModelScalarWhereInput | ChartModelScalarWhereInput[]
   }
 
+  export type RobotLiveSessionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput> | RobotLiveSessionCreateWithoutUserInput[] | RobotLiveSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotLiveSessionCreateOrConnectWithoutUserInput | RobotLiveSessionCreateOrConnectWithoutUserInput[]
+    upsert?: RobotLiveSessionUpsertWithWhereUniqueWithoutUserInput | RobotLiveSessionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RobotLiveSessionCreateManyUserInputEnvelope
+    set?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    disconnect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    delete?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    connect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    update?: RobotLiveSessionUpdateWithWhereUniqueWithoutUserInput | RobotLiveSessionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RobotLiveSessionUpdateManyWithWhereWithoutUserInput | RobotLiveSessionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RobotLiveSessionScalarWhereInput | RobotLiveSessionScalarWhereInput[]
+  }
+
   export type StripePlanPaymentUpdateManyWithoutUserNestedInput = {
     create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
     connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
@@ -60395,6 +61830,20 @@ export namespace Prisma {
     deleteMany?: ChartModelScalarWhereInput | ChartModelScalarWhereInput[]
   }
 
+  export type RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput> | RobotLiveSessionCreateWithoutUserInput[] | RobotLiveSessionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RobotLiveSessionCreateOrConnectWithoutUserInput | RobotLiveSessionCreateOrConnectWithoutUserInput[]
+    upsert?: RobotLiveSessionUpsertWithWhereUniqueWithoutUserInput | RobotLiveSessionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RobotLiveSessionCreateManyUserInputEnvelope
+    set?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    disconnect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    delete?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    connect?: RobotLiveSessionWhereUniqueInput | RobotLiveSessionWhereUniqueInput[]
+    update?: RobotLiveSessionUpdateWithWhereUniqueWithoutUserInput | RobotLiveSessionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RobotLiveSessionUpdateManyWithWhereWithoutUserInput | RobotLiveSessionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RobotLiveSessionScalarWhereInput | RobotLiveSessionScalarWhereInput[]
+  }
+
   export type StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<StripePlanPaymentCreateWithoutUserInput, StripePlanPaymentUncheckedCreateWithoutUserInput> | StripePlanPaymentCreateWithoutUserInput[] | StripePlanPaymentUncheckedCreateWithoutUserInput[]
     connectOrCreate?: StripePlanPaymentCreateOrConnectWithoutUserInput | StripePlanPaymentCreateOrConnectWithoutUserInput[]
@@ -60565,6 +62014,20 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutChartLayoutsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutChartLayoutsInput, UserUpdateWithoutChartLayoutsInput>, UserUncheckedUpdateWithoutChartLayoutsInput>
+  }
+
+  export type UserCreateNestedOneWithoutRobotLiveSessionsInput = {
+    create?: XOR<UserCreateWithoutRobotLiveSessionsInput, UserUncheckedCreateWithoutRobotLiveSessionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRobotLiveSessionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutRobotLiveSessionsNestedInput = {
+    create?: XOR<UserCreateWithoutRobotLiveSessionsInput, UserUncheckedCreateWithoutRobotLiveSessionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutRobotLiveSessionsInput
+    upsert?: UserUpsertWithoutRobotLiveSessionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutRobotLiveSessionsInput, UserUpdateWithoutRobotLiveSessionsInput>, UserUncheckedUpdateWithoutRobotLiveSessionsInput>
   }
 
   export type UserCreateNestedOneWithoutChartModelsInput = {
@@ -61288,6 +62751,29 @@ export namespace Prisma {
     _min?: NestedDecimalNullableFilter<$PrismaModel>
     _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedEnumSenderTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.SenderType | EnumSenderTypeFieldRefInput<$PrismaModel>
@@ -61338,29 +62824,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTxSourceFilter<$PrismaModel>
     _max?: NestedEnumTxSourceFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumCheckoutStatusFilter<$PrismaModel = never> = {
@@ -61748,6 +63211,34 @@ export namespace Prisma {
 
   export type ChartModelCreateManyUserInputEnvelope = {
     data: ChartModelCreateManyUserInput | ChartModelCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RobotLiveSessionCreateWithoutUserInput = {
+    id?: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type RobotLiveSessionUncheckedCreateWithoutUserInput = {
+    id?: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
+    updatedAt?: Date | string
+  }
+
+  export type RobotLiveSessionCreateOrConnectWithoutUserInput = {
+    where: RobotLiveSessionWhereUniqueInput
+    create: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput>
+  }
+
+  export type RobotLiveSessionCreateManyUserInputEnvelope = {
+    data: RobotLiveSessionCreateManyUserInput | RobotLiveSessionCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -62261,6 +63752,35 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"ChartModel"> | Date | string
   }
 
+  export type RobotLiveSessionUpsertWithWhereUniqueWithoutUserInput = {
+    where: RobotLiveSessionWhereUniqueInput
+    update: XOR<RobotLiveSessionUpdateWithoutUserInput, RobotLiveSessionUncheckedUpdateWithoutUserInput>
+    create: XOR<RobotLiveSessionCreateWithoutUserInput, RobotLiveSessionUncheckedCreateWithoutUserInput>
+  }
+
+  export type RobotLiveSessionUpdateWithWhereUniqueWithoutUserInput = {
+    where: RobotLiveSessionWhereUniqueInput
+    data: XOR<RobotLiveSessionUpdateWithoutUserInput, RobotLiveSessionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type RobotLiveSessionUpdateManyWithWhereWithoutUserInput = {
+    where: RobotLiveSessionScalarWhereInput
+    data: XOR<RobotLiveSessionUpdateManyMutationInput, RobotLiveSessionUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type RobotLiveSessionScalarWhereInput = {
+    AND?: RobotLiveSessionScalarWhereInput | RobotLiveSessionScalarWhereInput[]
+    OR?: RobotLiveSessionScalarWhereInput[]
+    NOT?: RobotLiveSessionScalarWhereInput | RobotLiveSessionScalarWhereInput[]
+    id?: StringFilter<"RobotLiveSession"> | string
+    userId?: StringFilter<"RobotLiveSession"> | string
+    robotId?: StringFilter<"RobotLiveSession"> | string
+    symbol?: StringFilter<"RobotLiveSession"> | string
+    openedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+    payload?: JsonFilter<"RobotLiveSession">
+    updatedAt?: DateTimeFilter<"RobotLiveSession"> | Date | string
+  }
+
   export type StripePlanPaymentUpsertWithWhereUniqueWithoutUserInput = {
     where: StripePlanPaymentWhereUniqueInput
     update: XOR<StripePlanPaymentUpdateWithoutUserInput, StripePlanPaymentUncheckedUpdateWithoutUserInput>
@@ -62472,6 +63992,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
@@ -62532,6 +64053,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
@@ -62608,6 +64130,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
@@ -62668,6 +64191,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
@@ -62728,6 +64252,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
@@ -62788,6 +64313,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
@@ -62864,6 +64390,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
@@ -62924,6 +64451,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
@@ -62984,6 +64512,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -63044,6 +64573,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -63120,6 +64650,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -63180,6 +64711,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -63365,6 +64897,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -63425,6 +64958,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -63501,6 +65035,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -63560,6 +65095,267 @@ export namespace Prisma {
     verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutRobotLiveSessionsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutRobotLiveSessionsInput = {
+    id?: string
+    emailEnc: string
+    emailIv: string
+    emailTag: string
+    emailSearchHash: string
+    emailVerifiedAt?: Date | string | null
+    name?: string | null
+    passwordHash: string
+    specialCodeHash?: string | null
+    specialExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role?: $Enums.Role
+    tier?: $Enums.Tier
+    nickname?: string | null
+    nicknameChanges?: number
+    avatarId?: number
+    avatarBorder?: string
+    avatarSkinTone?: number | null
+    avatarColorTone?: number | null
+    sevenPoints?: number
+    ganhoSimulado?: Decimal | DecimalJsLike | number | string
+    userLevel?: $Enums.UserLevel
+    position?: number | null
+    tmp?: boolean
+    isDeleted?: boolean
+    dataExclusao?: Date | string | null
+    dataExpiracao?: Date | string | null
+    pushToken?: string | null
+    pushTokenUpdated?: Date | string | null
+    notifyMegaSena?: boolean
+    notifyLotofacil?: boolean
+    notifyQuina?: boolean
+    hideStatusBar?: boolean
+    progress?: number
+    language?: $Enums.AppLanguage
+    timezoneOffset?: number
+    activeTabId?: string | null
+    activeTabUpdatedAt?: Date | string | null
+    previousTabId?: string | null
+    previousTabUpdatedAt?: Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUncheckedCreateNestedManyWithoutUserInput
+    coinLedger?: CoinLedgerEntryUncheckedCreateNestedManyWithoutUserInput
+    coinWallet?: UserCoinWalletUncheckedCreateNestedOneWithoutUserInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedCreateNestedManyWithoutUserInput
+    pagarMeOrders?: PagarMeOrderUncheckedCreateNestedManyWithoutUserInput
+    passwordResetTokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    verificationTokens?: EmailVerificationTokenUncheckedCreateNestedManyWithoutUserInput
+    walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
+    notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
+    chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
+    binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
+    binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutRobotLiveSessionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutRobotLiveSessionsInput, UserUncheckedCreateWithoutRobotLiveSessionsInput>
+  }
+
+  export type UserUpsertWithoutRobotLiveSessionsInput = {
+    update: XOR<UserUpdateWithoutRobotLiveSessionsInput, UserUncheckedUpdateWithoutRobotLiveSessionsInput>
+    create: XOR<UserCreateWithoutRobotLiveSessionsInput, UserUncheckedCreateWithoutRobotLiveSessionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutRobotLiveSessionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutRobotLiveSessionsInput, UserUncheckedUpdateWithoutRobotLiveSessionsInput>
+  }
+
+  export type UserUpdateWithoutRobotLiveSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
+    binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
+    binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
+    robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutRobotLiveSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    emailEnc?: StringFieldUpdateOperationsInput | string
+    emailIv?: StringFieldUpdateOperationsInput | string
+    emailTag?: StringFieldUpdateOperationsInput | string
+    emailSearchHash?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    specialCodeHash?: NullableStringFieldUpdateOperationsInput | string | null
+    specialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    tier?: EnumTierFieldUpdateOperationsInput | $Enums.Tier
+    nickname?: NullableStringFieldUpdateOperationsInput | string | null
+    nicknameChanges?: IntFieldUpdateOperationsInput | number
+    avatarId?: IntFieldUpdateOperationsInput | number
+    avatarBorder?: StringFieldUpdateOperationsInput | string
+    avatarSkinTone?: NullableIntFieldUpdateOperationsInput | number | null
+    avatarColorTone?: NullableIntFieldUpdateOperationsInput | number | null
+    sevenPoints?: IntFieldUpdateOperationsInput | number
+    ganhoSimulado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    userLevel?: EnumUserLevelFieldUpdateOperationsInput | $Enums.UserLevel
+    position?: NullableIntFieldUpdateOperationsInput | number | null
+    tmp?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    dataExclusao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    dataExpiracao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    pushToken?: NullableStringFieldUpdateOperationsInput | string | null
+    pushTokenUpdated?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    notifyMegaSena?: BoolFieldUpdateOperationsInput | boolean
+    notifyLotofacil?: BoolFieldUpdateOperationsInput | boolean
+    notifyQuina?: BoolFieldUpdateOperationsInput | boolean
+    hideStatusBar?: BoolFieldUpdateOperationsInput | boolean
+    progress?: IntFieldUpdateOperationsInput | number
+    language?: EnumAppLanguageFieldUpdateOperationsInput | $Enums.AppLanguage
+    timezoneOffset?: IntFieldUpdateOperationsInput | number
+    activeTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    activeTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    previousTabId?: NullableStringFieldUpdateOperationsInput | string | null
+    previousTabUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessionTabSlots?: NullableJsonNullValueInput | InputJsonValue
+    sessionEvictedTabs?: NullableJsonNullValueInput | InputJsonValue
+    accessRequests?: AccessRequestUncheckedUpdateManyWithoutUserNestedInput
+    coinLedger?: CoinLedgerEntryUncheckedUpdateManyWithoutUserNestedInput
+    coinWallet?: UserCoinWalletUncheckedUpdateOneWithoutUserNestedInput
+    checkoutSessions?: StripeCheckoutSessionUncheckedUpdateManyWithoutUserNestedInput
+    pagarMeOrders?: PagarMeOrderUncheckedUpdateManyWithoutUserNestedInput
+    passwordResetTokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    verificationTokens?: EmailVerificationTokenUncheckedUpdateManyWithoutUserNestedInput
+    walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
+    chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
@@ -63621,6 +65417,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -63681,6 +65478,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -63757,6 +65555,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -63817,6 +65616,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -63877,6 +65677,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -63937,6 +65738,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -64013,6 +65815,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -64073,6 +65876,7 @@ export namespace Prisma {
     walletCredits?: WalletCreditUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -64133,6 +65937,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -64193,6 +65998,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -64269,6 +66075,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -64329,6 +66136,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -64389,6 +66197,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -64449,6 +66258,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -64525,6 +66335,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -64585,6 +66396,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -64645,6 +66457,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -64705,6 +66518,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -64781,6 +66595,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -64841,6 +66656,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -64935,6 +66751,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -64995,6 +66812,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -65087,6 +66905,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -65147,6 +66966,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -65207,6 +67027,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -65267,6 +67088,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -65389,6 +67211,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -65449,6 +67272,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -65596,6 +67420,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -65656,6 +67481,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -65767,6 +67593,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -65827,6 +67654,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -65887,6 +67715,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -65947,6 +67776,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -66023,6 +67853,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -66083,6 +67914,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -66144,6 +67976,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventCreateNestedManyWithoutUserInput
@@ -66204,6 +68037,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedCreateNestedManyWithoutUserInput
@@ -66280,6 +68114,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUpdateManyWithoutUserNestedInput
@@ -66340,6 +68175,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
     robotSpotPerformanceEvents?: RobotSpotPerformanceEventUncheckedUpdateManyWithoutUserNestedInput
@@ -66551,6 +68387,7 @@ export namespace Prisma {
     notifications?: UserNotificationCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutCreateNestedManyWithoutUserInput
     chartModels?: ChartModelCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderCreateNestedManyWithoutUserInput
@@ -66611,6 +68448,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedCreateNestedManyWithoutUserInput
     chartLayouts?: ChartLayoutUncheckedCreateNestedManyWithoutUserInput
     chartModels?: ChartModelUncheckedCreateNestedManyWithoutUserInput
+    robotLiveSessions?: RobotLiveSessionUncheckedCreateNestedManyWithoutUserInput
     stripePlanPayments?: StripePlanPaymentUncheckedCreateNestedManyWithoutUserInput
     binanceConnection?: UserBinanceConnectionUncheckedCreateNestedOneWithoutUserInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedCreateNestedManyWithoutUserInput
@@ -66687,6 +68525,7 @@ export namespace Prisma {
     notifications?: UserNotificationUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUpdateManyWithoutUserNestedInput
@@ -66747,6 +68586,7 @@ export namespace Prisma {
     notifications?: UserNotificationUncheckedUpdateManyWithoutUserNestedInput
     chartLayouts?: ChartLayoutUncheckedUpdateManyWithoutUserNestedInput
     chartModels?: ChartModelUncheckedUpdateManyWithoutUserNestedInput
+    robotLiveSessions?: RobotLiveSessionUncheckedUpdateManyWithoutUserNestedInput
     stripePlanPayments?: StripePlanPaymentUncheckedUpdateManyWithoutUserNestedInput
     binanceConnection?: UserBinanceConnectionUncheckedUpdateOneWithoutUserNestedInput
     binanceSpotOrders?: UserBinanceSpotOrderUncheckedUpdateManyWithoutUserNestedInput
@@ -67036,6 +68876,15 @@ export namespace Prisma {
     regressions?: NullableJsonNullValueInput | InputJsonValue
     others?: NullableJsonNullValueInput | InputJsonValue
     name?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type RobotLiveSessionCreateManyUserInput = {
+    id?: string
+    robotId: string
+    symbol: string
+    openedAt?: Date | string
+    payload: JsonNullValueInput | InputJsonValue
     updatedAt?: Date | string
   }
 
@@ -67405,6 +69254,33 @@ export namespace Prisma {
     regressions?: NullableJsonNullValueInput | InputJsonValue
     others?: NullableJsonNullValueInput | InputJsonValue
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RobotLiveSessionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    robotId?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    openedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    payload?: JsonNullValueInput | InputJsonValue
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

@@ -119,8 +119,39 @@ export interface SavedRobot {
   referenceSpotUsdtFree: number | null;
 }
 
-/** robotId → openTime (string) → 1 */
+/** robotId → chave de vela → 1. Chave preferencial `SYMBOL::openTime`; legado: só `openTime`. */
 export type RobotBuyExecMap = Record<string, Record<string, 1>>;
+
+export function robotBuyExecMapKey(symbol: string, openTime: string): string {
+  return `${symbol.trim().toUpperCase()}::${openTime}`;
+}
+
+export function hasRobotBuyExecForCandle(
+  map: RobotBuyExecMap,
+  robotId: string,
+  symbol: string,
+  openTime: string
+): boolean {
+  const per = map[robotId];
+  if (!per) return false;
+  const k = robotBuyExecMapKey(symbol, openTime);
+  if (per[k] === 1) return true;
+  if (per[openTime] === 1) return true;
+  return false;
+}
+
+export function setRobotBuyExecForCandle(
+  map: RobotBuyExecMap,
+  robotId: string,
+  symbol: string,
+  openTime: string
+): RobotBuyExecMap {
+  const k = robotBuyExecMapKey(symbol, openTime);
+  return {
+    ...map,
+    [robotId]: { ...(map[robotId] ?? {}), [k]: 1 as const },
+  };
+}
 
 /** Ids de estratégias combinadas referenciadas pelo robô (compra, venda, flatten, pós-flatten). */
 export function collectRobotReferencedCombinedIds(robot: SavedRobot): string[] {

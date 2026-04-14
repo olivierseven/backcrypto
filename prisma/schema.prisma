@@ -138,6 +138,7 @@ model User {
   notifications        UserNotification[]
   chartLayouts         ChartLayout[]
   chartModels          ChartModel[]
+  robotLiveSessions    RobotLiveSession[]
   stripePlanPayments   StripePlanPayment[]
   binanceConnection    UserBinanceConnection?
   binanceSpotOrders    UserBinanceSpotOrder[]
@@ -271,6 +272,25 @@ model ChartLayout {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, slot])
+  @@schema("backcrypto")
+}
+
+/// Estado live do robô (motor + relatório JSON de ações) enquanto o robô está **ativo**. Apagado ao desativar.
+model RobotLiveSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  robotId   String   @map("robot_id") @db.VarChar(64)
+  symbol    String   @db.VarChar(32)
+  openedAt  DateTime @default(now()) @map("opened_at")
+  payload   Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, robotId, symbol])
+  @@index([userId])
+  @@index([userId, robotId])
+  @@map("RobotLiveSession")
   @@schema("backcrypto")
 }
 

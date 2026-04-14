@@ -250,6 +250,16 @@ exports.Prisma.ChartLayoutScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.RobotLiveSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  robotId: 'robotId',
+  symbol: 'symbol',
+  openedAt: 'openedAt',
+  payload: 'payload',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ChartModelScalarFieldEnum = {
   userId: 'userId',
   slot: 'slot',
@@ -799,6 +809,7 @@ exports.Prisma.ModelName = {
   AffiliateAccount: 'AffiliateAccount',
   AffiliateCoupon: 'AffiliateCoupon',
   ChartLayout: 'ChartLayout',
+  RobotLiveSession: 'RobotLiveSession',
   ChartModel: 'ChartModel',
   UserNotification: 'UserNotification',
   AccessRequest: 'AccessRequest',

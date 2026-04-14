@@ -15,6 +15,7 @@ import {
   type Strategy,
 } from "./strategies/strategiesTypes";
 import { CRYPTO_SISTEMA_BACKTEST_OPEN_PANEL_EVENT } from "./backtestStorage";
+import { deleteRobotLiveSessionsOnServerForRobot } from "./robotLiveSessionSync";
 import RobotLiveReportModal from "./RobotLiveReportModal";
 import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT,
@@ -747,6 +748,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     );
     setSavedRobots(next);
     persistSavedRobots(next);
+    void deleteRobotLiveSessionsOnServerForRobot(robot.id);
   };
 
   const handleDeleteSaved = (robot: SavedRobot) => {
@@ -764,6 +766,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     const next = savedRobots.filter((r) => r.id !== robot.id);
     setSavedRobots(next);
     persistSavedRobots(next);
+    void deleteRobotLiveSessionsOnServerForRobot(robot.id);
     if (editingRobotId === robot.id) resetAddForm();
     if (reportRobot?.id === robot.id) setReportRobot(null);
   };

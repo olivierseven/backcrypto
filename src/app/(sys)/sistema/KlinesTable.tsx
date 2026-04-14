@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useSyncExternalStore,
+} from "react";
 import { flushSync } from "react-dom";
 import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
@@ -25,6 +33,9 @@ import {
   loadRobotBuyExecMap,
   loadSavedRobots,
   persistRobotBuyExecMap,
+  hasRobotBuyExecForCandle,
+  setRobotBuyExecForCandle,
+  ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
   type RobotBuyExecMap,
   type SavedRobot,
 } from "./robotsStorage";
@@ -37,6 +48,20 @@ import {
 import { runRobotBacktest } from "./robotBacktest";
 import RobotBacktestResultModal from "./RobotBacktestResultModal";
 import { getRobotPosition } from "./robotPositionStorage";
+import {
+  applyRobotLiveBuyAccumSnapshot,
+  loadRobotLiveBuyAccumSnapshot,
+  persistRobotLiveBuyAccum,
+  ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY,
+} from "./robotLiveBuyAccumStorage";
+import {
+  appendRobotLiveActivityEvent,
+  clearRobotLiveRefsForRobotSymbol,
+  fetchRobotLiveSessionsAndMerge,
+  ROBOT_LIVE_SESSION_ACTIVITY_EVENT,
+  ROBOT_LIVE_SESSION_CLEAR_REFS_EVENT,
+  schedulePersistRobotLiveSessionsToDb,
+} from "./robotLiveSessionSync";
 import { buyerAllowsAccumulationBuy, longFlattenCloseBreakeven } from "./robotPriceLegRules";
 import {
   computeNominalBuyOperationUsdt,
@@ -1201,6 +1226,24 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   /** Fim do último efeito: havia posição neste robô+par. */
   const robotBuyHadPositionEndRef = useRef<Record<string, boolean>>({});
 
+  const robotLiveBuyAccumRefBag = useMemo(
+    () => ({
+      robotFlattenArmedRef,
+      robotBuyEdgesSinceFlatRef,
+      robotBuyAccumulationActiveRef,
+      robotBuyAccumLastOtRef,
+      robotBuyAccumCandleIndexRef,
+      robotBuySequentialSliceUsdtRef,
+      robotBuySignalCountedOpenTimesRef,
+      robotBuyHadPositionEndRef,
+    }),
+    []
+  );
+
+  useLayoutEffect(() => {
+    applyRobotLiveBuyAccumSnapshot(robotLiveBuyAccumRefBag, loadRobotLiveBuyAccumSnapshot());
+  }, [robotLiveBuyAccumRefBag]);
+
   const [savedRobots, setSavedRobots] = useState<SavedRobot[]>(() =>
     typeof window !== "undefined" ? loadSavedRobots() : []
   );
@@ -1215,6 +1258,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     const onStorage = (e: StorageEvent) => {
       if (e.key === ROBOTS_STORAGE_KEY || e.key === null) refreshRobots();
       if (e.key === ROBOT_BUY_EXEC_STORAGE_KEY || e.key === null) refreshExec();
+      if (e.key === ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY || e.key === null) {
+        applyRobotLiveBuyAccumSnapshot(robotLiveBuyAccumRefBag, loadRobotLiveBuyAccumSnapshot());
+      }
     };
     window.addEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
     window.addEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
@@ -1224,7 +1270,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       window.removeEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
       window.removeEventListener("storage", onStorage);
     };
-  }, []);
+  }, [robotLiveBuyAccumRefBag]);
 
   const [backtestModal, setBacktestModal] = useState<{
     robot: SavedRobot;
@@ -1339,6 +1385,54 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     [savedRobots]
   );
 
+  const scheduleRobotLiveToDb = useCallback(() => {
+    schedulePersistRobotLiveSessionsToDb({
+      refs: robotLiveBuyAccumRefBag,
+      getBuyExecMap: () => buyExecMapRef.current,
+      activeRobotIds: new Set(activeBuyerRobots.map((r) => r.id)),
+      symbol: symbol?.trim().toUpperCase() ?? "",
+    });
+  }, [robotLiveBuyAccumRefBag, activeBuyerRobots, symbol]);
+
+  useEffect(() => {
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym || !sym.endsWith("USDT")) return;
+    if (activeBuyerRobots.length === 0) return;
+    const activeIds = new Set(activeBuyerRobots.map((r) => r.id));
+    void fetchRobotLiveSessionsAndMerge({
+      refs: robotLiveBuyAccumRefBag,
+      setBuyExecMap,
+      symbol,
+      activeRobotIds: activeIds,
+    });
+  }, [symbol, activeBuyerRobots, robotLiveBuyAccumRefBag]);
+
+  useEffect(() => {
+    const fn = () => scheduleRobotLiveToDb();
+    window.addEventListener(ROBOT_LIVE_SESSION_ACTIVITY_EVENT, fn);
+    return () => window.removeEventListener(ROBOT_LIVE_SESSION_ACTIVITY_EVENT, fn);
+  }, [scheduleRobotLiveToDb]);
+
+  useEffect(() => {
+    const fn = (e: Event) => {
+      const id = (e as CustomEvent<{ robotId?: string }>).detail?.robotId;
+      if (typeof id !== "string") return;
+      const sym = symbol?.trim().toUpperCase() ?? "";
+      if (!sym) return;
+      clearRobotLiveRefsForRobotSymbol(robotLiveBuyAccumRefBag, id, sym);
+      setBuyExecMap((prev) => {
+        if (!prev[id]) return prev;
+        const next = { ...prev };
+        delete next[id];
+        persistRobotBuyExecMap(next);
+        return next;
+      });
+      persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
+    };
+    window.addEventListener(ROBOT_LIVE_SESSION_CLEAR_REFS_EVENT, fn);
+    return () => window.removeEventListener(ROBOT_LIVE_SESSION_CLEAR_REFS_EVENT, fn);
+  }, [symbol, robotLiveBuyAccumRefBag, scheduleRobotLiveToDb]);
+
   const robotBuyOrTrue = useCallback((robot: SavedRobot, rowIndex: number, results: Map<string, boolean[]>) => {
     for (const id of robot.buyCombinedStrategyIds) {
       if (results.get(id)?.[rowIndex]) return true;
@@ -1419,10 +1513,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           const nextE = (edgesRef[kArm] ?? 0) + 1;
           edgesRef[kArm] = nextE;
           const nStart = Math.min(
-            5,
+            ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
             Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber ?? 1))
           );
+          const wasAccumBefore = accumRef[kArm] === true;
           if (nextE >= nStart) accumRef[kArm] = true;
+          if (!wasAccumBefore && accumRef[kArm] === true) {
+            appendRobotLiveActivityEvent(robot.id, sym, "accumulation_window_on", {
+              signalsCounted: nextE,
+              openTime: ot,
+            });
+          }
         }
       }
     };
@@ -1461,6 +1562,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         robotBuyAccumLastOtRef.current[kArm] = ot;
         robotBuyAccumCandleIndexRef.current[kArm] = nextIdx;
         if (nextIdx > maxCandles) {
+          appendRobotLiveActivityEvent(robot.id, sym, "accumulation_window_end", {
+            maxCandles,
+            candleIndex: nextIdx,
+            openTime: ot,
+          });
           delete accumRef[kArm];
           delete robotBuyAccumLastOtRef.current[kArm];
           delete robotBuyAccumCandleIndexRef.current[kArm];
@@ -1505,7 +1611,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
       const kBuy = `${robot.id}::${sym}`;
       const acc = accumRef[kBuy] === true;
-      if (acc && !buyExecMapRef.current[robot.id]?.[ot]) {
+      if (acc && !hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) {
         const posBuy = getRobotPosition(robot.id, sym);
         const buyKeyInflight = `${robot.id}::${ot}::buy`;
         const priceOk =
@@ -1522,6 +1628,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const p = getRobotPosition(robot.id, sym);
       hadPosEndRef[`${robot.id}::${sym}`] = Boolean(p && p.totalBaseQty > 1e-12);
     }
+
+    persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
 
     if (!shouldRun) return;
 
@@ -1593,8 +1701,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   delete robotBuySequentialSliceUsdtRef.current[kb];
                   delete robotBuySignalCountedOpenTimesRef.current[kb];
                   delete robotBuyHadPositionEndRef.current[kb];
+                  appendRobotLiveActivityEvent(robot.id, sym, "flatten", {
+                    baseQty: posFlat.totalBaseQty,
+                    openTime: ot,
+                  });
                   dispatchRobotPositionSellClear(robot.id, sym);
                   dispatchSpotOrderPlaced();
+                  persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
                 }
               } finally {
                 robotLiveFlattenInFlightRef.current.delete(flatKey);
@@ -1639,8 +1752,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 delete robotBuySequentialSliceUsdtRef.current[kb];
                 delete robotBuySignalCountedOpenTimesRef.current[kb];
                 delete robotBuyHadPositionEndRef.current[kb];
+                appendRobotLiveActivityEvent(robot.id, sym, "signal_sell", {
+                  baseQty: posPre.totalBaseQty,
+                  sellSignalOpenTime: sellSignalOtLive,
+                });
                 dispatchRobotPositionSellClear(robot.id, sym);
                 dispatchSpotOrderPlaced();
+                persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
               }
             } finally {
               robotLiveSellInFlightRef.current.delete(sellKey);
@@ -1652,7 +1770,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
         const kAccum = `${robot.id}::${sym}`;
         if (robotBuyAccumulationActiveRef.current[kAccum] !== true) continue;
-        if (buyExecMapRef.current[robot.id]?.[ot]) continue;
+        if (hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) continue;
         const buyKey = `${robot.id}::${ot}::buy`;
         if (robotLiveBuyInFlightRef.current.has(buyKey)) continue;
 
@@ -1673,10 +1791,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
         const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos, sliceUsdt);
         if (quoteUsdt == null) {
+          appendRobotLiveActivityEvent(robot.id, sym, "accumulation_aborted_no_quote", { openTime: ot });
           delete robotBuyAccumulationActiveRef.current[kAccum];
           delete robotBuyAccumLastOtRef.current[kAccum];
           delete robotBuyAccumCandleIndexRef.current[kAccum];
           delete robotBuySequentialSliceUsdtRef.current[kAccum];
+          persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
           continue;
         }
 
@@ -1693,14 +1813,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             dispatchRobotPositionBuy(robot.id, sym, fill.quoteUsdt, fill.baseQty);
           }
           setBuyExecMap((prev) => {
-            if (prev[robot.id]?.[ot]) return prev;
-            const next = { ...prev };
-            const per = { ...(next[robot.id] ?? {}) };
-            per[ot] = 1;
-            next[robot.id] = per;
+            if (hasRobotBuyExecForCandle(prev, robot.id, sym, ot)) return prev;
+            const next = setRobotBuyExecForCandle(prev, robot.id, sym, ot);
             persistRobotBuyExecMap(next);
             return next;
           });
+          appendRobotLiveActivityEvent(robot.id, sym, "market_buy", {
+            quoteUsdt,
+            openTime: ot,
+            ...(fill ? { baseQty: fill.baseQty } : {}),
+          });
+          persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
           dispatchSpotOrderPlaced();
         } finally {
           robotLiveBuyInFlightRef.current.delete(buyKey);
@@ -1716,11 +1839,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     strategyResults,
     activeBuyerRobots,
     symbol,
-    buyExecMap,
     robotBuyOrTrue,
     robotSellOrTrue,
     robotFlattenOrTrue,
     robotPostFlattenSellOrTrue,
+    robotLiveBuyAccumRefBag,
+    scheduleRobotLiveToDb,
   ]);
 
   /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Se houver alguma estratégia combinada aplicada, só as combinadas têm efeito (as normais ficam desabilitadas). */
@@ -3298,9 +3422,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   </td>
                 );
               });
+              const symUpper = symbol?.trim().toUpperCase() ?? "";
               const robotBuyExecCols = activeBuyerRobots.map((robot) => {
                 const ot = String(k[0]);
-                const latched = buyExecMap[robot.id]?.[ot] === 1;
+                const latched =
+                  symUpper.length > 0 && hasRobotBuyExecForCandle(buyExecMap, robot.id, symUpper, ot);
                 const cond = robotBuyOrTrue(robot, i, strategyResults);
                 const v = i === 0 ? (latched ? 1 : 0) : cond ? 1 : 0;
                 return (

@@ -11,6 +11,7 @@ import {
   loadSavedRobots,
   type SavedRobot,
 } from "./robotsStorage";
+import { appendRobotLiveActivityEvent } from "./robotLiveSessionSync";
 import { dispatchRobotPositionSellClear } from "./robotLiveOrders";
 import {
   getRobotPosition,
@@ -125,6 +126,10 @@ export default function RobotTradingMonitor() {
           }),
         });
         if (res.ok) {
+          appendRobotLiveActivityEvent(id, sym, stopLossTrigger ? "stop_loss" : "stop_gain", {
+            baseQty: pos.totalBaseQty,
+            avgBuyPrice: pos.avgBuyPrice,
+          });
           dispatchRobotPositionSellClear(id, sym);
           setPosTick((x) => x + 1);
           lastStopAtRef.current.set(id, now);
