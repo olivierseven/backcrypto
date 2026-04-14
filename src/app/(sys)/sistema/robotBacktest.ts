@@ -298,6 +298,9 @@ export function runRobotBacktest(params: {
   /** Fatia USDT por operação na janela de acumulação (1.ª compra define; próximas repetem até ao teto). */
   let buySequentialSliceUsdt: number | null = null;
 
+  const hasFlattenStrats = (robot.flattenCombinedStrategyIds ?? []).length > 0;
+  const hasPostSellStrats = (robot.postFlattenSignalSellCombinedStrategyIds ?? []).length > 0;
+
   /** Património: caixa + valor da posição ao preço de venda efetivo (fecho com slippage a favor do mercado). */
   const equityUsdtNow = (sellMark: number) =>
     virtualFree + (baseQty > 1e-12 ? baseQty * sellMark : 0);
@@ -465,8 +468,8 @@ export function runRobotBacktest(params: {
       }
     }
 
-    // 2) Zerar: alerta armado; primeira vela com fecho ≤ limite de breakeven (médio + buffer % configurável).
-    if (baseQty > 1e-12 && flattenArmed) {
+    // 2) Zerar: alerta armado por sinal de zerar; primeira vela com fecho ≤ limite de breakeven (médio + buffer % configurável).
+    if (baseQty > 1e-12 && flattenArmed && hasFlattenStrats) {
       const avgExit = quoteInPosition / baseQty;
       const flatBuf = robot.flattenBreakevenBufferPercent ?? 0;
       if (longFlattenCloseBreakeven(close, avgExit, flatBuf)) {
@@ -522,8 +525,9 @@ export function runRobotBacktest(params: {
       }
     }
 
-    // 3) Venda por estratégias após o mesmo sinal do zerar (alerta armado; OR das estratégias configuradas)
-    if (baseQty > 1e-12 && flattenArmed && robotPostFlattenSellOrTrue(robot, i, strategyResults)) {
+    // 3) Venda pós-alertas: com estratégias de zerar, só após o alerta armado; só com venda pós-alertas (sem zerar), basta posição aberta.
+    const postSellGate = hasFlattenStrats ? flattenArmed : hasPostSellStrats;
+    if (baseQty > 1e-12 && postSellGate && robotPostFlattenSellOrTrue(robot, i, strategyResults)) {
       const baseBefore = baseQty;
       const costBefore = quoteInPosition;
       const exitAvg = quoteInPosition / baseQty;

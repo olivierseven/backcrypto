@@ -1471,8 +1471,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
     let shouldRun = false;
     for (const robot of activeBuyerRobots) {
+      const hasFlattenStratIds = (robot.flattenCombinedStrategyIds ?? []).length > 0;
+      const hasPostSellStrats = (robot.postFlattenSignalSellCombinedStrategyIds ?? []).length > 0;
       const flattenArmed = armRef[`${robot.id}::${sym}`] === true;
-      if (flattenArmed && refPx != null) {
+      if (flattenArmed && hasFlattenStratIds && refPx != null) {
         const pos = getRobotPosition(robot.id, sym);
         if (
           pos &&
@@ -1484,10 +1486,13 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           if (!robotLiveFlattenInFlightRef.current.has(k)) shouldRun = true;
         }
       }
-      const flattenArmedForSell = armRef[`${robot.id}::${sym}`] === true;
+      const posForPostSell = getRobotPosition(robot.id, sym);
+      const postSellArmed = hasFlattenStratIds
+        ? flattenArmed
+        : hasPostSellStrats && posForPostSell != null && posForPostSell.totalBaseQty > 1e-12;
       const sellOtNormal = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
       const sellOtPost =
-        flattenArmedForSell && (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0
+        postSellArmed && hasPostSellStrats
           ? robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotPostFlattenSellOrTrue)
           : null;
       const sellSignalOt = sellOtNormal ?? sellOtPost;
@@ -1560,7 +1565,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
 
         const flattenArmedLive = armRefLive[kArmLive] === true;
-        if (flattenArmedLive && refPx != null) {
+        const hasFlattenStratIdsLive = flattenIdsLive.length > 0;
+        if (flattenArmedLive && hasFlattenStratIdsLive && refPx != null) {
           const posFlat = getRobotPosition(robot.id, sym);
           if (
             posFlat &&
@@ -1599,9 +1605,15 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
         if (cancelled) continue;
 
+        const hasPostSellStratsLive = (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0;
+        const postSellArmedLive = hasFlattenStratIdsLive
+          ? flattenArmedLive
+          : hasPostSellStratsLive &&
+            posArmLive != null &&
+            posArmLive.totalBaseQty > 1e-12;
         const sellOtNormalLive = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
         const sellOtPostLive =
-          flattenArmedLive && (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0
+          postSellArmedLive && hasPostSellStratsLive
             ? robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotPostFlattenSellOrTrue)
             : null;
         const sellSignalOtLive = sellOtNormalLive ?? sellOtPostLive;

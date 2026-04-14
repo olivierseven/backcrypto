@@ -228,6 +228,12 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     });
   }, []);
   const [startIndex, setStartIndex] = useState(0);
+  /** Evita closure obsoleta ao decidir se o utilizador estava na “borda ao vivo” antes de `n` mudar. */
+  const startIndexRef = useRef(0);
+  startIndexRef.current = startIndex;
+  const prevKlinesLenRef = useRef(0);
+  const prevVisibleCountForScrollRef = useRef(visibleCount);
+  const prevIntervalAggKeyRef = useRef<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
@@ -1418,15 +1424,52 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return () => registerSaveLoadData(null);
   }, [registerSaveLoadData, savedLayouts, savedLayoutsError, canSaveDefault, isAdmin, fetchSavedLayouts, isFreeUser]);
 
-  // Ao mudar visibleCount (+/-, listbox) ou n: sempre mostrar os últimos candles
+  // Rolagem horizontal: ao mudar intervalo/agregação ou zoom (visibleCount), ir para o fim.
+  // Quando só cresce `n` (novo candle / fetch com mais barras) e o utilizador **não** estava na borda ao vivo, manter o deslocamento — evita saltar para o presente ao ler histórico.
   useEffect(() => {
-    setStartIndex(Math.max(0, n - visibleCount));
-  }, [n, visibleCount]);
+    const maxStart = Math.max(0, n - visibleCount);
+    const intervalKey = `${groupMinutes}:${aggSeriesKind}`;
+    const prevKey = prevIntervalAggKeyRef.current;
+    if (prevKey !== intervalKey) {
+      prevIntervalAggKeyRef.current = intervalKey;
+      prevKlinesLenRef.current = n;
+      prevVisibleCountForScrollRef.current = visibleCount;
+      setStartIndex(maxStart);
+      return;
+    }
 
-  // Ao carregar/atualizar dados, ir para o fim (mais recente)
-  useEffect(() => {
-    setStartIndex(Math.max(0, n - visibleCount));
-  }, [klines.length, groupMinutes, aggSeriesKind]);
+    const prevN = prevKlinesLenRef.current;
+    const prevVc = prevVisibleCountForScrollRef.current;
+    prevKlinesLenRef.current = n;
+    prevVisibleCountForScrollRef.current = visibleCount;
+
+    if (prevN === 0 && n > 0) {
+      setStartIndex(maxStart);
+      return;
+    }
+
+    if (visibleCount !== prevVc) {
+      setStartIndex(maxStart);
+      return;
+    }
+
+    if (n !== prevN) {
+      if (n < prevN) {
+        setStartIndex((s) => Math.min(s, maxStart));
+        return;
+      }
+      if (n > prevN && prevN > 0) {
+        const prevMaxStart = Math.max(0, prevN - visibleCount);
+        const wasAtLiveEdge = startIndexRef.current >= prevMaxStart;
+        if (!wasAtLiveEdge) {
+          setStartIndex((s) => Math.min(s, maxStart));
+          return;
+        }
+      }
+    }
+
+    setStartIndex(maxStart);
+  }, [n, visibleCount, groupMinutes, aggSeriesKind]);
 
   crosshairPointRef.current = crosshairPoint;
 
