@@ -20,7 +20,11 @@ Disallow: /analises/
 Disallow: /labs/
 Disallow: /sorte/
 Disallow: /progresso/
-Disallow: /biogenerator/
+Disallow: /crypto/sistema/
+Disallow: /crypto/conta/
+Disallow: /crypto/login
+Disallow: /crypto/dev/
+Disallow: /crypto/api/dev/
 
 # Permitir rastreador do Google AdSense
 User-agent: Mediapartners-Google

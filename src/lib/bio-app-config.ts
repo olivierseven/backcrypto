@@ -1,5 +1,4 @@
-import { bioPrisma } from "@/lib/bio-db";
-
+// Tabelas Bio removidas; retorna apenas defaults (sem BioAppConfig).
 const BIO_QUEUE_KEYS = [
   "bio_queue_max_fila_1x", "bio_queue_max_fila_20x", "bio_queue_max_fila_100x", "bio_queue_max_fila_1000x",
   "bio_queue_poll_interval_ms", "bio_queue_max_wait_ms",
@@ -15,14 +14,9 @@ const DEFAULTS: Record<string, string> = {
 };
 
 export async function getBioQueueConfigMap(): Promise<Map<string, string>> {
-  const rows = await bioPrisma.bioAppConfig.findMany({
-    where: { key: { in: [...BIO_QUEUE_KEYS] } },
-    select: { key: true, value: true },
-  });
   const map = new Map<string, string>();
   for (const k of BIO_QUEUE_KEYS) {
-    const row = rows.find((r) => r.key === k);
-    map.set(k, row?.value ?? DEFAULTS[k] ?? "");
+    map.set(k, DEFAULTS[k] ?? "");
   }
   return map;
 }

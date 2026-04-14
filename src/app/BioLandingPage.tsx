@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ASSET_PREFIX } from "./constants";
-import { getBioT, type BioLang } from "./lib/translations";
+import { getCryptoT, type CryptoLang } from "./lib/translations";
 import BioLandingHeader from "./BioLandingHeader";
 import BioLandingFooter from "./BioLandingFooter";
 
@@ -16,20 +17,30 @@ const FEATURES = [
   { emoji: "📱", key: "feature6" as const },
 ] as const;
 
-function getInitialLang(): BioLang {
+function getInitialLang(): CryptoLang {
   if (typeof document === "undefined") return "pt";
   const m = document.cookie.match(/sevencoins-lang=([^;]+)/);
   return m?.[1] === "en" ? "en" : "pt";
 }
 
-export default function BioLandingPage() {
-  const [lang, setLang] = useState<BioLang>("pt");
+type Props = { initialLocale: CryptoLang };
+
+export default function BioLandingPage({ initialLocale }: Props) {
+  const pathname = usePathname();
+  const [lang, setLang] = useState<CryptoLang>(initialLocale);
+
   useEffect(() => {
+    const parts = pathname.split("/").filter(Boolean);
+    const seg = parts[0];
+    if (seg === "en" || seg === "pt") {
+      setLang(seg);
+      return;
+    }
     const urlLang = new URLSearchParams(window.location.search).get("lang");
     if (urlLang === "en" || urlLang === "pt") setLang(urlLang);
     else setLang(getInitialLang());
-  }, []);
-  const t = getBioT(lang).landing;
+  }, [pathname]);
+  const t = getCryptoT(lang).landing;
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -45,25 +56,34 @@ export default function BioLandingPage() {
         >
       <main className="flex-1 flex flex-col items-center pb-8">
         {/* Hero */}
-        <section className="w-full flex justify-center pt-8 pb-8">
-          <div className="w-full max-w-2xl flex flex-col items-center text-center px-2">
-            <div className="mb-6 flex items-center justify-center gap-4">
+        <section className="w-full flex justify-center pt-6 pb-6">
+          <div className="w-full max-w-4xl flex flex-col items-center px-2">
+            {/* Ícone e título centralizados */}
+            <div className="mb-4 flex items-center justify-center gap-4">
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto Strategy"
                 width={80}
                 height={80}
-                className="h-20 w-20 object-contain"
+                className="h-20 w-20 object-contain shrink-0"
                 loading="eager"
                 decoding="async"
               />
               <div className="flex flex-col items-center">
-                <h1 className="text-4xl font-bold text-zinc-900">{t.title}</h1>
-                <p className="text-lg text-zinc-500">{t.subtitle}</p>
+                <div className="relative inline-block text-center">
+                  <span
+                    className="absolute -top-1.5 right-0 rounded-sm border border-amber-200 bg-amber-100 px-1 py-0.4 text-[10px] font-semibold uppercase tracking-wider text-amber-800"
+                    aria-label="Versão beta"
+                  >
+                    Beta
+                  </span>
+                  <h1 className="text-4xl font-bold text-zinc-900">{t.title}</h1>
+                  <p className="text-lg text-zinc-500 mt-0.5">{t.subtitle}</p>
+                </div>
               </div>
             </div>
-            <p className="text-lg text-zinc-600 mb-4">{t.tagline}</p>
-            <p className="text-zinc-600 mb-6 leading-relaxed">{t.description}</p>
+            <p className="text-lg text-[#0a1628] mb-4 text-center">{t.tagline}</p>
+            <p className="text-[#0a1628] mb-6 leading-relaxed text-center">{t.description}</p>
             <div className="w-full flex justify-center pt-1 pb-1">
               <Link
                 href="/login"
@@ -96,7 +116,7 @@ export default function BioLandingPage() {
         <section className="w-full flex justify-center pt-6 pb-8 border-t border-zinc-200">
           <div className="w-full max-w-2xl flex flex-col items-center text-center px-2">
             <h2 className="text-2xl font-bold text-zinc-900 mb-4">{t.sectionTitle}</h2>
-            <p className="text-zinc-600 mb-6 leading-relaxed">{t.sectionSubtitle}</p>
+            <p className="text-[#0a1628] mb-6 leading-relaxed">{t.sectionSubtitle}</p>
             <div className="w-full flex justify-center pt-1 pb-1">
               <Link
                 href="/login"

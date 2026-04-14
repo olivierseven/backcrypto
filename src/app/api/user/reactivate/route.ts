@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { log as vLog, warn } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -21,7 +21,7 @@ export async function POST() {
     return NextResponse.json({ error: "invalid_user" }, { status: 401 });
   }
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { isDeleted: true, dataExpiracao: true },
   });
@@ -45,7 +45,7 @@ export async function POST() {
   }
 
   try {
-    await bioPrisma.user.update({
+    await cryptoPrisma.user.update({
       where: { id: userId },
       data: { isDeleted: false, dataExclusao: null, dataExpiracao: null },
     });

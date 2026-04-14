@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-/** Layout da página sistema: tela cheia, sem scroll, fundo cobre até o fim. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
+
+/** Layout da página sistema: preenche a área de conteúdo do shell (sys). */
 export default function SistemaLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="fixed inset-0 z-10 h-[100dvh] min-h-[100dvh] w-full overflow-hidden bg-transparent">
-      {children}
-    </div>
-  );
+  return <div className="flex-1 min-h-0 w-full">{children}</div>;
 }

@@ -1,158 +1,48 @@
 /**
- * Trunca e recria a tabela backcrypto.BinanceKlineCache com dados agregados.
- * Intervalos até 45m (3m, 5m, 15m, 30m, 45m): agregados a partir de BinanceKlineFast (1m).
- * Intervalos 1h até 1D: agregados a partir de BinanceKline (1h).
- * Inclui apenas openTime < início do dia atual (UTC).
+ * Dispara o refresh do BinanceKlineCache chamando a API (mesma lógica do cron diário).
+ * Única fonte da lógica: GET /api/cron/cache-refresh (rota no app).
  *
- * Uso: node scripts/binance-kline-cache-refresh.js
- * Requer: DATABASE_URL no .env, migração da BinanceKlineCache aplicada, prisma generate.
+ * Uso: CRON_SECRET=xxx node scripts/binance-kline-cache-refresh.js
+ *      CACHE_REFRESH_URL=https://backcrypto.vercel.app/crypto node scripts/binance-kline-cache-refresh.js
+ * Requer: CRON_SECRET no .env ou em variável de ambiente.
  */
 
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
-const { PrismaClient, Prisma } = require("../src/lib/prisma-bio-client");
-
-const SYMBOL = "BTCUSDT";
-
-// Até 45m: BinanceKlineFast (1m); >= 1h: BinanceKline (1h)
-const CACHE_INTERVALS_FAST = [
-  { param: "3m", minutes: 3 },
-  { param: "5m", minutes: 5 },
-  { param: "15m", minutes: 15 },
-  { param: "30m", minutes: 30 },
-  { param: "45m", minutes: 45 },
-];
-const CACHE_INTERVALS_NORMAL = [
-  { param: "1h", minutes: 60 },
-  { param: "2h", minutes: 120 },
-  { param: "3h", minutes: 180 },
-  { param: "4h", minutes: 240 },
-  { param: "6h", minutes: 360 },
-  { param: "8h", minutes: 480 },
-  { param: "12h", minutes: 720 },
-  { param: "1d", minutes: 1440 },
-];
-
-/** Início do dia atual em UTC (ms). Cache só inclui openTime < este valor. */
-function getStartOfTodayUtcMs() {
-  const now = new Date();
-  return Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    0,
-    0,
-    0,
-    0
-  );
-}
-
-const prisma = new PrismaClient();
+const CRON_SECRET = process.env.CRON_SECRET;
+const BASE_URL = (process.env.CACHE_REFRESH_URL || "https://backcrypto.vercel.app/crypto").replace(/\/$/, "");
+const URL = `${BASE_URL}/api/cron/cache-refresh`;
 
 async function main() {
-  const cutoffMs = BigInt(getStartOfTodayUtcMs());
-  console.log(
-    "[binance-kline-cache-refresh] Cutoff (openTime <):",
-    cutoffMs.toString(),
-    "UTC"
-  );
-
-  console.log("[binance-kline-cache-refresh] Truncating BinanceKlineCache...");
-  await prisma.$executeRaw(Prisma.sql`TRUNCATE TABLE backcrypto."BinanceKlineCache"`);
-
-  async function runInterval({ param, minutes }, fromFast) {
-    const bucketMs = BigInt(minutes * 60 * 1000);
-    const intervalLabel = param;
-    if (fromFast) {
-      return prisma.$executeRaw(Prisma.sql`
-        INSERT INTO backcrypto."BinanceKlineCache" (
-          "symbol", "interval", "openTime", "open", "high", "low", "close",
-          "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
-          "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-        )
-        WITH k AS (
-          SELECT
-            (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
-            "openTime",
-            "open", "high", "low", "close", "volume", "closeTime",
-            "quoteAssetVolume", "numberOfTrades",
-            "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-          FROM backcrypto."BinanceKlineFast"
-          WHERE symbol = ${SYMBOL} AND "interval" = '1m' AND "openTime" < ${cutoffMs}
-        )
-        SELECT
-          ${SYMBOL},
-          ${intervalLabel},
-          k.bucket,
-          (array_agg(k."open" ORDER BY k."openTime"))[1],
-          max(k."high"),
-          min(k."low"),
-          (array_agg(k."close" ORDER BY k."openTime" DESC))[1],
-          sum(k."volume"),
-          max(k."closeTime"),
-          sum(k."quoteAssetVolume"),
-          sum(k."numberOfTrades")::int,
-          sum(k."takerBuyBaseAssetVolume"),
-          sum(k."takerBuyQuoteAssetVolume")
-        FROM k
-        GROUP BY k.bucket
-      `);
-    }
-    return prisma.$executeRaw(Prisma.sql`
-      INSERT INTO backcrypto."BinanceKlineCache" (
-        "symbol", "interval", "openTime", "open", "high", "low", "close",
-        "volume", "closeTime", "quoteAssetVolume", "numberOfTrades",
-        "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-      )
-      WITH k AS (
-        SELECT
-          (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
-          "openTime",
-          "open", "high", "low", "close", "volume", "closeTime",
-          "quoteAssetVolume", "numberOfTrades",
-          "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-        FROM backcrypto."BinanceKline"
-        WHERE symbol = ${SYMBOL} AND "interval" = '1h' AND "openTime" < ${cutoffMs}
-      )
-      SELECT
-        ${SYMBOL},
-        ${intervalLabel},
-        k.bucket,
-        (array_agg(k."open" ORDER BY k."openTime"))[1],
-        max(k."high"),
-        min(k."low"),
-        (array_agg(k."close" ORDER BY k."openTime" DESC))[1],
-        sum(k."volume"),
-        max(k."closeTime"),
-        sum(k."quoteAssetVolume"),
-        sum(k."numberOfTrades")::int,
-        sum(k."takerBuyBaseAssetVolume"),
-        sum(k."takerBuyQuoteAssetVolume")
-      FROM k
-      GROUP BY k.bucket
-    `);
+  if (!CRON_SECRET) {
+    console.error("[binance-kline-cache-refresh] CRON_SECRET não definido. Use .env ou variável de ambiente.");
+    process.exit(1);
   }
-
-  for (const interval of CACHE_INTERVALS_FAST) {
-    const result = await runInterval(interval, true);
-    console.log(
-      `[binance-kline-cache-refresh] ${interval.param} (Fast): inserted ${typeof result === "number" ? result : "?"} rows`
-    );
+  console.log("[binance-kline-cache-refresh] Chamando", URL);
+  const res = await fetch(URL, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${CRON_SECRET}` },
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = null;
   }
-  for (const interval of CACHE_INTERVALS_NORMAL) {
-    const result = await runInterval(interval, false);
-    console.log(
-      `[binance-kline-cache-refresh] ${interval.param}: inserted ${typeof result === "number" ? result : "?"} rows`
-    );
+  if (!res.ok) {
+    console.error("[binance-kline-cache-refresh] Erro", res.status, data?.error || text);
+    process.exit(1);
   }
-
+  console.log("[binance-kline-cache-refresh] ok:", data?.ok, "totalRows:", data?.totalRows);
+  if (data?.details?.length) {
+    data.details.forEach((d) => console.log(`  ${d.symbol} ${d.interval}: ${d.rows} rows`));
+  }
   console.log("[binance-kline-cache-refresh] Done.");
 }
 
-main()
-  .catch((e) => {
-    console.error("[binance-kline-cache-refresh]", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+main().catch((e) => {
+  console.error("[binance-kline-cache-refresh]", e);
+  process.exit(1);
+});

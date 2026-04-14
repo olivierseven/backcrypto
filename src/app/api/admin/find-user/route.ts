@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { decryptEmail, emailSearchHash, normalizeEmail } from "@/lib/crypto";
 import { warn } from "@/lib/logger";
 
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const token = request.cookies.get(COOKIE)?.value;
 
     if (!token) {
-      warn("[bio/admin/find-user] unauthorized: no token");
+      warn("[crypto/admin/find-user] unauthorized: no token");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -20,17 +20,17 @@ export async function POST(request: NextRequest) {
     const adminId = typeof payload?.sub === "string" ? payload.sub : "";
 
     if (!adminId) {
-      warn("[bio/admin/find-user] unauthorized: invalid payload");
+      warn("[crypto/admin/find-user] unauthorized: invalid payload");
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const adminUser = await bioPrisma.user.findUnique({
+    const adminUser = await cryptoPrisma.user.findUnique({
       where: { id: adminId },
       select: { role: true },
     });
 
     if (!adminUser || adminUser.role !== "admin") {
-      warn(`[bio/admin/find-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
+      warn(`[crypto/admin/find-user] forbidden: userId=${adminId.slice(0, 8)}... role=${adminUser?.role || "none"}`);
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     let user = null;
 
     if (userId) {
-      user = await bioPrisma.user.findUnique({
+      user = await cryptoPrisma.user.findUnique({
         where: { id: userId },
         select: {
           id: true,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (email) {
       const searchHash = emailSearchHash(normalizeEmail(String(email).trim()));
-      user = await bioPrisma.user.findUnique({
+      user = await cryptoPrisma.user.findUnique({
         where: { emailSearchHash: searchHash },
         select: {
           id: true,

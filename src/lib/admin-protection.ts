@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { decryptEmail } from "@/lib/crypto";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret");
 
@@ -32,7 +32,7 @@ export async function requireAdmin(): Promise<AdminUser> {
       redirect(`${BASE_PATH}/login`);
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { id: true, name: true, tier: true, role: true, emailEnc: true, emailIv: true, emailTag: true },
     });

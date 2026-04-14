@@ -1,21 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { ASSET_PREFIX } from "../constants";
+import type { CryptoLang } from "../lib/translations";
 
-export type BioLang = "en" | "pt";
+export type { CryptoLang };
 
 const LANG_COOKIE = "sevencoins-lang";
 
-function setLangCookie(lang: BioLang) {
+function setLangCookie(lang: CryptoLang) {
   if (typeof document !== "undefined") {
     document.cookie = `${LANG_COOKIE}=${lang};path=/;max-age=31536000`;
   }
 }
 
+/** Troca só o segmento de idioma (pt|en), mantendo o restante do path. */
+function pathWithLang(pathname: string, target: CryptoLang): string | null {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] === "en" || parts[0] === "pt") {
+    parts[0] = target;
+    return `/${parts.join("/")}`;
+  }
+  if (parts[0] === "funcionalidade" && parts.length === 1) {
+    return `/${target}/funcionalidade`;
+  }
+  if (parts.length === 0) {
+    return `/${target}`;
+  }
+  return null;
+}
+
 type Props = {
-  currentLang: BioLang;
-  onLangChange: (lang: BioLang) => void;
+  currentLang: CryptoLang;
+  onLangChange: (lang: CryptoLang) => void;
   className?: string;
 };
 
@@ -31,8 +49,8 @@ function FlagButton({
   title,
   ariaLabel,
 }: {
-  lang: BioLang;
-  currentLang: BioLang;
+  lang: CryptoLang;
+  currentLang: CryptoLang;
   onSelect: () => void;
   src: string;
   label: string;
@@ -66,14 +84,23 @@ function FlagButton({
 }
 
 export default function LanguageSwitcher({ currentLang, onLangChange, className = "" }: Props) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const navigateToLang = (target: CryptoLang) => {
+    setLangCookie(target);
+    const next = pathWithLang(pathname, target);
+    if (next) router.push(next);
+    onLangChange(target);
+  };
+
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
       <FlagButton
         lang="en"
         currentLang={currentLang}
         onSelect={() => {
-          setLangCookie("en");
-          onLangChange("en");
+          navigateToLang("en");
         }}
         src={FLAG_EN}
         label="EN"
@@ -84,8 +111,7 @@ export default function LanguageSwitcher({ currentLang, onLangChange, className 
         lang="pt"
         currentLang={currentLang}
         onSelect={() => {
-          setLangCookie("pt");
-          onLangChange("pt");
+          navigateToLang("pt");
         }}
         src={FLAG_PT}
         label="PT"

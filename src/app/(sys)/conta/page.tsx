@@ -1,47 +1,22 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { bioPrisma } from "@/lib/bio-db";
-import { jwtVerify } from "jose";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { decryptEmail } from "@/lib/crypto";
 import BioContaClient from "./ContaClient";
-import BioHeaderSafe from "@/app/BioHeaderSafe";
-import { APP_BACKCRYPTO_ROUTE_PREFIX, SISTEMA_PATH } from "@/app/constants";
-import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
-import { getBioT } from "@/app/lib/translations";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
+import { requireSysUserId } from "../require-sys-user";
 
 export const metadata: Metadata = {
-  title: "Minha Conta | Backtest Crypto",
+  title: "Minha Conta | Crypto",
   description: "Gerencie suas informações e preferências.",
 };
-
-const COOKIE = process.env.JWT_COOKIE_NAME || "session";
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export const dynamic = "force-dynamic";
 
 export default async function BioContaPage() {
-  const headersList = await headers();
-  const origin = getRedirectOriginFromHeaders(headersList);
-  const loginUrl = origin ? `${origin}${APP_BACKCRYPTO_ROUTE_PREFIX}/login` : `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
+  const userId = await requireSysUserId(`${APP_CRYPTO_ROUTE_PREFIX}/conta`);
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE)?.value;
-  if (!token) redirect(`${loginUrl}?next=${APP_BACKCRYPTO_ROUTE_PREFIX}/conta`);
-
-  let payload: { sub?: string };
-  try {
-    const result = await jwtVerify(token, JWT_SECRET);
-    payload = result.payload as { sub?: string };
-  } catch {
-    redirect(loginUrl);
-  }
-
-  const userId = typeof payload?.sub === "string" ? payload.sub : undefined;
-  if (!userId) redirect(loginUrl);
-
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -58,12 +33,13 @@ export default async function BioContaPage() {
       createdAt: true,
       hideStatusBar: true,
       language: true,
+      timezoneOffset: true,
     },
   });
 
-  if (!user) redirect(loginUrl);
+  if (!user) redirect(`${APP_CRYPTO_ROUTE_PREFIX}/login`);
 
-  const wallet = await bioPrisma.userCoinWallet.findUnique({
+  const wallet = await cryptoPrisma.userCoinWallet.findUnique({
     where: { userId },
     select: { balance: true },
   });
@@ -76,27 +52,9 @@ export default async function BioContaPage() {
     // ignore
   }
 
-  const lang = (user.language ?? "en") as "en" | "pt";
-  const t = getBioT(lang);
-
   return (
-    <main className="bio-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <BioHeaderSafe>
-      <header className="bio-header sticky top-0 z-10 shrink-0 w-full">
-        <div className="bio-header-inner mx-auto max-w-2xl px-4 sm:px-6">
-          <Link
-            href={SISTEMA_PATH}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
-          >
-            {t.conta.backToSystem}
-          </Link>
-          <span className="text-sm font-semibold text-neutral-800">{t.conta.title}</span>
-          <span className="w-14 shrink-0" aria-hidden />
-        </div>
-      </header>
-      </BioHeaderSafe>
-
-      <div className="bio-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-6 py-0 sm:px-8">
+    <main className="crypto-conta-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-conta-wrap relative mx-auto w-full max-w-2xl flex-1 px-0 py-0 sm:px-6 md:px-8">
         <div className="w-full">
           <BioContaClient
             user={user}
@@ -104,6 +62,7 @@ export default async function BioContaPage() {
             coinsBalance={coinsBalance}
             hideStatusBar={user.hideStatusBar}
             language={user.language ?? "en"}
+            timezoneOffset={(user as { timezoneOffset?: number }).timezoneOffset ?? 0}
           />
         </div>
       </div>

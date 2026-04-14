@@ -1,14 +1,15 @@
 import { ASSET_PREFIX } from "./constants";
+import BioMaintenanceBypassForm from "./BioMaintenanceBypassForm";
 
 const MAINTENANCE_MSG = {
   en: "The server is under maintenance for improvements and we'll be back soon.",
   pt: "O servidor está em manutenção para melhoria/ajuste e voltaremos em breve.",
 };
 
-export default function BioMaintenanceView() {
+export default function BioMaintenanceView({ showBypassForm = false }: { showBypassForm?: boolean }) {
   return (
-    <div className="bio-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="bio-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-12 sm:py-10">
+    <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-6 py-8 sm:px-12 sm:py-10">
         <div className="mx-auto max-w-4xl w-full">
           <div className="mb-8 flex items-center justify-center">
             <div
@@ -24,7 +25,7 @@ export default function BioMaintenanceView() {
             >
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto"
                 width={80}
                 height={80}
                 className="protected-logo h-20 w-20 object-contain"
@@ -44,9 +45,9 @@ export default function BioMaintenanceView() {
               />
             </div>
           </div>
-          <header className="bio-login-header w-full text-center">
+          <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Backtest Crypto
+              Crypto
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
           </header>
@@ -54,18 +55,19 @@ export default function BioMaintenanceView() {
 
         <div className="mx-auto w-full max-w-md">
           <section
-            className="bio-login-card card-bio-generator w-full rounded-2xl px-6 py-8 text-center"
+            className="crypto-login-card card-crypto-generator w-full rounded-2xl px-6 py-8 text-center"
             aria-live="polite"
           >
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-0.5">
-                <h2 className="bio-login-title text-lg font-semibold tracking-tight text-zinc-800">
+                <h2 className="crypto-login-title text-lg font-semibold tracking-tight text-zinc-800">
                   Maintenance
                 </h2>
                 <p className="text-zinc-700">{MAINTENANCE_MSG.en}</p>
               </div>
               <p className="text-zinc-600 text-sm">{MAINTENANCE_MSG.pt}</p>
-              <p className="text-zinc-500 text-xs border-t border-zinc-200 pt-4">
+              {showBypassForm && <BioMaintenanceBypassForm />}
+              <p className="text-zinc-500 text-xs border-t border-zinc-200 pt-4 mt-4">
                 {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>

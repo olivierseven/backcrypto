@@ -3,7 +3,7 @@
  * Token válido por 30 min; armazenamos o hash do token no banco.
  */
 import crypto from "crypto";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const TOKEN_BYTES = 32;
 const EXPIRES_MINUTES = 30;
@@ -20,7 +20,7 @@ export async function createPasswordResetToken(userId: string): Promise<string> 
   const token = crypto.randomBytes(TOKEN_BYTES).toString("hex");
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + EXPIRES_MINUTES * 60 * 1000);
-  await bioPrisma.passwordResetToken.upsert({
+  await cryptoPrisma.passwordResetToken.upsert({
     where: { tokenHash },
     create: { tokenHash, userId, expiresAt },
     update: { userId, expiresAt },
@@ -33,15 +33,15 @@ export async function createPasswordResetToken(userId: string): Promise<string> 
  */
 export async function consumePasswordResetToken(token: string): Promise<string | null> {
   const tokenHash = hashToken(token);
-  const row = await bioPrisma.passwordResetToken.findUnique({
+  const row = await cryptoPrisma.passwordResetToken.findUnique({
     where: { tokenHash },
     select: { userId: true, expiresAt: true },
   });
   if (!row) return null;
   if (new Date() > row.expiresAt) {
-    await bioPrisma.passwordResetToken.delete({ where: { tokenHash } }).catch(() => {});
+    await cryptoPrisma.passwordResetToken.delete({ where: { tokenHash } }).catch(() => {});
     return null;
   }
-  await bioPrisma.passwordResetToken.delete({ where: { tokenHash } });
+  await cryptoPrisma.passwordResetToken.delete({ where: { tokenHash } });
   return row.userId;
 }

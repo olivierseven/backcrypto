@@ -1,14 +1,16 @@
-// POST /api/biogenerator/checkout-pix — Cria pedido PIX via Pagar.me (Bio, salva em bioPrisma)
+// POST …/api/checkout-pix — PIX Pagar.me (Crypto, cryptoPrisma)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import crypto from "node:crypto";
 import { decryptEmail } from "@/lib/crypto";
 import { dbg, warn, error } from "@/lib/logger";
 import { getUsdToBrlRate } from "@/lib/usd-brl-rate";
 import { getBalance } from "@/lib/spend-coins";
+import { hasActivePaidCredits } from "@/lib/user-tier";
+import { resolveAffiliateCouponForPlanCheckout } from "@/lib/affiliate-coupon-plan";
 
 const MAX_COINS_BEFORE_PURCHASE = 700_000_000; // 700 milhões — não permitir compra acima disso
 
@@ -17,19 +19,26 @@ export const dynamic = "force-dynamic";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const BG_PAGARME_SECRET_KEY = process.env.BG_PAGARME_SECRET_KEY!;
-const BG_PAGARME_ACCOUNT_ID = process.env.BG_PAGARME_ACCOUNT_ID;
+const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY!;
+const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID;
 const PIX_EXPIRES_IN_SECONDS = 30 * 60;
-/** Override para teste: ex. 100 = R$ 1,00. Quando definido, o plano $7 usa esse valor em centavos em vez da cotação real. */
-const BG_PIX_TEST_AMOUNT_BRL_CENTS = process.env.BG_PIX_TEST_AMOUNT_BRL_CENTS
-  ? Math.max(1, Math.min(50000, parseInt(process.env.BG_PIX_TEST_AMOUNT_BRL_CENTS, 10) || 100))
-  : 0;
+/** Override para teste: ex. 100 = R$ 1,00. Em dev (NODE_ENV !== 'production') usa 100 se não definido; em produção só usa se a variável estiver definida. */
+const PIX_TEST_AMOUNT_BRL_CENTS = (() => {
+  const raw = process.env.PIX_TEST_AMOUNT_BRL_CENTS;
+  const parsed = raw != null && raw !== "" ? Math.max(1, Math.min(50000, parseInt(raw, 10) || 100)) : null;
+  if (parsed != null) return parsed;
+  return process.env.NODE_ENV !== "production" ? 100 : 0;
+})();
 const PIX_CPF_SEM_INFORMAR = "01234567890";
 
-// Bio: $7 → 49.000 coins | $49 → 490.000 coins (valores em USD; PIX converte para BRL na hora)
+// Crypto: 1 coin = US$1 — planos mensal/anual; PIX converte USD→BRL na hora
 const PLANS_USD = {
-  "7": { coins: 49_000, amountUsdCents: 700 },
-  "49": { coins: 490_000, amountUsdCents: 4900 },
+  "7": { amountUsdCents: 1100 },
+  "49": { amountUsdCents: 7700 },
+} as const;
+const PLANS_USD_PROMO = {
+  "7": { amountUsdCents: 900 },
+  "49": { amountUsdCents: 6200 },
 } as const;
 
 function usdCentsToBrlCents(usdCents: number, rate: number): number {
@@ -50,12 +59,12 @@ function pricingLabel(amountBrlCents: number, planKey: PlanKey) {
 export async function POST(req: Request) {
   const rid = (crypto as any).randomUUID?.() ?? crypto.randomBytes(8).toString("hex");
 
-  if (!BG_PAGARME_SECRET_KEY) {
-    error("[bio/checkout-pix] BG_PAGARME_SECRET_KEY missing");
+  if (!PAGARME_SECRET_KEY) {
+    error("[crypto/checkout-pix] PAGARME_SECRET_KEY missing");
     return NextResponse.json({ error: "pix_not_configured" }, { status: 503 });
   }
 
-  const { ok } = rateLimit(clientKeyFromRequest(req, "bio-checkout-pix"), 10, 60_000);
+  const { ok } = rateLimit(clientKeyFromRequest(req, "crypto-checkout-pix"), 10, 60_000);
   if (!ok) return NextResponse.json({ error: "too_many_requests" }, { status: 429 });
 
   const cookieStore = await cookies();
@@ -73,13 +82,13 @@ export async function POST(req: Request) {
   const userId = typeof payload?.sub === "string" ? payload.sub : null;
   if (!userId) return NextResponse.json({ error: "invalid_user" }, { status: 401 });
 
-  const exists = await bioPrisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+  const exists = await cryptoPrisma.user.findUnique({ where: { id: userId }, select: { id: true } });
   if (!exists) {
-    warn(`[bio/checkout-pix] user not in Bio DB userId=${userId.slice(0, 8)}...`);
+    warn(`[crypto/checkout-pix] user not in DB userId=${userId.slice(0, 8)}...`);
     return NextResponse.json({ error: "user_not_found" }, { status: 403 });
   }
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { emailEnc: true, emailIv: true, emailTag: true, name: true },
   });
@@ -89,11 +98,12 @@ export async function POST(req: Request) {
   try {
     userEmail = decryptEmail(user.emailEnc, user.emailIv, user.emailTag);
   } catch {
-    error("[bio/checkout-pix] email_decrypt_fail");
+    error("[crypto/checkout-pix] email_decrypt_fail");
     return NextResponse.json({ error: "email_decrypt_fail" }, { status: 500 });
   }
 
-  let body: { plan?: string; returnTo?: string; cpf?: string } = {};
+  let body: { plan?: string; returnTo?: string; cpf?: string; coupon?: string; cupom_id?: string; idAfiliado?: string } =
+    {};
   try {
     body = await req.json();
   } catch {
@@ -101,7 +111,23 @@ export async function POST(req: Request) {
   }
 
   const planKey: PlanKey = body?.plan === "49" ? "49" : "7";
-  const plan = PLANS_USD[planKey];
+  const cupomInput =
+    (typeof body.cupom_id === "string" && body.cupom_id.trim()
+      ? body.cupom_id
+      : typeof body.coupon === "string"
+        ? body.coupon
+        : undefined) ?? undefined;
+  const idAfiliadoMeta = (typeof body.idAfiliado === "string" ? body.idAfiliado : "").trim();
+
+  const cupomResolved = await resolveAffiliateCouponForPlanCheckout(cupomInput);
+  if (!cupomResolved.ok) {
+    return NextResponse.json({ error: cupomResolved.error }, { status: 400 });
+  }
+  const affiliate = cupomResolved.affiliate;
+  const usePromo = affiliate !== null;
+  const planRow = usePromo ? PLANS_USD_PROMO[planKey] : PLANS_USD[planKey];
+  const coinsUsd = planRow.amountUsdCents / 100;
+  const plan = { amountUsdCents: planRow.amountUsdCents, coins: coinsUsd };
 
   const balance = await getBalance(userId);
   if (balance >= MAX_COINS_BEFORE_PURCHASE) {
@@ -111,11 +137,19 @@ export async function POST(req: Request) {
     );
   }
 
+  const hasActivePaid = await hasActivePaidCredits(userId);
+  if (hasActivePaid) {
+    return NextResponse.json(
+      { error: "already_has_active_plan", message: "Você já possui créditos ativos. Use-os ou aguarde o vencimento antes de comprar novamente." },
+      { status: 409 }
+    );
+  }
+
   let amountBrlCents: number;
   let usdToBrlForLog: number | undefined;
-  if (BG_PIX_TEST_AMOUNT_BRL_CENTS > 0 && planKey === "7") {
-    amountBrlCents = BG_PIX_TEST_AMOUNT_BRL_CENTS;
-    dbg(`[bio/checkout-pix] using test override amountBrlCents=${amountBrlCents} (plan $7)`);
+  if (PIX_TEST_AMOUNT_BRL_CENTS > 0) {
+    amountBrlCents = PIX_TEST_AMOUNT_BRL_CENTS;
+    dbg(`[crypto/checkout-pix] using test override amountBrlCents=${amountBrlCents} (plan $${plan.amountUsdCents / 100})`);
   } else {
     const { rate } = await getUsdToBrlRate();
     usdToBrlForLog = rate;
@@ -138,21 +172,30 @@ export async function POST(req: Request) {
   const orderPayload = {
     customer,
     items: [
-      { amount: amountBrlCents, description: `${plan.coins.toLocaleString("pt-BR")} coins - Bio (equiv. $${plan.amountUsdCents / 100})`, quantity: 1, code: `bio_coins_${planKey}` },
+      { amount: amountBrlCents, description: `${plan.coins.toLocaleString("pt-BR")} coins - Crypto (equiv. $${plan.amountUsdCents / 100})`, quantity: 1, code: `crypto_coins_${planKey}` },
     ],
     payments: [{ payment_method: "pix" as const, pix: { expires_in: PIX_EXPIRES_IN_SECONDS } }],
-    metadata: { userId, coins: String(plan.coins), plan: planKey, bio: "1" },
+    metadata: {
+      userId,
+      coins: String(plan.coins),
+      plan: planKey,
+      crypto: "1",
+      promo_20off: usePromo ? "1" : "",
+      cupom_id: affiliate?.code ?? "",
+      idAfiliado: affiliate?.idAfiliado ?? idAfiliadoMeta,
+      affiliate_account_id: affiliate?.affiliateAccountId ?? "",
+    },
   };
 
-  const auth = Buffer.from(`${BG_PAGARME_SECRET_KEY}:`).toString("base64");
+  const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString("base64");
   const headers: Record<string, string> = {
     Authorization: `Basic ${auth}`,
     "Content-Type": "application/json",
   };
-  if (BG_PAGARME_ACCOUNT_ID) headers["X-Account-Id"] = BG_PAGARME_ACCOUNT_ID;
+  if (PAGARME_ACCOUNT_ID) headers["X-Account-Id"] = PAGARME_ACCOUNT_ID;
 
   try {
-    dbg(`[bio/checkout-pix] POST orders rid=${redactId(rid)} amountBrl=${amountBrlCents} ($${plan.amountUsdCents / 100}${usdToBrlForLog != null ? ` @ ${usdToBrlForLog}` : ""}) coins=${plan.coins}`);
+    dbg(`[crypto/checkout-pix] POST orders rid=${redactId(rid)} amountBrl=${amountBrlCents} ($${plan.amountUsdCents / 100}${usdToBrlForLog != null ? ` @ ${usdToBrlForLog}` : ""}) coins=${plan.coins}`);
     const apiRes = await fetch("https://api.pagar.me/core/v5/orders", {
       method: "POST",
       headers,
@@ -161,7 +204,7 @@ export async function POST(req: Request) {
 
     const responseData = await apiRes.json().catch(() => ({}));
     if (!apiRes.ok) {
-      error(`[bio/checkout-pix] Pagar.me API error status=${apiRes.status} body=${JSON.stringify(responseData)}`);
+      error(`[crypto/checkout-pix] Pagar.me API error status=${apiRes.status} body=${JSON.stringify(responseData)}`);
       return NextResponse.json(
         { error: responseData?.message || responseData?.errors?.[0]?.message || "pix_order_failed" },
         { status: 502 }
@@ -170,7 +213,7 @@ export async function POST(req: Request) {
 
     const orderId = responseData?.id;
     if (!orderId) {
-      error("[bio/checkout-pix] Pagar.me response missing id");
+      error("[crypto/checkout-pix] Pagar.me response missing id");
       return NextResponse.json({ error: "pix_order_invalid_response" }, { status: 502 });
     }
 
@@ -230,7 +273,7 @@ export async function POST(req: Request) {
 
     let extracted = extractPixFromPayload(responseData);
     if (!extracted.pixCopyPaste && !extracted.qrCode && !extracted.qrCodeUrl) {
-      dbg(`[bio/checkout-pix] no PIX data in create response, fetching order orderId=${redactId(orderId)}`);
+      dbg(`[crypto/checkout-pix] no PIX data in create response, fetching order orderId=${redactId(orderId)}`);
       try {
         const getRes = await fetch(`https://api.pagar.me/core/v5/orders/${orderId}`, {
           method: "GET",
@@ -238,7 +281,7 @@ export async function POST(req: Request) {
         });
         if (getRes.ok) extracted = extractPixFromPayload(await getRes.json().catch(() => ({})));
       } catch (e: any) {
-        warn(`[bio/checkout-pix] GET order failed ${e?.message ?? e}`);
+        warn(`[crypto/checkout-pix] GET order failed ${e?.message ?? e}`);
       }
     }
 
@@ -271,7 +314,7 @@ export async function POST(req: Request) {
             extracted = extractPixFromPayload({ charges: [chData] });
           }
         } catch (e: any) {
-          warn(`[bio/checkout-pix] GET charge failed chargeId=${chargeId} ${e?.message ?? e}`);
+          warn(`[crypto/checkout-pix] GET charge failed chargeId=${chargeId} ${e?.message ?? e}`);
         }
       }
     }
@@ -279,7 +322,7 @@ export async function POST(req: Request) {
     const { qrCode, qrCodeUrl, pixCopyPaste, expiresAt } = extracted;
     const expiresAtFallback = new Date(Date.now() + PIX_EXPIRES_IN_SECONDS * 1000);
 
-    await bioPrisma.pagarMeOrder.create({
+    await cryptoPrisma.pagarMeOrder.create({
       data: {
         id: orderId,
         userId,
@@ -295,7 +338,7 @@ export async function POST(req: Request) {
       },
     });
 
-    dbg(`[bio/checkout-pix] order created orderId=${redactId(orderId)}`);
+    dbg(`[crypto/checkout-pix] order created orderId=${redactId(orderId)}`);
     return NextResponse.json(
       {
         orderId,
@@ -311,7 +354,7 @@ export async function POST(req: Request) {
     );
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    error(`[bio/checkout-pix] handler error ${msg}`);
+    error(`[crypto/checkout-pix] handler error ${msg}`);
     return NextResponse.json({ error: msg || "internal_error" }, { status: 500 });
   }
 }

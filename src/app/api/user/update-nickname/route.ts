@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { validateNickname } from "@/lib/validate-nickname";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   const validationError = validateNickname(trimmed);
   if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
 
-  const user = await bioPrisma.user.findUnique({
+  const user = await cryptoPrisma.user.findUnique({
     where: { id: userId },
     select: { role: true, nickname: true, nicknameChanges: true },
   });
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   }
 
   if (nicknameChanged) {
-    const existing = await bioPrisma.user.findFirst({
+    const existing = await cryptoPrisma.user.findFirst({
       where: { nickname: { equals: trimmed, mode: "insensitive" }, id: { not: userId } },
       select: { id: true },
     });
@@ -68,6 +68,6 @@ export async function POST(req: Request) {
     updateData.nicknameChanges = user.nicknameChanges + 1;
   }
 
-  await bioPrisma.user.update({ where: { id: userId }, data: updateData });
+  await cryptoPrisma.user.update({ where: { id: userId }, data: updateData });
   return NextResponse.json({ success: true, nickname: trimmed });
 }

@@ -1,5 +1,6 @@
 node_modules
 .next
+*.tsbuildinfo
 .env
 .env*.local
 
@@ -16,3 +17,4 @@ android/.idea/
 
 logs/*
 !logs/.gitkeep
+dump.sql

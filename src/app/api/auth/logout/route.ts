@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const COOKIE_LAST = `${COOKIE}_last`;
 const COOKIE_IAT = `${COOKIE}_iat`;
-const LOGIN_PAGE = "/backcrypto/login";
+const LOGIN_PAGE = "/crypto/login";
 
 const baseCookie = {
   httpOnly: true,

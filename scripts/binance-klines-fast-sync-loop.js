@@ -1,15 +1,15 @@
 /**
- * Roda a sincronização de klines (fast) a cada 5 minutos (para deixar em segundo plano).
+ * Roda a sincronização de klines (fast) a cada 1 minuto (para deixar em segundo plano).
  * Uso: node scripts/binance-klines-fast-sync-loop.js
  * Ou: npm run binance-klines-fast-sync:loop
  *
- * Na primeira vez executa logo; depois a cada 5 min.
+ * Na primeira vez executa logo; depois a cada 1 min. Alternativa: usar Agendador de Tarefas para rodar binance-klines-fast-sync.js a cada 1 min.
  */
 
 const path = require("path");
 const { spawn } = require("child_process");
 
-const INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+const INTERVAL_MS = 1 * 60 * 1000; // 1 minuto
 const scriptPath = path.resolve(__dirname, "binance-klines-fast-sync.js");
 
 function runSync() {

@@ -3,7 +3,7 @@
 // Usa as mesmas variáveis do SevenCoins: FIREBASE_PROJECT_ID, FIREBASE_SERVICE_ACCOUNT_JSON
 
 import * as admin from "firebase-admin";
-import { bioPrisma } from "./bio-db";
+import { cryptoPrisma } from "./crypto-db";
 
 interface PushNotificationPayload {
   title: string;
@@ -71,7 +71,7 @@ export async function sendPushNotification(
       return { success: false, error: "Firebase não configurado" };
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { pushToken: true },
     });
@@ -116,7 +116,7 @@ export async function sendPushNotification(
         msg.includes("registration-token-not-registered") ||
         msg.includes("invalid-registration-token")
       ) {
-        await bioPrisma.user
+        await cryptoPrisma.user
           .update({
             where: { id: userId },
             data: { pushToken: null, pushTokenUpdated: new Date() },

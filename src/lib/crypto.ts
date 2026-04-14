@@ -37,3 +37,23 @@ export function decryptEmail(enc: string, ivB64: string, tagB64: string) {
   const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return plaintext.toString("utf8");
 }
+
+/** Criptografa strings sensíveis (ex.: JSON com API keys) com a mesma chave que o e-mail (AES-256-GCM). */
+export function encryptSensitiveString(plaintext: string) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", getEncKey(), iv);
+  const buf = Buffer.from(plaintext, "utf8");
+  const ciphertext = Buffer.concat([cipher.update(buf), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return { enc: ciphertext.toString("base64"), iv: iv.toString("base64"), tag: tag.toString("base64") };
+}
+
+export function decryptSensitiveString(enc: string, ivB64: string, tagB64: string): string {
+  const iv = Buffer.from(ivB64, "base64");
+  const tag = Buffer.from(tagB64, "base64");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", getEncKey(), iv);
+  decipher.setAuthTag(tag);
+  const ciphertext = Buffer.from(enc, "base64");
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  return plaintext.toString("utf8");
+}

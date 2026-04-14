@@ -64,8 +64,8 @@ function Button(
 
 function Card({ title, children, version }: { title: string; children: React.ReactNode; version?: string }) {
   return (
-    <section className="bio-login-card card-bio-generator w-full rounded-2xl">
-      <h2 className="bio-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
+    <section className="crypto-login-card card-crypto-generator w-full rounded-2xl">
+      <h2 className="crypto-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
       {children}
       {version && (
         <div className="mt-4 pt-2 text-center text-xs text-zinc-400" aria-hidden>
@@ -121,6 +121,13 @@ function useFormLock() {
   return { locked, onSubmit };
 }
 
+function shouldSendFromApp(): boolean {
+  if (typeof Capacitor !== "undefined" && Capacitor.isNativePlatform?.()) return true;
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /; wv\)|WebView|Capacitor/i.test(ua);
+}
+
 export default function BioLoginForm({
   nextPath,
   loginPagePath,
@@ -135,7 +142,7 @@ export default function BioLoginForm({
 
   const log = useFormLock();
 
-  // Com basePath (ex: /backcrypto), a API fica em /backcrypto/api/auth/login
+  // Com basePath (ex: /crypto), a API fica em /crypto/api/auth/login
   const basePath = loginPagePath.replace(/\/login$/, "") || "";
   const action = basePath ? `${basePath}/api/auth/login` : (AUTH_BASE ? `${AUTH_BASE.replace(/\/$/, "")}/api/auth/login` : "/api/auth/login");
   // Paths sem basePath para Link — Next adiciona basePath automaticamente
@@ -156,8 +163,8 @@ export default function BioLoginForm({
               : null;
 
   return (
-    <div className="bio-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="bio-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
+    <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-4xl w-full">
           <div className="mb-5 flex items-center justify-center">
             <div
@@ -173,7 +180,7 @@ export default function BioLoginForm({
             >
               <img
                 src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
+                alt="Crypto Strategy"
                 width={80}
                 height={80}
                 className="protected-logo h-20 w-20 object-contain"
@@ -203,11 +210,19 @@ export default function BioLoginForm({
               />
             </div>
           </div>
-          <header className="bio-login-header w-full text-center">
-            <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Backtest Crypto
-            </h1>
-            <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
+          <header className="crypto-login-header w-full text-center">
+            <div className="relative inline-block">
+              <span
+                className="absolute -top-1.5 right-0 rounded-sm border border-amber-200 bg-amber-100 px-1 py-0.4 text-[10px] font-semibold uppercase tracking-wider text-amber-800"
+                aria-label="Versão beta"
+              >
+                Beta
+              </span>
+              <h1 className="text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
+                Crypto Strategy
+              </h1>
+              <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
+            </div>
           </header>
         </div>
 
@@ -227,7 +242,7 @@ export default function BioLoginForm({
         <div className="mx-auto w-full max-w-md">
           <Card title="Sign in" version={process.env.NEXT_PUBLIC_APP_VERSION}>
             <form
-              className="bio-login-form space-y-2"
+              className="crypto-login-form space-y-2"
               method="post"
               action={action}
               onSubmit={log.onSubmit}
@@ -278,7 +293,7 @@ export default function BioLoginForm({
               </div>
               <div className="mb-3 flex justify-center">
                 <a
-                  href={`${API_BASE}/auth/google/start?next=${encodeURIComponent(nextPath)}${Capacitor?.isNativePlatform?.() ? "&from_app=1" : ""}`}
+                  href={`${API_BASE}/auth/google/start?next=${encodeURIComponent(nextPath)}${shouldSendFromApp() ? "&from_app=1" : ""}`}
                   aria-label="Sign in with Google"
                   className="inline-block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >

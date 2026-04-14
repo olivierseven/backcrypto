@@ -4,170 +4,274 @@
  * Gráfico de candles (OHLC). Janela visível configurável.
  * Eixo Y: preço USDT (ajustado aos candles visíveis). Eixo X: tempo + subeixo por data.
  */
-import { useState, useEffect, useRef } from "react";
-import { API_BASE } from "@/app/constants";
-import { useBioLang } from "@/app/contexts/BioLangContext";
-import { getBioT } from "@/app/lib/translations";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
+import { usePathname } from "next/navigation";
+import { API_BASE, APP_CRYPTO_ROUTE_PREFIX, ASSET_PREFIX, SISTEMA_PATH } from "@/app/constants";
+import { useSistemaDebug } from "./SistemaDebugContext";
+import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
+import { getCryptoT } from "@/app/lib/translations";
 import {
   ASPECT_BREAKPOINT,
   MIN_CHART_HEIGHT,
   PAD_Y,
+  Y_PAD_OFFSET_MIN,
+  Y_PAD_OFFSET_MAX,
   BODY_WIDTH_RATIO,
   Y_AXIS_WIDTH,
   GAP_PLOT_Y_AXIS,
   MARGIN_LEFT,
   MARGIN_TOP,
   MARGIN_BOTTOM_TABLE,
+  PANEL2_BOTTOM_MARGIN,
+  MAIN_TO_PANEL_GAP,
+  PANEL_GAP,
   INDICATOR_STRIP_HEIGHT,
+  CHART_TOP_PADDING,
   VISIBLE_OPTIONS,
+  VISIBLE_COUNT_MIN,
+  VISIBLE_COUNT_MAX,
   DEFAULT_VISIBLE,
   INVISIBLE_CANDLES_END,
   SIDEBAR_WIDTH,
   KLINE_PREFS_KEY,
-  KLINE_LAST_LAYOUT_KEY,
+  KLINE_LOCAL_PREFS_KEY,
+  SECONDARY_PANEL_HEIGHT_MIN,
+  SECONDARY_PANEL_HEIGHT_MAX,
+  SECONDARY_PANEL_HEIGHT_DEFAULT,
+  CHART_SIZE_PERCENT_MIN,
+  CHART_SIZE_PERCENT_MAX,
+  CHART_SIZE_PERCENT_DEFAULT,
+  CHART_SIZE_PERCENT_STEP,
+  getKlineLastLayoutStorage,
+  setKlineLastLayoutStorage,
   KLINE_DRAW_SEGMENTS_KEY,
+  KLINE_DRAW_VISIBLE_KEY,
+  KLINE_DRAW_DEFAULTS_KEY,
+  getDrawStorageKey,
+  getDrawSharedIntervalsKey,
   MS_PER_DAY,
-  type VisibleCount,
+  BINANCE_CONNECTION_CHANGED_EVENT,
 } from "./KlinesChartConstants";
 import {
   parseNum,
   formatUsdt,
   formatUsdtTwoDecimals,
-  formatTimeLabel,
+  formatUsdtWithDecimals,
+  priceAxisDecimals,
   formatDateLabel,
+  formatTimeLabel,
   formatDateYyyyMmDd,
   formatAbbreviated,
-  dayKey,
+  formatObvYAxis,
   monthKey,
   formatDayOnly,
-  formatMonthOnly,
   formatMonthYearShort,
+  enumerateLocalMidnightUtcMs,
+  isFirstDayOfMonthInOffsetZone,
   isStartOfDay,
 } from "./klinesFormatters";
-import { distanceToSegment, DEFAULT_SEGMENT_COLOR } from "./KlinesChartDrawing";
-import type { DrawSegment, SegmentCap } from "./KlinesChartDrawing";
+import {
+  DEFAULT_SEGMENT_COLOR,
+  DEFAULT_TEXT_COLOR as DEFAULT_DRAW_TEXT_COLOR,
+  mergeDrawSegmentsForChartLoad,
+  splitDrawSegmentsForPersistence,
+  type DrawSegment,
+  type DrawDefaults,
+} from "./KlinesChartDrawing";
+import { flushSync } from "react-dom";
 import { useKlinesChartDrawing } from "./useKlinesChartDrawing";
 import { useKlinesIndicators } from "./KlinesIndicatorsContext";
+import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
+import { computeRegressionOverlayPaths } from "./regression/regressionChart";
+import type { ChartStyle, Kline, KlinesChartProps } from "./klinesChart/types";
+import { isPersistedChartStyle } from "./klinesChart/types";
+import {
+  CANDLE_COLOR_PRESETS,
+  DEFAULT_CANDLE_PRESET,
+  DEFAULT_BACKGROUND,
+  DEFAULT_LINE_TABLE_COLOR,
+  DEFAULT_SECONDARY_GRID_COLOR,
+  DEFAULT_TEXT_COLOR,
+  BACKGROUND_PALETTE,
+  LINE_GRID_PALETTE,
+  TEXT_PALETTE,
+  SEGMENT_COLOR_PALETTE,
+} from "./klinesChart/palettes";
+import type { CandleColorPresetId, BackgroundId, LineGridId, TextColorId } from "./klinesChart/palettes";
+import { DEFAULT_LAYOUT_FALLBACK } from "./klinesChart/defaultLayoutFallback";
+import { KlinesChartSidebar } from "./klinesChart/KlinesChartSidebar";
+import { KlinesChartSegmentOptions } from "./klinesChart/KlinesChartSegmentOptions";
+import { KlinesChartSvg } from "./klinesChart/KlinesChartSvg";
+import { KlinesChartYAxis } from "./klinesChart/KlinesChartYAxis";
+import { KlinesChartFooter } from "./klinesChart/KlinesChartFooter";
+import { computeVolumeAtPriceBuckets } from "./klinesChart/volumeAtPrice";
+import { useChartLayoutSave } from "./ChartLayoutSaveContext";
+import { useChartSaveLoad } from "./ChartSaveLoadContext";
+import { useChartHeader } from "./ChartHeaderContext";
+import { isValidLimitBuyPriceVsLast, isValidLimitSellPriceVsLast } from "@/lib/binance-limit-buy-validation";
+import { parseSpotOpenOrdersJson } from "@/lib/spot-open-orders-client";
+import ChartCtrlLimitBuyModal from "./ChartCtrlLimitBuyModal";
+import ChartCtrlLimitSellModal from "./ChartCtrlLimitSellModal";
+import { useChartSymbol } from "./ChartSymbolContext";
+import { getSessionTabId } from "./sessionTabId";
+import { applyRobotsFromMergedLayoutConfig, getRobotsColumnPayloadForChartLayout } from "./robotsStorage";
 
-type Kline = [
-  number, string, string, string, string, string, number, string, number, string, string, number,
-  ...(number | null)[],
-];
+export type { ChartIndicatorLine } from "./klinesChart/types";
 
-/** Indicador a desenhar no gráfico: coluna (índice 12+), cor, espessura, tipo de traço e rótulo para a faixa no topo. */
-export interface ChartIndicatorLine {
-  columnIndex: number;
-  color: string;
-  lineWidth?: "thin" | "normal";
-  lineStyle?: "solid" | "dotted" | "dashed";
-  /** Rótulo exibido na faixa de indicadores no topo (ex.: "SMA(7) Close"). */
-  label?: string;
+function sameUsdtLimitPrice(a: number, b: number): boolean {
+  return Math.round(a * 1e8) === Math.round(b * 1e8);
 }
 
-type Props = {
-  klines: Kline[];
-  groupMinutes: number;
-  intervalLabel?: string;
-  width: number;
-  /** Indicadores do usuário (ex.: SMA) a desenhar como linhas. */
-  indicatorLines?: ChartIndicatorLine[];
-  /** Chamado ao carregar um layout; permite ao pai (ex.: KlinesTable) aplicar preferências que não são do chart (ex.: groupMinutes). */
-  onLayoutConfigLoaded?: (config: Record<string, unknown>) => void;
+const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
+  segment: { color: SEGMENT_COLOR_PALETTE[0], startCap: "point", endCap: "arrow", showPercent: true, showValues: false },
+  fibonacci: { color: SEGMENT_COLOR_PALETTE[8], fibLevel618Color: SEGMENT_COLOR_PALETTE[4], showPercent: false, showValues: false, fibStrokeWidth: "medium", fibLevel618StrokeWidth: "thin", fibLevelPct1: 33.33, fibShow1618: false, fibShowValuesOnYAxis: false },
+  freeRetracement: { color: SEGMENT_COLOR_PALETTE[0], freeRetracementLevelPct1: 25, freeRetracementLevelPct: 75, freeRetracementLevelPctExt: 100, freeRetracementShowValuesOnYAxis: false, freeRetracementExtensionIndices: 0, fibStrokeWidth: "medium", showPercent: true, showValues: false },
+  channel: { color: SEGMENT_COLOR_PALETTE[0], channelExtremityColor: SEGMENT_COLOR_PALETTE[0], channelMidStrokeWidth: "thin", channelExtremityStrokeWidth: "thin", showValues: false },
+  stopGain: { stopGainRatioUp: 1, stopGainRatioDown: 1, stopGainFillOpacity: 0.5, stopGainShowPercent: false, stopGainShowValuesOnYAxis: false, stopGainStrokeWidth: "medium" },
+  rectangle: { color: SEGMENT_COLOR_PALETTE[0], rectangleStrokeWidth: "medium", rectangleFilled: false, lineShowOnAllIntervals: false },
+  horizontalLine: { color: SEGMENT_COLOR_PALETTE[0], horizontalLineStrokeWidth: "medium", horizontalLineStrokeStyle: "solid", lineShowOnAllIntervals: false },
+  verticalLine: { color: SEGMENT_COLOR_PALETTE[0], verticalLineStrokeWidth: "medium", verticalLineStrokeStyle: "solid", lineShowOnAllIntervals: false },
+  arrow: { color: SEGMENT_COLOR_PALETTE[0], arrowSize: "medium" },
+  text: { color: DEFAULT_DRAW_TEXT_COLOR, textBold: false, textSize: "small" },
+  pencil: { color: SEGMENT_COLOR_PALETTE[0], pencilStrokeWidth: "medium" },
 };
 
-const CANDLE_COLOR_PRESETS = [
-  { id: "greenRed" as const, bull: "#059669", bear: "#dc2626" },
-  { id: "blueOrange" as const, bull: "#2563eb", bear: "#ea580c" },
-  { id: "blackWhite" as const, bull: "#f5f5f5", bear: "#171717" },
-  { id: "purpleAmber" as const, bull: "#7c3aed", bear: "#f59e0b" },
-  { id: "cyanRose" as const, bull: "#0891b2", bear: "#e11d48" },
-] as const;
-type CandleColorPresetId = (typeof CANDLE_COLOR_PRESETS)[number]["id"];
-const DEFAULT_CANDLE_PRESET: CandleColorPresetId = "greenRed";
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, aggIntervalPicker, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], spotOrderMarkers = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, aggSeriesKind = "ohlc", volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onPriceFormatChange, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
+  /** Renko/Range/Kagi: eixo temporal e cadência como no gráfico 5m (grades, rótulos, slots à direita). */
+  const timeScaleGroupMinutes = aggSeriesKind !== "ohlc" ? 5 : groupMinutes;
+  const pathname = usePathname();
+  const { addLayoutLoadLog, layoutSaveLoadDebugEnabled } = useSistemaDebug();
+  const lang = useCryptoLang();
+  const t = getCryptoT(lang).sistema.klines;
+  const { symbolQuickSwitchOpen } = useChartSymbol();
+  const {
+    intervalQuickSwitchOpen,
+    data: headerData,
+    setCrosshairMainPriceUsdt,
+    setOpenLimitBuyPricesUsdt,
+    setOpenLimitBuyOrdersUsdt,
+    setOpenLimitSellPricesUsdt,
+    setOpenLimitSellOrdersUsdt,
+  } = useChartHeader();
+  const [chartLimitBuyCancelingKey, setChartLimitBuyCancelingKey] = useState<string | null>(null);
 
-/** Paleta básica para cor do segmento de reta. */
-const SEGMENT_COLOR_PALETTE = [
-  "#000000", "#ffffff", "#dc2626", "#ea580c", "#ca8a04", "#65a30d", "#059669", "#0891b2", "#2563eb", "#7c3aed", "#db2777", "#78716c",
-] as const;
+  const refreshOpenLimitOrders = useCallback(async () => {
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s) return;
+    try {
+      const r = await fetch(`${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`, {
+        credentials: "include",
+      });
+      const j = await r.json().catch(() => ({}));
+      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
+      setOpenLimitBuyPricesUsdt(prices);
+      setOpenLimitBuyOrdersUsdt(orders);
+      setOpenLimitSellPricesUsdt(sellPrices);
+      setOpenLimitSellOrdersUsdt(sellOrders);
+    } catch {
+      /* ignore */
+    }
+  }, [symbolProp, setOpenLimitBuyPricesUsdt, setOpenLimitBuyOrdersUsdt, setOpenLimitSellPricesUsdt, setOpenLimitSellOrdersUsdt]);
 
-const SEGMENT_CAP_OPTIONS: { value: SegmentCap; labelKey: "capNone" | "capPoint" | "capArrow" }[] = [
-  { value: "none", labelKey: "capNone" },
-  { value: "point", labelKey: "capPoint" },
-  { value: "arrow", labelKey: "capArrow" },
-];
+  useEffect(() => {
+    const onConn = () => {
+      void refreshOpenLimitOrders();
+    };
+    window.addEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+    return () => window.removeEventListener(BINANCE_CONNECTION_CHANGED_EVENT, onConn);
+  }, [refreshOpenLimitOrders]);
 
-// Paleta Área de plot: branco, cinzas, pretos, marrons (10 cores)
-const BACKGROUND_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "bgWhite" as const },
-  { id: 1, hex: "#f5f5f5", labelKey: "bgLightGray" as const },
-  { id: 2, hex: "#e5e5e5", labelKey: "bgGray" as const },
-  { id: 3, hex: "#a3a3a3", labelKey: "bgMediumGray" as const },
-  { id: 4, hex: "#525252", labelKey: "bgDarkGray" as const },
-  { id: 5, hex: "#171717", labelKey: "bgBlack" as const },
-  { id: 6, hex: "#d6d3d1", labelKey: "bgLightBrown" as const },
-  { id: 7, hex: "#78716c", labelKey: "bgBrown" as const },
-  { id: 8, hex: "#57534e", labelKey: "bgDarkBrown" as const },
-  { id: 9, hex: "#292524", labelKey: "bgVeryDarkBrown" as const },
-] as const;
-type BackgroundId = (typeof BACKGROUND_PALETTE)[number]["id"];
-const DEFAULT_BACKGROUND: BackgroundId = 0;
+  const handleChartLimitBuyCancel = useCallback(
+    async (orderIds: string[]) => {
+      const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+      if (!s || orderIds.length === 0) return;
+      const busyKey = [...orderIds].sort().join(",");
+      setChartLimitBuyCancelingKey(busyKey);
+      try {
+        for (const orderId of orderIds) {
+          const res = await fetch(`${API_BASE}/user/binance-connection/order/cancel`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ symbol: s, orderId }),
+          });
+          if (!res.ok) {
+            const data = (await res.json().catch(() => ({}))) as { msg?: string; error?: string };
+            throw new Error(typeof data.msg === "string" ? data.msg : data.error ?? "cancel_failed");
+          }
+        }
+        await refreshOpenLimitOrders();
+      } catch {
+        /* silent */
+      } finally {
+        setChartLimitBuyCancelingKey(null);
+      }
+    },
+    [symbolProp, refreshOpenLimitOrders]
+  );
 
-// Paleta Linhas/tabela/grade: branco, preto, vermelho, verde, azul, roxo, ciano, amarelo, laranja, cinza, marrom (11 cores)
-const LINE_GRID_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "lineWhite" as const },
-  { id: 1, hex: "#000000", labelKey: "lineBlack" as const },
-  { id: 2, hex: "#dc2626", labelKey: "lineRed" as const },
-  { id: 3, hex: "#16a34a", labelKey: "lineGreen" as const },
-  { id: 4, hex: "#2563eb", labelKey: "lineBlue" as const },
-  { id: 5, hex: "#9333ea", labelKey: "linePurple" as const },
-  { id: 6, hex: "#0891b2", labelKey: "lineCyan" as const },
-  { id: 7, hex: "#ca8a04", labelKey: "lineYellow" as const },
-  { id: 8, hex: "#ea580c", labelKey: "lineOrange" as const },
-  { id: 9, hex: "#71717a", labelKey: "lineGray" as const },
-  { id: 10, hex: "#78716c", labelKey: "lineBrown" as const },
-] as const;
-type LineGridId = (typeof LINE_GRID_PALETTE)[number]["id"];
-const DEFAULT_LINE_TABLE_COLOR: LineGridId = 1; // preto
-const DEFAULT_SECONDARY_GRID_COLOR: LineGridId = 9; // cinza
-
-// Paleta texto: branco, preto, cinzas, marrom, vermelho, azul, roxo (10 cores) — para texto no fundo e no rodapé/eixo Y
-const TEXT_PALETTE = [
-  { id: 0, hex: "#ffffff", labelKey: "textWhite" as const },
-  { id: 1, hex: "#000000", labelKey: "textBlack" as const },
-  { id: 2, hex: "#f5f5f5", labelKey: "textLightGray" as const },
-  { id: 3, hex: "#a3a3a3", labelKey: "textGray" as const },
-  { id: 4, hex: "#525252", labelKey: "textDarkGray" as const },
-  { id: 5, hex: "#78716c", labelKey: "textBrown" as const },
-  { id: 6, hex: "#dc2626", labelKey: "textRed" as const },
-  { id: 7, hex: "#2563eb", labelKey: "textBlue" as const },
-  { id: 8, hex: "#9333ea", labelKey: "textPurple" as const },
-  { id: 9, hex: "#71717a", labelKey: "textMediumGray" as const },
-] as const;
-type TextColorId = (typeof TEXT_PALETTE)[number]["id"];
-const DEFAULT_TEXT_COLOR: TextColorId = 1; // preto
-
-export default function KlinesChart({ klines, groupMinutes, intervalLabel, width, indicatorLines = [], onLayoutConfigLoaded }: Props) {
-  const lang = useBioLang();
-  const t = getBioT(lang).sistema.klines;
-  const { showIndicatorLastValueOnYAxis, setShowIndicatorLastValueOnYAxis } = useKlinesIndicators();
-  const [visibleCount, setVisibleCount] = useState<VisibleCount>(DEFAULT_VISIBLE);
+  const { swapAdjacentSecondaryPanels, userIndicators } = useKlinesIndicators();
+  const { userRegressions } = useKlinesRegressions();
+  const maxRegForecastBars = useMemo(() => {
+    let m = 0;
+    for (const r of userRegressions) {
+      if (r.groupMinutes !== groupMinutes) continue;
+      if (r.forecastBars > m) m = r.forecastBars;
+    }
+    return m;
+  }, [userRegressions, groupMinutes]);
+  const [visibleCount, setVisibleCountState] = useState<number>(DEFAULT_VISIBLE);
+  const setVisibleCount = useCallback((v: number | ((prev: number) => number)) => {
+    setVisibleCountState((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      return Math.max(VISIBLE_COUNT_MIN, Math.min(VISIBLE_COUNT_MAX, Math.round(next)));
+    });
+  }, []);
   const [startIndex, setStartIndex] = useState(0);
+  /** Evita closure obsoleta ao decidir se o utilizador estava na “borda ao vivo” antes de `n` mudar. */
+  const startIndexRef = useRef(0);
+  startIndexRef.current = startIndex;
+  const prevKlinesLenRef = useRef(0);
+  const prevVisibleCountForScrollRef = useRef(visibleCount);
+  const prevIntervalAggKeyRef = useRef<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
-  const [saveOpen, setSaveOpen] = useState(false);
-  const [loadOpen, setLoadOpen] = useState(false);
   const [segmentToolboxCollapsed, setSegmentToolboxCollapsed] = useState(false);
-  const [segmentColorListboxOpen, setSegmentColorListboxOpen] = useState(false);
   const [segmentToolboxSide, setSegmentToolboxSide] = useState<"left" | "right">("left");
-  const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("left");
-  const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown> }[]>([]);
+  const [showClearDrawConfirm, setShowClearDrawConfirm] = useState(false);
+  const [drawPanelSide, setDrawPanelSide] = useState<"left" | "right">("right");
+  /** Posição (px) da caixa de desenho na área do gráfico; null = canto superior direito (right-2 top-2). */
+  const [drawToolboxPosition, setDrawToolboxPosition] = useState<{ x: number; y: number } | null>(null);
+  const drawToolboxRef = useRef<HTMLDivElement>(null);
+  const chartRowRef = useRef<HTMLDivElement>(null);
+  const chartYAxisContainerRef = useRef<HTMLDivElement>(null);
+  const drawToolboxDragStartRef = useRef<{ clientX: number; clientY: number; startX: number; startY: number } | null>(null);
+  /** Posição (px) da caixa de opções do segmento; null = canto superior esquerdo (left: 8, top: 8). */
+  const [segmentOptionsPosition, setSegmentOptionsPosition] = useState<{ x: number; y: number } | null>(null);
+  const segmentOptionsRef = useRef<HTMLDivElement>(null);
+  /** Padrões iniciais para novos desenhos (persistidos no localStorage). */
+  const [drawDefaults, setDrawDefaults] = useState<DrawDefaults>(BUILTIN_DRAW_DEFAULTS);
+  const [savedLayouts, setSavedLayouts] = useState<{ slot: number; config: Record<string, unknown>; name?: string }[]>([]);
+  const [savedLayoutsError, setSavedLayoutsError] = useState<string | null>(null);
   const [saveLoadMsg, setSaveLoadMsg] = useState<string | null>(null);
+  const [saveSuccessModalOpen, setSaveSuccessModalOpen] = useState(false);
+  const [savedLayoutName, setSavedLayoutName] = useState<string | null>(null);
+  /** Preço (USDT) sob o rato com Ctrl no painel principal — linha laranja de pré-visualização de compra limite. */
+  const [ctrlBuyPreviewPrice, setCtrlBuyPreviewPrice] = useState<number | null>(null);
+  /** Alt: pré-visualização de venda limite (linha vermelha). */
+  const [altSellPreviewPrice, setAltSellPreviewPrice] = useState<number | null>(null);
+  const [ctrlLimitBuyConfirm, setCtrlLimitBuyConfirm] = useState<{ price: number; symbol: string } | null>(null);
+  const [altLimitSellConfirm, setAltLimitSellConfirm] = useState<{ price: number; symbol: string } | null>(null);
+  const [saveConfirmSlot, setSaveConfirmSlot] = useState<number | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [yAxisAbbreviated, setYAxisAbbreviated] = useState(false); // false = 2 decimais (default), true = abreviado
   const [logScale, setLogScale] = useState(false);
   const [showMainAxis, setShowMainAxis] = useState(true);
   const [showSecondaryAxis, setShowSecondaryAxis] = useState(true);
   const [showLastCloseLine, setShowLastCloseLine] = useState(true);
+  const [showCandleCountdown, setShowCandleCountdown] = useState(true);
   const [invisibleCandlesEnd, setInvisibleCandlesEnd] = useState(INVISIBLE_CANDLES_END);
+  const [secondaryPanelHeightPercent, setSecondaryPanelHeightPercent] = useState(SECONDARY_PANEL_HEIGHT_DEFAULT);
   const [candleColorPreset, setCandleColorPreset] = useState<CandleColorPresetId>(DEFAULT_CANDLE_PRESET);
   const [containerBackground, setContainerBackground] = useState<BackgroundId>(DEFAULT_BACKGROUND);
   const [chartBackground, setChartBackground] = useState<BackgroundId>(DEFAULT_BACKGROUND);
@@ -175,25 +279,97 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
   const [backgroundTextColor, setBackgroundTextColor] = useState<TextColorId>(DEFAULT_TEXT_COLOR);
   const [footerYAxisTextColor, setFooterYAxisTextColor] = useState<TextColorId>(DEFAULT_TEXT_COLOR);
   const [lineTableColor, setLineTableColor] = useState<LineGridId>(DEFAULT_LINE_TABLE_COLOR);
+  const [lineTableStrokeWidth, setLineTableStrokeWidth] = useState<"thin" | "normal" | "thick">("thin");
+  const [lineTableStrokeStyle, setLineTableStrokeStyle] = useState<"solid" | "dotted" | "dashed">("dashed");
   const [secondaryGridColor, setSecondaryGridColor] = useState<LineGridId>(DEFAULT_SECONDARY_GRID_COLOR);
   const [lastCloseLineColor, setLastCloseLineColor] = useState<LineGridId>(1); // preto
   const [lastCloseTextColor, setLastCloseTextColor] = useState<LineGridId>(1); // preto (texto do fechamento no eixo Y)
+  const [lastCloseLineStrokeWidth, setLastCloseLineStrokeWidth] = useState<"thin" | "normal" | "thick">("thin");
+  const [lastCloseLineStrokeStyle, setLastCloseLineStrokeStyle] = useState<"solid" | "dotted" | "dashed">("dashed");
+  const [volumeOnPrice, setVolumeOnPrice] = useState(false);
+  const [volumeOnPriceOpacity, setVolumeOnPriceOpacity] = useState(20); // 0–30%, default 20%
+  const [chartSizePercent, setChartSizePercent] = useState(CHART_SIZE_PERCENT_DEFAULT); // desktop 16:9, 100–200%
+  const [chartStyle, setChartStyle] = useState<ChartStyle>("candles");
+  const [candleBodyStyle, setCandleBodyStyle] = useState<"filled" | "hollow">("filled");
+  useEffect(() => {
+    if (aggSeriesKind === "range") {
+      setChartStyle("bars");
+    } else if (aggSeriesKind === "kagi") {
+      setChartStyle("kagiClassic");
+    } else if (aggSeriesKind === "renko" || aggSeriesKind === "renko2x" || aggSeriesKind === "trades500") {
+      setChartStyle("candles");
+      setCandleBodyStyle("filled");
+    }
+  }, [aggSeriesKind]);
+
+  useEffect(() => {
+    if (aggSeriesKind === "kagi" && chartStyle !== "kagiClassic") {
+      setChartStyle("kagiClassic");
+    } else if (aggSeriesKind !== "kagi" && chartStyle === "kagiClassic") {
+      setChartStyle("candles");
+    }
+  }, [aggSeriesKind, chartStyle]);
+  const shouldShowCandleCountdown = showCandleCountdown && aggSeriesKind === "ohlc";
+  const [yPadOffset, setYPadOffset] = useState(0); // -3 a +3: margem extra no eixo Y para previsões
+  /** Largura da tela: quando < 696px, área do plot reduz proporcional (40px e 56px fixos). */
+  const [viewportWidth, setViewportWidth] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 696));
+  useEffect(() => {
+    // Throttle por frame: evita re-render pesado a cada pixel no resize (melhora os warnings de performance).
+    let rafId: number | null = null;
+    let pendingWidth = typeof window !== "undefined" ? window.innerWidth : 696;
+
+    const flush = () => {
+      rafId = null;
+      setViewportWidth((prev) => (prev === pendingWidth ? prev : pendingWidth));
+    };
+
+    const onResize = () => {
+      pendingWidth = window.innerWidth;
+      if (rafId != null) return;
+      rafId = window.requestAnimationFrame(flush);
+    };
+
+    // Sincroniza ao montar (ex.: após hidratação / zoom / barras do navegador).
+    onResize();
+
+    window.addEventListener("resize", onResize, { passive: true } as AddEventListenerOptions);
+    return () => {
+      if (rafId != null) window.cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
   /** Exibir gráfico; loading só por um instante ao trocar o intervalo (evita travar por efeitos assíncronos). */
   const [chartReady, setChartReady] = useState(true);
   const [layoutApplied, setLayoutApplied] = useState(false);
   const [segmentsApplied, setSegmentsApplied] = useState(false);
+  /** Ocultar/exibir todos os desenhos do timeframe/símbolo atual (persistido por intervalo). */
+  const [drawingsVisible, setDrawingsVisible] = useState(true);
   /** Ponto do crosshair (clique/arraste); índice global e preço. Display só quando estiver sobre um candle visível. */
-  const [crosshairPoint, setCrosshairPoint] = useState<{ index: number; price: number } | null>(null);
+  const [crosshairPoint, setCrosshairPoint] = useState<{ index: number; price: number; panelClickY?: number; panelValue?: number } | null>(null);
   const crosshairDraggingRef = useRef(false);
+  const crosshairStartedInPanelRef = useRef(false);
   const [crosshairDragging, setCrosshairDragging] = useState(false);
-  /** Conversão pixel → dados para o crosshair (sem atração magnética). */
+  /** Conversão pixel → dados para o crosshair (com snap aos OHLC quando drawMagnetic está ativo). */
   const crosshairPixelToDataRef = useRef<((x: number, yCoord: number) => { index: number; price: number }) | null>(null);
   const crosshairPointRef = useRef(crosshairPoint);
   const crosshairOverlayRef = useRef<SVGRectElement>(null);
+  const crosshairOverlayDivRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
-  const saveLoadRef = useRef<HTMLDivElement>(null);
   const chartSvgRef = useRef<SVGSVGElement>(null);
+  const chartDimensionsRef = useRef<{ w: number; h: number; sizePercent?: number }>({ w: 0, h: 0 });
+  const candleAreaRef = useRef({ left: MARGIN_LEFT, top: MARGIN_TOP, width: 0, height: 0 });
+  /** Evitar gravar segmentos/visibilidade do intervalo anterior na chave do novo ao trocar timeframe (race entre load e persist). */
+  const lastPersistedDrawKeyRef = useRef<string>("");
+  const lastPersistedVisibleKeyRef = useRef<string>("");
+  /** Régua ativada temporariamente com Shift (soltar Shift volta ao crosshair). */
+  const rulerHeldByShiftRef = useRef(false);
+  /** Mão (pan) ativada temporariamente com Espaço (soltar volta ao crosshair). */
+  const handHeldBySpaceRef = useRef(false);
+  /** Um frame após clicar na mão na barra: ignora Space-down para não marcar atalho Espaço em corrida com drawMode ainda false. */
+  const skipSpaceTempAfterToolbarHandRef = useRef(false);
+  /** Um frame após clicar na régua na barra: ignora Shift-down para não marcar atalho Shift em corrida com drawMode ainda false. */
+  const skipShiftTempAfterToolbarRulerRef = useRef(false);
 
   const drawing = useKlinesChartDrawing(chartSvgRef);
   const {
@@ -207,6 +383,18 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     setDrawSegments,
     drawPending,
     setDrawPending,
+    drawPendingRectSecond,
+    setDrawPendingRectSecond,
+    drawPendingFibSecond,
+    setDrawPendingFibSecond,
+    drawPendingFreeRetraceSecond,
+    setDrawPendingFreeRetraceSecond,
+    drawPendingLineSecond,
+    setDrawPendingLineSecond,
+    drawPendingChannelSecond,
+    setDrawPendingChannelSecond,
+    drawPendingStopGainSecond,
+    setDrawPendingStopGainSecond,
     selectedSegmentIndex,
     setSelectedSegmentIndex,
     setDrawDragging,
@@ -216,16 +404,65 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     openDrawPanel,
     closeDrawMode,
     selectLineTool,
+    selectFibonacciTool,
+    selectFreeRetracementTool,
+    selectChannelTool,
+    selectStopGainTool,
+    selectHorizontalLineTool,
+    selectVerticalLineTool,
+    selectArrowTool,
+    selectTextTool,
+    selectRulerTool,
+    selectRectangleTool,
     selectSelectTool,
     clearAllDrawing,
+    clearDrawingsForCurrentInterval,
+    drawPendingHorizontalSecond,
+    setDrawPendingHorizontalSecond,
+    drawPendingArrow,
+    setDrawPendingArrow,
+    drawPendingText,
+    setDrawPendingText,
+    drawPendingPencil,
+    setDrawPendingPencil,
+    selectPencilTool,
   } = drawing;
+
+  const drawModeRef = useRef(drawMode);
+  const drawToolRef = useRef(drawTool);
+  drawModeRef.current = drawMode;
+  drawToolRef.current = drawTool;
 
   const fullReversed = [...klines].reverse();
   const n = fullReversed.length;
 
+  /** Volume no preço: usa klines do cache (volumeAtPriceKlines) quando fornecido; já vêm com a quantidade certa do fetch. */
+  const volumeAtPriceData = useMemo(() => {
+    const source = volumeAtPriceKlines?.length ? volumeAtPriceKlines : klines;
+    return volumeAtPriceEnabled && aggSeriesKind === "ohlc" && source.length > 0
+      ? computeVolumeAtPriceBuckets(source as (string | number)[][], volumeAtPriceBuckets)
+      : null;
+  }, [volumeAtPriceEnabled, volumeAtPriceKlines, klines, volumeAtPriceBuckets, aggSeriesKind]);
+
+  // Sempre abrir a caixa de desenho encostada no canto esquerdo
   useEffect(() => {
-    if (segmentToolboxCollapsed) setSegmentColorListboxOpen(false);
-  }, [segmentToolboxCollapsed]);
+    if (!drawOpen) setDrawToolboxPosition(null);
+  }, [drawOpen]);
+
+  // Sempre abrir a caixa de opções do segmento encostada no canto esquerdo
+  useEffect(() => {
+    if (selectedSegmentIndex === null) setSegmentOptionsPosition(null);
+  }, [selectedSegmentIndex]);
+
+  // Com a caixa de opções do segmento aberta, desativa a rolagem por toque só na div role="presentation" (área do plot)
+  const segmentOptionsOpen = drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] != null;
+  useEffect(() => {
+    if (!segmentOptionsOpen || !crosshairOverlayDivRef.current) return;
+    const el = crosshairOverlayDivRef.current;
+    const preventTouchScroll = (e: TouchEvent) => e.preventDefault();
+    el.addEventListener("touchmove", preventTouchScroll, { passive: false });
+    return () => el.removeEventListener("touchmove", preventTouchScroll);
+  }, [segmentOptionsOpen]);
 
   // Ao trocar intervalo: loading breve (1 frame) para recarregar segmentos; em seguida voltar a exibir o gráfico
   useEffect(() => {
@@ -235,9 +472,19 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
       requestAnimationFrame(() => setChartReady(true));
     });
     return () => cancelAnimationFrame(id);
-  }, [groupMinutes]);
+  }, [groupMinutes, aggSeriesKind]);
 
-  // Carregar segmentos de desenho do localStorage ao mudar o intervalo (só os do intervalo atual ficam ativos/visíveis)
+  const drawStorageKey = getDrawStorageKey(symbolProp ?? null, groupMinutes);
+
+  // Expor n e lastClose para o teste QA (reta horizontal no final ao preço de fechamento)
+  useEffect(() => {
+    if (typeof window === "undefined" || klines.length === 0) return;
+    const n = klines.length;
+    const lastClose = parseNum(String(klines[0][4]));
+    (window as unknown as { __backcryptoKlinesInfo?: { n: number; lastClose: number } }).__backcryptoKlinesInfo = { n, lastClose };
+  }, [klines]);
+
+  // Carregar segmentos e visibilidade de desenho do localStorage ao mudar o timeframe (símbolo ou intervalo)
   useEffect(() => {
     try {
       const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY) : null;
@@ -245,142 +492,529 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
         setDrawSegments([]);
         setSelectedSegmentIndex(null);
         setDrawPending(null);
-        setSegmentsApplied(true);
-        return;
+      } else {
+        const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
+        const rawLocal = Array.isArray(data[drawStorageKey])
+          ? data[drawStorageKey]
+          : Array.isArray(data[String(groupMinutes)])
+            ? data[String(groupMinutes)]
+            : [];
+        const mergedData = { ...data, [drawStorageKey]: rawLocal };
+        const loaded = mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbolProp ?? null));
+        setDrawSegments(loaded);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
       }
-      const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
-      const key = String(groupMinutes);
-      const loaded = Array.isArray(data[key]) ? data[key] : [];
-      setDrawSegments(loaded);
-      setSelectedSegmentIndex(null);
-      setDrawPending(null);
+      const visibleRaw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_VISIBLE_KEY) : null;
+      if (visibleRaw) {
+        try {
+          const visibleData = JSON.parse(visibleRaw) as Record<string, boolean>;
+          if (typeof visibleData[drawStorageKey] === "boolean") setDrawingsVisible(visibleData[drawStorageKey]);
+          else if (typeof visibleData[String(groupMinutes)] === "boolean") setDrawingsVisible(visibleData[String(groupMinutes)]);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       setDrawSegments([]);
       setSelectedSegmentIndex(null);
       setDrawPending(null);
     }
     setSegmentsApplied(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when interval changes
-  }, [groupMinutes]);
+  }, [groupMinutes, symbolProp, drawStorageKey]);
 
-  // Persistir segmentos no localStorage (por intervalo; em outros intervalos não são exibidos)
+  // Ouvir evento de limpeza de cache de desenhos (ex.: menu mobile "Limpar todo o cache")
+  useEffect(() => {
+    const handler = () => clearAllDrawing();
+    window.addEventListener("backcrypto-drawings-cleared", handler);
+    return () => window.removeEventListener("backcrypto-drawings-cleared", handler);
+  }, [clearAllDrawing]);
+
+  // Ouvir evento de atualização de um desenho (ex.: exclusão de um item no painel Desenhos)
+  useEffect(() => {
+    const handler = () => {
+      try {
+        const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY) : null;
+        if (!raw) {
+          setDrawSegments([]);
+          setSelectedSegmentIndex(null);
+          setDrawPending(null);
+          return;
+        }
+        const data = JSON.parse(raw) as Record<string, DrawSegment[]>;
+        const rawLocal = Array.isArray(data[drawStorageKey])
+          ? data[drawStorageKey]
+          : Array.isArray(data[String(groupMinutes)])
+            ? data[String(groupMinutes)]
+            : [];
+        const mergedData = { ...data, [drawStorageKey]: rawLocal };
+        const loaded = mergeDrawSegmentsForChartLoad(mergedData, drawStorageKey, getDrawSharedIntervalsKey(symbolProp ?? null));
+        setDrawSegments(loaded);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
+      } catch {
+        setDrawSegments([]);
+        setSelectedSegmentIndex(null);
+        setDrawPending(null);
+      }
+    };
+    window.addEventListener("backcrypto-drawings-updated", handler);
+    return () => window.removeEventListener("backcrypto-drawings-updated", handler);
+  }, [groupMinutes, symbolProp, drawStorageKey]);
+
+  // Editar desenho a partir do menu Desenhos: fecha o painel, seleciona o objeto e leva o gráfico até o candle do primeiro ponto
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ev = e as CustomEvent<{ index: number }>;
+      const i = ev.detail?.index ?? -1;
+      if (i < 0) return;
+      const idx = Math.min(i, Math.max(0, drawSegments.length - 1));
+      if (idx < 0) return;
+      const seg = drawSegments[idx];
+      if (seg) {
+        const targetCandle = Math.min(seg.index1, seg.index2);
+        const newStart = Math.max(0, Math.min(n - visibleCount, targetCandle - Math.floor(visibleCount / 2)));
+        setStartIndex(newStart);
+      }
+      setSelectedSegmentIndex(idx);
+      selectSelectTool();
+      setDrawOpen(true); // abre a sidebar para mostrar as opções do segmento
+    };
+    window.addEventListener("backcrypto-drawings-edit", handler);
+    return () => window.removeEventListener("backcrypto-drawings-edit", handler);
+  }, [drawSegments, n, visibleCount, setSelectedSegmentIndex, selectSelectTool, setDrawOpen]);
+
+  // Carregar padrões de desenho do localStorage (uma vez ao montar)
   useEffect(() => {
     try {
-      if (typeof window === "undefined") return;
-      const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
-      const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
-      const key = String(groupMinutes);
-      data[key] = drawSegments;
-      window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
-  }, [groupMinutes, drawSegments]);
-
-  const formatYAxis = yAxisAbbreviated ? formatUsdt : formatUsdtTwoDecimals;
-  const candleColors = CANDLE_COLOR_PRESETS.find((p) => p.id === candleColorPreset) ?? CANDLE_COLOR_PRESETS[0];
-
-  // Inicializar do localStorage
-  useEffect(() => {
-    try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_PREFS_KEY) : null;
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_DRAW_DEFAULTS_KEY) : null;
       if (!raw) return;
-      const data = JSON.parse(raw) as { visibleCount?: number; invisibleCandlesEnd?: number; candleColorPreset?: string; yAxisAbbreviated?: boolean; logScale?: boolean; containerBackground?: number; chartBackground?: number; footerYAxisBgColor?: number; backgroundTextColor?: number; footerYAxisTextColor?: number; lineTableColor?: number; secondaryGridColor?: number; showMainAxis?: boolean; showSecondaryAxis?: boolean; showLastCloseLine?: boolean; lastCloseLineColor?: number; lastCloseTextColor?: number; showIndicatorLastValueOnYAxis?: boolean };
-      if (typeof data.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(data.visibleCount)) setVisibleCount(data.visibleCount as VisibleCount);
-      if (typeof data.invisibleCandlesEnd === "number" && data.invisibleCandlesEnd >= 0 && data.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(data.invisibleCandlesEnd);
-      if (typeof data.candleColorPreset === "string" && CANDLE_COLOR_PRESETS.some((p) => p.id === data.candleColorPreset)) setCandleColorPreset(data.candleColorPreset as CandleColorPresetId);
-      if (typeof data.yAxisAbbreviated === "boolean") setYAxisAbbreviated(data.yAxisAbbreviated);
-      if (typeof data.logScale === "boolean") setLogScale(data.logScale);
-      if (typeof data.containerBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === data.containerBackground)) setContainerBackground(data.containerBackground as BackgroundId);
-      if (typeof data.chartBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === data.chartBackground)) setChartBackground(data.chartBackground as BackgroundId);
-      if (typeof data.footerYAxisBgColor === "number" && BACKGROUND_PALETTE.some((b) => b.id === data.footerYAxisBgColor)) setFooterYAxisBgColor(data.footerYAxisBgColor as BackgroundId);
-      if (typeof data.backgroundTextColor === "number" && TEXT_PALETTE.some((b) => b.id === data.backgroundTextColor)) setBackgroundTextColor(data.backgroundTextColor as TextColorId);
-      if (typeof data.footerYAxisTextColor === "number" && TEXT_PALETTE.some((b) => b.id === data.footerYAxisTextColor)) setFooterYAxisTextColor(data.footerYAxisTextColor as TextColorId);
-      if (typeof data.lineTableColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lineTableColor)) setLineTableColor(data.lineTableColor as LineGridId);
-      if (typeof data.secondaryGridColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.secondaryGridColor)) setSecondaryGridColor(data.secondaryGridColor as LineGridId);
-      if (typeof data.showMainAxis === "boolean") setShowMainAxis(data.showMainAxis);
-      if (typeof data.showSecondaryAxis === "boolean") setShowSecondaryAxis(data.showSecondaryAxis);
-      if (typeof data.showLastCloseLine === "boolean") setShowLastCloseLine(data.showLastCloseLine);
-      if (typeof data.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseLineColor)) setLastCloseLineColor(data.lastCloseLineColor as LineGridId);
-      if (typeof data.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === data.lastCloseTextColor)) setLastCloseTextColor(data.lastCloseTextColor as LineGridId);
-      if (typeof data.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(data.showIndicatorLastValueOnYAxis);
+      const parsed = JSON.parse(raw) as Partial<DrawDefaults>;
+      setDrawDefaults({
+        segment: { ...BUILTIN_DRAW_DEFAULTS.segment, ...parsed.segment },
+        fibonacci: { ...BUILTIN_DRAW_DEFAULTS.fibonacci, ...parsed.fibonacci },
+        freeRetracement: { ...BUILTIN_DRAW_DEFAULTS.freeRetracement, ...parsed.freeRetracement },
+        channel: { ...BUILTIN_DRAW_DEFAULTS.channel, ...parsed.channel },
+        stopGain: { ...BUILTIN_DRAW_DEFAULTS.stopGain, ...parsed.stopGain },
+        rectangle: { ...BUILTIN_DRAW_DEFAULTS.rectangle, ...parsed.rectangle },
+        horizontalLine: { ...BUILTIN_DRAW_DEFAULTS.horizontalLine, ...parsed.horizontalLine },
+        verticalLine: { ...BUILTIN_DRAW_DEFAULTS.verticalLine, ...parsed.verticalLine },
+        arrow: { ...BUILTIN_DRAW_DEFAULTS.arrow, ...parsed.arrow },
+        text: { ...BUILTIN_DRAW_DEFAULTS.text, ...parsed.text },
+        pencil: { ...BUILTIN_DRAW_DEFAULTS.pencil, ...parsed.pencil },
+      });
     } catch {
       /* ignore */
     }
   }, []);
 
-  // Persistir no localStorage
+  // Persistir padrões quando o usuário altera opções de um segmento
+  const persistDrawDefault = useCallback((type: "segment" | "fibonacci" | "freeRetracement" | "channel" | "stopGain" | "rectangle" | "horizontalLine" | "verticalLine" | "arrow" | "text" | "pencil", partial: Partial<DrawSegment>) => {
+    setDrawDefaults((prev) => {
+      const next: DrawDefaults = {
+        segment: type === "segment" ? { ...prev.segment, ...partial } : prev.segment,
+        fibonacci: type === "fibonacci" ? { ...prev.fibonacci, ...partial } : prev.fibonacci,
+        freeRetracement: type === "freeRetracement" ? { ...prev.freeRetracement, ...partial } : prev.freeRetracement,
+        channel: type === "channel" ? { ...prev.channel, ...partial } : prev.channel,
+        stopGain: type === "stopGain" ? { ...prev.stopGain, ...partial } : prev.stopGain,
+        rectangle: type === "rectangle" ? { ...prev.rectangle, ...partial } : prev.rectangle,
+        horizontalLine: type === "horizontalLine" ? { ...prev.horizontalLine, ...partial } : prev.horizontalLine,
+        verticalLine: type === "verticalLine" ? { ...prev.verticalLine, ...partial } : prev.verticalLine,
+        arrow: type === "arrow" ? { ...prev.arrow, ...partial } : prev.arrow,
+        text: type === "text" ? { ...prev.text, ...partial } : prev.text,
+        pencil: type === "pencil" ? { ...prev.pencil, ...partial } : prev.pencil,
+      };
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(KLINE_DRAW_DEFAULTS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCreateTextSegment = useCallback(
+    (textContent: string) => {
+      if (!drawPendingText) return;
+      const { index1, price1 } = drawPendingText;
+      const df = drawDefaults.text;
+      const newSeg: DrawSegment = {
+        index1,
+        price1,
+        index2: index1,
+        price2: price1,
+        type: "text",
+        textContent: textContent || " ",
+        color: df?.color ?? DEFAULT_DRAW_TEXT_COLOR,
+        textBold: df?.textBold ?? false,
+        textSize: df?.textSize ?? "small",
+        textHideBox: df?.textHideBox === true,
+      };
+      let newIndex = 0;
+      flushSync(() => {
+        setDrawSegments((prev) => {
+          newIndex = prev.length;
+          return [...prev, newSeg];
+        });
+      });
+      setDrawPendingText(null);
+      setSelectedSegmentIndex(newIndex);
+      selectSelectTool();
+      setDrawOpen(true);
+      setSegmentToolboxCollapsed(false);
+    },
+    [drawPendingText, drawDefaults.text, setDrawSegments, setDrawPendingText, setSelectedSegmentIndex, selectSelectTool, setDrawOpen, setSegmentToolboxCollapsed]
+  );
+
+  // Persistir visibilidade dos desenhos (por timeframe: símbolo + intervalo). Não gravar ao trocar timeframe (estado ainda é o anterior).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (drawStorageKey !== lastPersistedVisibleKeyRef.current) {
+      lastPersistedVisibleKeyRef.current = drawStorageKey;
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(KLINE_DRAW_VISIBLE_KEY);
+      const data: Record<string, boolean> = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      data[drawStorageKey] = drawingsVisible;
+      window.localStorage.setItem(KLINE_DRAW_VISIBLE_KEY, JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+  }, [drawStorageKey, drawingsVisible]);
+
+  // Persistir segmentos só no localStorage ao criar/editar (não dispara save de layout no servidor).
+  // Só grava depois do carregamento inicial (segmentsApplied), senão sobrescreve o localStorage com [] no primeiro render.
+  // Chave por timeframe (símbolo + intervalo). Ao trocar timeframe, não gravar nesta rodada (drawSegments ainda é do intervalo anterior).
+  useEffect(() => {
+    if (!segmentsApplied || typeof window === "undefined") return;
+    if (drawStorageKey !== lastPersistedDrawKeyRef.current) {
+      lastPersistedDrawKeyRef.current = drawStorageKey;
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(KLINE_DRAW_SEGMENTS_KEY);
+      const data: Record<string, DrawSegment[]> = raw ? (JSON.parse(raw) as Record<string, DrawSegment[]>) : {};
+      const sharedKey = getDrawSharedIntervalsKey(symbolProp ?? null);
+      const { sharedOut, localOut } = splitDrawSegmentsForPersistence(drawSegments);
+      if (sharedKey) {
+        data[drawStorageKey] = localOut;
+        data[sharedKey] = sharedOut;
+      } else {
+        data[drawStorageKey] =
+          sharedOut.length > 0
+            ? [...localOut, ...sharedOut.map((s) => ({ ...s, lineShowOnAllIntervals: false }))]
+            : localOut;
+      }
+      window.localStorage.setItem(KLINE_DRAW_SEGMENTS_KEY, JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+  }, [drawStorageKey, drawSegments, segmentsApplied, symbolProp]);
+
+  const candleColors = CANDLE_COLOR_PRESETS.find((p) => p.id === candleColorPreset) ?? CANDLE_COLOR_PRESETS[0];
+
+  // Layout default e slots 1–7 vêm somente do banco; não inicializar do localStorage para não interferir.
+  // (Antes o default era aplicado de KLINE_PREFS_KEY; agora o default é aplicado no effect do layout via API defaultLayout.)
+
+  // Inicializar quantidade de candles, tipo de gráfico e olho visible do localStorage (última situação do usuário).
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY) : null;
+      if (!raw) return;
+      const data = JSON.parse(raw) as { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean; chartSizePercent?: number; yPadOffset?: number };
+      const vc = typeof data.visibleCount === "number" && data.visibleCount >= VISIBLE_COUNT_MIN && data.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(data.visibleCount) : null;
+      if (vc != null) setVisibleCount(vc);
+      // Só restaurar estilo do gráfico do localStorage em OHLC; Renko/Range/Kagi têm estilo imposto pelo intervalo.
+      if (aggSeriesKind === "ohlc" && isPersistedChartStyle(data.chartStyle)) setChartStyle(data.chartStyle);
+      if (data.candleBodyStyle === "filled" || data.candleBodyStyle === "hollow") setCandleBodyStyle(data.candleBodyStyle);
+      if (typeof data.drawingsVisible === "boolean") setDrawingsVisible(data.drawingsVisible);
+      const csp = typeof data.chartSizePercent === "number" && data.chartSizePercent >= CHART_SIZE_PERCENT_MIN && data.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(data.chartSizePercent) : null;
+      if (csp != null) setChartSizePercent(csp);
+      const ypo = typeof data.yPadOffset === "number" && data.yPadOffset >= Y_PAD_OFFSET_MIN && data.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(data.yPadOffset) : null;
+      if (ypo != null) setYPadOffset(ypo);
+    } catch {
+      /* ignore */
+    }
+  }, [aggSeriesKind]);
+
+  const prefsWriteSkippedRef = useRef(false);
+  // Persistir prefs no localStorage só quando o layout ativo for default (slot 0); em slot 1–7 o estado vem do layout no banco.
+  // Ignorar a primeira execução para não sobrescrever com valores default antes do restore do localStorage.
   useEffect(() => {
     try {
       if (typeof window === "undefined") return;
+      if (!prefsWriteSkippedRef.current) {
+        prefsWriteSkippedRef.current = true;
+        return;
+      }
+      const layoutRaw = getKlineLastLayoutStorage();
+      const slotNum = layoutRaw != null && layoutRaw !== "default" && layoutRaw !== "0" ? Number(layoutRaw) : 0;
+      if (Number.isInteger(slotNum) && slotNum >= 1 && slotNum <= 7) return;
       window.localStorage.setItem(
         KLINE_PREFS_KEY,
-        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis })
+        JSON.stringify({ visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle })
       );
     } catch {
       /* ignore */
     }
-  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis]);
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle]);
 
-  // Ao montar: se existir último layout selecionado, aplicá-lo (default ou slot da API). Sempre chama done() para desbloquear o gráfico.
+  // Persistir prefs locais ao alterar; pular a 1ª execução para não sobrescrever antes do restore do init.
+  const localPrefsWriteSkippedRef = useRef(false);
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!localPrefsWriteSkippedRef.current) {
+      localPrefsWriteSkippedRef.current = true;
+      return;
+    }
+    try {
+      window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify({ visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset }));
+    } catch {
+      /* ignore */
+    }
+  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset]);
+
+  // Persistir others no servidor em tempo real (slot 1–7: PATCH; slot 0 e admin: POST chart-models). Debounce 500ms.
+  const othersInstantPushSkippedRef = useRef(false);
+  const othersPushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!othersInstantPushSkippedRef.current) {
+      othersInstantPushSkippedRef.current = true;
+      return;
+    }
+    if (isFreeUser) return;
+
+    const payload = {
+      visibleCount,
+      chartStyle,
+      candleBodyStyle,
+      drawingsVisible,
+      chartSizePercent,
+      yPadOffset,
+    };
+
+    if (othersPushTimeoutRef.current) clearTimeout(othersPushTimeoutRef.current);
+    othersPushTimeoutRef.current = setTimeout(() => {
+      othersPushTimeoutRef.current = null;
+      if (Date.now() - layoutAppliedAtRef.current < 2000) return;
+      const raw = getKlineLastLayoutStorage();
+      const slot = raw === "default" || raw === "0" || raw == null ? 0 : Math.min(7, Math.max(1, Number(raw) || 0));
+
+      if (slot >= 1 && slot <= 7) {
+        fetch(`${API_BASE}/chart-layouts`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+          credentials: "include",
+          body: JSON.stringify({ slot, others: payload }),
+        }).catch(() => {});
+      } else if (slot === 0 && isAdmin) {
+        fetch(`${API_BASE}/chart-models`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ slot: 0, others: payload }),
+        }).catch(() => {});
+      }
+    }, 500);
+
+    return () => {
+      if (othersPushTimeoutRef.current) {
+        clearTimeout(othersPushTimeoutRef.current);
+        othersPushTimeoutRef.current = null;
+      }
+    };
+  }, [visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset, isAdmin, isFreeUser]);
+
+  // Toda vez que entrar na página do gráfico ou trocar símbolo: carregar layout do banco e reaplicar (incluindo estratégias e indicadores).
+  const lastLayoutApplyAtRef = useRef<number>(0);
+  const LAYOUT_APPLY_DEBOUNCE_MS = 3000;
+  const LAYOUT_APPLY_DELAY_MS = 0;
+
+  useEffect(() => {
+    lastLayoutApplyAtRef.current = 0;
+  }, [symbolProp]);
+
+  // Usuário free: sempre layout default; forçar localStorage e não usar slot 1–7.
+  useEffect(() => {
+    if (!isFreeUser || typeof window === "undefined") return;
+    const raw = getKlineLastLayoutStorage();
+    if (raw !== "default" && raw !== "0") {
+      setKlineLastLayoutStorage("default");
+      setShowUpgradeModal(true);
+    }
+  }, [isFreeUser]);
+
+  useEffect(() => {
+    if (pathname !== SISTEMA_PATH) return;
+    // Só aplicar layout depois do carregamento dos indicadores (klines/gráfico com dados).
+    if (klines.length === 0) {
+      addLayoutLoadLog(`klines.length=0 → aguardando carregamento dos indicadores`);
+      return;
+    }
+    const now = Date.now();
+    if (lastLayoutApplyAtRef.current && now - lastLayoutApplyAtRef.current < LAYOUT_APPLY_DEBOUNCE_MS) {
+      addLayoutLoadLog(`skip: layout aplicado há ${Math.round((now - lastLayoutApplyAtRef.current) / 1000)}s`);
+      setLayoutApplied(true);
+      return;
+    }
+    addLayoutLoadLog(`pathname=${pathname} → efeito layout rodando`);
     let cancelled = false;
+    let applyDelayTimeoutId: ReturnType<typeof setTimeout> | null = null;
     const done = () => {
       if (!cancelled) setLayoutApplied(true);
     };
-    try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
-      if (raw == null) {
-        done();
-        return;
-      }
-      if (raw === "default") {
-        applyLayoutConfig(getDefaultConfig());
-        done();
-        return;
-      }
-    } catch {
-      done();
-      return;
+    let raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
+    if (isFreeUser) {
+      raw = "default";
+      if (typeof window !== "undefined") setKlineLastLayoutStorage("default");
     }
+    addLayoutLoadLog(`KLINE_LAST_LAYOUT_KEY raw="${raw ?? "null"}"${isFreeUser ? " (free→default)" : ""}`);
     const timeoutId = setTimeout(done, 2000);
     (async () => {
+      let isSlot1to7 = false;
+      let useDelay = false;
       try {
-        const res = await fetch(`${API_BASE}/chart-layouts`);
-        if (!res.ok || cancelled) {
+        const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store", headers: { "X-Tab-Id": getSessionTabId() } });
+        if (cancelled) {
+          addLayoutLoadLog("cancelled (ignorar, não aplicar layout)");
+          done();
+          return;
+        }
+        if (!res.ok) {
+          addLayoutLoadLog(`fetch !ok ${res.status} (default não aplica)`);
+          clearTimeout(timeoutId);
           done();
           return;
         }
         const data = await res.json();
-        if (!Array.isArray(data.layouts) || cancelled) {
+        if (cancelled) {
+          addLayoutLoadLog("cancelled após parse (ignorar)");
           done();
           return;
         }
-        const layouts = data.layouts as { slot: number; config: Record<string, unknown> }[];
-        const raw = typeof window !== "undefined" ? window.localStorage.getItem(KLINE_LAST_LAYOUT_KEY) : null;
-        if (raw == null || raw === "default") {
+        const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown>; name?: string }[]) : [];
+        const defaultLayout = data.defaultLayout != null && typeof data.defaultLayout === "object" && !Array.isArray(data.defaultLayout)
+          ? (data.defaultLayout as Record<string, unknown>)
+          : null;
+        addLayoutLoadLog(`API ok: layouts slots=[${layouts.map((l) => l.slot).join(",")}], hasDefault=${!!defaultLayout}`);
+
+        const getLayoutLabel = (layout: { slot: number; name?: string }) =>
+          layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot)));
+
+        const markApplied = () => {
+          lastLayoutApplyAtRef.current = Date.now();
+        };
+
+        // Reaplicação só para layouts 1–7; no default não aplica nada (nem imediatamente nem com delay).
+        const slotNum = raw != null && raw !== "default" && raw !== "0" ? Number(raw) : 0;
+        isSlot1to7 = Number.isInteger(slotNum) && slotNum >= 1 && slotNum <= 7;
+        useDelay = isSlot1to7 && LAYOUT_APPLY_DELAY_MS > 0;
+
+        if (!isSlot1to7) {
+          // Default: carregar somente do banco (defaultLayout); storage não interfere.
+          const defaultConfig = defaultLayout && typeof defaultLayout === "object" && !Array.isArray(defaultLayout) && defaultLayout.config != null && typeof defaultLayout.config === "object" && !Array.isArray(defaultLayout.config)
+            ? (defaultLayout as { config: Record<string, unknown> }).config
+            : null;
+          if (defaultConfig) {
+            addLayoutLoadLog("aplicando layout default do banco");
+            applyLayoutConfig(defaultConfig, 0, "api");
+            // Criar no localStorage apenas as prefs que ainda não existirem (não sobrescrever).
+            try {
+              if (typeof window !== "undefined") {
+                const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+                const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+                const vc = typeof defaultConfig.visibleCount === "number" && defaultConfig.visibleCount >= VISIBLE_COUNT_MIN && defaultConfig.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(defaultConfig.visibleCount)) : undefined;
+                const cs = isPersistedChartStyle(defaultConfig.chartStyle as string) ? (defaultConfig.chartStyle as string) : undefined;
+                const cbs = (defaultConfig.candleBodyStyle === "filled" || defaultConfig.candleBodyStyle === "hollow") ? defaultConfig.candleBodyStyle as string : undefined;
+                const dv = typeof defaultConfig.drawingsVisible === "boolean" ? defaultConfig.drawingsVisible : undefined;
+                const csp = typeof defaultConfig.chartSizePercent === "number" && defaultConfig.chartSizePercent >= CHART_SIZE_PERCENT_MIN && defaultConfig.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(defaultConfig.chartSizePercent)) : undefined;
+                const ypo = typeof defaultConfig.yPadOffset === "number" && defaultConfig.yPadOffset >= Y_PAD_OFFSET_MIN && defaultConfig.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(defaultConfig.yPadOffset)) : undefined;
+                if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+                if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+                if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+                if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+                if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
+                window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+              }
+            } catch {
+              /* ignore */
+            }
+            markApplied();
+          } else {
+            addLayoutLoadLog("default/0: sem defaultLayout no banco, não aplica");
+          }
+          onCurrentLayoutLabelChange?.(t.defaultLayout);
+          clearTimeout(timeoutId);
           done();
-          return;
+        } else {
+          const runApply = () => {
+            if (cancelled) return;
+            const layout = layouts.find((l) => l.slot === slotNum);
+            if (layout) {
+              const applied = Array.isArray((layout.config as Record<string, unknown>).appliedStrategyIds)
+                ? (layout.config as Record<string, unknown>).appliedStrategyIds as string[]
+                : [];
+              addLayoutLoadLog(`aplicando slot ${slotNum}, appliedStrategyIds(${applied.length})=[${applied.slice(0, 5).join(",")}${applied.length > 5 ? "…" : ""}]`);
+              applyLayoutConfig(layout.config, layout.slot, "api");
+              // Criar no localStorage apenas as prefs que ainda não existirem (não sobrescrever).
+              try {
+                if (typeof window !== "undefined") {
+                  const c = layout.config as Record<string, unknown>;
+                  const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+                  const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+                  const vc = typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(c.visibleCount)) : undefined;
+                  const cs = isPersistedChartStyle(c.chartStyle as string) ? (c.chartStyle as string) : undefined;
+                  const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
+                  const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+                  const csp = typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(c.chartSizePercent)) : undefined;
+                  const ypo = typeof c.yPadOffset === "number" && c.yPadOffset >= Y_PAD_OFFSET_MIN && c.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(c.yPadOffset)) : undefined;
+                  if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+                  if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+                  if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+                  if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+                  if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+                  if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
+                  window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+                  setKlineLastLayoutStorage(String(slotNum));
+                }
+              } catch {
+                /* ignore */
+              }
+              markApplied();
+              onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
+            } else {
+              addLayoutLoadLog(`slot ${slotNum} não encontrado em layouts, não aplica`);
+              onCurrentLayoutLabelChange?.(t.defaultLayout);
+            }
+            clearTimeout(timeoutId);
+            done();
+          };
+
+          if (useDelay) {
+            addLayoutLoadLog(`aguardando ${LAYOUT_APPLY_DELAY_MS}ms antes de reaplicar layout slot ${slotNum}`);
+            applyDelayTimeoutId = setTimeout(runApply, LAYOUT_APPLY_DELAY_MS);
+          } else {
+            requestAnimationFrame(runApply);
+          }
         }
-        const slot = Number(raw);
-        if (!Number.isInteger(slot) || cancelled) {
-          done();
-          return;
-        }
-        const layout = layouts.find((l) => l.slot === slot);
-        if (layout) applyLayoutConfig(layout.config);
-      } catch {
-        /* ignore */
+      } catch (e) {
+        addLayoutLoadLog(`catch: ${e instanceof Error ? e.message : String(e)}`);
       } finally {
-        clearTimeout(timeoutId);
-        done();
+        if (isSlot1to7 && !useDelay) {
+          clearTimeout(timeoutId);
+          done();
+        }
       }
     })();
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
+      if (applyDelayTimeoutId != null) clearTimeout(applyDelayTimeoutId);
     };
-  }, []);
+  }, [pathname, klines.length, symbolProp, addLayoutLoadLog, onCurrentLayoutLabelChange, t.defaultLayout, t.layoutName]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -400,258 +1034,949 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     return () => document.removeEventListener("click", close);
   }, [colorsOpen]);
 
-  useEffect(() => {
-    if (!saveOpen && !loadOpen) return;
-    const close = (e: MouseEvent) => {
-      if (saveLoadRef.current && !saveLoadRef.current.contains(e.target as Node)) {
-        setSaveOpen(false);
-        setLoadOpen(false);
+  const [canSaveDefault, setCanSaveDefault] = useState(false);
+
+  const fetchSavedLayouts = useCallback(async () => {
+    setSavedLayoutsError(null);
+    try {
+      const res = await fetch(`${API_BASE}/chart-layouts`, { credentials: "include", cache: "no-store", headers: { "X-Tab-Id": getSessionTabId() } });
+      if (!res.ok) {
+        setSavedLayoutsError(t.loadError);
+        return;
       }
-    };
-    document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [saveOpen, loadOpen]);
+      const data = await res.json();
+      const layouts = Array.isArray(data.layouts) ? (data.layouts as { slot: number; config: Record<string, unknown>; name?: string }[]) : [];
+      const def = data.defaultLayout;
+      const defaultLayout =
+        def != null && typeof def === "object" && !Array.isArray(def) && def.config != null
+          ? { slot: 0, config: def.config as Record<string, unknown>, name: def.name as string | undefined }
+          : null;
+      setCanSaveDefault(Boolean(data.canSaveDefault));
+      setSavedLayouts(defaultLayout ? [defaultLayout, ...layouts] : layouts);
+    } catch {
+      setSavedLayoutsError(t.loadError);
+    }
+  }, [t.loadError]);
 
-  const fetchSavedLayouts = async () => {
-    const res = await fetch(`${API_BASE}/chart-layouts`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (Array.isArray(data.layouts)) setSavedLayouts(data.layouts);
+  useEffect(() => {
+    fetchSavedLayouts();
+  }, [fetchSavedLayouts]);
+
+  const getCurrentLayoutConfigRef = useRef<() => Record<string, unknown>>(() => ({}));
+  getCurrentLayoutConfigRef.current = () => {
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
+    const extra = getLayoutExtraConfig?.() ?? {};
+    return { ...baseConfig, ...extra };
   };
+  useEffect(() => {
+    const handler = () => {
+      window.dispatchEvent(new CustomEvent("chart-layout-config", { detail: getCurrentLayoutConfigRef.current() }));
+    };
+    window.addEventListener("chart-layout-get-config", handler);
+    return () => window.removeEventListener("chart-layout-get-config", handler);
+  }, []);
 
-  const handleSaveLayout = async (slot: number) => {
-    setSaveOpen(false);
-    const config = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, lastCloseLineColor, lastCloseTextColor, showIndicatorLastValueOnYAxis, groupMinutes };
+  /** Monta layout, indicators, strategies e regressions a partir do estado atual (chart + extra do KlinesTable). Desenhos ficam só no localStorage. */
+  const buildLayoutColumns = useCallback(() => {
+    const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
+    const extra = getLayoutExtraConfig?.() ?? {} as Record<string, unknown>;
+    const layout = {
+      ...baseConfig,
+      volumeAtPriceEnabled: extra.volumeAtPriceEnabled,
+      volumeAtPriceBuckets: extra.volumeAtPriceBuckets,
+      volumeAtPricePercent: extra.volumeAtPricePercent,
+      volumeAtPriceOpacity: extra.volumeAtPriceOpacity,
+      volumeAtPriceWidthPercent: extra.volumeAtPriceWidthPercent,
+      volumeAtPriceSide: extra.volumeAtPriceSide,
+      volumeAtPriceColorAbove: extra.volumeAtPriceColorAbove,
+      volumeAtPriceColorBelow: extra.volumeAtPriceColorBelow,
+    };
+    const indicators = Array.isArray(extra.userIndicators) ? extra.userIndicators : [];
+    const regressions = Array.isArray(extra.userRegressions) ? extra.userRegressions : [];
+    const strategiesPayload = {
+      strategies: Array.isArray(extra.strategies) ? extra.strategies : [],
+      appliedStrategyIds: Array.isArray(extra.appliedStrategyIds) ? extra.appliedStrategyIds : [],
+    };
+    return { layout, indicators, strategies: strategiesPayload, regressions };
+  }, [visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle, getLayoutExtraConfig]);
+
+  /** Chaves do eixo Y (para debug save/load). */
+  const LAYOUT_Y_AXIS_KEYS = ["footerYAxisBgColor", "backgroundTextColor", "footerYAxisTextColor"] as const;
+
+  const performSaveLayout = async (slot: number) => {
+    setSavedLayoutsError(null);
+    if (slot === 0) {
+      const baseConfig = { visibleCount, invisibleCandlesEnd, candleColorPreset, yAxisAbbreviated, logScale, containerBackground, chartBackground, footerYAxisBgColor, backgroundTextColor, footerYAxisTextColor, lineTableColor, lineTableStrokeWidth, lineTableStrokeStyle, secondaryGridColor, showMainAxis, showSecondaryAxis, showLastCloseLine, showCandleCountdown, lastCloseLineColor, lastCloseTextColor, lastCloseLineStrokeWidth, lastCloseLineStrokeStyle, secondaryPanelHeightPercent, volumeOnPrice, volumeOnPriceOpacity, chartSizePercent, yPadOffset, chartStyle, candleBodyStyle };
+      const extra = getLayoutExtraConfig?.() ?? {};
+      const config: Record<string, unknown> = { ...baseConfig, ...extra, strategies: [], userIndicators: [], appliedStrategyIds: [] };
+      const res = await fetch(`${API_BASE}/chart-models`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot: 0, config, name: "" }),
+      });
+      if (res.ok) {
+        setSavedLayoutName(t.defaultLayout);
+        setSaveSuccessModalOpen(true);
+        await fetchSavedLayouts();
+      }
+      return;
+    }
+    const { layout, indicators, strategies, regressions } = buildLayoutColumns();
+    if (layoutSaveLoadDebugEnabled) {
+      const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout[k], [`${k}_typeof`]: typeof layout[k] }), {} as Record<string, unknown>);
+      const msg = `[layout save] slot=${slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
+      addLayoutLoadLog(msg);
+      if (typeof console !== "undefined") console.log(msg);
+    }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slot, config }),
+      headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+      credentials: "include",
+      body: JSON.stringify({
+        slot,
+        layout,
+        indicators,
+        strategies,
+        regressions,
+        robots: getRobotsColumnPayloadForChartLayout(),
+      }),
+    });
+    if (!res.ok) {
+      setSavedLayoutsError((t as Record<string, string>).saveError ?? t.loadError);
+      return;
+    }
+    const label = savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot));
+    setSavedLayoutName(label);
+    setSaveSuccessModalOpen(true);
+    await fetchSavedLayouts();
+  };
+
+  const getLayoutLabelBySlot = (slot: number) =>
+    slot === 0 ? t.defaultLayout : (savedLayouts.find((l) => l.slot === slot)?.name?.trim() || t.layoutName.replace("{n}", String(slot)));
+
+  const handleSaveLayout = (slot: number) => {
+    if (isFreeUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setSaveConfirmSlot(slot);
+  };
+
+  const handleConfirmSaveLayout = async () => {
+    const slot = saveConfirmSlot;
+    if (slot == null) return;
+    setSaveConfirmSlot(null);
+    await performSaveLayout(slot);
+  };
+
+  const handleRenameLayout = async (
+    layout: { slot: number; config: Record<string, unknown>; name?: string },
+    newName: string
+  ) => {
+    const name = newName.trim().slice(0, 24);
+    if (layout.slot === 0) {
+      const res = await fetch(`${API_BASE}/chart-models`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slot: 0, config: layout.config, name: name || "" }),
+      });
+      if (res.ok) {
+        setSavedLayoutName(name || layout.name?.trim() || t.defaultLayout);
+        setSaveSuccessModalOpen(true);
+        fetchSavedLayouts();
+      }
+      return;
+    }
+    const res = await fetch(`${API_BASE}/chart-layouts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+      credentials: "include",
+      body: JSON.stringify({ slot: layout.slot, config: layout.config, name: name || "" }),
     });
     if (res.ok) {
-      setSaveLoadMsg(t.savedSuccess);
-      setTimeout(() => setSaveLoadMsg(null), 2000);
+      setSavedLayoutName(name || layout.name?.trim() || t.layoutName.replace("{n}", String(layout.slot)));
+      setSaveSuccessModalOpen(true);
+      await fetchSavedLayouts();
     }
   };
 
-  const applyLayoutConfig = (c: Record<string, unknown>) => {
-    if (typeof c.visibleCount === "number" && (VISIBLE_OPTIONS as readonly number[]).includes(c.visibleCount)) setVisibleCount(c.visibleCount as VisibleCount);
+  /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = "indicators" | "regressions" (array), "strategies" { strategies, appliedStrategyIds }. */
+  const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies" | "regressions", payload?: unknown) => {
+    try {
+      const raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
+      if (!raw || raw === "default") return;
+      const slot = Number(raw);
+      if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
+
+      if (part) {
+        const indicatorsPayload = part === "indicators" && Array.isArray(payload) ? payload : null;
+        const regressionsPayload = part === "regressions" && Array.isArray(payload) ? payload : null;
+        const strategiesPayload = part === "strategies" && payload != null && typeof payload === "object" && "strategies" in payload && "appliedStrategyIds" in payload ? (payload as { strategies: unknown[]; appliedStrategyIds: string[] }) : null;
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol } = buildLayoutColumns();
+        const body =
+          part === "layout"
+            ? { slot, layout: layoutCol }
+            : part === "indicators"
+              ? { slot, indicators: indicatorsPayload ?? indicatorsCol }
+              : part === "regressions"
+                ? { slot, regressions: regressionsPayload ?? regressionsCol }
+                : { slot, strategies: strategiesPayload ?? strategiesCol };
+        await fetch(`${API_BASE}/chart-layouts`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+          credentials: "include",
+          body: JSON.stringify(body),
+        }).catch(() => {});
+      } else {
+        const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol } = buildLayoutColumns();
+        await fetch(`${API_BASE}/chart-layouts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
+          credentials: "include",
+          body: JSON.stringify({
+            slot,
+            layout: layoutCol,
+            indicators: indicatorsCol,
+            strategies: strategiesCol,
+            regressions: regressionsCol,
+            robots: getRobotsColumnPayloadForChartLayout(),
+          }),
+        }).catch(() => {});
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [buildLayoutColumns]);
+
+  const saveLayoutToServerIfSlotRef = useRef(saveLayoutToServerIfSlot);
+  saveLayoutToServerIfSlotRef.current = saveLayoutToServerIfSlot;
+
+  const chartLayoutSave = useChartLayoutSave();
+  /** Save manual: ao clicar em "Salvar" ao lado de Volume/Volume no preço; persiste só a coluna layout. */
+  const saveVolumePrefsToLayout = useCallback(() => {
+    chartLayoutSave?.saveLayoutNow("layout");
+  }, [chartLayoutSave]);
+
+  const onSwapSecondaryPanel = useCallback(
+    (panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => {
+      swapAdjacentSecondaryPanels(panel, (next) => chartLayoutSave?.saveLayoutNow("indicators", next));
+    },
+    [swapAdjacentSecondaryPanels, chartLayoutSave]
+  );
+
+  useEffect(() => {
+    if (!chartLayoutSave) return;
+    chartLayoutSave.registerSaveLayout((part, payload) => saveLayoutToServerIfSlotRef.current?.(part, payload));
+    return () => chartLayoutSave.registerSaveLayout(null);
+  }, [chartLayoutSave]);
+
+  const onLayoutConfigLoadedRef = useRef(onLayoutConfigLoaded);
+  onLayoutConfigLoadedRef.current = onLayoutConfigLoaded;
+
+  const layoutAppliedAtRef = useRef(0);
+  const applyLayoutConfig = (c: Record<string, unknown>, slot?: number, source?: "api" | "user-load") => {
+    layoutAppliedAtRef.current = Date.now();
+    const num = (v: unknown): number | null => (typeof v === "number" && !Number.isNaN(v) ? v : typeof v === "string" ? (Number(v) as number) : null);
+    // Preferir localStorage para prefs locais: se já existir valor salvo, não sobrescrever com o do layout.
+    let localPrefs: { visibleCount?: number; chartStyle?: string; candleBodyStyle?: string; drawingsVisible?: boolean; chartSizePercent?: number; yPadOffset?: number } = {};
+    try {
+      if (typeof window !== "undefined") {
+        const raw = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+        if (raw) localPrefs = JSON.parse(raw) as typeof localPrefs;
+      }
+    } catch {
+      /* ignore */
+    }
+    const visibleCountVal = num(c.visibleCount);
+    const useVisibleCount = localPrefs.visibleCount != null && localPrefs.visibleCount >= VISIBLE_COUNT_MIN && localPrefs.visibleCount <= VISIBLE_COUNT_MAX
+      ? Math.round(localPrefs.visibleCount)
+      : (visibleCountVal != null && visibleCountVal >= VISIBLE_COUNT_MIN && visibleCountVal <= VISIBLE_COUNT_MAX ? Math.round(visibleCountVal) : null);
+    if (useVisibleCount != null) setVisibleCount(useVisibleCount);
     if (typeof c.candleColorPreset === "string") {
       const id = (c.candleColorPreset === "redGreen" ? "greenRed" : c.candleColorPreset === "whiteBlack" ? "blackWhite" : c.candleColorPreset) as CandleColorPresetId;
       if (CANDLE_COLOR_PRESETS.some((p) => p.id === id)) setCandleColorPreset(id);
     }
     if (typeof c.yAxisAbbreviated === "boolean") setYAxisAbbreviated(c.yAxisAbbreviated);
     if (typeof c.logScale === "boolean") setLogScale(c.logScale);
-    if (typeof c.containerBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.containerBackground)) setContainerBackground(c.containerBackground as BackgroundId);
-    if (typeof c.chartBackground === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.chartBackground)) setChartBackground(c.chartBackground as BackgroundId);
-    if (typeof c.footerYAxisBgColor === "number" && BACKGROUND_PALETTE.some((b) => b.id === c.footerYAxisBgColor)) setFooterYAxisBgColor(c.footerYAxisBgColor as BackgroundId);
-    if (typeof c.backgroundTextColor === "number" && TEXT_PALETTE.some((b) => b.id === c.backgroundTextColor)) setBackgroundTextColor(c.backgroundTextColor as TextColorId);
-    if (typeof c.footerYAxisTextColor === "number" && TEXT_PALETTE.some((b) => b.id === c.footerYAxisTextColor)) setFooterYAxisTextColor(c.footerYAxisTextColor as TextColorId);
-    if (typeof c.lineTableColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lineTableColor)) setLineTableColor(c.lineTableColor as LineGridId);
-    if (typeof c.secondaryGridColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.secondaryGridColor)) setSecondaryGridColor(c.secondaryGridColor as LineGridId);
+    const containerBg = num(c.containerBackground);
+    if (containerBg != null && BACKGROUND_PALETTE.some((b) => b.id === containerBg)) setContainerBackground(containerBg as BackgroundId);
+    const chartBg = num(c.chartBackground);
+    if (chartBg != null && BACKGROUND_PALETTE.some((b) => b.id === chartBg)) setChartBackground(chartBg as BackgroundId);
+    const footerYAxisBg = num(c.footerYAxisBgColor);
+    if (footerYAxisBg != null && BACKGROUND_PALETTE.some((b) => b.id === footerYAxisBg)) setFooterYAxisBgColor(footerYAxisBg as BackgroundId);
+    const backgroundText = num(c.backgroundTextColor);
+    if (backgroundText != null && TEXT_PALETTE.some((b) => b.id === backgroundText)) setBackgroundTextColor(backgroundText as TextColorId);
+    const footerYAxisText = num(c.footerYAxisTextColor);
+    if (footerYAxisText != null && TEXT_PALETTE.some((b) => b.id === footerYAxisText)) setFooterYAxisTextColor(footerYAxisText as TextColorId);
+    const lineTable = num(c.lineTableColor);
+    if (lineTable != null && LINE_GRID_PALETTE.some((b) => b.id === lineTable)) setLineTableColor(lineTable as LineGridId);
+    if (c.lineTableStrokeWidth === "thin" || c.lineTableStrokeWidth === "normal" || c.lineTableStrokeWidth === "thick") setLineTableStrokeWidth(c.lineTableStrokeWidth);
+    if (c.lineTableStrokeStyle === "solid" || c.lineTableStrokeStyle === "dotted" || c.lineTableStrokeStyle === "dashed") setLineTableStrokeStyle(c.lineTableStrokeStyle);
+    const secondaryGrid = num(c.secondaryGridColor);
+    if (secondaryGrid != null && LINE_GRID_PALETTE.some((b) => b.id === secondaryGrid)) setSecondaryGridColor(secondaryGrid as LineGridId);
     if (typeof c.showMainAxis === "boolean") setShowMainAxis(c.showMainAxis);
     if (typeof c.showSecondaryAxis === "boolean") setShowSecondaryAxis(c.showSecondaryAxis);
     if (typeof c.showLastCloseLine === "boolean") setShowLastCloseLine(c.showLastCloseLine);
-    if (typeof c.lastCloseLineColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseLineColor)) setLastCloseLineColor(c.lastCloseLineColor as LineGridId);
-    if (typeof c.lastCloseTextColor === "number" && LINE_GRID_PALETTE.some((b) => b.id === c.lastCloseTextColor)) setLastCloseTextColor(c.lastCloseTextColor as LineGridId);
-    if (typeof c.showIndicatorLastValueOnYAxis === "boolean") setShowIndicatorLastValueOnYAxis(c.showIndicatorLastValueOnYAxis);
-    if (typeof c.invisibleCandlesEnd === "number" && c.invisibleCandlesEnd >= 0 && c.invisibleCandlesEnd <= 30) setInvisibleCandlesEnd(c.invisibleCandlesEnd);
-    onLayoutConfigLoaded?.(c);
+    if (typeof c.showCandleCountdown === "boolean") setShowCandleCountdown(c.showCandleCountdown);
+    const lastCloseLine = num(c.lastCloseLineColor);
+    if (lastCloseLine != null && LINE_GRID_PALETTE.some((b) => b.id === lastCloseLine)) setLastCloseLineColor(lastCloseLine as LineGridId);
+    const lastCloseText = num(c.lastCloseTextColor);
+    if (lastCloseText != null && LINE_GRID_PALETTE.some((b) => b.id === lastCloseText)) setLastCloseTextColor(lastCloseText as LineGridId);
+    if (c.lastCloseLineStrokeWidth === "thin" || c.lastCloseLineStrokeWidth === "normal" || c.lastCloseLineStrokeWidth === "thick") setLastCloseLineStrokeWidth(c.lastCloseLineStrokeWidth);
+    if (c.lastCloseLineStrokeStyle === "solid" || c.lastCloseLineStrokeStyle === "dotted" || c.lastCloseLineStrokeStyle === "dashed") setLastCloseLineStrokeStyle(c.lastCloseLineStrokeStyle);
+    const invisibleEnd = num(c.invisibleCandlesEnd);
+    if (invisibleEnd != null && invisibleEnd >= 0 && invisibleEnd <= 50) setInvisibleCandlesEnd(invisibleEnd);
+    const secondaryPanelH = num(c.secondaryPanelHeightPercent);
+    if (secondaryPanelH != null && secondaryPanelH >= SECONDARY_PANEL_HEIGHT_MIN && secondaryPanelH <= SECONDARY_PANEL_HEIGHT_MAX) setSecondaryPanelHeightPercent(Math.round(secondaryPanelH));
+    if (typeof c.volumeOnPrice === "boolean") setVolumeOnPrice(c.volumeOnPrice);
+    const volOpacity = num(c.volumeOnPriceOpacity);
+    if (volOpacity != null && volOpacity >= 0 && volOpacity <= 30) setVolumeOnPriceOpacity(Math.round(volOpacity));
+    const chartSizeVal = num(c.chartSizePercent);
+    const useChartSize = localPrefs.chartSizePercent != null && localPrefs.chartSizePercent >= CHART_SIZE_PERCENT_MIN && localPrefs.chartSizePercent <= CHART_SIZE_PERCENT_MAX
+      ? Math.round(localPrefs.chartSizePercent)
+      : (chartSizeVal != null && chartSizeVal >= CHART_SIZE_PERCENT_MIN && chartSizeVal <= CHART_SIZE_PERCENT_MAX ? Math.round(chartSizeVal) : null);
+    if (useChartSize != null) setChartSizePercent(useChartSize);
+    const yPadVal = num(c.yPadOffset);
+    const useYPad = localPrefs.yPadOffset != null && localPrefs.yPadOffset >= Y_PAD_OFFSET_MIN && localPrefs.yPadOffset <= Y_PAD_OFFSET_MAX
+      ? Math.round(localPrefs.yPadOffset)
+      : (yPadVal != null && yPadVal >= Y_PAD_OFFSET_MIN && yPadVal <= Y_PAD_OFFSET_MAX ? Math.round(yPadVal) : null);
+    if (useYPad != null) setYPadOffset(useYPad);
+    const chartStyleVal = isPersistedChartStyle(c.chartStyle as string) ? (c.chartStyle as ChartStyle) : null;
+    const useChartStyle = isPersistedChartStyle(localPrefs.chartStyle) ? (localPrefs.chartStyle as ChartStyle) : chartStyleVal;
+    if (aggSeriesKind === "kagi") {
+      setChartStyle("kagiClassic");
+    } else if (aggSeriesKind === "range") {
+      setChartStyle("bars");
+    } else if (aggSeriesKind === "renko" || aggSeriesKind === "renko2x" || aggSeriesKind === "trades500") {
+      setChartStyle("candles");
+      setCandleBodyStyle("filled");
+    } else if (useChartStyle != null) {
+      setChartStyle(useChartStyle);
+    }
+    const candleBodyVal = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as "filled" | "hollow" : null;
+    const useCandleBody = (localPrefs.candleBodyStyle === "filled" || localPrefs.candleBodyStyle === "hollow") ? localPrefs.candleBodyStyle as "filled" | "hollow" : candleBodyVal;
+    if (useCandleBody != null) setCandleBodyStyle(useCandleBody);
+    if (typeof localPrefs.drawingsVisible === "boolean") setDrawingsVisible(localPrefs.drawingsVisible);
+    else if (typeof c.drawingsVisible === "boolean") setDrawingsVisible(c.drawingsVisible);
+    applyRobotsFromMergedLayoutConfig(c);
+    onLayoutConfigLoadedRef.current?.(c, slot, source);
   };
 
-  const getDefaultConfig = (): Record<string, unknown> => ({
-    visibleCount: DEFAULT_VISIBLE,
-    invisibleCandlesEnd: INVISIBLE_CANDLES_END,
-    candleColorPreset: DEFAULT_CANDLE_PRESET,
-    yAxisAbbreviated: false,
-    logScale: false,
-    containerBackground: DEFAULT_BACKGROUND,
-    chartBackground: DEFAULT_BACKGROUND,
-    footerYAxisBgColor: DEFAULT_BACKGROUND,
-    backgroundTextColor: DEFAULT_TEXT_COLOR,
-    footerYAxisTextColor: DEFAULT_TEXT_COLOR,
-    lineTableColor: DEFAULT_LINE_TABLE_COLOR,
-    secondaryGridColor: DEFAULT_SECONDARY_GRID_COLOR,
-    showMainAxis: true,
-    showSecondaryAxis: true,
-    showLastCloseLine: true,
-    lastCloseLineColor: 1,
-    lastCloseTextColor: 1,
-    showIndicatorLastValueOnYAxis: true,
-    groupMinutes,
-  });
+  const getLayoutLabel = (layout: { slot: number; name?: string }) =>
+    layout.name?.trim() || (layout.slot === 0 ? t.defaultLayout : t.layoutName.replace("{n}", String(layout.slot)));
 
-  const handleLoadDefaultLayout = () => {
-    setLoadOpen(false);
-    applyLayoutConfig(getDefaultConfig());
+  const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown>; name?: string }) => {
+    // Free user pode carregar modelo default (slot 0); só bloquear slots 1–7
+    if (isFreeUser && layout.slot >= 1) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    if (layoutSaveLoadDebugEnabled) {
+      const yAxisSlice = LAYOUT_Y_AXIS_KEYS.reduce((acc, k) => ({ ...acc, [k]: layout.config[k], [`${k}_typeof`]: typeof layout.config[k] }), {} as Record<string, unknown>);
+      const msg = `[layout load] slot=${layout.slot} Y axis: ${JSON.stringify(yAxisSlice)}`;
+      addLayoutLoadLog(msg);
+      if (typeof console !== "undefined") console.log(msg);
+    }
+    applyLayoutConfig(layout.config, layout.slot, "user-load");
+    onCurrentLayoutLabelChange?.(getLayoutLabel(layout));
     try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, "default");
+      if (typeof window !== "undefined") {
+        const c = layout.config;
+        const cur = window.localStorage.getItem(KLINE_LOCAL_PREFS_KEY);
+        const curData = cur ? (JSON.parse(cur) as Record<string, unknown>) : {};
+        const vc = typeof c.visibleCount === "number" && c.visibleCount >= VISIBLE_COUNT_MIN && c.visibleCount <= VISIBLE_COUNT_MAX ? Math.round(Number(c.visibleCount)) : undefined;
+        const cs = isPersistedChartStyle(c.chartStyle as string) ? (c.chartStyle as string) : undefined;
+        const cbs = (c.candleBodyStyle === "filled" || c.candleBodyStyle === "hollow") ? c.candleBodyStyle as string : undefined;
+        const dv = typeof c.drawingsVisible === "boolean" ? c.drawingsVisible : undefined;
+        const csp = typeof c.chartSizePercent === "number" && c.chartSizePercent >= CHART_SIZE_PERCENT_MIN && c.chartSizePercent <= CHART_SIZE_PERCENT_MAX ? Math.round(Number(c.chartSizePercent)) : undefined;
+        const ypo = typeof c.yPadOffset === "number" && c.yPadOffset >= Y_PAD_OFFSET_MIN && c.yPadOffset <= Y_PAD_OFFSET_MAX ? Math.round(Number(c.yPadOffset)) : undefined;
+        if (curData.visibleCount === undefined && vc != null) curData.visibleCount = vc;
+        if (curData.chartStyle === undefined && cs != null) curData.chartStyle = cs;
+        if (curData.candleBodyStyle === undefined && cbs != null) curData.candleBodyStyle = cbs;
+        if (curData.drawingsVisible === undefined && dv !== undefined) curData.drawingsVisible = dv;
+        if (curData.chartSizePercent === undefined && csp != null) curData.chartSizePercent = csp;
+        if (curData.yPadOffset === undefined && ypo != null) curData.yPadOffset = ypo;
+        window.localStorage.setItem(KLINE_LOCAL_PREFS_KEY, JSON.stringify(curData));
+        setKlineLastLayoutStorage(layout.slot === 0 ? "default" : String(layout.slot));
+      }
     } catch {
       /* ignore */
     }
   };
 
-  const handleLoadLayout = (layout: { slot: number; config: Record<string, unknown> }) => {
-    setLoadOpen(false);
-    applyLayoutConfig(layout.config);
-    try {
-      if (typeof window !== "undefined") window.localStorage.setItem(KLINE_LAST_LAYOUT_KEY, String(layout.slot));
-    } catch {
-      /* ignore */
-    }
-  };
+  const { registerSaveLoadData } = useChartSaveLoad();
+  useEffect(() => {
+    registerSaveLoadData({
+      savedLayouts,
+      savedLayoutsError,
+      canSaveDefault,
+      canRenameChartModels: isAdmin,
+      getLayoutLabel,
+      onSaveLayout: handleSaveLayout,
+      onLoadLayout: handleLoadLayout,
+      onRenameLayout: handleRenameLayout,
+      fetchSavedLayouts,
+      isFreeUser,
+      onUpgradeRequest: () => setShowUpgradeModal(true),
+    });
+    return () => registerSaveLoadData(null);
+  }, [registerSaveLoadData, savedLayouts, savedLayoutsError, canSaveDefault, isAdmin, fetchSavedLayouts, isFreeUser]);
 
-  // Garantir que startIndex fica dentro dos dados ao mudar visibleCount ou n
+  // Rolagem horizontal: ao mudar intervalo/agregação ou zoom (visibleCount), ir para o fim.
+  // Quando só cresce `n` (novo candle / fetch com mais barras) e o utilizador **não** estava na borda ao vivo, manter o deslocamento — evita saltar para o presente ao ler histórico.
   useEffect(() => {
     const maxStart = Math.max(0, n - visibleCount);
-    setStartIndex((prev) => Math.min(prev, maxStart));
-  }, [n, visibleCount]);
+    const intervalKey = `${groupMinutes}:${aggSeriesKind}`;
+    const prevKey = prevIntervalAggKeyRef.current;
+    if (prevKey !== intervalKey) {
+      prevIntervalAggKeyRef.current = intervalKey;
+      prevKlinesLenRef.current = n;
+      prevVisibleCountForScrollRef.current = visibleCount;
+      setStartIndex(maxStart);
+      return;
+    }
 
-  // Ao carregar/atualizar dados, ir para o fim (mais recente)
-  useEffect(() => {
-    setStartIndex(Math.max(0, n - visibleCount));
-  }, [klines.length, groupMinutes]);
+    const prevN = prevKlinesLenRef.current;
+    const prevVc = prevVisibleCountForScrollRef.current;
+    prevKlinesLenRef.current = n;
+    prevVisibleCountForScrollRef.current = visibleCount;
+
+    if (prevN === 0 && n > 0) {
+      setStartIndex(maxStart);
+      return;
+    }
+
+    if (visibleCount !== prevVc) {
+      setStartIndex(maxStart);
+      return;
+    }
+
+    if (n !== prevN) {
+      if (n < prevN) {
+        setStartIndex((s) => Math.min(s, maxStart));
+        return;
+      }
+      if (n > prevN && prevN > 0) {
+        const prevMaxStart = Math.max(0, prevN - visibleCount);
+        const wasAtLiveEdge = startIndexRef.current >= prevMaxStart;
+        if (!wasAtLiveEdge) {
+          setStartIndex((s) => Math.min(s, maxStart));
+          return;
+        }
+      }
+    }
+
+    setStartIndex(maxStart);
+  }, [n, visibleCount, groupMinutes, aggSeriesKind]);
 
   crosshairPointRef.current = crosshairPoint;
 
-  // Clique fora do gráfico: desativa o crosshair
+  // Clique fora da faixa do gráfico (plot + eixo Y + overlays de mira): desativa o crosshair. Usar chartRowRef — o overlay de mira não fica dentro do <svg>.
+  // Não limpar ao clicar no rodapé Comprar/Vender ou na boleta (`data-no-clear-crosshair`): senão perde-se a mira e o preço de referência.
   useEffect(() => {
     if (crosshairPoint === null) return;
     const onDocClick = (e: MouseEvent) => {
-      if (chartSvgRef.current && !chartSvgRef.current.contains(e.target as Node)) {
-        setCrosshairPoint(null);
-      }
+      const t = e.target;
+      if (!(t instanceof Node)) return;
+      if (chartRowRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest("[data-no-clear-crosshair]")) return;
+      setCrosshairPoint(null);
     };
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
   }, [crosshairPoint]);
 
-  // Arraste do crosshair: mousemove/mouseup; conversão usa rect do overlay (área de plot) + drawConversionRef para alinhar com o clique
+  /** Preço USDT no painel principal onde a mira está (boleta: compra limite). Painel RSI/MACD etc. não define preço spot. */
   useEffect(() => {
-    const getCoords = (e: MouseEvent | TouchEvent): { x: number; y: number } | null => {
-      if ("touches" in e && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      if ("clientX" in e) return { x: e.clientX, y: e.clientY };
-      return null;
+    if (crosshairPoint == null) {
+      setCrosshairMainPriceUsdt(null);
+      return;
+    }
+    if (crosshairPoint.panelClickY != null) {
+      setCrosshairMainPriceUsdt(null);
+      return;
+    }
+    const px = crosshairPoint.price;
+    if (Number.isFinite(px) && px > 0) setCrosshairMainPriceUsdt(px);
+    else setCrosshairMainPriceUsdt(null);
+  }, [crosshairPoint, setCrosshairMainPriceUsdt]);
+
+  useEffect(() => {
+    const clear = () => {
+      setCtrlBuyPreviewPrice(null);
+      setAltSellPreviewPrice(null);
     };
-    const onMove = (e: MouseEvent | TouchEvent) => {
-      if (!crosshairDraggingRef.current) return;
-      const coords = getCoords(e);
-      if (!coords) return;
-      const overlay = crosshairOverlayRef.current;
-      const dims = drawConversionRef.current;
-      if (!overlay || !dims) return;
-      if (e.cancelable && "touches" in e) e.preventDefault();
-      const rect = overlay.getBoundingClientRect();
-      const px = MARGIN_LEFT + (coords.x - rect.left) * (dims.chartW / (rect.width || 1));
-      const py = MARGIN_TOP + (coords.y - rect.top) * (dims.chartH / (rect.height || 1));
-      const toData = crosshairPixelToDataRef.current;
-      if (toData) setCrosshairPoint(toData(px, py));
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Control") setCtrlBuyPreviewPrice(null);
+      if (e.key === "Alt") setAltSellPreviewPrice(null);
     };
-    const onUp = () => {
-      crosshairDraggingRef.current = false;
-      setCrosshairDragging(false);
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchmove", onMove, { passive: false });
-    document.addEventListener("touchend", onUp);
-    document.addEventListener("touchcancel", onUp);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", clear);
     return () => {
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      document.removeEventListener("touchmove", onMove);
-      document.removeEventListener("touchend", onUp);
-      document.removeEventListener("touchcancel", onUp);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", clear);
     };
   }, []);
 
-  // Touch no overlay com passive: false para permitir preventDefault (evita scroll ao arrastar crosshair)
+  const exitRulerToCrosshair = useCallback(() => {
+    rulerHeldByShiftRef.current = false;
+    closeDrawMode();
+    setDrawPending(null);
+    setDrawPendingLineSecond(null);
+  }, [closeDrawMode, setDrawPending, setDrawPendingLineSecond]);
+
+  const exitSelectToCrosshair = useCallback(() => {
+    handHeldBySpaceRef.current = false;
+    closeDrawMode();
+  }, [closeDrawMode]);
+
+  const toggleRuler = useCallback(() => {
+    if (drawMode && drawTool === "ruler") {
+      exitRulerToCrosshair();
+    } else {
+      rulerHeldByShiftRef.current = false;
+      handHeldBySpaceRef.current = false;
+      skipShiftTempAfterToolbarRulerRef.current = true;
+      requestAnimationFrame(() => {
+        skipShiftTempAfterToolbarRulerRef.current = false;
+      });
+      selectRulerTool();
+    }
+  }, [drawMode, drawTool, exitRulerToCrosshair, selectRulerTool]);
+
+  const toggleSelectHand = useCallback(() => {
+    if (drawMode && drawTool === "select") {
+      exitSelectToCrosshair();
+    } else {
+      handHeldBySpaceRef.current = false;
+      rulerHeldByShiftRef.current = false;
+      skipSpaceTempAfterToolbarHandRef.current = true;
+      requestAnimationFrame(() => {
+        skipSpaceTempAfterToolbarHandRef.current = false;
+      });
+      selectSelectTool();
+    }
+  }, [drawMode, drawTool, exitSelectToCrosshair, selectSelectTool]);
+
+  const isEditableChartTarget = useCallback((target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (target.isContentEditable) return true;
+    return target.closest('[contenteditable="true"]') != null;
+  }, []);
+
+  // Shift segurado: mira → régua; soltar Shift: volta à mira se ainda estiver na régua (atalho temporário).
   useEffect(() => {
-    if (drawMode) return;
-    const el = crosshairOverlayRef.current;
-    if (!el) return;
-    const handler = (e: TouchEvent) => {
-      if (e.touches.length === 0) return;
-      e.preventDefault();
-      const t = e.touches[0];
-      const overlay = crosshairOverlayRef.current;
-      const dims = drawConversionRef.current;
-      if (!overlay || !dims) return;
-      const rect = overlay.getBoundingClientRect();
-      const px = MARGIN_LEFT + (t.clientX - rect.left) * (dims.chartW / (rect.width || 1));
-      const py = MARGIN_TOP + (t.clientY - rect.top) * (dims.chartH / (rect.height || 1));
-      const toData = crosshairPixelToDataRef.current;
-      if (!toData) return;
-      const newPoint = toData(px, py);
-      const current = crosshairPointRef.current;
-      const isSamePoint = current !== null && current.index === newPoint.index && Math.abs(current.price - newPoint.price) < 1e-9;
-      if (isSamePoint) {
-        setCrosshairPoint(null);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Shift") return;
+      if (e.repeat) return;
+      if (symbolQuickSwitchOpen || intervalQuickSwitchOpen) return;
+      if (isEditableChartTarget(e.target)) return;
+      const fromRulerToolbarBtn =
+        e.target instanceof Element && e.target.closest("[data-ruler-toggle]") != null;
+      if (fromRulerToolbarBtn) {
+        e.preventDefault();
+      }
+      // Corrida: clique na régua + Shift no mesmo tick deixava drawModeRef ainda false e rulerHeldByShiftRef true à régua “manual”.
+      if (skipShiftTempAfterToolbarRulerRef.current) {
+        e.preventDefault();
         return;
       }
-      const hadCrosshair = current !== null;
-      setCrosshairPoint(newPoint);
-      if (hadCrosshair) {
-        crosshairDraggingRef.current = true;
-        setCrosshairDragging(true);
+      if (drawModeRef.current) return;
+      e.preventDefault();
+      selectRulerTool();
+      rulerHeldByShiftRef.current = true;
+    };
+
+    const endRulerIfShiftHeld = () => {
+      if (!rulerHeldByShiftRef.current) return;
+      rulerHeldByShiftRef.current = false;
+      if (drawModeRef.current && drawToolRef.current === "ruler") {
+        exitRulerToCrosshair();
       }
     };
-    el.addEventListener("touchstart", handler, { passive: false });
-    return () => el.removeEventListener("touchstart", handler);
-  }, [drawMode]);
 
-  if (klines.length === 0 || width < 100) return null;
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key !== "Shift") return;
+      endRulerIfShiftHeld();
+    };
+
+    const onBlur = () => {
+      endRulerIfShiftHeld();
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [exitRulerToCrosshair, symbolQuickSwitchOpen, intervalQuickSwitchOpen, isEditableChartTarget, selectRulerTool]);
+
+  // Espaço segurado: mira → mão (pan); soltar: volta à mira se ainda estiver na mão (atalho temporário).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      if (symbolQuickSwitchOpen || intervalQuickSwitchOpen) return;
+      if (isEditableChartTarget(e.target)) return;
+      const fromHandToolbarBtn =
+        e.target instanceof Element && e.target.closest("[data-hand-tool-toggle]") != null;
+      // keydown repetido (Space segurado): sem preventDefault o browser faz scroll da página (comportamento nativo).
+      if (e.repeat) {
+        if (fromHandToolbarBtn) {
+          e.preventDefault();
+          return;
+        }
+        if (skipSpaceTempAfterToolbarHandRef.current) {
+          e.preventDefault();
+          return;
+        }
+        if (handHeldBySpaceRef.current || (drawModeRef.current && drawToolRef.current === "select")) {
+          e.preventDefault();
+        }
+        return;
+      }
+      // Impede o Space de ativar o botão da mão (clique sintético) e o retângulo de foco nativo (caixa preta).
+      if (fromHandToolbarBtn) {
+        e.preventDefault();
+      }
+      // Corrida: clique na mão + Space no mesmo tick deixava drawModeRef ainda false e handHeldBySpaceRef true à mão “manual”.
+      if (skipSpaceTempAfterToolbarHandRef.current) {
+        e.preventDefault();
+        return;
+      }
+      if (!drawModeRef.current) {
+        e.preventDefault();
+        selectSelectTool();
+        handHeldBySpaceRef.current = true;
+        return;
+      }
+      if (drawToolRef.current === "select") {
+        e.preventDefault();
+      }
+    };
+
+    const endHandIfSpaceHeld = () => {
+      if (!handHeldBySpaceRef.current) return;
+      handHeldBySpaceRef.current = false;
+      if (drawModeRef.current && drawToolRef.current === "select") {
+        exitSelectToCrosshair();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      endHandIfSpaceHeld();
+    };
+
+    const onBlur = () => {
+      endHandIfSpaceHeld();
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [exitSelectToCrosshair, symbolQuickSwitchOpen, intervalQuickSwitchOpen, isEditableChartTarget, selectSelectTool]);
+
+  // Clique fora da área dos candles: desativa a régua (volta ao crosshair)
+  useEffect(() => {
+    if (drawTool !== "ruler" || !drawMode) return;
+    const handler = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest?.("[data-ruler-toggle]")) return;
+      const svg = chartSvgRef.current;
+      const area = candleAreaRef.current;
+      if (!svg) {
+        exitRulerToCrosshair();
+        return;
+      }
+      if (!svg.contains(target as Node)) {
+        exitRulerToCrosshair();
+        return;
+      }
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+      const svgPt = pt.matrixTransform(ctm.inverse());
+      if (area.width > 0 && area.height > 0 && (svgPt.x < area.left || svgPt.x > area.left + area.width || svgPt.y < area.top || svgPt.y > area.top + area.height)) {
+        exitRulerToCrosshair();
+      }
+    };
+    document.addEventListener("pointerdown", handler, true);
+    return () => document.removeEventListener("pointerdown", handler, true);
+  }, [drawTool, drawMode, exitRulerToCrosshair]);
+
+  useLayoutEffect(() => {
+    const d = chartDimensionsRef.current;
+    if (d.w > 0 && onChartDimensionsChange) onChartDimensionsChange(d.w, d.h, d.sizePercent ?? 100);
+  }, [onChartDimensionsChange, width, chartSizePercent, chartReady, visibleCount, indicatorLines?.length, secondaryPanelHeightPercent, klines.length, viewportWidth]);
+
+  const onSelectToolPan = useCallback(
+    (deltaCandles: number) => {
+      setStartIndex((prev) => {
+        const maxStart = Math.max(0, n - visibleCount);
+        return Math.max(0, Math.min(maxStart, prev + deltaCandles));
+      });
+    },
+    [n, visibleCount]
+  );
+
+  // displayDecimals for onPriceFormatChange: compute before any early return so the effect runs unconditionally (Rules of Hooks)
+  const windowSliceForEffect = klines.length > 0 && width >= 100 ? fullReversed.slice(startIndex, startIndex + visibleCount) : [];
+  const windowNForEffect = windowSliceForEffect.length;
+  const displayDecimalsForEffect =
+    windowNForEffect > 0
+      ? (() => {
+          const lows = windowSliceForEffect.map((k) => parseNum(k[3]));
+          const highs = windowSliceForEffect.map((k) => parseNum(k[2]));
+          const minP = lows.length ? Math.min(...lows) : 0;
+          const maxP = highs.length ? Math.max(...highs) : 0;
+          const range = maxP - minP || 1;
+          const pad = range * PAD_Y;
+          const stepBase = (range + 2 * pad) / 5;
+          const step = Math.max(stepBase, 1e-8);
+          return Math.min(8, priceAxisDecimals(step) + 1);
+        })()
+      : 2;
+  useEffect(() => {
+    onPriceFormatChange?.(displayDecimalsForEffect, yAxisAbbreviated);
+  }, [displayDecimalsForEffect, yAxisAbbreviated, onPriceFormatChange]);
+
+  if (klines.length === 0 || width < 100) {
+    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
+    return null;
+  }
 
   const windowSlice = fullReversed.slice(startIndex, startIndex + visibleCount);
   const windowN = windowSlice.length;
   if (windowN === 0) return null;
 
-  const chartHeight = Math.max(
-    MIN_CHART_HEIGHT,
-    width < ASPECT_BREAKPOINT ? Math.round(width * (16 / 9)) : Math.round(width * (9 / 16))
-  );
+  const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7" =>
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
+  const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
+  const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
+  const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
+  const hasPanel5 = indicatorLines.some((ind) => getPanel(ind) === "panel5");
+  const hasPanel6 = indicatorLines.some((ind) => getPanel(ind) === "panel6");
+  const hasPanel7 = indicatorLines.some((ind) => getPanel(ind) === "panel7");
+  const hasAnySecondaryPanel = hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 || hasPanel6 || hasPanel7;
+  const mainToPanelGap = hasAnySecondaryPanel ? MAIN_TO_PANEL_GAP : 0;
+  const gap2_3 = hasPanel2 && hasPanel3 ? PANEL_GAP : 0;
+  const gap3_4 = hasPanel3 && hasPanel4 ? PANEL_GAP : 0;
+  const gap4_5 = hasPanel4 && hasPanel5 ? PANEL_GAP : 0;
+  const gap5_6 = hasPanel5 && hasPanel6 ? PANEL_GAP : 0;
+  const gap6_7 = hasPanel6 && hasPanel7 ? PANEL_GAP : 0;
+  const marginBottom = MARGIN_BOTTOM_TABLE;
+  const secondaryPanelRatio = secondaryPanelHeightPercent / 100;
+  const nSecondaryPanels = (hasPanel2 ? 1 : 0) + (hasPanel3 ? 1 : 0) + (hasPanel4 ? 1 : 0) + (hasPanel5 ? 1 : 0) + (hasPanel6 ? 1 : 0) + (hasPanel7 ? 1 : 0);
+
+  /** Teto do plot (600px em 100%, 750px em 125%). Largura máxima total do chart = 660px (600 + 60 eixo). */
+  const MAX_PLOT_WIDTH_BASE = 600;
+  const maxPlotWidth = Math.round(MAX_PLOT_WIDTH_BASE * (chartSizePercent / 100));
+  /** Sidebar agora fica no topo; na horizontal só o eixo Y é fixo. */
+  const FIXED_WIDTH = Y_AXIS_WIDTH;
+  const MIN_PLOT_WIDTH = 200;
+  // `width` aqui é a largura disponível para o plot (sem o eixo Y). Também limitamos pela viewport para não estourar em telas menores.
+  const availableForPlot = Math.min(width, viewportWidth - FIXED_WIDTH);
+  const displayPlotWidth =
+    availableForPlot >= maxPlotWidth
+      ? maxPlotWidth
+      : Math.max(MIN_PLOT_WIDTH, Math.min(availableForPlot, maxPlotWidth));
+  /** Proporções fixas: área dos candles 592×320 (razão 1,85). Em 100% mantém o teto 320px; no zoom (>=125%) a altura cresce com a largura. Cada painel = 1/3 da altura do main. */
+  const MAIN_PLOT_HEIGHT_PER_WIDTH = 320 / 592;
+  // IMPORTANT: 100% já estava calibrado com teto fixo 320px. No zoom, liberamos teto proporcional.
+  const MAIN_PLOT_HEIGHT_CAP =
+    chartSizePercent <= 100
+      ? 320
+      : Math.round(maxPlotWidth * MAIN_PLOT_HEIGHT_PER_WIDTH);
+  const PANEL_TO_MAIN_RATIO = 1 / 3;
+  const minChartH = MIN_CHART_HEIGHT - MARGIN_TOP - marginBottom;
+  // A largura "real" do plot (área dos candles) é `displayPlotWidth - GAP_PLOT_Y_AXIS`.
+  // Em zoom, o gap deve escalar (ex.: 8px → 10px em 125%) para manter 592→740 exatamente.
+  const gapPlotYAxisScaled = Math.round(GAP_PLOT_Y_AXIS * (chartSizePercent / 100));
+  const chartWForAspect = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
+  const chartH = Math.max(minChartH, Math.min(MAIN_PLOT_HEIGHT_CAP, Math.round(chartWForAspect * MAIN_PLOT_HEIGHT_PER_WIDTH)));
+  const baseChartHeight = chartH + MARGIN_TOP + marginBottom;
+  const panel2Height = hasPanel2 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel3Height = hasPanel3 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel4Height = hasPanel4 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel5Height = hasPanel5 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel6Height = hasPanel6 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const panel7Height = hasPanel7 ? chartH * PANEL_TO_MAIN_RATIO : 0;
+  const chartHeight = baseChartHeight + mainToPanelGap + panel2Height + panel3Height + panel4Height + panel5Height + panel6Height + panel7Height + gap2_3 + gap3_4 + gap4_5 + gap5_6 + gap6_7 + (hasAnySecondaryPanel ? PANEL2_BOTTOM_MARGIN : 0);
+
+  /** Escala dos textos (indicadores e eixo Y): reduz quando o plot está reduzido; aumento global (~25%). */
+  const textScale = Math.min(1.15, Math.max(0.7, Math.min(1, displayPlotWidth / maxPlotWidth)) * 1.25);
 
   const is2hOrAbove = groupMinutes >= 120;
-  const marginBottom = MARGIN_BOTTOM_TABLE;
-  const chartW = width - MARGIN_LEFT - GAP_PLOT_Y_AXIS;
-  const chartH = chartHeight - MARGIN_TOP - marginBottom;
-  const totalSlots = windowN + invisibleCandlesEnd;
+  const chartW = displayPlotWidth - MARGIN_LEFT - gapPlotYAxisScaled;
+  candleAreaRef.current = { left: MARGIN_LEFT, top: MARGIN_TOP, width: chartW, height: chartH };
+  const panel2Top = MARGIN_TOP + chartH + marginBottom + mainToPanelGap;
+  const panel3Top = panel2Top + panel2Height + (hasPanel2 ? PANEL_GAP : 0);
+  const panel4Top = panel3Top + panel3Height + (hasPanel3 ? PANEL_GAP : 0);
+  const panel5Top = panel4Top + panel4Height + (hasPanel4 ? PANEL_GAP : 0);
+  const panel6Top = panel5Top + panel5Height + (hasPanel5 ? PANEL_GAP : 0);
+  const panel7Top = panel6Top + panel6Height + (hasPanel6 ? PANEL_GAP : 0);
+  const panelTop = (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => p === "panel2" ? panel2Top : p === "panel3" ? panel3Top : p === "panel4" ? panel4Top : p === "panel5" ? panel5Top : p === "panel6" ? panel6Top : panel7Top;
+  const panelHeight = (p: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => p === "panel2" ? panel2Height : p === "panel3" ? panel3Height : p === "panel4" ? panel4Height : p === "panel5" ? panel5Height : p === "panel6" ? panel6Height : panel7Height;
+  const tableTop = MARGIN_TOP + chartH;
+  const chartBottom = hasPanel7
+    ? panelTop("panel7") + panelHeight("panel7")
+    : hasPanel6
+      ? panelTop("panel6") + panelHeight("panel6")
+      : hasPanel5
+        ? panelTop("panel5") + panelHeight("panel5")
+    : hasPanel4
+      ? panelTop("panel4") + panelHeight("panel4")
+      : hasPanel3
+        ? panelTop("panel3") + panelHeight("panel3")
+        : hasPanel2
+          ? panelTop("panel2") + panelHeight("panel2")
+          : tableTop;
+  const yValInPanel = (val: number, top: number, h: number, pMin: number, pMax: number) => {
+    const range = pMax - pMin || 1;
+    const t = (val - pMin) / range;
+    return top + h - Math.max(0, Math.min(1, t)) * h;
+  };
+  const buildPanelExtent = (panelKey: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") => {
+    const lines = indicatorLines.filter((ind) => getPanel(ind) === panelKey);
+    const hasObv = lines.some((ind) => ind.type === "OBV");
+    const useFixedScale =
+      !hasObv &&
+      lines.length > 0 &&
+      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || (ind.type === "MFI" && ind.mfiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
+    if (useFixedScale) return { min: 0, max: 100 };
+    const useFixedScaleWilliams =
+      !hasObv &&
+      lines.length > 0 &&
+      lines.every((ind) => ind.type === "WilliamsR");
+    if (useFixedScaleWilliams) return { min: -100, max: 0 };
+
+    const ext: number[] = [];
+    if (lines.some((ind) => ind.display === "histogram" && ind.type !== "Volume")) ext.push(0);
+    if (lines.some((ind) => ind.type === "Volume")) ext.push(0);
+    for (const ind of lines) {
+      const col = ind.columnIndex;
+      if (col < 12 && ind.type !== "Volume") continue;
+      const bandCols =
+        ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian"
+          ? [col, col + 1, col + 2]
+          : [col];
+      for (const c of bandCols) {
+        for (let i = 0; i < windowSlice.length; i++) {
+          const row = windowSlice[i];
+          if (row.length <= c) continue;
+          const raw = row[c];
+          const v = raw != null ? Number(raw) : NaN;
+          if (!Number.isFinite(v)) continue;
+          if (ind.type === "OBV" && Math.abs(v) > 1e11) continue;
+          if (ind.type === "Volume" && v < 0) continue;
+          ext.push(v);
+        }
+      }
+    }
+    let min = ext.length ? Math.min(...ext) : 0;
+    let max = ext.length ? Math.max(...ext) : 100;
+    const hasVolume = lines.some((ind) => ind.type === "Volume");
+    if (hasVolume) {
+      min = 0;
+      if (max < 0) max = 0;
+    }
+    if (lines.some((ind) => (ind.type === "RSI") || (ind.type === "Stochastic") || (ind.type === "ADX" && ind.adxFixedScale !== false))) {
+      min = Math.min(min, 0);
+      max = Math.max(max, 100);
+    }
+    if (lines.some((ind) => ind.type === "WilliamsR")) {
+      min = Math.min(min, -100);
+      max = Math.max(max, 0);
+    }
+    if (lines.some((ind) => ind.type === "CCI")) {
+      min = Math.min(min, -100);
+      max = Math.max(max, 100);
+    }
+    if (lines.some((ind) => ind.type === "CMF" && ind.cmfFixedScale)) {
+      min = Math.min(min, -1);
+      max = Math.max(max, 1);
+    }
+    if (min !== 0 || max !== 100) {
+      const range = max - min || 1;
+      const pad = range * 0.05;
+      if (!hasVolume) min -= pad;
+      max += pad;
+    }
+    if (hasVolume && min < 0) min = 0;
+    return { min, max };
+  };
+  const panelExtents: Record<"panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7", { min: number; max: number }> = {
+    panel2: buildPanelExtent("panel2"),
+    panel3: buildPanelExtent("panel3"),
+    panel4: buildPanelExtent("panel4"),
+    panel5: buildPanelExtent("panel5"),
+    panel6: buildPanelExtent("panel6"),
+    panel7: buildPanelExtent("panel7"),
+  };
+  const yRsiPanel2 = (rsi: number) => yValInPanel(rsi, panel2Top, panel2Height, panelExtents.panel2.min, panelExtents.panel2.max);
+  const yRsiPanel3 = (rsi: number) => yValInPanel(rsi, panel3Top, panel3Height, panelExtents.panel3.min, panelExtents.panel3.max);
+  const yRsiPanel4 = (rsi: number) => yValInPanel(rsi, panel4Top, panel4Height, panelExtents.panel4.min, panelExtents.panel4.max);
+  const yRsiPanel5 = (rsi: number) => yValInPanel(rsi, panel5Top, panel5Height, panelExtents.panel5.min, panelExtents.panel5.max);
+  const yRsiPanel6 = (rsi: number) => yValInPanel(rsi, panel6Top, panel6Height, panelExtents.panel6.min, panelExtents.panel6.max);
+  const yRsiPanel7 = (rsi: number) => yValInPanel(rsi, panel7Top, panel7Height, panelExtents.panel7.min, panelExtents.panel7.max);
+  const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") =>
+    panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : panel === "panel4" ? yRsiPanel4(rsi) : panel === "panel5" ? yRsiPanel5(rsi) : panel === "panel6" ? yRsiPanel6(rsi) : yRsiPanel7(rsi);
+  const invisibleEndEffective = Math.max(invisibleCandlesEnd, maxRegForecastBars);
+  const totalSlots = windowN + invisibleEndEffective;
   const gap = chartW / totalSlots;
   const candleW = Math.max(2, gap * BODY_WIDTH_RATIO);
   const cx = (i: number) => MARGIN_LEFT + (i + 0.5) * gap;
 
-  // Y apenas da janela visível (OHLC + valores dos indicadores)
+  // Eixo Y do painel principal: só high/low das velas na janela visível (indicadores no Main e regressão não alteram a escala).
   const lows = windowSlice.map((k) => parseNum(k[3]));
   const highs = windowSlice.map((k) => parseNum(k[2]));
-  const priceExtents: number[] = [...lows, ...highs];
-  for (const ind of indicatorLines) {
-    const col = ind.columnIndex;
-    for (let i = 0; i < windowSlice.length; i++) {
-      const v = windowSlice[i][col];
-      if (v != null && typeof v === "number" && Number.isFinite(v)) priceExtents.push(v);
-    }
-  }
-  const minPrice = priceExtents.length > 0 ? Math.min(...priceExtents) : Math.min(...lows);
-  const maxPrice = priceExtents.length > 0 ? Math.max(...priceExtents) : Math.max(...highs);
+  const candlePrices = [...lows, ...highs].filter((v) => Number.isFinite(v));
+  const minPrice = candlePrices.length > 0 ? Math.min(...candlePrices) : 0;
+  const maxPrice = candlePrices.length > 0 ? Math.max(...candlePrices) : 1;
   const range = maxPrice - minPrice || 1;
   const pad = range * PAD_Y;
   const yMinLinear = minPrice - pad;
   const yMaxLinear = maxPrice + pad;
-  const yRangeLinear = yMaxLinear - yMinLinear;
-  const Y_TICK_STEP = 0.10;
-  const floorToMultiple = (x: number, m: number) => Math.floor(x / m) * m;
-  const ceilToMultiple = (x: number, m: number) => Math.ceil(x / m) * m;
-  const roundToMultiple = (x: number, m: number) => Math.round(x / m) * m;
+  // Ajuste à janela visível: escala colada ao min/max (com PAD_Y), 5 intervalos iguais — sem espaço vazio.
+  const stepBase = (yMaxLinear - yMinLinear) / 5;
+  const step = Math.max(stepBase, 10 ** -8);
 
-  let yMin = logScale ? Math.max(yMinLinear, minPrice * 0.5 || 0.001) : yMinLinear;
-  let yMax = logScale ? (yMaxLinear <= 0 ? yMin * 1.1 : yMaxLinear + pad) : yMaxLinear;
-  // Sempre ajustar limites e marcas para múltiplos de 0,10 (valores originais); escala log só altera o posicionamento vertical
-  const yMinFloor = floorToMultiple(yMin, Y_TICK_STEP);
-  const yMaxCeil = ceilToMultiple(yMax, Y_TICK_STEP);
-  let step = roundToMultiple((yMaxCeil - yMinFloor) / 5, Y_TICK_STEP);
-  if (step < Y_TICK_STEP) step = Y_TICK_STEP;
-  yMin = yMinFloor;
-  yMax = yMinFloor + 5 * step;
+  let yMin: number;
+  let yMax: number;
+  let numIntervals: number;
+
+  if (yPadOffset === 0) {
+    let yMinVal = logScale ? Math.max(yMinLinear, minPrice * 0.5 || 0.001) : yMinLinear;
+    let yMaxVal = logScale ? (yMaxLinear <= 0 ? yMinVal * 1.1 : yMaxLinear + pad) : yMaxLinear;
+    yMin = yMinVal;
+    yMax = yMaxVal;
+    numIntervals = 5;
+  } else {
+    // Margem extra (previsões): +offset “meios passos” em cima e embaixo
+    yMin = yMinLinear - yPadOffset * stepBase;
+    yMax = yMaxLinear + yPadOffset * stepBase;
+    numIntervals = 5 + 2 * yPadOffset;
+  }
+
   const yRange = yMax - yMin;
+  const yAxisDecimals = priceAxisDecimals(step);
+  const displayDecimals = Math.min(8, yAxisDecimals + 1);
+  const formatYAxisResolved =
+    yAxisAbbreviated ? formatUsdt : (v: number) => formatUsdtWithDecimals(v, displayDecimals);
 
   const safeLog = (p: number) => Math.log(Math.max(p, 0.001));
   const yLogMin = logScale ? safeLog(yMin) : 0;
@@ -665,7 +1990,22 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     return MARGIN_TOP + chartH - ((price - yMin) / yRange) * chartH;
   };
 
-  const maxDrawIndex = startIndex + windowN + invisibleCandlesEnd - 1;
+  const regressionFilteredForExtents = userRegressions.filter((r) => r.groupMinutes === groupMinutes);
+  const { paths: regressionOverlayPaths } = computeRegressionOverlayPaths({
+    regressions: regressionFilteredForExtents,
+    groupMinutes,
+    userIndicators,
+    windowSlice,
+    windowN,
+    totalSlots,
+    logScale,
+    maxBarNum: n,
+    startIndex,
+    cx,
+    y,
+  });
+
+  const maxDrawIndex = startIndex + windowN + invisibleEndEffective - 1;
 
   // Parâmetros para converter pixel <-> dados (segmentos ficam fixos ao rolar)
   drawConversionRef.current = {
@@ -727,47 +2067,156 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     }
     return best;
   };
-  crosshairPixelToDataRef.current = pixelToData;
+  crosshairPixelToDataRef.current = snapToCandlePoint;
 
-  const yTicks = 5;
+  const roundToDecimals = (x: number, d: number) => {
+    const f = 10 ** d;
+    return Math.round(x * f) / f;
+  };
   const yTickValues: number[] = [];
-  for (let i = 0; i <= yTicks; i++) {
-    const v = yMin + (yRange * i) / yTicks;
-    yTickValues.push(Math.round(v * 10) / 10);
+  for (let i = 0; i <= numIntervals; i++) {
+    const v = yMin + (yRange * i) / numIntervals;
+    yTickValues.push(roundToDecimals(v, yAxisDecimals));
   }
 
-  // Data no subeixo: por dia (mudança de data) ou, no diário/semanal, a cada 7 candles
-  const isDailyOrWeekly = groupMinutes === 1440 || groupMinutes === 10080;
-  const dateBreaks: { index: number; dateStr: string }[] = [];
-  if (isDailyOrWeekly) {
-    for (let i = 0; i < windowN; i += 7) {
-      dateBreaks.push({ index: i, dateStr: formatDateLabel(windowSlice[i][0]) });
+  // Verticais principais: 30→6, 50→6, 100→8, 150→12; âncora na meia-noite UTC; mesmo passo até totalSlots (velas invisíveis)
+  const numVerticals =
+    windowN <= 30 ? 6
+      : windowN <= 50 ? 6
+        : windowN <= 100 ? 8
+          : 12;
+  const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
+  const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
+  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : 0;
+  const verticalIndices: number[] = [];
+  for (let i = anchorIndex; i >= 0; i -= verticalEvery) verticalIndices.push(i);
+  for (let i = anchorIndex + verticalEvery; i < totalSlots; i += verticalEvery) verticalIndices.push(i);
+  verticalIndices.sort((a, b) => a - b);
+  const verticalIndicesFiltered = [...new Set(verticalIndices)].filter((i) => i >= 0 && i < totalSlots);
+
+  // Secundária: mesma âncora, passo ~metade → cerca do dobro de linhas verticais
+  const secondaryVerticalEvery = Math.max(1, Math.floor(verticalEvery / 2));
+  const secondaryVerticalIndices: number[] = [];
+  for (let i = anchorIndex; i >= 0; i -= secondaryVerticalEvery) secondaryVerticalIndices.push(i);
+  for (let i = anchorIndex + secondaryVerticalEvery; i < totalSlots; i += secondaryVerticalEvery) secondaryVerticalIndices.push(i);
+  secondaryVerticalIndices.sort((a, b) => a - b);
+  const secondaryVerticalIndicesFiltered = [...new Set(secondaryVerticalIndices)].filter((i) => i >= 0 && i < totalSlots);
+
+  const intervalMsForSlots = timeScaleGroupMinutes * 60 * 1000;
+  const lastVisibleOpen = windowN > 0 ? Number(windowSlice[windowN - 1][0]) : NaN;
+  const openTimeForWindowSlot = (i: number): number | undefined => {
+    if (i < 0 || i >= totalSlots) return undefined;
+    if (i < windowN) {
+      const t = windowSlice[i]?.[0];
+      const v = typeof t === "number" ? t : Number(t);
+      return Number.isFinite(v) ? v : undefined;
     }
-  } else {
-    let lastDay = "";
-    for (let i = 0; i < windowN; i++) {
-      const day = dayKey(windowSlice[i][0]);
-      if (day !== lastDay) {
-        lastDay = day;
-        dateBreaks.push({ index: i, dateStr: formatDateLabel(windowSlice[i][0]) });
+    if (!Number.isFinite(lastVisibleOpen) || !Number.isFinite(intervalMsForSlots)) return undefined;
+    return lastVisibleOpen + (i - windowN + 1) * intervalMsForSlots;
+  };
+
+  const utcDayStartMarkerXs: number[] = [];
+  // Risquinhos: <1D todas as meia-noites locais; ≥8h só dia 1 do mês; inclui 1D/3D/1w; 1M (43200) sem marcador.
+  if (timeScaleGroupMinutes < 43200 && totalSlots > 0 && windowN > 0) {
+    const t0 = openTimeForWindowSlot(0);
+    const tLast = openTimeForWindowSlot(totalSlots - 1);
+    if (
+      t0 != null &&
+      tLast != null &&
+      Number.isFinite(t0) &&
+      Number.isFinite(tLast) &&
+      Number.isFinite(intervalMsForSlots)
+    ) {
+      const tEnd = tLast + intervalMsForSlots;
+      // openTime das klines já vem com timezoneOffset da API; enumerateLocalMidnightUtcMs usa UTC “real”.
+      const tzOffsetMs = timezoneOffset * 60 * 60 * 1000;
+      const t0Real = t0 - tzOffsetMs;
+      const tEndReal = tEnd - tzOffsetMs;
+      const midnightsReal = enumerateLocalMidnightUtcMs(t0Real, tEndReal, timezoneOffset);
+      const markersMonthStartOnly = timeScaleGroupMinutes >= 8 * 60;
+      for (const Mreal of midnightsReal) {
+        if (markersMonthStartOnly && !isFirstDayOfMonthInOffsetZone(Mreal, timezoneOffset)) continue;
+        const M = Mreal + tzOffsetMs;
+        if (M < t0 || M >= tEnd) continue;
+        let px: number | null = null;
+        for (let i = 0; i < totalSlots - 1; i++) {
+          const ti = openTimeForWindowSlot(i);
+          const tj = openTimeForWindowSlot(i + 1);
+          if (ti == null || tj == null) continue;
+          if (M >= ti && M < tj) {
+            const denom = tj - ti;
+            const f = denom > 0 ? (M - ti) / denom : 0;
+            px = MARGIN_LEFT + gap * (i + 0.5 + f);
+            break;
+          }
+        }
+        if (px == null && M >= tLast && M < tEnd) {
+          const f = (M - tLast) / intervalMsForSlots;
+          px = MARGIN_LEFT + gap * (totalSlots - 1 + 0.5 + f);
+        }
+        if (px != null && Number.isFinite(px)) utcDayStartMarkerXs.push(px);
       }
     }
   }
+  const utcOffsetStr = timezoneOffset >= 0 ? `+${timezoneOffset}` : String(timezoneOffset);
+  const utcDayStartMarkerTitle = t.utcDayStartMarkerTitle.replace("{offset}", utcOffsetStr);
 
-  // Evitar sobreposição de datas: só mostrar data se distância da última exibida for >= minGapCandles
-  const minGapCandlesForDate = 10;
-  const dateBreaksFiltered: { index: number; dateStr: string }[] = [];
-  for (const b of dateBreaks) {
-    if (dateBreaksFiltered.length === 0 || b.index - dateBreaksFiltered[dateBreaksFiltered.length - 1].index >= minGapCandlesForDate) {
-      dateBreaksFiltered.push(b);
+  // Eixo principal (linhas fortes + linha 1): mesmos índices que a cadência temporal; contínuo nas velas invisíveis
+  const dateBreaksFiltered: { index: number; dateStr: string; openTime?: number }[] = [];
+  for (const idx of verticalIndicesFiltered) {
+    const openTime = openTimeForWindowSlot(idx);
+    if (openTime == null || !Number.isFinite(openTime)) continue;
+    dateBreaksFiltered.push({ index: idx, dateStr: formatDateLabel(openTime), openTime });
+  }
+  const openTimeIsChartMidnight = (ms: number): boolean => {
+    const d = new Date(Math.trunc(Number(ms)));
+    return (
+      Number.isFinite(ms) &&
+      d.getUTCHours() === 0 &&
+      d.getUTCMinutes() === 0 &&
+      d.getUTCSeconds() === 0 &&
+      d.getUTCMilliseconds() === 0
+    );
+  };
+
+  const dayBreaksFiltered: {
+    index: number;
+    label: string;
+    openTime?: number;
+    mainAxisKind?: "month" | "day" | "hour";
+  }[] = dateBreaksFiltered.map((b) => {
+    const openTime = b.openTime as number;
+    if (openTime == null || !Number.isFinite(openTime)) {
+      return { index: b.index, label: "", openTime: b.openTime, mainAxisKind: "day" as const };
     }
-  }
 
-  // Dia (dd) em cada quebra de data (usado em 2h+ linha 1; 1h usa em linha 2)
-  const dayBreaksFiltered: { index: number; label: string }[] = [];
-  for (const b of dateBreaksFiltered) {
-    dayBreaksFiltered.push({ index: b.index, label: formatDayOnly(windowSlice[b.index][0] as number) });
-  }
+    if (timeScaleGroupMinutes >= 60) {
+      const dayLabel = formatDayOnly(openTime);
+      return {
+        index: b.index,
+        label: dayLabel,
+        openTime: b.openTime,
+        mainAxisKind: dayLabel === "01" ? ("month" as const) : ("day" as const),
+      };
+    }
+
+    if (!openTimeIsChartMidnight(openTime)) {
+      return {
+        index: b.index,
+        label: formatTimeLabel(openTime),
+        openTime: b.openTime,
+        mainAxisKind: "hour" as const,
+      };
+    }
+
+    const dayLabel = formatDayOnly(openTime);
+    return {
+      index: b.index,
+      label: dayLabel,
+      openTime: b.openTime,
+      mainAxisKind: dayLabel === "01" ? ("month" as const) : ("day" as const),
+    };
+  });
 
   // Mês/ano uma vez por mês, centralizado (mesmo mecanismo para 1h e 2h+)
   const monthYearCentered: { centerIndex: number; label: string }[] = [];
@@ -793,32 +2242,104 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
     monthYearCentered.push({ centerIndex, label: r.label });
   }
 
-  // Verticais: quantidade 30→6, 50→6, 100→8, 150→12; primeira vertical sempre no início do dia (meia-noite UTC)
-  const numVerticals =
-    windowN <= 30 ? 6
-    : windowN <= 50 ? 6
-    : windowN <= 100 ? 8
-    : 12;
-  const verticalEvery = numVerticals <= 1 ? 1 : Math.max(1, Math.floor(windowN / (numVerticals - 1)));
-  const firstMidnightIndex = windowSlice.findIndex((k) => isStartOfDay(k[0] as number));
-  const anchorIndex = firstMidnightIndex >= 0 ? firstMidnightIndex : (dateBreaks[0]?.index ?? 0);
-  const verticalIndices: number[] = [];
-  for (let i = anchorIndex; i >= 0; i -= verticalEvery) verticalIndices.push(i);
-  for (let i = anchorIndex + verticalEvery; i < windowN; i += verticalEvery) verticalIndices.push(i);
-  verticalIndices.sort((a, b) => a - b);
-  const verticalIndicesFiltered = [...new Set(verticalIndices)].filter((i) => i >= 0 && i < windowN);
-
   const canPrev = startIndex > 0;
   const canNext = startIndex + visibleCount < n;
 
-  // Último fechamento do dataset (candle mais recente); API retorna ORDER BY openTime DESC → [0] = mais recente
-  const lastClose = n > 0 ? parseNum(klines[0][4]) : 0;
+  // Último fechamento: preferir preço ao vivo (evita mostrar BTC após trocar para ETH quando klines[0] ainda é do par anterior)
+  const lastClose =
+    liveLastClose != null && Number.isFinite(parseNum(String(liveLastClose)))
+      ? parseNum(String(liveLastClose))
+      : (n > 0 ? parseNum(String(klines[0][4])) : 0);
+  /** Último preço “de mercado” para regras de compra limite: header ao vivo ou fecho do gráfico. */
+  const lastPriceForTrading =
+    headerData.lastPriceUsdt != null && Number.isFinite(headerData.lastPriceUsdt) && headerData.lastPriceUsdt > 0
+      ? headerData.lastPriceUsdt
+      : lastClose > 0 && Number.isFinite(lastClose)
+        ? lastClose
+        : null;
   const lastCloseY = y(lastClose);
   const lastCloseInVisibleRange =
     lastClose >= yMin && lastClose <= yMax;
   const showLastClose = lastClose > 0 && lastCloseInVisibleRange;
+  const limitBuyPricesMerged = (() => {
+    const uniq = new Set<number>();
+    for (const p of headerData.openLimitBuyPricesUsdt) {
+      if (Number.isFinite(p) && p > 0) uniq.add(p);
+    }
+    const sheet = headerData.limitBuyOrderPriceUsdt;
+    if (sheet != null && Number.isFinite(sheet) && sheet > 0) uniq.add(sheet);
+    return [...uniq].sort((a, b) => a - b);
+  })();
 
-  const totalChartWidth = SIDEBAR_WIDTH + width + Y_AXIS_WIDTH;
+  const limitBuyLinesVisible = limitBuyPricesMerged.filter((p) => p >= yMin && p <= yMax);
+  const showLimitBuyLine = limitBuyLinesVisible.length > 0;
+  const limitBuyLineYs = limitBuyLinesVisible.map((p) => y(p));
+  const limitBuyCancelTargets = (() => {
+    const orders = headerData.openLimitBuyOrdersUsdt;
+    if (orders.length === 0) return [] as { y: number; orderIds: string[] }[];
+    const out: { y: number; orderIds: string[] }[] = [];
+    for (const price of limitBuyLinesVisible) {
+      const orderIds = orders.filter((o) => sameUsdtLimitPrice(o.price, price)).map((o) => o.orderId);
+      if (orderIds.length > 0) out.push({ y: y(price), orderIds });
+    }
+    return out;
+  })();
+
+  const limitSellPricesMerged = (() => {
+    const uniq = new Set<number>();
+    for (const p of headerData.openLimitSellPricesUsdt) {
+      if (Number.isFinite(p) && p > 0) uniq.add(p);
+    }
+    return [...uniq].sort((a, b) => a - b);
+  })();
+  const limitSellLinesVisible = limitSellPricesMerged.filter((p) => p >= yMin && p <= yMax);
+  const showLimitSellLine = limitSellLinesVisible.length > 0;
+  const limitSellLineYs = limitSellLinesVisible.map((p) => y(p));
+  const limitSellCancelTargets = (() => {
+    const orders = headerData.openLimitSellOrdersUsdt;
+    if (orders.length === 0) return [] as { y: number; orderIds: string[] }[];
+    const out: { y: number; orderIds: string[] }[] = [];
+    for (const price of limitSellLinesVisible) {
+      const orderIds = orders.filter((o) => sameUsdtLimitPrice(o.price, price)).map((o) => o.orderId);
+      if (orderIds.length > 0) out.push({ y: y(price), orderIds });
+    }
+    return out;
+  })();
+
+  const ctrlLimitBuyPreviewLineY = useMemo(() => {
+    if (pathname !== SISTEMA_PATH) return null;
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s.endsWith("USDT") || s.length <= 4) return null;
+    if (lastPriceForTrading == null) return null;
+    const lim = ctrlBuyPreviewPrice;
+    if (lim == null || !Number.isFinite(lim)) return null;
+    if (!isValidLimitBuyPriceVsLast(lim, lastPriceForTrading)) return null;
+    if (lim < yMin || lim > yMax) return null;
+    return y(lim);
+  }, [pathname, symbolProp, ctrlBuyPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+
+  const altLimitSellPreviewLineY = useMemo(() => {
+    if (pathname !== SISTEMA_PATH) return null;
+    const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+    if (!s.endsWith("USDT") || s.length <= 4) return null;
+    if (lastPriceForTrading == null) return null;
+    const lim = altSellPreviewPrice;
+    if (lim == null || !Number.isFinite(lim)) return null;
+    if (!isValidLimitSellPriceVsLast(lim, lastPriceForTrading)) return null;
+    if (lim < yMin || lim > yMax) return null;
+    return y(lim);
+  }, [pathname, symbolProp, altSellPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+
+  const rawOpenTime = n > 0 ? klines[0][0] : null;
+  const openTimeMs = rawOpenTime != null ? (typeof rawOpenTime === "number" ? rawOpenTime : Number(rawOpenTime)) : null;
+  const offsetMs = timezoneOffset * 60 * 60 * 1000;
+  const validCloseTimeMs =
+    openTimeMs != null && Number.isFinite(openTimeMs)
+      ? (openTimeMs - offsetMs) + timeScaleGroupMinutes * 60 * 1000
+      : null;
+
+  const totalChartWidth = displayPlotWidth + Y_AXIS_WIDTH;
+  chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };
 
   const containerBgHex = BACKGROUND_PALETTE.find((b) => b.id === containerBackground)?.hex ?? "#ffffff";
   const chartBgHex = BACKGROUND_PALETTE.find((b) => b.id === chartBackground)?.hex ?? "#ffffff";
@@ -834,13 +2355,26 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   // Estado de carregamento apenas na primeira renderização ou ao trocar o intervalo (não ao atualizar klines em background)
   if (!chartReady) {
+    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
     return (
       <div
-        className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit flex items-center justify-center"
-        style={{ minWidth: width, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
+        className="rounded-lg border border-zinc-200 overflow-visible flex flex-col flex-shrink-0 w-fit flex items-center justify-center"
+        style={{ minWidth: totalChartWidth, minHeight: MIN_CHART_HEIGHT, backgroundColor: "#f5f5f5" }}
       >
         <p className="text-zinc-500 text-sm">{t.loading.replace("{interval}", intervalLabel ?? "")}</p>
       </div>
+    );
+  }
+
+  // Na página do sistema: esconder o gráfico até o layout do banco ser aplicado (evita flash com estado inicial errado)
+  if (pathname === SISTEMA_PATH && !layoutApplied) {
+    return (
+      <div
+        className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit animate-pulse"
+        style={{ minWidth: totalChartWidth, minHeight: chartHeight, backgroundColor: "#e4e4e7" }}
+        aria-busy="true"
+        aria-label={t.loading.replace("{interval}", intervalLabel ?? "")}
+      />
     );
   }
 
@@ -848,1339 +2382,1072 @@ export default function KlinesChart({ klines, groupMinutes, intervalLabel, width
 
   return (
     <div
-      className="rounded-lg border border-zinc-200 overflow-hidden flex flex-col flex-shrink-0 w-fit"
-      style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex }}
+      className="rounded-lg border border-zinc-200 overflow-visible flex flex-col flex-shrink-0 w-fit"
+      style={{ minWidth: totalChartWidth, backgroundColor: containerBgHex, paddingTop: CHART_TOP_PADDING }}
     >
-      <div className="flex min-w-0 flex-shrink-0">
-        {/* Sidebar: configuração + cores dos candles (mesma altura do gráfico) */}
-        <div
-          ref={settingsRef}
-          className="flex-shrink-0 border-r border-zinc-200 bg-zinc-50 flex flex-col items-center relative"
-          style={{ width: SIDEBAR_WIDTH, height: chartHeight }}
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setSettingsOpen((o) => !o); setColorsOpen(false); }}
-            className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-            title={t.configTitle}
-            aria-expanded={settingsOpen}
-          >
-            ⚙️
-          </button>
-          {settingsOpen && (
-            <div
-              className="absolute left-full top-0 ml-1 z-10 min-w-[160px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={yAxisAbbreviated}
-                  onChange={(e) => setYAxisAbbreviated(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.yAxisAbbreviated}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={logScale}
-                  onChange={(e) => setLogScale(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.logScale}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showMainAxis}
-                  onChange={(e) => setShowMainAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.mainAxis}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showSecondaryAxis}
-                  onChange={(e) => setShowSecondaryAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.secondaryAxis}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showLastCloseLine}
-                  onChange={(e) => setShowLastCloseLine(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.lastCloseLine}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-zinc-100 text-sm text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={showIndicatorLastValueOnYAxis}
-                  onChange={(e) => setShowIndicatorLastValueOnYAxis(e.target.checked)}
-                  className="rounded border-zinc-300"
-                />
-                <span>{t.showIndicatorLastValueOnYAxis}</span>
-              </label>
-              <div className="flex items-center gap-2 px-2 py-1.5 text-sm text-zinc-700">
-                <span className="shrink-0">{t.invisibleCandlesEnd}</span>
-                <div className="flex items-center gap-0.5 rounded border border-zinc-300 bg-white overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setInvisibleCandlesEnd((v) => Math.max(0, v - 1))}
-                    disabled={invisibleCandlesEnd <= 0}
-                    aria-label="-"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center font-mono text-zinc-800 tabular-nums" aria-live="polite">
-                    {invisibleCandlesEnd}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setInvisibleCandlesEnd((v) => Math.min(30, v + 1))}
-                    disabled={invisibleCandlesEnd >= 30}
-                    aria-label="+"
-                    className="w-7 h-7 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={colorsRef} className="relative w-full flex flex-col items-center">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setColorsOpen((o) => !o); setSettingsOpen(false); }}
-              className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-              title={t.candleColors}
-              aria-expanded={colorsOpen}
-            >
-              🎨
-            </button>
-            {colorsOpen && (
+      <div className="flex flex-col min-w-0 flex-shrink-0">
+        <div className="flex-shrink-0 min-w-0 w-full" style={{ touchAction: "pan-x pan-y", marginBottom: 0, maxWidth: "100vw" }}>
+          <KlinesChartSidebar
+            chartHeight={chartHeight}
+            settingsRef={settingsRef}
+            colorsRef={colorsRef}
+            drawRef={drawRef}
+            orientation="horizontal"
+            t={t}
+            intervalLabel={intervalLabel}
+            intervalOptions={intervalOptions ?? []}
+            aggIntervalPicker={aggIntervalPicker}
+            groupMinutes={groupMinutes}
+            onIntervalChange={onIntervalChange ?? (() => { })}
+            heikinAshi={heikinAshi}
+            onHeikinAshiChange={onHeikinAshiChange}
+            chartStyle={chartStyle}
+            onChartStyleChange={setChartStyle}
+            candleBodyStyle={candleBodyStyle}
+            onCandleBodyStyleChange={setCandleBodyStyle}
+            settingsOpen={settingsOpen}
+            setSettingsOpen={setSettingsOpen}
+            colorsOpen={colorsOpen}
+            setColorsOpen={setColorsOpen}
+            yAxisAbbreviated={yAxisAbbreviated}
+            setYAxisAbbreviated={setYAxisAbbreviated}
+            logScale={logScale}
+            setLogScale={setLogScale}
+            showMainAxis={showMainAxis}
+            setShowMainAxis={setShowMainAxis}
+            showSecondaryAxis={showSecondaryAxis}
+            setShowSecondaryAxis={setShowSecondaryAxis}
+            showLastCloseLine={showLastCloseLine}
+            setShowLastCloseLine={setShowLastCloseLine}
+            showCandleCountdown={shouldShowCandleCountdown}
+            setShowCandleCountdown={setShowCandleCountdown}
+            invisibleCandlesEnd={invisibleCandlesEnd}
+            setInvisibleCandlesEnd={setInvisibleCandlesEnd}
+            secondaryPanelHeightPercent={secondaryPanelHeightPercent}
+            setSecondaryPanelHeightPercent={setSecondaryPanelHeightPercent}
+            secondaryPanelHeightMin={SECONDARY_PANEL_HEIGHT_MIN}
+            secondaryPanelHeightMax={SECONDARY_PANEL_HEIGHT_MAX}
+            candleColorPreset={candleColorPreset}
+            setCandleColorPreset={setCandleColorPreset}
+            containerBackground={containerBackground}
+            setContainerBackground={setContainerBackground}
+            chartBackground={chartBackground}
+            setChartBackground={setChartBackground}
+            footerYAxisBgColor={footerYAxisBgColor}
+            setFooterYAxisBgColor={setFooterYAxisBgColor}
+            backgroundTextColor={backgroundTextColor}
+            setBackgroundTextColor={setBackgroundTextColor}
+            footerYAxisTextColor={footerYAxisTextColor}
+            setFooterYAxisTextColor={setFooterYAxisTextColor}
+            lineTableColor={lineTableColor}
+            setLineTableColor={setLineTableColor}
+            lineTableStrokeWidth={lineTableStrokeWidth}
+            setLineTableStrokeWidth={setLineTableStrokeWidth}
+            lineTableStrokeStyle={lineTableStrokeStyle}
+            setLineTableStrokeStyle={setLineTableStrokeStyle}
+            secondaryGridColor={secondaryGridColor}
+            setSecondaryGridColor={setSecondaryGridColor}
+            lastCloseLineColor={lastCloseLineColor}
+            setLastCloseLineColor={setLastCloseLineColor}
+            lastCloseTextColor={lastCloseTextColor}
+            setLastCloseTextColor={setLastCloseTextColor}
+            lastCloseLineStrokeWidth={lastCloseLineStrokeWidth}
+            setLastCloseLineStrokeWidth={setLastCloseLineStrokeWidth}
+            lastCloseLineStrokeStyle={lastCloseLineStrokeStyle}
+            setLastCloseLineStrokeStyle={setLastCloseLineStrokeStyle}
+            volumeOnPrice={volumeOnPrice}
+            setVolumeOnPrice={setVolumeOnPrice}
+            volumeOnPriceOpacity={volumeOnPriceOpacity}
+            setVolumeOnPriceOpacity={setVolumeOnPriceOpacity}
+            volumeAtPriceData={volumeAtPriceData}
+            volumeAtPriceEnabled={volumeAtPriceEnabled}
+            volumeAtPriceBuckets={volumeAtPriceBuckets}
+            volumeAtPricePercent={volumeAtPricePercent}
+            onVolumeAtPricePercentChange={onVolumeAtPricePercentChange}
+            vapTimeSpanLabel={vapTimeSpanLabel}
+            volumeAtPriceOpacity={volumeAtPriceOpacity}
+            volumeAtPriceWidthPercent={volumeAtPriceWidthPercent}
+            onVolumeAtPriceWidthPercentChange={onVolumeAtPriceWidthPercentChange}
+            onVolumeAtPriceEnabledChange={onVolumeAtPriceEnabledChange}
+            onVolumeAtPriceBucketsChange={onVolumeAtPriceBucketsChange}
+            onVolumeAtPriceOpacityChange={onVolumeAtPriceOpacityChange}
+            volumeAtPriceSide={volumeAtPriceSide}
+            volumeAtPriceColorAbove={volumeAtPriceColorAbove}
+            volumeAtPriceColorBelow={volumeAtPriceColorBelow}
+            onVolumeAtPriceSideChange={onVolumeAtPriceSideChange}
+            onVolumeAtPriceColorAboveChange={onVolumeAtPriceColorAboveChange}
+            onVolumeAtPriceColorBelowChange={onVolumeAtPriceColorBelowChange}
+            onSaveVolumePrefsToLayout={saveVolumePrefsToLayout}
+            chartWidth={width}
+            chartSizePercent={chartSizePercent}
+            setChartSizePercent={setChartSizePercent}
+            yPadOffset={yPadOffset}
+            setYPadOffset={setYPadOffset}
+            drawOpen={drawOpen}
+            setDrawOpen={setDrawOpen}
+            drawingsVisible={drawingsVisible}
+            setDrawingsVisible={setDrawingsVisible}
+            drawMode={drawMode}
+            drawTool={drawTool}
+            drawMagnetic={drawMagnetic}
+            setDrawMagnetic={setDrawMagnetic}
+            drawPanelSide={drawPanelSide}
+            setDrawPanelSide={setDrawPanelSide}
+            openDrawPanel={openDrawPanel}
+            closeDrawMode={closeDrawMode}
+            selectLineTool={selectLineTool}
+            selectFibonacciTool={selectFibonacciTool}
+            selectFreeRetracementTool={selectFreeRetracementTool}
+            selectChannelTool={selectChannelTool}
+            selectStopGainTool={selectStopGainTool}
+            selectRectangleTool={selectRectangleTool}
+            selectVerticalLineTool={selectVerticalLineTool}
+            selectTextTool={selectTextTool}
+            selectArrowTool={selectArrowTool}
+            selectHorizontalLineTool={selectHorizontalLineTool}
+            selectPencilTool={selectPencilTool}
+            exitRulerToCrosshair={exitRulerToCrosshair}
+            toggleRuler={toggleRuler}
+            toggleSelectHand={toggleSelectHand}
+            selectSelectTool={selectSelectTool}
+            clearAllDrawing={clearAllDrawing}
+          />
+        </div>
+        <div className="flex flex-col flex-shrink-0 min-w-0" style={{ touchAction: drawTool === "rectangle" || drawTool === "fibonacci" || drawTool === "freeRetracement" || drawTool === "line" || drawTool === "channel" || drawTool === "stopGain" || drawTool === "horizontalLine" || drawTool === "verticalLine" || drawTool === "arrow" || drawTool === "text" || drawTool === "ruler" || drawTool === "pencil" ? "none" : "pan-x pan-y" }}>
+          <div ref={chartRowRef} className="flex flex-shrink-0 flex-row relative z-[20]" style={{ backgroundColor: containerBgHex }}>
+            {drawOpen && (
               <div
-                className="absolute left-full top-0 ml-1 z-10 min-w-[180px] overflow-y-auto rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                style={{ maxHeight: `${Math.max(200, chartHeight - 24)}px` }}
+                ref={drawToolboxRef}
+                className="absolute z-[100] flex w-fit flex-col items-center rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
+                style={drawToolboxPosition === null ? { left: 8, top: 8 } : { left: drawToolboxPosition.x, top: drawToolboxPosition.y }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.candleColors}</div>
-                {CANDLE_COLOR_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => setCandleColorPreset(preset.id)}
-                    className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 ${candleColorPreset === preset.id ? "bg-zinc-200 font-medium" : "hover:bg-zinc-100"}`}
-                  >
-                    <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bull }} />
-                    <span className="w-3 h-3 rounded-full shrink-0 border border-zinc-300" style={{ backgroundColor: preset.bear }} />
-                    <span>
-                      {preset.id === "greenRed" && t.candleColorGreenRed}
-                      {preset.id === "blueOrange" && t.candleColorBlueOrange}
-                      {preset.id === "blackWhite" && t.candleColorBlackWhite}
-                      {preset.id === "purpleAmber" && t.candleColorPurpleAmber}
-                      {preset.id === "cyanRose" && t.candleColorCyanRose}
-                    </span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setCandleColorPreset(DEFAULT_CANDLE_PRESET)}
-                  className="w-full text-left px-2 py-1.5 rounded text-sm mt-1 border-t border-zinc-100 hover:bg-zinc-100 text-zinc-600"
-                >
-                  {t.default}
-                </button>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.background}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={`cb-${bg.id}`}
-                      type="button"
-                      onClick={() => setContainerBackground(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${containerBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.areaPlot}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={bg.id}
-                      type="button"
-                      onClick={() => setChartBackground(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${chartBackground === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.footerAndYAxis}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {BACKGROUND_PALETTE.map((bg) => (
-                    <button
-                      key={`fy-${bg.id}`}
-                      type="button"
-                      onClick={() => setFooterYAxisBgColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisBgColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.linesAndTable}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lt-${bg.id}`}
-                      type="button"
-                      onClick={() => setLineTableColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lineTableColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.secondaryGrid}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`sg-${bg.id}`}
-                      type="button"
-                      onClick={() => setSecondaryGridColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${secondaryGridColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseLineColor}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lcl-${bg.id}`}
-                      type="button"
-                      onClick={() => setLastCloseLineColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseLineColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.lastCloseTextColor}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {LINE_GRID_PALETTE.map((bg) => (
-                    <button
-                      key={`lct-${bg.id}`}
-                      type="button"
-                      onClick={() => setLastCloseTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${lastCloseTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textBackground}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {TEXT_PALETTE.map((bg) => (
-                    <button
-                      key={`bt-${bg.id}`}
-                      type="button"
-                      onClick={() => setBackgroundTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${backgroundTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-                <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5 pt-2 mt-1 border-t border-zinc-100">{t.textFooterYAxis}</div>
-                <div className="flex flex-wrap gap-1 px-2">
-                  {TEXT_PALETTE.map((bg) => (
-                    <button
-                      key={`ft-${bg.id}`}
-                      type="button"
-                      onClick={() => setFooterYAxisTextColor(bg.id)}
-                      title={t[bg.labelKey]}
-                      className={`w-6 h-6 rounded border-2 shrink-0 ${footerYAxisTextColor === bg.id ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                      style={{ backgroundColor: bg.hex }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <div ref={drawRef} className="relative w-full flex flex-col items-center">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setColorsOpen(false); setSettingsOpen(false); openDrawPanel(); }}
-              className={`w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors ${drawMode ? "bg-zinc-200" : ""}`}
-              title={t.drawTool}
-              aria-expanded={drawOpen}
-            >
-              📐
-            </button>
-            {drawOpen && drawPanelSide === "left" && (
-              <div
-                className="absolute left-full top-0 ml-1 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setDrawPanelSide((s) => s === "left" ? "right" : "left"); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                    title={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                    aria-label={drawPanelSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                  >
-                    {drawPanelSide === "left" ? "→" : "←"}
-                  </button>
+                <div className="flex w-full min-w-0 items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold"
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none font-semibold"
                     title={t.drawExitMode}
                     aria-label={t.drawExitMode}
                   >
                     <span aria-hidden>×</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDrawingsVisible((v) => !v); }}
+                    className={`p-0.5 rounded hover:bg-zinc-200 text-base leading-none ${!drawingsVisible ? "opacity-60" : "text-zinc-600 hover:text-zinc-800"}`}
+                    title={(t as Record<string, string>).drawVisibilityTitle}
+                    aria-label={(t as Record<string, string>).drawVisibilityAria}
+                    aria-pressed={!drawingsVisible}
+                  >
+                    <span className={!drawingsVisible ? "opacity-70" : ""} aria-hidden>👁</span>
+                  </button>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-base leading-none cursor-grab active:cursor-grabbing select-none touch-none"
+                    title={t.drawToolboxDrag}
+                    aria-label={t.drawToolboxDrag}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!drawToolboxRef.current || !chartRowRef.current) return;
+                      const box = drawToolboxRef.current.getBoundingClientRect();
+                      const row = chartRowRef.current.getBoundingClientRect();
+                      const currentX = drawToolboxPosition?.x ?? 8;
+                      const currentY = drawToolboxPosition?.y ?? 8;
+                      if (drawToolboxPosition === null) setDrawToolboxPosition({ x: currentX, y: currentY });
+                      const startClientX = e.clientX;
+                      const startClientY = e.clientY;
+                      const startX = currentX;
+                      const startY = currentY;
+                      const onMove = (ev: PointerEvent) => {
+                        if (!drawToolboxRef.current || !chartRowRef.current) return;
+                        if (ev.cancelable) ev.preventDefault();
+                        const boxRect = drawToolboxRef.current.getBoundingClientRect();
+                        const rowRect = chartRowRef.current.getBoundingClientRect();
+                        const cw = rowRect.width;
+                        const ch = rowRect.height;
+                        let newX = startX + (ev.clientX - startClientX);
+                        let newY = startY + (ev.clientY - startClientY);
+                        newX = Math.max(0, Math.min(cw - boxRect.width, newX));
+                        newY = Math.max(0, Math.min(ch - boxRect.height, newY));
+                        setDrawToolboxPosition({ x: newX, y: newY });
+                      };
+                      const onUp = () => {
+                        document.removeEventListener("pointermove", onMove);
+                        document.removeEventListener("pointerup", onUp);
+                        document.removeEventListener("pointercancel", onUp);
+                      };
+                      document.addEventListener("pointermove", onMove);
+                      document.addEventListener("pointerup", onUp);
+                      document.addEventListener("pointercancel", onUp);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") e.preventDefault();
+                    }}
+                  >
+                    <span aria-hidden>⠿</span>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={selectLineTool}
-                  title={t.lineSegment}
-                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
-                  aria-label={t.lineSegment}
-                >
-                  📏
-                </button>
-                <button
-                  type="button"
-                  onClick={selectSelectTool}
-                  title={t.drawSelectSegment}
-                  className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 ${drawTool === "select" ? "bg-zinc-100" : ""}`}
-                  aria-label={t.drawSelectSegment}
-                >
-                  👆
-                </button>
-                <label className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 ${drawMagnetic ? "bg-zinc-100" : ""}`} title={t.drawMagnetic}>
-                  <input
-                    type="checkbox"
-                    checked={drawMagnetic}
-                    onChange={(e) => setDrawMagnetic(e.target.checked)}
-                    className="rounded border-zinc-300 sr-only"
-                  />
-                  <span aria-hidden>🧲</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={clearAllDrawing}
-                  title={t.drawClearAll}
-                  className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700"
-                  aria-label={t.drawClearAll}
-                >
-                  🗑️
-                </button>
+                <div className="flex flex-col min-h-0 max-h-[min(70vh,400px)]">
+                  <div className="grid grid-cols-2 gap-0.5 overflow-y-auto py-0.5">
+                    <button
+                      type="button"
+                      onClick={selectLineTool}
+                      title={t.lineSegment}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "line" ? "bg-zinc-100" : ""}`}
+                      aria-label={t.lineSegment}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/trend.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectHorizontalLineTool}
+                      title={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "horizontalLine" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).horizontalLine ?? "Horizontal line"}
+                    >
+                      <span aria-hidden>―</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectFibonacciTool}
+                      title={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "fibonacci" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).fibonacciRetracement ?? "Fibonacci retracement"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/fibonacci.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectFreeRetracementTool}
+                      title={(t as Record<string, string>).freeRetracement ?? "Retração livre"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "freeRetracement" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).freeRetracement ?? "Retração livre"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/retracao.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectRectangleTool}
+                      title={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "rectangle" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).rectangleTool ?? "Rectangle"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/retangulo.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectChannelTool}
+                      title={(t as Record<string, string>).channelTool ?? "Channel"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "channel" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).channelTool ?? "Channel"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/canal.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectStopGainTool}
+                      title={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "stopGain" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).stopGainTool ?? "Stop/Gain"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/stopgain.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectVerticalLineTool}
+                      title={(t as Record<string, string>).verticalLine ?? "Vertical line"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "verticalLine" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).verticalLine ?? "Vertical line"}
+                    >
+                      <span aria-hidden>|</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectTextTool}
+                      title={(t as Record<string, string>).drawTextTool ?? "Text"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "text" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).drawTextTool ?? "Text"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/text.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectArrowTool}
+                      title={(t as Record<string, string>).arrowTool ?? "Arrow"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "arrow" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).arrowTool ?? "Arrow"}
+                    >
+                      <img src={`${ASSET_PREFIX}/assets/draw/seta.webp`} alt="" className="w-6 h-6 object-contain pointer-events-none" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={selectPencilTool}
+                      title={(t as Record<string, string>).pencilTool ?? "Lápis"}
+                      className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 shrink-0 ${drawTool === "pencil" ? "bg-zinc-100" : ""}`}
+                      aria-label={(t as Record<string, string>).pencilTool ?? "Lápis"}
+                    >
+                      <span aria-hidden className="text-lg leading-none">✎</span>
+                    </button>
+                  </div>
+                  <div className="flex justify-center border-t border-zinc-100 pt-0.5 mt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowClearDrawConfirm(true)}
+                      title={t.drawClearAll}
+                      className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 shrink-0"
+                      aria-label={t.drawClearAll}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-          <div ref={saveLoadRef} className="w-full flex flex-col items-center">
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setSaveOpen((o) => !o); setLoadOpen(false); }}
-                className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-                title={t.saveLayout}
-                aria-expanded={saveOpen}
-              >
-                💾
-              </button>
-              {saveOpen && (
+            {showClearDrawConfirm && (
+              <div className="absolute inset-0 z-[200] flex items-center justify-center">
                 <div
-                  className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                  onClick={(e) => e.stopPropagation()}
+                  className="absolute inset-0 bg-black/30"
+                  aria-hidden
+                  onClick={() => setShowClearDrawConfirm(false)}
+                />
+                <div
+                  className="relative z-[201] w-[min(320px,90vw)] rounded-xl border border-zinc-200 bg-white p-4 shadow-xl"
+                  role="alertdialog"
+                  aria-labelledby="clear-draw-confirm-title"
+                  aria-describedby="clear-draw-confirm-desc"
                 >
-                  <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.saveLayout}</div>
-                  {([1, 2, 3, 4, 5, 6, 7] as const).map((slot) => (
+                  <h3 id="clear-draw-confirm-title" className="text-sm font-semibold text-zinc-800 mb-2">
+                    {t.drawClearAll}
+                  </h3>
+                  <p id="clear-draw-confirm-desc" className="text-sm text-zinc-600 mb-4">
+                    {((t as Record<string, string>).clearDrawingsConfirmMessageTimeframe ?? "Delete all drawings for {interval}? This action cannot be undone.").replace(
+                      "{interval}",
+                      intervalLabel ?? (groupMinutes < 60 ? `${groupMinutes}m` : groupMinutes === 60 ? "1h" : groupMinutes < 1440 ? `${groupMinutes / 60}h` : groupMinutes === 1440 ? "1d" : groupMinutes === 10080 ? "1w" : groupMinutes === 43200 ? "1month" : `${groupMinutes}m`)
+                    )}
+                  </p>
+                  <div className="flex gap-2 justify-end">
                     <button
-                      key={slot}
                       type="button"
-                      onClick={() => handleSaveLayout(slot)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
+                      onClick={() => setShowClearDrawConfirm(false)}
+                      className="px-3 py-2 text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-100 rounded-lg border border-zinc-300"
                     >
-                      {t.layoutName.replace("{n}", String(slot))}
+                      {(t as Record<string, string>).clearDrawingsConfirmNo ?? "No"}
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearDrawingsForCurrentInterval();
+                        setShowClearDrawConfirm(false);
+                      }}
+                      className="px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                    >
+                      {(t as Record<string, string>).clearDrawingsConfirmYes ?? "Yes"}
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setLoadOpen((o) => {
-                    if (!o) fetchSavedLayouts();
-                    return !o;
-                  });
-                  setSaveOpen(false);
-                }}
-                className="w-full flex items-center justify-center py-2 text-lg hover:bg-zinc-200/80 transition-colors"
-                title={t.loadLayout}
-                aria-expanded={loadOpen}
-              >
-                📂
-              </button>
-              {loadOpen && (
+              </div>
+            )}
+            {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
+              <KlinesChartSegmentOptions
+                segmentOptionsRef={segmentOptionsRef}
+                segmentOptionsPosition={segmentOptionsPosition}
+                setSegmentOptionsPosition={setSegmentOptionsPosition}
+                chartRowRef={chartRowRef}
+                drawSegments={drawSegments}
+                selectedSegmentIndex={selectedSegmentIndex}
+                setDrawSegments={setDrawSegments}
+                setSelectedSegmentIndex={setSelectedSegmentIndex}
+                persistDrawDefault={persistDrawDefault}
+                segmentToPixel={segmentToPixel}
+                pixelToData={pixelToData}
+                t={t}
+                segmentToolboxCollapsed={segmentToolboxCollapsed}
+                sharedIntervalsDrawingsEnabled={Boolean(symbolProp)}
+              />
+            )}
+            <KlinesChartSvg
+              chartSvgRef={chartSvgRef}
+              crosshairOverlayRef={crosshairOverlayRef}
+              width={displayPlotWidth}
+              chartHeight={chartHeight}
+              chartW={chartW}
+              chartH={chartH}
+              gap={gap}
+              candleW={candleW}
+              chartStyle={chartStyle}
+              closeLineStepPath={aggSeriesKind === "kagi" && chartStyle === "linePoints"}
+              candleBodyStyle={candleBodyStyle}
+              y={y}
+              cx={cx}
+              segmentToPixel={segmentToPixel}
+              snapToCandlePoint={snapToCandlePoint}
+              windowSlice={windowSlice}
+              fullReversed={fullReversed}
+              startIndex={startIndex}
+              windowN={windowN}
+              totalSlots={totalSlots}
+              n={n}
+              candleColors={candleColors}
+              yTickValues={yTickValues}
+              verticalIndicesFiltered={verticalIndicesFiltered}
+              secondaryVerticalIndicesFiltered={secondaryVerticalIndicesFiltered}
+              utcDayStartMarkerXs={utcDayStartMarkerXs}
+              utcDayStartMarkerTitle={utcDayStartMarkerTitle}
+              dateBreaksFiltered={dateBreaksFiltered}
+              dayBreaksFiltered={dayBreaksFiltered}
+              showMainAxis={showMainAxis}
+              showSecondaryAxis={showSecondaryAxis}
+              showLastCloseLine={showLastCloseLine}
+              showLastClose={showLastClose}
+              lastCloseY={lastCloseY}
+              volumeOnPrice={volumeOnPrice}
+              volumeOnPriceOpacity={volumeOnPriceOpacity}
+              volumeAtPriceData={volumeAtPriceData}
+              volumeAtPriceOpacity={volumeAtPriceOpacity}
+              volumeAtPriceWidthPercent={volumeAtPriceWidthPercent}
+              volumeAtPriceSide={volumeAtPriceSide}
+              volumeAtPriceColorAbove={volumeAtPriceColorAbove}
+              volumeAtPriceColorBelow={volumeAtPriceColorBelow}
+              lineTableHex={lineTableHex}
+              lineTableStrokeWidth={lineTableStrokeWidth}
+              lineTableStrokeStyle={lineTableStrokeStyle}
+              secondaryGridHex={secondaryGridHex}
+              lastCloseLineHex={lastCloseLineHex}
+              lastCloseLineStrokeWidth={lastCloseLineStrokeWidth}
+              lastCloseLineStrokeStyle={lastCloseLineStrokeStyle}
+              showLimitBuyLine={showLimitBuyLine}
+              limitBuyLineYs={limitBuyLineYs}
+              limitBuyLineHex="#059669"
+              showLimitSellLine={showLimitSellLine}
+              limitSellLineYs={limitSellLineYs}
+              limitSellLineHex="#dc2626"
+              ctrlLimitBuyPreviewLineY={ctrlLimitBuyPreviewLineY}
+              ctrlLimitBuyPreviewHex="#d97706"
+              altLimitSellPreviewLineY={altLimitSellPreviewLineY}
+              altLimitSellPreviewHex="#dc2626"
+              chartBgHex={chartBgHex}
+              backgroundTextHex={backgroundTextHex}
+              formatYAxis={formatYAxisResolved}
+              hasPanel2={hasPanel2}
+              hasPanel3={hasPanel3}
+              hasPanel4={hasPanel4}
+              hasPanel5={hasPanel5}
+              hasPanel6={hasPanel6}
+              hasPanel7={hasPanel7}
+              panel2Top={panel2Top}
+              panel3Top={panel3Top}
+              panel4Top={panel4Top}
+              panel5Top={panel5Top}
+              panel6Top={panel6Top}
+              panel7Top={panel7Top}
+              panelTop={panelTop}
+              panelHeight={panelHeight}
+              panelExtents={panelExtents}
+              indicatorLines={indicatorLines}
+              getPanel={getPanel}
+              yValInPanel={yValInPanel}
+              hasIndicatorStrip={hasIndicatorStrip}
+              isDarkBg={isDarkBg}
+              crosshairPoint={crosshairPoint}
+              crosshairDragging={crosshairDragging}
+              setCrosshairPoint={setCrosshairPoint}
+              setCrosshairDragging={setCrosshairDragging}
+              drawingsVisible={drawingsVisible}
+              drawSegments={drawSegments}
+              setDrawSegments={setDrawSegments}
+              drawDefaults={drawDefaults}
+              drawPending={drawPending}
+              setDrawPending={setDrawPending}
+              drawPendingRectSecond={drawPendingRectSecond}
+              setDrawPendingRectSecond={setDrawPendingRectSecond}
+              drawPendingFibSecond={drawPendingFibSecond}
+              setDrawPendingFibSecond={setDrawPendingFibSecond}
+              drawPendingFreeRetraceSecond={drawPendingFreeRetraceSecond}
+              setDrawPendingFreeRetraceSecond={setDrawPendingFreeRetraceSecond}
+              drawPendingLineSecond={drawPendingLineSecond}
+              setDrawPendingLineSecond={setDrawPendingLineSecond}
+              drawPendingChannelSecond={drawPendingChannelSecond}
+              setDrawPendingChannelSecond={setDrawPendingChannelSecond}
+              drawPendingStopGainSecond={drawPendingStopGainSecond}
+              setDrawPendingStopGainSecond={setDrawPendingStopGainSecond}
+              drawPendingHorizontalSecond={drawPendingHorizontalSecond}
+              setDrawPendingHorizontalSecond={setDrawPendingHorizontalSecond}
+              drawPendingArrow={drawPendingArrow}
+              setDrawPendingArrow={setDrawPendingArrow}
+              drawPendingText={drawPendingText}
+              setDrawPendingText={setDrawPendingText}
+              drawPendingPencil={drawPendingPencil}
+              setDrawPendingPencil={setDrawPendingPencil}
+              onCreateTextSegment={handleCreateTextSegment}
+              pixelToData={pixelToData}
+              selectedSegmentIndex={selectedSegmentIndex}
+              setSelectedSegmentIndex={setSelectedSegmentIndex}
+              drawMode={drawMode}
+              drawTool={drawTool}
+              setDrawDragging={setDrawDragging}
+              onSelectToolPan={onSelectToolPan}
+              onSwapSecondaryPanel={onSwapSecondaryPanel}
+              onChartDrawClick={() => {
+                setSegmentToolboxCollapsed(true);
+                // Não fechar a caixa de desenho ao clicar no gráfico; reabrir após criar fica a cargo de onSegmentCreated/handleCreateTextSegment
+              }}
+              onSegmentCreated={(newIndex) => {
+                setSelectedSegmentIndex(newIndex);
+                selectSelectTool();
+                setDrawOpen(true);
+                setSegmentToolboxCollapsed(false);
+              }}
+              t={t}
+              textScale={textScale}
+              strategyCandleOverlays={strategyCandleOverlays}
+              spotOrderMarkers={spotOrderMarkers}
+              regressionOverlayPaths={regressionOverlayPaths}
+            />
+            {/* Overlay só no modo crosshair (!drawMode). Em modo desenho o rect do SVG cuida de select (pan + grab) e de desenho (line/rect/fib). */}
+            {!drawMode && (
+              <>
                 <div
-                  className="absolute left-full top-0 ml-1 z-10 min-w-[140px] rounded-lg border border-zinc-200 bg-white shadow-lg py-2 px-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="text-[10px] font-medium text-zinc-500 px-2 pb-1.5">{t.loadLayout}</div>
-                <button
-                  type="button"
-                  onClick={handleLoadDefaultLayout}
-                  className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100 font-medium"
-                >
-                  {t.defaultLayout}
-                </button>
-                {savedLayouts.length === 0 ? (
-                  <p className="px-2 py-1.5 text-sm text-zinc-500 border-t border-zinc-100 mt-1 pt-1">{t.noSavedLayouts}</p>
-                ) : (
-                  <>
-                    <div className="border-t border-zinc-100 mt-1 pt-1" />
-                    {savedLayouts.map((layout) => (
-                      <button
-                        key={layout.slot}
-                        type="button"
-                        onClick={() => handleLoadLayout(layout)}
-                        className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-zinc-100"
-                      >
-                        {t.layoutName.replace("{n}", String(layout.slot))}
-                      </button>
-                    ))}
-                  </>
-                  )}
-                </div>
-              )}
+                  ref={crosshairOverlayDivRef}
+                  role="presentation"
+                  style={{
+                    position: "absolute",
+                    left: MARGIN_LEFT,
+                    top: MARGIN_TOP,
+                    width: chartW,
+                    height: chartH,
+                    touchAction: "none",
+                    zIndex: 1,
+                    cursor: segmentOptionsOpen ? "grab" : (drawMode && drawTool === "select" ? (crosshairDragging ? "grabbing" : "grab") : (crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair")),
+                  }}
+                  onPointerDown={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                    const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                    const toData = crosshairPixelToDataRef.current;
+                    if (!toData) return;
+                    const newPoint = toData(px, py) as {
+                      index: number;
+                      price: number;
+                      panelClickY?: number;
+                    };
+                    const symStr = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                    const symUsdtOk = symStr.endsWith("USDT") && symStr.length > 4;
+                    const lastP = lastPriceForTrading;
+                    if (
+                      pathname === SISTEMA_PATH &&
+                      symUsdtOk &&
+                      e.altKey &&
+                      newPoint.panelClickY == null &&
+                      lastP != null &&
+                      isValidLimitSellPriceVsLast(newPoint.price, lastP)
+                    ) {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                      setAltLimitSellConfirm({ price: newPoint.price, symbol: symStr });
+                      return;
+                    }
+                    if (
+                      pathname === SISTEMA_PATH &&
+                      symUsdtOk &&
+                      e.ctrlKey &&
+                      !e.altKey &&
+                      newPoint.panelClickY == null &&
+                      lastP != null &&
+                      isValidLimitBuyPriceVsLast(newPoint.price, lastP)
+                    ) {
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                      setCtrlLimitBuyConfirm({ price: newPoint.price, symbol: symStr });
+                      return;
+                    }
+                    const isSamePoint =
+                      crosshairPoint !== null &&
+                      crosshairPoint.index === newPoint.index &&
+                      Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                    if (isSamePoint) {
+                      setCrosshairPoint(null);
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                      return;
+                    }
+                    setCrosshairPoint(newPoint);
+                    crosshairDraggingRef.current = true;
+                    setCrosshairDragging(true);
+                  }) : undefined}
+                  onPointerMove={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                    const py = MARGIN_TOP + (e.clientY - rect.top) * (chartH / (rect.height || 1));
+                    const toData = crosshairPixelToDataRef.current;
+                    if (pathname === SISTEMA_PATH && toData && symbolProp) {
+                      const symStr = String(symbolProp).trim().toUpperCase();
+                      const symOk = symStr.endsWith("USDT") && symStr.length > 4;
+                      if (e.altKey && symOk && lastPriceForTrading != null) {
+                        const pt = toData(px, py) as {
+                          index: number;
+                          price: number;
+                          panelClickY?: number;
+                        };
+                        if (pt.panelClickY == null && isValidLimitSellPriceVsLast(pt.price, lastPriceForTrading)) {
+                          setAltSellPreviewPrice(pt.price);
+                          setCtrlBuyPreviewPrice(null);
+                        } else {
+                          setAltSellPreviewPrice(null);
+                        }
+                      } else if (e.ctrlKey && symOk && lastPriceForTrading != null) {
+                        const pt = toData(px, py) as {
+                          index: number;
+                          price: number;
+                          panelClickY?: number;
+                        };
+                        if (pt.panelClickY == null && isValidLimitBuyPriceVsLast(pt.price, lastPriceForTrading)) {
+                          setCtrlBuyPreviewPrice(pt.price);
+                          setAltSellPreviewPrice(null);
+                        } else {
+                          setCtrlBuyPreviewPrice(null);
+                        }
+                      } else {
+                        setCtrlBuyPreviewPrice(null);
+                        setAltSellPreviewPrice(null);
+                      }
+                    } else {
+                      setCtrlBuyPreviewPrice(null);
+                      setAltSellPreviewPrice(null);
+                    }
+                    if (!crosshairDraggingRef.current) return;
+                    if (toData) setCrosshairPoint(toData(px, py));
+                  }) : undefined}
+                  onPointerLeave={
+                    !segmentOptionsOpen
+                      ? () => {
+                          setCtrlBuyPreviewPrice(null);
+                          setAltSellPreviewPrice(null);
+                        }
+                      : undefined
+                  }
+                  onPointerUp={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    crosshairDraggingRef.current = false;
+                    setCrosshairDragging(false);
+                  }) : undefined}
+                  onPointerCancel={!segmentOptionsOpen ? ((e: React.PointerEvent<HTMLDivElement>) => {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    crosshairDraggingRef.current = false;
+                    setCrosshairDragging(false);
+                  }) : undefined}
+                />
+                {hasPanel2 || hasPanel3 || hasPanel4 || hasPanel5 || hasPanel6 || hasPanel7 ? (
+                  <div
+                    role="presentation"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT,
+                      top: tableTop,
+                      width: chartW,
+                      height: chartBottom - tableTop,
+                      touchAction: "pan-x pan-y",
+                      zIndex: 1,
+                    }}
+                    onPointerDown={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const secH = chartBottom - tableTop;
+                      const px = MARGIN_LEFT + (e.clientX - rect.left) * (chartW / (rect.width || 1));
+                      const py = tableTop + (e.clientY - rect.top) * (secH / (rect.height || 1));
+                      const inPanel2 = hasPanel2 && py >= panel2Top && py < panel2Top + panel2Height;
+                      const inPanel3 = hasPanel3 && py >= panel3Top && py < panel3Top + panel3Height;
+                      const inPanel4 = hasPanel4 && py >= panel4Top && py < panel4Top + panel4Height;
+                      const inPanel5 = hasPanel5 && py >= panel5Top && py < panel5Top + panel5Height;
+                      const inPanel6 = hasPanel6 && py >= panel6Top && py < panel6Top + panel6Height;
+                      const inPanel7 = hasPanel7 && py >= panel7Top && py < panel7Top + panel7Height;
+                      if (!inPanel2 && !inPanel3 && !inPanel4 && !inPanel5 && !inPanel6 && !inPanel7) return;
+                      const idx = Math.max(0, Math.min(n - 1, Math.round((px - MARGIN_LEFT) / gap - 0.5) + startIndex));
+                      const close = parseNum(String(fullReversed[idx]?.[4] ?? 0));
+                      let panelValue: number;
+                      if (inPanel2) {
+                        const { min, max } = panelExtents.panel2;
+                        panelValue = min + (1 - (py - panel2Top) / panel2Height) * (max - min);
+                      } else if (inPanel3) {
+                        const { min, max } = panelExtents.panel3;
+                        panelValue = min + (1 - (py - panel3Top) / panel3Height) * (max - min);
+                      } else if (inPanel4) {
+                        const { min, max } = panelExtents.panel4;
+                        panelValue = min + (1 - (py - panel4Top) / panel4Height) * (max - min);
+                      } else if (inPanel5) {
+                        const { min, max } = panelExtents.panel5;
+                        panelValue = min + (1 - (py - panel5Top) / panel5Height) * (max - min);
+                      } else if (inPanel6) {
+                        const { min, max } = panelExtents.panel6;
+                        panelValue = min + (1 - (py - panel6Top) / panel6Height) * (max - min);
+                      } else {
+                        const { min, max } = panelExtents.panel7;
+                        panelValue = min + (1 - (py - panel7Top) / panel7Height) * (max - min);
+                      }
+                      const newPoint = { index: idx, price: close, panelClickY: py, panelValue };
+                      const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
+                      if (isSamePoint) {
+                        setCrosshairPoint(null);
+                        return;
+                      }
+                      setCrosshairPoint(newPoint);
+                    }}
+                  />
+                ) : null}
+              </>
+            )}
+            {pathname === SISTEMA_PATH &&
+              limitBuyCancelTargets.length > 0 &&
+              limitBuyCancelTargets.map((row, idx) => {
+                const busyKey = [...row.orderIds].sort().join(",");
+                const busy = chartLimitBuyCancelingKey === busyKey;
+                const tk = t as Record<string, string>;
+                const cancelLabel = tk.chartLimitBuyCancelOrder ?? "Cancel";
+                const cancelAria = tk.chartLimitBuyCancelOrderAria ?? cancelLabel;
+                return (
+                  <div
+                    key={`limit-buy-cancel-${busyKey}-${idx}`}
+                    className="pointer-events-auto"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT + 4,
+                      top: row.y - 12,
+                      zIndex: 5,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="crypto-btn shrink-0 rounded border border-emerald-700/45 bg-white/95 px-1.5 py-0 text-[10px] font-medium leading-tight text-emerald-900 shadow-sm hover:bg-emerald-50 disabled:opacity-60 dark:bg-zinc-900/95 dark:hover:bg-zinc-800"
+                      aria-label={cancelAria}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        void handleChartLimitBuyCancel(row.orderIds);
+                      }}
+                    >
+                      {busy ? (tk.tradingHistoryCanceling ?? "…") : cancelLabel}
+                    </button>
+                  </div>
+                );
+              })}
+            {pathname === SISTEMA_PATH &&
+              limitSellCancelTargets.length > 0 &&
+              limitSellCancelTargets.map((row, idx) => {
+                const busyKey = [...row.orderIds].sort().join(",");
+                const busy = chartLimitBuyCancelingKey === busyKey;
+                const tk = t as Record<string, string>;
+                const cancelLabel = tk.chartLimitBuyCancelOrder ?? "Cancel";
+                const cancelAria = tk.chartLimitBuyCancelOrderAria ?? cancelLabel;
+                return (
+                  <div
+                    key={`limit-sell-cancel-${busyKey}-${idx}`}
+                    className="pointer-events-auto"
+                    style={{
+                      position: "absolute",
+                      left: MARGIN_LEFT + 4,
+                      top: row.y - 12,
+                      zIndex: 5,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className="crypto-btn shrink-0 rounded border border-red-700/45 bg-white/95 px-1.5 py-0 text-[10px] font-medium leading-tight text-red-900 shadow-sm hover:bg-red-50 disabled:opacity-60 dark:bg-zinc-900/95 dark:hover:bg-zinc-800"
+                      aria-label={cancelAria}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        void handleChartLimitBuyCancel(row.orderIds);
+                      }}
+                    >
+                      {busy ? (tk.tradingHistoryCanceling ?? "…") : cancelLabel}
+                    </button>
+                  </div>
+                );
+              })}
+            <div ref={chartYAxisContainerRef} className="contents">
+              <KlinesChartYAxis
+                chartHeight={chartHeight}
+                yTickValues={yTickValues}
+                y={y}
+                formatYAxis={formatYAxisResolved}
+                formatPanelValue={(v: number) => (v >= 0 && v <= 100 && v === Math.round(v) ? String(v) : formatAbbreviated(v))}
+                formatObvValue={formatObvYAxis}
+                footerYAxisTextHex={footerYAxisTextHex}
+                isDarkFooterYAxis={isDarkFooterYAxis}
+                footerYAxisHex={footerYAxisHex}
+                lineTableHex={lineTableHex}
+                yAxisAbbreviated={yAxisAbbreviated}
+                hasPanel2={hasPanel2}
+                hasPanel3={hasPanel3}
+                hasPanel4={hasPanel4}
+                hasPanel5={hasPanel5}
+                hasPanel6={hasPanel6}
+                hasPanel7={hasPanel7}
+                panelExtents={panelExtents}
+                yRsiPanel2={yRsiPanel2}
+                yRsiPanel3={yRsiPanel3}
+                yRsiPanel4={yRsiPanel4}
+                yRsiPanel5={yRsiPanel5}
+                yRsiPanel6={yRsiPanel6}
+                yRsiPanel7={yRsiPanel7}
+                yRsiByPanel={yRsiByPanel}
+                showLastClose={showLastClose}
+                lastCloseY={lastCloseY}
+                lastClose={lastClose}
+                lastCloseTextHex={lastCloseTextHex}
+                currentCandleCloseTimeMs={validCloseTimeMs}
+                showCandleCountdown={shouldShowCandleCountdown}
+                groupMinutes={timeScaleGroupMinutes}
+                indicatorLines={indicatorLines}
+                klines={klines}
+                n={n}
+                getPanel={getPanel}
+                yMin={yMin}
+                yMax={yMax}
+                crosshairPoint={crosshairPoint}
+                startIndex={startIndex}
+                windowN={windowN}
+                crosshairDragging={crosshairDragging}
+                volumeOnPrice={volumeOnPrice}
+                volumeLabelY={volumeOnPrice && windowN > 0 ? MARGIN_TOP + chartH - chartH / 6 : undefined}
+                volumeLabelValue={
+                  volumeOnPrice && windowN > 0
+                    ? (() => {
+                      const lastRow = windowSlice[windowN - 1];
+                      if (!lastRow) return undefined;
+                      const v = lastRow[7];
+                      const num = v != null ? (typeof v === "number" ? v : Number(v)) : NaN;
+                      return Number.isFinite(num) ? formatAbbreviated(num) : undefined;
+                    })()
+                    : undefined
+                }
+                volumeLabelColor={
+                  volumeOnPrice && windowN > 0
+                    ? (() => {
+                      const lastRow = windowSlice[windowN - 1];
+                      if (!lastRow) return undefined;
+                      const open = parseNum(String(lastRow[1] ?? ""));
+                      const close = parseNum(String(lastRow[4] ?? ""));
+                      return Number.isFinite(open) && Number.isFinite(close) && close >= open ? candleColors.bull : candleColors.bear;
+                    })()
+                    : undefined
+                }
+                textScale={textScale}
+                horizontalLineAxisLabels={(() => {
+                  const LIMIT_BUY_LINE_HEX = "#059669";
+                  const fromDraw = drawingsVisible
+                    ? [
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "horizontalLine" } => s.type === "horizontalLine" && s.horizontalLineShowOnYAxis === true)
+                          .map((s) => ({ price: s.price1, color: s.color ?? DEFAULT_SEGMENT_COLOR })),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "fibonacci" } => s.type === "fibonacci" && s.fibShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const level618Color = s.fibLevel618Color ?? s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const entries: { price: number; color: string }[] = [
+                              { price: s.price2 + range * 0.618, color: level618Color },
+                            ];
+                            if (s.fibShow1618 === true) entries.push({ price: s.price2 + range * 1.618, color: level618Color });
+                            return entries;
+                          }),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "freeRetracement" } => s.type === "freeRetracement" && s.freeRetracementShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const range = s.price1 - s.price2;
+                            const c = s.color ?? DEFAULT_SEGMENT_COLOR;
+                            const k1 = Math.max(0, Math.min(0.5, (s.freeRetracementLevelPct1 ?? 25) / 100));
+                            const k3 = Math.max(0.5, Math.min(1, (s.freeRetracementLevelPct ?? 75) / 100));
+                            const kExt = Math.max(1, Math.min(2, (s.freeRetracementLevelPctExt ?? 100) / 100));
+                            return [
+                              { price: s.price2, color: c },
+                              { price: s.price2 + range * k1, color: c },
+                              { price: s.price2 + range * 0.5, color: c },
+                              { price: s.price2 + range * k3, color: c },
+                              { price: s.price1, color: c },
+                              { price: s.price2 + range * kExt, color: c },
+                            ];
+                          }),
+                        ...drawSegments
+                          .filter((s): s is DrawSegment & { type: "stopGain" } => s.type === "stopGain" && s.stopGainShowValuesOnYAxis === true)
+                          .flatMap((s) => {
+                            const midPrice = s.price1;
+                            const ru = Math.max(1, Math.min(10, Math.round((s.stopGainRatioUp ?? 1) * 100) / 100));
+                            const rd = Math.max(1, Math.min(10, Math.round((s.stopGainRatioDown ?? 1) * 100) / 100));
+                            const openAmount = Math.max(0, s.stopGainOpenAmount ?? 0);
+                            const gainOffset = openAmount * (ru / (ru + rd));
+                            const stopOffset = openAmount * (rd / (ru + rd));
+                            const midColor = s.color ?? DEFAULT_SEGMENT_COLOR;
+                            return [
+                              { price: midPrice - stopOffset, color: "#dc2626" },
+                              { price: midPrice, color: midColor },
+                              { price: midPrice + gainOffset, color: "#059669" },
+                            ];
+                          }),
+                      ]
+                    : [];
+                  const LIMIT_SELL_LINE_HEX = "#dc2626";
+                  const fromLimit = limitBuyLinesVisible.map((price) => ({ price, color: LIMIT_BUY_LINE_HEX }));
+                  const fromLimitSell = limitSellLinesVisible.map((price) => ({ price, color: LIMIT_SELL_LINE_HEX }));
+                  const merged = [...fromDraw, ...fromLimit, ...fromLimitSell];
+                  return merged.length > 0 ? merged : undefined;
+                })()}
+              />
             </div>
           </div>
-        </div>
-        <div className="flex-shrink-0 relative" style={{ backgroundColor: containerBgHex }}>
-          {drawOpen && drawPanelSide === "right" && (
-            <div
-              className="absolute right-2 top-2 z-10 w-fit min-w-0 rounded-lg border border-zinc-200 bg-white shadow-lg py-1 px-1"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between gap-0.5 px-0.5 pb-1 border-b border-zinc-100">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawPanelSide((s) => s === "left" ? "right" : "left"); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                  title={t.segmentToolboxMoveLeft}
-                  aria-label={t.segmentToolboxMoveLeft}
-                >
-                  <span aria-hidden>←</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); setDrawOpen(false); closeDrawMode(); }}
-                  className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-sm leading-none font-semibold"
-                  title={t.drawExitMode}
-                  aria-label={t.drawExitMode}
-                >
-                  <span aria-hidden>×</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={selectLineTool}
-                title={t.lineSegment}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 w-full ${drawTool === "line" ? "bg-zinc-100" : ""}`}
-                aria-label={t.lineSegment}
-              >
-                📏
-              </button>
-              <button
-                type="button"
-                onClick={selectSelectTool}
-                title={t.drawSelectSegment}
-                className={`flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 w-full ${drawTool === "select" ? "bg-zinc-100" : ""}`}
-                aria-label={t.drawSelectSegment}
-              >
-                👆
-              </button>
-              <label className={`flex items-center justify-center w-8 h-8 cursor-pointer rounded text-base hover:bg-zinc-100 w-full ${drawMagnetic ? "bg-zinc-100" : ""}`} title={t.drawMagnetic}>
-                <input
-                  type="checkbox"
-                  checked={drawMagnetic}
-                  onChange={(e) => setDrawMagnetic(e.target.checked)}
-                  className="rounded border-zinc-300 sr-only"
-                />
-                <span aria-hidden>🧲</span>
-              </label>
-              <button
-                type="button"
-                onClick={clearAllDrawing}
-                title={t.drawClearAll}
-                className="flex items-center justify-center w-8 h-8 rounded text-base hover:bg-zinc-100 text-zinc-700 w-full"
-                aria-label={t.drawClearAll}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
-          {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (
-            <div
-              className={`absolute top-12 z-10 rounded-lg border border-zinc-200 bg-white shadow-lg overflow-hidden w-fit min-w-0 max-w-[180px] ${segmentToolboxSide === "left" ? "left-2" : "right-2"}`}
-              onClick={(e) => e.stopPropagation()}
-              role="group"
-              aria-label={t.segmentOptionsTitle}
-            >
-              <div
-                className="flex items-center justify-between gap-1 bg-zinc-50 border-b border-zinc-200 px-1.5 py-1 cursor-pointer hover:bg-zinc-100 transition-colors"
-                onClick={() => setSegmentToolboxCollapsed((c) => !c)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSegmentToolboxCollapsed((c) => !c); } }}
-                aria-expanded={!segmentToolboxCollapsed}
-              >
-                <span className="text-[10px] font-medium text-zinc-600 truncate min-w-0">{t.segmentOptionsTitle}</span>
-                <span className="flex items-center gap-0.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setSegmentToolboxSide((s) => s === "left" ? "right" : "left"); }}
-                    className="p-0.5 rounded hover:bg-zinc-200 text-zinc-500 hover:text-zinc-700 text-xs leading-none"
-                    title={segmentToolboxSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                    aria-label={segmentToolboxSide === "left" ? t.segmentToolboxMoveRight : t.segmentToolboxMoveLeft}
-                  >
-                    {segmentToolboxSide === "left" ? "→" : "←"}
-                  </button>
-                  <span className="text-zinc-500 text-xs leading-none" aria-hidden>
-                    {segmentToolboxCollapsed ? "▶" : "▼"}
-                  </span>
-                </span>
-              </div>
-              {!segmentToolboxCollapsed && (
-                <div className="py-1.5 px-1.5 space-y-1.5">
-                  <div>
-                    <div className="text-[10px] font-medium text-zinc-500 pb-0.5">{t.segmentColor}</div>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        role="combobox"
-                        aria-expanded={segmentColorListboxOpen}
-                        aria-haspopup="listbox"
-                        aria-label={t.segmentColor}
-                        onClick={() => setSegmentColorListboxOpen((o) => !o)}
-                        className="w-full flex items-center gap-1.5 rounded border border-zinc-300 px-1.5 py-1 bg-white text-left min-h-[24px]"
-                      >
-                        <span
-                          className="w-4 h-4 rounded border border-zinc-300 shrink-0"
-                          style={{ backgroundColor: drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR }}
-                        />
-                        <span className="text-zinc-500 text-xs shrink-0 ml-auto" aria-hidden>{segmentColorListboxOpen ? "▲" : "▼"}</span>
-                      </button>
-                      {segmentColorListboxOpen && (
-                        <div
-                          role="listbox"
-                          aria-label={t.segmentColor}
-                          className="absolute left-0 top-full mt-0.5 z-20 grid grid-cols-3 gap-1 p-1 rounded border border-zinc-200 bg-white shadow-lg"
-                        >
-                          {SEGMENT_COLOR_PALETTE.map((hex) => {
-                            const isSelected = (drawSegments[selectedSegmentIndex]?.color ?? DEFAULT_SEGMENT_COLOR) === hex;
-                            return (
-                              <button
-                                key={hex}
-                                type="button"
-                                role="option"
-                                aria-selected={isSelected}
-                                aria-label={t.segmentColor}
-                                onClick={() => {
-                                  setDrawSegments((prev) => {
-                                    const next = [...prev];
-                                    const seg = next[selectedSegmentIndex];
-                                    if (seg) next[selectedSegmentIndex] = { ...seg, color: hex };
-                                    return next;
-                                  });
-                                  setSegmentColorListboxOpen(false);
-                                }}
-                                className={`w-5 h-5 rounded border-2 shrink-0 hover:opacity-90 ${isSelected ? "border-zinc-900 ring-1 ring-zinc-400" : "border-zinc-300 hover:border-zinc-500"}`}
-                                style={{ backgroundColor: hex }}
-                              />
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-startcap-listbox">{t.segmentStartCap}</label>
-                    <select
-                      id="segment-startcap-listbox"
-                      value={drawSegments[selectedSegmentIndex]?.startCap ?? "none"}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, startCap: e.target.value as SegmentCap };
-                        return next;
-                      })}
-                      className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                      aria-label={t.segmentStartCap}
-                    >
-                      {SEGMENT_CAP_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-zinc-500 block pb-0.5" htmlFor="segment-endcap-listbox">{t.segmentEndCap}</label>
-                    <select
-                      id="segment-endcap-listbox"
-                      value={drawSegments[selectedSegmentIndex]?.endCap ?? "none"}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, endCap: e.target.value as SegmentCap };
-                        return next;
-                      })}
-                      className="w-full min-w-0 text-xs rounded border border-zinc-300 px-1.5 py-0.5 bg-white text-zinc-800"
-                      aria-label={t.segmentEndCap}
-                    >
-                      {SEGMENT_CAP_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{t[opt.labelKey]}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={drawSegments[selectedSegmentIndex]?.showPercent !== false}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, showPercent: e.target.checked };
-                        return next;
-                      })}
-                      className="rounded border-zinc-300"
-                    />
-                    <span>{t.segmentShowPercent}</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={drawSegments[selectedSegmentIndex]?.showValues === true}
-                      onChange={(e) => setDrawSegments((prev) => {
-                        const next = [...prev];
-                        const seg = next[selectedSegmentIndex];
-                        if (seg) next[selectedSegmentIndex] = { ...seg, showValues: e.target.checked };
-                        return next;
-                      })}
-                      className="rounded border-zinc-300"
-                    />
-                    <span>{t.segmentShowValues}</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (selectedSegmentIndex === null) return;
-                      setDrawSegments((prev) => prev.filter((_, i) => i !== selectedSegmentIndex));
-                      setSelectedSegmentIndex(null);
-                    }}
-                    className="w-full flex items-center justify-center py-1 rounded border border-zinc-300 bg-zinc-50 hover:bg-red-50 hover:border-red-300 text-base"
-                    title={t.segmentDelete}
-                    aria-label={t.segmentDelete}
-                  >
-                    <span aria-hidden>🗑️</span>
+          {showUpgradeModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={(t as Record<string, string>).upgradePlanModalTitle ?? "Atualize seu plano"}>
+              <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-violet-50 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-violet-800">{(t as Record<string, string>).upgradePlanModalTitle ?? "Atualize seu plano"}</h3>
+                  <button type="button" onClick={() => setShowUpgradeModal(false)} className="p-1 rounded hover:bg-violet-100 text-violet-700" aria-label={t.close}>
+                    <span className="text-lg leading-none">×</span>
                   </button>
                 </div>
-              )}
+                <div className="px-4 py-3 text-sm text-zinc-600">
+                  {(t as Record<string, string>).upgradePlanModalMessage ?? "Salvar e carregar layouts estão disponíveis em planos pagos. Atualize para acessar essas funcionalidades."}
+                </div>
+                <div className="px-4 py-3 flex justify-end gap-2">
+                  <button type="button" onClick={() => setShowUpgradeModal(false)} className="crypto-btn rounded-lg border border-zinc-300 text-zinc-700 hover:bg-zinc-50 px-4 py-2 font-medium">
+                    {t.cancel}
+                  </button>
+                  <a href={`${APP_CRYPTO_ROUTE_PREFIX}/plans`} className="crypto-btn rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium px-4 py-2">
+                    {(t as Record<string, string>).upgradePlanCta ?? "Ver planos"}
+                  </a>
+                </div>
+              </div>
             </div>
           )}
-        <div className="flex flex-shrink-0 relative" style={{ width: width + Y_AXIS_WIDTH }}>
-          {/* Faixa de indicadores sobreposta ao topo da área de plot (não ocupa espaço) */}
-          {hasIndicatorStrip && (
-            <div
-              className="absolute left-0 top-0 z-10 flex items-center gap-2 flex-wrap pointer-events-none"
-              style={{
-                height: INDICATOR_STRIP_HEIGHT,
-                width,
-                paddingLeft: MARGIN_LEFT,
-                paddingTop: 2,
-              }}
-              role="list"
-              aria-label={t.indicatorsOnChart ?? "Indicadores no gráfico"}
-            >
-              {indicatorLines.map((ind, idx) => (
-                <span
-                  key={idx}
-                  className="flex items-center gap-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded"
-                  style={{
-                    color: ind.color,
-                    backgroundColor: isDarkBg ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.85)",
-                    boxShadow: "0 0 4px rgba(0,0,0,0.15)",
-                  }}
-                  role="listitem"
-                >
-                  <span className="w-2 h-0.5 rounded-full shrink-0" style={{ backgroundColor: ind.color }} aria-hidden />
-                  <span>{ind.label ?? `Ind ${idx + 1}`}</span>
-                </span>
-              ))}
+          {saveSuccessModalOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={t.savedSuccess}>
+              <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-emerald-50 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-emerald-800">{t.savedSuccess}</h3>
+                  <button type="button" onClick={() => { setSaveSuccessModalOpen(false); setSavedLayoutName(null); }} className="p-1 rounded hover:bg-emerald-100 text-emerald-700" aria-label={t.close}>
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
+                {savedLayoutName && (
+                  <div className="px-4 py-2 text-sm text-zinc-600">
+                    {savedLayoutName}
+                  </div>
+                )}
+                <div className="px-4 py-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setSaveSuccessModalOpen(false); setSavedLayoutName(null); }}
+                    className="crypto-btn rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2"
+                  >
+                    {t.renameLayoutOk}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        <svg ref={chartSvgRef} width={width} height={chartHeight} className={`flex-shrink-0 ${isDarkBg ? "text-zinc-400" : "text-zinc-700"}`}>
-          {/* Área de plotagem (só candles + grade) com cor de fundo */}
-          <rect
-            x={MARGIN_LEFT}
-            y={MARGIN_TOP}
-            width={chartW}
-            height={chartH}
-            fill={chartBgHex}
-          />
-          {/* Eixo secundário: grade do plot (verticais tracejadas + grid horizontal) — cor da paleta Área de plot */}
-          {showSecondaryAxis && (
+          {saveConfirmSlot !== null && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-label={t.saveLayout}>
+              <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-200 bg-amber-50 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-amber-800">{t.saveLayout} &quot;{getLayoutLabelBySlot(saveConfirmSlot)}&quot;</h3>
+                  <button type="button" onClick={() => setSaveConfirmSlot(null)} className="p-1 rounded hover:bg-amber-100 text-amber-700" aria-label={t.close}>
+                    <span className="text-lg leading-none">×</span>
+                  </button>
+                </div>
+                <div className="px-4 py-3 text-sm text-zinc-600">
+                  {(t as Record<string, string>).saveLayoutConfirmMessage ?? (t as Record<string, string>).saveDefaultConfirmMessage ?? ""}
+                </div>
+                <div className="px-4 py-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSaveConfirmSlot(null)}
+                    className="crypto-btn rounded-lg border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-700 font-medium px-4 py-2"
+                  >
+                    {t.renameLayoutCancel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmSaveLayout}
+                    className="crypto-btn rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2"
+                  >
+                    {(t as Record<string, string>).saveLayoutConfirmConfirm ?? (t as Record<string, string>).saveDefaultConfirmConfirm ?? t.renameLayoutOk}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {pathname === SISTEMA_PATH && (
             <>
-              {verticalIndicesFiltered.map((idx) => (
-                <line
-                  key={`dash-${idx}`}
-                  x1={cx(idx)}
-                  y1={MARGIN_TOP}
-                  x2={cx(idx)}
-                  y2={MARGIN_TOP + chartH}
-                  stroke={secondaryGridHex}
-                  strokeOpacity={0.5}
-                  strokeDasharray="4 2"
-                />
-              ))}
-              {yTickValues.map((v, i) => (
-                <line
-                  key={i}
-                  x1={MARGIN_LEFT}
-                  y1={y(v)}
-                  x2={MARGIN_LEFT + chartW}
-                  y2={y(v)}
-                  stroke={secondaryGridHex}
-                  strokeOpacity={0.5}
-                  strokeDasharray="2 2"
-                />
-              ))}
+              <ChartCtrlLimitBuyModal
+                open={ctrlLimitBuyConfirm !== null}
+                onClose={() => setCtrlLimitBuyConfirm(null)}
+                symbol={ctrlLimitBuyConfirm?.symbol ?? ""}
+                limitPrice={ctrlLimitBuyConfirm?.price ?? 0}
+                lang={lang}
+                onOrdered={() => {
+                  const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                  if (!s) return;
+                  void fetch(
+                    `${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`,
+                    { credentials: "include" }
+                  )
+                    .then(async (r) => {
+                      const j = await r.json().catch(() => ({}));
+                      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
+                      setOpenLimitBuyPricesUsdt(prices);
+                      setOpenLimitBuyOrdersUsdt(orders);
+                      setOpenLimitSellPricesUsdt(sellPrices);
+                      setOpenLimitSellOrdersUsdt(sellOrders);
+                    })
+                    .catch(() => {});
+                }}
+              />
+              <ChartCtrlLimitSellModal
+                open={altLimitSellConfirm !== null}
+                onClose={() => setAltLimitSellConfirm(null)}
+                symbol={altLimitSellConfirm?.symbol ?? ""}
+                limitPrice={altLimitSellConfirm?.price ?? 0}
+                lang={lang}
+                onOrdered={() => {
+                  const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
+                  if (!s) return;
+                  void fetch(
+                    `${API_BASE}/user/binance-connection/spot-open-orders?symbol=${encodeURIComponent(s)}`,
+                    { credentials: "include" }
+                  )
+                    .then(async (r) => {
+                      const j = await r.json().catch(() => ({}));
+                      const { prices, orders, sellPrices, sellOrders } = parseSpotOpenOrdersJson(j);
+                      setOpenLimitBuyPricesUsdt(prices);
+                      setOpenLimitBuyOrdersUsdt(orders);
+                      setOpenLimitSellPricesUsdt(sellPrices);
+                      setOpenLimitSellOrdersUsdt(sellOrders);
+                    })
+                    .catch(() => {});
+                }}
+              />
             </>
           )}
-          {/* Linha pontilhada do último fechamento (atravessa o gráfico) */}
-          {showLastCloseLine && showLastClose && (
-            <line
-              x1={MARGIN_LEFT}
-              y1={lastCloseY}
-              x2={MARGIN_LEFT + chartW}
-              y2={lastCloseY}
-              stroke={lastCloseLineHex}
-              strokeWidth={1}
-              strokeDasharray="2 4"
-            />
-          )}
-          {/* Eixo principal: verticais do dia */}
-          {showMainAxis && dateBreaksFiltered.map((b) => (
-            <line
-              key={`date-${b.index}`}
-              x1={cx(b.index)}
-              y1={MARGIN_TOP}
-              x2={cx(b.index)}
-              y2={MARGIN_TOP + chartH}
-              stroke={lineTableHex}
-              strokeWidth={1}
-              strokeDasharray="4 2"
-            />
-          ))}
-          {/* Eixo X: linha 1 = dias (dia 01 = mês a 45°); linha 2 = grade secundária (sempre) hh:mm, sem desenho de tabela */}
-          {(() => {
-            const tableTop = MARGIN_TOP + chartH;
-            const rowH = 12;
-            const labelOffsetDown = 4;
-            const yRow1 = tableTop + rowH - 2 + labelOffsetDown;
-            const yRow2 = tableTop + rowH + rowH - 2 + labelOffsetDown;
-            return (
-              <>
-                {/* Dias (dd); dia 01 = mês abreviado a 45° no mesmo lugar, substituindo o 01 — 12px */}
-                <g className="text-[12px] font-mono" fill={backgroundTextHex}>
-                  {dayBreaksFiltered.map((b) => {
-                    const isDay01 = b.label === "01";
-                    const openTimeMs = windowSlice[b.index][0] as number;
-                    const x = cx(b.index);
-                    if (isDay01) {
-                      return (
-                        <text
-                          key={b.index}
-                          x={x}
-                          y={yRow1}
-                          textAnchor="middle"
-                          className="text-[12px] font-mono"
-                          fill={backgroundTextHex}
-                          transform={`rotate(-45, ${x}, ${yRow1})`}
-                        >
-                          {formatMonthOnly(openTimeMs)}
-                        </text>
-                      );
-                    }
-                    return <text key={b.index} x={x} y={yRow1} textAnchor="middle">{b.label}</text>;
-                  })}
-                </g>
-                {/* Linha 2: grade secundária hh:mm só quando o eixo secundário está ativo */}
-                {showSecondaryAxis && (
-                  <g className="text-[9px] font-mono" fill={secondaryGridHex}>
-                    {verticalIndicesFiltered.map((idx) => (
-                      <text key={`sec-${idx}`} x={cx(idx)} y={yRow2} textAnchor="middle">
-                        {formatTimeLabel(windowSlice[idx][0] as number)}
-                      </text>
-                    ))}
-                  </g>
-                )}
-              </>
-            );
-          })()}
-          {/* Candles */}
-          {windowSlice.map((k, i) => {
-            const openP = parseNum(k[1]);
-            const highP = parseNum(k[2]);
-            const lowP = parseNum(k[3]);
-            const closeP = parseNum(k[4]);
-            const bull = closeP >= openP;
-            const x = cx(i);
-            const bodyTop = y(Math.max(openP, closeP));
-            const bodyBottom = y(Math.min(openP, closeP));
-            const bodyH = Math.max(1, bodyBottom - bodyTop);
-            const wickTop = y(highP);
-            const wickBottom = y(lowP);
-            const color = bull ? candleColors.bull : candleColors.bear;
-            const strokeColor = color === "#f5f5f5" ? "#171717" : color;
-            const slotLeft = MARGIN_LEFT + i * gap;
-            const slotRight = MARGIN_LEFT + (i + 1) * gap;
-            return (
-              <g key={i}>
-                {/* Área de clique ampliada (crosshair é tratado pelo overlay) */}
-                <rect x={slotLeft} y={MARGIN_TOP} width={gap} height={chartH} fill="transparent" />
-                <line x1={x} y1={wickTop} x2={x} y2={wickBottom} stroke={strokeColor} strokeWidth={1} />
-                <rect
-                  x={x - candleW / 2}
-                  y={bodyTop}
-                  width={candleW}
-                  height={bodyH}
-                  fill={color}
-                  stroke={strokeColor}
-                  strokeWidth={1}
-                />
-              </g>
-            );
-          })}
-          {/* Linhas dos indicadores (SMA etc.) */}
-          {indicatorLines.map((ind, indIdx) => {
-            const col = ind.columnIndex;
-            const points: { i: number; val: number }[] = [];
-            for (let i = 0; i < windowSlice.length; i++) {
-              const v = windowSlice[i][col];
-              if (v != null && typeof v === "number" && Number.isFinite(v)) points.push({ i, val: v });
-            }
-            if (points.length < 2) return null;
-            const d = points
-              .map((p, idx) => `${idx === 0 ? "M" : "L"} ${cx(p.i)} ${y(p.val)}`)
-              .join(" ");
-            const strokeWidth = ind.lineWidth === "thin" ? 1 : 2;
-            const strokeDasharray =
-              ind.lineStyle === "dotted"
-                ? "2 2"
-                : ind.lineStyle === "dashed"
-                  ? "6 4"
-                  : undefined;
-            return (
-              <path
-                key={indIdx}
-                d={d}
-                fill="none"
-                stroke={ind.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={strokeDasharray}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            );
-          })}
-          {/* Crosshair: linhas pontilhadas + marcador (visível sobre candle ou durante arraste; ao arrastar fora, fica na borda) */}
-          {(() => {
-            if (!crosshairPoint) return null;
-            const isOverCandle = crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
-            const showCrosshair = isOverCandle || crosshairDragging;
-            if (!showCrosshair) return null;
-            let crossX = segmentToPixel(crosshairPoint.index, crosshairPoint.price).x;
-            let crossY = y(crosshairPoint.price);
-            if (crosshairDragging) {
-              crossX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW, crossX));
-              crossY = Math.max(MARGIN_TOP, Math.min(MARGIN_TOP + chartH, crossY));
-            }
-            const strokeCross = lineTableHex;
-            const tableTop = MARGIN_TOP + chartH;
-            const openTimeMs = crosshairPoint.index >= 0 && crosshairPoint.index < n ? Number(fullReversed[crosshairPoint.index][0]) : null;
-            const boxPad = 6;
-            const lineH = 10;
-            const boxW = 72;
-            const boxH = lineH * 2 + boxPad * 2;
-            const boxX = Math.max(MARGIN_LEFT, Math.min(MARGIN_LEFT + chartW - boxW, crossX - boxW / 2));
-            const boxY = tableTop + 2;
-            return (
-              <g pointerEvents="none">
-                {/* Vertical pontilhada */}
-                <line x1={crossX} y1={MARGIN_TOP} x2={crossX} y2={tableTop} stroke={strokeCross} strokeWidth={1} strokeDasharray="4 2" />
-                {/* Horizontal pontilhada */}
-                <line x1={MARGIN_LEFT} y1={crossY} x2={MARGIN_LEFT + chartW} y2={crossY} stroke={strokeCross} strokeWidth={1} strokeDasharray="4 2" />
-                {/* Marcação do ponto */}
-                <circle cx={crossX} cy={crossY} r={3} fill={strokeCross} stroke="none" />
-                {/* Data/hora embaixo da vertical: fundo preto 80%, texto branco, quebra de linha (yyyy-mm-dd) */}
-                {openTimeMs != null && (
-                  <g>
-                    <rect x={boxX} y={boxY} width={boxW} height={boxH} rx={2} fill="#000000" fillOpacity={0.8} />
-                    <text x={boxX + boxW / 2} y={boxY + boxPad + lineH - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
-                      {formatDateYyyyMmDd(openTimeMs)}
-                    </text>
-                    <text x={boxX + boxW / 2} y={boxY + boxPad + lineH * 2 - 1} textAnchor="middle" className="text-[10px] font-mono" fill="#ffffff">
-                      {formatTimeLabel(openTimeMs)}
-                    </text>
-                  </g>
-                )}
-              </g>
-            );
-          })()}
-          {/* Tooltip OHLC do candle só quando o ponto está dentro dos limites (min/max) do candle */}
-          {(() => {
-            const isOverCandle = crosshairPoint !== null && crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN;
-            if (!isOverCandle || !crosshairPoint) return null;
-            const localIndex = crosshairPoint.index - startIndex;
-            const k = windowSlice[localIndex];
-            if (!k) return null;
-            const openP = parseNum(k[1]);
-            const highP = parseNum(k[2]);
-            const lowP = parseNum(k[3]);
-            const closeP = parseNum(k[4]);
-            if (crosshairPoint.price < lowP || crosshairPoint.price > highP) return null;
-            const openTimeMs = Number(k[0]);
-            const prevK = localIndex > 0 ? windowSlice[localIndex - 1] : null;
-            const prevClose = prevK ? parseNum(prevK[4]) : 0;
-            const amplitude = closeP - openP;
-            const amplitudePct = openP > 0 ? (amplitude / openP) * 100 : 0;
-            const pctVsPrev = prevClose > 0 ? ((closeP - prevClose) / prevClose) * 100 : 0;
-            const pctVsPrevStr = pctVsPrev >= 0 ? `+${pctVsPrev.toFixed(2)}%` : pctVsPrev.toFixed(2) + "%";
-            const volume = parseNum(k[5]);
-            const volumeUsdt = parseNum(k[7]);
-            const x = cx(localIndex);
-            const wickTop = y(highP);
-            const bodyBottom = y(Math.min(openP, closeP));
-            const tw = 130;
-            const lineH = 11;
-            const pad = 6;
-            const numLines = 11;
-            const th = pad * 2 + lineH * numLines;
-            const tx = Math.max(MARGIN_LEFT + 4, Math.min(MARGIN_LEFT + chartW - tw - 4, x - tw / 2));
-            const showAbove = wickTop - th - 4 >= MARGIN_TOP;
-            const ty = showAbove ? wickTop - th - 4 : bodyBottom + 4;
-            const fmt = (v: number) => formatYAxis(v);
-            const y1 = ty + pad + 9;
-            const blue = "#2563eb";
-            const green = "#059669";
-            const red = "#dc2626";
-            return (
-              <g pointerEvents="none" opacity={0.8}>
-                <rect x={tx} y={ty} width={tw} height={th} rx={4} ry={4} fill="white" stroke="#e4e4e7" strokeWidth={1} />
-                <text x={tx + pad} y={y1} className="text-[10px] font-mono" fill="#171717">{t.date}: {formatDateLabel(openTimeMs)}</text>
-                <text x={tx + pad} y={y1 + lineH} className="text-[10px] font-mono" fill="#171717">{t.time}: {formatTimeLabel(openTimeMs)}</text>
-                <text x={tx + pad} y={y1 + lineH * 2} className="text-[10px] font-mono font-medium" fill="#171717">{t.open}: {fmt(openP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 3} className="text-[10px] font-mono" fill="#171717">{t.high}: {fmt(highP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 4} className="text-[10px] font-mono" fill="#171717">{t.low}: {fmt(lowP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 5} className="text-[10px] font-mono" fill="#171717">{t.close}: {fmt(closeP)}</text>
-                <text x={tx + pad} y={y1 + lineH * 6} className="text-[10px] font-mono" fill={blue}>{t.amplitude}: {fmt(amplitude)}</text>
-                <text x={tx + pad} y={y1 + lineH * 7} className="text-[10px] font-mono" fill={blue}>{t.amplitudeVar}: {amplitudePct.toFixed(2)}%</text>
-                <text x={tx + pad} y={y1 + lineH * 8} className="text-[10px] font-mono" fill={pctVsPrev >= 0 ? green : red}>{t.vsPrevClose} {pctVsPrevStr}</text>
-                <text x={tx + pad} y={y1 + lineH * 9} className="text-[10px] font-mono" fill="#171717">{t.volumeBtc}: {formatAbbreviated(volume)}</text>
-                <text x={tx + pad} y={y1 + lineH * 10} className="text-[10px] font-mono" fill="#171717">{t.volUsdt}: {formatAbbreviated(volumeUsdt)}</text>
-              </g>
-            );
-          })()}
-          {/* Overlay: clique define/atualiza crosshair; mousedown com crosshair ativo inicia arraste (somente quando não está no modo desenho) */}
-          {!drawMode && (
-            <rect
-              ref={crosshairOverlayRef}
-              x={MARGIN_LEFT}
-              y={MARGIN_TOP}
-              width={chartW}
-              height={chartH}
-              fill="transparent"
-              style={{ cursor: crosshairDragging ? "grabbing" : crosshairPoint !== null ? "grab" : "crosshair" }}
-              onMouseDown={(e) => {
-                const overlay = crosshairOverlayRef.current;
-                const dims = drawConversionRef.current;
-                if (!overlay || !dims) return;
-                const rect = overlay.getBoundingClientRect();
-                const px = MARGIN_LEFT + (e.clientX - rect.left) * (dims.chartW / (rect.width || 1));
-                const py = MARGIN_TOP + (e.clientY - rect.top) * (dims.chartH / (rect.height || 1));
-                const toData = crosshairPixelToDataRef.current;
-                if (!toData) return;
-                const newPoint = toData(px, py);
-                const isSamePoint = crosshairPoint !== null && crosshairPoint.index === newPoint.index && Math.abs(crosshairPoint.price - newPoint.price) < 1e-9;
-                if (isSamePoint) {
-                  setCrosshairPoint(null);
-                  return;
-                }
-                const hadCrosshair = crosshairPoint !== null;
-                setCrosshairPoint(newPoint);
-                if (hadCrosshair) {
-                  crosshairDraggingRef.current = true;
-                  setCrosshairDragging(true);
-                }
-              }}
-            />
-          )}
-          {/* Segmentos de reta desenhados (em dados: índice + preço; convertidos para pixel); cor e pontas (ponto/seta) */}
-          {drawSegments.map((seg, idx) => {
-            const p1 = segmentToPixel(seg.index1, seg.price1);
-            const p2 = segmentToPixel(seg.index2, seg.price2);
-            const strokeColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
-            const startCap = seg.startCap ?? "none";
-            const endCap = seg.endCap ?? "none";
-            const isSelected = selectedSegmentIndex === idx;
-            const lineW = isSelected ? 2 : 1;
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const len = Math.sqrt(dx * dx + dy * dy) || 1;
-            const ux = dx / len;
-            const uy = dy / len;
-            const arrowLen = 8;
-            const arrowW = 4;
-            return (
-              <g key={idx}>
-                <line
-                  x1={p1.x}
-                  y1={p1.y}
-                  x2={p2.x}
-                  y2={p2.y}
-                  stroke={strokeColor}
-                  strokeWidth={lineW}
-                />
-                {startCap === "point" && <circle cx={p1.x} cy={p1.y} r={3} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />}
-                {endCap === "point" && <circle cx={p2.x} cy={p2.y} r={3} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />}
-                {startCap === "arrow" && (() => {
-                  const tip = p1;
-                  const u1 = (p1.x - p2.x) / len;
-                  const u2 = (p1.y - p2.y) / len;
-                  const backX = tip.x - arrowLen * u1;
-                  const backY = tip.y - arrowLen * u2;
-                  const leftX = backX - u2 * arrowW;
-                  const leftY = backY + u1 * arrowW;
-                  const rightX = backX + u2 * arrowW;
-                  const rightY = backY - u1 * arrowW;
-                  return <path d={`M ${tip.x} ${tip.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />;
-                })()}
-                {endCap === "arrow" && (() => {
-                  const tip = p2;
-                  const backX = tip.x - arrowLen * ux;
-                  const backY = tip.y - arrowLen * uy;
-                  const leftX = backX - uy * arrowW;
-                  const leftY = backY + ux * arrowW;
-                  const rightX = backX + uy * arrowW;
-                  const rightY = backY - ux * arrowW;
-                  return <path d={`M ${tip.x} ${tip.y} L ${leftX} ${leftY} L ${rightX} ${rightY} Z`} fill={strokeColor} stroke={strokeColor} strokeWidth={1} />;
-                })()}
-                {seg.showPercent !== false && (() => {
-                  const midX = (p1.x + p2.x) / 2;
-                  const midY = (p1.y + p2.y) / 2;
-                  const offset = 12;
-                  const labelX = midX + uy * offset;
-                  const labelY = midY - ux * offset;
-                  const percent = seg.price1 !== 0 ? ((seg.price2 - seg.price1) / seg.price1) * 100 : 0;
-                  const percentStr = percent >= 0 ? `+${percent.toFixed(4)}%` : `${percent.toFixed(4)}%`;
-                  const i1 = Math.max(0, Math.min(seg.index1, n - 1));
-                  const i2 = Math.max(0, Math.min(seg.index2, n - 1));
-                  const openTime1 = fullReversed[i1]?.[0] ?? 0;
-                  const openTime2 = fullReversed[i2]?.[0] ?? 0;
-                  const days = Math.round((openTime2 - openTime1) / MS_PER_DAY);
-                  const daysStr = `${days}d`;
-                  const textColor = percent >= 0 ? "#059669" : "#dc2626";
-                  const padW = 44;
-                  const padH = 14;
-                  return (
-                    <g>
-                      <rect x={labelX - padW} y={labelY - 12} width={padW * 2} height={padH * 2} rx={4} ry={4} fill="#ffffff" fillOpacity={0.8} stroke={textColor} strokeWidth={1} />
-                      <text x={labelX} y={labelY} textAnchor="middle" fill={textColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>
-                        <tspan x={labelX} dy={0}>{percentStr}</tspan>
-                        <tspan x={labelX} dy={11}>{daysStr}</tspan>
-                      </text>
-                    </g>
-                  );
-                })()}
-                {seg.showValues === true && (() => {
-                  const fmt = (v: number) => formatYAxis(v);
-                  const v1 = fmt(seg.price1);
-                  const v2 = fmt(seg.price2);
-                  const vPadW = 34;
-                  const vHeight = 16;
-                  const textBaselineY = -6;
-                  const textCenterY = textBaselineY - 5;
-                  const rectY1 = p1.y + textCenterY - vHeight / 2;
-                  const rectY2 = p2.y + textCenterY - vHeight / 2;
-                  return (
-                    <>
-                      <rect x={p1.x - vPadW} y={rectY1} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                      <text x={p1.x} y={p1.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v1}</text>
-                      <rect x={p2.x - vPadW} y={rectY2} width={vPadW * 2} height={vHeight} rx={3} ry={3} fill="#ffffff" fillOpacity={0.8} stroke={strokeColor} strokeWidth={1} />
-                      <text x={p2.x} y={p2.y - 6} textAnchor="middle" fill={strokeColor} className="text-[10px] font-medium select-none" style={{ fontSize: 10 }}>{v2}</text>
-                    </>
-                  );
-                })()}
-              </g>
-            );
-          })}
-          {/* Primeiro ponto ao desenhar (aguardando segundo clique) */}
-          {drawPending && (() => {
-            const p = segmentToPixel(drawPending.index1, drawPending.price1);
-            return <circle cx={p.x} cy={p.y} r={4} fill="none" stroke="#000000" strokeWidth={1} />;
-          })()}
-          {/* Overlay no modo desenho: captura cliques para segmento de reta ou seleção (evita que candles capturem) */}
-          {drawMode && (
-            <rect
-              x={MARGIN_LEFT}
-              y={MARGIN_TOP}
-              width={chartW}
-              height={chartH}
-              fill="transparent"
-              style={{ cursor: drawTool === "select" ? "pointer" : "crosshair" }}
-              onClick={(e) => {
-                if (!chartSvgRef.current) return;
-                const svg = chartSvgRef.current;
-                const rect = svg.getBoundingClientRect();
-                const svgW = svg.width.baseVal.value;
-                const svgH = svg.height.baseVal.value;
-                const px = (e.nativeEvent.clientX - rect.left) * (svgW / rect.width);
-                const py = (e.nativeEvent.clientY - rect.top) * (svgH / rect.height);
-                if (drawTool === "select") {
-                  const HIT_THRESHOLD = 12;
-                  let bestIdx = -1;
-                  let bestD = HIT_THRESHOLD;
-                  drawSegments.forEach((seg, idx) => {
-                    const p1 = segmentToPixel(seg.index1, seg.price1);
-                    const p2 = segmentToPixel(seg.index2, seg.price2);
-                    const d = distanceToSegment(px, py, p1.x, p1.y, p2.x, p2.y);
-                    if (d < bestD) {
-                      bestD = d;
-                      bestIdx = idx;
-                    }
-                  });
-                  setSelectedSegmentIndex(bestIdx >= 0 ? bestIdx : null);
-                  return;
-                }
-                const d = snapToCandlePoint(px, py);
-                if (drawPending === null) {
-                  setDrawPending({ index1: d.index, price1: d.price });
-                } else {
-                  setDrawSegments((seg) => [...seg, { index1: drawPending.index1, price1: drawPending.price1, index2: d.index, price2: d.price, startCap: "point", endCap: "arrow", showPercent: true }]);
-                  setDrawPending(null);
-                }
-              }}
-            />
-          )}
-          {/* Handles do segmento selecionado (reajustar posição dos pontos); cor do segmento */}
-          {drawMode && selectedSegmentIndex !== null && drawSegments[selectedSegmentIndex] && (() => {
-            const seg = drawSegments[selectedSegmentIndex];
-            const h1 = segmentToPixel(seg.index1, seg.price1);
-            const h2 = segmentToPixel(seg.index2, seg.price2);
-            const handleColor = seg.color ?? DEFAULT_SEGMENT_COLOR;
-            return (
-              <g pointerEvents="all">
-                <circle
-                  cx={h1.x}
-                  cy={h1.y}
-                  r={2.5}
-                  fill={handleColor}
-                  stroke={handleColor}
-                  strokeWidth={1}
-                  style={{ cursor: "grab" }}
-                  onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-                  onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 0 }); }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <circle
-                  cx={h2.x}
-                  cy={h2.y}
-                  r={2.5}
-                  fill={handleColor}
-                  stroke={handleColor}
-                  strokeWidth={1}
-                  style={{ cursor: "grab" }}
-                  onMouseDown={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-                  onTouchStart={(e) => { e.stopPropagation(); setDrawDragging({ segmentIndex: selectedSegmentIndex, point: 1 }); }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </g>
-            );
-          })()}
-        </svg>
-        {/* Eixo Y (USDT) — fixo à direita; último fechamento sempre visível — cor do texto rodapé/eixo Y */}
-        <div className="flex-shrink-0 border-l border-zinc-200" style={{ backgroundColor: footerYAxisHex }}>
-          <svg width={Y_AXIS_WIDTH} height={chartHeight} className="text-[10px] font-mono">
-            {yTickValues.map((v, i) => (
-              <text
-                key={i}
-                x={Y_AXIS_WIDTH - 6}
-                y={y(v) + 4}
-                textAnchor="end"
-                fill={footerYAxisTextHex}
-              >
-                {formatYAxis(v)}
-              </text>
-            ))}
-            {showLastClose && (
-              <g>
-                <rect
-                  x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                  y={lastCloseY - 7}
-                  width={yAxisAbbreviated ? 46 : 56}
-                  height={14}
-                  fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-                  stroke={isDarkFooterYAxis ? "#52525b" : "#e4e4e7"}
-                  strokeWidth={1}
-                  rx={2}
-                />
-                <text
-                  x={Y_AXIS_WIDTH - 6}
-                  y={lastCloseY + 4}
-                  textAnchor="end"
-                  className="font-semibold"
-                  fill={lastCloseTextHex}
-                >
-                  {formatYAxis(lastClose)}
-                </text>
-              </g>
-            )}
-            {showIndicatorLastValueOnYAxis && indicatorLines.map((ind, indIdx) => {
-              const lastVal = n > 0 ? (() => {
-                const v = klines[0][ind.columnIndex];
-                return v != null && typeof v === "number" && Number.isFinite(v) ? v : null;
-              })() : null;
-              if (lastVal == null) return null;
-              const lastValY = y(lastVal);
-              const inRange = lastVal >= yMin && lastVal <= yMax;
-              if (!inRange) return null;
-              return (
-                <g key={indIdx}>
-                  <rect
-                    x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                    y={lastValY - 7}
-                    width={yAxisAbbreviated ? 46 : 56}
-                    height={14}
-                    fill="white"
-                    fillOpacity={0.9}
-                    stroke="#e4e4e7"
-                    strokeWidth={1}
-                    rx={2}
-                  />
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={lastValY + 4}
-                    textAnchor="end"
-                    className="font-semibold font-mono text-[10px]"
-                    fill={ind.color}
-                  >
-                    {formatYAxis(lastVal)}
-                  </text>
-                </g>
-              );
-            })}
-            {/* Marcador do crosshair no eixo Y: valor + percentual (visível sobre candle ou durante arraste) */}
-            {crosshairPoint !== null && (crosshairPoint.index >= startIndex && crosshairPoint.index < startIndex + windowN || crosshairDragging) && (() => {
-              const crossY = y(crosshairPoint.price);
-              const pctVsLast = lastClose > 0 ? ((crosshairPoint.price - lastClose) / lastClose) * 100 : 0;
-              const pctStr = pctVsLast >= 0 ? `+${pctVsLast.toFixed(2)}%` : pctVsLast.toFixed(2) + "%";
-              const pctColor = pctVsLast >= 0 ? "#059669" : "#dc2626";
-              const boxH = 28;
-              const boxY = crossY - 8;
-              return (
-                <g>
-                  <rect
-                    x={yAxisAbbreviated ? Y_AXIS_WIDTH - 52 : Y_AXIS_WIDTH - 62}
-                    y={boxY}
-                    width={yAxisAbbreviated ? 46 : 56}
-                    height={boxH}
-                    fill={isDarkFooterYAxis ? "#3f3f46" : "white"}
-                    stroke={lineTableHex}
-                    strokeWidth={1}
-                    strokeDasharray="2 2"
-                    rx={2}
-                  />
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={crossY + 4}
-                    textAnchor="end"
-                    className="font-mono font-medium"
-                    fill={footerYAxisTextHex}
-                  >
-                    {formatYAxis(crosshairPoint.price)}
-                  </text>
-                  <text
-                    x={Y_AXIS_WIDTH - 6}
-                    y={crossY + 15}
-                    textAnchor="end"
-                    className="text-[10px] font-mono"
-                    fill={pctColor}
-                  >
-                    {pctStr}
-                  </text>
-                </g>
-              );
-            })()}
-          </svg>
-        </div>
-        </div>
-      </div>
-      </div>
-      <div
-        className={`px-3 pt-3 pb-2 text-[10px] border-t flex items-center justify-end gap-3 flex-wrap ${footerYAxisBgColor >= 4 ? "border-zinc-600" : "border-zinc-100"}`}
-        style={{ backgroundColor: footerYAxisHex, color: footerYAxisTextHex }}
-      >
-        {saveLoadMsg && <span className="mr-auto text-emerald-600 font-medium">{saveLoadMsg}</span>}
-        <span className="mr-auto">BTCUSDT {intervalLabel ?? `${groupMinutes}m`} · USDT</span>
-        <div className="flex items-center gap-2">
-          <label htmlFor="candles-listbox">{t.candles}:</label>
-          <select
-            id="candles-listbox"
-            value={visibleCount}
-            onChange={(e) => setVisibleCount(Number(e.target.value) as VisibleCount)}
-            aria-label={t.candlesAria}
-            className={`text-[10px] font-medium rounded px-1.5 py-0.5 cursor-pointer ${isDarkFooterYAxis ? "text-zinc-100 bg-zinc-600 border-zinc-500 border" : "text-zinc-700 bg-zinc-100 border border-zinc-200"}`}
-          >
-            {VISIBLE_OPTIONS.map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setStartIndex((i) => Math.max(0, i - Math.floor(visibleCount / 2)))}
-            disabled={!canPrev}
-            className={`px-2 py-0.5 rounded border disabled:opacity-40 disabled:cursor-not-allowed ${isDarkFooterYAxis ? "border-zinc-500 hover:bg-zinc-600" : "border-zinc-200 hover:bg-zinc-100"}`}
-          >
-            {t.previous}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStartIndex((i) => Math.min(n - visibleCount, i + visibleCount))}
-            disabled={!canNext}
-            className={`px-2 py-0.5 rounded border disabled:opacity-40 disabled:cursor-not-allowed ${isDarkFooterYAxis ? "border-zinc-500 hover:bg-zinc-600" : "border-zinc-200 hover:bg-zinc-100"}`}
-          >
-            {t.next}
-          </button>
+          <KlinesChartFooter
+            footerYAxisHex={footerYAxisHex}
+            footerYAxisTextHex={footerYAxisTextHex}
+            isDarkFooterYAxis={isDarkFooterYAxis}
+            saveLoadMsg={saveLoadMsg}
+            intervalLabel={intervalLabel}
+            groupMinutes={groupMinutes}
+            t={t}
+            visibleCount={visibleCount}
+            setVisibleCount={setVisibleCount}
+            setStartIndex={setStartIndex}
+            n={n}
+            canPrev={canPrev}
+            canNext={canNext}
+            symbol={symbolProp}
+            onOpenSymbolPanel={onOpenSymbolPanel}
+          />
         </div>
       </div>
     </div>

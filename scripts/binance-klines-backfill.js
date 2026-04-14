@@ -1,7 +1,6 @@
 /**
- * Backfill de klines BTCUSDT 1m no banco (backcrypto.BinanceKline).
- * Popula dados retroativamente de 2024-01-01T00:00:00.000Z até 2025-09-01T00:00:00.000Z.
- * Usa a mesma API Binance e createMany com skipDuplicates (não sobrescreve dados já existentes).
+ * Backfill de klines BTCUSDT 1m no banco (backcrypto.BinanceKlineFast).
+ * Período: últimos KLINE_1M_DAYS dias (.env, default 9) até agora. Se rodar de novo, reescreve o range.
  *
  * Uso: node scripts/binance-klines-backfill.js
  * Requer: DATABASE_URL no .env e prisma generate já rodado.
@@ -12,17 +11,23 @@ require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
 const { PrismaClient } = require("../src/lib/prisma-bio-client");
 
-const BINANCE_KLINES = "https://api.binance.com/api/v3/klines";
+const BINANCE_BASE = (process.env.BINANCE_API_BASE_URL || "https://api.binance.com").replace(/\/$/, "");
 const SYMBOL = "BTCUSDT";
 const INTERVAL = "1m";
 const LIMIT = 1000;
 const ONE_MINUTE_MS = 60 * 1000;
 const DELAY_MS = 1100; // ~1 req/s para evitar rate limit
+const CORRETORA = "binance";
+const KLINE_1M_DAYS = Math.max(1, parseInt(process.env.KLINE_1M_DAYS ?? "9", 10) || 9);
 
-/** 2024-01-01 00:00:00 UTC */
-const START_MS = new Date("2024-01-01T00:00:00.000Z").getTime();
-/** 2025-09-01 00:00:00 UTC (último minuto incluído: 2025-08-31 23:59:00) */
-const END_MS = new Date("2025-09-01T00:00:00.000Z").getTime();
+/** Início do passado = KLINE_1M_DAYS dias atrás (UTC). */
+function getStartMs() {
+  return Date.now() - KLINE_1M_DAYS * 24 * 60 * 60 * 1000;
+}
+/** Fim = agora (próximo minuto para incluir o atual). */
+function getEndMs() {
+  return Date.now() + ONE_MINUTE_MS;
+}
 
 const prisma = new PrismaClient();
 
@@ -31,7 +36,7 @@ function sleep(ms) {
 }
 
 async function fetchKlines(startTime, endTime) {
-  const url = new URL(BINANCE_KLINES);
+  const url = new URL(`${BINANCE_BASE}/api/v3/klines`);
   url.searchParams.set("symbol", SYMBOL);
   url.searchParams.set("interval", INTERVAL);
   url.searchParams.set("limit", String(LIMIT));
@@ -45,6 +50,7 @@ async function fetchKlines(startTime, endTime) {
 
 function klineToRow(k) {
   return {
+    corretora: CORRETORA,
     symbol: SYMBOL,
     interval: INTERVAL,
     openTime: BigInt(k[0]),
@@ -62,8 +68,22 @@ function klineToRow(k) {
 }
 
 async function main() {
+  const START_MS = getStartMs();
+  const END_MS = getEndMs();
   console.log("[binance-klines-backfill] Iniciando…");
-  console.log("[binance-klines-backfill] Período: 2024-01-01 00:00:00 UTC → 2025-09-01 00:00:00 UTC");
+  console.log("[binance-klines-backfill] Tabela: BinanceKlineFast | 1m | passado = " + KLINE_1M_DAYS + " dias até agora.");
+  console.log("[binance-klines-backfill] Período: " + new Date(START_MS).toISOString() + " → " + new Date(END_MS).toISOString());
+
+  // Reescrever se rodar novamente: remove o range que vamos preencher.
+  const deleted = await prisma.binanceKlineFast.deleteMany({
+    where: {
+      corretora: CORRETORA,
+      symbol: SYMBOL,
+      interval: INTERVAL,
+      openTime: { gte: BigInt(START_MS), lt: BigInt(END_MS) },
+    },
+  });
+  if (deleted.count > 0) console.log("[binance-klines-backfill] Removidas " + deleted.count + " linhas antigas do range (reescrevendo).");
 
   let startTime = START_MS;
   let totalInserted = 0;
@@ -80,7 +100,7 @@ async function main() {
     }
 
     const rows = klines.map(klineToRow);
-    const created = await prisma.binanceKline.createMany({
+    const created = await prisma.binanceKlineFast.createMany({
       data: rows,
       skipDuplicates: true,
     });

@@ -5,23 +5,23 @@ import { getLocaleFromRequest } from "@/lib/get-locale-server";
 import { AppBarSafeProvider } from "./AppBarSafeContext";
 import StatusBarPref from "./StatusBarPref";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sevencoins.com.br";
 
 const ROOT_META = {
   pt: {
-    title: "Backtest Crypto | Simulador de Estratégias para Criptomoedas",
+    title: "Crypto Strategy | Construtor de Estratégias para Criptomoedas",
     description:
-      "Simulador avançado de estratégias para criptomoedas com modelagem estatística aplicada a dados históricos. Teste indicadores técnicos, MACD, RSI e compare com Buy & Hold.",
+      "Crie e combine estratégias com um construtor visual baseado em regras: indicadores técnicos, condições de mercado e sinais no gráfico usando dados históricos. Explore vários ativos e cenários — simulação educacional, sem execução de ordens.",
     keywords:
-      "backtest criptomoedas, simulador estratégias, MACD, RSI, médias móveis, Bitcoin, SevenCoins, análise técnica",
+      "construtor de estratégias cripto, crypto strategy builder, regras de trading, indicadores técnicos, sinais no gráfico, Bitcoin, Ethereum, SevenCoins, análise técnica",
   },
   en: {
-    title: "Backtest Crypto | Crypto Strategy Simulator",
+    title: "Crypto Strategy | Visual Strategy Builder for Crypto",
     description:
-      "Advanced crypto strategy simulator with statistical modeling applied to historical data. Test technical indicators, MACD, RSI and compare with Buy & Hold.",
+      "Build and combine strategies with a visual, rule-based builder: technical indicators, market conditions and on-chart signals using historical data. Explore multiple assets and scenarios — educational simulation, no order execution.",
     keywords:
-      "crypto backtest, strategy simulator, MACD, RSI, moving averages, Bitcoin, SevenCoins, technical analysis",
+      "crypto strategy builder, visual rule builder, trading rules, technical indicators, chart signals, Bitcoin, Ethereum, SevenCoins, technical analysis",
   },
 } as const;
 
@@ -39,16 +39,16 @@ const SHARED_META: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Backtest Crypto",
+    title: "Crypto Strategy",
   },
   openGraph: {
-    siteName: "Backtest Crypto",
+    siteName: "Crypto Strategy",
     type: "website",
-    images: [{ url: `${BASE_PATH}/icon.png` }],
+    images: [{ url: `${BASE_PATH}/crypto_banner_x.png` }],
   },
   twitter: {
     card: "summary_large_image",
-    images: [`${BASE_PATH}/bio_banner_x.png`],
+    images: [`${BASE_PATH}/crypto_banner_x.png`],
   },
 };
 
@@ -86,13 +86,12 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const lang = await getLocaleFromRequest();
-  const ptHref = `${BASE_URL}${BASE_PATH}/`;
-  const enHref = `${BASE_URL}${BASE_PATH}/?lang=en`;
+  const ptHref = `${BASE_URL}${BASE_PATH}/pt`;
+  const enHref = `${BASE_URL}${BASE_PATH}/en`;
 
   return (
     <html lang={lang === "pt" ? "pt-BR" : "en"}>
       <head>
-        {/* hreflang: pt-BR padrão, en = ?lang=en */}
         <link rel="alternate" hrefLang="pt-BR" href={ptHref} />
         <link rel="alternate" hrefLang="en" href={enHref} />
         <link rel="alternate" hrefLang="x-default" href={ptHref} />
@@ -104,32 +103,25 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "Backtest Crypto",
+              name: "Crypto Strategy",
               applicationCategory: "EducationalApplication",
               operatingSystem: "Web",
               description: ROOT_META[lang].description,
-              url: `${BASE_URL}${BASE_PATH}/`,
+              url: `${BASE_URL}${BASE_PATH}/pt`,
               publisher: {
                 "@type": "Organization",
                 name: "SevenCoins",
                 url: "https://sevencoins.com.br",
               },
-              sameAs: [
-                "https://play.google.com/store/apps/details?id=com.sevencoins.biogenerator",
-              ],
             }),
           }}
         />
       </head>
-      <body className="min-h-dvh bg-gradient-to-br from-zinc-50 via-white to-zinc-100 text-zinc-900 antialiased">
-        <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-indigo-200/40 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-violet-200/40 blur-3xl" />
-        </div>
+      <body className="min-h-dvh bg-gradient-to-br from-zinc-300 to-zinc-600 text-zinc-900 antialiased">
         <main className="w-full px-0 py-0">
           <AppBarSafeProvider>
             <StatusBarPref />
-            <div data-app="backcrypto" className="bio-generator-app min-h-screen text-zinc-900">
+            <div data-app="crypto" className="crypto-generator-app min-h-screen text-zinc-900">
               {children}
             </div>
           </AppBarSafeProvider>

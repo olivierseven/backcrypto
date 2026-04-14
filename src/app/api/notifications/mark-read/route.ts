@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest) {
     const { notificationId } = await request.json();
     if (!notificationId) return NextResponse.json({ error: "ID da notificação é obrigatório" }, { status: 400 });
 
-    await bioPrisma.userNotification.updateMany({
+    await cryptoPrisma.userNotification.updateMany({
       where: { idNotification: notificationId, userId },
       data: { ativo: false },
     });

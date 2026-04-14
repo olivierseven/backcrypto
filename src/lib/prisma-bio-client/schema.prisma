@@ -17,7 +17,7 @@ enum Role {
   @@schema("backcrypto")
 }
 
-enum BioLanguage {
+enum AppLanguage {
   en
   pt
 
@@ -83,87 +83,212 @@ enum CheckoutStatus {
 }
 
 model User {
-  id               String      @id @default(cuid())
-  emailEnc         String
-  emailIv          String
-  emailTag         String
-  emailSearchHash  String      @unique
-  emailVerifiedAt  DateTime?
-  name             String?
-  passwordHash     String
-  specialCodeHash  String?
-  specialExpiresAt DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  role             Role        @default(user)
-  tier             Tier        @default(free)
-  nickname         String?     @unique
-  nicknameChanges  Int         @default(0)
-  avatarId         Int         @default(1)
-  avatarBorder     String      @default("white")
-  avatarSkinTone   Int?
-  avatarColorTone  Int?
-  sevenPoints      Int         @default(0)
-  ganhoSimulado    Decimal     @default(0) @db.Decimal(65, 30)
-  userLevel        UserLevel   @default(RECRUTA)
-  position         Int?
-  tmp              Boolean     @default(false)
-  isDeleted        Boolean     @default(false)
-  dataExclusao     DateTime?
-  dataExpiracao    DateTime?
-  pushToken        String?
-  pushTokenUpdated DateTime?
-  notifyMegaSena   Boolean     @default(true)
-  notifyLotofacil  Boolean     @default(true)
-  notifyQuina      Boolean     @default(true)
-  hideStatusBar    Boolean     @default(true)
-  progress         Int         @default(0)
-  language         BioLanguage @default(en)
+  id                   String      @id @default(cuid())
+  emailEnc             String
+  emailIv              String
+  emailTag             String
+  emailSearchHash      String      @unique
+  emailVerifiedAt      DateTime?
+  name                 String?
+  passwordHash         String
+  specialCodeHash      String?
+  specialExpiresAt     DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  role                 Role        @default(user)
+  tier                 Tier        @default(free)
+  nickname             String?     @unique
+  nicknameChanges      Int         @default(0)
+  avatarId             Int         @default(1)
+  avatarBorder         String      @default("white")
+  avatarSkinTone       Int?
+  avatarColorTone      Int?
+  sevenPoints          Int         @default(0)
+  ganhoSimulado        Decimal     @default(0) @db.Decimal(65, 30)
+  userLevel            UserLevel   @default(RECRUTA)
+  position             Int?
+  tmp                  Boolean     @default(false)
+  isDeleted            Boolean     @default(false)
+  dataExclusao         DateTime?
+  dataExpiracao        DateTime?
+  pushToken            String?
+  pushTokenUpdated     DateTime?
+  notifyMegaSena       Boolean     @default(true)
+  notifyLotofacil      Boolean     @default(true)
+  notifyQuina          Boolean     @default(true)
+  hideStatusBar        Boolean     @default(true)
+  progress             Int         @default(0)
+  language             AppLanguage @default(en)
+  timezoneOffset       Int         @default(0) // UTC offset in hours, -12 to +12
+  activeTabId          String?     @map("active_tab_id") // Legado — migração lazy para session_tab_slots
+  activeTabUpdatedAt   DateTime?   @map("active_tab_updated_at")
+  previousTabId        String?     @map("previous_tab_id") // Legado — migração lazy para session_evicted_tabs
+  previousTabUpdatedAt DateTime?   @map("previous_tab_updated_at")
+  sessionTabSlots      Json?       @map("session_tab_slots") // [{ id, at }] — até N abas (SISTEMA_MAX_SESSION_TABS, default 2)
+  sessionEvictedTabs   Json?       @map("session_evicted_tabs") // [{ id, until }] — cooldown após LRU
 
-  accessRequests      AccessRequest[]
-  coinLedger          CoinLedgerEntry[]
-  coinWallet          UserCoinWallet?
-  checkoutSessions    StripeCheckoutSession[]
-  pagarMeOrders       PagarMeOrder[]
-  passwordResetTokens PasswordResetToken[]
-  verificationTokens  EmailVerificationToken[]
-  walletCredits       WalletCredit[]
-  notifications       UserNotification[]
-  simulationQueue     BioSimulationQueue[]
-  savedConfigs        BioSavedConfig[]
-  simulationState     BioSimulationState?
-  chartLayouts        ChartLayout[]
+  accessRequests             AccessRequest[]
+  coinLedger                 CoinLedgerEntry[]
+  coinWallet                 UserCoinWallet?
+  checkoutSessions           StripeCheckoutSession[]
+  pagarMeOrders              PagarMeOrder[]
+  passwordResetTokens        PasswordResetToken[]
+  verificationTokens         EmailVerificationToken[]
+  walletCredits              WalletCredit[]
+  notifications              UserNotification[]
+  chartLayouts               ChartLayout[]
+  chartModels                ChartModel[]
+  stripePlanPayments         StripePlanPayment[]
+  binanceConnection          UserBinanceConnection?
+  binanceSpotOrders          UserBinanceSpotOrder[]
+  robotSpotPerformanceEvents RobotSpotPerformanceEvent[]
 
   @@schema("backcrypto")
 }
 
-// Preferências de layout do gráfico de klines (slots 1–7; 0 = default/localStorage). Config em JSON para flexibilidade.
+/// Credenciais API Binance do utilizador (payload cifrado com EMAIL_ENC_KEY_B64 / AES-256-GCM).
+model UserBinanceConnection {
+  userId                   String    @id @map("user_id")
+  payloadEnc               String    @map("payload_enc")
+  payloadIv                String    @map("payload_iv")
+  payloadTag               String    @map("payload_tag")
+  apiKeyLast4              String    @map("api_key_last4") @db.VarChar(8)
+  lastVerifiedAt           DateTime? @map("last_verified_at")
+  /// USDT a gastar por operação (compra): pré-preenchimento nas boletas; opcional.
+  defaultQuoteUsdtPerOrder Decimal?  @map("default_quote_usdt_per_order") @db.Decimal(20, 8)
+  /// Taxa taker (0–1, ex. 0.001 = 0,1%) para estimativas / fallback quando a API não devolve o par.
+  feeEstimateTakerFallback Decimal?  @map("fee_estimate_taker_fallback") @db.Decimal(20, 8)
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("UserBinanceConnection")
+  @@schema("backcrypto")
+}
+
+/// Ordens spot Binance criadas pela app (para cancelamento e histórico). `binance_order_id` vem da API.
+model UserBinanceSpotOrder {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  symbol         String    @db.VarChar(32)
+  binanceOrderId String    @map("binance_order_id") @db.VarChar(32)
+  side           String    @db.VarChar(8)
+  orderType      String    @map("order_type") @db.VarChar(16)
+  status         String?   @db.VarChar(32)
+  price          String?   @db.VarChar(64)
+  origQty        String?   @map("orig_qty") @db.VarChar(64)
+  executedQty    String?   @map("executed_qty") @db.VarChar(64)
+  rawJson        Json?     @map("raw_json")
+  canceledAt     DateTime? @map("canceled_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol, binanceOrderId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("UserBinanceSpotOrder")
+  @@schema("backcrypto")
+}
+
+/// Execuções spot atribuídas a um robô (métricas reais vs backtest).
+model RobotSpotPerformanceEvent {
+  id                 String   @id @default(cuid())
+  userId             String   @map("user_id")
+  robotId            String   @map("robot_id") @db.VarChar(64)
+  robotAliasSnapshot String?  @map("robot_alias_snapshot") @db.VarChar(160)
+  symbol             String   @db.VarChar(32)
+  side               String   @db.VarChar(8)
+  /// OPEN_BUY | FLATTEN | SIGNAL_SELL | STOP_LOSS | STOP_GAIN
+  executionRole      String   @map("execution_role") @db.VarChar(32)
+  binanceOrderId     String   @map("binance_order_id") @db.VarChar(32)
+  executedQtyBase    String?  @map("executed_qty_base") @db.VarChar(64)
+  quoteQtyUsdt       String?  @map("quote_qty_usdt") @db.VarChar(64)
+  avgPrice           String?  @map("avg_price") @db.VarChar(64)
+  feeUsdt            String?  @map("fee_usdt") @db.VarChar(64)
+  realizedPnlUsdt    String?  @map("realized_pnl_usdt") @db.VarChar(64)
+  rawJson            Json?    @map("raw_json")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, binanceOrderId])
+  @@index([userId, robotId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("RobotSpotPerformanceEvent")
+  @@schema("backcrypto")
+}
+
+/// Conta de afiliado (login separado do User). E-mail criptografado + emailSearchHash + passwordHash (bcrypt), como User.
+model AffiliateAccount {
+  id                          String    @id @default(cuid())
+  emailEnc                    String
+  emailIv                     String
+  emailTag                    String
+  emailSearchHash             String    @unique
+  passwordHash                String
+  ativo                       Boolean   @default(true)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  lastLoginAt                 DateTime? @map("last_login_at")
+  lastPlanPaymentPayoutSyncAt DateTime? @map("last_plan_payment_payout_sync_at")
+
+  coupons AffiliateCoupon[]
+
+  @@schema("backcrypto")
+}
+
+/// Cupom/campanha gerado pelo afiliado (código alfanumérico 7 caracteres, único globalmente).
+model AffiliateCoupon {
+  id                 String    @id @default(cuid())
+  affiliateAccountId String    @map("affiliate_account_id")
+  code               String    @unique @db.VarChar(7)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  ativo              Boolean   @default(false)
+  expiresAt          DateTime? @map("expires_at")
+
+  affiliateAccount AffiliateAccount @relation(fields: [affiliateAccountId], references: [id], onDelete: Cascade)
+
+  @@index([affiliateAccountId])
+  @@map("AffiliateCoupon")
+  @@schema("backcrypto")
+}
+
+// Layouts do usuário (slots 1–7 apenas). Slot 0 não existe aqui; fica em ChartModels.
+// Fonte da verdade: layout, indicators, strategies, regressions, others, robots. (Coluna config foi removida do banco.)
 model ChartLayout {
-  userId    String   @map("user_id")
-  slot      Int // 1–7 (Layout 1 … Layout 7); 0 = default, não persistido
-  config    Json // { visibleCount, candleColorPreset, yAxisAbbreviated, ... }
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id")
+  slot        Int // 1–7 (Layout 1 … 7 por usuário)
+  layout      Json? // config do gráfico (visibleCount, cores, VAP, etc.)
+  indicators  Json? // array userIndicators
+  strategies  Json? // { strategies: Strategy[], appliedStrategyIds: string[] }
+  regressions Json? // array userRegressions (separado do layout)
+  others      Json? // configs rápidas: visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset (não inclui draw-segments)
+  /// Robôs do sistema (lista + mapa B· por candle): { savedRobots: SavedRobot[], buyExecMap?: Record<robotId, Record<openTime, 1>> }
+  robots      Json?
+  name        String?  @db.VarChar(24) // Nome customizado (máx. 24 caracteres)
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, slot])
   @@schema("backcrypto")
 }
 
-model BioSavedConfig {
-  id               String   @id @default(cuid())
-  userId           String
-  name             String
-  private          Boolean  @default(true)
-  config           Json
-  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
-  likes            Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// Modelos de layout (ex.: Default, modelos personalizados). Mesmo esquema de 3 colunas que ChartLayout. (Coluna config foi removida do banco.)
+model ChartModel {
+  userId      String   @map("user_id")
+  slot        Int
+  layout      Json? // config do gráfico
+  indicators  Json? // array userIndicators
+  strategies  Json? // { strategies, appliedStrategyIds }
+  regressions Json? // array userRegressions (separado do layout)
+  others      Json? // configs rápidas: visibleCount, chartStyle, candleBodyStyle, drawingsVisible, chartSizePercent, yPadOffset (não inclui draw-segments)
+  name        String?  @db.VarChar(24)
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([name])
-  @@index([userId])
-  @@index([private])
+  @@id([userId, slot])
+  @@map("ChartModels")
   @@schema("backcrypto")
 }
 
@@ -310,6 +435,101 @@ model StripeCheckoutSession {
   @@schema("backcrypto")
 }
 
+// Pagamentos de plano: Stripe (invoice / sessão) ou Pagar.me (PIX). Metadados cupom_id e idAfiliado espelham o envio na criação do checkout/pedido.
+model StripePlanPayment {
+  id                       String   @id @default(cuid())
+  provider                 String   @default("stripe") // "stripe" | "pagarme"
+  userId                   String
+  invoiceId                String?  @unique @map("invoice_id")
+  checkoutSessionId        String?  @unique @map("checkout_session_id")
+  pagarmeOrderId           String?  @unique @map("pagarme_order_id")
+  subscriptionId           String?  @map("subscription_id")
+  paymentIntentId          String?  @map("payment_intent_id")
+  chargeId                 String?  @map("charge_id")
+  cupomId                  String   @default("") @map("cupom_id")
+  idAfiliado               String   @default("") @map("id_afiliado")
+  planKey                  String?  @map("plan_key")
+  amountTotalCents         Int      @map("amount_total_cents")
+  currency                 String   @default("usd")
+  amountAffiliateCents     Int?     @map("amount_affiliate_cents")
+  currencyAffiliate        String?  @map("currency_affiliate")
+  /// Comissão fixa (anual/mensal em USD na candidatura) convertida para a moeda do afiliado — centavos BRL ou USD.
+  commissionAffiliateCents Int?     @map("commission_affiliate_cents")
+  coinsCredited            Int      @map("coins_credited")
+  pricingLabel             String?  @map("pricing_label")
+  paidAt                   DateTime @map("paid_at")
+  createdAt                DateTime @default(now()) @map("created_at")
+  situacao                 String   @default("pendente") @map("situacao")
+
+  stripePayoutId    String?   @map("stripe_payout_id")
+  pagarmePayoutId   String?   @map("pagarme_payout_id")
+  payoutStatus      String?   @map("payout_status")
+  payoutArrivalDate DateTime? @map("payout_arrival_date")
+  payoutUpdatedAt   DateTime? @map("payout_updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, paidAt])
+  @@index([provider, paidAt])
+  @@index([idAfiliado])
+  @@index([cupomId])
+  @@index([stripePayoutId])
+  @@index([pagarmePayoutId])
+  @@map("StripePlanPayment")
+  @@schema("backcrypto")
+}
+
+/// Agregação mensal por afiliado: mês = 1.º dia UTC de `created_at`. Totais de negócio = comissão (`commission_affiliate_cents`); colunas `total_affiliate_*` de venda ficam zeradas.
+model AffiliatePlanPaymentMonthAgg {
+  id                                       String    @id @default(cuid())
+  idAfiliado                               String    @map("id_afiliado")
+  monthStart                               DateTime  @map("month_start") @db.Date
+  /// Legado (comissão USD); mantido zerado — usar `totalAffiliateCents` / `currencyAffiliate`.
+  totalAmountCents                         Int       @default(0) @map("total_amount_cents")
+  totalReembolsadoCents                    Int       @default(0) @map("total_reembolsado_cents")
+  totalAprovadoCents                       Int       @default(0) @map("total_aprovado_cents")
+  /// Legado (volume de venda em `amount_affiliate_cents`); mantido zerado — usar totais `total_*_commission_*`.
+  totalAffiliateCents                      Int       @default(0) @map("total_affiliate_cents")
+  totalReembolsadoAffiliateCents           Int       @default(0) @map("total_reembolsado_affiliate_cents")
+  totalAprovadoAffiliateCents              Int       @default(0) @map("total_aprovado_affiliate_cents")
+  /// Soma de `commission_affiliate_cents` (ou recálculo) no mês, mesma moeda que `currency_affiliate`.
+  totalCommissionAffiliateCents            Int       @default(0) @map("total_commission_affiliate_cents")
+  totalReembolsadoCommissionAffiliateCents Int       @default(0) @map("total_reembolsado_commission_affiliate_cents")
+  totalAprovadoCommissionAffiliateCents    Int       @default(0) @map("total_aprovado_commission_affiliate_cents")
+  /// Comissão que estava aprovada e passou a `expirado` (não paga); não confundir com estorno.
+  totalExpiradoCommissionAffiliateCents    Int       @default(0) @map("total_expirado_commission_affiliate_cents")
+  /// `brl` | `usd` conforme `AffiliateApplication.locale` na atualização do agregado.
+  currencyAffiliate                        String?   @map("currency_affiliate") @db.VarChar(8)
+  /// Fim do prazo de fecho: 1.º dia do mês = `monthStart` + 14 meses civis (UTC).
+  expiresAt                                DateTime? @map("expires_at") @db.Date
+  /// Chave: `em_aberto` | `aguardando_nota_fiscal` | `nota_fiscal_em_analise` | `expirado` | …
+  status                                   String    @default("em_aberto") @map("status")
+  updatedAt                                DateTime  @updatedAt @map("updated_at")
+
+  invoice AffiliateMonthAggInvoice?
+
+  @@unique([idAfiliado, monthStart])
+  @@index([idAfiliado])
+  @@map("AffiliatePlanPaymentMonthAgg")
+  @@schema("backcrypto")
+}
+
+/// NF / invoice (PDF) enviada pelo afiliado para o fecho mensal — uma por linha de `AffiliatePlanPaymentMonthAgg`.
+model AffiliateMonthAggInvoice {
+  id          String                       @id @default(cuid())
+  monthAggId  String                       @unique @map("month_agg_id")
+  monthAgg    AffiliatePlanPaymentMonthAgg @relation(fields: [monthAggId], references: [id], onDelete: Cascade)
+  pdfBytes    Bytes                        @map("pdf_bytes")
+  fileName    String?                      @map("file_name") @db.VarChar(512)
+  contentType String                       @default("application/pdf") @map("content_type")
+  sizeBytes   Int                          @map("size_bytes")
+  createdAt   DateTime                     @default(now()) @map("created_at")
+  updatedAt   DateTime                     @updatedAt @map("updated_at")
+
+  @@map("AffiliateMonthAggInvoice")
+  @@schema("backcrypto")
+}
+
 model PagarMeOrder {
   id               String         @id
   userId           String
@@ -333,55 +553,11 @@ model PagarMeOrder {
   @@schema("backcrypto")
 }
 
-enum BioQueueStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-
-  @@schema("backcrypto")
-}
-
-model BioSimulationQueue {
-  id        String         @id @default(cuid())
-  queueName String
-  userId    String
-  status    BioQueueStatus @default(PENDING)
-  payload   Json
-  result    Json?
-  createdAt DateTime       @default(now())
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([queueName, status])
-  @@index([userId, createdAt])
-  @@schema("backcrypto")
-}
-
-// Uma linha por usuário: último estado da simulação (genesis + inputs + mapa/origens). Sem histórico.
-model BioSimulationState {
-  userId           String   @unique
-  state            Json // snapshot: genesisResult, inputValues, origensAgendadas, mapaNumero, iteracao, etc.
-  mapDisplayByYear Json? // { "1": [births, deaths, groups, uniques, population], "2": [...], ... } — índices: 0=births, 1=deaths, 2=groups, 3=uniques, 4=population
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@schema("backcrypto")
-}
-
-model BioAppConfig {
-  key         String   @id
-  value       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([key])
-  @@schema("backcrypto")
-}
-
-// Velas (klines) Binance — BTCUSDT 1m; manter 180 dias com expurgo
+// Velas (klines) — corretora (ex.: binance), símbolo, intervalo (ex.: 1h); expurgo 5 anos.
 model BinanceKline {
+  corretora                String // ex.: binance
   symbol                   String // ex.: BTCUSDT
-  interval                 String // ex.: 1m
+  interval                 String // ex.: 1h
   openTime                 BigInt // abertura (ms UTC)
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -394,16 +570,17 @@ model BinanceKline {
   takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKline_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 
-// Cópia idêntica de BinanceKline (mesma estrutura e dados)
+// Cópia 1m (mesma estrutura); expurgo 9 dias. Incremental a cada minuto.
 model BinanceKlineFast {
+  corretora                String // ex.: binance
   symbol                   String
-  interval                 String
+  interval                 String // 1m
   openTime                 BigInt
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -416,17 +593,208 @@ model BinanceKlineFast {
   takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
   takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
 
-  @@id([symbol, interval, openTime])
-  @@index([symbol, interval, openTime])
-  @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineFast_symbol_interval_openTime_desc_idx")
   @@schema("backcrypto")
 }
 
-// Cache de klines agregados a partir de BinanceKline 1m. Sem 1m; intervalos até 1D.
-// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo script binance-kline-cache-refresh.
+// Barras Renko sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceRenkoFast {
+  corretora                String
+  symbol                   String
+  interval                 String // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+  /**
+   * Renko 1× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+   */
+  k2Incl5ticks             Boolean @default(false)
+  k2Incl15ticks            Boolean @default(false)
+  k2Incl25ticks            Boolean @default(false)
+  k2Incl50ticks            Boolean @default(false)
+  k2Incl100ticks           Boolean @default(false)
+  k2Incl150ticks           Boolean @default(false)
+  k2Incl200ticks           Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRenkoFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Barras Range sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceRangeFast {
+  corretora                String
+  symbol                   String
+  interval                 String // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+  /**
+   * Range → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+   */
+  k2Incl5ticks             Boolean @default(false)
+  k2Incl15ticks            Boolean @default(false)
+  k2Incl25ticks            Boolean @default(false)
+  k2Incl50ticks            Boolean @default(false)
+  k2Incl100ticks           Boolean @default(false)
+  k2Incl150ticks           Boolean @default(false)
+  k2Incl200ticks           Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRangeFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Barras Kagi sintéticas (mesma estrutura que BinanceKlineFast). Usar interval = "5ticks" nas linhas.
+model BinanceKagiFast {
+  corretora                String
+  symbol                   String
+  interval                 String // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+  /**
+   * Kagi → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+   */
+  k2Incl5ticks             Boolean @default(false)
+  k2Incl15ticks            Boolean @default(false)
+  k2Incl25ticks            Boolean @default(false)
+  k2Incl50ticks            Boolean @default(false)
+  k2Incl100ticks           Boolean @default(false)
+  k2Incl150ticks           Boolean @default(false)
+  k2Incl200ticks           Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKagiFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Renko clássico 2× (continuação H=B/2). Mesma estrutura; interval típico "5ticks" (distingue da tabela Renko normal).
+model BinanceRenko2xFast {
+  corretora                String
+  symbol                   String
+  interval                 String // ex.: 5ticks
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+  /**
+   * Renko2× → BinanceKlineCache2: linha já contabilizada neste tier (7 intervalos).
+   */
+  k2Incl5ticks             Boolean @default(false)
+  k2Incl15ticks            Boolean @default(false)
+  k2Incl25ticks            Boolean @default(false)
+  k2Incl50ticks            Boolean @default(false)
+  k2Incl100ticks           Boolean @default(false)
+  k2Incl150ticks           Boolean @default(false)
+  k2Incl200ticks           Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceRenko2xFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// OHLC por contagem de trades (ex.: 500 eventos aggTrade = 1 vela). Interval típico "500trades".
+model BinanceTradeCountFast {
+  corretora                String
+  symbol                   String
+  interval                 String // ex.: 500trades
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+  /**
+   * trades500 → BinanceKlineCache2: linha 500trades já contabilizada neste tier (6 intervalos).
+   */
+  k2Incl500trades          Boolean @default(false)
+  k2Incl1000trades         Boolean @default(false)
+  k2Incl2500trades         Boolean @default(false)
+  k2Incl5000trades         Boolean @default(false)
+  k2Incl7500trades         Boolean @default(false)
+  k2Incl10000trades        Boolean @default(false)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceTradeCountFast_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Velas 5m (sync da API Binance); mesma estrutura que BinanceKline. Nome histórico "Month"; expurgo 90 dias.
+model BinanceKlineMonth {
+  corretora                String
+  symbol                   String
+  interval                 String // 5m
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime])
+  @@index([corretora, symbol, interval, openTime(sort: Desc)], map: "BinanceKlineMonth_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Cache de klines agregados: de 1m (1m,2m,3m,4m), de 5m (5m,15m,30m,45m), de 1h (1h–1d).
+// Contém apenas dados com openTime < início do dia atual (UTC). Recriada pelo cron cache-refresh.
 model BinanceKlineCache {
   symbol                   String
-  interval                 String // 3m | 5m | 15m | 30m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  interval                 String // 1m | 2m | 3m | 4m | 5m | 15m | 30m | 45m | 1h | 2h | 4h | 6h | 8h | 12h | 1d
+  /**
+   * Tipo de gráfico: interval (OHLC) | renko | range | kagi | renko2x | trades500 — padrão interval.
+   */
+  chartKind                String  @default("interval") @db.VarChar(32)
   openTime                 BigInt
   open                     Decimal @db.Decimal(32, 8)
   high                     Decimal @db.Decimal(32, 8)
@@ -442,5 +810,139 @@ model BinanceKlineCache {
   @@id([symbol, interval, openTime])
   @@index([symbol, interval, openTime])
   @@index([symbol, interval, openTime(sort: Desc)], map: "BinanceKlineCache_symbol_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Cache histórico para gráficos atemporais (Renko 1×, Range, Kagi, Renko 2×, velas por contagem de trades).
+// Paralelo a `BinanceKlineCache` (só OHLC por intervalo). PK inclui `chartKind` para separar séries no mesmo símbolo.
+// Preenchimento futuro (cron / job): copiar de Binance*Fast com openTime antes do início do dia UTC (mesma regra que o cache OHLC).
+model BinanceKlineCache2 {
+  symbol                   String
+  chartKind                String  @db.VarChar(32) // renko | range | kagi | renko2x | trades500
+  interval                 String // ex.: 5ticks | 15ticks | 25ticks | … | 500trades
+  openTime                 BigInt
+  open                     Decimal @db.Decimal(32, 8)
+  high                     Decimal @db.Decimal(32, 8)
+  low                      Decimal @db.Decimal(32, 8)
+  close                    Decimal @db.Decimal(32, 8)
+  volume                   Decimal @db.Decimal(32, 8)
+  closeTime                BigInt
+  quoteAssetVolume         Decimal @db.Decimal(32, 8)
+  numberOfTrades           Int
+  takerBuyBaseAssetVolume  Decimal @db.Decimal(32, 8)
+  takerBuyQuoteAssetVolume Decimal @db.Decimal(32, 8)
+
+  @@id([symbol, chartKind, interval, openTime])
+  @@index([symbol, chartKind, interval, openTime])
+  @@index([symbol, chartKind, interval, openTime(sort: Desc)], map: "BinanceKlineCache2_symbol_chartKind_interval_openTime_desc_idx")
+  @@schema("backcrypto")
+}
+
+// Gaps conhecidos (sem dado na Binance): ao validar, estes intervalos são ignorados.
+model BinanceKlineGap {
+  symbol   String
+  interval String // 1m | 1h
+  gapFrom  BigInt // openTime do candle anterior ao gap
+  gapTo    BigInt // openTime do candle seguinte ao gap
+
+  @@id([symbol, interval, gapFrom, gapTo])
+  @@index([symbol, interval])
+  @@schema("backcrypto")
+}
+
+// Chave/valor de configuração da app (Neon / Postgres).
+model AppConfig {
+  key         String   @id
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("AppConfig")
+  @@schema("backcrypto")
+}
+
+/// Erros de API/scripts (gravar só quando falhar).
+model LogErro {
+  id       String   @id @default(cuid())
+  dataHora DateTime @default(now()) @map("data_hora")
+  origem   String   @db.VarChar(512)
+  msgErro  String   @map("msg_erro") @db.Text
+
+  @@index([dataHora])
+  @@index([origem])
+  @@map("LogErro")
+  @@schema("backcrypto")
+}
+
+// Lista de símbolos para sync (cron) e cache-refresh. Fonte de verdade no banco.
+model KlineSymbol {
+  symbol         String  @id // ex: BTCUSDT
+  ativo          Boolean @default(true) // false = não sync/cache nem dropdown
+  requiredDays1m Int? // janela 1m em dias (ex.: 9); null = default 9
+  requiredDays5m Int? // janela 5m em dias (ex.: 90); null = default 90
+  requiredDays1h Int? // janela 1h em dias (ex.: 730); null = default 730
+
+  @@schema("backcrypto")
+}
+
+// Inscrições no programa de afiliados (landing /pt|en/afiliados).
+model AffiliateApplication {
+  id                        String   @id @default(cuid())
+  idAfiliado                String   @unique @map("id_afiliado")
+  /// Brasil: 14 dígitos. Inscrições em EN podem usar só `taxId` (CNPJ nulo).
+  cnpjDigits                String?  @map("cnpj_digits")
+  /// Inscrições internacionais (EN): Tax ID / número de registo comercial.
+  taxId                     String?  @map("tax_id")
+  razaoSocial               String   @map("razao_social")
+  responsavel               String
+  email                     String   @unique
+  siteUrl                   String   @map("site_url")
+  acceptedDocs              Boolean  @default(false) @map("accepted_docs")
+  approved                  Boolean  @default(false) @map("aprovado")
+  locale                    String   @default("pt")
+  /// Comissão fixa por venda plano anual (USD, centavos). Default 800 = US$ 8,00.
+  commissionAnnualUsdCents  Int      @default(800) @map("commission_annual_usd_cents")
+  /// Comissão fixa por venda plano mensal (USD, centavos). Default 120 = US$ 1,20.
+  commissionMonthlyUsdCents Int      @default(120) @map("commission_monthly_usd_cents")
+  createdAt                 DateTime @default(now()) @map("created_at")
+
+  payoutProfile AffiliatePayoutProfile?
+
+  @@map("AffiliateApplication")
+  @@schema("backcrypto")
+}
+
+/// Dados bancários / recebimento do afiliado (PIX ou conta BR; PayPal ou wire internacional).
+model AffiliatePayoutProfile {
+  id                     String               @id @default(cuid())
+  affiliateApplicationId String               @unique @map("affiliate_application_id")
+  affiliateApplication   AffiliateApplication @relation(fields: [affiliateApplicationId], references: [id], onDelete: Cascade)
+
+  /// Última aba na UI: `br` | `intl`
+  activeTab String @default("br") @map("active_tab") @db.VarChar(16)
+
+  brRazaoSocial String? @map("br_razao_social") @db.VarChar(512)
+  brCnpjDigits  String? @map("br_cnpj_digits") @db.VarChar(14)
+  brBanco       String? @map("br_banco") @db.VarChar(256)
+  /// `corrente` | `poupanca`
+  brTipoConta   String? @map("br_tipo_conta") @db.VarChar(32)
+  brAgencia     String? @map("br_agencia") @db.VarChar(32)
+  brNumeroConta String? @map("br_numero_conta") @db.VarChar(64)
+  brChavePix    String? @map("br_chave_pix") @db.VarChar(512)
+
+  /// `paypal` | `wire`
+  intPaymentMethod     String? @map("int_payment_method") @db.VarChar(16)
+  intPaypalEmail       String? @map("int_paypal_email") @db.VarChar(320)
+  intBankName          String? @map("int_bank_name") @db.VarChar(256)
+  intAccountOrIban     String? @map("int_account_or_iban") @db.VarChar(64)
+  intSwiftBic          String? @map("int_swift_bic") @db.VarChar(32)
+  intAccountHolderName String? @map("int_account_holder_name") @db.VarChar(512)
+  intCountry           String? @map("int_country") @db.VarChar(120)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("AffiliatePayoutProfile")
   @@schema("backcrypto")
 }

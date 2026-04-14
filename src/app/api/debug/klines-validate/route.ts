@@ -1,18 +1,33 @@
 /**
- * Validação de klines 1m: verifica se não há minutos pulados na tabela.
- * Apenas admin. GET /api/debug/klines-validate?symbol=BTCUSDT
+ * Validação de klines: verifica ausência de intervalos pulados.
+ * - 1m: BinanceKlineFast
+ * - 5m: BinanceKlineMonth
+ * - 1h: BinanceKline
+ * Apenas admin. Só em dev. GET /api/debug/klines-validate?symbol=BTCUSDT&target=dev|prod
+ * Opcional: interval=1m | 5m | 1h — se omitido, valida as três tabelas. target=prod usa URL_PROD.
  */
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
-import { Prisma } from "@/lib/prisma-bio-client";
+import { PrismaClient } from "@/lib/prisma-bio-client";
+import { cryptoPrisma, getCryptoPrismaDev, getCryptoPrismaProd } from "@/lib/crypto-db";
+import {
+  DEFAULT_REQUIRED_DAYS_1H,
+  DEFAULT_REQUIRED_DAYS_1M,
+  DEFAULT_REQUIRED_DAYS_5M,
+  getKlineSymbolsWithPeriods,
+  resolveSymbol,
+} from "@/app/lib/kline-symbols";
+import { validate1m, validate5m, validate1h } from "@/app/lib/klines-validate";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const ONE_MINUTE_MS = 60 * 1000;
 
 export async function GET(request: NextRequest) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Validação só disponível em desenvolvimento" }, { status: 404 });
+    }
+
     const token = request.cookies.get(COOKIE)?.value;
     if (!token) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -24,7 +39,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
@@ -32,59 +47,44 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    const symbol = request.nextUrl.searchParams.get("symbol")?.trim() || "BTCUSDT";
+    const target = request.nextUrl.searchParams.get("target") === "prod" ? "prod" : "dev";
+    const db: PrismaClient = target === "prod" ? (() => {
+      try {
+        return getCryptoPrismaProd();
+      } catch (e) {
+        throw new Error(e instanceof Error ? e.message : "URL_PROD not set");
+      }
+    })() : getCryptoPrismaDev();
 
-    const [statsRow] = await bioPrisma.$queryRaw<[{ count: bigint; oldest: bigint | null; newest: bigint | null }]>(
-      Prisma.sql`
-        SELECT
-          count(*)::bigint AS count,
-          min("openTime") AS oldest,
-          max("openTime") AS newest
-        FROM backcrypto."BinanceKline"
-        WHERE symbol = ${symbol} AND "interval" = '1m'
-      `
-    );
-
-    const count = Number(statsRow?.count ?? 0);
-    const oldest = statsRow?.oldest != null ? Number(statsRow.oldest) : null;
-    const newest = statsRow?.newest != null ? Number(statsRow.newest) : null;
-
-    let days = 0;
-    if (oldest != null && newest != null && newest > oldest) {
-      days = (newest - oldest) / (24 * 60 * 60 * 1000);
-    }
-
-    const gaps = await bioPrisma.$queryRaw<{ openTime: bigint; next_open: bigint }[]>(
-      Prisma.sql`
-        WITH ordered AS (
-          SELECT
-            "openTime",
-            lead("openTime") OVER (ORDER BY "openTime") AS next_open
-          FROM backcrypto."BinanceKline"
-          WHERE symbol = ${symbol} AND "interval" = '1m'
-        )
-        SELECT "openTime", next_open
-        FROM ordered
-        WHERE next_open IS NOT NULL AND (next_open - "openTime") <> ${ONE_MINUTE_MS}
-        ORDER BY "openTime"
-        LIMIT 500
-      `
-    );
-
-    const gapList = (Array.isArray(gaps) ? gaps : []).map((g) => ({
-      from: Number(g.openTime),
-      to: Number(g.next_open),
-    }));
-
-    return NextResponse.json({
+    const symbolsWithPeriods = await getKlineSymbolsWithPeriods(db);
+    const symbolList = symbolsWithPeriods.map((s) => s.symbol);
+    const symbol = resolveSymbol(request.nextUrl.searchParams.get("symbol")?.trim(), symbolList);
+    const periods = symbolsWithPeriods.find((s) => s.symbol === symbol) ?? {
       symbol,
-      oldest: oldest != null ? new Date(oldest).toISOString() : null,
-      newest: newest != null ? new Date(newest).toISOString() : null,
-      count,
-      days: Math.round(days * 100) / 100,
-      ok: gapList.length === 0,
-      gaps: gapList,
-    });
+      requiredDays1m: DEFAULT_REQUIRED_DAYS_1M,
+      requiredDays5m: DEFAULT_REQUIRED_DAYS_5M,
+      requiredDays1h: DEFAULT_REQUIRED_DAYS_1H,
+    };
+    const intervalParam = request.nextUrl.searchParams.get("interval")?.trim().toLowerCase();
+
+    if (intervalParam === "1h") {
+      const result = await validate1h(db, symbol, periods.requiredDays1h);
+      return NextResponse.json(result);
+    }
+    if (intervalParam === "5m") {
+      const result = await validate5m(db, symbol, periods.requiredDays5m);
+      return NextResponse.json(result);
+    }
+    if (intervalParam === "1m") {
+      const result = await validate1m(db, symbol, periods.requiredDays1m);
+      return NextResponse.json(result);
+    }
+    const [result1m, result5m, result1h] = await Promise.all([
+      validate1m(db, symbol, periods.requiredDays1m),
+      validate5m(db, symbol, periods.requiredDays5m),
+      validate1h(db, symbol, periods.requiredDays1h),
+    ]);
+    return NextResponse.json({ "1m": result1m, "5m": result5m, "1h": result1h });
   } catch (e) {
     console.error("[api/debug/klines-validate]", e);
     return NextResponse.json(

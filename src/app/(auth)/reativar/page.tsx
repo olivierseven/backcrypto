@@ -47,7 +47,7 @@ export default function ReativarPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-zinc-50 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="card-bio-generator rounded-2xl p-6 sm:p-8 shadow-lg bg-amber-50/80 border border-amber-200">
+        <div className="card-crypto-generator rounded-2xl p-6 sm:p-8 shadow-lg bg-amber-50/80 border border-amber-200">
           <div className="text-center mb-6">
             <div className="text-6xl mb-4">⚠️</div>
             <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 mb-3">
@@ -77,7 +77,7 @@ export default function ReativarPage() {
             <button
               onClick={handleReactivate}
               disabled={reactivating || message?.type === "success"}
-              className="bio-btn inline-flex items-center justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+              className="crypto-btn inline-flex items-center justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
             >
               {reactivating ? "Reativando..." : message?.type === "success" ? "Reativado!" : "Reativar Conta"}
             </button>
@@ -92,7 +92,7 @@ export default function ReativarPage() {
         </div>
 
         <p className="mt-4 text-center text-sm text-zinc-600">
-          Ao reativar, sua conta será restaurada imediatamente e você poderá continuar usando o Backtest Crypto normalmente.
+          Ao reativar, sua conta será restaurada imediatamente e você poderá continuar usando o Crypto normalmente.
         </p>
       </div>
     </main>

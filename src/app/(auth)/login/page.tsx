@@ -5,18 +5,18 @@ import { jwtVerify } from "jose";
 import BioLoginForm from "@/app/BioLoginForm";
 import BioMaintenanceView from "@/app/BioMaintenanceView";
 import { getRedirectOriginFromHeaders } from "@/lib/redirect-origin";
+import {
+  getBypassCookieName,
+  verifyBypassCookie,
+  isBypassConfigured,
+} from "@/lib/maintenance-bypass";
+import { safeCryptoNext } from "@/lib/crypto-auth-next";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const BIO_NEXT = "/backcrypto/sistema";
-
-function safeNext(raw: string | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return BIO_NEXT;
-  return raw;
-}
 
 export default async function LoginPage({
   searchParams,
@@ -24,7 +24,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const sp = await searchParams;
-  const nextPath = safeNext(sp?.next);
+  const nextPath = safeCryptoNext(sp?.next);
 
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
@@ -42,18 +42,21 @@ export default async function LoginPage({
   }
 
   if (process.env.SITE_MAINTENANCE === "1") {
-    return (
-      <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
-        <BioMaintenanceView />
-      </Suspense>
-    );
+    const bypassCookie = store.get(getBypassCookieName())?.value;
+    if (!verifyBypassCookie(bypassCookie)) {
+      return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
+          <BioMaintenanceView showBypassForm={isBypassConfigured()} />
+        </Suspense>
+      );
+    }
   }
 
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-600">Loading...</div>}>
       <BioLoginForm
         nextPath={nextPath}
-        loginPagePath="/backcrypto/login"
+        loginPagePath="/crypto/login"
       />
     </Suspense>
   );

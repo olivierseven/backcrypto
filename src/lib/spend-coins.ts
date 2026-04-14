@@ -2,7 +2,7 @@
  * Deduz coins do usuário para execução de simulação.
  * Usado pela fila (queue-tick) e pela rota direta (simulacao/run).
  */
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { dbg } from "@/lib/logger";
 
 /** Custo em coins por fila/iterações: 1x=1, 20x=20, 100x=100, 1000x=1000 */
@@ -22,7 +22,7 @@ export function getCoinsForN(N: number): number {
 
 /** Retorna o saldo atual do usuário. */
 export async function getBalance(userId: string): Promise<number> {
-  const wallet = await bioPrisma.userCoinWallet.findUnique({
+  const wallet = await cryptoPrisma.userCoinWallet.findUnique({
     where: { userId },
     select: { balance: true },
   });
@@ -43,7 +43,7 @@ export async function spendCoins(
 ): Promise<void> {
   if (amount <= 0) return;
 
-  await bioPrisma.$transaction(async (tx) => {
+  await cryptoPrisma.$transaction(async (tx) => {
     const wallet = await tx.userCoinWallet.findUnique({
       where: { userId },
       select: { id: true, balance: true },

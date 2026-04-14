@@ -157,25 +157,108 @@ exports.Prisma.UserScalarFieldEnum = {
   notifyQuina: 'notifyQuina',
   hideStatusBar: 'hideStatusBar',
   progress: 'progress',
-  language: 'language'
+  language: 'language',
+  timezoneOffset: 'timezoneOffset',
+  activeTabId: 'activeTabId',
+  activeTabUpdatedAt: 'activeTabUpdatedAt',
+  previousTabId: 'previousTabId',
+  previousTabUpdatedAt: 'previousTabUpdatedAt',
+  sessionTabSlots: 'sessionTabSlots',
+  sessionEvictedTabs: 'sessionEvictedTabs'
+};
+
+exports.Prisma.UserBinanceConnectionScalarFieldEnum = {
+  userId: 'userId',
+  payloadEnc: 'payloadEnc',
+  payloadIv: 'payloadIv',
+  payloadTag: 'payloadTag',
+  apiKeyLast4: 'apiKeyLast4',
+  lastVerifiedAt: 'lastVerifiedAt',
+  defaultQuoteUsdtPerOrder: 'defaultQuoteUsdtPerOrder',
+  feeEstimateTakerFallback: 'feeEstimateTakerFallback',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.UserBinanceSpotOrderScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  symbol: 'symbol',
+  binanceOrderId: 'binanceOrderId',
+  side: 'side',
+  orderType: 'orderType',
+  status: 'status',
+  price: 'price',
+  origQty: 'origQty',
+  executedQty: 'executedQty',
+  rawJson: 'rawJson',
+  canceledAt: 'canceledAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RobotSpotPerformanceEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  robotId: 'robotId',
+  robotAliasSnapshot: 'robotAliasSnapshot',
+  symbol: 'symbol',
+  side: 'side',
+  executionRole: 'executionRole',
+  binanceOrderId: 'binanceOrderId',
+  executedQtyBase: 'executedQtyBase',
+  quoteQtyUsdt: 'quoteQtyUsdt',
+  avgPrice: 'avgPrice',
+  feeUsdt: 'feeUsdt',
+  realizedPnlUsdt: 'realizedPnlUsdt',
+  rawJson: 'rawJson',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AffiliateAccountScalarFieldEnum = {
+  id: 'id',
+  emailEnc: 'emailEnc',
+  emailIv: 'emailIv',
+  emailTag: 'emailTag',
+  emailSearchHash: 'emailSearchHash',
+  passwordHash: 'passwordHash',
+  ativo: 'ativo',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt',
+  lastPlanPaymentPayoutSyncAt: 'lastPlanPaymentPayoutSyncAt'
+};
+
+exports.Prisma.AffiliateCouponScalarFieldEnum = {
+  id: 'id',
+  affiliateAccountId: 'affiliateAccountId',
+  code: 'code',
+  createdAt: 'createdAt',
+  ativo: 'ativo',
+  expiresAt: 'expiresAt'
 };
 
 exports.Prisma.ChartLayoutScalarFieldEnum = {
   userId: 'userId',
   slot: 'slot',
-  config: 'config',
+  layout: 'layout',
+  indicators: 'indicators',
+  strategies: 'strategies',
+  regressions: 'regressions',
+  others: 'others',
+  robots: 'robots',
+  name: 'name',
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.BioSavedConfigScalarFieldEnum = {
-  id: 'id',
+exports.Prisma.ChartModelScalarFieldEnum = {
   userId: 'userId',
+  slot: 'slot',
+  layout: 'layout',
+  indicators: 'indicators',
+  strategies: 'strategies',
+  regressions: 'regressions',
+  others: 'others',
   name: 'name',
-  private: 'private',
-  config: 'config',
-  mapDisplayByYear: 'mapDisplayByYear',
-  likes: 'likes',
-  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
@@ -266,6 +349,67 @@ exports.Prisma.StripeCheckoutSessionScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.StripePlanPaymentScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  userId: 'userId',
+  invoiceId: 'invoiceId',
+  checkoutSessionId: 'checkoutSessionId',
+  pagarmeOrderId: 'pagarmeOrderId',
+  subscriptionId: 'subscriptionId',
+  paymentIntentId: 'paymentIntentId',
+  chargeId: 'chargeId',
+  cupomId: 'cupomId',
+  idAfiliado: 'idAfiliado',
+  planKey: 'planKey',
+  amountTotalCents: 'amountTotalCents',
+  currency: 'currency',
+  amountAffiliateCents: 'amountAffiliateCents',
+  currencyAffiliate: 'currencyAffiliate',
+  commissionAffiliateCents: 'commissionAffiliateCents',
+  coinsCredited: 'coinsCredited',
+  pricingLabel: 'pricingLabel',
+  paidAt: 'paidAt',
+  createdAt: 'createdAt',
+  situacao: 'situacao',
+  stripePayoutId: 'stripePayoutId',
+  pagarmePayoutId: 'pagarmePayoutId',
+  payoutStatus: 'payoutStatus',
+  payoutArrivalDate: 'payoutArrivalDate',
+  payoutUpdatedAt: 'payoutUpdatedAt'
+};
+
+exports.Prisma.AffiliatePlanPaymentMonthAggScalarFieldEnum = {
+  id: 'id',
+  idAfiliado: 'idAfiliado',
+  monthStart: 'monthStart',
+  totalAmountCents: 'totalAmountCents',
+  totalReembolsadoCents: 'totalReembolsadoCents',
+  totalAprovadoCents: 'totalAprovadoCents',
+  totalAffiliateCents: 'totalAffiliateCents',
+  totalReembolsadoAffiliateCents: 'totalReembolsadoAffiliateCents',
+  totalAprovadoAffiliateCents: 'totalAprovadoAffiliateCents',
+  totalCommissionAffiliateCents: 'totalCommissionAffiliateCents',
+  totalReembolsadoCommissionAffiliateCents: 'totalReembolsadoCommissionAffiliateCents',
+  totalAprovadoCommissionAffiliateCents: 'totalAprovadoCommissionAffiliateCents',
+  totalExpiradoCommissionAffiliateCents: 'totalExpiradoCommissionAffiliateCents',
+  currencyAffiliate: 'currencyAffiliate',
+  expiresAt: 'expiresAt',
+  status: 'status',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AffiliateMonthAggInvoiceScalarFieldEnum = {
+  id: 'id',
+  monthAggId: 'monthAggId',
+  pdfBytes: 'pdfBytes',
+  fileName: 'fileName',
+  contentType: 'contentType',
+  sizeBytes: 'sizeBytes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PagarMeOrderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -282,32 +426,8 @@ exports.Prisma.PagarMeOrderScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.BioSimulationQueueScalarFieldEnum = {
-  id: 'id',
-  queueName: 'queueName',
-  userId: 'userId',
-  status: 'status',
-  payload: 'payload',
-  result: 'result',
-  createdAt: 'createdAt'
-};
-
-exports.Prisma.BioSimulationStateScalarFieldEnum = {
-  userId: 'userId',
-  state: 'state',
-  mapDisplayByYear: 'mapDisplayByYear',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.BioAppConfigScalarFieldEnum = {
-  key: 'key',
-  value: 'value',
-  description: 'description',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.BinanceKlineScalarFieldEnum = {
+  corretora: 'corretora',
   symbol: 'symbol',
   interval: 'interval',
   openTime: 'openTime',
@@ -324,6 +444,143 @@ exports.Prisma.BinanceKlineScalarFieldEnum = {
 };
 
 exports.Prisma.BinanceKlineFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+};
+
+exports.Prisma.BinanceRenkoFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceRangeFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceKagiFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceRenko2xFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl5ticks: 'k2Incl5ticks',
+  k2Incl15ticks: 'k2Incl15ticks',
+  k2Incl25ticks: 'k2Incl25ticks',
+  k2Incl50ticks: 'k2Incl50ticks',
+  k2Incl100ticks: 'k2Incl100ticks',
+  k2Incl150ticks: 'k2Incl150ticks',
+  k2Incl200ticks: 'k2Incl200ticks'
+};
+
+exports.Prisma.BinanceTradeCountFastScalarFieldEnum = {
+  corretora: 'corretora',
+  symbol: 'symbol',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume',
+  k2Incl500trades: 'k2Incl500trades',
+  k2Incl1000trades: 'k2Incl1000trades',
+  k2Incl2500trades: 'k2Incl2500trades',
+  k2Incl5000trades: 'k2Incl5000trades',
+  k2Incl7500trades: 'k2Incl7500trades',
+  k2Incl10000trades: 'k2Incl10000trades'
+};
+
+exports.Prisma.BinanceKlineMonthScalarFieldEnum = {
+  corretora: 'corretora',
   symbol: 'symbol',
   interval: 'interval',
   openTime: 'openTime',
@@ -342,6 +599,7 @@ exports.Prisma.BinanceKlineFastScalarFieldEnum = {
 exports.Prisma.BinanceKlineCacheScalarFieldEnum = {
   symbol: 'symbol',
   interval: 'interval',
+  chartKind: 'chartKind',
   openTime: 'openTime',
   open: 'open',
   high: 'high',
@@ -355,17 +613,103 @@ exports.Prisma.BinanceKlineCacheScalarFieldEnum = {
   takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
 };
 
+exports.Prisma.BinanceKlineCache2ScalarFieldEnum = {
+  symbol: 'symbol',
+  chartKind: 'chartKind',
+  interval: 'interval',
+  openTime: 'openTime',
+  open: 'open',
+  high: 'high',
+  low: 'low',
+  close: 'close',
+  volume: 'volume',
+  closeTime: 'closeTime',
+  quoteAssetVolume: 'quoteAssetVolume',
+  numberOfTrades: 'numberOfTrades',
+  takerBuyBaseAssetVolume: 'takerBuyBaseAssetVolume',
+  takerBuyQuoteAssetVolume: 'takerBuyQuoteAssetVolume'
+};
+
+exports.Prisma.BinanceKlineGapScalarFieldEnum = {
+  symbol: 'symbol',
+  interval: 'interval',
+  gapFrom: 'gapFrom',
+  gapTo: 'gapTo'
+};
+
+exports.Prisma.AppConfigScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LogErroScalarFieldEnum = {
+  id: 'id',
+  dataHora: 'dataHora',
+  origem: 'origem',
+  msgErro: 'msgErro'
+};
+
+exports.Prisma.KlineSymbolScalarFieldEnum = {
+  symbol: 'symbol',
+  ativo: 'ativo',
+  requiredDays1m: 'requiredDays1m',
+  requiredDays5m: 'requiredDays5m',
+  requiredDays1h: 'requiredDays1h'
+};
+
+exports.Prisma.AffiliateApplicationScalarFieldEnum = {
+  id: 'id',
+  idAfiliado: 'idAfiliado',
+  cnpjDigits: 'cnpjDigits',
+  taxId: 'taxId',
+  razaoSocial: 'razaoSocial',
+  responsavel: 'responsavel',
+  email: 'email',
+  siteUrl: 'siteUrl',
+  acceptedDocs: 'acceptedDocs',
+  approved: 'approved',
+  locale: 'locale',
+  commissionAnnualUsdCents: 'commissionAnnualUsdCents',
+  commissionMonthlyUsdCents: 'commissionMonthlyUsdCents',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AffiliatePayoutProfileScalarFieldEnum = {
+  id: 'id',
+  affiliateApplicationId: 'affiliateApplicationId',
+  activeTab: 'activeTab',
+  brRazaoSocial: 'brRazaoSocial',
+  brCnpjDigits: 'brCnpjDigits',
+  brBanco: 'brBanco',
+  brTipoConta: 'brTipoConta',
+  brAgencia: 'brAgencia',
+  brNumeroConta: 'brNumeroConta',
+  brChavePix: 'brChavePix',
+  intPaymentMethod: 'intPaymentMethod',
+  intPaypalEmail: 'intPaypalEmail',
+  intBankName: 'intBankName',
+  intAccountOrIban: 'intAccountOrIban',
+  intSwiftBic: 'intSwiftBic',
+  intAccountHolderName: 'intAccountHolderName',
+  intCountry: 'intCountry',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
-exports.Prisma.JsonNullValueInput = {
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -374,15 +718,15 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
-};
-
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
 };
 exports.Role = exports.$Enums.Role = {
   user: 'user',
@@ -411,7 +755,7 @@ exports.UserLevel = exports.$Enums.UserLevel = {
   DIVINO: 'DIVINO'
 };
 
-exports.BioLanguage = exports.$Enums.BioLanguage = {
+exports.AppLanguage = exports.$Enums.AppLanguage = {
   en: 'en',
   pt: 'pt'
 };
@@ -447,16 +791,15 @@ exports.CheckoutStatus = exports.$Enums.CheckoutStatus = {
   OVER_LIMIT: 'OVER_LIMIT'
 };
 
-exports.BioQueueStatus = exports.$Enums.BioQueueStatus = {
-  PENDING: 'PENDING',
-  RUNNING: 'RUNNING',
-  COMPLETED: 'COMPLETED'
-};
-
 exports.Prisma.ModelName = {
   User: 'User',
+  UserBinanceConnection: 'UserBinanceConnection',
+  UserBinanceSpotOrder: 'UserBinanceSpotOrder',
+  RobotSpotPerformanceEvent: 'RobotSpotPerformanceEvent',
+  AffiliateAccount: 'AffiliateAccount',
+  AffiliateCoupon: 'AffiliateCoupon',
   ChartLayout: 'ChartLayout',
-  BioSavedConfig: 'BioSavedConfig',
+  ChartModel: 'ChartModel',
   UserNotification: 'UserNotification',
   AccessRequest: 'AccessRequest',
   EmailVerificationToken: 'EmailVerificationToken',
@@ -466,13 +809,26 @@ exports.Prisma.ModelName = {
   WalletCredit: 'WalletCredit',
   StripeEvent: 'StripeEvent',
   StripeCheckoutSession: 'StripeCheckoutSession',
+  StripePlanPayment: 'StripePlanPayment',
+  AffiliatePlanPaymentMonthAgg: 'AffiliatePlanPaymentMonthAgg',
+  AffiliateMonthAggInvoice: 'AffiliateMonthAggInvoice',
   PagarMeOrder: 'PagarMeOrder',
-  BioSimulationQueue: 'BioSimulationQueue',
-  BioSimulationState: 'BioSimulationState',
-  BioAppConfig: 'BioAppConfig',
   BinanceKline: 'BinanceKline',
   BinanceKlineFast: 'BinanceKlineFast',
-  BinanceKlineCache: 'BinanceKlineCache'
+  BinanceRenkoFast: 'BinanceRenkoFast',
+  BinanceRangeFast: 'BinanceRangeFast',
+  BinanceKagiFast: 'BinanceKagiFast',
+  BinanceRenko2xFast: 'BinanceRenko2xFast',
+  BinanceTradeCountFast: 'BinanceTradeCountFast',
+  BinanceKlineMonth: 'BinanceKlineMonth',
+  BinanceKlineCache: 'BinanceKlineCache',
+  BinanceKlineCache2: 'BinanceKlineCache2',
+  BinanceKlineGap: 'BinanceKlineGap',
+  AppConfig: 'AppConfig',
+  LogErro: 'LogErro',
+  KlineSymbol: 'KlineSymbol',
+  AffiliateApplication: 'AffiliateApplication',
+  AffiliatePayoutProfile: 'AffiliatePayoutProfile'
 };
 
 /**

@@ -1,13 +1,16 @@
 {
-  "name": "biogenerator",
+  "name": "backcrypto",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "node scripts/dev.js",
     "build": "node scripts/build.js",
     "start": "next start -p 3004",
     "postinstall": "prisma generate",
     "cap:sync": "npx cap sync",
+    "cap:sync:android": "npx cap sync android",
     "cap:open:android": "npx cap open android",
     "cap:copy": "npx cap copy",
     "cap:update": "npx cap update",
@@ -19,10 +22,17 @@
     "binance-klines-fast-sync:loop": "node scripts/binance-klines-fast-sync-loop.js",
     "binance-kline-cache-refresh": "node scripts/binance-kline-cache-refresh.js",
     "binance-klines-backfill": "node scripts/binance-klines-backfill.js",
-    "binance-klines-backfill-1h": "node scripts/binance-klines-backfill-1h.js"
+    "binance-klines-backfill-5m": "node scripts/binance-klines-backfill-5m.js",
+    "binance-klines-backfill-1h": "node scripts/binance-klines-backfill-1h.js",
+    "dump-db": "node scripts/dump-db.js",
+    "restore-db": "node scripts/restore-db.js",
+    "set-admin": "node scripts/set-admin.js",
+    "verify-schema-vs-db": "node scripts/verify-schema-vs-db.js",
+    "sync-plan-payment-payouts": "tsx scripts/sync-plan-payment-payout-status.ts",
+    "backfill-affiliate-payment-currency": "tsx scripts/backfill-affiliate-payment-currency.ts",
+    "backfill-affiliate-commission-month-agg": "tsx scripts/backfill-affiliate-commission-month-agg.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "@capacitor-community/in-app-review": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
@@ -30,7 +40,7 @@
     "@capacitor/core": "^8.0.0",
     "@capacitor/push-notifications": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
-    "@capacitor/status-bar": "^8.0.0",
+    "@capacitor/status-bar": "8.0.1",
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
     "firebase-admin": "^13.6.1",
@@ -50,9 +60,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "pg": "^8.13.0",
     "postcss": "^8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.21.0",
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"

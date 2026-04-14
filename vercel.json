@@ -1,5 +1,15 @@
 {
   "redirects": [
-    { "source": "/", "destination": "/biogenerator", "permanent": false }
-  ]
+    { "source": "/", "destination": "/crypto", "permanent": false }
+  ],
+  "crons": [
+    { "path": "/crypto/api/cron/cache-refresh", "schedule": "0 0 * * *" }
+  ],
+  "functions": {
+    "src/app/api/cron/route.ts": { "regions": ["gru1"] },
+    "src/app/api/cron/cache-refresh/route.ts": { "regions": ["gru1"], "maxDuration": 300 },
+    "src/app/api/binance/daily-close-tick/route.ts": { "regions": ["gru1"] },
+    "src/app/api/debug/klines-backfill/route.ts": { "regions": ["gru1"] },
+    "src/app/api/debug/sync-klines/route.ts": { "regions": ["gru1"] }
+  }
 }

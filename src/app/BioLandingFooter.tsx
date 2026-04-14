@@ -2,17 +2,17 @@
 
 import React from "react";
 import LanguageSwitcher from "./components/LanguageSwitcher";
-import { getBioT, type BioLang } from "./lib/translations";
+import { getCryptoT, type CryptoLang } from "./lib/translations";
 
 const SC_BASE = "https://sevencoins.com.br";
 
 type Props = {
-  lang: BioLang;
-  setLang: (lang: BioLang) => void;
+  lang: CryptoLang;
+  setLang: (lang: CryptoLang) => void;
 };
 
 export default function BioLandingFooter({ lang, setLang }: Props) {
-  const L = getBioT(lang).footer;
+  const L = getCryptoT(lang).footer;
 
   return (
     <footer className="border-t border-white/60 bg-white/70 backdrop-blur-xl dark:border-zinc-700 dark:bg-zinc-800/70">
@@ -46,6 +46,12 @@ export default function BioLandingFooter({ lang, setLang }: Props) {
             </a>
             <a href={`${SC_BASE}/terms`} className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
               {L.terms}
+            </a>
+            <a
+              href={`${SC_BASE}/${lang}/affiliate-terms`}
+              className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              {L.affiliateTerms}
             </a>
             <a href={`${SC_BASE}/refund-policy`} className="text-zinc-600 dark:text-zinc-400 hover:underline hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
               {L.refund}

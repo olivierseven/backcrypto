@@ -3,14 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ASSET_PREFIX, APP_BACKCRYPTO_ROUTE_PREFIX } from "./constants";
-import { useBioLang } from "./contexts/BioLangContext";
+import { ASSET_PREFIX, APP_CRYPTO_ROUTE_PREFIX } from "./constants";
+import { useCryptoLang } from "./contexts/CryptoLangContext";
 import { bioTranslations } from "./lib/translations";
 
-const FORGOT_ACTION = `${APP_BACKCRYPTO_ROUTE_PREFIX}/api/auth/forgot`;
-const RESET_ACTION = `${APP_BACKCRYPTO_ROUTE_PREFIX}/api/auth/reset`;
-const LOGIN_PATH = `${APP_BACKCRYPTO_ROUTE_PREFIX}/login`;
-const RESET_PATH = `${APP_BACKCRYPTO_ROUTE_PREFIX}/reset-password`;
+const FORGOT_ACTION = `${APP_CRYPTO_ROUTE_PREFIX}/api/auth/forgot`;
+const RESET_ACTION = `${APP_CRYPTO_ROUTE_PREFIX}/api/auth/reset`;
+const LOGIN_PATH = `${APP_CRYPTO_ROUTE_PREFIX}/login`;
+const RESET_PATH = `${APP_CRYPTO_ROUTE_PREFIX}/reset-password`;
 
 function Field(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
@@ -66,8 +66,8 @@ function Button(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bio-login-card card-bio-generator w-full rounded-2xl">
-      <h2 className="bio-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
+    <section className="crypto-login-card card-crypto-generator w-full rounded-2xl">
+      <h2 className="crypto-login-title text-lg font-semibold tracking-tight text-zinc-800">{title}</h2>
       {children}
     </section>
   );
@@ -96,7 +96,7 @@ function Alert({
 
 export default function BioResetPasswordForm() {
   const searchParams = useSearchParams();
-  const lang = useBioLang();
+  const lang = useCryptoLang();
   const t = bioTranslations[lang].resetPassword;
 
   const token = searchParams?.get("token") ?? null;
@@ -119,13 +119,13 @@ export default function BioResetPasswordForm() {
   const isSetNewPasswordMode = !!token;
 
   return (
-    <div className="bio-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
-      <div className="bio-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
+    <div className="crypto-login-page relative overflow-hidden min-h-screen flex flex-col items-center">
+      <div className="crypto-login-wrap relative mx-auto w-full max-w-5xl flex-1 flex flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
         <div className="mx-auto max-w-4xl w-full">
           <div className="mb-5 flex items-center justify-center">
             <img
               src={`${ASSET_PREFIX}/icon.png`}
-              alt="Backtest Crypto"
+              alt="Crypto"
               width={80}
               height={80}
               className="protected-logo h-20 w-20 object-contain"
@@ -133,9 +133,9 @@ export default function BioResetPasswordForm() {
               decoding="async"
             />
           </div>
-          <header className="bio-login-header w-full text-center">
+          <header className="crypto-login-header w-full text-center">
             <h1 className="block w-full text-2xl font-bold leading-tight tracking-tight text-zinc-900 md:text-3xl">
-              Backtest Crypto
+              Crypto
             </h1>
             <p className="text-sm text-zinc-500 mt-0.5">by SevenCoins</p>
           </header>

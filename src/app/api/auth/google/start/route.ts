@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { dbg, log as vLog } from "@/lib/logger";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
+import { safeCryptoNext } from "@/lib/crypto-auth-next";
 
-const BASE_PATH = "/backcrypto";
+const BASE_PATH = "/crypto";
 const CID = process.env.GOOGLE_CLIENT_ID;
 
 function rand(n = 16): string {
@@ -22,14 +23,15 @@ function signState(state: string): string {
 export async function GET(req: Request) {
   const start = Date.now();
   const url = new URL(req.url);
-  const next = url.searchParams.get("next") || `${BASE_PATH}/sistema`;
+  const next = safeCryptoNext(url.searchParams.get("next"));
   const fromAppParam = url.searchParams.get("from_app") === "1";
   const ua = req.headers.get("user-agent") || "";
   const isMobile = /android|iphone|ipad|mobile/i.test(ua);
+  /** Igual BioGenerator: app / WebView mobile → state ~app → callback devolve intent/deep link para /google/complete no app. */
   const fromApp = fromAppParam || isMobile;
 
   if (!CID) {
-    dbg("[bio/auth/google/start] GOOGLE_CLIENT_ID not configured");
+    dbg("[crypto/auth/google/start] GOOGLE_CLIENT_ID not configured");
     const origin = getRedirectOrigin(req);
     return NextResponse.redirect(`${origin}${BASE_PATH}/login?login=server`, { status: 303 });
   }
@@ -37,8 +39,8 @@ export async function GET(req: Request) {
   const state = rand(24);
   const nonce = rand(24);
 
-  vLog(`[bio/auth/google/start] next=${next} fromApp=${fromApp} isMobile=${isMobile} ua=${ua.slice(0, 50)}...`);
-  dbg(`[bio/auth/google/start] state=${state.slice(0, 8)}...`);
+  vLog(`[crypto/auth/google/start] next=${next} fromApp=${fromApp} isMobile=${isMobile} ua=${ua.slice(0, 50)}...`);
+  dbg(`[crypto/auth/google/start] state=${state.slice(0, 8)}...`);
 
   const origin = getRedirectOrigin(req);
   const redirectUri = `${origin}${BASE_PATH}/api/auth/google/callback`;
@@ -68,6 +70,6 @@ export async function GET(req: Request) {
   res.cookies.set("oauth_state", state, opts);
   res.cookies.set("oauth_nonce", nonce, opts);
 
-  vLog(`[bio/auth/google/start] success next=${next} took=${Date.now() - start}ms`);
+  vLog(`[crypto/auth/google/start] success next=${next} took=${Date.now() - start}ms`);
   return res;
 }

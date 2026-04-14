@@ -2,12 +2,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { SignJWT } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { normalizeEmail, emailSearchHash, decryptEmail } from "@/lib/crypto";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 import { dbg, warn, error, log as vLog } from "@/lib/logger";
-import { isFirstLoginBio, createBioWelcomePackage } from "@/lib/bio-bonus";
+import { safeCryptoNext, CRYPTO_LOGIN_PAGE, CRYPTO_DEFAULT_NEXT } from "@/lib/crypto-auth-next";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +16,8 @@ const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const COOKIE_LAST = `${COOKIE}_last`;
 const COOKIE_IAT = `${COOKIE}_iat`;
 
-const LOGIN_PAGE = "/backcrypto/login";
-const DEFAULT_NEXT = "/backcrypto/sistema";
+const LOGIN_PAGE = CRYPTO_LOGIN_PAGE;
+const DEFAULT_NEXT = CRYPTO_DEFAULT_NEXT;
 
 const MAX_LOGIN_ATTEMPTS = 10;
 const LOGIN_WINDOW_MS = 60_000;
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
     dbg(`[auth/login] processing email=${emailNorm.slice(0, 3)}...@${emailNorm.split("@")[1]}`);
 
-    const user = await bioPrisma.user.findUnique({
+    const user = await cryptoPrisma.user.findUnique({
       where: { emailSearchHash: emailSearchHash(emailNorm) },
       select: {
         id: true,
@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         .setIssuedAt()
         .setExpirationTime("1h")
         .sign(JWT_SECRET);
-      const res = redirect("/backcrypto/reativar", req);
+      const res = redirect("/crypto/reativar", req);
       res.cookies.set(COOKIE, tempJWT, {
         httpOnly: true,
         sameSite: "lax",
@@ -150,26 +150,9 @@ export async function POST(req: Request) {
       .setExpirationTime("24h")
       .sign(JWT_SECRET);
 
-    const safeNext =
-      rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : DEFAULT_NEXT;
+    const safeNext = safeCryptoNext(rawNext || undefined);
 
     vLog(`[auth/login] success redirect=${safeNext}`);
-
-    try {
-      const isFirstBio = await isFirstLoginBio(user.id);
-      if (isFirstBio) {
-        dbg(`[auth/login] Bio first login, creating welcome package: userId=${user.id.slice(0, 8)}...`);
-        const result = await createBioWelcomePackage(user.id);
-        if (result?.success) {
-          vLog(`[auth/login] Bio welcome package created: userId=${user.id.slice(0, 8)}... coins=${result.coins}`);
-        } else {
-          warn(`[auth/login] Bio welcome package failed: userId=${user.id.slice(0, 8)}... error=${result?.error ?? "unknown"}`);
-        }
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      warn(`[auth/login] Bio welcome package error: userId=${user.id.slice(0, 8)}... error=${msg}`);
-    }
 
     const res = redirect(safeNext, req);
     const maxAge = 24 * 60 * 60;

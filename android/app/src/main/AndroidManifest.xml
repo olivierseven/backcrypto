@@ -6,7 +6,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
+        android:theme="@style/AppTheme.NoActionBar"
         android:usesCleartextTraffic="true">
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
@@ -20,28 +20,37 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- App Links: só autenticação e rotas pós-login; landing e funcionalidade ficam no browser -->
+            <!-- App Links: autenticação e rotas pós-login (basePath /crypto). Landing pública fica no browser. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/login" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/register" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/reset-password" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/oauth-return" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/reativar" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/sistema" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/conta" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/plans" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/historico" />
-                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/biogenerator/admin" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/login" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/register" />
+                <data
+                    android:scheme="https"
+                    android:host="sevencoins.com.br"
+                    android:pathPrefix="/crypto/reset-password"
+                />
+                <data
+                    android:scheme="https"
+                    android:host="sevencoins.com.br"
+                    android:pathPrefix="/crypto/oauth-return"
+                />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/reativar" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/sistema" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/conta" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/plans" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/historico" />
+                <data android:scheme="https" android:host="sevencoins.com.br" android:pathPrefix="/crypto/admin" />
             </intent-filter>
 
+            <!-- Deep link OAuth (Chrome → app): cryptostrategy://oauth -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="biogenerator" android:host="oauth" />
+                <data android:scheme="cryptostrategy" android:host="oauth" />
             </intent-filter>
         </activity>
 

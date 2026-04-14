@@ -1,10 +1,10 @@
 // GET /api/auth/verify?token=... — verificação de e-mail (cadastro Bio)
 import { NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { consumeEmailVerificationToken } from "@/lib/token";
 import { rateLimit, clientKeyFromRequest } from "@/lib/rate";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
-import { APP_BACKCRYPTO_ROUTE_PREFIX } from "@/app/constants";
+import { APP_CRYPTO_ROUTE_PREFIX } from "@/app/constants";
 import { getRedirectOrigin } from "@/lib/redirect-origin";
 
 export const runtime = "nodejs";
@@ -16,7 +16,7 @@ const VERIFY_PER_TOKEN_LIMIT = 3; // permite retries (duplo clique, prefetch do 
 const VERIFY_PER_TOKEN_WINDOW = 60_000;
 
 function getBaseUrl(req: Request): string {
-  return getRedirectOrigin(req) + APP_BACKCRYPTO_ROUTE_PREFIX;
+  return getRedirectOrigin(req) + APP_CRYPTO_ROUTE_PREFIX;
 }
 
 function loginUrl(req: Request, query = "") {
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
       return NextResponse.redirect(loginUrl(req, "verified=invalid"), { status: 303 });
     }
 
-    await bioPrisma.user.update({
+    await cryptoPrisma.user.update({
       where: { id: result.userId },
       data: { emailVerifiedAt: new Date() },
     });

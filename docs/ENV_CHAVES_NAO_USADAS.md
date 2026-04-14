@@ -1,4 +1,4 @@
-# Chaves do .env — uso no BioGenerator
+# Chaves do .env — referência Crypto (backcrypto)
 
 Verificação feita por busca em `src/` e `prisma/`.
 
@@ -8,7 +8,7 @@ Verificação feita por busca em `src/` e `prisma/`.
 
 **Todas são usadas no código do Bio.**
 
-FIREBASE_PROJECT_ID e FIREBASE_SERVICE_ACCOUNT_JSON são usadas em `src/lib/push-notification.ts` (mesmas variáveis do SevenCoins). As demais da sua lista (BG_DATABASE_URL, APP_URL, NEXT_PUBLIC_APP_URL, JWT_*, EMAIL_ENC_KEY_B64, RESEND_API_KEY, MAIL_FROM, MAIL_REPLY_TO, BG_STRIPE_*, UNVERIFIED_TTL_HOURS, SITE_MAINTENANCE, DEBUG_LOGS, NODE_ENV, GOOGLE_CLIENT_*, BG_PAGARME_*, BG_PIX_TEST_AMOUNT_BRL_CENTS) **estão em uso**.
+FIREBASE_PROJECT_ID e FIREBASE_SERVICE_ACCOUNT_JSON são usadas em `src/lib/push-notification.ts` (mesmas variáveis do SevenCoins). As demais da sua lista (BG_DATABASE_URL, APP_URL, NEXT_PUBLIC_APP_URL, JWT_*, EMAIL_ENC_KEY_B64, RESEND_API_KEY, MAIL_FROM, MAIL_REPLY_TO, STRIPE_* (ex-BG_STRIPE_*), UNVERIFIED_TTL_HOURS, SITE_MAINTENANCE, DEBUG_LOGS, NODE_ENV, GOOGLE_CLIENT_*, PAGARME_*, PIX_TEST_AMOUNT_BRL_CENTS) **estão em uso**.
 
 ---
 

@@ -21,7 +21,9 @@
     </style>
 
 
+    <!-- Depois do splash, o tema de continuação era ?android:attr/theme → AppTheme (DarkActionBar) → barra branca "C..." no topo. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

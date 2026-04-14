@@ -2,16 +2,28 @@
  * Klines a partir de backcrypto.BinanceKlineFast (1m), backcrypto.BinanceKline (1h) e backcrypto.BinanceKlineCache.
  * Cache < 1h: de BinanceKlineFast; cache >= 1h: de BinanceKline.
  * Agregação do dia atual (UTC) em todos os intervalos: sempre a partir de BinanceKlineFast (1m).
+ * openTime/closeTime são ajustados pelo timezoneOffset do utilizador (horas, -12..12) antes de devolver.
  * GET /api/binance/klines?symbol=BTCUSDT&interval=5m&limit=1000
- * Resposta: array no formato Binance [openTime, open, high, low, close, volume, closeTime, ...]
+ * Resposta: { klines: array Binance [openTime, open, high, low, close, volume, closeTime, ...], lastUpdateUtc?: ms (openTime do último 1m em Fast), needsRefresh?: true }
  */
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
-import { bioPrisma } from "@/lib/bio-db";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma } from "@/lib/prisma-bio-client";
+import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
+
+const COOKIE = process.env.JWT_COOKIE_NAME || "session";
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const CORRETORA = "binance";
 
 const INTERVAL_TO_MINUTES: Record<string, number> = {
   "1m": 1,
+  "2m": 2,
   "3m": 3,
+  "4m": 4,
   "5m": 5,
   "15m": 15,
   "30m": 30,
@@ -29,9 +41,9 @@ const INTERVAL_TO_MINUTES: Record<string, number> = {
   "1M": 43200, // 30 days
 };
 
-/** Intervalos que existem na BinanceKlineCache (até 1D). Sem 1m. */
+/** Intervalos que existem na BinanceKlineCache: 1m–4m (de Fast), 5m/15m/30m/45m (de 5m), 1h–1d (de 1h). */
 const CACHE_INTERVALS = new Set<string>([
-  "3m", "5m", "15m", "30m", "45m", "1h", "2h", "3h", "4h", "6h", "8h", "12h", "1d",
+  "1m", "2m", "3m", "4m", "5m", "15m", "30m", "45m", "1h", "2h", "3h", "4h", "6h", "8h", "12h", "1d",
 ]);
 
 function parseIntervalMinutes(interval: string | null, groupMinutes: number | null): number {
@@ -98,9 +110,22 @@ function rowToKline(r: Record<string, unknown>) {
   ];
 }
 
+/** Aplica timezoneOffset (horas, -12..12) a openTime [0] e closeTime [6] de cada linha. */
+function applyTimezoneOffset(data: (string | number)[][], offsetHours: number): (string | number)[][] {
+  if (offsetHours === 0) return data;
+  const offsetMs = offsetHours * 60 * 60 * 1000;
+  return data.map((row) => {
+    const out = [...row];
+    out[0] = Number(row[0]) + offsetMs;
+    out[6] = Number(row[6]) + offsetMs;
+    return out;
+  });
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const symbol = searchParams.get("symbol") ?? "BTCUSDT";
+  const symbolList = await getKlineSymbolsFromDb(cryptoPrisma);
+  const symbol = resolveSymbol(searchParams.get("symbol"), symbolList);
   const limit = Math.min(Number(searchParams.get("limit")) || 1000, 5000);
   const groupMinutes = parseIntervalMinutes(
     searchParams.get("interval"),
@@ -108,34 +133,92 @@ export async function GET(request: NextRequest) {
   );
   const bucketMs = groupMinutes * 60 * 1000;
 
+  let timezoneOffset = 0;
+  try {
+    const token = (await cookies()).get(COOKIE)?.value;
+    if (token) {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const userId = typeof payload?.sub === "string" ? payload.sub : null;
+      if (userId) {
+        const user = await cryptoPrisma.user.findUnique({
+          where: { id: userId },
+          select: { timezoneOffset: true },
+        });
+        const tz = user?.timezoneOffset ?? 0;
+        timezoneOffset = Math.max(-12, Math.min(12, Number(tz) || 0));
+      }
+    }
+  } catch {
+    // sem sessão ou erro: usar 0
+  }
+
   const intervalParam = (searchParams.get("interval") ?? "").toLowerCase();
+  // Intervalo canônico para cache/histórico (baseado no agrupamento), mesmo que a UI envie interval=1m.
+  // Ex.: groupMinutes=60 => "1h"; 240 => "4h"; 1440 => "1d"; caso contrário usa "<n>m".
+  const canonicalIntervalParam =
+    groupMinutes === 1440
+      ? "1d"
+      : groupMinutes >= 60 && groupMinutes % 60 === 0 && groupMinutes < 1440
+        ? `${groupMinutes / 60}h`
+        : `${groupMinutes}m`;
   const useCache =
     groupMinutes !== 1 &&
-    CACHE_INTERVALS.has(intervalParam);
+    CACHE_INTERVALS.has(canonicalIntervalParam);
+
+  // Última atualização sempre da tabela BinanceKlineFast (1m), independente do timeframe; aplicar timezoneOffset como em openTime/closeTime
+  const lastUpdateFromFast = await cryptoPrisma
+    .$queryRaw<[{ openTime: number | bigint } | null]>(
+      Prisma.sql`
+        SELECT "openTime" FROM backcrypto."BinanceKlineFast"
+        WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
+        ORDER BY "openTime" DESC
+        LIMIT 1
+      `
+    )
+    .then((r) => (Array.isArray(r) && r[0] != null ? Number(r[0].openTime) : null));
+  const offsetMs = timezoneOffset * 60 * 60 * 1000;
+  const lastUpdateUtc = lastUpdateFromFast != null ? lastUpdateFromFast + offsetMs : null;
 
   try {
     if (groupMinutes === 1) {
-      const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+      const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         Prisma.sql`
           SELECT "openTime", "open", "high", "low", "close", "volume",
                  "closeTime", "quoteAssetVolume", "numberOfTrades",
                  "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
           FROM backcrypto."BinanceKlineFast"
-          WHERE symbol = ${symbol} AND "interval" = '1m'
+          WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m'
           ORDER BY "openTime" DESC
           LIMIT ${limit}
         `
       );
       const list = Array.isArray(rows) ? rows : [];
-      const data = list.map(rowToKline);
-      return NextResponse.json(data);
+      let data = list.map(rowToKline);
+      data = applyTimezoneOffset(data, timezoneOffset);
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
     if (useCache) {
+      // Sem cache: retornar needsRefresh. Com cache: histórico do cache + dia atual sempre de BinanceKlineFast (1m).
       const startOfToday = startOfTodayUtcMs();
+      const hasCache = await cryptoPrisma
+        .$queryRaw<[{ exists: boolean }]>(
+          Prisma.sql`
+            SELECT EXISTS (
+              SELECT 1 FROM backcrypto."BinanceKlineCache"
+              WHERE symbol = ${symbol} AND "interval" = ${canonicalIntervalParam}
+              LIMIT 1
+            ) AS "exists"
+          `
+        )
+        .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
-      // Agregação só do dia atual (UTC) a partir de BinanceKlineFast (1m)
-      const todayRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
+      if (!hasCache) {
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
+      }
+
+      // Dia atual (UTC): sempre agregar a partir de BinanceKlineFast (1m), independente do timeframe.
+      const todayRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
         Prisma.sql`
           WITH k AS (
             SELECT
@@ -145,7 +228,7 @@ export async function GET(request: NextRequest) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
           )
           SELECT
             k.bucket::bigint AS "openTime",
@@ -166,113 +249,33 @@ export async function GET(request: NextRequest) {
       );
       const todayList = Array.isArray(todayRows) ? todayRows : [];
       const cacheLimit = Math.max(0, limit - todayList.length);
-
       let cacheList: Record<string, unknown>[] = [];
       if (cacheLimit > 0) {
-        const isGe1h = groupMinutes >= 60;
-        const hasCacheForInterval = await bioPrisma
-          .$queryRaw<[{ exists: boolean }]>(
-            Prisma.sql`
-              SELECT EXISTS (
-                SELECT 1 FROM backcrypto."BinanceKlineCache"
-                WHERE symbol = ${symbol} AND "interval" = ${intervalParam} LIMIT 1
-              ) AS "exists"
-            `
-          )
-          .then((r) => Array.isArray(r) && r[0]?.exists === true);
-
-        if (hasCacheForInterval) {
-          const cacheRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-            Prisma.sql`
-              SELECT "openTime", "open", "high", "low", "close", "volume",
-                     "closeTime", "quoteAssetVolume", "numberOfTrades",
-                     "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-              FROM backcrypto."BinanceKlineCache"
-              WHERE symbol = ${symbol} AND "interval" = ${intervalParam}
-              ORDER BY "openTime" DESC
-              LIMIT ${cacheLimit}
-            `
-          );
-          cacheList = Array.isArray(cacheRows) ? cacheRows : [];
-        } else if (isGe1h) {
-          // Sem cache para >= 1h: histórico a partir de BinanceKline (1h) agregado ao bucket
-          const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-            Prisma.sql`
-              WITH k AS (
-                SELECT
-                  (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
-                  "openTime",
-                  "open", "high", "low", "close", "volume", "closeTime",
-                  "quoteAssetVolume", "numberOfTrades",
-                  "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-                FROM backcrypto."BinanceKline"
-                WHERE symbol = ${symbol} AND "interval" = '1h' AND "openTime" < ${startOfToday}
-              )
-              SELECT
-                k.bucket::bigint AS "openTime",
-                (array_agg(k."open" ORDER BY k."openTime"))[1] AS "open",
-                max(k."high") AS "high",
-                min(k."low") AS "low",
-                (array_agg(k."close" ORDER BY k."openTime" DESC))[1] AS "close",
-                sum(k."volume") AS "volume",
-                max(k."closeTime") AS "closeTime",
-                sum(k."quoteAssetVolume") AS "quoteAssetVolume",
-                sum(k."numberOfTrades")::int AS "numberOfTrades",
-                sum(k."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-                sum(k."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-              FROM k
-              GROUP BY k.bucket
-              ORDER BY k.bucket DESC
-              LIMIT ${cacheLimit}
-            `
-          );
-          cacheList = Array.isArray(historyRows) ? historyRows : [];
-        } else {
-          // Sem cache para < 1h: histórico a partir de BinanceKlineFast (1m) agregado ao bucket
-          const historyRows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-            Prisma.sql`
-              WITH k AS (
-                SELECT
-                  (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
-                  "openTime",
-                  "open", "high", "low", "close", "volume", "closeTime",
-                  "quoteAssetVolume", "numberOfTrades",
-                  "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-                FROM backcrypto."BinanceKlineFast"
-                WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" < ${startOfToday}
-              )
-              SELECT
-                k.bucket::bigint AS "openTime",
-                (array_agg(k."open" ORDER BY k."openTime"))[1] AS "open",
-                max(k."high") AS "high",
-                min(k."low") AS "low",
-                (array_agg(k."close" ORDER BY k."openTime" DESC))[1] AS "close",
-                sum(k."volume") AS "volume",
-                max(k."closeTime") AS "closeTime",
-                sum(k."quoteAssetVolume") AS "quoteAssetVolume",
-                sum(k."numberOfTrades")::int AS "numberOfTrades",
-                sum(k."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-                sum(k."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-              FROM k
-              GROUP BY k.bucket
-              ORDER BY k.bucket DESC
-              LIMIT ${cacheLimit}
-            `
-          );
-          cacheList = Array.isArray(historyRows) ? historyRows : [];
-        }
+        const cacheRows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
+          Prisma.sql`
+            SELECT "openTime", "open", "high", "low", "close", "volume",
+                   "closeTime", "quoteAssetVolume", "numberOfTrades",
+                   "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
+            FROM backcrypto."BinanceKlineCache"
+            WHERE symbol = ${symbol} AND "interval" = ${canonicalIntervalParam}
+              AND "openTime" < ${startOfToday}
+            ORDER BY "openTime" DESC
+            LIMIT ${cacheLimit}
+          `
+        );
+        cacheList = Array.isArray(cacheRows) ? cacheRows : [];
       }
-
       const combined = [...todayList, ...cacheList].slice(0, limit);
-      const data = combined.map(rowToKline);
-      return NextResponse.json(data);
+      let data = combined.map(rowToKline);
+      data = applyTimezoneOffset(data, timezoneOffset);
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
     // Intervalos acima de 1d (3d, 1w, 1M): cache 1d + dia atual em 1d, depois reagrupa. Sem cache: 1d a partir de BinanceKline (1h).
     if (ABOVE_1D_MINUTES.has(groupMinutes)) {
       const bucketExpr = above1dBucketExpr(groupMinutes, bucketMs);
       const startOfToday = startOfTodayUtcMs();
-      const hasCache1d = await bioPrisma
+      const hasCache1d = await cryptoPrisma
         .$queryRaw<[{ exists: boolean }]>(
           Prisma.sql`
             SELECT EXISTS (
@@ -283,9 +286,12 @@ export async function GET(request: NextRequest) {
         )
         .then((r) => Array.isArray(r) && r[0]?.exists === true);
 
-      const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-        hasCache1d
-          ? Prisma.sql`
+      if (!hasCache1d) {
+        return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
+      }
+
+      const rows = await cryptoPrisma.$queryRaw<Record<string, unknown>[]>(
+        Prisma.sql`
           WITH k_today AS (
             SELECT
               (("openTime" / ${ONE_DAY_MS}) * ${ONE_DAY_MS}) AS bucket,
@@ -294,7 +300,7 @@ export async function GET(request: NextRequest) {
               "quoteAssetVolume", "numberOfTrades",
               "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
             FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
+            WHERE corretora = ${CORRETORA} AND symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
           ),
           today_1d AS (
             SELECT
@@ -356,137 +362,15 @@ export async function GET(request: NextRequest) {
           )
           SELECT * FROM grouped
         `
-          : Prisma.sql`
-          WITH k_today AS (
-            SELECT
-              (("openTime" / ${ONE_DAY_MS}) * ${ONE_DAY_MS}) AS bucket,
-              "openTime",
-              "open", "high", "low", "close", "volume", "closeTime",
-              "quoteAssetVolume", "numberOfTrades",
-              "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-            FROM backcrypto."BinanceKlineFast"
-            WHERE symbol = ${symbol} AND "interval" = '1m' AND "openTime" >= ${startOfToday}
-          ),
-          today_1d AS (
-            SELECT
-              k.bucket::bigint AS "openTime",
-              (array_agg(k."open" ORDER BY k."openTime"))[1] AS "open",
-              max(k."high") AS "high",
-              min(k."low") AS "low",
-              (array_agg(k."close" ORDER BY k."openTime" DESC))[1] AS "close",
-              sum(k."volume") AS "volume",
-              max(k."closeTime") AS "closeTime",
-              sum(k."quoteAssetVolume") AS "quoteAssetVolume",
-              sum(k."numberOfTrades")::int AS "numberOfTrades",
-              sum(k."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-              sum(k."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-            FROM k_today k
-            GROUP BY k.bucket
-          ),
-          history_1h AS (
-            SELECT
-              (("openTime" / ${ONE_DAY_MS}) * ${ONE_DAY_MS}) AS bucket,
-              "openTime",
-              "open", "high", "low", "close", "volume", "closeTime",
-              "quoteAssetVolume", "numberOfTrades",
-              "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-            FROM backcrypto."BinanceKline"
-            WHERE symbol = ${symbol} AND "interval" = '1h' AND "openTime" < ${startOfToday}
-          ),
-          history_1d AS (
-            SELECT
-              h.bucket::bigint AS "openTime",
-              (array_agg(h."open" ORDER BY h."openTime"))[1] AS "open",
-              max(h."high") AS "high",
-              min(h."low") AS "low",
-              (array_agg(h."close" ORDER BY h."openTime" DESC))[1] AS "close",
-              sum(h."volume") AS "volume",
-              max(h."closeTime") AS "closeTime",
-              sum(h."quoteAssetVolume") AS "quoteAssetVolume",
-              sum(h."numberOfTrades")::int AS "numberOfTrades",
-              sum(h."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-              sum(h."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-            FROM history_1h h
-            GROUP BY h.bucket
-            ORDER BY h.bucket DESC
-            LIMIT 5000
-          ),
-          daily AS (
-            (SELECT "openTime", "open", "high", "low", "close", "volume", "closeTime",
-                    "quoteAssetVolume", "numberOfTrades", "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume" FROM today_1d)
-            UNION ALL
-            (SELECT "openTime", "open", "high", "low", "close", "volume", "closeTime",
-                    "quoteAssetVolume", "numberOfTrades", "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume" FROM history_1d)
-          ),
-          daily_with_bucket AS (
-            SELECT
-              ${bucketExpr} AS bucket,
-              "openTime",
-              "open", "high", "low", "close", "volume", "closeTime",
-              "quoteAssetVolume", "numberOfTrades", "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-            FROM daily
-          ),
-          grouped AS (
-            SELECT
-              d.bucket AS "openTime",
-              (array_agg(d."open" ORDER BY d."openTime"))[1] AS "open",
-              max(d."high") AS "high",
-              min(d."low") AS "low",
-              (array_agg(d."close" ORDER BY d."openTime" DESC))[1] AS "close",
-              sum(d."volume") AS "volume",
-              max(d."closeTime") AS "closeTime",
-              sum(d."quoteAssetVolume") AS "quoteAssetVolume",
-              sum(d."numberOfTrades")::int AS "numberOfTrades",
-              sum(d."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-              sum(d."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-            FROM daily_with_bucket d
-            GROUP BY d.bucket
-            ORDER BY d.bucket DESC
-            LIMIT ${limit}
-          )
-          SELECT * FROM grouped
-        `
       );
       const list = Array.isArray(rows) ? rows : [];
-      const data = list.map(rowToKline);
-      return NextResponse.json(data);
+      let data = list.map(rowToKline);
+      data = applyTimezoneOffset(data, timezoneOffset);
+      return NextResponse.json({ klines: data, lastUpdateUtc, timezoneOffset });
     }
 
-    // Fallback: agregação direta da BinanceKlineFast (1m)
-    const rows = await bioPrisma.$queryRaw<Record<string, unknown>[]>(
-      Prisma.sql`
-        WITH k AS (
-          SELECT
-            (("openTime" / ${bucketMs}) * ${bucketMs}) AS bucket,
-            "openTime",
-            "open", "high", "low", "close", "volume", "closeTime",
-            "quoteAssetVolume", "numberOfTrades",
-            "takerBuyBaseAssetVolume", "takerBuyQuoteAssetVolume"
-          FROM backcrypto."BinanceKlineFast"
-          WHERE symbol = ${symbol} AND "interval" = '1m'
-        )
-        SELECT
-          k.bucket::bigint AS "openTime",
-          (array_agg(k."open" ORDER BY k."openTime"))[1] AS "open",
-          max(k."high") AS "high",
-          min(k."low") AS "low",
-          (array_agg(k."close" ORDER BY k."openTime" DESC))[1] AS "close",
-          sum(k."volume") AS "volume",
-          max(k."closeTime") AS "closeTime",
-          sum(k."quoteAssetVolume") AS "quoteAssetVolume",
-          sum(k."numberOfTrades")::int AS "numberOfTrades",
-          sum(k."takerBuyBaseAssetVolume") AS "takerBuyBaseAssetVolume",
-          sum(k."takerBuyQuoteAssetVolume") AS "takerBuyQuoteAssetVolume"
-        FROM k
-        GROUP BY k.bucket
-        ORDER BY k.bucket DESC
-        LIMIT ${limit}
-      `
-    );
-
-    const list = Array.isArray(rows) ? rows : [];
-    const data = list.map(rowToKline);
-    return NextResponse.json(data);
+    // Sem cache: não usar tabelas de origem; pedir refresh no front.
+    return NextResponse.json({ klines: [], needsRefresh: true, lastUpdateUtc, timezoneOffset });
   } catch (e) {
     console.error("[api/binance/klines]", e);
     return NextResponse.json(

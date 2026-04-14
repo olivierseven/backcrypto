@@ -1,8 +1,8 @@
-// GET /api/biogenerator/checkout-pix/status — Status do pedido PIX (Bio)
+// GET …/api/checkout-pix/status — status PIX (Crypto)
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
 import { handleOrderPaid } from "@/lib/pagarme-order-paid";
 import { dbg } from "@/lib/logger";
 
@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
-const BG_PAGARME_SECRET_KEY = process.env.BG_PAGARME_SECRET_KEY;
-const BG_PAGARME_ACCOUNT_ID = process.env.BG_PAGARME_ACCOUNT_ID;
+const PAGARME_SECRET_KEY = process.env.PAGARME_SECRET_KEY;
+const PAGARME_ACCOUNT_ID = process.env.PAGARME_ACCOUNT_ID;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     const userId = typeof payload?.sub === "string" ? payload.sub : null;
     if (!userId) return NextResponse.json({ error: "invalid_user" }, { status: 401 });
 
-    let order = await bioPrisma.pagarMeOrder.findFirst({
+    let order = await cryptoPrisma.pagarMeOrder.findFirst({
       where: { id: orderId, userId },
       select: { id: true, status: true, coinsToCredit: true, amountTotalCents: true, completedAt: true },
     });
@@ -38,21 +38,21 @@ export async function GET(req: Request) {
     if (!order) return NextResponse.json({ error: "order_not_found" }, { status: 404 });
 
     // Fallback: se ainda CREATED, consultar Pagar.me (útil quando webhook não chega, ex. localhost)
-    if (order.status === "CREATED" && BG_PAGARME_SECRET_KEY) {
+    if (order.status === "CREATED" && PAGARME_SECRET_KEY) {
       try {
-        const auth = Buffer.from(`${BG_PAGARME_SECRET_KEY}:`).toString("base64");
+        const auth = Buffer.from(`${PAGARME_SECRET_KEY}:`).toString("base64");
         const headers: Record<string, string> = {
           Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
         };
-        if (BG_PAGARME_ACCOUNT_ID) headers["X-Account-Id"] = BG_PAGARME_ACCOUNT_ID;
+        if (PAGARME_ACCOUNT_ID) headers["X-Account-Id"] = PAGARME_ACCOUNT_ID;
         const res = await fetch(`https://api.pagar.me/core/v5/orders/${orderId}`, { method: "GET", headers });
         if (res.ok) {
           const pgOrder = await res.json().catch(() => ({}));
           if (pgOrder?.status === "paid") {
-            dbg(`[bio/checkout-pix/status] order paid at Pagar.me, processing orderId=${orderId}`);
+            dbg(`[crypto/checkout-pix/status] order paid at Pagar.me, processing orderId=${orderId}`);
             await handleOrderPaid(pgOrder);
-            order = await bioPrisma.pagarMeOrder.findFirst({
+            order = await cryptoPrisma.pagarMeOrder.findFirst({
               where: { id: orderId, userId },
               select: { id: true, status: true, coinsToCredit: true, amountTotalCents: true, completedAt: true },
             }) ?? order;

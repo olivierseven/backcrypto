@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/admin-protection";
-import BioAdminClient from "./BioAdminClient";
+import CryptoAdminClient from "./CryptoAdminClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -10,7 +10,7 @@ export default async function AdminPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-zinc-50 to-white">
       <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="card-bio-generator rounded-2xl p-6 shadow-lg">
+        <div className="card-crypto-generator rounded-2xl p-6 shadow-lg">
           <h1 className="text-2xl font-bold text-zinc-900 mb-6">
             🔑 Painel de Administração
           </h1>
@@ -21,7 +21,7 @@ export default async function AdminPage() {
             </p>
           </div>
 
-          <BioAdminClient
+          <CryptoAdminClient
             userId={adminUser.id}
             userEmail={adminUser.email || adminUser.name}
           />

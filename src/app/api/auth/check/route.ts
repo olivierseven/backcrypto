@@ -1,8 +1,11 @@
-// GET /api/auth/check — verifica sessão (cookie JWT) e devolve role/tier do usuário no banco Bio. Para debug admin.
+// GET /api/auth/check — verifica sessão (cookie JWT) e devolve role/tier do usuário no banco Bio.
+// Sincroniza tier a partir dos créditos ativos (se todos expirados → free). Para debug admin.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
+import { cryptoPrisma } from "@/lib/crypto-db";
+import { syncUserTierFromCredits } from "@/lib/user-tier";
+import { isFirstLoginCryptoLiteTrial, createCryptoLiteTrialPackage } from "@/lib/crypto-bonus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,16 +30,22 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    const user = await bioPrisma.user.findUnique({
+    // Trial lite no primeiro login (1 coin / 1 dia). Pacote de boas-vindas maior só via admin.
+    if (await isFirstLoginCryptoLiteTrial(userId)) {
+      await createCryptoLiteTrialPackage(userId);
+    }
+
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, tier: true },
+      select: { role: true },
     });
+    const tier = await syncUserTierFromCredits(userId);
 
     return NextResponse.json({
       authenticated: true,
       userId,
       role: user?.role ?? "user",
-      tier: user?.tier ?? "free",
+      tier,
     });
   } catch {
     return NextResponse.json({ authenticated: false }, { status: 401 });

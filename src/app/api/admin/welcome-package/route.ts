@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { bioPrisma } from "@/lib/bio-db";
-import { createBioWelcomePackage, BIO_WELCOME_COINS, BIO_WELCOME_DURATION_DAYS } from "@/lib/bio-bonus";
+import { cryptoPrisma } from "@/lib/crypto-db";
+import {
+  createCryptoWelcomePackage,
+  DEFAULT_ADMIN_WELCOME_DURATION_DAYS,
+  MAX_ACCESS_DAYS,
+  MIN_ACCESS_DAYS,
+} from "@/lib/crypto-bonus";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
@@ -21,7 +26,7 @@ async function requireAdmin(request: NextRequest): Promise<string> {
     throw new Error("Não autenticado");
   }
 
-  const adminUser = await bioPrisma.user.findUnique({
+  const adminUser = await cryptoPrisma.user.findUnique({
     where: { id: adminId },
     select: { role: true },
   });
@@ -36,7 +41,7 @@ async function requireAdmin(request: NextRequest): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     const adminId = await requireAdmin(request);
-    dbg(`[bio/admin/welcome-package] admin=${adminId.slice(0, 8)}... creating welcome package`);
+    dbg(`[crypto/admin/welcome-package] admin=${adminId.slice(0, 8)}... creating welcome package`);
 
     const body = await request.json();
     const { userId } = body;
@@ -45,7 +50,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
     }
 
-    const user = await bioPrisma.user.findUnique({
+    const rawDays = body.durationDays ?? body.days ?? DEFAULT_ADMIN_WELCOME_DURATION_DAYS;
+    const durationDays = typeof rawDays === "number" ? rawDays : Number(rawDays);
+    if (!Number.isFinite(durationDays) || durationDays < MIN_ACCESS_DAYS || durationDays > MAX_ACCESS_DAYS) {
+      return NextResponse.json(
+        { error: `durationDays deve ser entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}` },
+        { status: 400 },
+      );
+    }
+
+    const user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
       select: { id: true },
     });
@@ -54,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
-    const result = await createBioWelcomePackage(userId);
+    const result = await createCryptoWelcomePackage(userId, durationDays);
 
     if (!result.success) {
       return NextResponse.json(
@@ -63,15 +77,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    vLog(`[bio/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${BIO_WELCOME_COINS}`);
+    vLog(`[crypto/admin/welcome-package] welcome package created: admin=${adminId.slice(0, 8)}... user=${userId.slice(0, 8)}... coins=${result.coins}`);
 
     return NextResponse.json({
       success: true,
       message: "Pacote de boas-vindas criado com sucesso",
       data: {
         userId,
-        coins: BIO_WELCOME_COINS,
-        durationDays: BIO_WELCOME_DURATION_DAYS,
+        coins: result.coins ?? durationDays,
+        durationDays: result.durationDays ?? durationDays,
       },
     });
   } catch (err: unknown) {
@@ -82,7 +96,7 @@ export async function POST(request: NextRequest) {
     if (msg === "Acesso negado") {
       return NextResponse.json({ error: msg }, { status: 403 });
     }
-    error(`[bio/admin/welcome-package] error: ${msg}`);
+    error(`[crypto/admin/welcome-package] error: ${msg}`);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
 }

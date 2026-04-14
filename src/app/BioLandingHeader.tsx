@@ -1,37 +1,65 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ASSET_PREFIX } from "./constants";
 import LanguageSwitcher from "./components/LanguageSwitcher";
-import { getBioT, type BioLang } from "./lib/translations";
+import { getCryptoT, type CryptoLang } from "./lib/translations";
 
 const SC_BASE = "https://sevencoins.com.br";
-const navLinks = [
-  { href: "/", key: "home" as const, external: false }, // página própria (landing)
-  { href: SC_BASE, key: "sevencoins" as const, external: true },
-  { href: "/funcionalidade", key: "functionality" as const, external: false },
-] as const;
 
 type Props = {
-  lang: BioLang;
-  setLang: (lang: BioLang) => void;
+  lang: CryptoLang;
+  setLang: (lang: CryptoLang) => void;
 };
 
 export default function BioLandingHeader({ lang, setLang }: Props) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const t = getBioT(lang).landing;
+  const t = getCryptoT(lang).landing;
   const nav = t.nav;
+
+  const earnProgramHref = `/${lang}/afiliados`;
+  const earnLoginPath = "/afiliados/login";
+  const earnLoginHref = `${earnLoginPath}?lang=${lang}`;
+
+  const navLinks = useMemo(
+    () =>
+      [
+        { href: `/${lang}`, key: "home" as const, external: false },
+        { href: SC_BASE, key: "sevencoins" as const, external: true },
+        { href: `/${lang}/funcionalidade`, key: "functionality" as const, external: false },
+        { href: "/comunidade", key: "community" as const, external: false },
+      ] as const,
+    [lang],
+  );
 
   const linkClass = "px-3 py-1.5 rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700";
   const linkClassActive = "px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50";
 
   const isActive = (key: (typeof navLinks)[number]["key"]) => {
-    if (key === "home") return pathname === "/";
-    if (key === "functionality") return pathname === "/funcionalidade";
+    if (key === "home") return pathname === `/${lang}`;
+    if (key === "functionality") return pathname === `/${lang}/funcionalidade`;
+    if (key === "community") return pathname === "/comunidade";
     return false;
+  };
+
+  const isEarnActive =
+    pathname === earnProgramHref ||
+    pathname === earnLoginPath ||
+    pathname.startsWith(`/${lang}/afiliados/`);
+
+  const earnTriggerClass = isEarnActive ? linkClassActive : linkClass;
+
+  const subLinkClass = (href: string) => {
+    const pathOnly = href.split("?")[0] ?? href;
+    const active = pathname === href || pathname === pathOnly;
+    return `block w-full text-left px-3 py-2 text-sm rounded-lg ${
+      active
+        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200"
+        : "text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-700"
+    }`;
   };
 
   return (
@@ -40,21 +68,19 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href={`/${lang}`} className="flex items-center gap-2">
               <img
-                src={`${ASSET_PREFIX}/icon.png`}
-                alt="Backtest Crypto"
-                width={36}
-                height={36}
-                className="h-9 w-9 object-contain"
+                src={`${ASSET_PREFIX}/assets/logo.webp`}
+                alt="Crypto"
+                className="h-10 w-auto max-h-10 max-w-[min(140px,55vw)] object-contain object-left"
                 loading="eager"
               />
             </Link>
           </div>
 
-          {/* Menu desktop: Home (própria, ativo) + SevenCoins + Funcionalidade */}
+          {/* Menu desktop */}
           <nav className="hidden md:flex items-center gap-6">
-            <div className="flex gap-2 text-sm">
+            <div className="flex gap-2 text-sm items-center">
               {navLinks.map(({ href, key, external }) => {
                 const className = isActive(key) ? linkClassActive : linkClass;
                 return external ? (
@@ -67,6 +93,35 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
                   </Link>
                 );
               })}
+
+              {/* Afiliados ▾ Programa / Login */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  className={`${earnTriggerClass} inline-flex items-center gap-0.5 cursor-default`}
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-label={nav.earnMenuAria}
+                >
+                  {nav.earn}
+                  <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div
+                  role="menu"
+                  className="absolute left-0 top-full z-50 min-w-[12.5rem] pt-1 opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto transition-opacity"
+                >
+                  <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-zinc-800 py-1 shadow-lg">
+                    <Link href={earnProgramHref} role="menuitem" className={subLinkClass(earnProgramHref)}>
+                      {nav.affiliateProgram}
+                    </Link>
+                    <Link href={earnLoginHref} role="menuitem" className={subLinkClass(earnLoginHref)}>
+                      {nav.affiliateLogin}
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </nav>
 
@@ -117,7 +172,7 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-neutral-200 dark:border-neutral-700 py-3">
             <div className="flex justify-end">
-              <nav className="flex flex-col gap-2 w-fit">
+              <nav className="flex flex-col gap-2 w-fit max-w-full items-end">
                 {navLinks.map(({ href, key, external }) => {
                   const itemClass = `px-3 py-2 rounded-lg text-sm text-left ${isActive(key) ? linkClassActive : linkClass}`;
                   if (external) {
@@ -143,6 +198,26 @@ export default function BioLandingHeader({ lang, setLang }: Props) {
                     </Link>
                   );
                 })}
+
+                <div className="w-full border-t border-neutral-200 dark:border-neutral-700 pt-2 mt-1 flex flex-col gap-1 items-stretch">
+                  <span className={`px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 text-right`}>
+                    {nav.earn}
+                  </span>
+                  <Link
+                    href={earnProgramHref}
+                    className={`${subLinkClass(earnProgramHref)} text-right`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {nav.affiliateProgram}
+                  </Link>
+                  <Link
+                    href={earnLoginHref}
+                    className={`${subLinkClass(earnLoginHref)} text-right`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {nav.affiliateLogin}
+                  </Link>
+                </div>
               </nav>
             </div>
           </div>
