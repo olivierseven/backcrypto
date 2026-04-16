@@ -31,6 +31,7 @@ export type RobotLiveSessionPayloadV2 = {
     accumLastOt?: string;
     accumCandleIndex?: number;
     sequentialSliceUsdt?: number;
+    accumFrozenMaxSpendUsdt?: number;
     buySignalCountedOpenTimes: string[];
     hadPositionEnd?: true;
   };
@@ -113,6 +114,7 @@ export function clearRobotLiveRefsForRobotSymbol(
   delete refs.robotBuyAccumLastOtRef.current[kArm];
   delete refs.robotBuyAccumCandleIndexRef.current[kArm];
   delete refs.robotBuySequentialSliceUsdtRef.current[kArm];
+  delete refs.robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
   delete refs.robotBuySignalCountedOpenTimesRef.current[kArm];
   delete refs.robotBuyHadPositionEndRef.current[kArm];
 }
@@ -131,6 +133,7 @@ export function extractSessionPayloadForKey(
   const lastOt = refs.robotBuyAccumLastOtRef.current[kArm];
   const cIdx = refs.robotBuyAccumCandleIndexRef.current[kArm];
   const slice = refs.robotBuySequentialSliceUsdtRef.current[kArm];
+  const frozenMax = refs.robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
   const countedArr = [...(refs.robotBuySignalCountedOpenTimesRef.current[kArm] ?? new Set<string>())].sort();
   const hadEnd = refs.robotBuyHadPositionEndRef.current[kArm] === true;
 
@@ -157,6 +160,9 @@ export function extractSessionPayloadForKey(
   if (typeof lastOt === "string") engine.accumLastOt = lastOt;
   if (typeof cIdx === "number" && Number.isFinite(cIdx)) engine.accumCandleIndex = cIdx;
   if (typeof slice === "number" && Number.isFinite(slice) && slice > 0) engine.sequentialSliceUsdt = slice;
+  if (typeof frozenMax === "number" && Number.isFinite(frozenMax) && frozenMax > 0) {
+    engine.accumFrozenMaxSpendUsdt = frozenMax;
+  }
   if (hadEnd) engine.hadPositionEnd = true;
 
   return {
@@ -192,6 +198,14 @@ export function mergePayloadIntoRefs(
   if (typeof e.sequentialSliceUsdt === "number" && Number.isFinite(e.sequentialSliceUsdt) && e.sequentialSliceUsdt > 0) {
     refs.robotBuySequentialSliceUsdtRef.current[kArm] = e.sequentialSliceUsdt;
   } else delete refs.robotBuySequentialSliceUsdtRef.current[kArm];
+
+  if (
+    typeof e.accumFrozenMaxSpendUsdt === "number" &&
+    Number.isFinite(e.accumFrozenMaxSpendUsdt) &&
+    e.accumFrozenMaxSpendUsdt > 0
+  ) {
+    refs.robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm] = e.accumFrozenMaxSpendUsdt;
+  } else delete refs.robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
 
   const set = new Set<string>(Array.isArray(e.buySignalCountedOpenTimes) ? e.buySignalCountedOpenTimes : []);
   refs.robotBuySignalCountedOpenTimesRef.current[kArm] = set;

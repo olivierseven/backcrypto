@@ -34,11 +34,16 @@ export function computeRobotMarketBuyQuoteUsdt(
   robot: SavedRobot,
   spotUsdtFree: number,
   position: RobotOpenPosition | null,
-  sequentialSliceUsdt?: number | null
+  sequentialSliceUsdt?: number | null,
+  frozenMaxSpendUsdt?: number | null
 ): number | null {
-  /** Teto = % do USDT livre atual (Binance), não saldo congelado na ativação. */
+  /** Teto padrão = % do USDT livre atual (Binance). Na acumulação sequencial podemos congelar no início da janela. */
   if (!Number.isFinite(spotUsdtFree) || spotUsdtFree < 0) return null;
-  const maxSpendUsdt = (spotUsdtFree * robot.maxSpotPercent) / 100;
+  const dynamicMaxSpendUsdt = (spotUsdtFree * robot.maxSpotPercent) / 100;
+  const maxSpendUsdt =
+    frozenMaxSpendUsdt != null && Number.isFinite(frozenMaxSpendUsdt) && frozenMaxSpendUsdt > 0
+      ? frozenMaxSpendUsdt
+      : dynamicMaxSpendUsdt;
   const quoteInPosition = position?.totalQuoteSpent ?? 0;
   const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
   let opUsdt: number;

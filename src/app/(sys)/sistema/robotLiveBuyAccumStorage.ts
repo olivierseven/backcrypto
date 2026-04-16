@@ -15,6 +15,7 @@ export type RobotLiveBuyAccumRefBag = {
   robotBuyAccumLastOtRef: MutableRefObject<Record<string, string>>;
   robotBuyAccumCandleIndexRef: MutableRefObject<Record<string, number>>;
   robotBuySequentialSliceUsdtRef: MutableRefObject<Record<string, number>>;
+  robotBuyAccumFrozenMaxSpendUsdtRef: MutableRefObject<Record<string, number>>;
   robotBuySignalCountedOpenTimesRef: MutableRefObject<Record<string, Set<string>>>;
   robotBuyHadPositionEndRef: MutableRefObject<Record<string, boolean>>;
 };
@@ -27,6 +28,7 @@ type PersistedV1 = {
   accumLastOt: Record<string, string>;
   accumCandleIndex: Record<string, number>;
   sequentialSliceUsdt: Record<string, number>;
+  accumFrozenMaxSpendUsdt?: Record<string, number>;
   buySignalCountedOpenTimes: Record<string, string[]>;
   hadPositionEnd: Record<string, true>;
 };
@@ -68,6 +70,7 @@ export function buildRobotLiveBuyAccumSnapshot(refs: RobotLiveBuyAccumRefBag): P
     accumLastOt: { ...refs.robotBuyAccumLastOtRef.current },
     accumCandleIndex: { ...refs.robotBuyAccumCandleIndexRef.current },
     sequentialSliceUsdt: { ...refs.robotBuySequentialSliceUsdtRef.current },
+    accumFrozenMaxSpendUsdt: { ...refs.robotBuyAccumFrozenMaxSpendUsdtRef.current },
     buySignalCountedOpenTimes: serializeCounted(refs.robotBuySignalCountedOpenTimesRef.current),
     hadPositionEnd: Object.fromEntries(
       Object.entries(refs.robotBuyHadPositionEndRef.current).filter(([, v]) => v === true)
@@ -89,6 +92,7 @@ export function persistRobotLiveBuyAccum(refs: RobotLiveBuyAccumRefBag, onAfterL
     accumLastOt: pruneByRobotKeys(full.accumLastOt, validIds),
     accumCandleIndex: pruneByRobotKeys(full.accumCandleIndex, validIds),
     sequentialSliceUsdt: pruneByRobotKeys(full.sequentialSliceUsdt, validIds),
+    accumFrozenMaxSpendUsdt: pruneByRobotKeys(full.accumFrozenMaxSpendUsdt ?? {}, validIds),
     buySignalCountedOpenTimes: pruneByRobotKeys(full.buySignalCountedOpenTimes, validIds),
     hadPositionEnd: pruneByRobotKeys(full.hadPositionEnd, validIds),
   };
@@ -133,6 +137,7 @@ export function applyRobotLiveBuyAccumSnapshot(refs: RobotLiveBuyAccumRefBag, sn
   refs.robotBuyAccumLastOtRef.current = { ...(snap.accumLastOt ?? {}) };
   refs.robotBuyAccumCandleIndexRef.current = { ...(snap.accumCandleIndex ?? {}) };
   refs.robotBuySequentialSliceUsdtRef.current = { ...(snap.sequentialSliceUsdt ?? {}) };
+  refs.robotBuyAccumFrozenMaxSpendUsdtRef.current = { ...(snap.accumFrozenMaxSpendUsdt ?? {}) };
   const counted: Record<string, Set<string>> = {};
   const rawCounted = snap.buySignalCountedOpenTimes ?? {};
   for (const [k, arr] of Object.entries(rawCounted)) {

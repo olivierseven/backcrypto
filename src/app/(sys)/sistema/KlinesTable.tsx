@@ -62,7 +62,11 @@ import {
   ROBOT_LIVE_SESSION_CLEAR_REFS_EVENT,
   schedulePersistRobotLiveSessionsToDb,
 } from "./robotLiveSessionSync";
-import { buyerAllowsAccumulationBuy, longFlattenCloseBreakeven } from "./robotPriceLegRules";
+import {
+  buyerAllowsAccumulationBuy,
+  flattenBreakevenThresholdPrice,
+  longFlattenCloseBreakeven,
+} from "./robotPriceLegRules";
 import {
   computeNominalBuyOperationUsdt,
   computeRobotMarketBuyQuoteUsdt,
@@ -1221,6 +1225,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const robotBuyAccumCandleIndexRef = useRef<Record<string, number>>({});
   /** Por robô+par: USDT por operação na janela (1.ª compra define %/fixo do teto; próximas repetem até ao máximo). */
   const robotBuySequentialSliceUsdtRef = useRef<Record<string, number>>({});
+  /** Por robô+par: teto USDT congelado no início da janela de acumulação (não recalcula por vela). */
+  const robotBuyAccumFrozenMaxSpendUsdtRef = useRef<Record<string, number>>({});
   /** Por robô+par: `openTime` das velas já contadas como “sinal de compra” enquanto sem posição (uma contagem por vela). */
   const robotBuySignalCountedOpenTimesRef = useRef<Record<string, Set<string>>>({});
   /** Fim do último efeito: havia posição neste robô+par. */
@@ -1234,6 +1240,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       robotBuyAccumLastOtRef,
       robotBuyAccumCandleIndexRef,
       robotBuySequentialSliceUsdtRef,
+      robotBuyAccumFrozenMaxSpendUsdtRef,
       robotBuySignalCountedOpenTimesRef,
       robotBuyHadPositionEndRef,
     }),
@@ -1500,15 +1507,18 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         delete robotBuyAccumLastOtRef.current[kArm];
         delete robotBuyAccumCandleIndexRef.current[kArm];
         delete robotBuySequentialSliceUsdtRef.current[kArm];
+        delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
       }
       const buySig = robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotBuyOrTrue);
-      if (flat && buySig) {
+      if (flat) {
         let seen = countedOtRef[kArm];
         if (!seen) {
           seen = new Set<string>();
           countedOtRef[kArm] = seen;
         }
-        if (!seen.has(ot)) {
+        const hasStartedCounting = (edgesRef[kArm] ?? 0) > 0;
+        const shouldCountThisCandle = buySig || hasStartedCounting;
+        if (shouldCountThisCandle && !seen.has(ot)) {
           seen.add(ot);
           const nextE = (edgesRef[kArm] ?? 0) + 1;
           edgesRef[kArm] = nextE;
@@ -1571,6 +1581,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           delete robotBuyAccumLastOtRef.current[kArm];
           delete robotBuyAccumCandleIndexRef.current[kArm];
           delete robotBuySequentialSliceUsdtRef.current[kArm];
+          delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
         }
       }
     }
@@ -1593,9 +1604,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         }
       }
       const posForPostSell = getRobotPosition(robot.id, sym);
-      const postSellArmed = hasFlattenStratIds
-        ? flattenArmed
-        : hasPostSellStrats && posForPostSell != null && posForPostSell.totalBaseQty > 1e-12;
+      const postSellArmed = flattenArmed && posForPostSell != null && posForPostSell.totalBaseQty > 1e-12;
       const sellOtNormal = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
       const sellOtPost =
         postSellArmed && hasPostSellStrats
@@ -1699,10 +1708,19 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   delete robotBuyAccumLastOtRef.current[kb];
                   delete robotBuyAccumCandleIndexRef.current[kb];
                   delete robotBuySequentialSliceUsdtRef.current[kb];
+                  delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kb];
                   delete robotBuySignalCountedOpenTimesRef.current[kb];
                   delete robotBuyHadPositionEndRef.current[kb];
-                  appendRobotLiveActivityEvent(robot.id, sym, "flatten", {
+                  appendRobotLiveActivityEvent(robot.id, sym, "flatten_breakeven", {
+                    executionRole: "FLATTEN",
                     baseQty: posFlat.totalBaseQty,
+                    avgBuyPrice: posFlat.avgBuyPrice,
+                    closePrice: refPx,
+                    flattenBreakevenBufferPercent: robot.flattenBreakevenBufferPercent ?? 0,
+                    breakevenThresholdPrice: flattenBreakevenThresholdPrice(
+                      posFlat.avgBuyPrice,
+                      robot.flattenBreakevenBufferPercent ?? 0
+                    ),
                     openTime: ot,
                   });
                   dispatchRobotPositionSellClear(robot.id, sym);
@@ -1719,11 +1737,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (cancelled) continue;
 
         const hasPostSellStratsLive = (robot.postFlattenSignalSellCombinedStrategyIds?.length ?? 0) > 0;
-        const postSellArmedLive = hasFlattenStratIdsLive
-          ? flattenArmedLive
-          : hasPostSellStratsLive &&
-            posArmLive != null &&
-            posArmLive.totalBaseQty > 1e-12;
+        const postSellArmedLive =
+          flattenArmedLive && posArmLive != null && posArmLive.totalBaseQty > 1e-12;
         const sellOtNormalLive = robotLivePickOpenTimeWhere(robot, extendedKlines, strategyResults, robotSellOrTrue);
         const sellOtPostLive =
           postSellArmedLive && hasPostSellStratsLive
@@ -1750,6 +1765,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 delete robotBuyAccumLastOtRef.current[kb];
                 delete robotBuyAccumCandleIndexRef.current[kb];
                 delete robotBuySequentialSliceUsdtRef.current[kb];
+                delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kb];
                 delete robotBuySignalCountedOpenTimesRef.current[kb];
                 delete robotBuyHadPositionEndRef.current[kb];
                 appendRobotLiveActivityEvent(robot.id, sym, "signal_sell", {
@@ -1785,17 +1801,32 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
         const maxSpendNow = (spotUsdtFree * robot.maxSpotPercent) / 100;
         let sliceUsdt = robotBuySequentialSliceUsdtRef.current[kAccum];
+        let frozenMaxSpendUsdt = robotBuyAccumFrozenMaxSpendUsdtRef.current[kAccum];
+        if (frozenMaxSpendUsdt === undefined || !Number.isFinite(frozenMaxSpendUsdt) || frozenMaxSpendUsdt <= 0) {
+          frozenMaxSpendUsdt = maxSpendNow;
+          if (frozenMaxSpendUsdt > 1e-8) {
+            robotBuyAccumFrozenMaxSpendUsdtRef.current[kAccum] = frozenMaxSpendUsdt;
+          }
+        }
         if (sliceUsdt === undefined || !Number.isFinite(sliceUsdt) || sliceUsdt <= 0) {
-          sliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendNow);
+          const sliceBase = frozenMaxSpendUsdt > 0 ? frozenMaxSpendUsdt : maxSpendNow;
+          sliceUsdt = computeNominalBuyOperationUsdt(robot, sliceBase);
           if (sliceUsdt > 1e-8) robotBuySequentialSliceUsdtRef.current[kAccum] = sliceUsdt;
         }
-        const quoteUsdt = computeRobotMarketBuyQuoteUsdt(robot, spotUsdtFree, pos, sliceUsdt);
+        const quoteUsdt = computeRobotMarketBuyQuoteUsdt(
+          robot,
+          spotUsdtFree,
+          pos,
+          sliceUsdt,
+          frozenMaxSpendUsdt
+        );
         if (quoteUsdt == null) {
           appendRobotLiveActivityEvent(robot.id, sym, "accumulation_aborted_no_quote", { openTime: ot });
           delete robotBuyAccumulationActiveRef.current[kAccum];
           delete robotBuyAccumLastOtRef.current[kAccum];
           delete robotBuyAccumCandleIndexRef.current[kAccum];
           delete robotBuySequentialSliceUsdtRef.current[kAccum];
+          delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kAccum];
           persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
           continue;
         }

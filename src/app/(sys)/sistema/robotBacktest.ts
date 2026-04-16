@@ -379,14 +379,18 @@ export function runRobotBacktest(params: {
       Number.isFinite(robot.buyAccumulationStartOnSignalNumber)
         ? Math.min(5, Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber)))
         : 1;
-    if (flatAtStart && buySig) {
-      buyEdgesSinceFlat += 1;
-      if (buyEdgesSinceFlat >= nAccumStart) {
-        const wasAccum = buyAccumulationActive;
-        buyAccumulationActive = true;
-        if (!wasAccum) {
-          buyAccumLastOpenTime = ot;
-          buyAccumCandlesInWindow = 1;
+    if (flatAtStart) {
+      const hasStartedCounting = buyEdgesSinceFlat > 0;
+      const shouldCountThisCandle = buySig || hasStartedCounting;
+      if (shouldCountThisCandle) {
+        buyEdgesSinceFlat += 1;
+        if (buyEdgesSinceFlat >= nAccumStart) {
+          const wasAccum = buyAccumulationActive;
+          buyAccumulationActive = true;
+          if (!wasAccum) {
+            buyAccumLastOpenTime = ot;
+            buyAccumCandlesInWindow = 1;
+          }
         }
       }
     }
@@ -526,8 +530,8 @@ export function runRobotBacktest(params: {
     }
 
     // 3) Venda pós-alertas: com estratégias de zerar, só após o alerta armado; só com venda pós-alertas (sem zerar), basta posição aberta.
-    const postSellGate = hasFlattenStrats ? flattenArmed : hasPostSellStrats;
-    if (baseQty > 1e-12 && postSellGate && robotPostFlattenSellOrTrue(robot, i, strategyResults)) {
+    const postSellGate = flattenArmed;
+    if (baseQty > 1e-12 && hasPostSellStrats && postSellGate && robotPostFlattenSellOrTrue(robot, i, strategyResults)) {
       const baseBefore = baseQty;
       const costBefore = quoteInPosition;
       const exitAvg = quoteInPosition / baseQty;
