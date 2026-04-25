@@ -127,13 +127,13 @@ export async function processTradeKlineCacheWithSourceFlags(
 
   const intervals: Record<string, number> = {};
 
-  const allRows = await db.binanceTradeCountFast.findMany({
-    where: { corretora, symbol, interval: SOURCE_INTERVAL },
-    orderBy: { openTime: "asc" },
-  });
-  const allSrc = allRows.map((r) => toSourceRow(r));
-
   if (mustFullRebuild) {
+    const allRows = await db.binanceTradeCountFast.findMany({
+      where: { corretora, symbol, interval: SOURCE_INTERVAL },
+      orderBy: { openTime: "asc" },
+    });
+    const allSrc = allRows.map((r) => toSourceRow(r));
+
     for (const tradeTotal of TRADE_CACHE_TRADE_INTERVALS) {
       const intervalLabel = `${tradeTotal}trades`;
       const gs = groupSizeForTradeCacheInterval(tradeTotal);

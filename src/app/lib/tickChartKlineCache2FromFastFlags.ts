@@ -162,13 +162,13 @@ export async function processTickChartKlineCacheWithSourceFlags(
 
   const intervals: Record<string, number> = {};
 
-  const allRows = await tickDel.findMany({
-    where: { corretora, symbol, interval: SOURCE_INTERVAL },
-    orderBy: { openTime: "asc" },
-  });
-  const allSrc = allRows.map((r) => toSourceRow(r));
-
   if (mustFullRebuild) {
+    const allRows = await tickDel.findMany({
+      where: { corretora, symbol, interval: SOURCE_INTERVAL },
+      orderBy: { openTime: "asc" },
+    });
+    const allSrc = allRows.map((r) => toSourceRow(r));
+
     for (const ticks of RENKO_CACHE_TICK_INTERVALS) {
       const intervalLabel = `${ticks}ticks`;
       const gs = groupSizeForTickInterval(ticks);
