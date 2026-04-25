@@ -137,6 +137,28 @@ function getOperandValue(
   );
 }
 
+/** Valor no candle relativo a `barRowIndex` (0 = esse candle, -1 = anterior). Constante ignora o índice. */
+function getCrossoverSideValue(
+  operand: StrategyOperand,
+  extendedKlines: KlineRow[],
+  barRowIndex: number,
+  candleRelativeOffset: number,
+  userIndicators: UserIndicatorConfig[],
+  getIndicatorColumnStart: (indicatorIndex: number) => number,
+  strategyResultsById?: Map<string, boolean[]>
+): number | null {
+  if (operand.type === "constant") return operand.value;
+  return getSeriesValue(
+    extendedKlines,
+    barRowIndex,
+    operand.seriesKey,
+    candleRelativeOffset,
+    userIndicators,
+    getIndicatorColumnStart,
+    strategyResultsById
+  );
+}
+
 function applyOperator(left: number, op: StrategyOperator, right: number): boolean {
   switch (op) {
     case ">": return left > right;
@@ -163,19 +185,25 @@ function evaluateCondition(
     const leftVal = getOperandValue(condition.left, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
     const rightVal = getOperandValue(condition.right, extendedKlines, rowIndex, userIndicators, getIndicatorColumnStart, strategyResultsById);
     if (leftVal == null || rightVal == null) return false;
+    if (condition.operator === "between") {
+      const upperRaw = typeof condition.betweenUpper === "number" ? condition.betweenUpper : rightVal;
+      const min = Math.min(rightVal, upperRaw);
+      const max = Math.max(rightVal, upperRaw);
+      return leftVal >= min && leftVal <= max;
+    }
     return applyOperator(leftVal, condition.operator, rightVal);
   }
 
   if (kind === "crossover" || kind === "crossunder") {
     const barsAfter = normalizeBarsAfter(condition.barsAfter);
-    const leftKey = condition.left.type === "series" ? condition.left.seriesKey : null;
-    const rightKey = condition.right.type === "series" ? condition.right.seriesKey : null;
-    if (leftKey == null || rightKey == null) return false;
+    const leftIsSeries = condition.left.type === "series";
+    const rightIsSeries = condition.right.type === "series";
+    if (!leftIsSeries && !rightIsSeries) return false;
 
     // Exige que "agora" (t(0)) já esteja na relação correta (acima para crossover, abaixo para crossunder).
     // Não exige que t(-1) já estivesse assim, senão o cruzamento no candle atual (índice 0) nunca dispara.
-    const nowLeft = getSeriesValue(extendedKlines, rowIndex, leftKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
-    const nowRight = getSeriesValue(extendedKlines, rowIndex, rightKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+    const nowLeft = getCrossoverSideValue(condition.left, extendedKlines, rowIndex, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+    const nowRight = getCrossoverSideValue(condition.right, extendedKlines, rowIndex, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
     if (nowLeft == null || nowRight == null) return false;
     if (kind === "crossover") {
       if (!(nowLeft > nowRight)) return false;
@@ -188,10 +216,10 @@ function evaluateCondition(
       const prevRow = crossRow + 1;
       if (prevRow >= extendedKlines.length) continue;
 
-      const leftPrev = getSeriesValue(extendedKlines, crossRow, leftKey, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
-      const rightPrev = getSeriesValue(extendedKlines, crossRow, rightKey, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
-      const leftCur = getSeriesValue(extendedKlines, crossRow, leftKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
-      const rightCur = getSeriesValue(extendedKlines, crossRow, rightKey, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const leftPrev = getCrossoverSideValue(condition.left, extendedKlines, crossRow, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const rightPrev = getCrossoverSideValue(condition.right, extendedKlines, crossRow, -1, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const leftCur = getCrossoverSideValue(condition.left, extendedKlines, crossRow, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
+      const rightCur = getCrossoverSideValue(condition.right, extendedKlines, crossRow, 0, userIndicators, getIndicatorColumnStart, strategyResultsById);
 
       if (leftPrev == null || rightPrev == null || leftCur == null || rightCur == null) continue;
 

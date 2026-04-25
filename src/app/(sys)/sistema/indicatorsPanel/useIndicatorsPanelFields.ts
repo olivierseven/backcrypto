@@ -82,12 +82,12 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
       } else if (!isIndicatorVisibleForGroupMinutes(u, currentGroupMinutes)) {
         return;
       }
-      const outputUsed = usedOutputIds.has(String(u.id));
+      /** Só `inputUsed`: permite que vários indicadores usem a mesma fonte (ex.: Bollinger no RSI já com EMA no RSI). */
       const inputUsed = (() => {
         const ref = parseUserFieldRefId(u.fieldKey);
         return ref != null && usedOutputIds.has(ref);
       })();
-      const disabled = outputUsed || inputUsed;
+      const disabled = inputUsed;
       const pushOpt = (value: string, label: string) =>
         base.push({
           value: value as IndicatorFieldKey,

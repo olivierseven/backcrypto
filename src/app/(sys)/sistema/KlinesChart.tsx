@@ -1176,11 +1176,17 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   ) => {
     const name = newName.trim().slice(0, 24);
     if (layout.slot === 0) {
+      const hasConfig =
+        layout.config != null && typeof layout.config === "object" && !Array.isArray(layout.config);
       const res = await fetch(`${API_BASE}/chart-models`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ slot: 0, config: layout.config, name: name || "" }),
+        body: JSON.stringify(
+          hasConfig
+            ? { slot: 0, config: layout.config, name: name || "" }
+            : { slot: 0, name: name || null }
+        ),
       });
       if (res.ok) {
         setSavedLayoutName(name || layout.name?.trim() || t.defaultLayout);
@@ -1190,10 +1196,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       return;
     }
     const res = await fetch(`${API_BASE}/chart-layouts`, {
-      method: "POST",
+      method: "PATCH",
       headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
       credentials: "include",
-      body: JSON.stringify({ slot: layout.slot, config: layout.config, name: name || "" }),
+      body: JSON.stringify({ slot: layout.slot, name: name || null }),
     });
     if (res.ok) {
       setSavedLayoutName(name || layout.name?.trim() || t.layoutName.replace("{n}", String(layout.slot)));
@@ -1223,15 +1229,19 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
               : part === "regressions"
                 ? { slot, regressions: regressionsPayload ?? regressionsCol }
                 : { slot, strategies: strategiesPayload ?? strategiesCol };
-        await fetch(`${API_BASE}/chart-layouts`, {
+        const res = await fetch(`${API_BASE}/chart-layouts`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
           body: JSON.stringify(body),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn("[layout] PATCH /chart-layouts failed", res.status, text);
+        }
       } else {
         const { layout: layoutCol, indicators: indicatorsCol, strategies: strategiesCol, regressions: regressionsCol } = buildLayoutColumns();
-        await fetch(`${API_BASE}/chart-layouts`, {
+        const res = await fetch(`${API_BASE}/chart-layouts`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
           credentials: "include",
@@ -1243,7 +1253,11 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
             regressions: regressionsCol,
             robots: getRobotsColumnPayloadForChartLayout(),
           }),
-        }).catch(() => {});
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn("[layout] POST /chart-layouts failed", res.status, text);
+        }
       }
     } catch {
       /* ignore */
@@ -1764,7 +1778,23 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   if (windowN === 0) return null;
 
   const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7" =>
-    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" ? "panel2" : "main");
+    (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") ??
+    (ind.type === "RSI" ||
+    ind.type === "MFI" ||
+    ind.type === "MACD" ||
+    ind.type === "DIFF" ||
+    ind.type === "Stochastic" ||
+    ind.type === "WilliamsR" ||
+    ind.type === "OBV" ||
+    ind.type === "AD" ||
+    ind.type === "ATR" ||
+    ind.type === "ADX" ||
+    ind.type === "CCI" ||
+    ind.type === "CMF" ||
+    ind.type === "MA_ANGLE" ||
+    ind.type === "Volume"
+      ? "panel2"
+      : "main");
   const hasPanel2 = indicatorLines.some((ind) => getPanel(ind) === "panel2");
   const hasPanel3 = indicatorLines.some((ind) => getPanel(ind) === "panel3");
   const hasPanel4 = indicatorLines.some((ind) => getPanel(ind) === "panel4");
@@ -1863,7 +1893,6 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       lines.length > 0 &&
       lines.every((ind) => ind.type === "WilliamsR");
     if (useFixedScaleWilliams) return { min: -100, max: 0 };
-
     const ext: number[] = [];
     if (lines.some((ind) => ind.display === "histogram" && ind.type !== "Volume")) ext.push(0);
     if (lines.some((ind) => ind.type === "Volume")) ext.push(0);
@@ -2330,13 +2359,16 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     return y(lim);
   }, [pathname, symbolProp, altSellPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
 
-  const rawOpenTime = n > 0 ? klines[0][0] : null;
-  const openTimeMs = rawOpenTime != null ? (typeof rawOpenTime === "number" ? rawOpenTime : Number(rawOpenTime)) : null;
-  const offsetMs = timezoneOffset * 60 * 60 * 1000;
-  const validCloseTimeMs =
-    openTimeMs != null && Number.isFinite(openTimeMs)
-      ? (openTimeMs - offsetMs) + timeScaleGroupMinutes * 60 * 1000
-      : null;
+  /** Primitivo estável: evita novo `validCloseTimeMs` a cada render quando `klines` só muda de referência. */
+  const firstCandleOpenTimeRaw = n > 0 && klines[0] != null ? klines[0][0] : null;
+  const validCloseTimeMs = useMemo(() => {
+    if (firstCandleOpenTimeRaw == null) return null;
+    const openTimeMs =
+      typeof firstCandleOpenTimeRaw === "number" ? firstCandleOpenTimeRaw : Number(firstCandleOpenTimeRaw);
+    if (!Number.isFinite(openTimeMs)) return null;
+    const offsetMs = timezoneOffset * 60 * 60 * 1000;
+    return openTimeMs - offsetMs + timeScaleGroupMinutes * 60 * 1000;
+  }, [firstCandleOpenTimeRaw, timezoneOffset, timeScaleGroupMinutes]);
 
   const totalChartWidth = displayPlotWidth + Y_AXIS_WIDTH;
   chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };

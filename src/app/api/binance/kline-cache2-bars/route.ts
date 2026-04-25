@@ -10,6 +10,7 @@ import { jwtVerify } from "jose";
 import { cryptoPrisma, prismaForAtemporalCacheRead } from "@/lib/crypto-db";
 import { getKlineSymbolsFromDb, resolveSymbol } from "@/app/lib/kline-symbols";
 import { RENKO_CACHE_TICK_INTERVALS, TRADE_CACHE_TRADE_INTERVALS } from "@/app/lib/renkoKlineCache2Build";
+import { resolveAggAtemporalKlineCacheLimit } from "@/lib/crypto-app-config";
 
 const COOKIE = process.env.JWT_COOKIE_NAME || "session";
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -77,7 +78,10 @@ export async function GET(request: NextRequest) {
   if (!interval || !isValidInterval(chartKind, interval)) {
     return NextResponse.json({ error: "interval inválido para este chartKind" }, { status: 400 });
   }
-  const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 1000, 1), 5000);
+  const maxLimit = await resolveAggAtemporalKlineCacheLimit();
+  const requestedRaw = Number(searchParams.get("limit"));
+  const requested = Number.isFinite(requestedRaw) && requestedRaw > 0 ? Math.floor(requestedRaw) : maxLimit;
+  const limit = Math.min(Math.max(requested, 1), maxLimit);
 
   let timezoneOffset = 0;
   try {
@@ -108,7 +112,14 @@ export async function GET(request: NextRequest) {
 
     let data = rows.map(rowToKline);
     data = applyTimezoneOffset(data, timezoneOffset);
-    return NextResponse.json({ klines: data, timezoneOffset, chartKind, interval });
+    return NextResponse.json({
+      klines: data,
+      timezoneOffset,
+      chartKind,
+      interval,
+      /** Teto configurado (AppConfig / env); o cliente alinha merge e pedidos seguintes a este valor. */
+      maxBars: maxLimit,
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });

@@ -8,6 +8,8 @@ const LAYOUT_DEBUG_STORAGE_KEY = "backcrypto-layout-debug";
 const LAYOUT_SAVE_LOAD_DEBUG_STORAGE_KEY = "backcrypto-layout-save-load-debug";
 const AGG_FAST_LIVE_DEBUG_STORAGE_KEY = "backcrypto-agg-fast-live-debug";
 const SPOT_ORDER_CHART_DEBUG_STORAGE_KEY = "backcrypto-spot-order-chart-debug";
+const NAV_PERF_DEBUG_STORAGE_KEY = "backcrypto-nav-perf-debug";
+const NAV_PERF_LOG_MAX = 40;
 
 function loadLayoutDebugEnabled(): boolean {
   if (typeof window === "undefined") return false;
@@ -45,6 +47,15 @@ function loadSpotOrderChartDebugEnabled(): boolean {
   }
 }
 
+function loadNavPerfDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(NAV_PERF_DEBUG_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 interface SistemaDebugContextValue {
   showKlinesTable: boolean;
   setShowKlinesTable: (v: boolean) => void;
@@ -66,6 +77,12 @@ interface SistemaDebugContextValue {
   setSpotOrderChartDebugEnabled: (v: boolean) => void;
   spotOrderChartDebugPayload: unknown | null;
   setSpotOrderChartDebugPayload: (p: unknown | null) => void;
+  /** Tempos de rota / long tasks — preenchido em `navPerfLog` quando o modo está ligado. */
+  navPerfDebugEnabled: boolean;
+  setNavPerfDebugEnabled: (v: boolean) => void;
+  navPerfLog: string[];
+  addNavPerfLog: (msg: string) => void;
+  clearNavPerfLog: () => void;
 }
 
 const SistemaDebugContext = createContext<SistemaDebugContextValue | null>(null);
@@ -88,6 +105,11 @@ const defaultValue: SistemaDebugContextValue = {
   setSpotOrderChartDebugEnabled: () => {},
   spotOrderChartDebugPayload: null,
   setSpotOrderChartDebugPayload: () => {},
+  navPerfDebugEnabled: false,
+  setNavPerfDebugEnabled: () => {},
+  navPerfLog: [],
+  addNavPerfLog: () => {},
+  clearNavPerfLog: () => {},
 };
 
 export function SistemaDebugProvider({ children }: { children: ReactNode }) {
@@ -99,12 +121,15 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
   const [aggFastLiveDebugSnapshot, setAggFastLiveDebugSnapshotState] = useState<AggFastLiveDebugSnapshot | null>(null);
   const [spotOrderChartDebugEnabled, setSpotOrderChartDebugEnabledState] = useState(false);
   const [spotOrderChartDebugPayload, setSpotOrderChartDebugPayloadState] = useState<unknown | null>(null);
+  const [navPerfDebugEnabled, setNavPerfDebugEnabledState] = useState(false);
+  const [navPerfLog, setNavPerfLog] = useState<string[]>([]);
 
   useLayoutEffect(() => {
     setLayoutLoadDebugEnabledState(loadLayoutDebugEnabled());
     setLayoutSaveLoadDebugEnabledState(loadLayoutSaveLoadDebugEnabled());
     setAggFastLiveDebugEnabledState(loadAggFastLiveDebugEnabled());
     setSpotOrderChartDebugEnabledState(loadSpotOrderChartDebugEnabled());
+    setNavPerfDebugEnabledState(loadNavPerfDebugEnabled());
   }, []);
 
   const setLayoutLoadDebugEnabled = useCallback((v: boolean) => {
@@ -149,6 +174,64 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
     setSpotOrderChartDebugPayloadState(p);
   }, []);
 
+  const setNavPerfDebugEnabled = useCallback((v: boolean) => {
+    setNavPerfDebugEnabledState(v);
+    try {
+      if (typeof window !== "undefined") window.localStorage.setItem(NAV_PERF_DEBUG_STORAGE_KEY, v ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const navPerfDebugEnabledRef = useRef(navPerfDebugEnabled);
+  navPerfDebugEnabledRef.current = navPerfDebugEnabled;
+  const navPerfQueueRef = useRef<string[]>([]);
+  const navPerfFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navPerfLastMsgRef = useRef<string>("");
+  const navPerfLastMsgAtRef = useRef<number>(0);
+
+  const flushNavPerfQueue = useCallback(() => {
+    const queued = navPerfQueueRef.current;
+    navPerfQueueRef.current = [];
+    if (queued.length === 0) return;
+    setNavPerfLog((prev) => [...prev, ...queued].slice(-NAV_PERF_LOG_MAX));
+  }, []);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (navPerfFlushTimerRef.current) {
+        clearTimeout(navPerfFlushTimerRef.current);
+        navPerfFlushTimerRef.current = null;
+      }
+      navPerfQueueRef.current = [];
+    };
+  }, []);
+
+  const addNavPerfLog = useCallback((msg: string) => {
+    if (!navPerfDebugEnabledRef.current) return;
+    const now = Date.now();
+    // Evita tempestade de logs idênticos em cascata no mesmo instante.
+    if (msg === navPerfLastMsgRef.current && now - navPerfLastMsgAtRef.current < 250) return;
+    navPerfLastMsgRef.current = msg;
+    navPerfLastMsgAtRef.current = now;
+    const line = `[${new Date().toISOString().slice(11, 23)}] ${msg}`;
+    navPerfQueueRef.current.push(line);
+    if (navPerfFlushTimerRef.current != null) return;
+    navPerfFlushTimerRef.current = setTimeout(() => {
+      navPerfFlushTimerRef.current = null;
+      flushNavPerfQueue();
+    }, 100);
+  }, [flushNavPerfQueue]);
+
+  const clearNavPerfLog = useCallback(() => {
+    navPerfQueueRef.current = [];
+    if (navPerfFlushTimerRef.current) {
+      clearTimeout(navPerfFlushTimerRef.current);
+      navPerfFlushTimerRef.current = null;
+    }
+    setNavPerfLog([]);
+  }, []);
+
   const setAggFastLiveDebugSnapshot = useCallback((s: AggFastLiveDebugSnapshot | null) => {
     setAggFastLiveDebugSnapshotState(s);
   }, []);
@@ -184,6 +267,11 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       setSpotOrderChartDebugEnabled,
       spotOrderChartDebugPayload,
       setSpotOrderChartDebugPayload,
+      navPerfDebugEnabled,
+      setNavPerfDebugEnabled,
+      navPerfLog,
+      addNavPerfLog,
+      clearNavPerfLog,
     }),
     [
       showKlinesTable,
@@ -202,6 +290,11 @@ export function SistemaDebugProvider({ children }: { children: ReactNode }) {
       setSpotOrderChartDebugEnabled,
       spotOrderChartDebugPayload,
       setSpotOrderChartDebugPayload,
+      navPerfDebugEnabled,
+      setNavPerfDebugEnabled,
+      navPerfLog,
+      addNavPerfLog,
+      clearNavPerfLog,
     ]
   );
   return (

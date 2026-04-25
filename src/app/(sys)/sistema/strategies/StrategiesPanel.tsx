@@ -13,6 +13,7 @@ import { useStrategies } from "./StrategiesContext";
 import { useChartLayoutSave } from "../ChartLayoutSaveContext";
 import { getKlineLastLayoutStorage, DEFAULT_MODEL_MAX_STRATEGIES, isKlinesDefaultLayoutStorageRaw } from "../KlinesChartConstants";
 import { ColorPaletteCombobox } from "../components/ColorPaletteCombobox";
+import { getSessionTabId } from "../sessionTabId";
 import { INDICATOR_COLOR_PALETTE } from "../indicatorsPanel/indicatorsPanelConstants";
 import {
   type Strategy,
@@ -289,12 +290,16 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
     const slot = Number(raw);
     if (!Number.isInteger(slot) || slot < 1 || slot > 7) return;
     try {
-      await fetch(`${API_BASE}/chart-layouts`, {
+      const res = await fetch(`${API_BASE}/chart-layouts`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Tab-Id": getSessionTabId() },
         credentials: "include",
         body: JSON.stringify({ slot, appliedStrategyIds: nextAppliedIds }),
       });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.warn("[strategies] failed to persist appliedStrategyIds", res.status, text);
+      }
     } catch {
       /* ignore */
     }
@@ -339,7 +344,7 @@ export default function StrategiesPanel({ onClose, initialView = "list" }: Strat
   const tKlines = getCryptoT(lang).sistema.klines;
   /** Painel padrão por tipo (igual ao do gráfico). */
   const getIndicatorPanel = (ind: (typeof userIndicators)[0]) =>
-    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : "main");
+    ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" ? "panel2" : "main");
   const panelToNum = (p: string) => (p === "main" ? 1 : p === "panel2" ? 2 : p === "panel3" ? 3 : p === "panel4" ? 4 : p === "panel5" ? 5 : p === "panel6" ? 6 : p === "panel7" ? 7 : 1);
   /** Intervalo efetivo para filtrar séries: ao editar, usa o intervalo da estratégia; ao criar, usa o do gráfico. */
   const effectiveIntervalMinutes = editingStrategyId
@@ -1199,6 +1204,13 @@ function formatStrategyConstant(n: number): string {
   return String(n);
 }
 
+function truncateToDecimals(value: number, decimals: number): number {
+  if (!Number.isFinite(value)) return 0;
+  if (decimals <= 0) return value < 0 ? Math.ceil(value) : Math.floor(value);
+  const factor = 10 ** decimals;
+  return value < 0 ? Math.ceil(value * factor) / factor : Math.floor(value * factor) / factor;
+}
+
 /**
  * Input de constante: permite apagar o valor e digitar "-" / "." sem o controlled
  * `Number('')` / `Number('-')` → 0 que impedia edição com `type="number"`.
@@ -1237,7 +1249,7 @@ function ConstantOperandNumberField({
           next = 0;
         } else {
           const raw = Number(t);
-          next = Number.isNaN(raw) ? 0 : Math.round(raw * 100) / 100;
+          next = Number.isNaN(raw) ? 0 : truncateToDecimals(raw, 6);
         }
         onChange(next);
       }}
@@ -1360,7 +1372,12 @@ function ConditionRow({
   const setKind = (k: StrategyConditionKind) => {
     if (k === "crossover" || k === "crossunder") {
       const left = condition.left?.type === "series" ? condition.left : { type: "series" as const, seriesKey: "close", offset: 0 };
-      const right = condition.right?.type === "series" ? condition.right : { type: "series" as const, seriesKey: "close", offset: -1 };
+      const right =
+        condition.right?.type === "constant"
+          ? condition.right
+          : condition.right?.type === "series"
+            ? condition.right
+            : { type: "series" as const, seriesKey: "close", offset: -1 };
       onUpdate({ kind: k, left, right, barsAfter: normalizeBarsAfter(condition.barsAfter) });
     } else {
       onUpdate({ kind: "compare", barsAfter: undefined });
@@ -1368,6 +1385,7 @@ function ConditionRow({
   };
   const barsAfter = normalizeBarsAfter(condition.barsAfter);
   const seriesLabel = combinedMode ? ((t as Record<string, string>).strategyLabel ?? "Estratégia") : t.series;
+  const isBetween = effectiveKind === "compare" && condition.operator === "between";
 
   const firstStrategyKey = combinedMode ? (seriesOptions[0]?.key ?? "") : (seriesOptions[0]?.key ?? "close");
   const isValidSeriesKey = (key: string) => seriesOptions.some((o) => o.key === key);
@@ -1398,6 +1416,16 @@ function ConditionRow({
       if (Object.keys(patches).length > 0) onUpdate(patches);
     }
   }, [combinedMode, kind, firstStrategyKey, condition.left?.type, condition.left?.type === "series" ? condition.left.seriesKey : null, condition.operator, condition.right?.type, condition.right?.type === "constant" ? condition.right.value : null]);
+
+  useEffect(() => {
+    if (combinedMode || effectiveKind !== "compare" || condition.operator !== "between") return;
+    const lower = condition.right?.type === "constant" ? condition.right.value : 0;
+    const upper = typeof condition.betweenUpper === "number" ? condition.betweenUpper : lower;
+    const patches: Partial<StrategyConditionNode> = {};
+    if (condition.right?.type !== "constant") patches.right = { type: "constant", value: lower };
+    if (condition.betweenUpper !== upper) patches.betweenUpper = upper;
+    if (Object.keys(patches).length > 0) onUpdate(patches);
+  }, [combinedMode, effectiveKind, condition.operator, condition.right?.type, condition.right?.type === "constant" ? condition.right.value : null, condition.betweenUpper, onUpdate]);
 
   return (
     <div className={`p-2 rounded border border-zinc-200 bg-white text-xs ${disableCrossoverCrossunder ? "strategies-default-model" : ""}`}>
@@ -1450,27 +1478,56 @@ function ConditionRow({
             />
             <select
               value={condition.operator}
-              onChange={(e) => onUpdate({ operator: e.target.value as StrategyOperator })}
-              className="text-xs border border-zinc-300 rounded px-1 py-1 w-12"
+              onChange={(e) => {
+                const nextOperator = e.target.value as StrategyOperator;
+                if (nextOperator === "between") {
+                  const lower = condition.right?.type === "constant" ? condition.right.value : 0;
+                  const upper = typeof condition.betweenUpper === "number" ? condition.betweenUpper : lower;
+                  onUpdate({
+                    operator: "between",
+                    right: { type: "constant", value: lower },
+                    betweenUpper: upper,
+                  });
+                  return;
+                }
+                onUpdate({ operator: nextOperator });
+              }}
+              className={`text-xs border border-zinc-300 rounded px-1 py-1 ${condition.operator === "between" ? "w-20" : "w-12"}`}
             >
               {STRATEGY_OPERATORS.map((o) => {
-                const isDisabled = disableCrossoverCrossunder && o.value !== ">";
+                const isDisabled = (disableCrossoverCrossunder && o.value !== ">") || (combinedMode && o.value === "between");
                 return (
                   <option key={o.value} value={o.value} disabled={isDisabled}>{isDisabled ? "🔒 " : ""}{o.label}</option>
                 );
               })}
             </select>
-            <OperandInput
-              operand={condition.right?.type === "series" ? { ...condition.right, offset: condition.right.offset } : condition.right?.type === "constant" ? condition.right : { type: "constant" as const, value: 0 }}
-              onChange={(right) => onUpdate({ right })}
-              seriesOptions={seriesOptions}
-              seriesLabel={seriesLabel}
-              constantLabel={t.constant}
-              offsetLabel={t.operandOffset}
-              hideOffset={false}
-              seriesOnly={false}
-              disableNegativeOffsets={disableCrossoverCrossunder}
-            />
+            {isBetween ? (
+              <>
+                <ConstantOperandNumberField
+                  value={condition.right?.type === "constant" ? condition.right.value : 0}
+                  onChange={(v) => onUpdate({ right: { type: "constant", value: v } })}
+                  className="w-20 text-xs border border-zinc-300 rounded px-1.5 py-1"
+                />
+                <span className="text-zinc-500">e</span>
+                <ConstantOperandNumberField
+                  value={typeof condition.betweenUpper === "number" ? condition.betweenUpper : (condition.right?.type === "constant" ? condition.right.value : 0)}
+                  onChange={(v) => onUpdate({ betweenUpper: v })}
+                  className="w-20 text-xs border border-zinc-300 rounded px-1.5 py-1"
+                />
+              </>
+            ) : (
+              <OperandInput
+                operand={condition.right?.type === "series" ? { ...condition.right, offset: condition.right.offset } : condition.right?.type === "constant" ? condition.right : { type: "constant" as const, value: 0 }}
+                onChange={(right) => onUpdate({ right })}
+                seriesOptions={seriesOptions}
+                seriesLabel={seriesLabel}
+                constantLabel={t.constant}
+                offsetLabel={t.operandOffset}
+                hideOffset={false}
+                seriesOnly={false}
+                disableNegativeOffsets={disableCrossoverCrossunder}
+              />
+            )}
           </>
         )}
         {!combinedMode && (kind === "crossover" || kind === "crossunder") && (
@@ -1489,10 +1546,26 @@ function ConditionRow({
                     onChange={(left) => onUpdate({ left })}
                     seriesOptions={seriesOptions}
                   />
-                  <SeriesOnlyInput
-                    operand={condition.right}
-                    onChange={(right) => onUpdate({ right })}
+                  <OperandInput
+                    operand={
+                      condition.right?.type === "series"
+                        ? { ...condition.right, offset: condition.right.offset ?? 0 }
+                        : condition.right?.type === "constant"
+                          ? condition.right
+                          : { type: "constant" as const, value: 0 }
+                    }
+                    onChange={(right) =>
+                      onUpdate({
+                        right: right.type === "series" ? { ...right, offset: right.offset ?? 0 } : right,
+                      })
+                    }
                     seriesOptions={seriesOptions}
+                    seriesLabel={seriesLabel}
+                    constantLabel={t.constant}
+                    offsetLabel={t.operandOffset}
+                    hideOffset={true}
+                    seriesOnly={false}
+                    disableNegativeOffsets={disableCrossoverCrossunder}
                   />
                 </div>
                 <span className="flex items-center justify-center text-zinc-400 shrink-0 w-16 h-16" aria-hidden title="Cruzamento">

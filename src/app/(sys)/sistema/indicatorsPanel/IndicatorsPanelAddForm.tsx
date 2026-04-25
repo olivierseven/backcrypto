@@ -27,7 +27,7 @@ type IchimokuColorLine = "Tenkan" | "Kijun" | "Span A" | "Span B" | "Chikou";
 /** Grupos e tipos para o combobox de tipo de indicador (mesma ordem e labels do select antigo). */
 const INDICATOR_TYPE_GROUPS: { groupLabelKey: string; types: { value: UserIndicatorType; labelKey?: string; labelEn?: string }[] }[] = [
   { groupLabelKey: "indicatorGroupMovingAverages", types: [{ value: "SMA", labelEn: "SMA" }, { value: "SMA2", labelKey: "sma2Label" }, { value: "EMA", labelEn: "EMA" }, { value: "EMA2", labelKey: "ema2Label" }, { value: "WMA", labelEn: "WMA" }, { value: "WMA2", labelKey: "wma2Label" }, { value: "HMA", labelKey: "hmaLabel" }, { value: "HMA_CUSTOM", labelKey: "hmaCustomLabel" }, { value: "VWMA", labelKey: "vwmaLabel" }] },
-  { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "DIFF", labelKey: "diffLabel" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }] },
+  { groupLabelKey: "indicatorGroupMomentum", types: [{ value: "RSI", labelEn: "RSI" }, { value: "MFI", labelKey: "mfiLabel" }, { value: "MACD", labelEn: "MACD" }, { value: "DIFF", labelKey: "diffLabel" }, { value: "Stochastic", labelEn: "Stochastic" }, { value: "WilliamsR", labelKey: "williamsRLabel" }, { value: "CCI", labelKey: "cciLabel" }, { value: "MA_ANGLE", labelKey: "maAngleLabel" }] },
   { groupLabelKey: "indicatorGroupTrend", types: [{ value: "ADX", labelKey: "adxLabel" }, { value: "SAR", labelKey: "sarLabel" }, { value: "Ichimoku", labelKey: "ichimokuLabel" }, { value: "LINEAR_FIT", labelKey: "linearFitLabel" }, { value: "QUADRATIC_FIT", labelKey: "quadraticFitLabel" }] },
   { groupLabelKey: "indicatorGroupVolume", types: [{ value: "Volume", labelKey: "volumeLabel" }, { value: "OBV", labelEn: "OBV" }, { value: "AD", labelKey: "adLabel" }, { value: "CMF", labelKey: "cmfLabel" }, { value: "VWAP", labelKey: "vwapLabel" }] },
   { groupLabelKey: "indicatorGroupVolatilityChannels", types: [{ value: "ATR", labelKey: "atrLabel" }, { value: "Bollinger", labelKey: "bollingerLabel" }, { value: "Keltner", labelKey: "keltnerLabel" }, { value: "Donchian", labelKey: "donchianLabel" }] },
@@ -64,6 +64,7 @@ const INDICATOR_THEORY_I18N_KEY: Record<UserIndicatorType, string> = {
   ADX: "indicatorTheoryADX",
   CCI: "indicatorTheoryCCI",
   CMF: "indicatorTheoryCMF",
+  MA_ANGLE: "indicatorTheoryMA_ANGLE",
   Ichimoku: "indicatorTheoryIchimoku",
 };
 
@@ -169,7 +170,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
       if (!hasEmpty) opts.push({ value: "", label: none });
       return opts;
     }
-    if (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF") {
+    if (form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF" || form.indicatorType === "MA_ANGLE") {
       const opts: ComboboxOption[] = [];
       if (panelsFreeForSecondary.panel2) opts.push({ value: "panel2", label: p2 });
       if (panelsFreeForSecondary.panel3) opts.push({ value: "panel3", label: p3 });
@@ -216,6 +217,16 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
     ],
     [tRecord]
   );
+  const maAngleMaTypeOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "SMA", label: "SMA" },
+      { value: "EMA", label: "EMA" },
+      { value: "WMA", label: "WMA" },
+      { value: "HMA", label: tRecord.hmaLabel ?? "HMA" },
+      { value: "VWMA", label: tRecord.vwmaLabel ?? "VWMA" },
+    ],
+    [tRecord]
+  );
   const hmaCustomLegMaTypeOptions: ComboboxOption[] = macdMaTypeOptions;
   const volumeSourceOptions: ComboboxOption[] = useMemo(() => [
     { value: "base", label: tRecord.volumeBaseLabel ?? "Vol (base)" },
@@ -240,7 +251,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           : hasEmptyPanelForVolume
             ? firstEmptyPanelForVolume
             : ""
-        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF"
+        : form.indicatorType === "RSI" || form.indicatorType === "MFI" || form.indicatorType === "MACD" || form.indicatorType === "DIFF" || form.indicatorType === "Stochastic" || form.indicatorType === "WilliamsR" || form.indicatorType === "OBV" || form.indicatorType === "AD" || form.indicatorType === "ATR" || form.indicatorType === "ADX" || form.indicatorType === "CCI" || form.indicatorType === "CMF" || form.indicatorType === "MA_ANGLE"
           ? (form.chartOption === "panel2" && panelsFreeForSecondary.panel2) || (form.chartOption === "panel3" && panelsFreeForSecondary.panel3) || (form.chartOption === "panel4" && panelsFreeForSecondary.panel4) || (form.chartOption === "panel5" && panelsFreeForSecondary.panel5) || (form.chartOption === "panel6" && panelsFreeForSecondary.panel6) || (form.chartOption === "panel7" && panelsFreeForSecondary.panel7)
             ? form.chartOption
             : hasFreePanelForSecondary
@@ -336,6 +347,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           diffHistogram: false,
           diffHistogramColorAbove: "#059669",
           diffHistogramColorBelow: "#dc2626",
+          diffRelativePercent: false,
         };
       }
       if (newType === "Stochastic") {
@@ -468,6 +480,33 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
           cciAsHistogram: false,
           cciHistogramColorAbove: "#059669",
           cciHistogramColorBelow: "#dc2626",
+        };
+      }
+      if (newType === "MA_ANGLE") {
+        return {
+          ...prev,
+          indicatorType: "MA_ANGLE",
+          period: 20,
+          periodText: "20",
+          fieldKey: "close",
+          chartOption: freePanel,
+          maAngleMaType: "EMA",
+          maAngleLookback: 3,
+          maAngleLookbackText: "3",
+          maAngleCenterLine: false,
+          maAngleCenterLineValue: 0,
+          maAngleCenterLineValueText: "0",
+          maAngleCenterLineColor: "#71717a",
+          maAngleCenterLineWidth: "normal",
+          maAngleCenterLineStyle: "dotted",
+          maAngleLimits: false,
+          maAngleLimitUpper: 0.2,
+          maAngleLimitLower: -0.2,
+          maAngleLimitUpperText: "0.2",
+          maAngleLimitLowerText: "-0.2",
+          maAngleLimitColor: "#dc2626",
+          maAngleLimitLineWidth: "normal",
+          maAngleLimitLineStyle: "dotted",
         };
       }
       if (newType === "CMF") {
@@ -988,7 +1027,7 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
         </div>
       )}
 
-      {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "DIFF" && (
+      {form.indicatorType !== "OBV" && form.indicatorType !== "AD" && form.indicatorType !== "SAR" && form.indicatorType !== "ATR" && form.indicatorType !== "ADX" && form.indicatorType !== "VWAP" && form.indicatorType !== "Volume" && form.indicatorType !== "Donchian" && form.indicatorType !== "MFI" && form.indicatorType !== "CMF" && form.indicatorType !== "Ichimoku" && form.indicatorType !== "DIFF" && form.indicatorType !== "Bollinger" && (
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.field}</span>
           <Combobox
@@ -1208,6 +1247,131 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
                 <Combobox value={form.cciLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, cciLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {form.indicatorType === "MA_ANGLE" && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).maAngleMaTypeLabel ?? "Tipo MA"}</span>
+            <Combobox
+              value={form.maAngleMaType}
+              onChange={(v) => setForm((prev) => ({ ...prev, maAngleMaType: v as AddFormState["maAngleMaType"] }))}
+              options={maAngleMaTypeOptions}
+              className="flex-1 min-w-0"
+              size="lg"
+              aria-label={(t as Record<string, string>).maAngleMaTypeLabel ?? "Tipo MA"}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).maAngleLookbackLabel ?? "Barras (L)"}</span>
+            <div className="flex items-center gap-1">
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, maAngleLookback: Math.max(1, prev.maAngleLookback - 1), maAngleLookbackText: String(Math.max(1, prev.maAngleLookback - 1)) }))} className="stepper-btn">
+                −
+              </StepperButton>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.maAngleLookbackText}
+                onChange={(e) => setForm((prev) => ({ ...prev, maAngleLookbackText: e.target.value.replace(/[^\d]/g, "") }))}
+                onBlur={() => {
+                  const n = Number(form.maAngleLookbackText);
+                  const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(50, Math.round(n))) : 3;
+                  setForm((prev) => ({ ...prev, maAngleLookback: v, maAngleLookbackText: String(v) }));
+                }}
+                className="w-14 text-center tabular-nums text-sm border border-zinc-300 rounded px-2 py-1.5"
+                aria-label={(t as Record<string, string>).maAngleLookbackLabel ?? "Lookback"}
+              />
+              <StepperButton onStep={() => setForm((prev) => ({ ...prev, maAngleLookback: Math.min(50, prev.maAngleLookback + 1), maAngleLookbackText: String(Math.min(50, prev.maAngleLookback + 1)) }))} className="stepper-btn">
+                +
+              </StepperButton>
+            </div>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.maAngleCenterLine} onChange={(e) => setForm((prev) => ({ ...prev, maAngleCenterLine: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).maAngleCenterLineLabel ?? "Reference line (value)"}</span>
+          </label>
+          {form.maAngleCenterLine && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).maAngleCenterLineValueLabel ?? "Y value"}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.maAngleCenterLineValueText}
+                  onChange={(e) => setForm((prev) => ({ ...prev, maAngleCenterLineValueText: e.target.value }))}
+                  onBlur={() => {
+                    const v = parseFloat(form.maAngleCenterLineValueText.replace(",", "."));
+                    if (Number.isFinite(v)) setForm((prev) => ({ ...prev, maAngleCenterLineValue: v }));
+                  }}
+                  className="w-24 text-sm tabular-nums border border-zinc-300 rounded px-2 py-1.5"
+                  aria-label={(t as Record<string, string>).maAngleCenterLineValueLabel ?? "Y value"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <ColorPaletteCombobox value={form.maAngleCenterLineColor} onChange={(hex) => setForm((prev) => ({ ...prev, maAngleCenterLineColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <Combobox value={form.maAngleCenterLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, maAngleCenterLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <Combobox value={form.maAngleCenterLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, maAngleCenterLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
+              </div>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.maAngleLimits} onChange={(e) => setForm((prev) => ({ ...prev, maAngleLimits: e.target.checked }))} className="rounded border-zinc-300" />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).maAngleLimitsLabel ?? "Upper and lower lines (Y value)"}</span>
+          </label>
+          {form.maAngleLimits && (
+            <div className="space-y-2 pl-4 border-l-2 border-zinc-200">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).maAngleLimitUpperLabel ?? "Upper"}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.maAngleLimitUpperText}
+                  onChange={(e) => setForm((prev) => ({ ...prev, maAngleLimitUpperText: e.target.value }))}
+                  onBlur={() => {
+                    const v = parseFloat(form.maAngleLimitUpperText.replace(",", "."));
+                    if (Number.isFinite(v)) setForm((prev) => ({ ...prev, maAngleLimitUpper: v }));
+                  }}
+                  className="w-24 text-sm tabular-nums border border-zinc-300 rounded px-2 py-1.5"
+                  aria-label={(t as Record<string, string>).maAngleLimitUpperLabel ?? "Upper"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).maAngleLimitLowerLabel ?? "Lower"}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={form.maAngleLimitLowerText}
+                  onChange={(e) => setForm((prev) => ({ ...prev, maAngleLimitLowerText: e.target.value }))}
+                  onBlur={() => {
+                    const v = parseFloat(form.maAngleLimitLowerText.replace(",", "."));
+                    if (Number.isFinite(v)) setForm((prev) => ({ ...prev, maAngleLimitLower: v }));
+                  }}
+                  className="w-24 text-sm tabular-nums border border-zinc-300 rounded px-2 py-1.5"
+                  aria-label={(t as Record<string, string>).maAngleLimitLowerLabel ?? "Lower"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{t.color}</span>
+                <ColorPaletteCombobox value={form.maAngleLimitColor} onChange={(hex) => setForm((prev) => ({ ...prev, maAngleLimitColor: hex }))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineWidth ?? "Thickness"}</span>
+                <Combobox value={form.maAngleLimitLineWidth} onChange={(v) => setForm((prev) => ({ ...prev, maAngleLimitLineWidth: v as IndicatorLineWidth }))} options={lineWidthOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineWidth ?? "Espessura"} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-600 w-16 shrink-0">{(t as Record<string, string>).lineStyle ?? "Line style"}</span>
+                <Combobox value={form.maAngleLimitLineStyle} onChange={(v) => setForm((prev) => ({ ...prev, maAngleLimitLineStyle: v as IndicatorLineStyle }))} options={lineStyleOptions} className="flex-1 min-w-0" size="lg" aria-label={(t as Record<string, string>).lineStyle ?? "Estilo"} />
               </div>
             </div>
           )}
@@ -1762,6 +1926,15 @@ export function IndicatorsPanelAddForm({ form, setForm }: IndicatorsPanelAddForm
               aria-label={(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2"}
             />
           </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.diffRelativePercent}
+              onChange={(e) => setForm((prev) => ({ ...prev, diffRelativePercent: e.target.checked }))}
+              className="rounded border-zinc-300"
+            />
+            <span className="text-xs text-zinc-700">{(t as Record<string, string>).diffRelativePercentLabel ?? "Diferença % vs. entrada 1 (A)"}</span>
+          </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.diffSignalLine} onChange={(e) => setForm((prev) => ({ ...prev, diffSignalLine: e.target.checked }))} className="rounded border-zinc-300" />
             <span className="text-xs text-zinc-700">{(t as Record<string, string>).macdSignalLineLabel ?? "Linha de sinal"}</span>

@@ -267,6 +267,10 @@ export default function SistemaDebugPanel() {
     spotOrderChartDebugEnabled,
     setSpotOrderChartDebugEnabled,
     spotOrderChartDebugPayload,
+    navPerfDebugEnabled,
+    setNavPerfDebugEnabled,
+    navPerfLog,
+    clearNavPerfLog,
   } = useSistemaDebug();
   const { userIndicators } = useKlinesIndicators();
   const [open, setOpen] = useState(false);
@@ -307,6 +311,7 @@ export default function SistemaDebugPanel() {
   const [qaResults, setQaResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [qaIndicatorResults, setQaIndicatorResults] = useState<{ name: string; pass: boolean; message?: string; evidence?: string }[]>([]);
   const [layoutLogCopied, setLayoutLogCopied] = useState(false);
+  const [navPerfLogCopied, setNavPerfLogCopied] = useState(false);
   const [sessionDebugEnabled, setSessionDebugEnabledState] = useState(false);
   const [sessionDebugInfo, setSessionDebugInfoState] = useState<SessionDebugInfo | null>(null);
   const [syncKlinesLoading, setSyncKlinesLoading] = useState(false);
@@ -2331,6 +2336,52 @@ export default function SistemaDebugPanel() {
                     {(t as Record<string, string>).spotOrderChartDebugInspectEmpty}
                   </p>
                 ))}
+            </section>
+            <section>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={navPerfDebugEnabled}
+                  onChange={(e) => setNavPerfDebugEnabled(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span>Performance navegação</span>
+              </label>
+              <p className="text-xs text-zinc-500 mt-1">
+                <strong className="font-medium text-zinc-600">Rotas:</strong> tempo até pintar após mudar URL.{" "}
+                <strong className="font-medium text-zinc-600">Long tasks:</strong> blocos &gt;50ms na thread principal — o browser muitas vezes não diz *qual* script (aparece como «self»); nesse caso use Performance › gravar ou React Profiler. Várias tarefas no mesmo instante são agrupadas numa linha.
+              </p>
+              <div className="flex justify-end gap-2 mb-1 mt-2">
+                <button
+                  type="button"
+                  onClick={clearNavPerfLog}
+                  className="text-xs text-zinc-500 hover:text-zinc-700"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const text = navPerfLog.length === 0 ? "" : navPerfLog.join("\n");
+                    try {
+                      await navigator.clipboard.writeText(text);
+                      setNavPerfLogCopied(true);
+                      setTimeout(() => setNavPerfLogCopied(false), 2000);
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-700"
+                >
+                  {(t as Record<string, string>).copyLog ?? "Copiar"}
+                  {navPerfLogCopied ? ` — ${(t as Record<string, string>).copyLogDone ?? "Copiado!"}` : ""}
+                </button>
+              </div>
+              <pre className="text-[10px] font-mono text-zinc-700 bg-zinc-100 rounded p-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+                {navPerfLog.length === 0
+                  ? "(vazio — ative acima e navegue na app)"
+                  : navPerfLog.join("\n")}
+              </pre>
             </section>
             <section>
               <h4 className="text-xs font-medium text-zinc-600 uppercase tracking-wide mb-2">

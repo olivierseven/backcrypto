@@ -1,10 +1,49 @@
 import { cryptoPrisma } from "@/lib/crypto-db";
 
+/** Chave em `backcrypto.AppConfig` — quantidade máxima de barras a carregar nos gráficos atemporais (GET kline-cache2-bars / merge agg). */
+export const APP_CONFIG_KEY_AGG_ATEMPORAL_KLINE_CACHE_LIMIT = "AGG_ATEMPORAL_KLINE_CACHE_LIMIT";
+
 /** Chave em `backcrypto.AppConfig` — limite de linhas no sync de reembolso (login afiliado). */
 export const APP_CONFIG_KEY_AFFILIATE_REFUND_SYNC_ROW_LIMIT = "AFFILIATE_REFUND_SYNC_ROW_LIMIT";
 
+const DEFAULT_AGG_ATEMPORAL_KLINE_CACHE_LIMIT = 5000;
+const MIN_AGG_ATEMPORAL_KLINE_CACHE_LIMIT = 100;
+const MAX_AGG_ATEMPORAL_KLINE_CACHE_LIMIT = 50_000;
+
 const DEFAULT_AFFILIATE_REFUND_SYNC_ROW_LIMIT = 500;
 const MAX_AFFILIATE_REFUND_SYNC_ROW_LIMIT = 2000;
+
+function clampAggAtemporalKlineCacheLimit(n: number): number {
+  return Math.max(
+    MIN_AGG_ATEMPORAL_KLINE_CACHE_LIMIT,
+    Math.min(MAX_AGG_ATEMPORAL_KLINE_CACHE_LIMIT, Math.floor(n))
+  );
+}
+
+/**
+ * Ordem: `AppConfig` AGG_ATEMPORAL_KLINE_CACHE_LIMIT → env `AGG_ATEMPORAL_KLINE_CACHE_LIMIT` → default 5000 (100–50000).
+ * Usado pelo GET `/api/binance/kline-cache2-bars` e pelo cliente (merge / refetch).
+ */
+export async function resolveAggAtemporalKlineCacheLimit(): Promise<number> {
+  try {
+    const row = await cryptoPrisma.appConfig.findUnique({
+      where: { key: APP_CONFIG_KEY_AGG_ATEMPORAL_KLINE_CACHE_LIMIT },
+      select: { value: true },
+    });
+    if (row?.value) {
+      const n = parseInt(String(row.value).trim(), 10);
+      if (Number.isFinite(n)) return clampAggAtemporalKlineCacheLimit(n);
+    }
+  } catch {
+    /* tabela ausente ou erro transitório */
+  }
+  const raw = process.env.AGG_ATEMPORAL_KLINE_CACHE_LIMIT;
+  if (raw != null && raw !== "") {
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n)) return clampAggAtemporalKlineCacheLimit(n);
+  }
+  return DEFAULT_AGG_ATEMPORAL_KLINE_CACHE_LIMIT;
+}
 
 function clampAffiliateRefundSyncRowLimit(n: number): number {
   return Math.max(1, Math.min(MAX_AFFILIATE_REFUND_SYNC_ROW_LIMIT, n));

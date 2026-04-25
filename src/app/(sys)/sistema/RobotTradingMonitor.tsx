@@ -38,6 +38,25 @@ type LineState = {
   pnlUsdt: number;
 };
 
+function areLineStatesEqual(a: LineState[], b: LineState[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const ai = a[i];
+    const bi = b[i];
+    if (
+      ai.robotId !== bi.robotId ||
+      ai.avgBuyPrice !== bi.avgBuyPrice ||
+      ai.baseQty !== bi.baseQty ||
+      ai.pnlPct !== bi.pnlPct ||
+      ai.pnlUsdt !== bi.pnlUsdt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Atualiza PnL vs preço médio de compras (posição persistida) e opcionalmente dispara stop loss/stop gain a mercado.
  * Compras devem ser registadas com o evento `backcrypto-robot-position-buy` (ver robotPositionStorage).
@@ -151,11 +170,11 @@ export default function RobotTradingMonitor() {
   useEffect(() => {
     const sym = symbol?.trim();
     if (!sym || !isUsdtSpotPair(sym)) {
-      setLines([]);
+      setLines((prev) => (prev.length === 0 ? prev : []));
       return;
     }
     if (lastPrice == null || !Number.isFinite(lastPrice) || lastPrice <= 0) {
-      setLines([]);
+      setLines((prev) => (prev.length === 0 ? prev : []));
       return;
     }
 
@@ -176,7 +195,7 @@ export default function RobotTradingMonitor() {
         });
         void tryStops(robot, sym, pos);
       }
-      setLines(next);
+      setLines((prev) => (areLineStatesEqual(prev, next) ? prev : next));
     };
 
     tick();

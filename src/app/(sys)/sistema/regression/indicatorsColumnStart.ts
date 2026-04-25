@@ -1,39 +1,47 @@
 import type { UserIndicatorConfig } from "../KlinesIndicatorsContext";
 
-/** Primeira coluna (índice 12+) de cada indicador na linha estendida — espelha KlinesTable. */
-export function getIndicatorColumnStart(userIndicators: UserIndicatorConfig[], indicatorIndex: number): number {
+/**
+ * Quantas colunas extra (após índices 0–11) este indicador ocupa na linha estendida — alinhado a `extendedKlines` em KlinesTable.
+ */
+export function indicatorColumnSpan(ind: UserIndicatorConfig): number {
+  if (ind.type === "Volume") return 0;
+  if (ind.type === "MACD" || ind.type === "DIFF") {
+    return (
+      1 +
+      (ind.type === "MACD" ? (ind.macdSignalLine ? 1 : 0) : ind.diffSignalLine ? 1 : 0) +
+      (ind.type === "MACD" ? (ind.macdHistogram ? 1 : 0) : ind.diffHistogram ? 1 : 0)
+    );
+  }
+  if (ind.type === "Stochastic") return 1 + (ind.stochDLine ? 1 : 0);
+  if (ind.type === "WilliamsR") return 1;
+  if (ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian") return 3;
+  if (ind.type === "Ichimoku") return 5;
+  if (ind.type === "ADX") return 3;
+  if (
+    ind.type === "OBV" ||
+    ind.type === "AD" ||
+    ind.type === "SAR" ||
+    ind.type === "ATR" ||
+    ind.type === "VWAP" ||
+    ind.type === "CCI" ||
+    ind.type === "CMF" ||
+    ind.type === "MFI"
+  ) {
+    return 1;
+  }
+  return 1;
+}
+
+/** Primeira coluna (índice 12+) do indicador na posição `indicatorIndex` — mesma regra que KlinesTable / getFieldIndex. */
+export function indicatorColumnStart(userIndicators: UserIndicatorConfig[], indicatorIndex: number): number {
   let col = 12;
   for (let i = 0; i < indicatorIndex; i++) {
-    const ind = userIndicators[i];
-    if (ind.type === "MACD") {
-      col += 1 + (ind.macdSignalLine ? 1 : 0) + (ind.macdHistogram ? 1 : 0);
-    } else if (ind.type === "DIFF") {
-      col += 1 + (ind.diffSignalLine ? 1 : 0) + (ind.diffHistogram ? 1 : 0);
-    } else if (ind.type === "Stochastic") {
-      col += 1 + (ind.stochDLine ? 1 : 0);
-    } else if (ind.type === "WilliamsR") {
-      col += 1;
-    } else if (ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian") {
-      col += 3;
-    } else if (ind.type === "Ichimoku") {
-      col += 5;
-    } else if (ind.type === "ADX") {
-      col += 3;
-    } else if (ind.type === "Volume") {
-      /* não consome slot */
-    } else if (
-      ind.type === "OBV" ||
-      ind.type === "SAR" ||
-      ind.type === "ATR" ||
-      ind.type === "VWAP" ||
-      ind.type === "CCI" ||
-      ind.type === "CMF" ||
-      ind.type === "MFI"
-    ) {
-      col += 1;
-    } else {
-      col += 1;
-    }
+    col += indicatorColumnSpan(userIndicators[i]!);
   }
   return col;
+}
+
+/** Alias histórico — mesmo que `indicatorColumnStart`. */
+export function getIndicatorColumnStart(userIndicators: UserIndicatorConfig[], indicatorIndex: number): number {
+  return indicatorColumnStart(userIndicators, indicatorIndex);
 }

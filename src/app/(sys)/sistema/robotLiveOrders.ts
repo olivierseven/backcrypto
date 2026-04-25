@@ -15,6 +15,11 @@ export type RobotOrderContext = {
   executionRole: RobotOrderExecutionRole;
 };
 
+type OrderSyncResponse = {
+  success?: boolean;
+  order?: unknown;
+};
+
 /**
  * Valor nominal de uma operação (USDT) em função do teto atual do robô: % do teto ou USDT fixo (até ao teto).
  * Na sequência de acumulação, este valor é calculado uma vez por ciclo e reutilizado em cada vela.
@@ -73,6 +78,13 @@ function formatQtyForMarketOrder(n: number): string {
   return s.length > 0 ? s : "0";
 }
 
+function formatLimitPrice(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) throw new Error("invalid_price");
+  const s = n.toFixed(8).replace(/\.?0+$/, "").replace(/\.$/, "");
+  if (s.length === 0) throw new Error("invalid_price");
+  return s;
+}
+
 export function parseMarketOrderFill(order: unknown): { quoteUsdt: number; baseQty: number } | null {
   if (order == null || typeof order !== "object") return null;
   const o = order as Record<string, unknown>;
@@ -82,6 +94,27 @@ export function parseMarketOrderFill(order: unknown): { quoteUsdt: number; baseQ
   const quoteUsdt = typeof cum === "string" ? parseFloat(cum) : typeof cum === "number" ? cum : NaN;
   if (!Number.isFinite(baseQty) || !Number.isFinite(quoteUsdt) || baseQty <= 0 || quoteUsdt <= 0) return null;
   return { quoteUsdt, baseQty };
+}
+
+export type RobotLimitOrderState = "NEW" | "PARTIALLY_FILLED" | "FILLED" | "CANCELED" | "REJECTED" | "EXPIRED" | "UNKNOWN";
+
+export function parseSpotOrderState(order: unknown): RobotLimitOrderState {
+  if (order == null || typeof order !== "object") return "UNKNOWN";
+  const o = order as Record<string, unknown>;
+  const raw = String(o.status ?? "").toUpperCase();
+  if (raw === "NEW" || raw === "PARTIALLY_FILLED" || raw === "FILLED" || raw === "CANCELED" || raw === "REJECTED" || raw === "EXPIRED") {
+    return raw;
+  }
+  return "UNKNOWN";
+}
+
+function parseOrderId(order: unknown): string | null {
+  if (order == null || typeof order !== "object") return null;
+  const o = order as Record<string, unknown>;
+  const id = o.orderId;
+  if (typeof id === "string" && id.trim().length > 0) return id.trim();
+  if (typeof id === "number" && Number.isFinite(id)) return String(id);
+  return null;
 }
 
 export async function submitRobotMarketBuyOrder(
@@ -118,6 +151,47 @@ export async function submitRobotMarketBuyOrder(
   return { ok: true, order: data.order };
 }
 
+export async function submitRobotLimitBuyOrder(
+  symbol: string,
+  quoteUsdt: number,
+  limitPrice: number,
+  ctx?: RobotOrderContext
+): Promise<{ ok: true; order: unknown; orderId: string } | { ok: false }> {
+  let pxStr: string;
+  let qtyStr: string;
+  try {
+    pxStr = formatLimitPrice(limitPrice);
+    qtyStr = formatQtyForMarketOrder(quoteUsdt / limitPrice);
+  } catch {
+    return { ok: false };
+  }
+  const res = await fetch(`${API_BASE}/user/binance-connection/order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      symbol: symbol.trim().toUpperCase(),
+      side: "BUY",
+      type: "LIMIT",
+      timeInForce: "GTC",
+      quantity: qtyStr,
+      price: pxStr,
+      ...(ctx
+        ? {
+            robotId: ctx.robotId,
+            robotAlias: ctx.robotAlias,
+            executionRole: ctx.executionRole,
+          }
+        : {}),
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { success?: boolean; order?: unknown };
+  if (!res.ok || data.success !== true || data.order == null) return { ok: false };
+  const orderId = parseOrderId(data.order);
+  if (!orderId) return { ok: false };
+  return { ok: true, order: data.order, orderId };
+}
+
 export async function submitRobotMarketSellOrder(
   symbol: string,
   baseQty: number,
@@ -145,6 +219,42 @@ export async function submitRobotMarketSellOrder(
             executionRole: ctx.executionRole,
           }
         : {}),
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { success?: boolean; order?: unknown };
+  if (!res.ok || data.success !== true || data.order == null) return { ok: false };
+  return { ok: true, order: data.order };
+}
+
+export async function syncRobotSpotOrder(
+  symbol: string,
+  orderId: string
+): Promise<{ ok: true; order: unknown; state: RobotLimitOrderState } | { ok: false }> {
+  const res = await fetch(`${API_BASE}/user/binance-connection/order/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      symbol: symbol.trim().toUpperCase(),
+      orderId: orderId.trim(),
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as OrderSyncResponse;
+  if (!res.ok || data.success !== true || data.order == null) return { ok: false };
+  return { ok: true, order: data.order, state: parseSpotOrderState(data.order) };
+}
+
+export async function cancelRobotSpotOrder(
+  symbol: string,
+  orderId: string
+): Promise<{ ok: true; order: unknown } | { ok: false }> {
+  const res = await fetch(`${API_BASE}/user/binance-connection/order/cancel`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      symbol: symbol.trim().toUpperCase(),
+      orderId: orderId.trim(),
     }),
   });
   const data = (await res.json().catch(() => ({}))) as { success?: boolean; order?: unknown };

@@ -1,15 +1,15 @@
 import type { UserIndicatorConfig } from "../KlinesIndicatorsContext";
 
 /** Operador de comparação entre dois operandos. */
-export type StrategyOperator = ">" | "<" | "=" | ">=" | "<=" | "<>";
+export type StrategyOperator = ">" | "<" | "=" | ">=" | "<=" | "<>" | "between";
 
-/** Indexador de período: 0 = valor atual da linha, -1 = 1 candle anterior, -2 = 2 anteriores, etc. (0 a -20). */
-export const STRATEGY_OFFSET_MIN = -20;
+/** Indexador de período: 0 = valor atual da linha, -1 = 1 candle anterior, -2 = 2 anteriores, etc. (0 a -40). */
+export const STRATEGY_OFFSET_MIN = -40;
 export const STRATEGY_OFFSET_MAX = 0;
 
-/** Para CROSSOVER/CROSSUNDER: quantos candles após o cruzamento a condição continua válida (0 = só no candle do cruzamento, até 20 candles depois). */
+/** Para CROSSOVER/CROSSUNDER: quantos candles após o cruzamento a condição continua válida (0 = só no candle do cruzamento, até 60 candles depois). */
 export const STRATEGY_BARSAFTER_MIN = 0;
-export const STRATEGY_BARSAFTER_MAX = 20;
+export const STRATEGY_BARSAFTER_MAX = 60;
 
 /** Operando: série (coluna do candle/indicador, com offset opcional) ou constante numérica. */
 export type StrategyOperand =
@@ -19,7 +19,7 @@ export type StrategyOperand =
 /** Tipo de condição folha: comparação, cruzamento acima ou abaixo. */
 export type StrategyConditionKind = "compare" | "crossover" | "crossunder";
 
-/** Condição folha: compare (left op right), crossover (left cruza acima de right), crossunder (left cruza abaixo de right). */
+/** Condição folha: compare (left op right), crossover (left cruza acima de right), crossunder (left cruza abaixo de right). Em crossover/crossunder, um dos lados pode ser constante (ex.: linha zero). */
 export interface StrategyConditionNode {
   type: "condition";
   id: string;
@@ -28,6 +28,8 @@ export interface StrategyConditionNode {
   left: StrategyOperand;
   operator: StrategyOperator;
   right: StrategyOperand;
+  /** Só para operator "between": limite superior (o inferior fica em right.value). */
+  betweenUpper?: number;
   /** Só para kind crossover/crossunder: 0 = só no candle do cruzamento, 1..STRATEGY_BARSAFTER_MAX = válido até N candles depois. */
   barsAfter?: number;
 }
@@ -95,6 +97,7 @@ export const STRATEGY_OPERATORS: { value: StrategyOperator; label: string }[] = 
   { value: ">=", label: ">=" },
   { value: "<=", label: "<=" },
   { value: "<>", label: "<>" },
+  { value: "between", label: "between" },
 ];
 
 function isCondition(n: StrategyNode): n is StrategyConditionNode {

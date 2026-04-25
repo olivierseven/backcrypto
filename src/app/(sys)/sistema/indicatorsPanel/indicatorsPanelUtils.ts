@@ -102,6 +102,9 @@ export function getIndicatorLabel(
   if (ind.type === "DIFF") {
     const first = getFieldLabel(ind.diffFirstFieldKey ?? "close", t, userIndicators);
     const second = getFieldLabel(ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", t, userIndicators);
+    if (ind.diffRelativePercent) {
+      return `DIFF%(${second}-${first})/${first}`;
+    }
     return `DIFF(${second}-${first})`;
   }
   if (ind.type === "Stochastic") {
@@ -150,6 +153,11 @@ export function getIndicatorLabel(
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;
+  }
+  if (ind.type === "MA_ANGLE") {
+    const mt = ind.maAngleMaType === "SMA" || ind.maAngleMaType === "EMA" || ind.maAngleMaType === "WMA" || ind.maAngleMaType === "HMA" || ind.maAngleMaType === "VWMA" ? ind.maAngleMaType : "EMA";
+    const lb = ind.maAngleLookback ?? 3;
+    return `MA∠(${mt},${ind.period},L${lb}) ${fieldLabel}`;
   }
   if (ind.type === "CCI") {
     return `CCI(${ind.period}) ${fieldLabel}`;
@@ -239,7 +247,7 @@ export function getIndicatorLabelShort(
   if (ind.type === "DIFF") {
     const a = getFieldShortLetter(ind.diffFirstFieldKey ?? "close", userIndicators);
     const b = getFieldShortLetter(ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", userIndicators);
-    return `DIFF(${b}-${a})`;
+    return ind.diffRelativePercent ? `DIFF%(${b}-${a})/${a}` : `DIFF(${b}-${a})`;
   }
   if (ind.type === "Stochastic") {
     return `%K(${ind.period}) ${letter}`;
@@ -278,6 +286,11 @@ export function getIndicatorLabelShort(
   }
   if (ind.type === "ADX") {
     return `ADX(${ind.period})`;
+  }
+  if (ind.type === "MA_ANGLE") {
+    const mt = ind.maAngleMaType === "SMA" || ind.maAngleMaType === "EMA" || ind.maAngleMaType === "WMA" || ind.maAngleMaType === "HMA" || ind.maAngleMaType === "VWMA" ? ind.maAngleMaType : "EMA";
+    const lb = ind.maAngleLookback ?? 3;
+    return `∠${mt}(${ind.period},${lb}) ${letter}`;
   }
   if (ind.type === "CCI") {
     return `CCI(${ind.period}) ${letter}`;
@@ -378,4 +391,69 @@ export function isMovingAverageType(type: string): boolean {
     type === "LINEAR_FIT" ||
     type === "QUADRATIC_FIT"
   );
+}
+
+export { indicatorColumnSpan, indicatorColumnStart } from "../regression/indicatorsColumnStart";
+
+function parseUserFieldRefIdFromFieldKey(fieldKey: string | undefined): string | null {
+  if (fieldKey == null || typeof fieldKey !== "string" || !fieldKey.startsWith("user_")) return null;
+  const raw = fieldKey.slice(5);
+  const sep = raw.indexOf(":");
+  return sep < 0 ? raw : raw.slice(0, sep);
+}
+
+/**
+ * Ids de outros indicadores referenciados em `fieldKey` (ex.: médias, Bollinger, etc. sobre `user_<id>` de **qualquer**
+ * indicador anterior: RSI, MACD, outra banda, Stochastic…) e em DIFF. Define a ordem de cálculo (fonte antes do dependente).
+ */
+export function collectIndicatorDependencyIds(ind: UserIndicatorConfig): string[] {
+  const ids: string[] = [];
+  const add = (fk: string | undefined) => {
+    const id = parseUserFieldRefIdFromFieldKey(fk);
+    if (id && id !== ind.id) ids.push(id);
+  };
+  add(ind.fieldKey as string);
+  if (ind.type === "DIFF") {
+    add(ind.diffFirstFieldKey);
+    add(ind.diffSecondFieldKey);
+  }
+  return ids;
+}
+
+/**
+ * Ordem de cálculo segura: indicadores referenciados por `user_<id>` são calculados antes dos que deles dependem.
+ * Se houver ciclo ou dependência em falta, devolve [0..n-1].
+ */
+export function topologicalUserIndicatorOrder(userIndicators: UserIndicatorConfig[]): number[] {
+  const n = userIndicators.length;
+  if (n <= 1) return [...Array(n).keys()];
+  const idToIndex = new Map<string, number>();
+  for (let i = 0; i < n; i++) idToIndex.set(userIndicators[i]!.id, i);
+
+  const adj = new Map<number, number[]>();
+  const inDeg = new Array<number>(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    const deps = collectIndicatorDependencyIds(userIndicators[i]!);
+    for (const id of deps) {
+      const j = idToIndex.get(id);
+      if (j === undefined || j === i) continue;
+      if (!adj.has(j)) adj.set(j, []);
+      adj.get(j)!.push(i);
+      inDeg[i]++;
+    }
+  }
+
+  const q: number[] = [];
+  for (let i = 0; i < n; i++) if (inDeg[i] === 0) q.push(i);
+  const out: number[] = [];
+  while (q.length > 0) {
+    const u = q.shift()!;
+    out.push(u);
+    for (const v of adj.get(u) ?? []) {
+      inDeg[v]--;
+      if (inDeg[v] === 0) q.push(v);
+    }
+  }
+  if (out.length !== n) return [...Array(n).keys()];
+  return out;
 }

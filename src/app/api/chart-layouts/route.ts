@@ -1,6 +1,6 @@
 // GET: lista layouts do usuário (slots 1–7; ChartLayout). defaultLayout vem de ChartModels (slot 0). canSaveDefault só para admin.
 // POST: salva layout em um slot (1–7). Body: { slot, config } (legado) ou { slot, layout?, indicators?, strategies?, name? }.
-// PATCH: atualiza só colunas enviadas. Body: { slot, appliedStrategyIds? | layout? | indicators? | strategies? | regressions? | others? }.
+// PATCH: atualiza só colunas enviadas ou só o nome. Body: { slot, name? } ou { slot, appliedStrategyIds? | layout? | ... }.
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
@@ -30,7 +30,9 @@ async function getUserId(): Promise<string | null> {
 }
 
 const USER_SLOTS = [1, 2, 3, 4, 5, 6, 7] as const;
-const CONFIG_MAX_BYTES = 32 * 1024; // 32KB por JSON
+// Limite por coluna JSON do layout.
+// 32KB ficou curto para estratégias/regressões mais complexas e causava 400 frequente.
+const CONFIG_MAX_BYTES = 256 * 1024; // 256KB por JSON
 
 export async function GET(request: Request) {
   const userId = await getUserId();
@@ -266,8 +268,11 @@ export async function PATCH(req: Request) {
   const sessionReject = await claimOrRejectSession(req, userId, tabId);
   if (sessionReject) return sessionReject;
 
+  const NAME_MAX_LEN = 24;
+
   let body: {
     slot?: number;
+    name?: string;
     appliedStrategyIds?: unknown;
     layout?: unknown;
     indicators?: unknown;
@@ -286,6 +291,11 @@ export async function PATCH(req: Request) {
   if (slot == null || !USER_SLOTS.includes(slot as (typeof USER_SLOTS)[number])) {
     return NextResponse.json({ error: "invalid_slot", message: "Slot must be 1–7" }, { status: 400 });
   }
+
+  const nameUpdate =
+    body.name !== undefined
+      ? (typeof body.name === "string" ? body.name.trim().slice(0, NAME_MAX_LEN) || null : null)
+      : undefined;
 
   const existing = await cryptoPrisma.chartLayout.findUnique({
     where: { userId_slot: { userId, slot } },
@@ -381,10 +391,23 @@ export async function PATCH(req: Request) {
   }
 
   if (Object.keys(update).length === 0) {
-    return NextResponse.json({
-      error: "invalid_body",
-      message: "Send appliedStrategyIds, layout, indicators, strategies, regressions, others or robots",
-    }, { status: 400 });
+    if (nameUpdate === undefined) {
+      return NextResponse.json({
+        error: "invalid_body",
+        message: "Send name, appliedStrategyIds, layout, indicators, strategies, regressions, others or robots",
+      }, { status: 400 });
+    }
+    if (!existing) {
+      return NextResponse.json(
+        { error: "layout_not_found", message: "Save the layout at least once before renaming" },
+        { status: 404 }
+      );
+    }
+    await cryptoPrisma.chartLayout.update({
+      where: { userId_slot: { userId, slot } },
+      data: { name: nameUpdate },
+    });
+    return NextResponse.json({ ok: true, slot });
   }
 
   const updatePayload: {
@@ -394,6 +417,7 @@ export async function PATCH(req: Request) {
     regressions?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     others?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
     robots?: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue;
+    name?: string | null;
   } = {};
   if (update.layout !== undefined) updatePayload.layout = toJsonInput(update.layout);
   if (update.indicators !== undefined) updatePayload.indicators = toJsonInput(update.indicators);
@@ -401,6 +425,7 @@ export async function PATCH(req: Request) {
   if (update.regressions !== undefined) updatePayload.regressions = toJsonInput(update.regressions);
   if (update.others !== undefined) updatePayload.others = toJsonInput(update.others);
   if (update.robots !== undefined) updatePayload.robots = toJsonInput(update.robots);
+  if (nameUpdate !== undefined) updatePayload.name = nameUpdate;
 
   await cryptoPrisma.chartLayout.upsert({
     where: { userId_slot: { userId, slot } },
@@ -413,7 +438,7 @@ export async function PATCH(req: Request) {
       regressions: update.regressions !== undefined ? toJsonInput(update.regressions) : undefined,
       others: update.others !== undefined ? toJsonInput(update.others) : undefined,
       robots: update.robots !== undefined ? toJsonInput(update.robots) : undefined,
-      name: null,
+      name: nameUpdate !== undefined ? nameUpdate : null,
     },
     update: updatePayload,
   });

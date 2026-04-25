@@ -45,7 +45,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD/DIFF, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "DIFF" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "Ichimoku";
+  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "DIFF" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "MA_ANGLE" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
@@ -95,6 +95,17 @@ export interface ChartIndicatorLine {
   mfiLimitColor?: string;
   mfiLimitLineWidth?: "thin" | "normal" | "thick";
   mfiLimitLineStyle?: "solid" | "dotted" | "dashed";
+  maAngleCenterLine?: boolean;
+  maAngleCenterLineValue?: number;
+  maAngleCenterLineColor?: string;
+  maAngleCenterLineWidth?: "thin" | "normal" | "thick";
+  maAngleCenterLineStyle?: "solid" | "dotted" | "dashed";
+  maAngleLimits?: boolean;
+  maAngleLimitUpper?: number;
+  maAngleLimitLower?: number;
+  maAngleLimitColor?: string;
+  maAngleLimitLineWidth?: "thin" | "normal" | "thick";
+  maAngleLimitLineStyle?: "solid" | "dotted" | "dashed";
   /** Desenho: linha (default), barras (histograma MACD) ou pontos (SAR). */
   display?: "line" | "histogram" | "points";
   /** Só para display "points" (SAR): tamanho do ponto (thin = mais fino, normal = mais grosso). */

@@ -88,6 +88,7 @@ const INITIAL_ADD_FORM: AddFormState = {
   diffHistogram: false,
   diffHistogramColorAbove: "#059669",
   diffHistogramColorBelow: "#dc2626",
+  diffRelativePercent: false,
   rsiFixedScale: true,
   rsiCenterLine: false,
   rsiCenterLineColor: "#71717a",
@@ -199,6 +200,23 @@ const INITIAL_ADD_FORM: AddFormState = {
   cciAsHistogram: false,
   cciHistogramColorAbove: "#059669",
   cciHistogramColorBelow: "#dc2626",
+  maAngleMaType: "EMA",
+  maAngleLookback: 3,
+  maAngleLookbackText: "3",
+  maAngleCenterLine: false,
+  maAngleCenterLineValue: 0,
+  maAngleCenterLineValueText: "0",
+  maAngleCenterLineColor: "#71717a",
+  maAngleCenterLineWidth: "normal",
+  maAngleCenterLineStyle: "dotted",
+  maAngleLimits: false,
+  maAngleLimitUpper: 0.2,
+  maAngleLimitLower: -0.2,
+  maAngleLimitUpperText: "0.2",
+  maAngleLimitLowerText: "-0.2",
+  maAngleLimitColor: "#dc2626",
+  maAngleLimitLineWidth: "normal",
+  maAngleLimitLineStyle: "dotted",
   cmfFixedScale: false,
   cmfLimits: true,
   cmfLimitUpper: 0.25,
@@ -376,7 +394,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5 || panelsFreeForSecondary.panel6 || panelsFreeForSecondary.panel7;
-  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "DIFF" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Volume";
+  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "DIFF" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF" || addForm.indicatorType === "MA_ANGLE" || addForm.indicatorType === "Volume";
   const hasEmptyPanelForVolume =
     indicatorCountByPanel.panel2 === 0 ||
     indicatorCountByPanel.panel3 === 0 ||
@@ -523,7 +541,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
               : addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "SAR" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "Volume" || isTimeWindowMa2Type(addForm.indicatorType)
                 ? 1
                 : periodNum,
-      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Ichimoku" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.indicatorType === "DIFF" ? (addForm.diffSecondFieldKey ?? "close") : addForm.fieldKey,
+      fieldKey: addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "Volume" ? "volume" : addForm.indicatorType === "SAR" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "VWAP" || addForm.indicatorType === "CMF" || addForm.indicatorType === "Ichimoku" ? "close" : addForm.indicatorType === "CCI" ? (addForm.fieldKey ?? "HLC3") : addForm.indicatorType === "MA_ANGLE" ? (addForm.fieldKey ?? "close") : addForm.indicatorType === "DIFF" ? (addForm.diffSecondFieldKey ?? "close") : addForm.fieldKey,
       ...(addForm.indicatorType === "Bollinger" ? {
         bollingerMaType: addForm.bollingerMaType,
         bollingerZ: Math.max(0, Math.min(3, parseFloat(addForm.bollingerZText) || 2)),
@@ -607,6 +625,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         diffHistogram: addForm.diffSignalLine && addForm.diffHistogram,
         diffHistogramColorAbove: addForm.diffSignalLine && addForm.diffHistogram ? addForm.diffHistogramColorAbove : undefined,
         diffHistogramColorBelow: addForm.diffSignalLine && addForm.diffHistogram ? addForm.diffHistogramColorBelow : undefined,
+        diffRelativePercent: addForm.diffRelativePercent === true,
       } : {}),
       ...(addForm.indicatorType === "Stochastic" ? {
         stochLimits: addForm.stochLimits,
@@ -659,6 +678,34 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciAsHistogram: addForm.cciAsHistogram,
         cciHistogramColorAbove: addForm.cciHistogramColorAbove,
         cciHistogramColorBelow: addForm.cciHistogramColorBelow,
+      } : {}),
+      ...(addForm.indicatorType === "MA_ANGLE" ? {
+        maAngleMaType: addForm.maAngleMaType,
+        maAngleLookback: Math.max(1, Math.min(50, Number(addForm.maAngleLookbackText) || 3)),
+        maAngleCenterLine: addForm.maAngleCenterLine,
+        ...(addForm.maAngleCenterLine === true
+          ? (() => {
+              const cv = parseFloat(addForm.maAngleCenterLineValueText.replace(",", "."));
+              return { maAngleCenterLineValue: Number.isFinite(cv) ? Math.max(-1e15, Math.min(1e15, cv)) : 0 };
+            })()
+          : {}),
+        maAngleCenterLineColor: addForm.maAngleCenterLineColor,
+        maAngleCenterLineWidth: addForm.maAngleCenterLineWidth,
+        maAngleCenterLineStyle: addForm.maAngleCenterLineStyle,
+        maAngleLimits: addForm.maAngleLimits,
+        ...(addForm.maAngleLimits
+          ? (() => {
+              const lu = parseFloat(addForm.maAngleLimitUpperText.replace(",", "."));
+              const ll = parseFloat(addForm.maAngleLimitLowerText.replace(",", "."));
+              return {
+                maAngleLimitUpper: Number.isFinite(lu) ? Math.max(-1e15, Math.min(1e15, lu)) : 0.2,
+                maAngleLimitLower: Number.isFinite(ll) ? Math.max(-1e15, Math.min(1e15, ll)) : -0.2,
+              };
+            })()
+          : {}),
+        maAngleLimitColor: addForm.maAngleLimitColor,
+        maAngleLimitLineWidth: addForm.maAngleLimitLineWidth,
+        maAngleLimitLineStyle: addForm.maAngleLimitLineStyle,
       } : {}),
       ...(addForm.indicatorType === "CMF" ? {
         cmfFixedScale: addForm.cmfFixedScale,
@@ -885,6 +932,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       diffHistogram: ind.type === "DIFF" && ind.diffSignalLine ? (ind.diffHistogram === true) : false,
       diffHistogramColorAbove: ind.type === "DIFF" && ind.diffHistogram ? (ind.diffHistogramColorAbove ?? "#059669") : "#059669",
       diffHistogramColorBelow: ind.type === "DIFF" && ind.diffHistogram ? (ind.diffHistogramColorBelow ?? "#dc2626") : "#dc2626",
+      diffRelativePercent: ind.type === "DIFF" ? (ind.diffRelativePercent === true) : false,
       rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : true,
       rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : false,
       rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : "#71717a",
@@ -952,6 +1000,41 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       cciAsHistogram: ind.type === "CCI" ? (ind.cciAsHistogram === true) : false,
       cciHistogramColorAbove: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : "#059669",
       cciHistogramColorBelow: ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : "#dc2626",
+      maAngleMaType: ind.type === "MA_ANGLE" ? (ind.maAngleMaType === "SMA" || ind.maAngleMaType === "EMA" || ind.maAngleMaType === "WMA" || ind.maAngleMaType === "HMA" || ind.maAngleMaType === "VWMA" ? ind.maAngleMaType : "EMA") : "EMA",
+      maAngleLookback: ind.type === "MA_ANGLE" ? (typeof ind.maAngleLookback === "number" ? Math.max(1, Math.min(50, Math.round(ind.maAngleLookback))) : 3) : 3,
+      maAngleLookbackText: String(ind.type === "MA_ANGLE" ? (typeof ind.maAngleLookback === "number" ? Math.max(1, Math.min(50, Math.round(ind.maAngleLookback))) : 3) : 3),
+      maAngleCenterLine: ind.type === "MA_ANGLE" ? (ind.maAngleCenterLine === true) : false,
+      maAngleCenterLineValue:
+        ind.type === "MA_ANGLE" && ind.maAngleCenterLine && typeof ind.maAngleCenterLineValue === "number" && Number.isFinite(ind.maAngleCenterLineValue)
+          ? ind.maAngleCenterLineValue
+          : 0,
+      maAngleCenterLineValueText:
+        ind.type === "MA_ANGLE" && ind.maAngleCenterLine && typeof ind.maAngleCenterLineValue === "number" && Number.isFinite(ind.maAngleCenterLineValue)
+          ? String(ind.maAngleCenterLineValue)
+          : "0",
+      maAngleCenterLineColor: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineColor ?? "#71717a") : "#71717a",
+      maAngleCenterLineWidth: (ind.type === "MA_ANGLE" && ind.maAngleCenterLine && (ind.maAngleCenterLineWidth === "thin" || ind.maAngleCenterLineWidth === "normal" || ind.maAngleCenterLineWidth === "thick") ? ind.maAngleCenterLineWidth : "normal") as IndicatorLineWidth,
+      maAngleCenterLineStyle: (ind.type === "MA_ANGLE" && ind.maAngleCenterLine && (ind.maAngleCenterLineStyle === "solid" || ind.maAngleCenterLineStyle === "dotted" || ind.maAngleCenterLineStyle === "dashed") ? ind.maAngleCenterLineStyle : "dotted") as IndicatorLineStyle,
+      maAngleLimits: ind.type === "MA_ANGLE" ? (ind.maAngleLimits === true) : false,
+      maAngleLimitUpper:
+        ind.type === "MA_ANGLE" && ind.maAngleLimits && typeof ind.maAngleLimitUpper === "number" && Number.isFinite(ind.maAngleLimitUpper)
+          ? Math.max(-1e15, Math.min(1e15, ind.maAngleLimitUpper))
+          : 0.2,
+      maAngleLimitLower:
+        ind.type === "MA_ANGLE" && ind.maAngleLimits && typeof ind.maAngleLimitLower === "number" && Number.isFinite(ind.maAngleLimitLower)
+          ? Math.max(-1e15, Math.min(1e15, ind.maAngleLimitLower))
+          : -0.2,
+      maAngleLimitUpperText:
+        ind.type === "MA_ANGLE" && ind.maAngleLimits && typeof ind.maAngleLimitUpper === "number" && Number.isFinite(ind.maAngleLimitUpper)
+          ? String(ind.maAngleLimitUpper)
+          : "0.2",
+      maAngleLimitLowerText:
+        ind.type === "MA_ANGLE" && ind.maAngleLimits && typeof ind.maAngleLimitLower === "number" && Number.isFinite(ind.maAngleLimitLower)
+          ? String(ind.maAngleLimitLower)
+          : "-0.2",
+      maAngleLimitColor: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitColor ?? "#dc2626") : "#dc2626",
+      maAngleLimitLineWidth: (ind.type === "MA_ANGLE" && ind.maAngleLimits && (ind.maAngleLimitLineWidth === "thin" || ind.maAngleLimitLineWidth === "normal" || ind.maAngleLimitLineWidth === "thick") ? ind.maAngleLimitLineWidth : "normal") as IndicatorLineWidth,
+      maAngleLimitLineStyle: (ind.type === "MA_ANGLE" && ind.maAngleLimits && (ind.maAngleLimitLineStyle === "solid" || ind.maAngleLimitLineStyle === "dotted" || ind.maAngleLimitLineStyle === "dashed") ? ind.maAngleLimitLineStyle : "dotted") as IndicatorLineStyle,
       cmfFixedScale: ind.type === "CMF" ? (ind.cmfFixedScale === true) : false,
       cmfLimits: ind.type === "CMF" ? (ind.cmfLimits === true) : true,
       cmfLimitUpper: ind.type === "CMF" && ind.cmfLimits ? (typeof ind.cmfLimitUpper === "number" ? Math.max(-1, Math.min(1, ind.cmfLimitUpper)) : 0.25) : 0.25,
@@ -1131,7 +1214,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
             : ind?.type === "HMA_CUSTOM" && hmaEditParsed
               ? hmaEditParsed.hmaCustomLongPeriod
               : periodNum,
-      fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : ind?.type === "DIFF" ? (editForm.diffSecondFieldKey ?? editForm.fieldKey) : editForm.fieldKey,
+      fieldKey: ind?.type === "OBV" || ind?.type === "AD" || ind?.type === "Volume" ? "volume" : ind?.type === "CCI" ? (editForm.fieldKey ?? "HLC3") : ind?.type === "MA_ANGLE" ? (editForm.fieldKey ?? "close") : ind?.type === "DIFF" ? (editForm.diffSecondFieldKey ?? editForm.fieldKey) : editForm.fieldKey,
       color:
         ind?.type === "Bollinger"
           ? editForm.bollingerLimitsColor
@@ -1193,6 +1276,7 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         diffHistogram: editForm.diffSignalLine && editForm.diffHistogram,
         diffHistogramColorAbove: editForm.diffSignalLine && editForm.diffHistogram ? editForm.diffHistogramColorAbove : undefined,
         diffHistogramColorBelow: editForm.diffSignalLine && editForm.diffHistogram ? editForm.diffHistogramColorBelow : undefined,
+        diffRelativePercent: editForm.diffRelativePercent === true,
       } : {}),
       ...(ind?.type === "Stochastic" ? {
         stochLimits: editForm.stochLimits,
@@ -1245,6 +1329,34 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
         cciAsHistogram: editForm.cciAsHistogram,
         cciHistogramColorAbove: editForm.cciHistogramColorAbove,
         cciHistogramColorBelow: editForm.cciHistogramColorBelow,
+      } : {}),
+      ...(ind?.type === "MA_ANGLE" ? {
+        maAngleMaType: editForm.maAngleMaType,
+        maAngleLookback: Math.max(1, Math.min(50, Number(editForm.maAngleLookbackText) || 3)),
+        maAngleCenterLine: editForm.maAngleCenterLine,
+        ...(editForm.maAngleCenterLine === true
+          ? (() => {
+              const cv = parseFloat(editForm.maAngleCenterLineValueText.replace(",", "."));
+              return { maAngleCenterLineValue: Number.isFinite(cv) ? Math.max(-1e15, Math.min(1e15, cv)) : 0 };
+            })()
+          : {}),
+        maAngleCenterLineColor: editForm.maAngleCenterLineColor,
+        maAngleCenterLineWidth: editForm.maAngleCenterLineWidth,
+        maAngleCenterLineStyle: editForm.maAngleCenterLineStyle,
+        maAngleLimits: editForm.maAngleLimits,
+        ...(editForm.maAngleLimits
+          ? (() => {
+              const lu = parseFloat(editForm.maAngleLimitUpperText.replace(",", "."));
+              const ll = parseFloat(editForm.maAngleLimitLowerText.replace(",", "."));
+              return {
+                maAngleLimitUpper: Number.isFinite(lu) ? Math.max(-1e15, Math.min(1e15, lu)) : 0.2,
+                maAngleLimitLower: Number.isFinite(ll) ? Math.max(-1e15, Math.min(1e15, ll)) : -0.2,
+              };
+            })()
+          : {}),
+        maAngleLimitColor: editForm.maAngleLimitColor,
+        maAngleLimitLineWidth: editForm.maAngleLimitLineWidth,
+        maAngleLimitLineStyle: editForm.maAngleLimitLineStyle,
       } : {}),
       ...(ind?.type === "CMF" ? {
         cmfFixedScale: editForm.cmfFixedScale,

@@ -3,7 +3,7 @@
 /**
  * Eixo Y (USDT) à direita do gráfico: ticks, último fechamento, valores dos indicadores, marcador do crosshair.
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Y_AXIS_WIDTH } from "../KlinesChartConstants";
 import type { ChartIndicatorLine } from "./types";
 
@@ -133,27 +133,33 @@ export function KlinesChartYAxis({
   const textX = 4;
 
   const [countdown, setCountdown] = useState<string | null>(null);
+  const closeTimeRef = useRef(currentCandleCloseTimeMs);
+  closeTimeRef.current = currentCandleCloseTimeMs;
+
   useEffect(() => {
-    if (currentCandleCloseTimeMs == null || (groupMinutes != null && groupMinutes > 1440)) {
-      setCountdown(null);
+    if (!showCandleCountdown) {
+      setCountdown((p) => (p === null ? p : null));
       return;
     }
     const tick = () => {
-      const remaining = currentCandleCloseTimeMs - Date.now();
-      if (remaining <= 0) {
-        setCountdown(null);
+      const closeMs = closeTimeRef.current;
+      if (closeMs == null || (groupMinutes != null && groupMinutes > 1440)) {
+        setCountdown((p) => (p === null ? p : null));
         return;
       }
-      if (remaining < MS_24H) {
-        setCountdown(formatCountdown(remaining));
-      } else {
-        setCountdown(null);
-      }
+      const remaining = closeMs - Date.now();
+      setCountdown((prev) => {
+        let next: string | null;
+        if (remaining <= 0) next = null;
+        else if (remaining < MS_24H) next = formatCountdown(remaining);
+        else next = null;
+        return prev === next ? prev : next;
+      });
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [currentCandleCloseTimeMs, groupMinutes]);
+  }, [showCandleCountdown, groupMinutes, currentCandleCloseTimeMs]);
 
   const crosshairActive =
     crosshairPoint !== null && crosshairPoint.index >= 0 && crosshairPoint.index < n;

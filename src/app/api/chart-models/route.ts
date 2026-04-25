@@ -166,6 +166,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, slot });
   }
 
+  /** Renomear sem reenviar config (evita 400 quando o cliente não tem `config` no estado). */
+  if (name !== undefined) {
+    const existing = await cryptoPrisma.chartModel.findUnique({
+      where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
+      select: { slot: true },
+    });
+    if (!existing) {
+      return NextResponse.json(
+        { error: "model_not_found", message: "Save the model at least once before renaming" },
+        { status: 404 }
+      );
+    }
+    await cryptoPrisma.chartModel.update({
+      where: { userId_slot: { userId: ADMIN_USER_ID, slot } },
+      data: { name },
+    });
+    return NextResponse.json({ ok: true, slot });
+  }
+
   return NextResponse.json({
     error: "invalid_body",
     message: "Send config or at least one of layout, indicators, strategies, regressions, others",

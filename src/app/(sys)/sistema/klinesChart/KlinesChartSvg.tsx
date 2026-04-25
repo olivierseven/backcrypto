@@ -1116,18 +1116,45 @@ export function KlinesChartSvg({
                   />
                 );
               })}
-              {panelLines.filter((ind) => (ind.type === "RSI" && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine)).map((ind, idx) => {
-                const y50 = yPanel(50);
-                const cStrokeWidth = ind.type === "RSI" ? lineWidthToStroke(ind.rsiCenterLineWidth) : lineWidthToStroke(ind.mfiCenterLineWidth);
-                const cStrokeDasharray = ind.type === "RSI" ? (ind.rsiCenterLineStyle === "dotted" ? "1 2" : ind.rsiCenterLineStyle === "dashed" ? "6 4" : undefined) : (ind.mfiCenterLineStyle === "dotted" ? "1 2" : ind.mfiCenterLineStyle === "dashed" ? "6 4" : undefined);
-                const cColor = ind.type === "RSI" ? (ind.rsiCenterLineColor ?? "#71717a") : (ind.mfiCenterLineColor ?? "#71717a");
+              {panelLines.filter((ind) => (ind.type === "RSI" && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine) || (ind.type === "MA_ANGLE" && ind.maAngleCenterLine)).map((ind, idx) => {
+                const yCenter = ind.type === "MA_ANGLE" ? yPanel(ind.maAngleCenterLineValue ?? 0) : yPanel(50);
+                const cStrokeWidth =
+                  ind.type === "MA_ANGLE"
+                    ? lineWidthToStroke(ind.maAngleCenterLineWidth)
+                    : ind.type === "RSI"
+                      ? lineWidthToStroke(ind.rsiCenterLineWidth)
+                      : lineWidthToStroke(ind.mfiCenterLineWidth);
+                const cStrokeDasharray =
+                  ind.type === "MA_ANGLE"
+                    ? ind.maAngleCenterLineStyle === "dotted"
+                      ? "1 2"
+                      : ind.maAngleCenterLineStyle === "dashed"
+                        ? "6 4"
+                        : undefined
+                    : ind.type === "RSI"
+                      ? ind.rsiCenterLineStyle === "dotted"
+                        ? "1 2"
+                        : ind.rsiCenterLineStyle === "dashed"
+                          ? "6 4"
+                          : undefined
+                      : ind.mfiCenterLineStyle === "dotted"
+                        ? "1 2"
+                        : ind.mfiCenterLineStyle === "dashed"
+                          ? "6 4"
+                          : undefined;
+                const cColor =
+                  ind.type === "MA_ANGLE"
+                    ? (ind.maAngleCenterLineColor ?? "#71717a")
+                    : ind.type === "RSI"
+                      ? (ind.rsiCenterLineColor ?? "#71717a")
+                      : (ind.mfiCenterLineColor ?? "#71717a");
                 return (
                   <line
                     key={`center-${idx}`}
                     x1={MARGIN_LEFT}
-                    y1={y50}
+                    y1={yCenter}
                     x2={MARGIN_LEFT + chartW}
-                    y2={y50}
+                    y2={yCenter}
                     stroke={cColor}
                     strokeWidth={cStrokeWidth}
                     strokeDasharray={cStrokeDasharray}
@@ -1144,6 +1171,21 @@ export function KlinesChartSvg({
                 const stroke = ind.rsiLimitColor ?? "#dc2626";
                 return (
                   <g key={`limits-${idx}`}>
+                    <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                    <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
+                  </g>
+                );
+              })}
+              {panelLines.filter((ind) => ind.type === "MA_ANGLE" && ind.maAngleLimits).map((ind, idx) => {
+                const upper = typeof ind.maAngleLimitUpper === "number" && Number.isFinite(ind.maAngleLimitUpper) ? ind.maAngleLimitUpper : 0.5;
+                const lower = typeof ind.maAngleLimitLower === "number" && Number.isFinite(ind.maAngleLimitLower) ? ind.maAngleLimitLower : -0.5;
+                const yUpper = yPanel(upper);
+                const yLower = yPanel(lower);
+                const lStrokeWidth = lineWidthToStroke(ind.maAngleLimitLineWidth);
+                const lStrokeDasharray = ind.maAngleLimitLineStyle === "dotted" ? "1 2" : ind.maAngleLimitLineStyle === "dashed" ? "6 4" : undefined;
+                const stroke = ind.maAngleLimitColor ?? "#dc2626";
+                return (
+                  <g key={`ma-angle-limits-${idx}`}>
                     <line x1={MARGIN_LEFT} y1={yUpper} x2={MARGIN_LEFT + chartW} y2={yUpper} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                     <line x1={MARGIN_LEFT} y1={yLower} x2={MARGIN_LEFT + chartW} y2={yLower} stroke={stroke} strokeWidth={lStrokeWidth} strokeDasharray={lStrokeDasharray} />
                   </g>

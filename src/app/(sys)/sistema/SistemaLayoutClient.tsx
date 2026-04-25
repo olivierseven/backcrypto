@@ -25,6 +25,7 @@ import RegressionsPanel from "./RegressionsPanel";
 import RobotsPanel from "./RobotsPanel";
 import BacktestPanel from "./BacktestPanel";
 import { SistemaDebugProvider } from "./SistemaDebugContext";
+import NavigationPerfDebug from "./NavigationPerfDebug";
 import { ChartHeaderProvider } from "./ChartHeaderContext";
 import HeaderIntervalDropdown from "./HeaderIntervalDropdown";
 import { ChartSymbolProvider, useChartSymbol } from "./ChartSymbolContext";
@@ -749,6 +750,7 @@ function SistemaLayoutInner({
 
   return (
     <SistemaDebugProvider>
+      <NavigationPerfDebug />
       <ChartHeaderProvider>
         <ChartSymbolProvider>
           <ChartLayoutSaveProvider>

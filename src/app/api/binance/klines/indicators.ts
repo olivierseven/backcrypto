@@ -1621,3 +1621,56 @@ export function computeCmfColumn(
   }
   return out;
 }
+
+export type MaAngleMaType = "SMA" | "EMA" | "WMA" | "HMA" | "VWMA";
+
+export function normalizeMaAngleMaType(t: string | undefined): MaAngleMaType {
+  if (t === "SMA" || t === "EMA" || t === "WMA" || t === "HMA" || t === "VWMA") return t;
+  return "EMA";
+}
+
+/**
+ * Inclinação da média móvel em graus (dados DESC: índice 0 = mais recente).
+ * Para cada `i`: compara `ma[i]` com `ma[i+k]` (k velas mais antigas).
+ * Eixo X: cada barra conta como uma unidade de comprimento igual ao ATR na vela `i`
+ * (`atr` deve ser o ATR Wilder com o mesmo período usado no indicador da MA).
+ * O “run” horizontal é `k × ATR[i]`.
+ * `atan2(ma[i] − ma[i+k], k × ATR[i]) × 180/π` — negativo = tendência a baixo, positivo = a subir.
+ */
+export function computeMaAngleColumn(
+  ma: (number | null)[],
+  lookback: number,
+  atr: (number | null)[]
+): (number | null)[] {
+  const k = Math.max(1, Math.min(50, Math.round(lookback)));
+  const n = ma.length;
+  const RAD = 180 / Math.PI;
+  const EPS = 1e-12;
+  const out: (number | null)[] = [];
+  if (atr.length !== n) {
+    for (let i = 0; i < n; i++) out.push(null);
+    return out;
+  }
+  for (let i = 0; i < n; i++) {
+    const j = i + k;
+    if (j >= n) {
+      out.push(null);
+      continue;
+    }
+    const yCur = ma[i];
+    const yOld = ma[j];
+    if (yCur == null || yOld == null || !Number.isFinite(yCur) || !Number.isFinite(yOld)) {
+      out.push(null);
+      continue;
+    }
+    const atrI = atr[i];
+    if (atrI == null || !Number.isFinite(atrI)) {
+      out.push(null);
+      continue;
+    }
+    const rise = yCur - yOld;
+    const runX = k * Math.max(EPS, atrI);
+    out.push(Math.atan2(rise, runX) * RAD);
+  }
+  return out;
+}

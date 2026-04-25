@@ -62,7 +62,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   const firstForEdit = (visibleForEdit[0]?.value ?? (ind.type === "WilliamsR" ? "close" : firstEnabledFieldValue)) as IndicatorFieldKey;
   const editFieldValue = (visibleForEdit.some((o) => o.value === editForm?.fieldKey) ? editForm!.fieldKey : firstForEdit) as string;
 
-  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? "panel2" : "main");
+  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" || ind.type === "Volume" ? "panel2" : "main");
   const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : panel === "panel6" ? "6" : panel === "panel7" ? "7" : null;
 
   const tRecord = t as Record<string, string>;
@@ -91,6 +91,16 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     ],
     [tRecord]
   );
+  const maAngleMaTypeOptions: ComboboxOption[] = useMemo(
+    () => [
+      { value: "SMA", label: "SMA" },
+      { value: "EMA", label: "EMA" },
+      { value: "WMA", label: "WMA" },
+      { value: "HMA", label: tRecord.hmaLabel ?? "HMA" },
+      { value: "VWMA", label: tRecord.vwmaLabel ?? "VWMA" },
+    ],
+    [tRecord]
+  );
   const hmaCustomLegMaTypeOptions: ComboboxOption[] = macdMaTypeOptions;
   const wma2UnitOptions: ComboboxOption[] = useMemo(
     () => [
@@ -108,7 +118,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
     const p6 = tRecord.chartOptionPanel6 ?? "Panel 6";
     const p7 = tRecord.chartOptionPanel7 ?? "Panel 7";
     const main = tRecord.chartOptionMain ?? "Main";
-    if (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume") {
+    if (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" || ind.type === "Volume") {
       const opts: ComboboxOption[] = [];
       if (panelsFreeForSecondaryEdit.panel2) opts.push({ value: "panel2", label: p2 });
       if (panelsFreeForSecondaryEdit.panel3) opts.push({ value: "panel3", label: p3 });
@@ -348,6 +358,15 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2 (B)"}</span>
                 <Combobox value={editForm.diffSecondFieldKey} onChange={(v) => setEditForm((f) => (f ? { ...f, diffSecondFieldKey: v as IndicatorFieldKey, fieldKey: v as IndicatorFieldKey } : f))} options={visibleForEdit.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))} className="flex-1 min-w-0" size="md" aria-label={(t as Record<string, string>).diffSecondInputLabel ?? "Entrada 2"} />
               </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editForm.diffRelativePercent}
+                  onChange={(e) => setEditForm((f) => (f ? { ...f, diffRelativePercent: e.target.checked } : f))}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).diffRelativePercentLabel ?? "Diferença % vs. entrada 1 (A)"}</span>
+              </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={editForm.diffSignalLine} onChange={(e) => setEditForm((f) => (f ? { ...f, diffSignalLine: e.target.checked } : f))} className="rounded border-zinc-300" />
                 <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdSignalLineLabel ?? "Linha de sinal"}</span>
@@ -1123,7 +1142,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
             </div>
           ) : (
           <>
-          {!["ATR", "ADX", "VWAP", "Donchian", "Ichimoku"].includes(ind.type as string) && (
+          {!["ATR", "ADX", "VWAP", "Donchian", "Ichimoku", "CMF"].includes(ind.type as string) && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.field}</span>
               <Combobox value={editFieldValue} onChange={(v) => setEditForm((f) => (f ? { ...f, fieldKey: v as IndicatorFieldKey } : f))} options={visibleForEdit.map((o) => ({ value: o.value, label: o.label, disabled: o.disabled }))} className="flex-1 min-w-0" size="md" aria-label={t.field} />
@@ -1162,7 +1181,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
           {!(ind.type === "SAR" || ind.type === "VWAP" || ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian" || ind.type === "HMA" || ind.type === "HMA_CUSTOM" || ind.type === "VWMA" || ind.type === "LINEAR_FIT" || ind.type === "QUADRATIC_FIT" || ind.type === "Ichimoku") && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.chartOption}</span>
-            {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "Volume" ? (
+            {ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" || ind.type === "Volume" ? (
               <Combobox value={editForm.panel} onChange={(v) => setEditForm((f) => (f ? { ...f, panel: v as IndicatorPanel } : f))} options={editPanelOptions} className="flex-1 min-w-0" size="md" aria-label={t.chartOption} />
             ) : (
               <Combobox value={editForm.panel} onChange={(v) => setEditForm((f) => (f ? { ...f, panel: v as IndicatorPanel } : f))} options={editPanelOptions} className="flex-1 min-w-0" size="md" aria-label={t.chartOption} />
@@ -1438,6 +1457,127 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
                     <Combobox value={editForm.cciLimitLineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, cciLimitLineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle} />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {ind.type === "MA_ANGLE" && (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).maAngleMaTypeLabel ?? "Tipo MA"}</span>
+                <Combobox
+                  value={editForm.maAngleMaType}
+                  onChange={(v) => setEditForm((f) => (f ? { ...f, maAngleMaType: v as EditFormState["maAngleMaType"] } : f))}
+                  options={maAngleMaTypeOptions}
+                  className="flex-1 min-w-0"
+                  size="md"
+                  aria-label={(t as Record<string, string>).maAngleMaTypeLabel ?? "Tipo MA"}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).maAngleLookbackLabel ?? "Barras (L)"}</span>
+                <div className="flex items-center gap-1">
+                  <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, maAngleLookback: Math.max(1, f.maAngleLookback - 1), maAngleLookbackText: String(Math.max(1, f.maAngleLookback - 1)) } : f))} className="stepper-btn">
+                    −
+                  </StepperButton>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.maAngleLookbackText}
+                    onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleLookbackText: e.target.value.replace(/[^\d]/g, "") } : f))}
+                    onBlur={() => {
+                      const n = Number(editForm.maAngleLookbackText);
+                      const v = Number.isFinite(n) && n > 0 ? Math.max(1, Math.min(50, Math.round(n))) : 3;
+                      setEditForm((f) => (f ? { ...f, maAngleLookback: v, maAngleLookbackText: String(v) } : f));
+                    }}
+                    className="w-14 text-center tabular-nums text-xs border border-zinc-300 rounded px-2 py-1"
+                    aria-label={(t as Record<string, string>).maAngleLookbackLabel ?? "Lookback"}
+                  />
+                  <StepperButton onStep={() => setEditForm((f) => (f ? { ...f, maAngleLookback: Math.min(50, f.maAngleLookback + 1), maAngleLookbackText: String(Math.min(50, f.maAngleLookback + 1)) } : f))} className="stepper-btn">
+                    +
+                  </StepperButton>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.maAngleCenterLine} onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleCenterLine: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).maAngleCenterLineLabel ?? "Linha de referência"}</span>
+              </label>
+              {editForm.maAngleCenterLine && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).maAngleCenterLineValueLabel ?? "Valor Y"}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editForm.maAngleCenterLineValueText}
+                      onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleCenterLineValueText: e.target.value } : f))}
+                      onBlur={() => {
+                        const v = parseFloat(editForm.maAngleCenterLineValueText.replace(",", "."));
+                        if (Number.isFinite(v)) setEditForm((f) => (f ? { ...f, maAngleCenterLineValue: v } : f));
+                      }}
+                      className="w-20 text-xs tabular-nums border border-zinc-300 rounded px-2 py-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <ColorPaletteCombobox value={editForm.maAngleCenterLineColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, maAngleCenterLineColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                    <Combobox value={editForm.maAngleCenterLineWidth} onChange={(v) => setEditForm((f) => (f ? { ...f, maAngleCenterLineWidth: v as IndicatorLineWidth } : f))} options={lineWidthOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineWidth} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                    <Combobox value={editForm.maAngleCenterLineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, maAngleCenterLineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle} />
+                  </div>
+                </div>
+              )}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.maAngleLimits} onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleLimits: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).maAngleLimitsLabel ?? "Limites (valor Y)"}</span>
+              </label>
+              {editForm.maAngleLimits && (
+                <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).maAngleLimitUpperLabel ?? "Sup."}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editForm.maAngleLimitUpperText}
+                      onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleLimitUpperText: e.target.value } : f))}
+                      onBlur={() => {
+                        const v = parseFloat(editForm.maAngleLimitUpperText.replace(",", "."));
+                        if (Number.isFinite(v)) setEditForm((f) => (f ? { ...f, maAngleLimitUpper: v } : f));
+                      }}
+                      className="w-20 text-xs tabular-nums border border-zinc-300 rounded px-2 py-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).maAngleLimitLowerLabel ?? "Inf."}</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editForm.maAngleLimitLowerText}
+                      onChange={(e) => setEditForm((f) => (f ? { ...f, maAngleLimitLowerText: e.target.value } : f))}
+                      onBlur={() => {
+                        const v = parseFloat(editForm.maAngleLimitLowerText.replace(",", "."));
+                        if (Number.isFinite(v)) setEditForm((f) => (f ? { ...f, maAngleLimitLower: v } : f));
+                      }}
+                      className="w-20 text-xs tabular-nums border border-zinc-300 rounded px-2 py-1"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{t.color}</span>
+                    <ColorPaletteCombobox value={editForm.maAngleLimitColor} onChange={(hex) => setEditForm((f) => (f ? { ...f, maAngleLimitColor: hex } : f))} palette={INDICATOR_COLOR_PALETTE} aria-label={t.color} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineWidth}</span>
+                    <Combobox value={editForm.maAngleLimitLineWidth} onChange={(v) => setEditForm((f) => (f ? { ...f, maAngleLimitLineWidth: v as IndicatorLineWidth } : f))} options={lineWidthOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineWidth} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).lineStyle}</span>
+                    <Combobox value={editForm.maAngleLimitLineStyle} onChange={(v) => setEditForm((f) => (f ? { ...f, maAngleLimitLineStyle: v as IndicatorLineStyle } : f))} options={lineStyleOptions} className="flex-1 min-w-0" size="md" aria-label={tRecord.lineStyle} />
                   </div>
                 </div>
               )}
