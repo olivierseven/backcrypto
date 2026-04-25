@@ -13,7 +13,7 @@ import { flushSync } from "react-dom";
 import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns, computeMaAngleColumn, normalizeMaAngleMaType } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator, type UserIndicatorConfig } from "./KlinesIndicatorsContext";
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -64,20 +64,32 @@ import {
 } from "./robotLiveSessionSync";
 import {
   buyerAllowsAccumulationBuy,
+  buyerLimitBuyMaxPriceBelowCandleOpen,
+  buyerMarketBuyRefStrictlyBelowCandleOpen,
+  buyerRefAllowsNextBuy,
   flattenBreakevenThresholdPrice,
   longFlattenCloseBreakeven,
 } from "./robotPriceLegRules";
 import {
   computeNominalBuyOperationUsdt,
+  cancelRobotSpotOrder,
   computeRobotMarketBuyQuoteUsdt,
   dispatchRobotPositionBuy,
   dispatchRobotPositionSellClear,
   dispatchSpotOrderPlaced,
   parseMarketOrderFill,
+  parseSpotOrderState,
+  submitRobotLimitBuyOrder,
   submitRobotMarketBuyOrder,
   submitRobotMarketSellOrder,
+  syncRobotSpotOrder,
 } from "./robotLiveOrders";
 import { evaluateNode } from "./strategies/strategyEvaluator";
+import {
+  indicatorColumnSpan,
+  indicatorColumnStart,
+  topologicalUserIndicatorOrder,
+} from "./indicatorsPanel/indicatorsPanelUtils";
 import {
   Y_AXIS_WIDTH,
   KLINE_GROUP_MINUTES_KEY,
@@ -133,6 +145,24 @@ function subscribeKlinesLayoutDefault(callback: () => void) {
 function snapshotKlinesLayoutIsDefault(): boolean {
   if (typeof window === "undefined") return true;
   return isKlinesDefaultLayoutStorageRaw(getKlineLastLayoutStorage());
+}
+
+function buyerSignalExitMeetsMinEdge(robot: SavedRobot, refPrice: number, avgBuyPrice: number): boolean {
+  if (!Number.isFinite(refPrice) || refPrice <= 0) return false;
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return false;
+  const minEdgePctRaw = robot.signalExitMinEdgePercent ?? 0;
+  const minEdgePct = Number.isFinite(minEdgePctRaw) ? Math.max(0, minEdgePctRaw) : 0;
+  if (minEdgePct <= 1e-12) return true;
+  return refPrice >= avgBuyPrice * (1 + minEdgePct / 100) - 1e-9;
+}
+
+function buyerAlertArmMeetsMinEdge(robot: SavedRobot, refPrice: number, avgBuyPrice: number): boolean {
+  if (!Number.isFinite(refPrice) || refPrice <= 0) return false;
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return false;
+  const minEdgePctRaw = robot.alertArmMinEdgePercent ?? 0;
+  const minEdgePct = Number.isFinite(minEdgePctRaw) ? Math.max(0, minEdgePctRaw) : 0;
+  if (minEdgePct <= 1e-12) return true;
+  return refPrice >= avgBuyPrice * (1 + minEdgePct / 100) - 1e-9;
 }
 
 /** Largura reservada à direita para a barra de rolagem vertical ficar fora do gráfico (não cobrir o eixo Y). */
@@ -218,14 +248,16 @@ const REFRESH_MS = 1 * 60 * 1000; // 1 min
 const AGG_ATEMPORAL_CACHE_REFRESH_MS = 2 * 60 * 1000;
 const AGG_CACHE_REFRESH_WINDOW_MS = 60 * 60 * 1000; // 1h
 
-/** Alinhado ao `limit` do GET kline-cache2 e ao `maxBars` do merge agg; acima disto refetch do cache. */
-const AGG_KLINE_CACHE_LIMIT = 5000;
+/** Fallback até o primeiro GET kline-cache2 devolver `maxBars` (AppConfig AGG_ATEMPORAL_KLINE_CACHE_LIMIT). */
+const FALLBACK_AGG_KLINE_CACHE_LIMIT = 5000;
 
 function mergeRecentCacheWindow(
   prev: readonly Kline[],
   next: readonly Kline[],
-  windowMs: number
+  windowMs: number,
+  maxBars: number
 ): Kline[] {
+  const cap = Number.isFinite(maxBars) && maxBars > 0 ? Math.floor(maxBars) : FALLBACK_AGG_KLINE_CACHE_LIMIT;
   if (prev.length === 0) return [...next];
   if (next.length === 0) return [...prev];
   const newestOpenTime = Number(next[0]?.[0]);
@@ -235,7 +267,7 @@ function mergeRecentCacheWindow(
   const olderPrev = prev.filter((row) => Number(row[0]) < cutoff);
   return [...recent, ...olderPrev]
     .sort((a, b) => Number(b[0]) - Number(a[0]))
-    .slice(0, AGG_KLINE_CACHE_LIMIT);
+    .slice(0, cap);
 }
 
 const INTERVAL_OPTIONS_BASE: { value: number; label: string; param: string }[] = [
@@ -547,8 +579,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [error, setError] = useState<string | null>(null);
   const [needsRefresh, setNeedsRefresh] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  /** Tick para re-render da bolinha de status (atualiza a cada 15s). */
-  const [, setStatusTick] = useState(0);
   /** Ordens spot (GET /orders) — dados da API; etiquetas no gráfico são só visualização (`showSpotOrderLabels` / séries). */
   const [chartSpotOrdersFromApi, setChartSpotOrdersFromApi] = useState<ChartSpotOrderApiRow[]>([]);
   /** Último resultado do GET /orders (para painel de debug). */
@@ -570,6 +600,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const serverAggKlinesRef = useRef<Kline[]>([]);
   /** Para refetch ao cache só ao cruzar o limite de barras (modo atemporal). */
   const prevAggKlineCountForLimitRef = useRef<number | null>(null);
+  /** Teto de barras atemporais (AppConfig `AGG_ATEMPORAL_KLINE_CACHE_LIMIT` via resposta `maxBars` do GET kline-cache2-bars). */
+  const aggAtemporalKlineCacheLimitRef = useRef(FALLBACK_AGG_KLINE_CACHE_LIMIT);
   /** Topo do último GET kline-cache2 (só servidor); âncora de fecho/open para o aggTrade ao vivo. */
   const [serverNewestKlineFromCache, setServerNewestKlineFromCache] = useState<(string | number)[] | null>(null);
   /** Chave = conteúdo OHLC+vol (sem tempos) — mesmo tijolo com openTime/closeTime diferentes não duplica. */
@@ -897,12 +929,25 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const extendedKlines = useMemo((): Kline[] => {
     const base = baseForIndicators as (string | number)[][];
     if (base.length === 0 || userIndicators.length === 0) return baseForIndicators;
-    const out = base.map((row) => [...row] as (string | number | null)[]);
+    let totalExtra = 0;
+    for (const ind of userIndicators) totalExtra += indicatorColumnSpan(ind);
+    const out = base.map((row) =>
+      [...row, ...Array(totalExtra).fill(null)] as (string | number | null)[]
+    );
     /** Indicadores só leem colunas 0–11 (OHLC etc.); fazer cast para satisfazer a API. */
     const data = out as (string | number)[][];
-    for (let u = 0; u < userIndicators.length; u++) {
+    const writeBlock = (colStart: number, cols: (number | null)[][]) => {
+      const n = out.length;
+      for (let k = 0; k < cols.length; k++) {
+        const series = cols[k]!;
+        for (let i = 0; i < n; i++) out[i]![colStart + k] = series[i] ?? null;
+      }
+    };
+    const order = topologicalUserIndicatorOrder(userIndicators);
+    for (const u of order) {
       const ind = userIndicators[u];
       if (ind.type === "Volume") continue;
+      const colStart = indicatorColumnStart(userIndicators, u);
       const { data: dataForInd, valueIndex } = getDataAndValueIndexForIndicator(data, ind.fieldKey, userIndicators);
       const ma2ChartMinutes = chartMinutesForTimeWindowMa2(groupMinutes);
       const ma2Unit =
@@ -924,9 +969,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           normalizeMacdMaType(ind.macdSlowMaType),
           ind.macdSlowPeriod ?? 26
         );
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
         if (ind.macdSignalLine) {
-          const macdColIndex = out[0].length - 1;
+          const macdColIndex = colStart;
           const signalPeriod = Math.max(1, Math.min(500, ind.macdSignalPeriod ?? 9));
           const signalCol = computeMaColumn(
             out as (string | number | null)[][],
@@ -934,33 +979,45 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             normalizeMacdMaType(ind.macdSignalMaType),
             signalPeriod
           );
-          for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
+          writeBlock(colStart + 1, [signalCol]);
           if (ind.macdHistogram) {
-            const signalColIndex = out[0].length - 1;
+            const signalColIndex = colStart + 1;
+            const hist: (number | null)[] = [];
             for (let i = 0; i < out.length; i++) {
               const macdVal = out[i][macdColIndex];
               const sigVal = out[i][signalColIndex];
-              const hist = macdVal != null && sigVal != null && Number.isFinite(Number(macdVal)) && Number.isFinite(Number(sigVal))
-                ? (Number(macdVal) - Number(sigVal))
-                : null;
-              out[i].push(hist);
+              hist.push(
+                macdVal != null && sigVal != null && Number.isFinite(Number(macdVal)) && Number.isFinite(Number(sigVal))
+                  ? Number(macdVal) - Number(sigVal)
+                  : null
+              );
             }
+            writeBlock(colStart + 2, [hist]);
           }
         }
       } else if (ind.type === "DIFF") {
         const first = getDataAndValueIndexForIndicator(data, ind.diffFirstFieldKey ?? "close", userIndicators);
         const second = getDataAndValueIndexForIndicator(data, ind.diffSecondFieldKey ?? ind.fieldKey ?? "close", userIndicators);
+        const relPct = ind.diffRelativePercent === true;
         const diffCol: (number | null)[] = [];
         for (let i = 0; i < out.length; i++) {
           const a = first.data[i]?.[first.valueIndex];
           const b = second.data[i]?.[second.valueIndex];
           const av = a != null ? Number(a) : NaN;
           const bv = b != null ? Number(b) : NaN;
-          diffCol.push(Number.isFinite(av) && Number.isFinite(bv) ? (bv - av) : null);
+          if (!Number.isFinite(av) || !Number.isFinite(bv)) {
+            diffCol.push(null);
+            continue;
+          }
+          if (relPct) {
+            diffCol.push(av !== 0 ? ((bv - av) / av) * 100 : null);
+          } else {
+            diffCol.push(bv - av);
+          }
         }
-        for (let i = 0; i < out.length; i++) out[i].push(diffCol[i] ?? null);
+        writeBlock(colStart, [diffCol]);
         if (ind.diffSignalLine) {
-          const diffColIndex = out[0].length - 1;
+          const diffColIndex = colStart;
           const signalPeriod = Math.max(1, Math.min(500, ind.diffSignalPeriod ?? 9));
           const signalCol = computeMaColumn(
             out as (string | number | null)[][],
@@ -968,24 +1025,27 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             normalizeMacdMaType(ind.diffSignalMaType),
             signalPeriod
           );
-          for (let i = 0; i < out.length; i++) out[i].push(signalCol[i] ?? null);
+          writeBlock(colStart + 1, [signalCol]);
           if (ind.diffHistogram) {
-            const signalColIndex = out[0].length - 1;
+            const signalColIndex = colStart + 1;
+            const hist: (number | null)[] = [];
             for (let i = 0; i < out.length; i++) {
               const diffVal = out[i][diffColIndex];
               const sigVal = out[i][signalColIndex];
-              const hist = diffVal != null && sigVal != null && Number.isFinite(Number(diffVal)) && Number.isFinite(Number(sigVal))
-                ? (Number(diffVal) - Number(sigVal))
-                : null;
-              out[i].push(hist);
+              hist.push(
+                diffVal != null && sigVal != null && Number.isFinite(Number(diffVal)) && Number.isFinite(Number(sigVal))
+                  ? Number(diffVal) - Number(sigVal)
+                  : null
+              );
             }
+            writeBlock(colStart + 2, [hist]);
           }
         }
       } else if (ind.type === "Stochastic") {
         const kCol = computeStochasticKColumn(dataForInd, period, valueIndex);
-        for (let i = 0; i < out.length; i++) out[i].push(kCol[i] ?? null);
+        writeBlock(colStart, [kCol]);
         if (ind.stochDLine) {
-          const kColIndex = out[0].length - 1;
+          const kColIndex = colStart;
           const dPeriod = Math.max(1, Math.min(500, ind.stochDPeriod ?? 3));
           const dCol =
             (ind.stochDMaType ?? "SMA") === "EMA"
@@ -993,87 +1053,84 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               : (ind.stochDMaType ?? "SMA") === "WMA"
                 ? computeWmaColumn(out, kColIndex, dPeriod)
                 : computeSmaColumn(out, kColIndex, dPeriod);
-          for (let i = 0; i < out.length; i++) out[i].push(dCol[i] ?? null);
+          writeBlock(colStart + 1, [dCol]);
         }
       } else if (ind.type === "WilliamsR") {
         const wrValueIndex = (valueIndex === 1 || valueIndex === 4) ? valueIndex : 4;
         const wrCol = computeWilliamsRColumn(dataForInd, period, wrValueIndex);
-        for (let i = 0; i < out.length; i++) out[i].push(wrCol[i] ?? null);
+        writeBlock(colStart, [wrCol]);
       } else if (ind.type === "OBV") {
         const volIdx = ind.obvVolumeSource === "usdt" ? 7 : 5;
         const col = computeObvColumn(data, volIdx);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "AD") {
         const volIdx = ind.adVolumeSource === "usdt" ? 7 : 5;
         const col = computeAdColumn(data, volIdx);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "SAR") {
         const start = typeof ind.sarStart === "number" ? Math.max(0.001, Math.min(1, ind.sarStart)) : 0.02;
         const inc = typeof ind.sarIncrement === "number" ? Math.max(0.001, Math.min(1, ind.sarIncrement)) : 0.02;
         const max = typeof ind.sarMax === "number" ? Math.max(0.02, Math.min(1, ind.sarMax)) : 0.2;
         const col = computeParabolicSarColumn(data, start, inc, max);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "ATR") {
         const col = computeAtrColumn(data, period);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "VWAP") {
         const col = computeVwapColumn(data);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "Bollinger") {
         const z = typeof ind.bollingerZ === "number" ? Math.max(0, Math.min(3, ind.bollingerZ)) : 2;
         const { upper, middle, lower } = computeBollingerBands(dataForInd, valueIndex, period, ind.bollingerMaType ?? "SMA", z);
-        for (let i = 0; i < out.length; i++) {
-          out[i].push(upper[i] ?? null);
-          out[i].push(middle[i] ?? null);
-          out[i].push(lower[i] ?? null);
-        }
+        writeBlock(colStart, [upper, middle, lower]);
       } else if (ind.type === "Keltner") {
         const mult = typeof ind.keltnerMultiplier === "number" ? Math.max(0, Math.min(10, ind.keltnerMultiplier)) : 2;
         const { upper, middle, lower } = computeKeltnerChannels(data, valueIndex, period, ind.keltnerMaType ?? "EMA", mult);
-        for (let i = 0; i < out.length; i++) {
-          out[i].push(upper[i] ?? null);
-          out[i].push(middle[i] ?? null);
-          out[i].push(lower[i] ?? null);
-        }
+        writeBlock(colStart, [upper, middle, lower]);
       } else if (ind.type === "Donchian") {
         const { upper, middle, lower } = computeDonchianChannels(dataForInd, period);
-        for (let i = 0; i < out.length; i++) {
-          out[i].push(upper[i] ?? null);
-          out[i].push(middle[i] ?? null);
-          out[i].push(lower[i] ?? null);
-        }
+        writeBlock(colStart, [upper, middle, lower]);
       } else if (ind.type === "Ichimoku") {
         const tenkanP = typeof ind.ichimokuTenkanPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuTenkanPeriod)) : 9;
         const kijunP = typeof ind.ichimokuKijunPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuKijunPeriod)) : 26;
         const spanBP = typeof ind.ichimokuSpanBPeriod === "number" ? Math.max(1, Math.min(500, ind.ichimokuSpanBPeriod)) : 52;
         const disp = typeof ind.ichimokuDisplacement === "number" ? Math.max(0, Math.min(500, ind.ichimokuDisplacement)) : 26;
         const { tenkan, kijun, spanBRaw, chikou } = computeIchimokuColumns(data, tenkanP, kijunP, spanBP, disp);
+        const spanA: (number | null)[] = [];
         for (let i = 0; i < out.length; i++) {
           const t = tenkan[i];
           const k = kijun[i];
-          const spanA = t != null && k != null ? (t + k) / 2 : null;
-          out[i].push(t ?? null);
-          out[i].push(k ?? null);
-          out[i].push(spanA);
-          out[i].push(spanBRaw[i] ?? null);
-          out[i].push(chikou[i] ?? null);
+          spanA.push(t != null && k != null ? (t + k) / 2 : null);
         }
+        writeBlock(colStart, [tenkan, kijun, spanA, spanBRaw, chikou]);
       } else if (ind.type === "ADX") {
         const { plusDi, minusDi, adx } = computeAdxColumns(data, period);
-        for (let i = 0; i < out.length; i++) {
-          out[i].push(plusDi[i] ?? null);
-          out[i].push(minusDi[i] ?? null);
-          out[i].push(adx[i] ?? null);
-        }
+        writeBlock(colStart, [plusDi, minusDi, adx]);
+      } else if (ind.type === "MA_ANGLE") {
+        const mt = normalizeMaAngleMaType(ind.maAngleMaType);
+        const maCol =
+          mt === "SMA"
+            ? computeSmaColumn(dataForInd, valueIndex, period)
+            : mt === "EMA"
+              ? computeEmaColumn(dataForInd, valueIndex, period)
+              : mt === "WMA"
+                ? computeWmaColumn(dataForInd, valueIndex, period)
+                : mt === "HMA"
+                  ? computeHmaColumn(dataForInd, valueIndex, period)
+                  : computeVwmaColumn(dataForInd, valueIndex, period);
+        const lb = Math.max(1, Math.min(50, ind.maAngleLookback ?? 3));
+        const atrCol = computeAtrColumn(dataForInd, period);
+        const angleCol = computeMaAngleColumn(maCol, lb, atrCol);
+        writeBlock(colStart, [angleCol]);
       } else if (ind.type === "CCI") {
         const col = computeCciColumn(dataForInd, valueIndex, period);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "CMF") {
         const col = computeCmfColumn(data, period);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else if (ind.type === "MFI") {
         const col = computeMfiColumn(data, period);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       } else {
         const twMa2 = isTimeWindowMa2Type(ind.type);
         const twSkip = twMa2 && wma2ShouldOmitSeriesOnChart(groupMinutes, data.length, period);
@@ -1125,39 +1182,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                         : ind.type === "RSI"
                           ? computeRsiColumn(dataForInd, valueIndex, period)
                           : computeSmaColumn(dataForInd, valueIndex, period);
-        for (let i = 0; i < out.length; i++) out[i].push(col[i] ?? null);
+        writeBlock(colStart, [col]);
       }
     }
     return out as Kline[];
   }, [baseForIndicators, userIndicators, groupMinutes]);
 
-  /** Índice da primeira coluna de cada indicador. MACD: 1 col; MACD+sinal: 2 col; MACD+sinal+histograma: 3 col. Stochastic: 1 col; Stoch+%D: 2 col. */
-  const getIndicatorColumnStart = useCallback((indicatorIndex: number) => {
-    let col = 12;
-    for (let i = 0; i < indicatorIndex; i++) {
-      const ind = userIndicators[i];
-      if (ind.type === "MACD" || ind.type === "DIFF") {
-        col += 1 + (ind.type === "MACD" ? (ind.macdSignalLine ? 1 : 0) : (ind.diffSignalLine ? 1 : 0)) + (ind.type === "MACD" ? (ind.macdHistogram ? 1 : 0) : (ind.diffHistogram ? 1 : 0));
-      } else if (ind.type === "Stochastic") {
-        col += 1 + (ind.stochDLine ? 1 : 0);
-      } else if (ind.type === "WilliamsR") {
-        col += 1;
-      } else if (ind.type === "Bollinger" || ind.type === "Keltner" || ind.type === "Donchian") {
-        col += 3;
-      } else if (ind.type === "Ichimoku") {
-        col += 5;
-      } else if (ind.type === "ADX") {
-        col += 3;
-      } else if (ind.type === "Volume") {
-        // Volume usa coluna 5 ou 7, não consome slot
-      } else if (ind.type === "OBV" || ind.type === "SAR" || ind.type === "ATR" || ind.type === "VWAP" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MFI") {
-        col += 1;
-      } else {
-        col += 1;
-      }
-    }
-    return col;
-  }, [userIndicators]);
+  /** Índice da primeira coluna de cada indicador (alinhado ao pré-cálculo em `extendedKlines`). */
+  const getIndicatorColumnStart = useCallback(
+    (indicatorIndex: number) => indicatorColumnStart(userIndicators, indicatorIndex),
+    [userIndicators]
+  );
 
   /** Estratégias que se aplicam ao intervalo e símbolo atuais e que estão aplicadas (coluna na tabela). */
   const visibleStrategies = useMemo(
@@ -1231,6 +1266,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const robotBuySignalCountedOpenTimesRef = useRef<Record<string, Set<string>>>({});
   /** Fim do último efeito: havia posição neste robô+par. */
   const robotBuyHadPositionEndRef = useRef<Record<string, boolean>>({});
+  /** LIMIT de 1.ª compra pendente (sync até fill/timeout) por robô+par, quando `firstEntryLimitEnabled`. */
+  const robotFirstEntryLimitPendingRef = useRef<
+    Record<string, { orderId: string; openTime: string; startedCandleIndex: number }>
+  >({});
 
   const robotLiveBuyAccumRefBag = useMemo(
     () => ({
@@ -1427,6 +1466,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const sym = symbol?.trim().toUpperCase() ?? "";
       if (!sym) return;
       clearRobotLiveRefsForRobotSymbol(robotLiveBuyAccumRefBag, id, sym);
+      delete robotFirstEntryLimitPendingRef.current[`${id}::${sym}`];
       setBuyExecMap((prev) => {
         if (!prev[id]) return prev;
         const next = { ...prev };
@@ -1508,6 +1548,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         delete robotBuyAccumCandleIndexRef.current[kArm];
         delete robotBuySequentialSliceUsdtRef.current[kArm];
         delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
+        delete robotFirstEntryLimitPendingRef.current[kArm];
       }
       const buySig = robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotBuyOrTrue);
       if (flat) {
@@ -1545,10 +1586,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (!posArm || posArm.totalBaseQty <= 1e-12) {
         delete armRef[kArm];
       } else {
+        const autoArmByPrice =
+          robot.autoArmByPriceEnabled === true &&
+          refPx != null &&
+          buyerAlertArmMeetsMinEdge(robot, refPx, posArm.avgBuyPrice);
         const flattenHit =
           flattenIds.length > 0 &&
-          robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue);
-        if (armRef[kArm] === true || flattenHit) armRef[kArm] = true;
+          refPx != null &&
+          robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue) &&
+          buyerAlertArmMeetsMinEdge(robot, refPx, posArm.avgBuyPrice);
+        if (armRef[kArm] === true || autoArmByPrice || flattenHit) armRef[kArm] = true;
       }
       syncBuyAccumForRobot(robot);
     }
@@ -1582,16 +1629,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           delete robotBuyAccumCandleIndexRef.current[kArm];
           delete robotBuySequentialSliceUsdtRef.current[kArm];
           delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kArm];
+          delete robotFirstEntryLimitPendingRef.current[kArm];
         }
       }
     }
 
     let shouldRun = false;
     for (const robot of activeBuyerRobots) {
-      const hasFlattenStratIds = (robot.flattenCombinedStrategyIds ?? []).length > 0;
       const hasPostSellStrats = (robot.postFlattenSignalSellCombinedStrategyIds ?? []).length > 0;
       const flattenArmed = armRef[`${robot.id}::${sym}`] === true;
-      if (flattenArmed && hasFlattenStratIds && refPx != null) {
+      if (flattenArmed && refPx != null) {
         const pos = getRobotPosition(robot.id, sym);
         if (
           pos &&
@@ -1614,6 +1661,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (sellSignalOt != null) {
         const pos = getRobotPosition(robot.id, sym);
         if (pos && pos.totalBaseQty > 1e-12) {
+          if (refPx == null || !buyerSignalExitMeetsMinEdge(robot, refPx, pos.avgBuyPrice)) continue;
           const k = `${robot.id}::${sellSignalOt}::sell`;
           if (!robotLiveSellInFlightRef.current.has(k)) shouldRun = true;
         }
@@ -1621,6 +1669,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       const kBuy = `${robot.id}::${sym}`;
       const acc = accumRef[kBuy] === true;
       if (acc && !hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) {
+        if (robotFirstEntryLimitPendingRef.current[kBuy] != null) {
+          shouldRun = true;
+          continue;
+        }
         const posBuy = getRobotPosition(robot.id, sym);
         const buyKeyInflight = `${robot.id}::${ot}::buy`;
         const priceOk =
@@ -1675,15 +1727,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (!posArmLive || posArmLive.totalBaseQty <= 1e-12) {
           delete armRefLive[kArmLive];
         } else {
+          const autoArmByPriceLive =
+            robot.autoArmByPriceEnabled === true &&
+            refPx != null &&
+            buyerAlertArmMeetsMinEdge(robot, refPx, posArmLive.avgBuyPrice);
           const flattenHitLive =
             flattenIdsLive.length > 0 &&
-            robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue);
-          if (armRefLive[kArmLive] === true || flattenHitLive) armRefLive[kArmLive] = true;
+            refPx != null &&
+            robotStrategyTrueOnAnyLiveRow(robot, extendedKlines, strategyResults, robotFlattenOrTrue) &&
+            buyerAlertArmMeetsMinEdge(robot, refPx, posArmLive.avgBuyPrice);
+          if (armRefLive[kArmLive] === true || autoArmByPriceLive || flattenHitLive) armRefLive[kArmLive] = true;
         }
 
         const flattenArmedLive = armRefLive[kArmLive] === true;
-        const hasFlattenStratIdsLive = flattenIdsLive.length > 0;
-        if (flattenArmedLive && hasFlattenStratIdsLive && refPx != null) {
+        if (flattenArmedLive && refPx != null) {
           const posFlat = getRobotPosition(robot.id, sym);
           if (
             posFlat &&
@@ -1709,6 +1766,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                   delete robotBuyAccumCandleIndexRef.current[kb];
                   delete robotBuySequentialSliceUsdtRef.current[kb];
                   delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kb];
+                  delete robotFirstEntryLimitPendingRef.current[kb];
                   delete robotBuySignalCountedOpenTimesRef.current[kb];
                   delete robotBuyHadPositionEndRef.current[kb];
                   appendRobotLiveActivityEvent(robot.id, sym, "flatten_breakeven", {
@@ -1748,6 +1806,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (sellSignalOtLive != null) {
           const posPre = getRobotPosition(robot.id, sym);
           if (posPre && posPre.totalBaseQty > 1e-12) {
+            if (refPx == null || !buyerSignalExitMeetsMinEdge(robot, refPx, posPre.avgBuyPrice)) continue;
             const sellKey = `${robot.id}::${sellSignalOtLive}::sell`;
             if (robotLiveSellInFlightRef.current.has(sellKey)) continue;
             robotLiveSellInFlightRef.current.add(sellKey);
@@ -1766,6 +1825,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 delete robotBuyAccumCandleIndexRef.current[kb];
                 delete robotBuySequentialSliceUsdtRef.current[kb];
                 delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kb];
+                delete robotFirstEntryLimitPendingRef.current[kb];
                 delete robotBuySignalCountedOpenTimesRef.current[kb];
                 delete robotBuyHadPositionEndRef.current[kb];
                 appendRobotLiveActivityEvent(robot.id, sym, "signal_sell", {
@@ -1788,7 +1848,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         if (robotBuyAccumulationActiveRef.current[kAccum] !== true) continue;
         if (hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) continue;
         const buyKey = `${robot.id}::${ot}::buy`;
-        if (robotLiveBuyInFlightRef.current.has(buyKey)) continue;
 
         const refCloseLive = Number(extendedKlines[0]?.[4]);
         const refOpenLiveRaw = Number(extendedKlines[0]?.[1]);
@@ -1827,7 +1886,119 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           delete robotBuyAccumCandleIndexRef.current[kAccum];
           delete robotBuySequentialSliceUsdtRef.current[kAccum];
           delete robotBuyAccumFrozenMaxSpendUsdtRef.current[kAccum];
+          delete robotFirstEntryLimitPendingRef.current[kAccum];
           persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
+          continue;
+        }
+
+        const pendingOpenBuy = robotFirstEntryLimitPendingRef.current[kAccum];
+        if (pendingOpenBuy) {
+          const sync = await syncRobotSpotOrder(sym, pendingOpenBuy.orderId);
+          if (sync.ok) {
+            const state = parseSpotOrderState(sync.order);
+            if (state === "FILLED") {
+              const fill = parseMarketOrderFill(sync.order);
+              if (fill) {
+                dispatchRobotPositionBuy(robot.id, sym, fill.quoteUsdt, fill.baseQty);
+              }
+              setBuyExecMap((prev) => {
+                if (hasRobotBuyExecForCandle(prev, robot.id, sym, pendingOpenBuy.openTime)) return prev;
+                const next = setRobotBuyExecForCandle(prev, robot.id, sym, pendingOpenBuy.openTime);
+                persistRobotBuyExecMap(next);
+                return next;
+              });
+              appendRobotLiveActivityEvent(robot.id, sym, "limit_buy_filled", {
+                openTime: pendingOpenBuy.openTime,
+                orderId: pendingOpenBuy.orderId,
+                ...(fill ? { baseQty: fill.baseQty, quoteUsdt: fill.quoteUsdt } : {}),
+              });
+              delete robotFirstEntryLimitPendingRef.current[kAccum];
+              robotLiveBuyInFlightRef.current.delete(buyKey);
+              dispatchSpotOrderPlaced();
+              continue;
+            }
+            if (state === "CANCELED" || state === "EXPIRED" || state === "REJECTED") {
+              delete robotFirstEntryLimitPendingRef.current[kAccum];
+              robotLiveBuyInFlightRef.current.delete(buyKey);
+              appendRobotLiveActivityEvent(robot.id, sym, "limit_buy_closed_unfilled", {
+                openTime: pendingOpenBuy.openTime,
+                orderId: pendingOpenBuy.orderId,
+                status: state,
+              });
+              continue;
+            }
+            const timeoutCandles = Math.min(
+              ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+              Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(robot.firstEntryLimitTimeoutCandles ?? 7))
+            );
+            const candleIndexNow = robotBuyAccumCandleIndexRef.current[kAccum] ?? 1;
+            if (candleIndexNow - pendingOpenBuy.startedCandleIndex >= timeoutCandles) {
+              const canceled = await cancelRobotSpotOrder(sym, pendingOpenBuy.orderId);
+              if (canceled.ok) {
+                appendRobotLiveActivityEvent(robot.id, sym, "limit_buy_timeout_cancel", {
+                  openTime: pendingOpenBuy.openTime,
+                  orderId: pendingOpenBuy.orderId,
+                  timeoutCandles,
+                });
+                delete robotFirstEntryLimitPendingRef.current[kAccum];
+                robotLiveBuyInFlightRef.current.delete(buyKey);
+              }
+            }
+          }
+          continue;
+        }
+
+        if (robotLiveBuyInFlightRef.current.has(buyKey)) continue;
+
+        const wantsFirstEntryLimit =
+          robot.firstEntryLimitEnabled === true && (!pos || pos.totalBaseQty <= 1e-12);
+
+        if (wantsFirstEntryLimit) {
+          const offsetPct = Math.min(1, Math.max(0, robot.firstEntryLimitOffsetPercent ?? 0));
+          const limitPx = buyerLimitBuyMaxPriceBelowCandleOpen(refOpenLive, offsetPct);
+          if (!Number.isFinite(limitPx) || limitPx <= 0) {
+            appendRobotLiveActivityEvent(robot.id, sym, "open_buy_skip_bad_limit_px", {
+              openTime: ot,
+              refOpenLive,
+              offsetPct,
+            });
+            continue;
+          }
+
+          robotLiveBuyInFlightRef.current.add(buyKey);
+          try {
+            const outLimit = await submitRobotLimitBuyOrder(sym, quoteUsdt, limitPx, {
+              robotId: robot.id,
+              robotAlias: robot.alias ?? "",
+              executionRole: "OPEN_BUY",
+            });
+            if (outLimit.ok) {
+              robotFirstEntryLimitPendingRef.current[kAccum] = {
+                orderId: outLimit.orderId,
+                openTime: ot,
+                startedCandleIndex: robotBuyAccumCandleIndexRef.current[kAccum] ?? 1,
+              };
+              appendRobotLiveActivityEvent(robot.id, sym, "limit_buy_placed", {
+                openTime: ot,
+                quoteUsdt,
+                orderId: outLimit.orderId,
+                price: limitPx,
+                offsetPct,
+                anchor: "candle_open",
+              });
+            }
+          } finally {
+            if (!robotFirstEntryLimitPendingRef.current[kAccum]) {
+              robotLiveBuyInFlightRef.current.delete(buyKey);
+            }
+          }
+          continue;
+        }
+
+        if (
+          !buyerMarketBuyRefStrictlyBelowCandleOpen(refPxLive, refOpenLive) ||
+          !buyerRefAllowsNextBuy(refPxLive, pos?.lastBuyFillPrice)
+        ) {
           continue;
         }
 
@@ -2252,34 +2423,43 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       setNeedsRefresh(false);
       if (cache2 != null) {
         const { chartKind, interval } = cache2;
+        const limitParam = aggAtemporalKlineCacheLimitRef.current;
         const res = await fetch(
-          `${API_BASE}/binance/kline-cache2-bars?symbol=${encodeURIComponent(requestedSymbol)}&chartKind=${encodeURIComponent(chartKind)}&interval=${encodeURIComponent(interval)}&limit=${AGG_KLINE_CACHE_LIMIT}`,
+          `${API_BASE}/binance/kline-cache2-bars?symbol=${encodeURIComponent(requestedSymbol)}&chartKind=${encodeURIComponent(chartKind)}&interval=${encodeURIComponent(interval)}&limit=${limitParam}`,
           { cache: "no-store", credentials: "include" }
         );
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error((err as { error?: string }).error || `HTTP ${res.status}`);
         }
-        const body = await res.json();
+        const body = (await res.json()) as {
+          klines?: unknown;
+          timezoneOffset?: number;
+          maxBars?: number;
+        };
+        const maxBarsRaw = body.maxBars;
+        const maxBars =
+          typeof maxBarsRaw === "number" && Number.isFinite(maxBarsRaw) && maxBarsRaw > 0
+            ? Math.floor(maxBarsRaw)
+            : aggAtemporalKlineCacheLimitRef.current;
+        aggAtemporalKlineCacheLimitRef.current = maxBars;
         const list = Array.isArray(body.klines) ? body.klines : [];
         if (symbolRef.current !== requestedSymbol) return false;
         const prevServer = serverAggKlinesRef.current as Kline[];
         const mergedServer =
           force || prevServer.length === 0
             ? (list as Kline[])
-            : mergeRecentCacheWindow(prevServer, list as Kline[], AGG_CACHE_REFRESH_WINDOW_MS);
+            : mergeRecentCacheWindow(prevServer, list as Kline[], AGG_CACHE_REFRESH_WINDOW_MS, maxBars);
         // Refresh periódico (5 min): considerar sempre mudança e reaplicar cache para realinhar WS.
         skipAggPeriodicWsReconnectRef.current = false;
         lastKlinesFetchSymbolRef.current = requestedSymbol;
         serverAggKlinesRef.current = mergedServer;
         setServerNewestKlineFromCache(mergedServer.length > 0 ? (mergedServer[0] as (string | number)[]) : null);
         const aggLive = isAggFastGroupMinutes(groupMinutes);
-        // Ao receber snapshot novo do cache2, limpar live acumulado para refletir exatamente o servidor
-        // e depois realinhar via reconexão do WS aggTrade.
+        // Ao receber snapshot novo do cache2, limpar só o merge live para realinhar com o servidor.
+        // Não limpar anéis de debug WS/closed bricks aqui: em mercado calmo isso parecia “reset”
+        // mesmo sem desconexão real, porque o painel passava a mostrar buffer vazio após cada refresh.
         liveAggRowsByOpenTimeRef.current.clear();
-        liveWsRawTradesRef.current = [];
-        liveDebugClosedBricksRef.current = [];
-        liveDebugBrickSeqRef.current = 0;
         setKlines(mergedServer);
         if (aggLive) {
           pushAggFastLiveDebug();
@@ -2428,7 +2608,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           serverAggKlinesRef.current,
           tierLive,
           timezoneOffsetRef.current,
-          AGG_KLINE_CACHE_LIMIT
+          aggAtemporalKlineCacheLimitRef.current
         ) as Kline[]
       );
       pushAggFastLiveDebug();
@@ -2454,7 +2634,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
   useLayoutEffect(() => {
     setAggFormingAccVolumes(null);
-  }, [symbol, groupMinutes, serverCacheHeadOpenTimeMs]);
+  }, [symbol, groupMinutes]);
 
   useVpsFlushNotify({
     enabled: aggWsKind != null && timeframeRestored && VPS_FLUSH_WS_URL.length > 0,
@@ -2587,7 +2767,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     const prev = prevAggKlineCountForLimitRef.current;
     prevAggKlineCountForLimitRef.current = n;
     if (prev == null) return;
-    if (n >= AGG_KLINE_CACHE_LIMIT && prev < AGG_KLINE_CACHE_LIMIT) {
+    const cap = aggAtemporalKlineCacheLimitRef.current;
+    if (n >= cap && prev < cap) {
       void fetchKlinesRef.current(true);
     }
   }, [klines.length, groupMinutes, timeframeRestored]);
@@ -2631,12 +2812,6 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => clearInterval(interval);
   }, [symbol]);
 
-  // Atualizar bolinha de status a cada 15s (idade da última atualização)
-  useEffect(() => {
-    const t = setInterval(() => setStatusTick((n) => n + 1), 15000);
-    return () => clearInterval(t);
-  }, []);
-
   /**
    * lastUpdate (GET) usa openTime já com `timezoneOffset` do utilizador (como coluna Open Time).
    * WS grava instante real UTC — para o relógio: +offset na mesma lógica da API (kline-cache2 / klines).
@@ -2664,9 +2839,26 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
     let alive = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let commitTimer: ReturnType<typeof setTimeout> | null = null;
     const lastEmitAtRef = { current: 0 };
     const reconnectDelayRef = { current: 1000 };
+    const pendingPriceRef = { current: null as string | null };
+    const pendingUpdatedAtRef = { current: null as number | null };
     let ws: WebSocket | null = null;
+
+    const commitPending = () => {
+      if (!alive) return;
+      const price = pendingPriceRef.current;
+      const updatedAt = pendingUpdatedAtRef.current;
+      pendingPriceRef.current = null;
+      pendingUpdatedAtRef.current = null;
+      if (price != null) {
+        setSpotWsPrice((prev) => (prev === price ? prev : price));
+      }
+      if (updatedAt != null) {
+        setSpotWsUpdatedAt((prev) => (prev === updatedAt ? prev : updatedAt));
+      }
+    };
 
     const connect = () => {
       if (!alive) return;
@@ -2683,8 +2875,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             // Throttle: no máximo 4 updates/segundo
             if (price != null && now - lastEmitAtRef.current >= 250) {
               lastEmitAtRef.current = now;
-              setSpotWsPrice(price);
-              setSpotWsUpdatedAt(now);
+              pendingPriceRef.current = price;
+              pendingUpdatedAtRef.current = now;
+              if (commitTimer == null) {
+                commitTimer = setTimeout(() => {
+                  commitTimer = null;
+                  commitPending();
+                }, 16);
+              }
             }
           } catch {
             // ignore parse errors
@@ -2715,6 +2913,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     return () => {
       alive = false;
       if (timer) clearTimeout(timer);
+      if (commitTimer) clearTimeout(commitTimer);
       try {
         ws?.close();
       } catch {
@@ -2722,7 +2921,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
       ws = null;
     };
-  }, [symbol, groupMinutes]);
+  }, [symbol]);
 
   // Volume da vela em formação (base + quote USDT) em tempo real — stream kline Binance; o GET só traz acumulado no último poll.
   useEffect(() => {
@@ -3085,7 +3284,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
               histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
               histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorBelow ?? "#dc2626") : (ind.macdHistogramColorBelow ?? "#dc2626")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
               rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
               rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
               rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
@@ -3097,6 +3296,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
               rsiLimitLineWidth: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
               rsiLimitLineStyle: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
+              maAngleCenterLine: ind.type === "MA_ANGLE" ? (ind.maAngleCenterLine === true) : undefined,
+              maAngleCenterLineValue: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineValue ?? 0) : undefined,
+              maAngleCenterLineColor: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineColor ?? "#71717a") : undefined,
+              maAngleCenterLineWidth: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineWidth ?? "normal") : undefined,
+              maAngleCenterLineStyle: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineStyle ?? "dotted") : undefined,
+              maAngleLimits: ind.type === "MA_ANGLE" ? (ind.maAngleLimits === true) : undefined,
+              maAngleLimitUpper: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitUpper ?? 0.5) : undefined,
+              maAngleLimitLower: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitLower ?? -0.5) : undefined,
+              maAngleLimitColor: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitColor ?? "#dc2626") : undefined,
+              maAngleLimitLineWidth: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitLineWidth ?? "normal") : undefined,
+              maAngleLimitLineStyle: ind.type === "MA_ANGLE" && ind.maAngleLimits ? (ind.maAngleLimitLineStyle ?? "dotted") : undefined,
               mfiFixedScale: ind.type === "MFI" ? (ind.mfiFixedScale !== false) : undefined,
               mfiCenterLine: ind.type === "MFI" ? (ind.mfiCenterLine === true) : undefined,
               mfiCenterLineColor: ind.type === "MFI" && ind.mfiCenterLine ? (ind.mfiCenterLineColor ?? "#71717a") : undefined,
@@ -3372,7 +3582,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               {visibleIndicatorColumns.map(({ ind, columnIndex, isSignal, isHistogram, adxPart, ichimokuPart }, idx) => {
                 const ichimokuPartLabels: Record<IchimokuPart, string> = { tenkan: "Tenkan", kijun: "Kijun", spanA: "Span A", spanB: "Span B", chikou: "Chikou" };
                 const headerBorderColor = ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : adxPart === "adx" ? (ind.adxAdxColor ?? "#eab308") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : isSignal ? (ind.type === "DIFF" ? (ind.diffSignalColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? "#6366f1") : ind.color;
-                const headerLabel = ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabels[ichimokuPart] : ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : ind.type === "DIFF" ? `DIFF Sig(${ind.diffSignalPeriod ?? 9})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "DIFF" ? "DIFF(B-A)" : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "Ichimoku" ? `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26}/${ind.ichimokuSpanBPeriod ?? 52})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`;
+                const headerLabel = ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabels[ichimokuPart] : ind.type === "Volume" ? (ind.volumeInUsdt ? ((t as Record<string, string>).volumeUsdtLabel ?? "Volume (USDT)") : ((t as Record<string, string>).volumeLabel ?? "Volume")) : adxPart === "plusDi" ? `+DI(${ind.period})` : adxPart === "minusDi" ? `-DI(${ind.period})` : adxPart === "adx" ? `ADX(${ind.period})` : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? `%D(${ind.stochDPeriod ?? 3})` : ind.type === "DIFF" ? `DIFF Sig(${ind.diffSignalPeriod ?? 9})` : `MACD Sig(${ind.macdSignalPeriod ?? 9})`) : ind.type === "MACD" ? `MACD(${ind.macdFastPeriod ?? 12},${ind.macdSlowPeriod ?? 26})` : ind.type === "DIFF" ? (ind.diffRelativePercent ? ((t as Record<string, string>).diffTableHeaderRelative ?? "DIFF%((B-A)/A)") : ((t as Record<string, string>).diffTableHeaderAbsolute ?? "DIFF(B-A)")) : ind.type === "MA_ANGLE" ? `MA∠(${(ind.maAngleMaType === "SMA" || ind.maAngleMaType === "EMA" || ind.maAngleMaType === "WMA" || ind.maAngleMaType === "HMA" || ind.maAngleMaType === "VWMA") ? ind.maAngleMaType : "EMA"},${ind.period},L${ind.maAngleLookback ?? 3})` : ind.type === "Stochastic" ? `%K(${ind.period})` : ind.type === "WilliamsR" ? `%R(${ind.period})` : ind.type === "OBV" ? "OBV(1)" : ind.type === "AD" ? "A/D" : ind.type === "Bollinger" ? `BB(${ind.period}) Z=${ind.bollingerZ ?? 2}` : ind.type === "Donchian" ? `DC(${ind.period})` : ind.type === "Ichimoku" ? `Ichimoku(${ind.ichimokuTenkanPeriod ?? 9}/${ind.ichimokuKijunPeriod ?? 26}/${ind.ichimokuSpanBPeriod ?? 52})` : ind.type === "CCI" ? `CCI(${ind.period})` : ind.type === "CMF" ? `CMF(${ind.period})` : `${ind.type}(${ind.period})`;
                 return (
                 <th
                   key={`${ind.id}-${adxPart ?? ichimokuPart ?? (isSignal ? "sig" : isHistogram ? "hist" : "main")}-${idx}`}

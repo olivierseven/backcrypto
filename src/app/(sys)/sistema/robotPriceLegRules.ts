@@ -28,6 +28,15 @@ export function buyerAllowsMarketBuyOrder(
 }
 
 /**
+ * Compra a **mercado** só quando a referência (ex. fecho da vela) está estritamente abaixo do open.
+ */
+export function buyerMarketBuyRefStrictlyBelowCandleOpen(refPrice: number, candleOpen: number): boolean {
+  if (!Number.isFinite(refPrice) || refPrice <= 0) return false;
+  if (!Number.isFinite(candleOpen) || candleOpen <= 0) return false;
+  return refPrice < candleOpen * (1 - ROBOT_PRICE_LEG_REL_EPS);
+}
+
+/**
  * Janela de acumulação (várias compras, no máximo uma por vela no live):
  * - **Primeira** compra: o critério de entrada é o sinal das estratégias (contagem de velas com sinal antes de ligar a janela); aqui só exigimos preços de referência válidos (fecho/abertura > 0), sem fecho ≤ abertura.
  * - **Seguintes**: só se o preço de referência estiver **estritamente abaixo** do último fill registado (nova vela com “dip” vs última compra).
@@ -46,6 +55,24 @@ export function buyerAllowsAccumulationBuy(
     return true;
   }
   return refPrice < lastBuyFillPrice * (1 - ROBOT_PRICE_LEG_REL_EPS);
+}
+
+/**
+ * Preço limite máximo para compra por sinal: sempre estritamente abaixo do open da vela.
+ * `offsetPercent` é o desvio configurado no robô (0–1%, típ. “abaixo do open”); aplica-se sobre o open.
+ * Com offset 0 usa-se um mínimo técnico para o preço ficar abaixo do open após arredondamentos.
+ */
+export const ROBOT_BUY_LIMIT_MIN_OFFSET_BELOW_OPEN_PCT = 0.01;
+
+export function buyerLimitBuyMaxPriceBelowCandleOpen(
+  candleOpen: number,
+  offsetPercent: number
+): number {
+  if (!Number.isFinite(candleOpen) || candleOpen <= 0) return NaN;
+  const oRaw = Number.isFinite(offsetPercent) ? offsetPercent : 0;
+  const o = Math.min(1, Math.max(0, oRaw));
+  const effectivePct = Math.max(o, ROBOT_BUY_LIMIT_MIN_OFFSET_BELOW_OPEN_PCT);
+  return candleOpen * (1 - effectivePct / 100);
 }
 
 /** Para robô vendedor (execução futura): nova venda só se o preço de referência ≥ última venda. */

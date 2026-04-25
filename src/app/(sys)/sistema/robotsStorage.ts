@@ -24,7 +24,7 @@ export type ChartLayoutRobotsColumn = {
 export const ROBOT_MAX_SPOT_MIN = 1;
 export const ROBOT_MAX_SPOT_MAX = 100;
 
-/** Stop loss em % vs preço médio de compra: 0,1% a 5%, passo 0,1%. */
+/** Stop loss em % vs preço médio de compra: 0,1% a 5%, passo 0,01%. */
 export const ROBOT_STOP_LOSS_PCT_MIN = 0.1;
 export const ROBOT_STOP_LOSS_PCT_MAX = 5;
 
@@ -36,10 +36,19 @@ export const ROBOT_BUY_ACCUM_START_SIGNAL_MAX = 5;
 export const ROBOT_BUY_ACCUM_MAX_CANDLES_MIN = 1;
 export const ROBOT_BUY_ACCUM_MAX_CANDLES_MAX = 20;
 export const ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT = 7;
+export const ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN = 0;
+export const ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX = 1;
+export const ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT = 7;
 
 /** Breakeven (zerar): desvio % vs médio de compra — mínimo, máximo e passo (UI). */
 export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN = -1;
 export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX = 1;
+/** Filtro mínimo no sinal contrário vs preço médio da perna atual (0 a 5%). */
+export const ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN = 0;
+export const ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX = 5;
+/** Filtro mínimo para armar o alerta (flatten) vs preço médio da perna atual (0 a 5%). */
+export const ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN = 0;
+export const ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX = 5;
 
 export type RobotSide = "buyer" | "seller";
 
@@ -76,6 +85,20 @@ export interface SavedRobot {
    * 0 = fecho ≤ médio; +0,2 ⇒ permite saída com fecho até ~0,2% acima do médio; −0,2 exige fecho mais abaixo.
    */
   flattenBreakevenBufferPercent: number;
+  /**
+   * Filtro mínimo no sinal contrário, em % vs preço médio da perna atual.
+   * - buyer: só aceita venda por sinal se preço >= médio de compra × (1 + pct/100)
+   * - seller: reservado para execução futura (compra por sinal só se <= médio de venda × (1 - pct/100))
+   */
+  signalExitMinEdgePercent: number;
+  /**
+   * Filtro mínimo para armar o alerta (flatten), em % vs preço médio da perna atual.
+   * - buyer: só arma no sinal de alerta se preço >= médio de compra × (1 + pct/100)
+   * - seller: reservado para execução futura (só arma se <= médio de venda × (1 - pct/100))
+   */
+  alertArmMinEdgePercent: number;
+  /** Comprador: quando ativo, arma o alerta automaticamente ao atingir o edge configurado, mesmo sem estratégia de flatten. */
+  autoArmByPriceEnabled: boolean;
   createdAt: number;
   /** Se as estratégias deste robô estão aplicadas na tabela (só muda em Meus robôs). */
   isActive: boolean;
@@ -97,11 +120,17 @@ export interface SavedRobot {
    * de compra por vela (o sinal pode ficar falso). Entre ROBOT_BUY_ACCUM_MAX_CANDLES_MIN e MAX.
    */
   buyAccumMaxCandles: number;
+  /** Comprador: se ativo, a 1.ª compra (sem posição) usa LIMIT abaixo do open; senão compra a mercado só com fecho estritamente abaixo do open. */
+  firstEntryLimitEnabled: boolean;
+  /** Comprador com LIMIT: desvio (%) abaixo do **open** da vela; mínimo técnico 0,01% sempre aplicado. */
+  firstEntryLimitOffsetPercent: number;
+  /** Comprador com LIMIT: timeout (velas) para cancelar a ordem não executada. */
+  firstEntryLimitTimeoutCandles: number;
   /** Ativa venda a mercado quando a perda ≥ limite (robô comprador). */
   stopLossEnabled: boolean;
   /** `percent`: perda vs preço médio de compra (%). `fixed`: perda em USDT (valor absoluto). */
   stopLossMode: RobotStopLossMode;
-  /** Limite em % vs média de compra (0,1 a 5, passo 0,1). */
+  /** Limite em % vs média de compra (0,1 a 5, passo 0,01). */
   stopLossPercent: number;
   /** Limite em USDT de perda não realizada (custo − valor atual). */
   stopLossFixedUsdt: number;
@@ -109,7 +138,7 @@ export interface SavedRobot {
   stopGainEnabled: boolean;
   /** `percent`: ganho vs preço médio de compra (%). `fixed`: ganho em USDT (valor absoluto). */
   stopGainMode: RobotStopLossMode;
-  /** Limite em % vs média de compra (0,1 a 5, passo 0,1). */
+  /** Limite em % vs média de compra (0,1 a 5, passo 0,01). */
   stopGainPercent: number;
   /** Limite em USDT de ganho não realizado (valor atual − custo). */
   stopGainFixedUsdt: number;
@@ -252,13 +281,30 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
     Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesRaw)
   );
+  const firstEntryLimitEnabled = typeof x.firstEntryLimitEnabled === "boolean" ? x.firstEntryLimitEnabled : false;
+  const firstEntryLimitOffsetRaw =
+    typeof x.firstEntryLimitOffsetPercent === "number" && Number.isFinite(x.firstEntryLimitOffsetPercent)
+      ? x.firstEntryLimitOffsetPercent
+      : 0;
+  const firstEntryLimitOffsetPercent = Math.min(
+    ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX,
+    Math.max(ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN, Math.round(firstEntryLimitOffsetRaw * 10) / 10)
+  );
+  const firstEntryLimitTimeoutRaw =
+    typeof x.firstEntryLimitTimeoutCandles === "number" && Number.isFinite(x.firstEntryLimitTimeoutCandles)
+      ? Math.floor(x.firstEntryLimitTimeoutCandles)
+      : ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT;
+  const firstEntryLimitTimeoutCandles = Math.min(
+    ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+    Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, firstEntryLimitTimeoutRaw)
+  );
   const stopLossEnabled = typeof x.stopLossEnabled === "boolean" ? x.stopLossEnabled : false;
   const stopLossMode: RobotStopLossMode = x.stopLossMode === "fixed" ? "fixed" : "percent";
   const slPctRaw =
     typeof x.stopLossPercent === "number" && Number.isFinite(x.stopLossPercent) ? x.stopLossPercent : 2;
   const stopLossPercent = Math.min(
     ROBOT_STOP_LOSS_PCT_MAX,
-    Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(slPctRaw * 10) / 10)
+    Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(slPctRaw * 100) / 100)
   );
   const slFixRaw =
     typeof x.stopLossFixedUsdt === "number" && Number.isFinite(x.stopLossFixedUsdt) ? x.stopLossFixedUsdt : 25;
@@ -269,7 +315,7 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     typeof x.stopGainPercent === "number" && Number.isFinite(x.stopGainPercent) ? x.stopGainPercent : 2;
   const stopGainPercent = Math.min(
     ROBOT_STOP_LOSS_PCT_MAX,
-    Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(sgPctRaw * 10) / 10)
+    Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(sgPctRaw * 100) / 100)
   );
   const sgFixRaw =
     typeof x.stopGainFixedUsdt === "number" && Number.isFinite(x.stopGainFixedUsdt) ? x.stopGainFixedUsdt : 25;
@@ -285,9 +331,26 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
     Math.max(
       ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN,
-      Math.round(bufRaw * 10) / 10
+      Math.round(bufRaw * 100) / 100
     )
   );
+  const signalExitRaw =
+    typeof x.signalExitMinEdgePercent === "number" && Number.isFinite(x.signalExitMinEdgePercent)
+      ? x.signalExitMinEdgePercent
+      : 0;
+  const signalExitMinEdgePercent = Math.min(
+    ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+    Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(signalExitRaw * 100) / 100)
+  );
+  const alertArmRaw =
+    typeof x.alertArmMinEdgePercent === "number" && Number.isFinite(x.alertArmMinEdgePercent)
+      ? x.alertArmMinEdgePercent
+      : 0;
+  const alertArmMinEdgePercent = Math.min(
+    ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+    Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(alertArmRaw * 100) / 100)
+  );
+  const autoArmByPriceEnabled = x.autoArmByPriceEnabled === true;
   const aliasRaw = x.alias;
   const alias =
     typeof aliasRaw === "string" ? aliasRaw.trim().slice(0, 80) : "";
@@ -301,6 +364,9 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     postFlattenSignalSellCombinedStrategyIds: [...new Set(postSellIds)],
     postFlattenSignalBuyCombinedStrategyIds: [...new Set(postBuyIds)],
     flattenBreakevenBufferPercent,
+    signalExitMinEdgePercent,
+    alertArmMinEdgePercent,
+    autoArmByPriceEnabled,
     createdAt: x.createdAt,
     isActive,
     maxSpotPercent,
@@ -309,6 +375,9 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     buyOperationFixedUsdt,
     buyAccumulationStartOnSignalNumber,
     buyAccumMaxCandles,
+    firstEntryLimitEnabled,
+    firstEntryLimitOffsetPercent,
+    firstEntryLimitTimeoutCandles,
     stopLossEnabled,
     stopLossMode,
     stopLossPercent,

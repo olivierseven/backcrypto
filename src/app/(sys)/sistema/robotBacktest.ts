@@ -2,6 +2,7 @@ import type { Kline } from "./klinesChart/types";
 import { clampBacktestExecutionMode, clampSlippagePercent, type BacktestExecutionMode } from "./backtestStorage";
 import {
   buyerAllowsAccumulationBuy,
+  buyerMarketBuyRefStrictlyBelowCandleOpen,
   flattenBreakevenThresholdPrice,
   longFlattenCloseBreakeven,
 } from "./robotPriceLegRules";
@@ -43,13 +44,127 @@ export type RobotBacktestRow = {
   stopProceedsThisBar: number;
   avgStopPriceThisBar: number | null;
   stopRealizedPnlPct: number | null;
-  /** % ganho não realizado no fecho (se ainda em posição e close > médio). */
+  /** % ganho não realizado (posição aberta): vs **máximo** da vela com slippage à venda. */
   gainPctUnrealized: number | null;
-  /** % perda não realizada no fecho (se ainda em posição e close < médio). */
+  /** % perda não realizada (posição aberta): vs **mínimo** da vela com slippage à venda. */
   lossPctUnrealized: number | null;
   /** Motivo da saída total nesta vela; null se não houve fecho (só compra ou posição aberta). Inclui venda só com alerta de zerar armado (`post_arm_sell`). */
   exitReason: RobotBacktestExitReason | null;
 };
+
+/**
+ * Um ciclo completo de posição: primeira compra no intervalo até à saída (ou até ao fim dos dados se a posição ficar aberta).
+ * Útil para mini-relatórios de debug no modal de backtest (admin).
+ */
+export type RobotBacktestTradeCycle = {
+  /** Índice 1-based para mostrar ao utilizador. */
+  index: number;
+  readonly rows: readonly RobotBacktestRow[];
+  /** Foi fechada dentro do intervalo simulado (venda ou stop na última vela do ciclo). */
+  closed: boolean;
+  startBar: number;
+  endBar: number;
+  startOpenTimeMs: number;
+  endOpenTimeMs: number;
+  totalBuyUsdt: number;
+  buyFillCount: number;
+  exitReason: RobotBacktestExitReason | null;
+  /** USDT líquidos na vela de saída (soma venda + stop; só um costuma ser > 0). */
+  exitNetProceedsUsdt: number;
+  realizedPnlPct: number | null;
+  maxGainPctUnrealized: number | null;
+  maxLossPctUnrealized: number | null;
+  firstBarEquityUsdt: number;
+  lastBarEquityUsdt: number;
+};
+
+function finalizeRobotBacktestTradeCycleDraft(
+  rows: RobotBacktestRow[],
+  closed: boolean
+): Omit<RobotBacktestTradeCycle, "index"> {
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  let totalBuyUsdt = 0;
+  let buyFillCount = 0;
+  let maxGainPctUnrealized: number | null = null;
+  let maxLossPctUnrealized: number | null = null;
+  for (const r of rows) {
+    if (r.buyUsdtThisBar > 1e-9) {
+      totalBuyUsdt += r.buyUsdtThisBar;
+      buyFillCount++;
+    }
+    if (r.gainPctUnrealized != null && Number.isFinite(r.gainPctUnrealized)) {
+      maxGainPctUnrealized =
+        maxGainPctUnrealized == null
+          ? r.gainPctUnrealized
+          : Math.max(maxGainPctUnrealized, r.gainPctUnrealized);
+    }
+    if (r.lossPctUnrealized != null && Number.isFinite(r.lossPctUnrealized)) {
+      maxLossPctUnrealized =
+        maxLossPctUnrealized == null
+          ? r.lossPctUnrealized
+          : Math.max(maxLossPctUnrealized, r.lossPctUnrealized);
+    }
+  }
+  const exitNetProceedsUsdt = closed ? last.sellProceedsThisBar + last.stopProceedsThisBar : 0;
+  const realizedPnlPct = closed
+    ? last.stopProceedsThisBar > 1e-9
+      ? last.stopRealizedPnlPct
+      : last.sellRealizedPnlPct
+    : null;
+  return {
+    rows: [...rows],
+    closed,
+    startBar: first.barNum,
+    endBar: last.barNum,
+    startOpenTimeMs: first.openTime,
+    endOpenTimeMs: last.openTime,
+    totalBuyUsdt,
+    buyFillCount,
+    exitReason: closed ? last.exitReason : null,
+    exitNetProceedsUsdt,
+    realizedPnlPct,
+    maxGainPctUnrealized,
+    maxLossPctUnrealized,
+    firstBarEquityUsdt: first.equityUsdt,
+    lastBarEquityUsdt: last.equityUsdt,
+  };
+}
+
+/**
+ * Segmenta as linhas do backtest em ciclos posição→saída.
+ * Regra: início = primeira vela com compra após estar flat; fim = primeira vela com venda ou stop que zera a posição.
+ * Na mesma vela pode haver saída e nova compra — contam como fim de um ciclo e início do seguinte.
+ */
+export function buildRobotBacktestTradeCycles(rows: readonly RobotBacktestRow[]): RobotBacktestTradeCycle[] {
+  const out: RobotBacktestTradeCycle[] = [];
+  let active: RobotBacktestRow[] | null = null;
+
+  for (const row of rows) {
+    const hadBuy = row.buyUsdtThisBar > 1e-9;
+    const hadExit =
+      (Number.isFinite(row.sellProceedsThisBar) && row.sellProceedsThisBar > 1e-9) ||
+      (Number.isFinite(row.stopProceedsThisBar) && row.stopProceedsThisBar > 1e-9);
+
+    if (active === null) {
+      if (!hadBuy) continue;
+      active = [row];
+    } else {
+      active.push(row);
+    }
+
+    if (hadExit) {
+      out.push({ index: 0, ...finalizeRobotBacktestTradeCycleDraft(active, true) });
+      active = hadBuy ? [row] : null;
+    }
+  }
+
+  if (active !== null && active.length > 0) {
+    out.push({ index: 0, ...finalizeRobotBacktestTradeCycleDraft(active, false) });
+  }
+
+  return out.map((c, i) => ({ ...c, index: i + 1 }));
+}
 
 export type RobotBacktestSummary = {
   startBar: number;
@@ -140,6 +255,31 @@ function robotSellOrTrue(robot: SavedRobot, i: number, results: Map<string, bool
   return false;
 }
 
+function buyerSignalExitMeetsMinEdge(robot: SavedRobot, signalPx: number, avgBuyPrice: number): boolean {
+  if (!Number.isFinite(signalPx) || signalPx <= 0) return false;
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return false;
+  const minEdgePctRaw = robot.signalExitMinEdgePercent ?? 0;
+  const minEdgePct = Number.isFinite(minEdgePctRaw) ? Math.max(0, minEdgePctRaw) : 0;
+  if (minEdgePct <= 1e-12) return true;
+  return signalPx >= avgBuyPrice * (1 + minEdgePct / 100) - 1e-9;
+}
+
+function buyerSignalExitMinEdgeThresholdPrice(robot: SavedRobot, avgBuyPrice: number): number {
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return NaN;
+  const minEdgePctRaw = robot.signalExitMinEdgePercent ?? 0;
+  const minEdgePct = Number.isFinite(minEdgePctRaw) ? Math.max(0, minEdgePctRaw) : 0;
+  return avgBuyPrice * (1 + minEdgePct / 100);
+}
+
+function buyerAlertArmMeetsMinEdge(robot: SavedRobot, signalPx: number, avgBuyPrice: number): boolean {
+  if (!Number.isFinite(signalPx) || signalPx <= 0) return false;
+  if (!Number.isFinite(avgBuyPrice) || avgBuyPrice <= 0) return false;
+  const minEdgePctRaw = robot.alertArmMinEdgePercent ?? 0;
+  const minEdgePct = Number.isFinite(minEdgePctRaw) ? Math.max(0, minEdgePctRaw) : 0;
+  if (minEdgePct <= 1e-12) return true;
+  return signalPx >= avgBuyPrice * (1 + minEdgePct / 100) - 1e-9;
+}
+
 function robotFlattenOrTrue(robot: SavedRobot, i: number, results: Map<string, boolean[]>): boolean {
   const ids = robot.flattenCombinedStrategyIds ?? [];
   for (const id of ids) {
@@ -167,6 +307,16 @@ function parseOpen(k: Kline): number | null {
   return Number.isFinite(o) && o > 0 ? o : null;
 }
 
+function parseHigh(k: Kline): number | null {
+  const h = Number(k[2]);
+  return Number.isFinite(h) && h > 0 ? h : null;
+}
+
+function parseLow(k: Kline): number | null {
+  const lo = Number(k[3]);
+  return Number.isFinite(lo) && lo > 0 ? lo : null;
+}
+
 /** Comissão spot típica por lado quando não há outro valor (0,1%). */
 export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
 
@@ -174,10 +324,15 @@ export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
  * Simula o robô comprador no fechamento de cada vela, do candle mais antigo ao mais recente do intervalo.
  * Regra fixa: nova compra só se o preço de execução da compra (buyPx) for ≤ ao da compra anterior no ciclo; reinicia ao zerar posição.
  * `barNum` na tabela: 1 = vela mais antiga carregada, `length` = mais recente.
- * Stop, zerar (alerta mantém-se com posição até fechar; venda na 1.ª vela com fecho ≤ limiar breakeven; min(sellPx, limiar) no bruto),
- * venda por estratégias só com alerta armado, venda por sinal normal e compra (acumulação: fatia da 1.ª compra repetida até ao teto).
+ *
+ * **High/low (OHLC):** armar alerta de preço / min edge usa o melhor preço de venda intrabar (`high×(1−slippage)`).
+ * Stop-loss avalia o pior preço (`low×(1−slippage)`); stop-gain o melhor (`high×(1−slippage)`); na mesma vela com os dois
+ * disparados, modo **optimistic** assume stop-gain primeiro, **conservative** assume stop-loss primeiro.
+ * Zerar (flatten): dispara se o **mínimo** ou o **fecho** da vela tocarem o limiar; fill com `min(preço efetivo, limiar)` usando
+ * o preço da trajetória relevante (mínimo quando o low tocou o limiar).
+ * Vendas por sinal / pós-alertas: preço de execução simulado `max(ref fecho/open, high com slippage)` quando mais favorável.
  * Comissão: `feeRatePerSide` sobre o nocional de cada compra e sobre o bruto de cada venda.
- * Slippage: compra ao preço `close×(1+s)`, venda/stop ao `close×(1−s)` com `s` = slippage % / 100.
+ * Slippage: compra na ref. configurada; venda/stop nas refs acima com `s` = slippage % / 100.
  */
 export function runRobotBacktest(params: {
   robot: SavedRobot;
@@ -298,7 +453,6 @@ export function runRobotBacktest(params: {
   /** Fatia USDT por operação na janela de acumulação (1.ª compra define; próximas repetem até ao teto). */
   let buySequentialSliceUsdt: number | null = null;
 
-  const hasFlattenStrats = (robot.flattenCombinedStrategyIds ?? []).length > 0;
   const hasPostSellStrats = (robot.postFlattenSignalSellCombinedStrategyIds ?? []).length > 0;
 
   /** Património: caixa + valor da posição ao preço de venda efetivo (fecho com slippage a favor do mercado). */
@@ -341,6 +495,13 @@ export function runRobotBacktest(params: {
     lastCloseInRange = close;
     const ot = String(k[0]);
     const open = parseOpen(k) ?? close;
+    let high = parseHigh(k) ?? close;
+    let low = parseLow(k) ?? close;
+    if (low > high) {
+      const t = low;
+      low = high;
+      high = t;
+    }
 
     if (buyAccumulationActive && buyAccumLastOpenTime !== null && buyAccumLastOpenTime !== ot) {
       buyAccumCandlesInWindow += 1;
@@ -356,7 +517,12 @@ export function runRobotBacktest(params: {
     const buyRefPx = executionMode === "optimistic" ? Math.min(open, close) : close;
     const sellRefPx = executionMode === "optimistic" ? Math.max(open, close) : close;
     const buyPx = buyRefPx * (1 + slipDec);
+    /** Preço de venda de referência no fecho (open/close conforme modo); património no fim da vela. */
     const sellPx = sellRefPx * (1 - slipDec);
+    /** Pior preço de venda intrabar (long): mínimo da vela com slippage — stops de perda, flatten quando o low toca o limiar. */
+    const sellPxLow = low * (1 - slipDec);
+    /** Melhor preço de venda intrabar: máximo da vela com slippage — stops de ganho, armar alerta, min edge em vendas. */
+    const sellPxHigh = high * (1 - slipDec);
     lastSellPxInRange = sellPx;
 
     let buyUsdtThisBar = 0;
@@ -398,33 +564,63 @@ export function runRobotBacktest(params: {
     if (baseQty <= 1e-12) {
       flattenArmed = false;
     } else {
-      const flattenHit =
-        (robot.flattenCombinedStrategyIds ?? []).length > 0 && robotFlattenOrTrue(robot, i, strategyResults);
-      flattenArmed = flattenArmed || flattenHit;
+      const autoArmByPrice =
+        robot.autoArmByPriceEnabled === true &&
+        avgBuyBeforeExits != null &&
+        buyerAlertArmMeetsMinEdge(robot, sellPxHigh, avgBuyBeforeExits);
+      const armByFlattenSignal =
+        (robot.flattenCombinedStrategyIds ?? []).length > 0 &&
+        avgBuyBeforeExits != null &&
+        robotFlattenOrTrue(robot, i, strategyResults) &&
+        buyerAlertArmMeetsMinEdge(robot, sellPxHigh, avgBuyBeforeExits);
+      flattenArmed = flattenArmed || autoArmByPrice || armByFlattenSignal;
     }
 
-    // 1) Stops (loss/gain) — fecha posição completa
+    // 1) Stops (loss/gain) — fecha posição completa; executa no preço-limite configurado quando cruzado intrabar.
     if (baseQty > 1e-12 && avgBuyBeforeExits != null && (robot.stopLossEnabled || robot.stopGainEnabled)) {
-      const lossPctVsAvg = ((avgBuyBeforeExits - sellPx) / avgBuyBeforeExits) * 100;
-      const gainPctVsAvg = ((sellPx - avgBuyBeforeExits) / avgBuyBeforeExits) * 100;
-      const currentVal = baseQty * sellPx;
-      const lossUsdt = Math.max(0, quoteInPosition - currentVal);
-      const gainUsdt = Math.max(0, currentVal - quoteInPosition);
+      let stopLossThresholdPx: number | null = null;
+      if (robot.stopLossEnabled) {
+        if (robot.stopLossMode === "percent") {
+          const lossPct = Math.max(0, robot.stopLossPercent ?? 0);
+          const th = avgBuyBeforeExits * (1 - lossPct / 100);
+          if (Number.isFinite(th) && th > 0) stopLossThresholdPx = th;
+        } else {
+          const lossFixed = Math.max(0, robot.stopLossFixedUsdt ?? 0);
+          const th = (quoteInPosition - lossFixed) / baseQty;
+          if (Number.isFinite(th) && th > 0) stopLossThresholdPx = th;
+        }
+      }
+      let stopGainThresholdPx: number | null = null;
+      if (robot.stopGainEnabled) {
+        if (robot.stopGainMode === "percent") {
+          const gainPct = Math.max(0, robot.stopGainPercent ?? 0);
+          const th = avgBuyBeforeExits * (1 + gainPct / 100);
+          if (Number.isFinite(th) && th > 0) stopGainThresholdPx = th;
+        } else {
+          const gainFixed = Math.max(0, robot.stopGainFixedUsdt ?? 0);
+          const th = (quoteInPosition + gainFixed) / baseQty;
+          if (Number.isFinite(th) && th > 0) stopGainThresholdPx = th;
+        }
+      }
       const stopLossTrigger =
-        robot.stopLossEnabled &&
-        (robot.stopLossMode === "percent"
-          ? sellPx < avgBuyBeforeExits && lossPctVsAvg >= robot.stopLossPercent - 1e-9
-          : lossUsdt >= robot.stopLossFixedUsdt - 1e-9);
+        stopLossThresholdPx != null && sellPxLow <= stopLossThresholdPx * (1 + 1e-9);
       const stopGainTrigger =
-        robot.stopGainEnabled &&
-        (robot.stopGainMode === "percent"
-          ? sellPx > avgBuyBeforeExits && gainPctVsAvg >= robot.stopGainPercent - 1e-9
-          : gainUsdt >= robot.stopGainFixedUsdt - 1e-9);
-      const trigger = stopLossTrigger || stopGainTrigger;
-      if (trigger) {
+        stopGainThresholdPx != null && sellPxHigh >= stopGainThresholdPx * (1 - 1e-9);
+      let stopExitPx: number | null = null;
+      if (stopLossTrigger && stopGainTrigger) {
+        stopExitPx =
+          executionMode === "optimistic"
+            ? (stopGainThresholdPx ?? sellPxHigh)
+            : (stopLossThresholdPx ?? sellPxLow);
+      } else if (stopLossTrigger) {
+        stopExitPx = stopLossThresholdPx ?? sellPxLow;
+      } else if (stopGainTrigger) {
+        stopExitPx = stopGainThresholdPx ?? sellPxHigh;
+      }
+      if (stopExitPx != null) {
         const baseBefore = baseQty;
         const costBefore = quoteInPosition;
-        const grossProceeds = baseQty * sellPx;
+        const grossProceeds = baseQty * stopExitPx;
         const feeSell = grossProceeds * f;
         const netProceeds = grossProceeds - feeSell;
         totalFeesUsdt += feeSell;
@@ -472,16 +668,19 @@ export function runRobotBacktest(params: {
       }
     }
 
-    // 2) Zerar: alerta armado por sinal de zerar; primeira vela com fecho ≤ limite de breakeven (médio + buffer % configurável).
-    if (baseQty > 1e-12 && flattenArmed && hasFlattenStrats) {
+    // 2) Zerar: alerta armado; dispara se o fecho **ou** o mínimo da vela tocarem o limiar; fill no mínimo quando aplicável.
+    if (baseQty > 1e-12 && flattenArmed) {
       const avgExit = quoteInPosition / baseQty;
       const flatBuf = robot.flattenBreakevenBufferPercent ?? 0;
-      if (longFlattenCloseBreakeven(close, avgExit, flatBuf)) {
+      const flatHitClose = longFlattenCloseBreakeven(close, avgExit, flatBuf);
+      const flatHitLow = longFlattenCloseBreakeven(low, avgExit, flatBuf);
+      if (flatHitClose || flatHitLow) {
         const baseBefore = baseQty;
         const costBefore = quoteInPosition;
         if (avgBuyPriceAtExit == null) avgBuyPriceAtExit = avgExit;
         /** Breakeven: teto do preço efetivo = limite (médio com buffer); modo otimista não acrescenta lucro acima disso. */
-        const effFlatPx = Math.min(sellPx, flattenBreakevenThresholdPrice(avgExit, flatBuf));
+        const flatRefPx = flatHitLow ? sellPxLow : sellPx;
+        const effFlatPx = Math.min(flatRefPx, flattenBreakevenThresholdPrice(avgExit, flatBuf));
         const grossProceeds = baseQty * effFlatPx;
         const feeSell = grossProceeds * f;
         const netProceeds = grossProceeds - feeSell;
@@ -583,12 +782,20 @@ export function runRobotBacktest(params: {
     }
 
     // 4) Venda por sinal (fecha posição completa, a mercado no simulador)
-    if (baseQty > 1e-12 && robotSellOrTrue(robot, i, strategyResults)) {
+    if (
+      baseQty > 1e-12 &&
+      avgBuyBeforeExits != null &&
+      robotSellOrTrue(robot, i, strategyResults) &&
+      buyerSignalExitMeetsMinEdge(robot, sellPxHigh, avgBuyBeforeExits)
+    ) {
       const baseBefore = baseQty;
       const costBefore = quoteInPosition;
       const exitAvg = quoteInPosition / baseQty;
       if (avgBuyPriceAtExit == null) avgBuyPriceAtExit = exitAvg;
-      const grossProceeds = baseQty * sellPx;
+      const minEdgePx = buyerSignalExitMinEdgeThresholdPrice(robot, avgBuyBeforeExits);
+      const signalExitPx =
+        Number.isFinite(minEdgePx) && minEdgePx > 0 ? Math.max(sellPx, minEdgePx) : sellPx;
+      const grossProceeds = baseQty * signalExitPx;
       const feeSell = grossProceeds * f;
       const netProceeds = grossProceeds - feeSell;
       totalFeesUsdt += feeSell;
@@ -634,9 +841,12 @@ export function runRobotBacktest(params: {
       flattenArmed = false;
     }
 
-    // 5) Compra: acumulação ativa → até uma compra por vela até ao teto ou fim da janela; sinal pode estar falso; 1.ª compra fecho≤abertura; seguintes só vs última compra.
+    // 5) Compra: acumulação ativa → …; a mercado só se buyRef estritamente abaixo do open (como no live sem LIMIT opcional); seguintes só vs última compra.
     if (buyAccumulationActive && !boughtThisOpenTime.has(ot)) {
-      if (buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice)) {
+      if (
+        buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice) &&
+        buyerMarketBuyRefStrictlyBelowCandleOpen(buyRefPx, open)
+      ) {
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
         if (buySequentialSliceUsdt == null || !Number.isFinite(buySequentialSliceUsdt) || buySequentialSliceUsdt <= 0) {
           buySequentialSliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendUsdt);
@@ -685,9 +895,10 @@ export function runRobotBacktest(params: {
     let gainPctUnrealized: number | null = null;
     let lossPctUnrealized: number | null = null;
     if (avgAfter != null) {
-      const u = ((sellPx - avgAfter) / avgAfter) * 100;
-      if (u > 0) gainPctUnrealized = u;
-      else if (u < 0) lossPctUnrealized = -u;
+      const uHigh = ((sellPxHigh - avgAfter) / avgAfter) * 100;
+      const uLow = ((sellPxLow - avgAfter) / avgAfter) * 100;
+      if (uHigh > 0) gainPctUnrealized = uHigh;
+      if (uLow < 0) lossPctUnrealized = -uLow;
     }
 
     const eq = equityUsdtNow(sellPx);

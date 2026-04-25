@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { API_BASE } from "@/app/constants";
 import { useAppBarSafe } from "@/app/AppBarSafeContext";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
@@ -23,10 +23,17 @@ import {
   ROBOT_BUY_ACCUM_MAX_CANDLES_MIN,
   ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
   ROBOT_BUY_ACCUM_START_SIGNAL_MIN,
+  ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX,
+  ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN,
+  ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT,
+  ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+  ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN,
   ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
   ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN,
   ROBOT_MAX_SPOT_MAX,
   ROBOT_MAX_SPOT_MIN,
+  ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+  ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN,
   ROBOT_STOP_LOSS_PCT_MAX,
   ROBOT_STOP_LOSS_PCT_MIN,
   loadSavedRobots,
@@ -60,6 +67,102 @@ function parseUsdtInput(s: string): number | null {
   if (t === "") return 0;
   const v = Number(t);
   return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
+function parseDecimalInput(s: string): number | null {
+  const t = s.trim().replace(/\s/g, "").replace(",", ".");
+  if (t === "" || t === "-" || t === "." || t === "-.") return null;
+  const v = Number(t);
+  return Number.isFinite(v) ? v : null;
+}
+
+const STOP_PCT_STEP = 0.01;
+
+/**
+ * [−] valor [+] com repetição ao manter pressionado (acelera após alguns passos).
+ * `pointerup`/`pointercancel` na janela para soltar fora do botão.
+ */
+function PctHoldStepperRow(props: {
+  valueLabel: ReactNode;
+  onNudge: (dir: 1 | -1) => void;
+  minusClass: string;
+  plusClass: string;
+  ariaDecrease: string;
+  ariaIncrease: string;
+  holdHint?: string;
+}) {
+  const { valueLabel, onNudge, minusClass, plusClass, ariaDecrease, ariaIncrease, holdHint } = props;
+  const armRef = useRef<{ active: boolean; tid: ReturnType<typeof setTimeout> | null }>({
+    active: false,
+    tid: null,
+  });
+
+  const endHold = useCallback(() => {
+    armRef.current.active = false;
+    if (armRef.current.tid != null) {
+      clearTimeout(armRef.current.tid);
+      armRef.current.tid = null;
+    }
+    window.removeEventListener("pointerup", endHold);
+    window.removeEventListener("pointercancel", endHold);
+  }, []);
+
+  const startHold = useCallback(
+    (dir: 1 | -1) => {
+      endHold();
+      armRef.current.active = true;
+      let count = 0;
+      onNudge(dir);
+      const scheduleNext = () => {
+        if (!armRef.current.active) return;
+        const ms =
+          count === 0 ? 420 : count < 7 ? 130 : count < 20 ? 75 : count < 45 ? 45 : 26;
+        armRef.current.tid = setTimeout(() => {
+          if (!armRef.current.active) return;
+          onNudge(dir);
+          count += 1;
+          scheduleNext();
+        }, ms);
+      };
+      window.addEventListener("pointerup", endHold);
+      window.addEventListener("pointercancel", endHold);
+      scheduleNext();
+    },
+    [endHold, onNudge]
+  );
+
+  const btnBase =
+    "shrink-0 w-9 h-9 rounded-lg border text-lg font-semibold leading-none flex items-center justify-center select-none touch-manipulation active:scale-[0.97]";
+
+  return (
+    <div className="flex items-center justify-center gap-2 py-0.5 select-none">
+      <button
+        type="button"
+        className={`${btnBase} ${minusClass}`}
+        aria-label={ariaDecrease}
+        title={holdHint}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(-1);
+        }}
+      >
+        −
+      </button>
+      <div className="min-w-[5.25rem] text-center text-sm font-mono tabular-nums text-zinc-900">{valueLabel}</div>
+      <button
+        type="button"
+        className={`${btnBase} ${plusClass}`}
+        aria-label={ariaIncrease}
+        title={holdHint}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          startHold(1);
+        }}
+      >
+        +
+      </button>
+    </div>
+  );
 }
 
 async function fetchSpotUsdtFreeFromApi(): Promise<number | null> {
@@ -138,7 +241,16 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     ROBOT_BUY_ACCUM_START_SIGNAL_MIN
   );
   const [buyAccumMaxCandles, setBuyAccumMaxCandles] = useState(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+  const [firstEntryLimitEnabled, setFirstEntryLimitEnabled] = useState(false);
+  const [firstEntryLimitOffsetPercent, setFirstEntryLimitOffsetPercent] = useState(0);
+  const [firstEntryLimitTimeoutCandles, setFirstEntryLimitTimeoutCandles] = useState(
+    ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT
+  );
   const [flattenBreakevenBufferPercent, setFlattenBreakevenBufferPercent] = useState(0);
+  const [flattenBreakevenBufferInput, setFlattenBreakevenBufferInput] = useState("0");
+  const [signalExitMinEdgePercent, setSignalExitMinEdgePercent] = useState(0);
+  const [alertArmMinEdgePercent, setAlertArmMinEdgePercent] = useState(0);
+  const [autoArmByPriceEnabled, setAutoArmByPriceEnabled] = useState(false);
 
   useEffect(() => {
     setView(initialView);
@@ -375,7 +487,14 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setRobotAlias("");
     setBuyAccumulationStartOnSignalNumber(ROBOT_BUY_ACCUM_START_SIGNAL_MIN);
     setBuyAccumMaxCandles(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+    setFirstEntryLimitEnabled(false);
+    setFirstEntryLimitOffsetPercent(0);
+    setFirstEntryLimitTimeoutCandles(ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT);
     setFlattenBreakevenBufferPercent(0);
+    setFlattenBreakevenBufferInput("0");
+    setSignalExitMinEdgePercent(0);
+    setAlertArmMinEdgePercent(0);
+    setAutoArmByPriceEnabled(false);
     setErrorMsg(null);
   }, []);
 
@@ -436,6 +555,21 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setBuyAccumMaxCandles(
       Math.min(ROBOT_BUY_ACCUM_MAX_CANDLES_MAX, Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesN))
     );
+    setFirstEntryLimitEnabled(robot.firstEntryLimitEnabled === true);
+    const limitOffset =
+      typeof robot.firstEntryLimitOffsetPercent === "number" && Number.isFinite(robot.firstEntryLimitOffsetPercent)
+        ? robot.firstEntryLimitOffsetPercent
+        : 0;
+    setFirstEntryLimitOffsetPercent(
+      Math.min(ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX, Math.max(ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN, Math.round(limitOffset * 10) / 10))
+    );
+    const firstLimitTimeout =
+      typeof robot.firstEntryLimitTimeoutCandles === "number" && Number.isFinite(robot.firstEntryLimitTimeoutCandles)
+        ? Math.floor(robot.firstEntryLimitTimeoutCandles)
+        : ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT;
+    setFirstEntryLimitTimeoutCandles(
+      Math.min(ROBOT_BUY_ACCUM_MAX_CANDLES_MAX, Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, firstLimitTimeout))
+    );
     const buf =
       typeof robot.flattenBreakevenBufferPercent === "number" && Number.isFinite(robot.flattenBreakevenBufferPercent)
         ? robot.flattenBreakevenBufferPercent
@@ -443,9 +577,34 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setFlattenBreakevenBufferPercent(
       Math.min(
         ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
-        Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(buf * 10) / 10)
+        Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(buf * 100) / 100)
       )
     );
+    setFlattenBreakevenBufferInput(String(Math.min(
+      ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+      Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(buf * 100) / 100)
+    )));
+    const signalExitPct =
+      typeof robot.signalExitMinEdgePercent === "number" && Number.isFinite(robot.signalExitMinEdgePercent)
+        ? robot.signalExitMinEdgePercent
+        : 0;
+    setSignalExitMinEdgePercent(
+      Math.min(
+        ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+        Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(signalExitPct * 100) / 100)
+      )
+    );
+    const alertArmPct =
+      typeof robot.alertArmMinEdgePercent === "number" && Number.isFinite(robot.alertArmMinEdgePercent)
+        ? robot.alertArmMinEdgePercent
+        : 0;
+    setAlertArmMinEdgePercent(
+      Math.min(
+        ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+        Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(alertArmPct * 100) / 100)
+      )
+    );
+    setAutoArmByPriceEnabled(robot.autoArmByPriceEnabled === true);
     setErrorMsg(null);
     setView("add");
   };
@@ -541,7 +700,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
 
     const stopLossPctClamped = Math.min(
       ROBOT_STOP_LOSS_PCT_MAX,
-      Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(stopLossPercent * 10) / 10)
+      Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(stopLossPercent * 100) / 100)
     );
     const slFixedParsed = parseUsdtInput(stopLossFixedInput);
     if (stopLossEnabled && side === "buyer") {
@@ -559,7 +718,7 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     const stopLossFixedUsdt = Math.max(0, slFixedParsed ?? 0);
     const stopGainPctClamped = Math.min(
       ROBOT_STOP_LOSS_PCT_MAX,
-      Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(stopGainPercent * 10) / 10)
+      Math.max(ROBOT_STOP_LOSS_PCT_MIN, Math.round(stopGainPercent * 100) / 100)
     );
     const sgFixedParsed = parseUsdtInput(stopGainFixedInput);
     if (stopGainEnabled && side === "buyer") {
@@ -590,9 +749,31 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
             Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(buyAccumMaxCandles))
           )
         : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
+    const firstEntryLimitOffsetClamped =
+      side === "buyer"
+        ? Math.min(
+            ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX,
+            Math.max(ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN, Math.round(firstEntryLimitOffsetPercent * 10) / 10)
+          )
+        : 0;
+    const firstEntryLimitTimeoutClamped =
+      side === "buyer"
+        ? Math.min(
+            ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+            Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(firstEntryLimitTimeoutCandles))
+          )
+        : ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT;
     const flattenBreakevenBufferClamped = Math.min(
       ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
-      Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(flattenBreakevenBufferPercent * 10) / 10)
+      Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(flattenBreakevenBufferPercent * 100) / 100)
+    );
+    const signalExitMinEdgeClamped = Math.min(
+      ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+      Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(signalExitMinEdgePercent * 100) / 100)
+    );
+    const alertArmMinEdgeClamped = Math.min(
+      ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+      Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(alertArmMinEdgePercent * 100) / 100)
     );
 
     if (editingRobotId) {
@@ -657,7 +838,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
           side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
         buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
         buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+        firstEntryLimitEnabled: side === "buyer" ? firstEntryLimitEnabled : false,
+        firstEntryLimitOffsetPercent: firstEntryLimitOffsetClamped,
+        firstEntryLimitTimeoutCandles: firstEntryLimitTimeoutClamped,
         flattenBreakevenBufferPercent: side === "buyer" ? flattenBreakevenBufferClamped : 0,
+        signalExitMinEdgePercent: signalExitMinEdgeClamped,
+        alertArmMinEdgePercent: alertArmMinEdgeClamped,
+        autoArmByPriceEnabled: side === "buyer" ? autoArmByPriceEnabled : false,
       };
       const nextList = savedRobots.map((r) => (r.id === editingRobotId ? updated : r));
       setSavedRobots(nextList);
@@ -695,7 +882,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
       buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
       buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+      firstEntryLimitEnabled: side === "buyer" ? firstEntryLimitEnabled : false,
+      firstEntryLimitOffsetPercent: firstEntryLimitOffsetClamped,
+      firstEntryLimitTimeoutCandles: firstEntryLimitTimeoutClamped,
       flattenBreakevenBufferPercent: side === "buyer" ? flattenBreakevenBufferClamped : 0,
+      signalExitMinEdgePercent: signalExitMinEdgeClamped,
+      alertArmMinEdgePercent: alertArmMinEdgeClamped,
+      autoArmByPriceEnabled: side === "buyer" ? autoArmByPriceEnabled : false,
     };
     const nextList = [entry, ...savedRobots];
     setSavedRobots(nextList);
@@ -903,6 +1096,42 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                             )
                           )
                         )}
+                      </p>
+                    )}
+                    {(r.signalExitMinEdgePercent ?? 0) > 0 && (
+                      <p className="text-[10px] text-zinc-700">
+                        {r.side === "buyer"
+                          ? (t.robotsSignalExitMinEdgeSummaryBuyer ??
+                              "Sell signal only if price is at least {pct}% above avg buy.")
+                              .replace("{pct}", String(r.signalExitMinEdgePercent ?? 0))
+                          : (t.robotsSignalExitMinEdgeSummarySeller ??
+                              "Buy signal only if price is at least {pct}% below avg sell.")
+                              .replace("{pct}", String(r.signalExitMinEdgePercent ?? 0))}
+                      </p>
+                    )}
+                    {(r.alertArmMinEdgePercent ?? 0) > 0 && (
+                      <p className="text-[10px] text-zinc-700">
+                        {r.side === "buyer"
+                          ? (t.robotsAlertArmMinEdgeSummaryBuyer ??
+                              "Alert arms only if price is at least {pct}% above avg buy.")
+                              .replace("{pct}", String(r.alertArmMinEdgePercent ?? 0))
+                          : (t.robotsAlertArmMinEdgeSummarySeller ??
+                              "Alert arms only if price is at least {pct}% below avg sell.")
+                              .replace("{pct}", String(r.alertArmMinEdgePercent ?? 0))}
+                      </p>
+                    )}
+                    {r.side === "buyer" && (r.firstEntryLimitEnabled ?? false) && (
+                      <p className="text-[10px] text-blue-800">
+                        {(t.robotsListFirstLimitLine ??
+                          "First buy LIMIT: {pct}% below candle open, timeout {n} candles.")
+                          .replace("{pct}", String(r.firstEntryLimitOffsetPercent ?? 0))
+                          .replace("{n}", String(r.firstEntryLimitTimeoutCandles ?? ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT))}
+                      </p>
+                    )}
+                    {r.side === "buyer" && (
+                      <p className="text-[10px] text-zinc-600">
+                        {t.robotsListMarketBelowOpenHint ??
+                          "Without LIMIT: market buys only when close is strictly below candle open."}
                       </p>
                     )}
                     {r.side === "buyer" && (
@@ -1268,26 +1497,124 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                   </p>
                   <div className="flex items-center gap-2">
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
+                      pattern="-?[0-9]*[.,]?[0-9]*"
                       min={ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN}
                       max={ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX}
-                      step={0.1}
-                      value={flattenBreakevenBufferPercent}
+                      step={0.01}
+                      value={flattenBreakevenBufferInput}
                       onChange={(e) => {
-                        const v = parseFloat(e.target.value);
-                        if (!Number.isFinite(v)) return;
-                        setFlattenBreakevenBufferPercent(
-                          Math.min(
-                            ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
-                            Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(v * 10) / 10)
-                          )
+                        const raw = e.target.value;
+                        const normalized = raw.replace(",", ".");
+                        if (!/^-?\d*(?:[.]\d*)?$/.test(normalized)) return;
+                        setFlattenBreakevenBufferInput(raw);
+                        const v = parseDecimalInput(raw);
+                        if (v == null) return;
+                        const clamped = Math.min(
+                          ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX,
+                          Math.max(ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN, Math.round(v * 100) / 100)
                         );
+                        setFlattenBreakevenBufferPercent(clamped);
+                      }}
+                      onBlur={() => {
+                        setFlattenBreakevenBufferInput(String(flattenBreakevenBufferPercent));
                       }}
                       className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
                     />
                     <span className="text-xs text-zinc-500">%</span>
                   </div>
                 </div>
+              )}
+
+              <div className="mt-2">
+                <p className="text-xs font-medium text-zinc-700 mb-1">
+                  {side === "buyer"
+                    ? (t.robotsSignalExitMinEdgeLabelBuyer ?? "Minimum edge for sell signal (%)")
+                    : (t.robotsSignalExitMinEdgeLabelSeller ?? "Minimum edge for buy signal (%)")}
+                </p>
+                <p className="text-[10px] text-zinc-500 mb-1.5">
+                  {side === "buyer"
+                    ? (t.robotsSignalExitMinEdgeHintBuyer ??
+                        "Example: 0.6 means a sell signal only executes if current price is at least 0.6% above average buy.")
+                    : (t.robotsSignalExitMinEdgeHintSeller ??
+                        "Example: 0.6 means a buy signal only executes if current price is at least 0.6% below average sell (seller flow reserved for future live execution).")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="-?[0-9]*[.,]?[0-9]*"
+                    min={ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN}
+                    max={ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX}
+                    step={0.01}
+                    value={signalExitMinEdgePercent}
+                    onChange={(e) => {
+                      const v = parseDecimalInput(e.target.value);
+                      if (v == null) return;
+                      setSignalExitMinEdgePercent(
+                        Math.min(
+                          ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+                          Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(v * 100) / 100)
+                        )
+                      );
+                    }}
+                    className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
+                  />
+                  <span className="text-xs text-zinc-500">%</span>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <p className="text-xs font-medium text-zinc-700 mb-1">
+                  {side === "buyer"
+                    ? (t.robotsAlertArmMinEdgeLabelBuyer ?? "Minimum edge to arm alert (%)")
+                    : (t.robotsAlertArmMinEdgeLabelSeller ?? "Minimum edge to arm alert (%)")}
+                </p>
+                <p className="text-[10px] text-zinc-500 mb-1.5">
+                  {side === "buyer"
+                    ? (t.robotsAlertArmMinEdgeHintBuyer ??
+                        "Example: 0.6 means alert only arms when price is at least 0.6% above average buy. Once armed, it stays armed until position is closed.")
+                    : (t.robotsAlertArmMinEdgeHintSeller ??
+                        "Example: 0.6 means alert only arms when price is at least 0.6% below average sell. Once armed, it stays armed until position is closed.")}
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    pattern="-?[0-9]*[.,]?[0-9]*"
+                    min={ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN}
+                    max={ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX}
+                    step={0.01}
+                    value={alertArmMinEdgePercent}
+                    onChange={(e) => {
+                      const v = parseDecimalInput(e.target.value);
+                      if (v == null) return;
+                      setAlertArmMinEdgePercent(
+                        Math.min(
+                          ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+                          Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(v * 100) / 100)
+                        )
+                      );
+                    }}
+                    className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
+                  />
+                  <span className="text-xs text-zinc-500">%</span>
+                </div>
+              </div>
+              {side === "buyer" && (
+                <label className="mt-2 flex items-start gap-2 text-xs text-zinc-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={autoArmByPriceEnabled}
+                    onChange={(e) => setAutoArmByPriceEnabled(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    {t.robotsAutoArmByPriceLabel ??
+                      "Auto-arm flatten by price edge (ON: arms when edge is hit even without flatten strategy)"}
+                  </span>
+                </label>
               )}
 
               {side === "buyer" && (
@@ -1609,6 +1936,83 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
               )}
 
               {side === "buyer" && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2 space-y-2">
+                  <p className="text-[10px] text-zinc-600 leading-snug">
+                    {t.robotsMarketBelowOpenHint ??
+                      "Default: market buy on signal only when the candle close is strictly below its open. Optional: first buy (flat) as LIMIT below open."}
+                  </p>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={firstEntryLimitEnabled}
+                      onChange={(e) => setFirstEntryLimitEnabled(e.target.checked)}
+                      className="mt-0.5 rounded border-zinc-300 text-violet-600"
+                    />
+                    <span className="text-xs font-medium text-zinc-800">
+                      {t.robotsFirstLimitEnable ?? "First buy as LIMIT (below candle open)"}
+                    </span>
+                  </label>
+                  <p className="text-[10px] text-zinc-600 leading-snug pl-6 -mt-1">
+                    {t.robotsFirstLimitHint ??
+                      "When enabled, the first buy while flat uses a LIMIT capped below that candle’s open (offset + 0.01% minimum). Timeout cancels unfilled orders. Further buys in the window use market, still only if close < open."}
+                  </p>
+                  {firstEntryLimitEnabled && (
+                    <>
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-medium text-zinc-700">
+                          {t.robotsFirstLimitOffsetLabel ?? "Offset below candle open (%)"}
+                        </label>
+                        <input
+                          type="number"
+                          min={ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN}
+                          max={ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX}
+                          step={0.1}
+                          value={firstEntryLimitOffsetPercent}
+                          onChange={(e) => {
+                            const v = parseFloat(e.target.value);
+                            if (!Number.isFinite(v)) return;
+                            setFirstEntryLimitOffsetPercent(
+                              Math.min(ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX, Math.max(ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN, Math.round(v * 10) / 10))
+                            );
+                          }}
+                          className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-900"
+                        />
+                        <p className="text-[10px] text-zinc-500">
+                          {t.robotsFirstLimitOffsetFloorHint ?? "At least 0.01% below open is always applied to the limit price."}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="block text-[11px] font-medium text-zinc-700">
+                          {t.robotsFirstLimitTimeoutLabel ?? "Limit timeout (candles)"}
+                        </label>
+                        <select
+                          value={firstEntryLimitTimeoutCandles}
+                          onChange={(e) =>
+                            setFirstEntryLimitTimeoutCandles(
+                              Math.min(
+                                ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
+                                Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Number(e.target.value))
+                              )
+                            )
+                          }
+                          className="w-full text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-900"
+                        >
+                          {Array.from(
+                            { length: ROBOT_BUY_ACCUM_MAX_CANDLES_MAX - ROBOT_BUY_ACCUM_MAX_CANDLES_MIN + 1 },
+                            (_, i) => ROBOT_BUY_ACCUM_MAX_CANDLES_MIN + i
+                          ).map((n) => (
+                            <option key={`first_limit_timeout_${n}`} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {side === "buyer" && (
                 <div className="space-y-1">
                   <label className="block text-xs font-medium text-zinc-800" htmlFor="robot-buy-accum-max-candles">
                     {t.robotsBuyAccumMaxCandlesLabel ?? "Max consecutive candles to try buys"}
@@ -1678,21 +2082,30 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                         </button>
                       </div>
                       {stopLossMode === "percent" ? (
-                        <>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] text-zinc-700">{t.robotsStopLossPercentLabel ?? "Max loss vs avg buy (%)"}</span>
-                            <span className="text-xs font-mono text-orange-800 tabular-nums">{stopLossPercent.toFixed(1)}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min={ROBOT_STOP_LOSS_PCT_MIN}
-                            max={ROBOT_STOP_LOSS_PCT_MAX}
-                            step={0.1}
-                            value={Math.min(ROBOT_STOP_LOSS_PCT_MAX, Math.max(ROBOT_STOP_LOSS_PCT_MIN, stopLossPercent))}
-                            onChange={(e) => setStopLossPercent(Number(e.target.value))}
-                            className="w-full h-2 accent-orange-500"
+                        <div className="space-y-1">
+                          <span className="text-[11px] text-zinc-700 block">
+                            {t.robotsStopLossPercentLabel ?? "Max loss vs avg buy (%)"}
+                          </span>
+                          <PctHoldStepperRow
+                            valueLabel={<span className="text-orange-900">{stopLossPercent.toFixed(2)}%</span>}
+                            onNudge={(dir) =>
+                              setStopLossPercent((p) =>
+                                Math.min(
+                                  ROBOT_STOP_LOSS_PCT_MAX,
+                                  Math.max(
+                                    ROBOT_STOP_LOSS_PCT_MIN,
+                                    Math.round((p + dir * STOP_PCT_STEP) * 100) / 100
+                                  )
+                                )
+                              )
+                            }
+                            minusClass="border-orange-300 bg-orange-100 text-orange-900 hover:bg-orange-200"
+                            plusClass="border-orange-500 bg-orange-500 text-white hover:bg-orange-600"
+                            ariaDecrease={t.robotsStopPctDecrease ?? "Decrease by 0.01%"}
+                            ariaIncrease={t.robotsStopPctIncrease ?? "Increase by 0.01%"}
+                            holdHint={t.robotsStopPctHoldHint}
                           />
-                        </>
+                        </div>
                       ) : (
                         <>
                           <p className="text-[11px] text-zinc-700">{t.robotsStopLossFixedLabel ?? "Max unrealized loss (USDT)"}</p>
@@ -1752,21 +2165,30 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                         </button>
                       </div>
                       {stopGainMode === "percent" ? (
-                        <>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[11px] text-zinc-700">{t.robotsStopGainPercentLabel ?? "Max gain vs avg buy (%)"}</span>
-                            <span className="text-xs font-mono text-emerald-800 tabular-nums">{stopGainPercent.toFixed(1)}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min={ROBOT_STOP_LOSS_PCT_MIN}
-                            max={ROBOT_STOP_LOSS_PCT_MAX}
-                            step={0.1}
-                            value={Math.min(ROBOT_STOP_LOSS_PCT_MAX, Math.max(ROBOT_STOP_LOSS_PCT_MIN, stopGainPercent))}
-                            onChange={(e) => setStopGainPercent(Number(e.target.value))}
-                            className="w-full h-2 accent-emerald-600"
+                        <div className="space-y-1">
+                          <span className="text-[11px] text-zinc-700 block">
+                            {t.robotsStopGainPercentLabel ?? "Max gain vs avg buy (%)"}
+                          </span>
+                          <PctHoldStepperRow
+                            valueLabel={<span className="text-emerald-900">{stopGainPercent.toFixed(2)}%</span>}
+                            onNudge={(dir) =>
+                              setStopGainPercent((p) =>
+                                Math.min(
+                                  ROBOT_STOP_LOSS_PCT_MAX,
+                                  Math.max(
+                                    ROBOT_STOP_LOSS_PCT_MIN,
+                                    Math.round((p + dir * STOP_PCT_STEP) * 100) / 100
+                                  )
+                                )
+                              )
+                            }
+                            minusClass="border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200"
+                            plusClass="border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700"
+                            ariaDecrease={t.robotsStopPctDecrease ?? "Decrease by 0.01%"}
+                            ariaIncrease={t.robotsStopPctIncrease ?? "Increase by 0.01%"}
+                            holdHint={t.robotsStopPctHoldHint}
                           />
-                        </>
+                        </div>
                       ) : (
                         <>
                           <p className="text-[11px] text-zinc-700">{t.robotsStopGainFixedLabel ?? "Max unrealized gain (USDT)"}</p>
