@@ -333,6 +333,74 @@ export function computeWmaColumn(
 }
 
 /**
+ * Média móvel harmônica "signed" estável para séries que podem cruzar zero.
+ * - Magnitude: média harmônica de |x| na janela [i, i+period) em DESC.
+ * - Sinal: sinal da média aritmética da própria janela.
+ * - Ignora |x| muito pequeno (EPS) para evitar explosões numéricas perto de zero.
+ */
+export function computeHarmonicMaColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const p = Math.max(1, Math.round(period));
+  const EPS = 1e-8;
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    let invSum = 0;
+    let sum = 0;
+    let count = 0;
+    for (let k = 0; k < p && i + k < n; k++) {
+      const raw = data[i + k]?.[valueIndex];
+      if (raw == null) continue;
+      const v = Number(raw);
+      if (!Number.isFinite(v)) continue;
+      const absV = Math.abs(v);
+      if (absV < EPS) continue;
+      invSum += 1 / absV;
+      sum += v;
+      count += 1;
+    }
+    if (count === 0 || invSum <= EPS) {
+      out.push(null);
+      continue;
+    }
+    const magnitude = count / invSum;
+    const sign = sum < 0 ? -1 : 1;
+    out.push(sign * magnitude);
+  }
+  return out;
+}
+
+/**
+ * Média móvel quadrática (QMMA / RMS): sqrt( Σ(x²) / n ) na janela [i, i+period) em DESC.
+ */
+export function computeQuadraticMaColumn(
+  data: (string | number | null)[][],
+  valueIndex: number,
+  period: number
+): (number | null)[] {
+  const n = data.length;
+  const p = Math.max(1, Math.round(period));
+  const out: (number | null)[] = [];
+  for (let i = 0; i < n; i++) {
+    let sumSquares = 0;
+    let count = 0;
+    for (let k = 0; k < p && i + k < n; k++) {
+      const raw = data[i + k]?.[valueIndex];
+      if (raw == null) continue;
+      const v = Number(raw);
+      if (!Number.isFinite(v)) continue;
+      sumSquares += v * v;
+      count += 1;
+    }
+    out.push(count > 0 ? Math.sqrt(sumSquares / count) : null);
+  }
+  return out;
+}
+
+/**
  * WMA aplicada a um array de valores (valores[0] = mais recente).
  * Mesmo esquema de pesos: peso period no índice 0, period-1 no 1, ..., 1 no period-1.
  */
@@ -424,7 +492,7 @@ export type HmaCustomLegMaType = "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRAT
 /** @deprecated Use HmaCustomLegMaType ou HmaCustomSmoothMaType. */
 export type HmaCustomMaType = HmaCustomSmoothMaType;
 
-function computeHmaCustomSmoothFromRaw(
+export function computeHmaCustomSmoothFromRaw(
   raw: (number | null)[],
   period: number,
   maType: HmaCustomSmoothMaType
@@ -866,7 +934,8 @@ export function computeRsiColumn(
   return out;
 }
 
-/** Índices high, low, close, volume no array kline. */
+/** Índices open, high, low, close, volume no array kline. */
+const OPEN_IDX = 1;
 const HIGH_IDX = 2;
 const LOW_IDX = 3;
 const CLOSE_IDX_COL = 4;
@@ -1574,21 +1643,100 @@ export function computeCciColumn(
   return out;
 }
 
+/** Peso de fluxo CMF por direção da vela: cada valor em [0,1], até 4 casas decimais. */
+export type CmfDirectionalWeights = {
+  bullBuy: number;
+  bullSell: number;
+  bearBuy: number;
+  bearSell: number;
+};
+export type CmfAggregationMaType = "SMA" | "EMA" | "WMA";
+
+function clampCmfWeight01(n: number): number {
+  const c = Math.max(0, Math.min(1, n));
+  return Math.round(c * 10000) / 10000;
+}
+
 /**
- * Chaikin Money Flow (CMF).
+ * Normaliza os quatro pesos (0–1, 4 decimais). Default 0,5 cada = viés nulo no fator `1 + (buy − sell)`.
+ */
+export function normalizeCmfDirectionalWeights(w?: {
+  bullBuy?: number;
+  bullSell?: number;
+  bearBuy?: number;
+  bearSell?: number;
+}): CmfDirectionalWeights {
+  const c = (v: unknown, def: number) =>
+    clampCmfWeight01(typeof v === "number" && Number.isFinite(v) ? v : def);
+  return {
+    bullBuy: c(w?.bullBuy, 0.5),
+    bullSell: c(w?.bullSell, 0.5),
+    bearBuy: c(w?.bearBuy, 0.5),
+    bearSell: c(w?.bearSell, 0.5),
+  };
+}
+
+/** Par único compra/venda espelhado em vela de alta e de baixa (UI). */
+export function normalizeCmfMirroredBuySellWeights(buy?: number, sell?: number): CmfDirectionalWeights {
+  const c = (v: unknown, def: number) =>
+    clampCmfWeight01(typeof v === "number" && Number.isFinite(v) ? v : def);
+  const b = c(buy, 0.5);
+  const s = c(sell, 0.5);
+  return normalizeCmfDirectionalWeights({
+    bullBuy: b,
+    bullSell: s,
+    bearBuy: b,
+    bearSell: s,
+  });
+}
+
+/** Par compra/venda para a UI a partir do layout (média se cantos antigos diferirem). */
+export function cmfMirroredBuySellPairFromStoredWeights(w?: {
+  bullBuy?: number;
+  bullSell?: number;
+  bearBuy?: number;
+  bearSell?: number;
+}): { buy: number; sell: number } {
+  const W = normalizeCmfDirectionalWeights(w);
+  return {
+    buy: Math.round(((W.bullBuy + W.bearBuy) / 2) * 10000) / 10000,
+    sell: Math.round(((W.bullSell + W.bearSell) / 2) * 10000) / 10000,
+  };
+}
+
+export function normalizeCmfAggregationMaType(t: unknown): CmfAggregationMaType {
+  return t === "EMA" || t === "WMA" ? t : "SMA";
+}
+
+/**
+ * Chaikin Money Flow (CMF) com viés direcional opcional por cor da vela.
  * Money Flow Multiplier = ((Close - Low) - (High - Close)) / (High - Low) = (2*Close - High - Low) / (High - Low); 0 se High === Low.
- * Money Flow Volume = MF Multiplier × Volume.
- * CMF = Sum(MFV, period) / Sum(Volume, period). Valores típicos entre -1 e +1.
+ * MFV = MFM × Volume. Para cada vela: `isBull = close > open` (doji e bear usam pesos “bear”).
+ * Fluxo ajustado = MFV × (1 + (peso_compra − peso_venda)) com pesos da linha bull ou bear.
+ * Agregação final selecionável: SMA (soma na janela), WMA (pesos lineares) ou EMA (suavização exponencial)
+ * aplicada tanto ao fluxo ajustado quanto ao volume; CMF = agregação(fluxo) / agregação(volume).
+ * Com 0,5/0,5 em ambos os lados, (1 + 0) = 1 → CMF clássico (quando agregação=SMA).
+ * Valores típicos entre -1 e +1 (o viés pode alterar levemente a escala).
  * Dados em ordem DESC (índice 0 = mais recente).
  */
 export function computeCmfColumn(
   data: (string | number | null)[][],
-  period: number
+  period: number,
+  directionalWeights?: Partial<{
+    bullBuy: number;
+    bullSell: number;
+    bearBuy: number;
+    bearSell: number;
+  }>,
+  aggregationMaType?: CmfAggregationMaType
 ): (number | null)[] {
   const n = data.length;
   const out: (number | null)[] = [];
   const periodUse = Math.max(1, Math.min(500, period));
   if (n < periodUse) return new Array(n).fill(null);
+  const W = normalizeCmfDirectionalWeights(directionalWeights);
+  const maType = normalizeCmfAggregationMaType(aggregationMaType);
+  const alpha = 2 / (periodUse + 1);
 
   const getNum = (row: (string | number | null)[], col: number): number | null => {
     const raw = row?.[col];
@@ -1597,28 +1745,187 @@ export function computeCmfColumn(
     return Number.isFinite(v) ? v : null;
   };
 
+  const getAdjusted = (j: number): { mfvAdj: number; vol: number } | null => {
+    const o = getNum(data[j], OPEN_IDX);
+    const h = getNum(data[j], HIGH_IDX);
+    const l = getNum(data[j], LOW_IDX);
+    const c = getNum(data[j], CLOSE_IDX_COL);
+    const v = getNum(data[j], VOLUME_INDEX);
+    if (h == null || l == null || c == null || v == null || v < 0) return null;
+    const range = h - l;
+    const mfm = range === 0 ? 0 : (2 * c - h - l) / range;
+    const isBull = o != null && c > o;
+    const buy = isBull ? W.bullBuy : W.bearBuy;
+    const sell = isBull ? W.bullSell : W.bearSell;
+    const dirMul = 1 + (buy - sell);
+    return { mfvAdj: mfm * v * dirMul, vol: v };
+  };
+
   for (let i = 0; i < n; i++) {
     const end = Math.min(i + periodUse, n);
-    let sumMfv = 0;
-    let sumVol = 0;
-    for (let j = i; j < end; j++) {
-      const h = getNum(data[j], HIGH_IDX);
-      const l = getNum(data[j], LOW_IDX);
-      const c = getNum(data[j], CLOSE_IDX_COL);
-      const v = getNum(data[j], VOLUME_INDEX);
-      if (h == null || l == null || c == null || v == null || v < 0) continue;
-      const range = h - l;
-      const mfm = range === 0 ? 0 : (2 * c - h - l) / range;
-      sumMfv += mfm * v;
-      sumVol += v;
+    let cmf: number | null = null;
+
+    if (maType === "EMA") {
+      let emaMfv: number | null = null;
+      let emaVol: number | null = null;
+      for (let j = end - 1; j >= i; j--) {
+        const s = getAdjusted(j);
+        if (!s) continue;
+        if (emaMfv == null || emaVol == null) {
+          emaMfv = s.mfvAdj;
+          emaVol = s.vol;
+          continue;
+        }
+        emaMfv = alpha * s.mfvAdj + (1 - alpha) * emaMfv;
+        emaVol = alpha * s.vol + (1 - alpha) * emaVol;
+      }
+      if (emaVol != null && emaVol !== 0) cmf = emaMfv! / emaVol;
+    } else {
+      let sumMfv = 0;
+      let sumVol = 0;
+      for (let j = i; j < end; j++) {
+        const s = getAdjusted(j);
+        if (!s) continue;
+        const w = maType === "WMA" ? (end - j) : 1;
+        sumMfv += s.mfvAdj * w;
+        sumVol += s.vol * w;
+      }
+      if (sumVol !== 0) cmf = sumMfv / sumVol;
     }
-    if (sumVol === 0) {
-      out.push(null);
+
+    out.push(cmf != null && Number.isFinite(cmf) ? cmf : null);
+  }
+  return out;
+}
+
+/**
+ * CMF acumulado (pressão acumulada no estilo OBV) usando a mesma lógica de fluxo/viés do CMF.
+ * Por vela: pressão = MFV ajustado por pesos direcionais (sem dividir por volume e sem média).
+ * Série final = soma acumulada da pressão (do mais antigo para o mais recente).
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeCmfAccumColumn(
+  data: (string | number | null)[][],
+  directionalWeights?: Partial<{
+    bullBuy: number;
+    bullSell: number;
+    bearBuy: number;
+    bearSell: number;
+  }>
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  if (n === 0) return out;
+  const W = normalizeCmfDirectionalWeights(directionalWeights);
+
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  out[n - 1] = 0;
+  for (let j = n - 2; j >= 0; j--) {
+    const prev = out[j + 1];
+    if (prev == null) {
+      out[j] = null;
       continue;
     }
-    const cmf = sumMfv / sumVol;
-    out.push(Number.isFinite(cmf) ? cmf : null);
+    const o = getNum(data[j], OPEN_IDX);
+    const h = getNum(data[j], HIGH_IDX);
+    const l = getNum(data[j], LOW_IDX);
+    const c = getNum(data[j], CLOSE_IDX_COL);
+    const v = getNum(data[j], VOLUME_INDEX);
+    if (h == null || l == null || c == null || v == null || v < 0) {
+      out[j] = prev;
+      continue;
+    }
+    const range = h - l;
+    const mfm = range === 0 ? 0 : (2 * c - h - l) / range;
+    const isBull = o != null && c > o;
+    const buy = isBull ? W.bullBuy : W.bearBuy;
+    const sell = isBull ? W.bullSell : W.bearSell;
+    const dirMul = 1 + (buy - sell);
+    out[j] = prev + (mfm * v * dirMul);
   }
+  return out;
+}
+
+/**
+ * CMF RSI — RSI sobre pressão intrabar com peso de volume (Wilder).
+ * Por vela: range = max(high−low, ε); up = (close−low)/range×vol; down = (high−close)/range×vol.
+ * Primeiros N: SMA(up), SMA(down); depois suavização Wilder; RS = avgUp / max(avgDown, ε); RSI = 100 − 100/(1+RS).
+ * Dados em ordem DESC (índice 0 = mais recente).
+ */
+export function computeCmfRsiColumn(
+  data: (string | number | null)[][],
+  period: number,
+  volumeIndex: number = VOLUME_INDEX,
+  directionalWeights?: Partial<{
+    bullBuy: number;
+    bullSell: number;
+    bearBuy: number;
+    bearSell: number;
+  }>
+): (number | null)[] {
+  const n = data.length;
+  const out: (number | null)[] = new Array(n).fill(null);
+  const N = Math.max(1, Math.min(500, Math.round(period)));
+  const EPS = 1e-10;
+  if (n < N) return out;
+  const W = normalizeCmfDirectionalWeights(directionalWeights);
+
+  const getNum = (row: (string | number | null)[], col: number): number | null => {
+    const raw = row?.[col];
+    if (raw == null) return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const upArr = new Array<number>(n);
+  const downArr = new Array<number>(n);
+  for (let i = 0; i < n; i++) {
+    const h = getNum(data[i], HIGH_IDX);
+    const l = getNum(data[i], LOW_IDX);
+    const c = getNum(data[i], CLOSE_IDX_COL);
+    const v = getNum(data[i], volumeIndex);
+    if (h == null || l == null || c == null || v == null || v < 0) {
+      upArr[i] = 0;
+      downArr[i] = 0;
+    } else {
+      const range = Math.max(h - l, EPS);
+      const o = getNum(data[i], OPEN_IDX);
+      const isBull = o != null && c > o;
+      const buy = isBull ? W.bullBuy : W.bearBuy;
+      const sell = isBull ? W.bullSell : W.bearSell;
+      const dirMul = 1 + (buy - sell);
+      upArr[i] = ((c - l) / range) * v * dirMul;
+      downArr[i] = ((h - c) / range) * v * dirMul;
+    }
+  }
+
+  const rsiFromAvgs = (avgUp: number, avgDown: number): number => {
+    const rs = avgUp / Math.max(avgDown, EPS);
+    return 100 - 100 / (1 + rs);
+  };
+
+  let sumUp = 0;
+  let sumDown = 0;
+  for (let idx = n - 1; idx >= n - N; idx--) {
+    sumUp += upArr[idx]!;
+    sumDown += downArr[idx]!;
+  }
+  let avgUp = sumUp / N;
+  let avgDown = sumDown / N;
+  out[n - N] = rsiFromAvgs(avgUp, avgDown);
+
+  for (let idx = n - N - 1; idx >= 0; idx--) {
+    avgUp = (avgUp * (N - 1) + upArr[idx]!) / N;
+    avgDown = (avgDown * (N - 1) + downArr[idx]!) / N;
+    out[idx] = rsiFromAvgs(avgUp, avgDown);
+  }
+
   return out;
 }
 

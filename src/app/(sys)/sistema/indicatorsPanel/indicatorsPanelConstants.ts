@@ -1,7 +1,7 @@
 /** Máximo de indicadores no painel principal (main). */
 export const MAIN_MAX_INDICATORS = 7;
-/** Máximo de indicadores em cada painel secundário (2, 3 ou 4). */
-export const SECONDARY_MAX_INDICATORS = 3;
+/** Máximo de indicadores em cada painel secundário (painéis 2–7). */
+export const SECONDARY_MAX_INDICATORS = 5;
 
 /** Paleta de cores para indicadores (nomes clássicos). */
 export const INDICATOR_COLOR_PALETTE = [

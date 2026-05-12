@@ -36,7 +36,10 @@ import {
   ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN,
   ROBOT_STOP_LOSS_PCT_MAX,
   ROBOT_STOP_LOSS_PCT_MIN,
+  ROBOT_BUY_REPURCHASE_DELAY_SEC_MAX,
+  ROBOT_BUY_REPURCHASE_DELAY_SEC_MIN,
   loadSavedRobots,
+  normalizeBuyRepurchaseDelaySeconds,
   persistSavedRobots,
   type RobotBuyOperationMode,
   type RobotSide,
@@ -241,6 +244,8 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     ROBOT_BUY_ACCUM_START_SIGNAL_MIN
   );
   const [buyAccumMaxCandles, setBuyAccumMaxCandles] = useState(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+  const [buyOncePerCandle, setBuyOncePerCandle] = useState(true);
+  const [buyRepurchaseDelaySeconds, setBuyRepurchaseDelaySeconds] = useState(0);
   const [firstEntryLimitEnabled, setFirstEntryLimitEnabled] = useState(false);
   const [firstEntryLimitOffsetPercent, setFirstEntryLimitOffsetPercent] = useState(0);
   const [firstEntryLimitTimeoutCandles, setFirstEntryLimitTimeoutCandles] = useState(
@@ -249,7 +254,9 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
   const [flattenBreakevenBufferPercent, setFlattenBreakevenBufferPercent] = useState(0);
   const [flattenBreakevenBufferInput, setFlattenBreakevenBufferInput] = useState("0");
   const [signalExitMinEdgePercent, setSignalExitMinEdgePercent] = useState(0);
+  const [signalExitMinEdgeInput, setSignalExitMinEdgeInput] = useState("0");
   const [alertArmMinEdgePercent, setAlertArmMinEdgePercent] = useState(0);
+  const [alertArmMinEdgeInput, setAlertArmMinEdgeInput] = useState("0");
   const [autoArmByPriceEnabled, setAutoArmByPriceEnabled] = useState(false);
 
   useEffect(() => {
@@ -487,13 +494,17 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setRobotAlias("");
     setBuyAccumulationStartOnSignalNumber(ROBOT_BUY_ACCUM_START_SIGNAL_MIN);
     setBuyAccumMaxCandles(ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT);
+    setBuyOncePerCandle(true);
+    setBuyRepurchaseDelaySeconds(0);
     setFirstEntryLimitEnabled(false);
     setFirstEntryLimitOffsetPercent(0);
     setFirstEntryLimitTimeoutCandles(ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT);
     setFlattenBreakevenBufferPercent(0);
     setFlattenBreakevenBufferInput("0");
     setSignalExitMinEdgePercent(0);
+    setSignalExitMinEdgeInput("0");
     setAlertArmMinEdgePercent(0);
+    setAlertArmMinEdgeInput("0");
     setAutoArmByPriceEnabled(false);
     setErrorMsg(null);
   }, []);
@@ -555,6 +566,8 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
     setBuyAccumMaxCandles(
       Math.min(ROBOT_BUY_ACCUM_MAX_CANDLES_MAX, Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesN))
     );
+    setBuyOncePerCandle(robot.buyOncePerCandle !== false);
+    setBuyRepurchaseDelaySeconds(normalizeBuyRepurchaseDelaySeconds(robot.buyRepurchaseDelaySeconds));
     setFirstEntryLimitEnabled(robot.firstEntryLimitEnabled === true);
     const limitOffset =
       typeof robot.firstEntryLimitOffsetPercent === "number" && Number.isFinite(robot.firstEntryLimitOffsetPercent)
@@ -588,22 +601,22 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
       typeof robot.signalExitMinEdgePercent === "number" && Number.isFinite(robot.signalExitMinEdgePercent)
         ? robot.signalExitMinEdgePercent
         : 0;
-    setSignalExitMinEdgePercent(
-      Math.min(
-        ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
-        Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(signalExitPct * 100) / 100)
-      )
+    const signalExitClamped = Math.min(
+      ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX,
+      Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(signalExitPct * 100) / 100)
     );
+    setSignalExitMinEdgePercent(signalExitClamped);
+    setSignalExitMinEdgeInput(String(signalExitClamped));
     const alertArmPct =
       typeof robot.alertArmMinEdgePercent === "number" && Number.isFinite(robot.alertArmMinEdgePercent)
         ? robot.alertArmMinEdgePercent
         : 0;
-    setAlertArmMinEdgePercent(
-      Math.min(
-        ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
-        Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(alertArmPct * 100) / 100)
-      )
+    const alertArmClamped = Math.min(
+      ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX,
+      Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(alertArmPct * 100) / 100)
     );
+    setAlertArmMinEdgePercent(alertArmClamped);
+    setAlertArmMinEdgeInput(String(alertArmClamped));
     setAutoArmByPriceEnabled(robot.autoArmByPriceEnabled === true);
     setErrorMsg(null);
     setView("add");
@@ -749,6 +762,11 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
             Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, Math.floor(buyAccumMaxCandles))
           )
         : ROBOT_BUY_ACCUM_MAX_CANDLES_DEFAULT;
+    const buyOncePerCandleClamped = side === "buyer" ? buyOncePerCandle : true;
+    const buyRepurchaseDelayClamped =
+      side === "buyer" && !buyOncePerCandleClamped
+        ? normalizeBuyRepurchaseDelaySeconds(buyRepurchaseDelaySeconds)
+        : normalizeBuyRepurchaseDelaySeconds(0);
     const firstEntryLimitOffsetClamped =
       side === "buyer"
         ? Math.min(
@@ -838,6 +856,8 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
           side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
         buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
         buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+        buyOncePerCandle: buyOncePerCandleClamped,
+        buyRepurchaseDelaySeconds: buyRepurchaseDelayClamped,
         firstEntryLimitEnabled: side === "buyer" ? firstEntryLimitEnabled : false,
         firstEntryLimitOffsetPercent: firstEntryLimitOffsetClamped,
         firstEntryLimitTimeoutCandles: firstEntryLimitTimeoutClamped,
@@ -882,6 +902,8 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
         side === "buyer" && stopGainEnabled && stopGainMode === "fixed" ? stopGainFixedUsdt : 25,
       buyAccumulationStartOnSignalNumber: buyAccumStartClamped,
       buyAccumMaxCandles: buyAccumMaxCandlesClamped,
+      buyOncePerCandle: buyOncePerCandleClamped,
+      buyRepurchaseDelaySeconds: buyRepurchaseDelayClamped,
       firstEntryLimitEnabled: side === "buyer" ? firstEntryLimitEnabled : false,
       firstEntryLimitOffsetPercent: firstEntryLimitOffsetClamped,
       firstEntryLimitTimeoutCandles: firstEntryLimitTimeoutClamped,
@@ -1548,9 +1570,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                     min={ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN}
                     max={ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MAX}
                     step={0.01}
-                    value={signalExitMinEdgePercent}
+                    value={signalExitMinEdgeInput}
                     onChange={(e) => {
-                      const v = parseDecimalInput(e.target.value);
+                      const raw = e.target.value;
+                      const normalized = raw.replace(",", ".");
+                      if (!/^-?\d*(?:[.]\d*)?$/.test(normalized)) return;
+                      setSignalExitMinEdgeInput(raw);
+                      const v = parseDecimalInput(raw);
                       if (v == null) return;
                       setSignalExitMinEdgePercent(
                         Math.min(
@@ -1558,6 +1584,9 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                           Math.max(ROBOT_SIGNAL_EXIT_MIN_EDGE_PCT_MIN, Math.round(v * 100) / 100)
                         )
                       );
+                    }}
+                    onBlur={() => {
+                      setSignalExitMinEdgeInput(String(signalExitMinEdgePercent));
                     }}
                     className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
                   />
@@ -1586,9 +1615,13 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                     min={ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN}
                     max={ROBOT_ALERT_ARM_MIN_EDGE_PCT_MAX}
                     step={0.01}
-                    value={alertArmMinEdgePercent}
+                    value={alertArmMinEdgeInput}
                     onChange={(e) => {
-                      const v = parseDecimalInput(e.target.value);
+                      const raw = e.target.value;
+                      const normalized = raw.replace(",", ".");
+                      if (!/^-?\d*(?:[.]\d*)?$/.test(normalized)) return;
+                      setAlertArmMinEdgeInput(raw);
+                      const v = parseDecimalInput(raw);
                       if (v == null) return;
                       setAlertArmMinEdgePercent(
                         Math.min(
@@ -1596,6 +1629,9 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                           Math.max(ROBOT_ALERT_ARM_MIN_EDGE_PCT_MIN, Math.round(v * 100) / 100)
                         )
                       );
+                    }}
+                    onBlur={() => {
+                      setAlertArmMinEdgeInput(String(alertArmMinEdgePercent));
                     }}
                     className="w-24 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-800"
                   />
@@ -2042,6 +2078,54 @@ export default function RobotsPanel({ initialView = "list", onClose }: RobotsPan
                   <p className="text-[10px] text-zinc-600 leading-snug">
                     {t.robotsBuyAccumMaxCandlesHint ?? ""}
                   </p>
+                </div>
+              )}
+
+              {side === "buyer" && (
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-2 space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={buyOncePerCandle}
+                      onChange={(e) => setBuyOncePerCandle(e.target.checked)}
+                      className="mt-0.5 rounded border-zinc-300 text-violet-600"
+                    />
+                    <span className="text-xs font-medium text-zinc-800">
+                      {t.robotsBuyOncePerCandleLabel ?? "At most one buy per candle"}
+                    </span>
+                  </label>
+                  <p className="text-[10px] text-zinc-600 leading-snug pl-6 -mt-1">
+                    {t.robotsBuyOncePerCandleHint ?? ""}
+                  </p>
+                  {!buyOncePerCandle && (
+                    <div className="space-y-1 pl-6">
+                      <label className="block text-[11px] font-medium text-zinc-700" htmlFor="robot-buy-repurchase-delay">
+                        {t.robotsBuyRepurchaseDelayLabel ?? "Min. delay between buys on the same candle (seconds)"}
+                      </label>
+                      <input
+                        id="robot-buy-repurchase-delay"
+                        type="number"
+                        min={ROBOT_BUY_REPURCHASE_DELAY_SEC_MIN}
+                        max={ROBOT_BUY_REPURCHASE_DELAY_SEC_MAX}
+                        step={1}
+                        value={buyRepurchaseDelaySeconds}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!Number.isFinite(v)) return;
+                          setBuyRepurchaseDelaySeconds(
+                            Math.min(
+                              ROBOT_BUY_REPURCHASE_DELAY_SEC_MAX,
+                              Math.max(ROBOT_BUY_REPURCHASE_DELAY_SEC_MIN, Math.floor(v))
+                            )
+                          );
+                        }}
+                        className="w-28 text-xs border border-zinc-300 rounded px-2 py-1.5 bg-white text-zinc-900"
+                      />
+                      <p className="text-[10px] text-zinc-500">
+                        {t.robotsBuyRepurchaseDelayHint ?? ""}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

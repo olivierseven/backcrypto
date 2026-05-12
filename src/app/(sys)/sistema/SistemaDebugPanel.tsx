@@ -1582,7 +1582,7 @@ export default function SistemaDebugPanel() {
                       </div>
                       <div>
                         <span className="text-zinc-500">
-                          {(t as Record<string, string>).aggLiveLastPeriodicCacheOk ?? "Last cache refresh (5 min), OK"}:
+                          {(t as Record<string, string>).aggLiveLastPeriodicCacheOk ?? "Last cache refresh (1 min), OK"}:
                         </span>{" "}
                         {aggFastLiveDebugSnapshot.lastPeriodicCacheRefreshOkAt != null
                           ? new Date(aggFastLiveDebugSnapshot.lastPeriodicCacheRefreshOkAt).toLocaleString()

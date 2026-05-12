@@ -37,7 +37,7 @@ export function buyerMarketBuyRefStrictlyBelowCandleOpen(refPrice: number, candl
 }
 
 /**
- * Janela de acumulação (várias compras, no máximo uma por vela no live):
+ * Janela de acumulação (várias compras; no live, no máximo uma por vela por defeito — configurável no robô):
  * - **Primeira** compra: o critério de entrada é o sinal das estratégias (contagem de velas com sinal antes de ligar a janela); aqui só exigimos preços de referência válidos (fecho/abertura > 0), sem fecho ≤ abertura.
  * - **Seguintes**: só se o preço de referência estiver **estritamente abaixo** do último fill registado (nova vela com “dip” vs última compra).
  */

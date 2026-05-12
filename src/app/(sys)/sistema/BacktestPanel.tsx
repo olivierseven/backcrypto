@@ -17,6 +17,7 @@ import {
   formatFeeDecimalAsPercentLabel,
   loadBacktestRange,
   persistBacktestRange,
+  type BacktestRangeSettings,
 } from "./backtestStorage";
 import { ROBOTS_CHANGED_EVENT, loadSavedRobots, type SavedRobot } from "./robotsStorage";
 
@@ -46,6 +47,26 @@ function parseBarIndexInput(s: string): number | null {
   const v = Math.floor(Number(t));
   if (!Number.isFinite(v)) return null;
   return Math.max(1, v);
+}
+
+/** Mesma regra que `onBlur` nos campos de barra: combina rascunhos com o intervalo atual (para «Executar» sem blur). */
+function mergeBacktestBarDraftsIntoRange(
+  prev: BacktestRangeSettings,
+  startDraft: string,
+  endDraft: string
+): BacktestRangeSettings {
+  const sp = parseBarIndexInput(startDraft);
+  const ep = parseBarIndexInput(endDraft);
+  let startBar = prev.startBar;
+  let endBar = prev.endBar;
+  if (sp != null) {
+    startBar = Math.max(1, Math.floor(sp));
+    endBar = Math.max(prev.endBar, startBar);
+  }
+  if (ep != null) {
+    endBar = Math.max(Math.max(1, Math.floor(ep)), startBar);
+  }
+  return { ...prev, startBar, endBar };
 }
 
 function robotDisplayLabel(r: SavedRobot): string {
@@ -258,10 +279,17 @@ export default function BacktestPanel({ onClose, initialRobotId = null }: Backte
       setLocalError(t.backtestErrPickRobot ?? "Select a robot.");
       return;
     }
+    const merged = mergeBacktestBarDraftsIntoRange(range, startBarDraft, endBarDraft);
+    if (merged.startBar !== range.startBar || merged.endBar !== range.endBar) {
+      persistBacktestRange(merged);
+      setRange(merged);
+    }
+    setStartBarDraft(String(merged.startBar));
+    setEndBarDraft(String(merged.endBar));
     window.dispatchEvent(
       new CustomEvent(CRYPTO_SISTEMA_BACKTEST_RUN_EVENT, { detail: { robotId: selRobotId } })
     );
-  }, [selRobotId, t.backtestErrPickRobot]);
+  }, [selRobotId, range, startBarDraft, endBarDraft, t.backtestErrPickRobot]);
 
   const title = t.menuBacktest ?? "Backtest";
 

@@ -45,7 +45,7 @@ export interface ChartIndicatorLine {
   /** Exibir valor do indicador no eixo Y (default true). */
   showLastValueOnYAxis?: boolean;
   /** Tipo do indicador: RSI e Stochastic usam escala 0–100 no gráfico; MACD/DIFF, OBV e demais usam escala automática no painel. */
-  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "DIFF" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "MA_ANGLE" | "Ichimoku";
+  type?: "SMA" | "SMA2" | "EMA" | "EMA2" | "WMA" | "WMA2" | "HMA" | "HMA_CUSTOM" | "VWMA" | "HARMONIC_MA" | "QUADRATIC_MA" | "LINEAR_FIT" | "QUADRATIC_FIT" | "RSI" | "MFI" | "MACD" | "DIFF" | "Stochastic" | "WilliamsR" | "OBV" | "AD" | "SAR" | "ATR" | "ADX" | "VWAP" | "Bollinger" | "Keltner" | "Donchian" | "Volume" | "CCI" | "CMF" | "CMF_ACC" | "CMF_RSI" | "MA_ANGLE" | "Ichimoku";
   /** Só para ADX: qual das 3 linhas (+DI, -DI, ADX). */
   adxPart?: "plusDi" | "minusDi" | "adx";
   /** Só para Ichimoku: qual das 5 linhas (tenkan, kijun, spanA, spanB, chikou). */
@@ -212,6 +212,11 @@ export interface ChartIndicatorLine {
   cmfAsHistogram?: boolean;
   cmfHistogramColorAbove?: string;
   cmfHistogramColorBelow?: string;
+  cmfAggregationMaType?: "SMA" | "WMA" | "EMA";
+  cmfWeightBullBuy?: number;
+  cmfWeightBullSell?: number;
+  cmfWeightBearBuy?: number;
+  cmfWeightBearSell?: number;
 }
 
 export type IntervalOption = { value: number; label: string; param: string };
@@ -323,6 +328,13 @@ export type KlinesChartProps = {
   liveLastClose?: number | string | null;
   /** Chamado quando a formatação do preço do eixo Y muda (decimais + abreviado), para o header/WebSocket usar a mesma. */
   onPriceFormatChange?: (decimals: number, abbreviated: boolean) => void;
+  /**
+   * Centrar a vista na vela com `openTimeMs` (campo [0] do kline). `id` deve mudar a cada pedido (ex. contador)
+   * para repetir o mesmo instante.
+   */
+  jumpToOpenTimeSignal?: { id: number; openTimeMs: number } | null;
+  /** Chamado após o gráfico processar (ou ignorar) `jumpToOpenTimeSignal`, para o pai limpar o estado. */
+  onJumpToOpenTimeConsumed?: () => void;
   /** Chamado quando o layout em uso muda (nome ou slot), para exibir no container (ex.: canto esquerdo da última atualização). */
   onCurrentLayoutLabelChange?: (label: string) => void;
   /** Admin: pode renomear modelos ChartModels (slot 0) na seção Carregar. */

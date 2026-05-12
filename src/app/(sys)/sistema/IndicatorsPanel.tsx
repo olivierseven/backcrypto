@@ -50,6 +50,26 @@ import { normalizeHmaCustomPeriods, normalizeHmaCustomLegMaType, normalizeMacdMa
 /** Re-export para quem importa de IndicatorsPanel (ex.: KlinesTable). */
 export { getIndicatorLabel, getIndicatorLabelShort, getIndicatorLabelSignal, getIndicatorLabelShortSignal, getIndicatorLabelStochD, getIndicatorLabelShortStochD } from "./indicatorsPanel/index";
 
+type SecondaryPanelSlot = "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7";
+
+/** Igual ao `KlinesChart`: painel 2 até ao limite; 3–7 em conta free só se o strip já tiver indicadores (não abre strip novo vazio). */
+function secondarySlotOpenForAdd(isFreeUser: boolean, slot: SecondaryPanelSlot, count: number): boolean {
+  if (count >= SECONDARY_MAX_INDICATORS) return false;
+  if (slot === "panel2") return true;
+  if (!isFreeUser) return true;
+  return count > 0;
+}
+
+function secondarySlotOpenForEdit(
+  isFreeUser: boolean,
+  slot: SecondaryPanelSlot,
+  count: number,
+  editingPanel: IndicatorPanel | null
+): boolean {
+  if (secondarySlotOpenForAdd(isFreeUser, slot, count)) return true;
+  return editingPanel === slot && count >= SECONDARY_MAX_INDICATORS;
+}
+
 const INITIAL_ADD_FORM: AddFormState = {
   indicatorType: "SMA",
   period: 7,
@@ -169,6 +189,7 @@ const INITIAL_ADD_FORM: AddFormState = {
   keltnerMiddleLineWidth: "normal",
   obvVolumeSource: "base",
   adVolumeSource: "base",
+  cmfRsiVolumeSource: "base",
   volumeInUsdt: false,
   volumeColorAbove: "#10b981",
   volumeColorBelow: "#ef4444",
@@ -227,6 +248,9 @@ const INITIAL_ADD_FORM: AddFormState = {
   cmfAsHistogram: false,
   cmfHistogramColorAbove: "#059669",
   cmfHistogramColorBelow: "#dc2626",
+  cmfAggregationMaType: "SMA",
+  cmfWeightBuy: 0.5,
+  cmfWeightSell: 0.5,
   donchianShowUpper: true,
   donchianShowLower: true,
   donchianShowMiddle: false,
@@ -280,12 +304,14 @@ const INITIAL_ADD_FORM: AddFormState = {
   hmaCustomLongMaType: "WMA",
   hmaCustomFastMaType: "WMA",
   hmaCustomSmoothMaType: "WMA",
+  hmaCustomLongFieldKey: "close",
+  hmaCustomFastFieldKey: "close",
 };
 
 interface IndicatorsPanelProps {
   initialView?: "list" | "add";
   onClose?: () => void;
-  /** Modo free: bloqueia seleção dos painéis 3, 4 e 5. */
+  /** Modo free: painéis 3–7 só para strips já usados; painel 2 completo como em conta paga. */
   isFreeUser?: boolean;
 }
 
@@ -315,7 +341,26 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   /** true = só indicadores que aparecem no timeframe atual; false = todos do layout (incluindo outros timeframes). */
   const [showOnlyCurrentTimeframe, setShowOnlyCurrentTimeframe] = useState(true);
 
-  const getPanel = (i: UserIndicatorConfig) => i.panel ?? (i.type === "RSI" || i.type === "MFI" || i.type === "MACD" || i.type === "DIFF" || i.type === "Stochastic" || i.type === "WilliamsR" || i.type === "OBV" || i.type === "AD" || i.type === "ATR" || i.type === "ADX" || i.type === "CCI" ? "panel2" : "main");
+  const getPanel = (i: UserIndicatorConfig) =>
+    i.panel ??
+    (i.type === "RSI" ||
+    i.type === "MFI" ||
+    i.type === "MACD" ||
+    i.type === "DIFF" ||
+    i.type === "Stochastic" ||
+    i.type === "WilliamsR" ||
+    i.type === "OBV" ||
+    i.type === "AD" ||
+    i.type === "ATR" ||
+    i.type === "ADX" ||
+    i.type === "CCI" ||
+    i.type === "CMF" ||
+    i.type === "CMF_ACC" ||
+    i.type === "CMF_RSI" ||
+    i.type === "MA_ANGLE" ||
+    i.type === "Volume"
+      ? "panel2"
+      : "main");
 
   const indicatorCountByPanel = useMemo(() => {
     let main = 0;
@@ -348,26 +393,38 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
     panel7: indicatorCountByPanel.panel7 > 0,
   }), [indicatorCountByPanel]);
 
-  const panelsFreeForSecondary = useMemo(() => ({
-    panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS,
-    panel3: !isFreeUser && indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS,
-    panel4: !isFreeUser && indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS,
-    panel5: !isFreeUser && indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS,
-    panel6: !isFreeUser && indicatorCountByPanel.panel6 < SECONDARY_MAX_INDICATORS,
-    panel7: !isFreeUser && indicatorCountByPanel.panel7 < SECONDARY_MAX_INDICATORS,
-  }), [indicatorCountByPanel, isFreeUser]);
+  const panelsFreeForSecondary = useMemo(
+    () => ({
+      panel2: secondarySlotOpenForAdd(isFreeUser, "panel2", indicatorCountByPanel.panel2),
+      panel3: secondarySlotOpenForAdd(isFreeUser, "panel3", indicatorCountByPanel.panel3),
+      panel4: secondarySlotOpenForAdd(isFreeUser, "panel4", indicatorCountByPanel.panel4),
+      panel5: secondarySlotOpenForAdd(isFreeUser, "panel5", indicatorCountByPanel.panel5),
+      panel6: secondarySlotOpenForAdd(isFreeUser, "panel6", indicatorCountByPanel.panel6),
+      panel7: secondarySlotOpenForAdd(isFreeUser, "panel7", indicatorCountByPanel.panel7),
+    }),
+    [indicatorCountByPanel, isFreeUser]
+  );
 
   const panelsFreeForSecondaryEdit = useMemo(() => {
-    if (!editingId) return { panel2: true, panel3: !isFreeUser, panel4: !isFreeUser, panel5: !isFreeUser, panel6: !isFreeUser, panel7: !isFreeUser };
+    if (!editingId) {
+      return {
+        panel2: true,
+        panel3: secondarySlotOpenForAdd(isFreeUser, "panel3", indicatorCountByPanel.panel3),
+        panel4: secondarySlotOpenForAdd(isFreeUser, "panel4", indicatorCountByPanel.panel4),
+        panel5: secondarySlotOpenForAdd(isFreeUser, "panel5", indicatorCountByPanel.panel5),
+        panel6: secondarySlotOpenForAdd(isFreeUser, "panel6", indicatorCountByPanel.panel6),
+        panel7: secondarySlotOpenForAdd(isFreeUser, "panel7", indicatorCountByPanel.panel7),
+      };
+    }
     const editing = userIndicators.find((i) => i.id === editingId);
     const editingPanel = editing ? getPanel(editing) : null;
     return {
       panel2: indicatorCountByPanel.panel2 < SECONDARY_MAX_INDICATORS || editingPanel === "panel2",
-      panel3: (!isFreeUser && (indicatorCountByPanel.panel3 < SECONDARY_MAX_INDICATORS || editingPanel === "panel3")),
-      panel4: (!isFreeUser && (indicatorCountByPanel.panel4 < SECONDARY_MAX_INDICATORS || editingPanel === "panel4")),
-      panel5: (!isFreeUser && (indicatorCountByPanel.panel5 < SECONDARY_MAX_INDICATORS || editingPanel === "panel5")),
-      panel6: (!isFreeUser && (indicatorCountByPanel.panel6 < SECONDARY_MAX_INDICATORS || editingPanel === "panel6")),
-      panel7: (!isFreeUser && (indicatorCountByPanel.panel7 < SECONDARY_MAX_INDICATORS || editingPanel === "panel7")),
+      panel3: secondarySlotOpenForEdit(isFreeUser, "panel3", indicatorCountByPanel.panel3, editingPanel),
+      panel4: secondarySlotOpenForEdit(isFreeUser, "panel4", indicatorCountByPanel.panel4, editingPanel),
+      panel5: secondarySlotOpenForEdit(isFreeUser, "panel5", indicatorCountByPanel.panel5, editingPanel),
+      panel6: secondarySlotOpenForEdit(isFreeUser, "panel6", indicatorCountByPanel.panel6, editingPanel),
+      panel7: secondarySlotOpenForEdit(isFreeUser, "panel7", indicatorCountByPanel.panel7, editingPanel),
     };
   }, [userIndicators, editingId, indicatorCountByPanel, isFreeUser]);
 
@@ -394,7 +451,23 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
   });
 
   const hasFreePanelForSecondary = panelsFreeForSecondary.panel2 || panelsFreeForSecondary.panel3 || panelsFreeForSecondary.panel4 || panelsFreeForSecondary.panel5 || panelsFreeForSecondary.panel6 || panelsFreeForSecondary.panel7;
-  const isSecondaryType = addForm.indicatorType === "RSI" || addForm.indicatorType === "MFI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "DIFF" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF" || addForm.indicatorType === "MA_ANGLE" || addForm.indicatorType === "Volume";
+  const isSecondaryType =
+    addForm.indicatorType === "RSI" ||
+    addForm.indicatorType === "MFI" ||
+    addForm.indicatorType === "MACD" ||
+    addForm.indicatorType === "DIFF" ||
+    addForm.indicatorType === "Stochastic" ||
+    addForm.indicatorType === "WilliamsR" ||
+    addForm.indicatorType === "OBV" ||
+    addForm.indicatorType === "AD" ||
+    addForm.indicatorType === "ATR" ||
+    addForm.indicatorType === "ADX" ||
+    addForm.indicatorType === "CCI" ||
+    addForm.indicatorType === "CMF" ||
+    addForm.indicatorType === "CMF_ACC" ||
+    addForm.indicatorType === "CMF_RSI" ||
+    addForm.indicatorType === "MA_ANGLE" ||
+    addForm.indicatorType === "Volume";
   const hasEmptyPanelForVolume =
     indicatorCountByPanel.panel2 === 0 ||
     indicatorCountByPanel.panel3 === 0 ||
@@ -467,7 +540,21 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
                       : indicatorCountByPanel.panel7 === 0
                         ? "panel7"
                         : "panel2")
-      : addForm.indicatorType === "RSI" || addForm.indicatorType === "MACD" || addForm.indicatorType === "DIFF" || addForm.indicatorType === "Stochastic" || addForm.indicatorType === "WilliamsR" || addForm.indicatorType === "OBV" || addForm.indicatorType === "AD" || addForm.indicatorType === "ATR" || addForm.indicatorType === "ADX" || addForm.indicatorType === "CCI" || addForm.indicatorType === "CMF"
+      : addForm.indicatorType === "RSI" ||
+        addForm.indicatorType === "MFI" ||
+        addForm.indicatorType === "MACD" ||
+        addForm.indicatorType === "DIFF" ||
+        addForm.indicatorType === "Stochastic" ||
+        addForm.indicatorType === "WilliamsR" ||
+        addForm.indicatorType === "OBV" ||
+        addForm.indicatorType === "AD" ||
+        addForm.indicatorType === "ATR" ||
+        addForm.indicatorType === "ADX" ||
+        addForm.indicatorType === "CCI" ||
+        addForm.indicatorType === "CMF" ||
+        addForm.indicatorType === "CMF_ACC" ||
+        addForm.indicatorType === "CMF_RSI" ||
+        addForm.indicatorType === "MA_ANGLE"
       ? (addForm.chartOption === "panel2" && panelsFreeForSecondary.panel2) ||
         (addForm.chartOption === "panel3" && panelsFreeForSecondary.panel3) ||
         (addForm.chartOption === "panel4" && panelsFreeForSecondary.panel4) ||
@@ -598,21 +685,24 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
               : addForm.lineStyle,
       ...(addForm.indicatorType === "RSI" ? { rsiFixedScale: addForm.rsiFixedScale, rsiCenterLine: addForm.rsiCenterLine, rsiCenterLineColor: addForm.rsiCenterLineColor, rsiCenterLineWidth: addForm.rsiCenterLineWidth, rsiCenterLineStyle: addForm.rsiCenterLineStyle, rsiLimits: addForm.rsiLimits, rsiLimitUpper: addForm.rsiLimitUpper, rsiLimitLower: addForm.rsiLimitLower, rsiLimitColor: addForm.rsiLimitColor, rsiLimitLineWidth: addForm.rsiLimitLineWidth, rsiLimitLineStyle: addForm.rsiLimitLineStyle } : {}),
       ...(addForm.indicatorType === "MFI" ? { mfiFixedScale: addForm.mfiFixedScale, mfiCenterLine: addForm.mfiCenterLine, mfiCenterLineColor: addForm.mfiCenterLineColor, mfiCenterLineWidth: addForm.mfiCenterLineWidth, mfiCenterLineStyle: addForm.mfiCenterLineStyle, mfiLimits: addForm.mfiLimits, mfiLimitUpper: addForm.mfiLimitUpper, mfiLimitLower: addForm.mfiLimitLower, mfiLimitColor: addForm.mfiLimitColor, mfiLimitLineWidth: addForm.mfiLimitLineWidth, mfiLimitLineStyle: addForm.mfiLimitLineStyle } : {}),
-      ...(addForm.indicatorType === "MACD" ? {
-        macdFastMaType: addForm.macdFastMaType,
-        macdFastPeriod: Math.max(1, Math.min(500, fastP)),
-        macdSlowMaType: addForm.macdSlowMaType,
-        macdSlowPeriod: Math.max(1, Math.min(500, slowP)),
-        macdSignalLine: addForm.macdSignalLine,
-        macdSignalMaType: addForm.macdSignalMaType,
-        macdSignalPeriod: addForm.macdSignalLine ? Math.max(1, Math.min(500, Number(addForm.macdSignalPeriodText) || 9)) : undefined,
-        macdSignalColor: addForm.macdSignalLine ? addForm.macdSignalColor : undefined,
-        macdSignalLineWidth: addForm.macdSignalLine ? addForm.macdSignalLineWidth : undefined,
-        macdSignalLineStyle: addForm.macdSignalLine ? addForm.macdSignalLineStyle : undefined,
-        macdHistogram: addForm.macdSignalLine && addForm.macdHistogram,
-        macdHistogramColorAbove: addForm.macdSignalLine && addForm.macdHistogram ? addForm.macdHistogramColorAbove : undefined,
-        macdHistogramColorBelow: addForm.macdSignalLine && addForm.macdHistogram ? addForm.macdHistogramColorBelow : undefined,
-      } : {}),
+      ...(addForm.indicatorType === "MACD" ? (() => {
+        const macdSigOrHist = addForm.macdSignalLine || addForm.macdHistogram;
+        return {
+          macdFastMaType: addForm.macdFastMaType,
+          macdFastPeriod: Math.max(1, Math.min(500, fastP)),
+          macdSlowMaType: addForm.macdSlowMaType,
+          macdSlowPeriod: Math.max(1, Math.min(500, slowP)),
+          macdSignalLine: addForm.macdSignalLine,
+          macdSignalMaType: macdSigOrHist ? addForm.macdSignalMaType : undefined,
+          macdSignalPeriod: macdSigOrHist ? Math.max(1, Math.min(500, Number(addForm.macdSignalPeriodText) || 9)) : undefined,
+          macdSignalColor: addForm.macdSignalLine ? addForm.macdSignalColor : undefined,
+          macdSignalLineWidth: addForm.macdSignalLine ? addForm.macdSignalLineWidth : undefined,
+          macdSignalLineStyle: addForm.macdSignalLine ? addForm.macdSignalLineStyle : undefined,
+          macdHistogram: addForm.macdHistogram,
+          macdHistogramColorAbove: addForm.macdHistogram ? addForm.macdHistogramColorAbove : undefined,
+          macdHistogramColorBelow: addForm.macdHistogram ? addForm.macdHistogramColorBelow : undefined,
+        };
+      })() : {}),
       ...(addForm.indicatorType === "DIFF" ? {
         diffFirstFieldKey: addForm.diffFirstFieldKey,
         diffSecondFieldKey: addForm.diffSecondFieldKey,
@@ -911,13 +1001,28 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
       macdSlowPeriod: slowP,
       macdSlowPeriodText: String(slowP),
       macdSignalLine: ind.type === "MACD" ? (ind.macdSignalLine === true) : false,
-      macdSignalMaType: ind.type === "MACD" && ind.macdSignalLine ? normalizeMacdMaType(ind.macdSignalMaType) : "EMA",
-      macdSignalPeriod: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalPeriod ?? 9) : 9,
-      macdSignalPeriodText: String(ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalPeriod ?? 9) : 9),
-      macdSignalColor: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalColor ?? "#ea580c") : "#ea580c",
-      macdSignalLineWidth: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalLineWidth === "thin" || ind.macdSignalLineWidth === "normal" || ind.macdSignalLineWidth === "thick" ? ind.macdSignalLineWidth : "normal") : "normal",
-      macdSignalLineStyle: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalLineStyle === "solid" || ind.macdSignalLineStyle === "dotted" || ind.macdSignalLineStyle === "dashed" ? ind.macdSignalLineStyle : "dashed") : "dashed",
-      macdHistogram: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdHistogram === true) : false,
+      ...(() => {
+        const macdSigOrHist = ind.type === "MACD" && (ind.macdSignalLine === true || ind.macdHistogram === true);
+        return {
+          macdSignalMaType: macdSigOrHist ? normalizeMacdMaType(ind.macdSignalMaType) : "EMA",
+          macdSignalPeriod: macdSigOrHist ? (ind.macdSignalPeriod ?? 9) : 9,
+          macdSignalPeriodText: String(macdSigOrHist ? (ind.macdSignalPeriod ?? 9) : 9),
+          macdSignalColor: ind.type === "MACD" && ind.macdSignalLine ? (ind.macdSignalColor ?? "#ea580c") : "#ea580c",
+          macdSignalLineWidth:
+            ind.type === "MACD" && ind.macdSignalLine
+              ? ind.macdSignalLineWidth === "thin" || ind.macdSignalLineWidth === "normal" || ind.macdSignalLineWidth === "thick"
+                ? ind.macdSignalLineWidth
+                : "normal"
+              : "normal",
+          macdSignalLineStyle:
+            ind.type === "MACD" && ind.macdSignalLine
+              ? ind.macdSignalLineStyle === "solid" || ind.macdSignalLineStyle === "dotted" || ind.macdSignalLineStyle === "dashed"
+                ? ind.macdSignalLineStyle
+                : "dashed"
+              : "dashed",
+          macdHistogram: ind.type === "MACD" ? (ind.macdHistogram === true) : false,
+        };
+      })(),
       macdHistogramColorAbove: ind.type === "MACD" && ind.macdHistogram ? (ind.macdHistogramColorAbove ?? "#059669") : "#059669",
       macdHistogramColorBelow: ind.type === "MACD" && ind.macdHistogram ? (ind.macdHistogramColorBelow ?? "#dc2626") : "#dc2626",
       diffFirstFieldKey: ind.type === "DIFF" ? (ind.diffFirstFieldKey ?? "close") : "close",
@@ -1249,21 +1354,26 @@ export default function IndicatorsPanel({ initialView = "list", onClose, isFreeU
               : editForm.lineStyle,
       ...(ind?.type === "RSI" ? { rsiFixedScale: editForm.rsiFixedScale, rsiCenterLine: editForm.rsiCenterLine, rsiCenterLineColor: editForm.rsiCenterLineColor, rsiCenterLineWidth: editForm.rsiCenterLineWidth, rsiCenterLineStyle: editForm.rsiCenterLineStyle, rsiLimits: editForm.rsiLimits, rsiLimitUpper: editForm.rsiLimitUpper, rsiLimitLower: editForm.rsiLimitLower, rsiLimitColor: editForm.rsiLimitColor, rsiLimitLineWidth: editForm.rsiLimitLineWidth, rsiLimitLineStyle: editForm.rsiLimitLineStyle } : {}),
       ...(ind?.type === "MFI" ? { mfiFixedScale: editForm.mfiFixedScale, mfiCenterLine: editForm.mfiCenterLine, mfiCenterLineColor: editForm.mfiCenterLineColor, mfiCenterLineWidth: editForm.mfiCenterLineWidth, mfiCenterLineStyle: editForm.mfiCenterLineStyle, mfiLimits: editForm.mfiLimits, mfiLimitUpper: editForm.mfiLimitUpper, mfiLimitLower: editForm.mfiLimitLower, mfiLimitColor: editForm.mfiLimitColor, mfiLimitLineWidth: editForm.mfiLimitLineWidth, mfiLimitLineStyle: editForm.mfiLimitLineStyle } : {}),
-      ...(ind?.type === "MACD" ? {
-        macdFastMaType: editForm.macdFastMaType,
-        macdFastPeriod: Math.max(1, Math.min(500, fastP)),
-        macdSlowMaType: editForm.macdSlowMaType,
-        macdSlowPeriod: Math.max(1, Math.min(500, slowP)),
-        macdSignalLine: editForm.macdSignalLine,
-        macdSignalMaType: editForm.macdSignalMaType,
-        macdSignalPeriod: editForm.macdSignalLine ? Math.max(1, Math.min(500, Number(editForm.macdSignalPeriodText) || 9)) : undefined,
-        macdSignalColor: editForm.macdSignalLine ? editForm.macdSignalColor : undefined,
-        macdSignalLineWidth: editForm.macdSignalLine ? editForm.macdSignalLineWidth : undefined,
-        macdSignalLineStyle: editForm.macdSignalLine ? editForm.macdSignalLineStyle : undefined,
-        macdHistogram: editForm.macdSignalLine && editForm.macdHistogram,
-        macdHistogramColorAbove: editForm.macdSignalLine && editForm.macdHistogram ? editForm.macdHistogramColorAbove : undefined,
-        macdHistogramColorBelow: editForm.macdSignalLine && editForm.macdHistogram ? editForm.macdHistogramColorBelow : undefined,
-      } : {}),
+      ...(ind?.type === "MACD"
+        ? (() => {
+            const macdSigOrHist = editForm.macdSignalLine || editForm.macdHistogram;
+            return {
+              macdFastMaType: editForm.macdFastMaType,
+              macdFastPeriod: Math.max(1, Math.min(500, fastP)),
+              macdSlowMaType: editForm.macdSlowMaType,
+              macdSlowPeriod: Math.max(1, Math.min(500, slowP)),
+              macdSignalLine: editForm.macdSignalLine,
+              macdSignalMaType: macdSigOrHist ? editForm.macdSignalMaType : undefined,
+              macdSignalPeriod: macdSigOrHist ? Math.max(1, Math.min(500, Number(editForm.macdSignalPeriodText) || 9)) : undefined,
+              macdSignalColor: editForm.macdSignalLine ? editForm.macdSignalColor : undefined,
+              macdSignalLineWidth: editForm.macdSignalLine ? editForm.macdSignalLineWidth : undefined,
+              macdSignalLineStyle: editForm.macdSignalLine ? editForm.macdSignalLineStyle : undefined,
+              macdHistogram: editForm.macdHistogram,
+              macdHistogramColorAbove: editForm.macdHistogram ? editForm.macdHistogramColorAbove : undefined,
+              macdHistogramColorBelow: editForm.macdHistogram ? editForm.macdHistogramColorBelow : undefined,
+            };
+          })()
+        : {}),
       ...(ind?.type === "DIFF" ? {
         diffFirstFieldKey: editForm.diffFirstFieldKey,
         diffSecondFieldKey: editForm.diffSecondFieldKey,

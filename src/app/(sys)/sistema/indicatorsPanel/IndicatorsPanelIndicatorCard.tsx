@@ -62,7 +62,26 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
   const firstForEdit = (visibleForEdit[0]?.value ?? (ind.type === "WilliamsR" ? "close" : firstEnabledFieldValue)) as IndicatorFieldKey;
   const editFieldValue = (visibleForEdit.some((o) => o.value === editForm?.fieldKey) ? editForm!.fieldKey : firstForEdit) as string;
 
-  const panel = ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" || ind.type === "Volume" ? "panel2" : "main");
+  const panel =
+    ind.panel ??
+    (ind.type === "RSI" ||
+    ind.type === "MFI" ||
+    ind.type === "MACD" ||
+    ind.type === "DIFF" ||
+    ind.type === "Stochastic" ||
+    ind.type === "WilliamsR" ||
+    ind.type === "OBV" ||
+    ind.type === "AD" ||
+    ind.type === "ATR" ||
+    ind.type === "ADX" ||
+    ind.type === "CCI" ||
+    ind.type === "CMF" ||
+    ind.type === "CMF_ACC" ||
+    ind.type === "CMF_RSI" ||
+    ind.type === "MA_ANGLE" ||
+    ind.type === "Volume"
+      ? "panel2"
+      : "main");
   const panelNum = panel === "panel2" ? "2" : panel === "panel3" ? "3" : panel === "panel4" ? "4" : panel === "panel5" ? "5" : panel === "panel6" ? "6" : panel === "panel7" ? "7" : null;
 
   const tRecord = t as Record<string, string>;
@@ -303,7 +322,11 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                 <input type="checkbox" checked={editForm.macdSignalLine} onChange={(e) => setEditForm((f) => (f ? { ...f, macdSignalLine: e.target.checked } : f))} className="rounded border-zinc-300" />
                 <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdSignalLineLabel ?? "Linha de sinal"}</span>
               </label>
-              {editForm.macdSignalLine && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editForm.macdHistogram} onChange={(e) => setEditForm((f) => (f ? { ...f, macdHistogram: e.target.checked } : f))} className="rounded border-zinc-300" />
+                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)"}</span>
+              </label>
+              {(editForm.macdSignalLine || editForm.macdHistogram) && (
                 <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdSignalMa ?? "MA sinal"}</span>
@@ -331,11 +354,7 @@ export function IndicatorsPanelIndicatorCard({ ind }: IndicatorsPanelIndicatorCa
                   </div>
                 </div>
               )}
-              <label className={`flex items-center gap-2 ${editForm.macdSignalLine ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}>
-                <input type="checkbox" checked={editForm.macdHistogram} disabled={!editForm.macdSignalLine} onChange={(e) => setEditForm((f) => (f ? { ...f, macdHistogram: e.target.checked } : f))} className="rounded border-zinc-300" />
-                <span className="text-[10px] text-zinc-700">{(t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)"}</span>
-              </label>
-              {editForm.macdSignalLine && editForm.macdHistogram && (
+              {editForm.macdHistogram && (
                 <div className="space-y-1.5 pl-3 border-l-2 border-zinc-200">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-medium text-zinc-600 w-14 shrink-0">{(t as Record<string, string>).macdHistogramColorAbove ?? "Cor acima de 0"}</span>

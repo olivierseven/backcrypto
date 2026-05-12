@@ -127,6 +127,7 @@ export interface AddFormState {
   keltnerMiddleLineWidth: IndicatorLineWidth;
   obvVolumeSource: "base" | "usdt";
   adVolumeSource: "base" | "usdt";
+  cmfRsiVolumeSource: "base" | "usdt";
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
@@ -185,6 +186,10 @@ export interface AddFormState {
   cmfAsHistogram: boolean;
   cmfHistogramColorAbove: string;
   cmfHistogramColorBelow: string;
+  cmfAggregationMaType: "SMA" | "WMA" | "EMA";
+  /** Par único espelhado em alta/baixa ao guardar (CMF / CMF_ACC / CMF_RSI). */
+  cmfWeightBuy: number;
+  cmfWeightSell: number;
   donchianShowUpper: boolean;
   donchianShowLower: boolean;
   donchianShowMiddle: boolean;
@@ -238,6 +243,8 @@ export interface AddFormState {
   hmaCustomLongMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomLongFieldKey: IndicatorFieldKey;
+  hmaCustomFastFieldKey: IndicatorFieldKey;
 }
 
 export interface EditFormState {
@@ -356,6 +363,7 @@ export interface EditFormState {
   keltnerMiddleLineWidth: IndicatorLineWidth;
   obvVolumeSource: "base" | "usdt";
   adVolumeSource: "base" | "usdt";
+  cmfRsiVolumeSource: "base" | "usdt";
   volumeInUsdt: boolean;
   volumeColorAbove: string;
   volumeColorBelow: string;
@@ -412,6 +420,10 @@ export interface EditFormState {
   cmfAsHistogram: boolean;
   cmfHistogramColorAbove: string;
   cmfHistogramColorBelow: string;
+  cmfAggregationMaType: "SMA" | "WMA" | "EMA";
+  /** Par único espelhado em alta/baixa ao guardar (CMF / CMF_ACC / CMF_RSI). */
+  cmfWeightBuy: number;
+  cmfWeightSell: number;
   donchianShowUpper: boolean;
   donchianShowLower: boolean;
   donchianShowMiddle: boolean;
@@ -465,6 +477,8 @@ export interface EditFormState {
   hmaCustomLongMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomFastMaType: "SMA" | "EMA" | "WMA" | "LINEAR_FIT" | "QUADRATIC_FIT";
   hmaCustomSmoothMaType: "SMA" | "EMA" | "WMA";
+  hmaCustomLongFieldKey: IndicatorFieldKey;
+  hmaCustomFastFieldKey: IndicatorFieldKey;
   showLastValueOnYAxis: boolean;
   intervals: number[];
 }

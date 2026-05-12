@@ -1374,6 +1374,12 @@ export const cryptoTranslations = {
         robotsBuyAccumMaxCandlesLabel: "Max consecutive candles to try buys (after N signals)",
         robotsBuyAccumMaxCandlesHint:
           "How many candles in a row may get one buy attempt each (1–20). Default 7. Independent of the buy signal staying true after accumulation starts.",
+        robotsBuyOncePerCandleLabel: "At most one buy per candle",
+        robotsBuyOncePerCandleHint:
+          "When checked (default), the robot executes at most one buy per candle open time while accumulating. Uncheck to allow multiple buys in the same candle if price rules still allow (live: close updates); use the delay below to space repeated attempts.",
+        robotsBuyRepurchaseDelayLabel: "Min. delay between buys on the same candle (seconds)",
+        robotsBuyRepurchaseDelayHint:
+          "Live only: minimum seconds after a successful buy before another buy on the same candle (0–300). Backtest does not model wall-clock delay; it may stack multiple buys per bar only when price rules allow.",
         robotsListBuyAccumStart: "Sequential buys start after buy signal #{n}.",
         robotsListBuyAccumMaxCandles: "Sequential buy window: up to {n} candles.",
         robotsParamsSummary: "Max spot {max}% · Per operation {buy}% of max",
@@ -1413,6 +1419,8 @@ export const cryptoTranslations = {
         backtestAdminTradeCyclesHint:
           "Each chip is one round-trip from the first buy to the exit (or still open at the end). Click the chip or # on the bar column.",
         backtestAdminTradeCycleChip: "#{n} bars {from}→{to}",
+        backtestGoToChartFirstBuy: "Chart",
+        backtestGoToChartFirstBuyTitle: "Center chart on first buy candle (open time) of this cycle",
         backtestAdminTradeReportTitle: "Cycle #{n}",
         backtestAdminTradeBars: "Bars",
         backtestAdminTradeCalendar: "Time",
@@ -1748,11 +1756,18 @@ export const cryptoTranslations = {
         cciLimitLowerLabel: "Lower",
         cciAsHistogramLabel: "Display as histogram",
         cmfLabel: "CMF (Chaikin Money Flow)",
+        cmfAccumLabel: "CMF Acc (Cumulative Pressure)",
+        cmfRsiLabel: "CMF RSI (intrabar + volume)",
         cmfFixedScaleLabel: "Fixed scale -1 to 1 on Y axis",
         cmfAsHistogramLabel: "Display as histogram",
         cmfLimitsLabel: "Upper and lower limits (-1 to 1)",
         cmfLimitUpperLabel: "Upper",
         cmfLimitLowerLabel: "Lower",
+        cmfAggregationMaTypeLabel: "Final averaging",
+        cmfWeightsHint:
+          "Directional scaling: each bar’s money-flow volume is multiplied by 1 + (buy weight − sell weight), with weights from 0 to 1 and up to four decimal places. The same buy and sell pair applies to bull candles (close > open) and to bear or doji (close ≤ open). Equal 0.5 / 0.5 recovers the classic Chaikin Money Flow.",
+        cmfWeightBuyLabel: "Buy weight",
+        cmfWeightSellLabel: "Sell weight",
         vwapLabel: "VWAP",
         sarLabel: "Parabolic SAR",
         sarStart: "Start",
@@ -1761,6 +1776,8 @@ export const cryptoTranslations = {
         sarPointSize: "Point size",
         bollingerLabel: "Bollinger Bands",
         hmaLabel: "HMA",
+        harmonicMaLabel: "Harmonic moving average",
+        quadraticMaLabel: "Quadratic moving average",
         hmaCustomLabel: "Hull MA (Custom)",
         hmaCustomShortLabel: "Hull MA (Custom)",
         hmaCustomHint: "Smoothing period must be less than fast; fast must be less than long.",
@@ -1858,6 +1875,10 @@ export const cryptoTranslations = {
           "The weighted moving average assigns linearly increasing weights to the most recent candles—the latest bar weighs most. It sits between the SMA and EMA in spirit: more responsive than an equal-weight SMA, less ubiquitous than the EMA in retail defaults. Periods are chosen like other MAs (for instance 20 or 50). Use it when you want one line that stresses recent prices without going to an extremely short EMA; in ranges it will still flip often—combine with volatility or trend filters the same way you would for any moving average.",
         indicatorTheoryWMA2:
           "WMA2 combines the weighted MA logic with a time-based window option alongside classic period length, similar in goal to SMA2/EMA2: anchor the average to a calendar or session span while keeping extra weight on the newest bars. Interpretation follows the WMA; align the window with your analysis horizon and validate signals with volume, levels, or higher-timeframe direction.",
+        indicatorTheoryHARMONIC_MA:
+          "The harmonic moving average uses the harmonic mean over the last N values, which emphasizes lower values more than SMA/EMA. On price series it reacts differently around pullbacks and can be useful when you want a conservative average that penalizes spikes. As with any moving average, it lags in trends and can whipsaw in sideways markets, so use it as context and not as a standalone trigger.",
+        indicatorTheoryQUADRATIC_MA:
+          "The quadratic moving average (RMS) is the square root of the mean of squared values over N bars. It gives proportionally more weight to larger magnitudes than SMA, often producing a smoother and slightly elevated curve versus arithmetic mean. It can help track dominant amplitude, but still requires trend/structure confirmation for entries.",
         indicatorTheoryHMA:
           "The Hull moving average (Alan Hull, 2005) uses nested weighted moving averages to reduce lag while preserving a smooth line—often described as quicker to turn than a standard MA of comparable length. A 16-period HMA is frequently cited as a starting point, with N scaled to the chart interval. It is used for trend identification and crossover strategies; no MA removes whipsaw in tight ranges—pair with a regime measure (e.g. ADX, range detection) and avoid treating every slope change as a standalone entry without confirmation.",
         indicatorTheoryHMA_CUSTOM:
@@ -1901,7 +1922,11 @@ export const cryptoTranslations = {
         indicatorTheoryMA_ANGLE:
           "MA angle measures the slope of a chosen moving average (SMA, EMA, WMA, HMA or VWMA) at each bar: vertical leg is the MA change from L bars ago to now; horizontal leg is L times the ATR at the current bar, using the same period as the MA’s period setting (Wilder ATR on the chart’s OHLC). One bar on X counts as one ATR—so the angle compares MA drift to typical range over that horizon. The plotted value is in degrees (positive ≈ MA rising over the segment, negative ≈ falling). The Y axis is always automatic from the visible data (with a little padding). Optional horizontal lines mark any Y values you choose (e.g. “strong” vs “weak” tilt). Longer period smooths the MA and widens ATR; larger L measures slope over more bars and is less noisy but reacts more slowly. Confirm with price structure and higher timeframes rather than using this alone as an entry rule.",
         indicatorTheoryCMF:
-          "Marc Chaikin’s Chaikin Money Flow (CMF) measures buying and selling pressure by combining price and volume: it sums money flow volume over N periods (typically 21) and divides by the sum of volume over the same window, yielding a normalized reading of accumulation versus distribution. Interpretation centers on the zero line—readings above 0 suggest net buying (accumulation), below 0 net selling (distribution). Persistence matters more than isolated spikes: CMF held above or below zero indicates sustained flow, while rapid oscillations around zero often reflect indecision or a sideways market. Key ideas include divergences (price makes new highs or lows without CMF confirmation—possible weakening or loss of volume “sponsorship”) and trend confirmation (CMF aligned with price direction reinforces the move). Limitations: CMF is a flow gauge, not a precision timing trigger; gaps and the nature of the asset (e.g. fragmented or less reliable volume) can distort the series; it works best alongside price structure and other trend or momentum tools. In short, CMF is a thermometer of capital flow—useful to validate moves and should be integrated into a broader analytical context for trading decisions.",
+          "Marc Chaikin’s Chaikin Money Flow (CMF) measures buying and selling pressure by combining price and volume: it sums money flow volume over N periods (typically 21) and divides by the sum of volume over the same window, yielding a normalized reading of accumulation versus distribution. Interpretation centers on the zero line—readings above 0 suggest net buying (accumulation), below 0 net selling (distribution). Persistence matters more than isolated spikes: CMF held above or below zero indicates sustained flow, while rapid oscillations around zero often reflect indecision or a sideways market. Key ideas include divergences (price makes new highs or lows without CMF confirmation—possible weakening or loss of volume “sponsorship”) and trend confirmation (CMF aligned with price direction reinforces the move). Limitations: CMF is a flow gauge, not a precision timing trigger; gaps and the nature of the asset (e.g. fragmented or less reliable volume) can distort the series; it works best alongside price structure and other trend or momentum tools. In short, CMF is a thermometer of capital flow—useful to validate moves and should be integrated into a broader analytical context for trading decisions. Optional directional weights let you scale each bar’s contribution by candle color (bull vs bear/doji) using explicit buy/sell weights in [0,1]; neutral 0.5/0.5 preserves the standard formula.",
+        indicatorTheoryCMF_ACC:
+          "CMF Acc keeps the CMF pressure logic (money-flow multiplier with directional buy/sell weights), but removes normalization by volume and removes moving-average aggregation. Each candle contributes raw pressure and the series accumulates this value over time, similar to an OBV-style running total. Because it is cumulative, there are no fixed numeric bands; interpretation focuses on slope, persistence, and divergence versus price.",
+        indicatorTheoryCMF_RSI:
+          "CMF RSI applies Wilder-style RSI not to close-to-close changes but to intrabar pressure scaled by volume. For each bar: range = max(high − low, ε); up = (close − low) / range × volume; down = (high − close) / range × volume. The first N bars use simple averages of up and down; thereafter averages update like Wilder RSI. RS = avgUp / max(avgDown, ε); RSI = 100 − 100/(1 + RS), equivalent to 100 × avgUp / (avgUp + avgDown) when the sum is positive. Same 0–100 reading habits as classic RSI; volume source can be base or quote (USDT) like OBV.",
         indicatorTheoryLINEAR_FIT:
           "Linear fit (rolling least squares) applies ordinary least-squares regression to the last N values of the chosen field (same window idea as a moving average). For each bar, the line is fitted with time running from oldest to newest within the window; the plotted value is the regression estimate at the newest bar—i.e. the endpoint of the fit, not the midpoint. A rising line suggests upward drift in that window, a falling line downward drift; slope and distance from price can be read like a smoothed trend proxy. It is still a lagging, descriptive tool: use it with structure, volatility, and confirmation rather than as a lone timing signal.",
         indicatorTheoryQUADRATIC_FIT:
@@ -2198,7 +2223,7 @@ export const cryptoTranslations = {
         aggLiveColTrades: "Trades",
         aggLiveEmpty: "Select an atemporal interval on the chart (e.g. Renko P25) and wait for trades.",
         aggLiveUpdated: "Updated",
-        aggLiveLastPeriodicCacheOk: "Last kline-cache2 refresh (5 min), success",
+        aggLiveLastPeriodicCacheOk: "Last kline-cache2 refresh (1 min), success",
         aggLiveStatsLine:
           "{baseTier} → {tierShort}: {groupSize} base bricks per chart candle · remainder {remainder} · aggTrades {bufferTotal} (ring) · base bricks {baseTotal}",
         aggLiveTickBrickLine:
@@ -3734,6 +3759,12 @@ export const cryptoTranslations = {
         robotsBuyAccumMaxCandlesLabel: "Máximo de velas consecutivas para tentar compras (após N sinais)",
         robotsBuyAccumMaxCandlesHint:
           "Quantas velas seguidas podem ter no máximo uma tentativa de compra cada (1–20). Omissão 7. Não depende do sinal de compra continuar verdadeiro depois de ligar a acumulação.",
+        robotsBuyOncePerCandleLabel: "No máximo uma compra por vela",
+        robotsBuyOncePerCandleHint:
+          "Marcado por defeito: durante a acumulação só há no máximo uma compra por horário de abertura da vela. Desmarque para permitir várias compras na mesma vela se as regras de preço o permitirem (live: o fecho atualiza); use o atraso abaixo entre tentativas.",
+        robotsBuyRepurchaseDelayLabel: "Atraso mínimo entre compras na mesma vela (segundos)",
+        robotsBuyRepurchaseDelayHint:
+          "Só no live: segundos mínimos após uma compra bem-sucedida antes de outra na mesma vela (0–300). No backtest não há relógio em segundos; várias compras na mesma barra só quando as regras de preço o permitirem.",
         robotsListBuyAccumStart: "Compras em sequência começam após o sinal de compra n.º {n}.",
         robotsListBuyAccumMaxCandles: "Janela de compras em sequência: até {n} velas.",
         robotsParamsSummary: "Spot máx. {max}% · Por operação {buy}% do máx.",
@@ -3773,6 +3804,8 @@ export const cryptoTranslations = {
         backtestAdminTradeCyclesHint:
           "Cada botão é um ciclo da primeira compra até à saída (ou posição ainda aberta no fim). Clica no botão ou no # na coluna da barra.",
         backtestAdminTradeCycleChip: "#{n} barras {from}→{to}",
+        backtestGoToChartFirstBuy: "Gráfico",
+        backtestGoToChartFirstBuyTitle: "Ir à vela da primeira compra deste ciclo (open time)",
         backtestAdminTradeReportTitle: "Ciclo #{n}",
         backtestAdminTradeBars: "Barras",
         backtestAdminTradeCalendar: "Tempo",
@@ -4108,11 +4141,18 @@ export const cryptoTranslations = {
         cciLimitLowerLabel: "Inferior",
         cciAsHistogramLabel: "Exibir como histograma",
         cmfLabel: "CMF (Chaikin Money Flow)",
+        cmfAccumLabel: "CMF Acc (Pressao Acumulada)",
+        cmfRsiLabel: "CMF RSI (intrabar + volume)",
         cmfFixedScaleLabel: "Escala fixa -1 a 1 no eixo Y",
         cmfAsHistogramLabel: "Exibir como histograma",
         cmfLimitsLabel: "Limites superior e inferior (-1 a 1)",
         cmfLimitUpperLabel: "Superior",
         cmfLimitLowerLabel: "Inferior",
+        cmfAggregationMaTypeLabel: "Média final",
+        cmfWeightsHint:
+          "Escala direcional: o money-flow volume de cada vela é multiplicado por 1 + (peso compra − peso venda), com pesos entre 0 e 1 e até quatro casas decimais. O mesmo par compra/venda vale para vela de alta (close > open) e para baixa ou doji (close ≤ open). 0,5 / 0,5 recupera o Chaikin Money Flow clássico.",
+        cmfWeightBuyLabel: "Peso compra",
+        cmfWeightSellLabel: "Peso venda",
         vwapLabel: "VWAP",
         sarLabel: "Parabolic SAR",
         sarStart: "Início",
@@ -4121,6 +4161,8 @@ export const cryptoTranslations = {
         sarPointSize: "Tamanho do ponto",
         bollingerLabel: "Bollinger Bands",
         hmaLabel: "HMA",
+        harmonicMaLabel: "Média móvel harmônica",
+        quadraticMaLabel: "Média móvel quadrática",
         hmaCustomLabel: "Hull MA (personalizado)",
         hmaCustomShortLabel: "Hull MA (personalizado)",
         hmaCustomHint: "A suavização deve ser menor que a rápida; a rápida deve ser menor que a longa.",
@@ -4218,6 +4260,10 @@ export const cryptoTranslations = {
           "A média móvel ponderada atribui pesos linearmente crescentes aos candles mais recentes—o último pesa mais. Fica, em espírito, entre a SMA e a EMA: mais ágil que uma SMA de pesos iguais, menos padrão que a EMA nas plataformas. Períodos seguem a lógica das outras médias (por exemplo 20 ou 50). Use-a quando quiser uma linha que enfatize o recente sem ir a uma EMA extremamente curta; em faixas ela ainda oscila—combine com filtros de volatilidade ou tendência como faria com qualquer média.",
         indicatorTheoryWMA2:
           "A WMA2 une a lógica da WMA a uma janela por tempo além do período em barras, no mesmo espírito da SMA2/EMA2: ancorar a média a um intervalo de calendário ou sessão mantendo peso extra nos candles novos. A leitura segue a WMA; alinhe a janela ao horizonte de análise e valide com volume, níveis ou direção do timeframe maior.",
+        indicatorTheoryHARMONIC_MA:
+          "A média móvel harmônica usa a média harmônica dos últimos N valores, dando mais peso relativo aos valores menores do que SMA/EMA. Em séries de preço, pode reagir de forma diferente em pullbacks e é útil quando se quer uma média mais conservadora contra picos. Como toda média, atrasa em tendência e gera ruído em lateral; use como contexto, não como gatilho isolado.",
+        indicatorTheoryQUADRATIC_MA:
+          "A média móvel quadrática (RMS) é a raiz da média dos quadrados em N barras. Ela enfatiza magnitudes maiores em relação à SMA e costuma formar uma curva mais suave e ligeiramente acima da média aritmética. Pode ajudar a acompanhar amplitude dominante, mas ainda precisa de confirmação por tendência/estrutura para entradas.",
         indicatorTheoryHMA:
           "A Hull moving average (Alan Hull, 2005) usa médias móveis ponderadas aninhadas para reduzir atraso com linha ainda suave—costuma-se dizer que vira mais cedo que uma MA clássica de comprimento parecido. Cita-se muito 16 períodos como ponto de partida, ajustando N ao gráfico. Serve para identificar tendência e sistemas de cruzamento; nenhuma média elimina ruído em faixa estreita—combine com medida de regime (ex.: ADX, detecção de lateral) e não trate toda mudança de inclinação como entrada única sem confirmação.",
         indicatorTheoryHMA_CUSTOM:
@@ -4261,7 +4307,11 @@ export const cryptoTranslations = {
         indicatorTheoryMA_ANGLE:
           "O indicador mede a inclinação de uma média móvel (SMA, EMA, WMA, HMA ou VWMA) em cada vela: o lado vertical é a variação da MA entre há L barras e agora; o lado horizontal é L vezes o ATR na vela atual, calculado com o mesmo período que o período da MA (ATR Wilder sobre o OHLC do gráfico). Cada barra no eixo X equivale a um ATR—compara o deslocamento da MA com a amplitude típica de preço nesse horizonte. O valor está em graus (positivo ≈ MA a subir no trecho, negativo ≈ a descer). O eixo Y é automático com base nos dados visíveis (com pequena margem). Linhas horizontais opcionais marcam valores Y (ex.: limiar “forte” vs “fraca”). Período maior suaviza a MA e alarga o ATR; L maior mede inclinação em mais barras, com menos ruído e mais atraso. Confirme com estrutura de preço e timeframes maiores.",
         indicatorTheoryCMF:
-          "O Chaikin Money Flow (CMF), desenvolvido por Marc Chaikin, mede a pressão de compra e venda ao combinar preço e volume: soma o money flow volume ao longo de N períodos (tipicamente 21) e divide pela soma do volume no mesmo intervalo, produzindo uma leitura normalizada de acumulação versus distribuição. A interpretação gira em torno da linha zero: acima de 0 predomina pressão compradora (acumulação); abaixo de 0, pressão vendedora (distribuição). Mais relevante que picos isolados é a persistência: CMF sustentado acima ou abaixo de zero indica fluxo consistente; oscilações rápidas em torno de zero tendem a refletir indecisão ou mercado lateral. Leituras importantes incluem divergências (preço faz novas máximas ou mínimas sem confirmação do CMF—possível enfraquecimento do movimento por falta de patrocínio de volume) e confirmação de tendência (CMF alinhado à direção do preço reforça a validade do movimento). Limitações e cuidados: o CMF não é gatilho de timing preciso, e sim indicador de fluxo; pode ser influenciado por gaps e pela natureza do ativo (por exemplo mercados com volume fragmentado ou menos confiável); funciona melhor combinado com estrutura de preço e outros indicadores de tendência ou momentum. Em resumo, o CMF é um termômetro de fluxo de capital, útil para validar movimentos, mas deve ser integrado a um contexto mais amplo para decisões operacionais.",
+          "O Chaikin Money Flow (CMF), desenvolvido por Marc Chaikin, mede a pressão de compra e venda ao combinar preço e volume: soma o money flow volume ao longo de N períodos (tipicamente 21) e divide pela soma do volume no mesmo intervalo, produzindo uma leitura normalizada de acumulação versus distribuição. A interpretação gira em torno da linha zero: acima de 0 predomina pressão compradora (acumulação); abaixo de 0, pressão vendedora (distribuição). Mais relevante que picos isolados é a persistência: CMF sustentado acima ou abaixo de zero indica fluxo consistente; oscilações rápidas em torno de zero tendem a refletir indecisão ou mercado lateral. Leituras importantes incluem divergências (preço faz novas máximas ou mínimas sem confirmação do CMF—possível enfraquecimento do movimento por falta de patrocínio de volume) e confirmação de tendência (CMF alinhado à direção do preço reforça a validade do movimento). Limitações e cuidados: o CMF não é gatilho de timing preciso, e sim indicador de fluxo; pode ser influenciado por gaps e pela natureza do ativo (por exemplo mercados com volume fragmentado ou menos confiável); funciona melhor combinado com estrutura de preço e outros indicadores de tendência ou momentum. Em resumo, o CMF é um termômetro de fluxo de capital, útil para validar movimentos, mas deve ser integrado a um contexto mais amplo para decisões operacionais. Pesos direcionais opcionais permitem escalar a contribuição de cada vela pela cor (alta vs baixa/doji), com pesos explícitos de compra/venda em [0,1]; 0,5/0,5 neutros preservam a fórmula padrão.",
+        indicatorTheoryCMF_ACC:
+          "O CMF Acc mantém a lógica de pressão do CMF (money-flow multiplier com pesos direcionais de compra/venda), mas remove a normalização pelo volume e remove a agregação por média móvel. Cada vela contribui com a pressão bruta e a série acumula esse valor ao longo do tempo, no estilo de uma linha OBV. Por ser acumulativo, não há faixas numéricas fixas; a leitura foca em inclinação, persistência e divergência em relação ao preço.",
+        indicatorTheoryCMF_RSI:
+          "O CMF RSI aplica o RSI ao estilo Wilder não às variações de fechamento, mas à pressão intrabar ponderada pelo volume. Por vela: amplitude = max(máxima − mínima, ε); “up” = (fechamento − mínima) / amplitude × volume; “down” = (máxima − fechamento) / amplitude × volume. Nos primeiros N períodos usa-se média simples de up e down; depois a suavização segue a de Wilder. RS = médiaUp / max(médiaDown, ε); RSI = 100 − 100/(1 + RS), equivalente a 100 × médiaUp / (médiaUp + médiaDown) quando a soma é positiva. Leitura 0–100 como no RSI clássico; a fonte de volume pode ser na base ou em USDT, como no OBV.",
         indicatorTheoryLINEAR_FIT:
           "O Ajuste Linear aplica regressão linear pelos mínimos quadrados (janela deslizante) aos últimos N valores do campo escolhido—mesma ideia de período que numa média móvel. Para cada vela, a reta é ajustada com o tempo do mais antigo ao mais recente da janela; o valor desenhado é a estimativa no ponto mais recente, ou seja, o último valor da reta ajustada, não o ponto médio. Uma linha ascendente sugere deriva de alta na janela, descendente deriva de baixa; inclinação e afastamento do preço funcionam como referência de tendência suavizada. Continua a ser ferramenta descritiva e atrasada: use com estrutura, volatilidade e confirmação, não como único gatilho de entrada.",
         indicatorTheoryQUADRATIC_FIT:
@@ -4558,7 +4608,7 @@ export const cryptoTranslations = {
         aggLiveColTrades: "Negócios",
         aggLiveEmpty: "Escolha um intervalo atemporal no gráfico (ex. Renko P25) e aguarde trades.",
         aggLiveUpdated: "Atualizado",
-        aggLiveLastPeriodicCacheOk: "Último refresh kline-cache2 (5 min), com sucesso",
+        aggLiveLastPeriodicCacheOk: "Último refresh kline-cache2 (1 min), com sucesso",
         aggLiveStatsLine:
           "{baseTier} → {tierShort}: {groupSize} tijolos base por vela · resto {remainder} · aggTrades {bufferTotal} (anel) · tijolos base {baseTotal}",
         aggLiveTickBrickLine:

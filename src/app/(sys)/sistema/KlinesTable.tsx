@@ -13,7 +13,7 @@ import { flushSync } from "react-dom";
 import { API_BASE, VPS_FLUSH_WS_URL } from "@/app/constants";
 import { useCryptoLang } from "@/app/contexts/CryptoLangContext";
 import { getCryptoT } from "@/app/lib/translations";
-import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeHmaColumn, computeHmaCustomColumn, computeVwmaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns, computeMaAngleColumn, normalizeMaAngleMaType } from "@/app/api/binance/klines/indicators";
+import { computeSmaColumn, computeEmaColumn, computeWmaColumn, computeRsiColumn, computeMfiColumn, computeMacdColumn, computeMaColumn, normalizeMacdMaType, normalizeHmaCustomLegMaType, computeHmaCustomSmoothFromRaw, computeStochasticKColumn, computeWilliamsRColumn, computeObvColumn, computeAdColumn, computeParabolicSarColumn, computeAtrColumn, computeVwapColumn, computeBollingerBands, computeKeltnerChannels, computeDonchianChannels, computeAdxColumns, computeCciColumn, computeCmfColumn, computeCmfAccumColumn, computeCmfRsiColumn, computeHmaColumn, computeVwmaColumn, computeHarmonicMaColumn, computeQuadraticMaColumn, computeLinearFitColumn, computeQuadraticFitColumn, computeIchimokuColumns, computeMaAngleColumn, normalizeMaAngleMaType } from "@/app/api/binance/klines/indicators";
 import { useKlinesIndicators, getDataAndValueIndexForIndicator, type UserIndicatorConfig } from "./KlinesIndicatorsContext";
 import { useKlinesRegressions } from "./regression/KlinesRegressionsContext";
 import { useSistemaDebug } from "./SistemaDebugContext";
@@ -34,6 +34,7 @@ import {
   loadSavedRobots,
   persistRobotBuyExecMap,
   hasRobotBuyExecForCandle,
+  robotLiveBuyBlockedByCandlePolicy,
   setRobotBuyExecForCandle,
   ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
   type RobotBuyExecMap,
@@ -244,8 +245,10 @@ function robotLivePickOpenTimeWhere(
 
 const REFRESH_MS = 1 * 60 * 1000; // 1 min
 
-/** Gráficos atemporais (Renko/Range/Kagi/…): GET kline-cache2 + reconexão aggTrade para alinhar ao servidor. */
-const AGG_ATEMPORAL_CACHE_REFRESH_MS = 2 * 60 * 1000;
+/** Gráficos atemporais (Renko/Range/Kagi/…): GET kline-cache2 a cada 7 min; reconexão aggTrade só se o topo do cache tiver `openTime` novo (fetch forçado reconecta sempre). */
+const AGG_ATEMPORAL_CACHE_REFRESH_MS = 7 * 60 * 1000;
+/** Reagrupa o tier de exibição a partir da origem base (5ticks/500trades) a cada 1 min, como no fluxo de 1m. */
+const AGG_ATEMPORAL_REGROUP_MS = 1 * 60 * 1000;
 const AGG_CACHE_REFRESH_WINDOW_MS = 60 * 60 * 1000; // 1h
 
 /** Fallback até o primeiro GET kline-cache2 devolver `maxBars` (AppConfig AGG_ATEMPORAL_KLINE_CACHE_LIMIT). */
@@ -622,7 +625,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [aggPriceTickDiag, setAggPriceTickDiag] = useState<AggFastLivePriceTickDiagnostics | null>(null);
   /** Incrementado após refresh periódico do cache agg — força reconexão do WebSocket aggTrade em `useAggFastTradeLive`. */
   const [aggPeriodicWsReconnectKey, setAggPeriodicWsReconnectKey] = useState(0);
-  /** Momento (Date.now) do último GET kline-cache2 do intervalo de 5 min que terminou com sucesso (debug agg live). */
+  /** Momento (Date.now) do último GET kline-cache2 do intervalo periódico (atemporais) que terminou com sucesso (debug agg live). */
   const [lastAggPeriodicCacheRefreshOkAt, setLastAggPeriodicCacheRefreshOkAt] = useState<number | null>(null);
   const [spot, setSpot] = useState<{ currentClose: string | null; prevDayClose: string | null }>({ currentClose: null, prevDayClose: null });
   const [spotWsPrice, setSpotWsPrice] = useState<string | null>(null);
@@ -646,6 +649,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   } | null>(null);
   const [priceFormatDecimals, setPriceFormatDecimals] = useState<number | null>(null);
   const [priceFormatAbbreviated, setPriceFormatAbbreviated] = useState(false);
+  const handlePriceFormatChange = useCallback((d: number, a: boolean) => {
+    setPriceFormatDecimals((prev) => (prev === d ? prev : d));
+    setPriceFormatAbbreviated((prev) => (prev === a ? prev : a));
+  }, []);
+  /** Pedido ao gráfico: centrar na vela com este open time (ex.: primeira compra do ciclo do backtest). */
+  const [chartJumpOpenTimeSignal, setChartJumpOpenTimeSignal] = useState<{ id: number; openTimeMs: number } | null>(null);
+  const chartJumpIdRef = useRef(0);
+  const goToBacktestFirstBuyOnChart = useCallback((openTimeMs: number) => {
+    chartJumpIdRef.current += 1;
+    setChartJumpOpenTimeSignal({ id: chartJumpIdRef.current, openTimeMs });
+  }, []);
+  const handleJumpToOpenTimeConsumed = useCallback(() => {
+    setChartJumpOpenTimeSignal(null);
+  }, []);
   const [spotWsHigh, setSpotWsHigh] = useState<number | null>(null);
   const [spotWsLow, setSpotWsLow] = useState<number | null>(null);
   const lastSpotPersistAtRef = useRef(0);
@@ -656,7 +673,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   aggFastLiveDebugEnabledRef.current = aggFastLiveDebugEnabled;
   const lastKlinesFetchSymbolRef = useRef<string | null>(null);
   const fetchKlinesRef = useRef<(force?: boolean) => Promise<boolean>>(async () => false);
-  /** Quando o GET periódico kline-cache2 não trouxe linha nova, não incrementar `aggPeriodicWsReconnectKey` (evita WS agg a repor refs e zerar live). */
+  /** GET periódico cache2 com o mesmo `openTime` no topo que antes: não incrementar `aggPeriodicWsReconnectKey` (mantém WS agg; dados já foram fundidos no `setKlines`). */
   const skipAggPeriodicWsReconnectRef = useRef(false);
   /** `document.visibilityState === hidden` em gráfico atemporal — para refetch ao voltar (timers em segundo plano atrasam). */
   const aggAtemporalTabHiddenAtRef = useRef<number | null>(null);
@@ -970,7 +987,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           ind.macdSlowPeriod ?? 26
         );
         writeBlock(colStart, [col]);
-        if (ind.macdSignalLine) {
+        const hasSignalForMacd = ind.macdSignalLine || ind.macdHistogram;
+        if (hasSignalForMacd) {
           const macdColIndex = colStart;
           const signalPeriod = Math.max(1, Math.min(500, ind.macdSignalPeriod ?? 9));
           const signalCol = computeMaColumn(
@@ -979,20 +997,21 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             normalizeMacdMaType(ind.macdSignalMaType),
             signalPeriod
           );
-          writeBlock(colStart + 1, [signalCol]);
+          const signalColIndex = colStart + 1;
+          if (ind.macdSignalLine) writeBlock(signalColIndex, [signalCol]);
           if (ind.macdHistogram) {
-            const signalColIndex = colStart + 1;
+            const histColIndex = colStart + (ind.macdSignalLine ? 2 : 1);
             const hist: (number | null)[] = [];
             for (let i = 0; i < out.length; i++) {
-              const macdVal = out[i][macdColIndex];
-              const sigVal = out[i][signalColIndex];
+              const macdVal = out[i]?.[macdColIndex];
+              const sigVal = signalCol[i];
               hist.push(
                 macdVal != null && sigVal != null && Number.isFinite(Number(macdVal)) && Number.isFinite(Number(sigVal))
                   ? Number(macdVal) - Number(sigVal)
                   : null
               );
             }
-            writeBlock(colStart + 2, [hist]);
+            writeBlock(histColIndex, [hist]);
           }
         }
       } else if (ind.type === "DIFF") {
@@ -1126,7 +1145,29 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         const col = computeCciColumn(dataForInd, valueIndex, period);
         writeBlock(colStart, [col]);
       } else if (ind.type === "CMF") {
-        const col = computeCmfColumn(data, period);
+        const col = computeCmfColumn(data, period, {
+          bullBuy: ind.cmfWeightBullBuy,
+          bullSell: ind.cmfWeightBullSell,
+          bearBuy: ind.cmfWeightBearBuy,
+          bearSell: ind.cmfWeightBearSell,
+        }, ind.cmfAggregationMaType);
+        writeBlock(colStart, [col]);
+      } else if (ind.type === "CMF_ACC") {
+        const col = computeCmfAccumColumn(data, {
+          bullBuy: ind.cmfWeightBullBuy,
+          bullSell: ind.cmfWeightBullSell,
+          bearBuy: ind.cmfWeightBearBuy,
+          bearSell: ind.cmfWeightBearSell,
+        });
+        writeBlock(colStart, [col]);
+      } else if (ind.type === "CMF_RSI") {
+        const volIdx = ind.cmfRsiVolumeSource === "usdt" ? 7 : 5;
+        const col = computeCmfRsiColumn(data, period, volIdx, {
+          bullBuy: ind.cmfWeightBullBuy,
+          bullSell: ind.cmfWeightBullSell,
+          bearBuy: ind.cmfWeightBearBuy,
+          bearSell: ind.cmfWeightBearSell,
+        });
         writeBlock(colStart, [col]);
       } else if (ind.type === "MFI") {
         const col = computeMfiColumn(data, period);
@@ -1161,20 +1202,57 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                     : ind.type === "HMA"
                       ? computeHmaColumn(dataForInd, valueIndex, period)
                       : ind.type === "HMA_CUSTOM"
-                        ? computeHmaCustomColumn(
-                            dataForInd,
-                            valueIndex,
-                            ind.hmaCustomSmoothPeriod ?? 4,
-                            ind.hmaCustomFastPeriod ?? 10,
-                            ind.hmaCustomLongPeriod ?? period,
-                            normalizeHmaCustomLegMaType(ind.hmaCustomFastMaType),
-                            normalizeHmaCustomLegMaType(ind.hmaCustomLongMaType),
-                            ind.hmaCustomSmoothMaType === "SMA" || ind.hmaCustomSmoothMaType === "EMA" || ind.hmaCustomSmoothMaType === "WMA"
-                              ? ind.hmaCustomSmoothMaType
-                              : "WMA"
-                          )
+                        ? (() => {
+                            const fastSource = getDataAndValueIndexForIndicator(
+                              data,
+                              ind.hmaCustomFastFieldKey ?? ind.fieldKey,
+                              userIndicators
+                            );
+                            const longSource = getDataAndValueIndexForIndicator(
+                              data,
+                              ind.hmaCustomLongFieldKey ?? ind.fieldKey,
+                              userIndicators
+                            );
+                            const smoothPeriod = ind.hmaCustomSmoothPeriod ?? 4;
+                            const fastPeriod = ind.hmaCustomFastPeriod ?? 10;
+                            const longPeriod = ind.hmaCustomLongPeriod ?? period;
+                            const fastLeg = computeMaColumn(
+                              fastSource.data as (string | number | null)[][],
+                              fastSource.valueIndex,
+                              normalizeHmaCustomLegMaType(ind.hmaCustomFastMaType),
+                              fastPeriod
+                            );
+                            const longLeg = computeMaColumn(
+                              longSource.data as (string | number | null)[][],
+                              longSource.valueIndex,
+                              normalizeHmaCustomLegMaType(ind.hmaCustomLongMaType),
+                              longPeriod
+                            );
+                            const n = out.length;
+                            const raw: (number | null)[] = [];
+                            for (let i = 0; i < n; i++) {
+                              const a = fastLeg[i];
+                              const b = longLeg[i];
+                              raw.push(
+                                a != null && b != null && Number.isFinite(a) && Number.isFinite(b)
+                                  ? 2 * a - b
+                                  : null
+                              );
+                            }
+                            return computeHmaCustomSmoothFromRaw(
+                              raw,
+                              smoothPeriod,
+                              ind.hmaCustomSmoothMaType === "SMA" || ind.hmaCustomSmoothMaType === "EMA" || ind.hmaCustomSmoothMaType === "WMA"
+                                ? ind.hmaCustomSmoothMaType
+                                : "WMA"
+                            );
+                          })()
                         : ind.type === "VWMA"
                         ? computeVwmaColumn(dataForInd, valueIndex, period)
+                        : ind.type === "HARMONIC_MA"
+                          ? computeHarmonicMaColumn(dataForInd, valueIndex, period)
+                        : ind.type === "QUADRATIC_MA"
+                          ? computeQuadraticMaColumn(dataForInd, valueIndex, period)
                         : ind.type === "LINEAR_FIT"
                           ? computeLinearFitColumn(dataForInd, valueIndex, period)
                           : ind.type === "QUADRATIC_FIT"
@@ -1270,6 +1348,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const robotFirstEntryLimitPendingRef = useRef<
     Record<string, { orderId: string; openTime: string; startedCandleIndex: number }>
   >({});
+  /** Por robô+par: instante (epoch ms) da última compra executada com sucesso — delay de recompra na mesma vela quando `buyOncePerCandle` é false. */
+  const robotLastBuyWallClockMsRef = useRef<Record<string, number>>({});
 
   const robotLiveBuyAccumRefBag = useMemo(
     () => ({
@@ -1557,9 +1637,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           seen = new Set<string>();
           countedOtRef[kArm] = seen;
         }
-        const hasStartedCounting = (edgesRef[kArm] ?? 0) > 0;
-        const shouldCountThisCandle = buySig || hasStartedCounting;
-        if (shouldCountThisCandle && !seen.has(ot)) {
+        // Só velas com sinal verdadeiro contam para N (igual ao backtest e à documentação do robô).
+        const accumOff = accumRef[kArm] !== true;
+        if (buySig && accumOff && !seen.has(ot)) {
           seen.add(ot);
           const nextE = (edgesRef[kArm] ?? 0) + 1;
           edgesRef[kArm] = nextE;
@@ -1615,6 +1695,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         robotBuyAccumLastOtRef.current[kArm] = ot;
         robotBuyAccumCandleIndexRef.current[kArm] = 1;
       } else if (lastOt !== ot) {
+        delete robotLastBuyWallClockMsRef.current[kArm];
         const nextIdx = (robotBuyAccumCandleIndexRef.current[kArm] ?? 1) + 1;
         robotBuyAccumLastOtRef.current[kArm] = ot;
         robotBuyAccumCandleIndexRef.current[kArm] = nextIdx;
@@ -1625,6 +1706,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             openTime: ot,
           });
           delete accumRef[kArm];
+          delete edgesRef[kArm];
+          delete countedOtRef[kArm];
           delete robotBuyAccumLastOtRef.current[kArm];
           delete robotBuyAccumCandleIndexRef.current[kArm];
           delete robotBuySequentialSliceUsdtRef.current[kArm];
@@ -1668,7 +1751,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       }
       const kBuy = `${robot.id}::${sym}`;
       const acc = accumRef[kBuy] === true;
-      if (acc && !hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) {
+      const blockedByCandlePolicy = robotLiveBuyBlockedByCandlePolicy(
+        robot,
+        buyExecMapRef.current,
+        sym,
+        ot,
+        robotLastBuyWallClockMsRef.current[kBuy]
+      );
+      if (acc && !blockedByCandlePolicy) {
         if (robotFirstEntryLimitPendingRef.current[kBuy] != null) {
           shouldRun = true;
           continue;
@@ -1846,7 +1936,17 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
 
         const kAccum = `${robot.id}::${sym}`;
         if (robotBuyAccumulationActiveRef.current[kAccum] !== true) continue;
-        if (hasRobotBuyExecForCandle(buyExecMapRef.current, robot.id, sym, ot)) continue;
+        if (
+          robotLiveBuyBlockedByCandlePolicy(
+            robot,
+            buyExecMapRef.current,
+            sym,
+            ot,
+            robotLastBuyWallClockMsRef.current[kAccum]
+          )
+        ) {
+          continue;
+        }
         const buyKey = `${robot.id}::${ot}::buy`;
 
         const refCloseLive = Number(extendedKlines[0]?.[4]);
@@ -1912,6 +2012,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
                 orderId: pendingOpenBuy.orderId,
                 ...(fill ? { baseQty: fill.baseQty, quoteUsdt: fill.quoteUsdt } : {}),
               });
+              robotLastBuyWallClockMsRef.current[kAccum] = Date.now();
               delete robotFirstEntryLimitPendingRef.current[kAccum];
               robotLiveBuyInFlightRef.current.delete(buyKey);
               dispatchSpotOrderPlaced();
@@ -2025,6 +2126,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             openTime: ot,
             ...(fill ? { baseQty: fill.baseQty } : {}),
           });
+          robotLastBuyWallClockMsRef.current[kAccum] = Date.now();
           persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
           dispatchSpotOrderPlaced();
         } finally {
@@ -2342,8 +2444,12 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
         continue;
       }
       list.push({ ind, columnIndex: start, isSignal: false, isHistogram: false });
-      if (ind.type === "MACD" && ind.macdSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
-      if (ind.type === "MACD" && ind.macdHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
+      if (ind.type === "MACD") {
+        const signalOffset = 1;
+        const histOffset = ind.macdSignalLine ? 2 : 1;
+        if (ind.macdSignalLine) list.push({ ind, columnIndex: start + signalOffset, isSignal: true, isHistogram: false });
+        if (ind.macdHistogram) list.push({ ind, columnIndex: start + histOffset, isSignal: false, isHistogram: true });
+      }
       if (ind.type === "DIFF" && ind.diffSignalLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
       if (ind.type === "DIFF" && ind.diffHistogram) list.push({ ind, columnIndex: start + 2, isSignal: false, isHistogram: true });
       if (ind.type === "Stochastic" && ind.stochDLine) list.push({ ind, columnIndex: start + 1, isSignal: true, isHistogram: false });
@@ -2450,8 +2556,16 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           force || prevServer.length === 0
             ? (list as Kline[])
             : mergeRecentCacheWindow(prevServer, list as Kline[], AGG_CACHE_REFRESH_WINDOW_MS, maxBars);
-        // Refresh periódico (5 min): considerar sempre mudança e reaplicar cache para realinhar WS.
-        skipAggPeriodicWsReconnectRef.current = false;
+        const prevHead =
+          prevServer.length > 0 && prevServer[0]?.[0] != null ? Number(prevServer[0][0]) : null;
+        const mergedHead =
+          mergedServer.length > 0 && mergedServer[0]?.[0] != null ? Number(mergedServer[0][0]) : null;
+        const sameHeadOpenTimeAfterMerge =
+          !force &&
+          prevHead != null &&
+          mergedHead != null &&
+          mergedHead === prevHead;
+        skipAggPeriodicWsReconnectRef.current = sameHeadOpenTimeAfterMerge;
         lastKlinesFetchSymbolRef.current = requestedSymbol;
         serverAggKlinesRef.current = mergedServer;
         setServerNewestKlineFromCache(mergedServer.length > 0 ? (mergedServer[0] as (string | number)[]) : null);
@@ -2567,6 +2681,21 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   }, [serverNewestKlineFromCache]);
   const aggCacheReadyForWs =
     klinesDataSymbol != null && klinesDataSymbol.trim().toUpperCase() === symbol.trim().toUpperCase();
+  const regroupAggTierFromSource = useCallback(() => {
+    const gmNorm = normalizeAggGroupMinutes(groupMinutesRef.current);
+    const c2 = groupMinutesToCache2Params(gmNorm);
+    if (c2 == null) return;
+    const tierLive = liveSourcePayloadsToTierPayloadsForMerge(liveAggRowsByOpenTimeRef.current.values(), c2);
+    setKlines(
+      mergeAggFastServerAndLive(
+        serverAggKlinesRef.current,
+        tierLive,
+        timezoneOffsetRef.current,
+        aggAtemporalKlineCacheLimitRef.current
+      ) as Kline[]
+    );
+    if (aggFastLiveDebugEnabledRef.current) pushAggFastLiveDebug();
+  }, [pushAggFastLiveDebug]);
   useAggFastTradeLive({
     enabled: aggWsKind != null && timeframeRestored && isAggFastGroupMinutes(groupMinutes),
     aggKind: (aggWsKind ?? "renko") as AggFastWsKind,
@@ -2708,7 +2837,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     setSpotWsHigh(null);
     setSpotWsLow(null);
     fetchKlines();
-    /** Temporais: refresh a cada 1 min. Atemporais: GET kline-cache2 a cada 5 min e reconexão aggTrade (via `aggPeriodicWsReconnectKey`). */
+    /** Temporais: refresh a cada 1 min. Atemporais: GET kline-cache2 a cada 7 min; reconexão aggTrade só com novo `openTime` no topo ou fetch forçado (via `skipAggPeriodicWsReconnectRef` + `aggPeriodicWsReconnectKey`). */
     setLastAggPeriodicCacheRefreshOkAt(null);
     const aggAtemporal = isAggFastGroupMinutes(groupMinutes);
     const interval = aggAtemporal
@@ -2730,7 +2859,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     };
   }, [groupMinutes, symbol, timeframeRestored]);
 
-  /** Atemporais: ao regressar à aba após ≥45s em fundo, forçar GET cache2 (complementa o intervalo de 5 min com throttling do browser). */
+  /** Atemporais: ao regressar à aba após ≥45s em fundo, forçar GET cache2 (complementa o intervalo periódico com throttling do browser). */
   useEffect(() => {
     if (!timeframeRestored) return;
     if (!isAggFastGroupMinutes(groupMinutes)) return;
@@ -2772,6 +2901,14 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       void fetchKlinesRef.current(true);
     }
   }, [klines.length, groupMinutes, timeframeRestored]);
+
+  /** Mantém o tier de exibição sincronizado por reagrupamento periódico da origem base (5ticks/500trades). */
+  useEffect(() => {
+    if (!timeframeRestored) return;
+    if (!isAggFastGroupMinutes(groupMinutes)) return;
+    const id = window.setInterval(regroupAggTierFromSource, AGG_ATEMPORAL_REGROUP_MS);
+    return () => window.clearInterval(id);
+  }, [groupMinutes, timeframeRestored, regroupAggTierFromSource]);
 
   const fetchVapCacheKlines = async () => {
     if (!volumeAtPriceEnabled || isAggFastGroupMinutes(groupMinutes)) {
@@ -2907,8 +3044,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     };
 
     // ao trocar símbolo, limpa o preço anterior até chegar 1.º evento
-    setSpotWsPrice(null);
-    setSpotWsUpdatedAt(null);
+    setSpotWsPrice((prev) => (prev == null ? prev : null));
+    setSpotWsUpdatedAt((prev) => (prev == null ? prev : null));
     connect();
     return () => {
       alive = false;
@@ -3086,6 +3223,43 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     [priceFormatDecimals, priceFormatAbbreviated]
   );
 
+  const sameHeaderViewData = useCallback(
+    (
+      a: {
+        chartContainerWidth: number | null;
+        priceText: string | null;
+        lastPriceUsdt: number | null;
+        pctText: string | null;
+        max24h: string | null;
+        min24h: string | null;
+        vol24hBtc: string | null;
+        vol24hUsd: string | null;
+        intervalLabel: string | null;
+      },
+      b: {
+        chartContainerWidth: number | null;
+        priceText: string | null;
+        lastPriceUsdt: number | null;
+        pctText: string | null;
+        max24h: string | null;
+        min24h: string | null;
+        vol24hBtc: string | null;
+        vol24hUsd: string | null;
+        intervalLabel: string | null;
+      }
+    ) =>
+      a.chartContainerWidth === b.chartContainerWidth &&
+      a.priceText === b.priceText &&
+      a.lastPriceUsdt === b.lastPriceUsdt &&
+      a.pctText === b.pctText &&
+      a.max24h === b.max24h &&
+      a.min24h === b.min24h &&
+      a.vol24hBtc === b.vol24hBtc &&
+      a.vol24hUsd === b.vol24hUsd &&
+      a.intervalLabel === b.intervalLabel,
+    []
+  );
+
   useEffect(() => {
     const current = spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? String(extendedKlines[0][4]) : null);
     const prevDayCloseNum = spot.prevDayClose != null ? parseFloat(spot.prevDayClose) : null;
@@ -3094,7 +3268,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     const pct = currentNum != null && prevDayCloseNum != null && prevDayCloseNum > 0
       ? ((currentNum - prevDayCloseNum) / prevDayCloseNum) * 100
       : null;
-    setHeaderData({
+    const next = {
       ...headerDataRef.current,
       chartContainerWidth,
       priceText: current != null ? formatPriceLikeChart(current) : null,
@@ -3105,8 +3279,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       vol24hBtc: last24h != null ? formatAbbreviated(last24h.volBtc) : null,
       vol24hUsd: last24h != null ? formatAbbreviated(last24h.volUsd) : null,
       intervalLabel: intervalLabel ?? null,
-    });
-  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart]);
+    };
+    if (!sameHeaderViewData(headerDataRef.current, next)) {
+      setHeaderData(next);
+    }
+  }, [symbol, spotWsPrice, spot.currentClose, spot.prevDayClose, extendedKlines, chartContainerWidth, intervalLabel, setHeaderData, formatPriceLikeChart, sameHeaderViewData]);
 
   useEffect(() => {
     if (!symbol || symbol.trim().length < 5) {
@@ -3216,10 +3393,9 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
             isFreeUser={isFreeUser}
             klines={extendedKlines}
             liveLastClose={spotWsPrice ?? spot.currentClose ?? (extendedKlines.length > 0 ? extendedKlines[0][4] : null)}
-            onPriceFormatChange={(d, a) => {
-              setPriceFormatDecimals(d);
-              setPriceFormatAbbreviated(a);
-            }}
+            onPriceFormatChange={handlePriceFormatChange}
+            jumpToOpenTimeSignal={chartJumpOpenTimeSignal}
+            onJumpToOpenTimeConsumed={handleJumpToOpenTimeConsumed}
             onCurrentLayoutLabelChange={setCurrentLayoutLabel}
             groupMinutes={groupMinutes}
             timezoneOffset={timezoneOffset}
@@ -3273,29 +3449,29 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               adxPart,
               ichimokuPart,
               showLastValueOnYAxis: ind.showLastValueOnYAxis !== false,
-              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : ind.type === "DIFF" ? (ind.diffSignalColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? ind.color ?? "#6366f1") : ind.color,
-              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : ind.type === "DIFF" ? (ind.diffSignalLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Donchian" ? (ind.donchianLimitsLineWidth ?? ind.lineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
-              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || (ind.type === "CMF" && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : ind.type === "DIFF" ? (ind.diffSignalLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Donchian" ? (ind.donchianLimitsLineStyle ?? ind.lineStyle ?? "solid") : (ind.lineStyle ?? "solid"),
+              color: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanColor ?? "#6366f1") : ichimokuPart === "kijun" ? (ind.ichimokuKijunColor ?? "#ea580c") : ichimokuPart === "spanA" ? (ind.ichimokuSpanAColor ?? "#22c55e") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBColor ?? "#ef4444") : (ind.ichimokuChikouColor ?? "#a855f7")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiColor ?? "#22c55e") : adxPart === "minusDi" ? (ind.adxMinusDiColor ?? "#ef4444") : (ind.adxAdxColor ?? "#eab308")) : ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : (ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : isSignal ? (ind.type === "Stochastic" ? (ind.stochDColor ?? "#ea580c") : ind.type === "DIFF" ? (ind.diffSignalColor ?? "#ea580c") : (ind.macdSignalColor ?? "#ea580c")) : ind.type === "Bollinger" ? (ind.bollingerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Keltner" ? (ind.keltnerLimitsColor ?? ind.color ?? "#6366f1") : ind.type === "Donchian" ? (ind.donchianLimitsColor ?? ind.color ?? "#6366f1") : ind.color,
+              lineWidth: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineWidth ?? "normal") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineWidth ?? "normal") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineWidth ?? "normal") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineWidth ?? "normal") : (ind.ichimokuChikouLineWidth ?? "normal")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineWidth ?? "normal") : adxPart === "minusDi" ? (ind.adxMinusDiLineWidth ?? "normal") : (ind.adxAdxLineWidth ?? "normal")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || ((ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineWidth ?? "normal") : ind.type === "DIFF" ? (ind.diffSignalLineWidth ?? "normal") : (ind.macdSignalLineWidth ?? "normal")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Keltner" ? (ind.keltnerLimitsLineWidth ?? ind.lineWidth ?? "normal") : ind.type === "Donchian" ? (ind.donchianLimitsLineWidth ?? ind.lineWidth ?? "normal") : (ind.lineWidth ?? "normal"),
+              lineStyle: ind.type === "Ichimoku" && ichimokuPart ? (ichimokuPart === "tenkan" ? (ind.ichimokuTenkanLineStyle ?? "solid") : ichimokuPart === "kijun" ? (ind.ichimokuKijunLineStyle ?? "solid") : ichimokuPart === "spanA" ? (ind.ichimokuSpanALineStyle ?? "solid") : ichimokuPart === "spanB" ? (ind.ichimokuSpanBLineStyle ?? "solid") : (ind.ichimokuChikouLineStyle ?? "solid")) : ind.type === "ADX" && adxPart ? (adxPart === "plusDi" ? (ind.adxPlusDiLineStyle ?? "solid") : adxPart === "minusDi" ? (ind.adxMinusDiLineStyle ?? "solid") : (ind.adxAdxLineStyle ?? "solid")) : ind.type === "Volume" || isHistogram || (ind.type === "CCI" && ind.cciAsHistogram) || ((ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram) ? undefined : isSignal ? (ind.type === "Stochastic" ? (ind.stochDLineStyle ?? "dashed") : ind.type === "DIFF" ? (ind.diffSignalLineStyle ?? "dashed") : (ind.macdSignalLineStyle ?? "dashed")) : ind.type === "Bollinger" ? (ind.bollingerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Keltner" ? (ind.keltnerLimitsLineStyle ?? ind.lineStyle ?? "solid") : ind.type === "Donchian" ? (ind.donchianLimitsLineStyle ?? ind.lineStyle ?? "solid") : (ind.lineStyle ?? "solid"),
               label: ind.type === "Ichimoku" && ichimokuPart ? `${baseIchimokuLabel} ${ichimokuPartLabel[ichimokuPart]}` : ind.type === "Volume" ? getIndicatorLabel(ind, t, userIndicators) : isHistogram ? ((t as Record<string, string>).macdHistogramLabel ?? "MACD (histograma)") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelStochD(ind, t) : getIndicatorLabelSignal(ind, t)) : getIndicatorLabel(ind, t, userIndicators),
               shortLabel: ind.type === "Ichimoku" && ichimokuPart ? ichimokuPartLabel[ichimokuPart] : ind.type === "Volume" ? getIndicatorLabelShort(ind, userIndicators) : isHistogram ? (ind.type === "DIFF" ? "DIFF Hist" : "MACD Hist") : isSignal ? (ind.type === "Stochastic" ? getIndicatorLabelShortStochD(ind) : getIndicatorLabelShortSignal(ind)) : getIndicatorLabelShort(ind, userIndicators),
               type: ind.type,
-              display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "CCI" && ind.cciAsHistogram ? "histogram" as const : ind.type === "CMF" && ind.cmfAsHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
+              display: ind.type === "Volume" ? "histogram" as const : isHistogram ? "histogram" as const : ind.type === "CCI" && ind.cciAsHistogram ? "histogram" as const : (ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram ? "histogram" as const : ind.type === "SAR" ? "points" as const : undefined,
               volumeInUsdt: ind.type === "Volume" ? (ind.volumeInUsdt === true) : undefined,
               pointSize: ind.type === "SAR" ? (ind.sarPointSize === "thin" || ind.sarPointSize === "normal" ? ind.sarPointSize : "normal") : undefined,
-              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
-              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorBelow ?? "#dc2626") : (ind.macdHistogramColorBelow ?? "#dc2626")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : ind.type === "CMF" && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
-              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "MA_ANGLE" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
-              rsiFixedScale: ind.type === "RSI" ? (ind.rsiFixedScale !== false) : undefined,
-              rsiCenterLine: ind.type === "RSI" ? (ind.rsiCenterLine === true) : undefined,
-              rsiCenterLineColor: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
-              rsiCenterLineWidth: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineWidth ?? "normal") : undefined,
-              rsiCenterLineStyle: ind.type === "RSI" && ind.rsiCenterLine ? (ind.rsiCenterLineStyle ?? "dotted") : undefined,
-              rsiLimits: ind.type === "RSI" ? (ind.rsiLimits === true) : undefined,
-              rsiLimitUpper: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitUpper ?? 90) : undefined,
-              rsiLimitLower: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLower ?? 10) : undefined,
-              rsiLimitColor: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
-              rsiLimitLineWidth: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
-              rsiLimitLineStyle: ind.type === "RSI" && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
+              histogramColorAbove: ind.type === "Volume" ? (ind.volumeColorAbove ?? "#10b981") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorAbove ?? "#059669") : (ind.macdHistogramColorAbove ?? "#059669")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorAbove ?? "#059669") : (ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram ? (ind.cmfHistogramColorAbove ?? "#059669") : undefined,
+              histogramColorBelow: ind.type === "Volume" ? (ind.volumeColorBelow ?? "#ef4444") : isHistogram ? (ind.type === "DIFF" ? (ind.diffHistogramColorBelow ?? "#dc2626") : (ind.macdHistogramColorBelow ?? "#dc2626")) : ind.type === "CCI" && ind.cciAsHistogram ? (ind.cciHistogramColorBelow ?? "#dc2626") : (ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI") && ind.cmfAsHistogram ? (ind.cmfHistogramColorBelow ?? "#dc2626") : undefined,
+              panel: ind.panel ?? (ind.type === "RSI" || ind.type === "MFI" || ind.type === "MACD" || ind.type === "DIFF" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "OBV" || ind.type === "AD" || ind.type === "ATR" || ind.type === "ADX" || ind.type === "Volume" || ind.type === "CCI" || ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI" || ind.type === "MA_ANGLE" ? "panel2" : ind.type === "Ichimoku" ? "main" : "main"),
+              rsiFixedScale: ind.type === "RSI" || ind.type === "CMF_RSI" ? (ind.rsiFixedScale !== false) : undefined,
+              rsiCenterLine: ind.type === "RSI" || ind.type === "CMF_RSI" ? (ind.rsiCenterLine === true) : undefined,
+              rsiCenterLineColor: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiCenterLine ? (ind.rsiCenterLineColor ?? "#71717a") : undefined,
+              rsiCenterLineWidth: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiCenterLine ? (ind.rsiCenterLineWidth ?? "normal") : undefined,
+              rsiCenterLineStyle: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiCenterLine ? (ind.rsiCenterLineStyle ?? "dotted") : undefined,
+              rsiLimits: ind.type === "RSI" || ind.type === "CMF_RSI" ? (ind.rsiLimits === true) : undefined,
+              rsiLimitUpper: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits ? (ind.rsiLimitUpper ?? 90) : undefined,
+              rsiLimitLower: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits ? (ind.rsiLimitLower ?? 10) : undefined,
+              rsiLimitColor: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits ? (ind.rsiLimitColor ?? "#dc2626") : undefined,
+              rsiLimitLineWidth: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits ? (ind.rsiLimitLineWidth ?? "normal") : undefined,
+              rsiLimitLineStyle: (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits ? (ind.rsiLimitLineStyle ?? "dotted") : undefined,
               maAngleCenterLine: ind.type === "MA_ANGLE" ? (ind.maAngleCenterLine === true) : undefined,
               maAngleCenterLineValue: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineValue ?? 0) : undefined,
               maAngleCenterLineColor: ind.type === "MA_ANGLE" && ind.maAngleCenterLine ? (ind.maAngleCenterLineColor ?? "#71717a") : undefined,
@@ -3412,6 +3588,11 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
               cmfLimitColor: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitColor ?? "#dc2626") : undefined,
               cmfLimitLineWidth: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineWidth ?? "normal") : undefined,
               cmfLimitLineStyle: ind.type === "CMF" && ind.cmfLimits ? (ind.cmfLimitLineStyle ?? "dotted") : undefined,
+              cmfAggregationMaType: ind.type === "CMF" ? (ind.cmfAggregationMaType ?? "SMA") : undefined,
+              cmfWeightBullBuy: ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI" ? ind.cmfWeightBullBuy : undefined,
+              cmfWeightBullSell: ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI" ? ind.cmfWeightBullSell : undefined,
+              cmfWeightBearBuy: ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI" ? ind.cmfWeightBearBuy : undefined,
+              cmfWeightBearSell: ind.type === "CMF" || ind.type === "CMF_ACC" || ind.type === "CMF_RSI" ? ind.cmfWeightBearSell : undefined,
             };
             })}
             strategyCandleOverlays={strategyCandleOverlays}
@@ -3701,6 +3882,7 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       robot={backtestModal?.robot ?? null}
       result={backtestModal?.result ?? null}
       isAdmin={isAdmin}
+      onGoToChartFirstBuy={goToBacktestFirstBuyOnChart}
       t={tk}
     />
     </>

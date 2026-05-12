@@ -40,6 +40,11 @@ export const ROBOT_FIRST_LIMIT_OFFSET_PCT_MIN = 0;
 export const ROBOT_FIRST_LIMIT_OFFSET_PCT_MAX = 1;
 export const ROBOT_FIRST_LIMIT_TIMEOUT_CANDLES_DEFAULT = 7;
 
+/** Com multi-compra na mesma vela: espera mínima entre compras consecutivas (live). */
+export const ROBOT_BUY_REPURCHASE_DELAY_SEC_MIN = 0;
+export const ROBOT_BUY_REPURCHASE_DELAY_SEC_MAX = 300;
+export const ROBOT_BUY_REPURCHASE_DELAY_SEC_DEFAULT = 0;
+
 /** Breakeven (zerar): desvio % vs médio de compra — mínimo, máximo e passo (UI). */
 export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MIN = -1;
 export const ROBOT_FLATTEN_BREAKEVEN_BUFFER_PCT_MAX = 1;
@@ -120,6 +125,14 @@ export interface SavedRobot {
    * de compra por vela (o sinal pode ficar falso). Entre ROBOT_BUY_ACCUM_MAX_CANDLES_MIN e MAX.
    */
   buyAccumMaxCandles: number;
+  /**
+   * Comprador: se true (default), no máximo uma execução de compra por vela (`openTime`).
+   * Se false, podem ocorrer várias compras na mesma vela desde que as regras de preço permitam e,
+   * em live, decorra {@link buyRepurchaseDelaySeconds} entre compras quando > 0.
+   */
+  buyOncePerCandle: boolean;
+  /** Comprador com {@link buyOncePerCandle} false: segundos entre compras na mesma vela (0–300). */
+  buyRepurchaseDelaySeconds: number;
   /** Comprador: se ativo, a 1.ª compra (sem posição) usa LIMIT abaixo do open; senão compra a mercado só com fecho estritamente abaixo do open. */
   firstEntryLimitEnabled: boolean;
   /** Comprador com LIMIT: desvio (%) abaixo do **open** da vela; mínimo técnico 0,01% sempre aplicado. */
@@ -167,6 +180,33 @@ export function hasRobotBuyExecForCandle(
   if (per[k] === 1) return true;
   if (per[openTime] === 1) return true;
   return false;
+}
+
+export function normalizeBuyRepurchaseDelaySeconds(raw: number | undefined): number {
+  if (raw == null || typeof raw !== "number" || !Number.isFinite(raw)) return ROBOT_BUY_REPURCHASE_DELAY_SEC_DEFAULT;
+  return Math.min(
+    ROBOT_BUY_REPURCHASE_DELAY_SEC_MAX,
+    Math.max(ROBOT_BUY_REPURCHASE_DELAY_SEC_MIN, Math.floor(raw))
+  );
+}
+
+/** Live: bloqueia nova tentativa de compra nesta vela conforme política do robô (1/vela ou delay entre recompras). */
+export function robotLiveBuyBlockedByCandlePolicy(
+  robot: SavedRobot,
+  buyExecMap: RobotBuyExecMap,
+  symbol: string,
+  openTime: string,
+  lastBuyWallClockMs: number | undefined,
+  nowMs: number = Date.now()
+): boolean {
+  const oncePer = robot.buyOncePerCandle !== false;
+  if (oncePer) {
+    return hasRobotBuyExecForCandle(buyExecMap, robot.id, symbol, openTime);
+  }
+  const delaySec = normalizeBuyRepurchaseDelaySeconds(robot.buyRepurchaseDelaySeconds);
+  if (delaySec <= 0) return false;
+  if (lastBuyWallClockMs == null || !Number.isFinite(lastBuyWallClockMs)) return false;
+  return nowMs - lastBuyWallClockMs < delaySec * 1000;
 }
 
 export function setRobotBuyExecForCandle(
@@ -281,6 +321,10 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     ROBOT_BUY_ACCUM_MAX_CANDLES_MAX,
     Math.max(ROBOT_BUY_ACCUM_MAX_CANDLES_MIN, maxCandlesRaw)
   );
+  const buyOncePerCandle = x.buyOncePerCandle === false ? false : true;
+  const buyRepurchaseDelaySeconds = normalizeBuyRepurchaseDelaySeconds(
+    typeof x.buyRepurchaseDelaySeconds === "number" ? x.buyRepurchaseDelaySeconds : undefined
+  );
   const firstEntryLimitEnabled = typeof x.firstEntryLimitEnabled === "boolean" ? x.firstEntryLimitEnabled : false;
   const firstEntryLimitOffsetRaw =
     typeof x.firstEntryLimitOffsetPercent === "number" && Number.isFinite(x.firstEntryLimitOffsetPercent)
@@ -375,6 +419,8 @@ export function normalizeRobot(raw: unknown): SavedRobot | null {
     buyOperationFixedUsdt,
     buyAccumulationStartOnSignalNumber,
     buyAccumMaxCandles,
+    buyOncePerCandle,
+    buyRepurchaseDelaySeconds,
     firstEntryLimitEnabled,
     firstEntryLimitOffsetPercent,
     firstEntryLimitTimeoutCandles,

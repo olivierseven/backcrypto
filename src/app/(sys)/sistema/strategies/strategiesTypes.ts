@@ -300,7 +300,7 @@ export function isValidIndicatorSeriesKey(seriesKey: string, ind: UserIndicatorC
   switch (ind.type) {
     case "MACD":
       if (part === "sig") return !!ind.macdSignalLine;
-      if (part === "hist") return !!(ind.macdSignalLine && ind.macdHistogram);
+      if (part === "hist") return !!ind.macdHistogram;
       return false;
     case "DIFF":
       if (part === "sig") return !!ind.diffSignalLine;

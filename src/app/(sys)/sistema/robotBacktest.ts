@@ -166,6 +166,12 @@ export function buildRobotBacktestTradeCycles(rows: readonly RobotBacktestRow[])
   return out.map((c, i) => ({ ...c, index: i + 1 }));
 }
 
+/** `openTime` (ms) da primeira vela do ciclo em que houve compra; coincide com `startOpenTimeMs` nos ciclos normais. */
+export function robotBacktestCycleFirstBuyOpenTimeMs(cycle: RobotBacktestTradeCycle): number {
+  const r = cycle.rows.find((x) => x.buyUsdtThisBar > 1e-9);
+  return r != null ? r.openTime : cycle.startOpenTimeMs;
+}
+
 export type RobotBacktestSummary = {
   startBar: number;
   endBar: number;
@@ -511,6 +517,7 @@ export function runRobotBacktest(params: {
         buyAccumLastOpenTime = null;
         buyAccumCandlesInWindow = 0;
         buySequentialSliceUsdt = null;
+        buyEdgesSinceFlat = 0;
       }
     }
 
@@ -545,19 +552,14 @@ export function runRobotBacktest(params: {
       Number.isFinite(robot.buyAccumulationStartOnSignalNumber)
         ? Math.min(5, Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber)))
         : 1;
-    if (flatAtStart) {
-      const hasStartedCounting = buyEdgesSinceFlat > 0;
-      const shouldCountThisCandle = buySig || hasStartedCounting;
-      if (shouldCountThisCandle) {
-        buyEdgesSinceFlat += 1;
-        if (buyEdgesSinceFlat >= nAccumStart) {
-          const wasAccum = buyAccumulationActive;
-          buyAccumulationActive = true;
-          if (!wasAccum) {
-            buyAccumLastOpenTime = ot;
-            buyAccumCandlesInWindow = 1;
-          }
-        }
+    // Só contamos velas **com** sinal de compra (documentação: N-ésima vela flat em que o sinal é verdadeiro).
+    // Não incrementar em velas sem sinal — isso atrasava a janela como se N fosse “velas após o 1.º sinal”.
+    if (flatAtStart && buySig && !buyAccumulationActive) {
+      buyEdgesSinceFlat += 1;
+      if (buyEdgesSinceFlat >= nAccumStart) {
+        buyAccumulationActive = true;
+        buyAccumLastOpenTime = ot;
+        buyAccumCandlesInWindow = 1;
       }
     }
 
@@ -842,11 +844,16 @@ export function runRobotBacktest(params: {
     }
 
     // 5) Compra: acumulação ativa → …; a mercado só se buyRef estritamente abaixo do open (como no live sem LIMIT opcional); seguintes só vs última compra.
-    if (buyAccumulationActive && !boughtThisOpenTime.has(ot)) {
-      if (
-        buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice) &&
-        buyerMarketBuyRefStrictlyBelowCandleOpen(buyRefPx, open)
-      ) {
+    const buyOncePerCandleBt = robot.buyOncePerCandle !== false;
+    if (buyAccumulationActive) {
+      while (true) {
+        if (buyOncePerCandleBt && boughtThisOpenTime.has(ot)) break;
+        if (
+          !buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice) ||
+          !buyerMarketBuyRefStrictlyBelowCandleOpen(buyRefPx, open)
+        ) {
+          break;
+        }
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);
         if (buySequentialSliceUsdt == null || !Number.isFinite(buySequentialSliceUsdt) || buySequentialSliceUsdt <= 0) {
           buySequentialSliceUsdt = computeNominalBuyOperationUsdt(robot, maxSpendUsdt);
@@ -864,22 +871,26 @@ export function runRobotBacktest(params: {
             baseQty += baseAdd;
             cumulativeBuyUsdt += opUsdt;
             totalBuyUsdtInPeriod += opUsdt;
-            buyUsdtThisBar = opUsdt;
+            buyUsdtThisBar += opUsdt;
             buyFills++;
-            boughtThisOpenTime.add(ot);
+            if (buyOncePerCandleBt) boughtThisOpenTime.add(ot);
             lastBuyFillPrice = buyPx;
-          } else {
-            buyAccumulationActive = false;
-            buyAccumLastOpenTime = null;
-            buyAccumCandlesInWindow = 0;
-            buySequentialSliceUsdt = null;
+            if (buyOncePerCandleBt) break;
+            continue;
           }
-        } else {
           buyAccumulationActive = false;
           buyAccumLastOpenTime = null;
           buyAccumCandlesInWindow = 0;
           buySequentialSliceUsdt = null;
+          buyEdgesSinceFlat = 0;
+          break;
         }
+        buyAccumulationActive = false;
+        buyAccumLastOpenTime = null;
+        buyAccumCandlesInWindow = 0;
+        buySequentialSliceUsdt = null;
+        buyEdgesSinceFlat = 0;
+        break;
       }
     }
 

@@ -454,7 +454,7 @@ export function KlinesChartSvg({
                 if (raw == null) return null;
                 const v = Number(raw);
                 if (!Number.isFinite(v)) return null;
-                return (ind.type === "RSI" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "CCI") ? v.toFixed(1) : ind.type === "CMF" ? v.toFixed(3) : formatYAxis(v);
+                return (ind.type === "RSI" || ind.type === "CMF_RSI" || ind.type === "Stochastic" || ind.type === "WilliamsR" || ind.type === "CCI") ? v.toFixed(1) : ind.type === "CMF" ? v.toFixed(3) : formatYAxis(v);
               })()
             : null;
         return (
@@ -1116,12 +1116,12 @@ export function KlinesChartSvg({
                   />
                 );
               })}
-              {panelLines.filter((ind) => (ind.type === "RSI" && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine) || (ind.type === "MA_ANGLE" && ind.maAngleCenterLine)).map((ind, idx) => {
+              {panelLines.filter((ind) => ((ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiCenterLine) || (ind.type === "MFI" && ind.mfiCenterLine) || (ind.type === "MA_ANGLE" && ind.maAngleCenterLine)).map((ind, idx) => {
                 const yCenter = ind.type === "MA_ANGLE" ? yPanel(ind.maAngleCenterLineValue ?? 0) : yPanel(50);
                 const cStrokeWidth =
                   ind.type === "MA_ANGLE"
                     ? lineWidthToStroke(ind.maAngleCenterLineWidth)
-                    : ind.type === "RSI"
+                    : ind.type === "RSI" || ind.type === "CMF_RSI"
                       ? lineWidthToStroke(ind.rsiCenterLineWidth)
                       : lineWidthToStroke(ind.mfiCenterLineWidth);
                 const cStrokeDasharray =
@@ -1131,7 +1131,7 @@ export function KlinesChartSvg({
                       : ind.maAngleCenterLineStyle === "dashed"
                         ? "6 4"
                         : undefined
-                    : ind.type === "RSI"
+                    : ind.type === "RSI" || ind.type === "CMF_RSI"
                       ? ind.rsiCenterLineStyle === "dotted"
                         ? "1 2"
                         : ind.rsiCenterLineStyle === "dashed"
@@ -1145,7 +1145,7 @@ export function KlinesChartSvg({
                 const cColor =
                   ind.type === "MA_ANGLE"
                     ? (ind.maAngleCenterLineColor ?? "#71717a")
-                    : ind.type === "RSI"
+                    : ind.type === "RSI" || ind.type === "CMF_RSI"
                       ? (ind.rsiCenterLineColor ?? "#71717a")
                       : (ind.mfiCenterLineColor ?? "#71717a");
                 return (
@@ -1161,7 +1161,7 @@ export function KlinesChartSvg({
                   />
                 );
               })}
-              {panelLines.filter((ind) => ind.type === "RSI" && ind.rsiLimits).map((ind, idx) => {
+              {panelLines.filter((ind) => (ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiLimits).map((ind, idx) => {
                 const upper = Math.max(0, Math.min(100, ind.rsiLimitUpper ?? 90));
                 const lower = Math.max(0, Math.min(100, ind.rsiLimitLower ?? 10));
                 const yUpper = yPanel(upper);

@@ -32,7 +32,7 @@ const MA2_WINDOW_EQUIVALENCE_QA_NAME =
   "MA2 — equivalência (7d≡168h; no gráfico 4h 1d≡24h≡1440m e SMA/EMA/WMA iguais)";
 
 /** Tipos de média móvel com mesmo fluxo (período, fonte, painel, intervalos, cor, espessura, tipo de linha). */
-const MOVING_AVERAGE_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA"] as const;
+const MOVING_AVERAGE_TYPES = ["SMA", "EMA", "WMA", "HMA", "VWMA", "HARMONIC_MA", "QUADRATIC_MA"] as const;
 
 /** SMA2 / EMA2 / WMA2: janela temporal; em estratégias a série é `ind_<id>:<fieldKey>` como as MA clássicas. */
 const MA2_TIME_WINDOW_TYPES = ["WMA2", "SMA2", "EMA2"] as const;

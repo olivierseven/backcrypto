@@ -80,7 +80,7 @@ export type AggFastLiveDebugSnapshot = {
   priceTickDiagnostics: AggFastLivePriceTickDiagnostics | null;
   /** Sugestões quando tudo vazio ou inconsistente. */
   diagnostics: AggFastLiveDiagItem[];
-  /** Último GET kline-cache2 do intervalo de 5 min (atemporais) que terminou com sucesso; null se nunca correu ou falhou sempre. */
+  /** Último GET kline-cache2 periódico (atemporais) que terminou com sucesso; null se nunca correu ou falhou sempre. */
   lastPeriodicCacheRefreshOkAt: number | null;
 };
 

@@ -136,7 +136,7 @@ const BUILTIN_DRAW_DEFAULTS: DrawDefaults = {
   pencil: { color: SEGMENT_COLOR_PALETTE[0], pencilStrokeWidth: "medium" },
 };
 
-export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, aggIntervalPicker, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], spotOrderMarkers = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, aggSeriesKind = "ohlc", volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onPriceFormatChange, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
+export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, intervalLabel, intervalOptions, aggIntervalPicker, onIntervalChange, width, indicatorLines = [], strategyCandleOverlays = [], spotOrderMarkers = [], onLayoutConfigLoaded, getLayoutExtraConfig, layoutAppliedTick, maxChartHeight, onChartDimensionsChange, symbol: symbolProp, onOpenSymbolPanel, heikinAshi = false, onHeikinAshiChange, aggSeriesKind = "ohlc", volumeAtPriceEnabled = false, volumeAtPriceKlines, volumeAtPriceBuckets = 20, volumeAtPricePercent = 100, onVolumeAtPricePercentChange, vapTimeSpanLabel = "", volumeAtPriceOpacity = 40, volumeAtPriceWidthPercent = 100, volumeAtPriceSide = "left", volumeAtPriceColorAbove = "#059669", volumeAtPriceColorBelow = "#dc2626", onVolumeAtPriceEnabledChange, onVolumeAtPriceBucketsChange, onVolumeAtPriceOpacityChange, onVolumeAtPriceWidthPercentChange, onVolumeAtPriceSideChange, onVolumeAtPriceColorAboveChange, onVolumeAtPriceColorBelowChange, liveLastClose, onPriceFormatChange, jumpToOpenTimeSignal, onJumpToOpenTimeConsumed, onCurrentLayoutLabelChange, isAdmin = false, isFreeUser = false }: KlinesChartProps) {
   /** Renko/Range/Kagi: eixo temporal e cadência como no gráfico 5m (grades, rótulos, slots à direita). */
   const timeScaleGroupMinutes = aggSeriesKind !== "ohlc" ? 5 : groupMinutes;
   const pathname = usePathname();
@@ -1768,14 +1768,37 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     onPriceFormatChange?.(displayDecimalsForEffect, yAxisAbbreviated);
   }, [displayDecimalsForEffect, yAxisAbbreviated, onPriceFormatChange]);
 
-  if (klines.length === 0 || width < 100) {
-    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
-    return null;
-  }
+  /** Backtest / externo: centrar na vela pelo open time (klines[0] = mais recente). */
+  useEffect(() => {
+    if (!jumpToOpenTimeSignal) return;
+    const { openTimeMs } = jumpToOpenTimeSignal;
+    const kLen = klines.length;
+    if (kLen === 0 || width < 100) {
+      onJumpToOpenTimeConsumed?.();
+      return;
+    }
+    let j = -1;
+    for (let i = 0; i < kLen; i++) {
+      if (Number(klines[i]?.[0]) === openTimeMs) {
+        j = i;
+        break;
+      }
+    }
+    if (j < 0) {
+      onJumpToOpenTimeConsumed?.();
+      return;
+    }
+    const nLocal = kLen;
+    const idxInFullReversed = nLocal - 1 - j;
+    const maxStart = Math.max(0, nLocal - visibleCount);
+    const centered = Math.max(0, Math.min(maxStart, idxInFullReversed - Math.floor(visibleCount / 2)));
+    setStartIndex(centered);
+    onJumpToOpenTimeConsumed?.();
+  }, [jumpToOpenTimeSignal, klines, visibleCount, width, onJumpToOpenTimeConsumed]);
 
-  const windowSlice = fullReversed.slice(startIndex, startIndex + visibleCount);
-  const windowN = windowSlice.length;
-  if (windowN === 0) return null;
+  // Mesmo recorte que windowSliceForEffect: não fazer return antes dos hooks abaixo (preview lines, etc.) — Rules of Hooks.
+  const windowSlice = windowSliceForEffect;
+  const windowN = windowNForEffect;
 
   const getPanel = (ind: { type?: string; panel?: string }): "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7" =>
     (ind.panel as "main" | "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") ??
@@ -1791,6 +1814,8 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     ind.type === "ADX" ||
     ind.type === "CCI" ||
     ind.type === "CMF" ||
+    ind.type === "CMF_ACC" ||
+    ind.type === "CMF_RSI" ||
     ind.type === "MA_ANGLE" ||
     ind.type === "Volume"
       ? "panel2"
@@ -1886,7 +1911,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const useFixedScale =
       !hasObv &&
       lines.length > 0 &&
-      lines.every((ind) => (ind.type === "RSI" && ind.rsiFixedScale !== false) || (ind.type === "MFI" && ind.mfiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
+      lines.every((ind) => ((ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiFixedScale !== false) || (ind.type === "MFI" && ind.mfiFixedScale !== false) || ind.type === "Stochastic" || (ind.type === "ADX" && ind.adxFixedScale !== false));
     if (useFixedScale) return { min: 0, max: 100 };
     const useFixedScaleWilliams =
       !hasObv &&
@@ -1910,7 +1935,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
           const raw = row[c];
           const v = raw != null ? Number(raw) : NaN;
           if (!Number.isFinite(v)) continue;
-          if (ind.type === "OBV" && Math.abs(v) > 1e11) continue;
+          if ((ind.type === "OBV" || ind.type === "CMF_ACC") && Math.abs(v) > 1e11) continue;
           if (ind.type === "Volume" && v < 0) continue;
           ext.push(v);
         }
@@ -1923,7 +1948,14 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       min = 0;
       if (max < 0) max = 0;
     }
-    if (lines.some((ind) => (ind.type === "RSI") || (ind.type === "Stochastic") || (ind.type === "ADX" && ind.adxFixedScale !== false))) {
+    if (
+      lines.some(
+        (ind) =>
+          ((ind.type === "RSI" || ind.type === "CMF_RSI") && ind.rsiFixedScale !== false) ||
+          ind.type === "Stochastic" ||
+          (ind.type === "ADX" && ind.adxFixedScale !== false)
+      )
+    ) {
       min = Math.min(min, 0);
       max = Math.max(max, 100);
     }
@@ -1965,7 +1997,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   const yRsiByPanel = (rsi: number, panel: "panel2" | "panel3" | "panel4" | "panel5" | "panel6" | "panel7") =>
     panel === "panel2" ? yRsiPanel2(rsi) : panel === "panel3" ? yRsiPanel3(rsi) : panel === "panel4" ? yRsiPanel4(rsi) : panel === "panel5" ? yRsiPanel5(rsi) : panel === "panel6" ? yRsiPanel6(rsi) : yRsiPanel7(rsi);
   const invisibleEndEffective = Math.max(invisibleCandlesEnd, maxRegForecastBars);
-  const totalSlots = windowN + invisibleEndEffective;
+  const totalSlots = Math.max(1, windowN + invisibleEndEffective);
   const gap = chartW / totalSlots;
   const candleW = Math.max(2, gap * BODY_WIDTH_RATIO);
   const cx = (i: number) => MARGIN_LEFT + (i + 0.5) * gap;
@@ -2336,6 +2368,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
   })();
 
   const ctrlLimitBuyPreviewLineY = useMemo(() => {
+    if (klines.length === 0 || width < 100 || windowN === 0) return null;
     if (pathname !== SISTEMA_PATH) return null;
     const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
     if (!s.endsWith("USDT") || s.length <= 4) return null;
@@ -2345,9 +2378,10 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (!isValidLimitBuyPriceVsLast(lim, lastPriceForTrading)) return null;
     if (lim < yMin || lim > yMax) return null;
     return y(lim);
-  }, [pathname, symbolProp, ctrlBuyPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+  }, [klines.length, width, windowN, pathname, symbolProp, ctrlBuyPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
 
   const altLimitSellPreviewLineY = useMemo(() => {
+    if (klines.length === 0 || width < 100 || windowN === 0) return null;
     if (pathname !== SISTEMA_PATH) return null;
     const s = symbolProp ? String(symbolProp).trim().toUpperCase() : "";
     if (!s.endsWith("USDT") || s.length <= 4) return null;
@@ -2357,7 +2391,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     if (!isValidLimitSellPriceVsLast(lim, lastPriceForTrading)) return null;
     if (lim < yMin || lim > yMax) return null;
     return y(lim);
-  }, [pathname, symbolProp, altSellPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
+  }, [klines.length, width, windowN, pathname, symbolProp, altSellPreviewPrice, lastPriceForTrading, yMin, yMax, y]);
 
   /** Primitivo estável: evita novo `validCloseTimeMs` a cada render quando `klines` só muda de referência. */
   const firstCandleOpenTimeRaw = n > 0 && klines[0] != null ? klines[0][0] : null;
@@ -2369,6 +2403,11 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     const offsetMs = timezoneOffset * 60 * 60 * 1000;
     return openTimeMs - offsetMs + timeScaleGroupMinutes * 60 * 1000;
   }, [firstCandleOpenTimeRaw, timezoneOffset, timeScaleGroupMinutes]);
+
+  if (klines.length === 0 || width < 100 || windowN === 0) {
+    chartDimensionsRef.current = { w: 0, h: 0, sizePercent: 100 };
+    return null;
+  }
 
   const totalChartWidth = displayPlotWidth + Y_AXIS_WIDTH;
   chartDimensionsRef.current = { w: totalChartWidth, h: chartHeight, sizePercent: chartSizePercent };

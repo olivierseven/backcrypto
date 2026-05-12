@@ -179,6 +179,14 @@ export function getIndicatorLabel(
     const typesExtra = ft === "WMA" && lt === "WMA" && st === "WMA" ? "" : ` · ${ft}/${lt}/${st}`;
     return `${short}(${fa},${lo},${sm})${typesExtra} ${fieldLabel}`;
   }
+  if (ind.type === "HARMONIC_MA") {
+    const k = t as Record<string, string>;
+    return `${k.harmonicMaLabel ?? "Média harmônica"}(${ind.period}) ${fieldLabel}`;
+  }
+  if (ind.type === "QUADRATIC_MA") {
+    const k = t as Record<string, string>;
+    return `${k.quadraticMaLabel ?? "Média quadrática"}(${ind.period}) ${fieldLabel}`;
+  }
   if (isTimeWindowMa2Type(ind.type)) {
     return `${ind.type}(${formatWma2WindowLong(ind, t)}) ${fieldLabel}`;
   }
@@ -314,6 +322,12 @@ export function getIndicatorLabelShort(
     const typesExtra = ft === "WMA" && lt === "WMA" && st === "WMA" ? "" : ` · ${ft}/${lt}/${st}`;
     return `HMA*(${fa},${lo},${sm})${typesExtra} ${letter}`;
   }
+  if (ind.type === "HARMONIC_MA") {
+    return `Harm(${ind.period}) ${letter}`;
+  }
+  if (ind.type === "QUADRATIC_MA") {
+    return `QMA(${ind.period}) ${letter}`;
+  }
   if (ind.type === "LINEAR_FIT") {
     return `Lin(${ind.period}) ${letter}`;
   }
@@ -365,7 +379,7 @@ export function isIndicatorVisibleForGroupMinutes(ind: UserIndicatorConfig, grou
 }
 
 /**
- * Indicador entra no limite de painel (7 main / 3 sec.) para o timeframe atual.
+ * Indicador entra no limite de painel (contagens vs. `MAIN_MAX_INDICATORS` / `SECONDARY_MAX_INDICATORS` em `indicatorsPanelConstants`).
  * Exclui «nenhum intervalo»; com `currentGroupMinutes` só conta os ativos nesse tempo (como a lista «deste tempo»).
  */
 export function indicatorAppliesToCurrentChartTimeframe(
@@ -388,6 +402,8 @@ export function isMovingAverageType(type: string): boolean {
     type === "HMA" ||
     type === "HMA_CUSTOM" ||
     type === "VWMA" ||
+    type === "HARMONIC_MA" ||
+    type === "QUADRATIC_MA" ||
     type === "LINEAR_FIT" ||
     type === "QUADRATIC_FIT"
   );

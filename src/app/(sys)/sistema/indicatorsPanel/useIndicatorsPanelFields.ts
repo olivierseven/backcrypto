@@ -82,10 +82,20 @@ export function useIndicatorsPanelFields<TEditForm extends { fieldKey: Indicator
       } else if (!isIndicatorVisibleForGroupMinutes(u, currentGroupMinutes)) {
         return;
       }
-      /** Só `inputUsed`: permite que vários indicadores usem a mesma fonte (ex.: Bollinger no RSI já com EMA no RSI). */
+      /**
+       * `usedOutputIds` inclui também as entradas A/B do DIFF/MACD. O `fieldKey` do DIFF espelha a entrada B
+       * (`diffSecondFieldKey`), pelo que o próprio DIFF acabava marcado como "inputUsed" e sumia da Fonte —
+       * inclusive `user_<id>:hist` quando se quer SMA (ou outro) sobre o histograma.
+       */
       const inputUsed = (() => {
         const ref = parseUserFieldRefId(u.fieldKey);
-        return ref != null && usedOutputIds.has(ref);
+        if (ref == null || !usedOutputIds.has(ref)) return false;
+        if (u.type === "DIFF") {
+          const firstId = parseUserFieldRefId((u.diffFirstFieldKey ?? "close") as IndicatorFieldKey);
+          const secondId = parseUserFieldRefId((u.diffSecondFieldKey ?? u.fieldKey ?? "close") as IndicatorFieldKey);
+          if (ref === firstId || ref === secondId) return false;
+        }
+        return true;
       })();
       const disabled = inputUsed;
       const pushOpt = (value: string, label: string) =>

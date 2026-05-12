@@ -8,8 +8,12 @@ export function indicatorColumnSpan(ind: UserIndicatorConfig): number {
   if (ind.type === "MACD" || ind.type === "DIFF") {
     return (
       1 +
-      (ind.type === "MACD" ? (ind.macdSignalLine ? 1 : 0) : ind.diffSignalLine ? 1 : 0) +
-      (ind.type === "MACD" ? (ind.macdHistogram ? 1 : 0) : ind.diffHistogram ? 1 : 0)
+      (ind.type === "MACD"
+        ? (ind.macdSignalLine ? 1 : 0)
+        : ind.diffSignalLine ? 1 : 0) +
+      (ind.type === "MACD"
+        ? (ind.macdHistogram ? 1 : 0)
+        : ind.diffHistogram ? 1 : 0)
     );
   }
   if (ind.type === "Stochastic") return 1 + (ind.stochDLine ? 1 : 0);
@@ -25,6 +29,8 @@ export function indicatorColumnSpan(ind: UserIndicatorConfig): number {
     ind.type === "VWAP" ||
     ind.type === "CCI" ||
     ind.type === "CMF" ||
+    ind.type === "CMF_ACC" ||
+    ind.type === "CMF_RSI" ||
     ind.type === "MFI"
   ) {
     return 1;

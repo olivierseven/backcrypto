@@ -21,6 +21,8 @@ export function chartLinePanelForUserIndicator(ind: UserIndicatorConfig): "main"
     ind.type === "Volume" ||
     ind.type === "CCI" ||
     ind.type === "CMF" ||
+    ind.type === "CMF_ACC" ||
+    ind.type === "CMF_RSI" ||
     ind.type === "MA_ANGLE"
       ? "panel2"
       : "main")

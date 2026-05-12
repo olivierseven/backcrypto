@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatFeeDecimalAsPercentLabel } from "./backtestStorage";
 import {
   buildRobotBacktestTradeCycles,
+  robotBacktestCycleFirstBuyOpenTimeMs,
   type RobotBacktestExitReason,
   type RobotBacktestResult,
   type RobotBacktestRow,
@@ -117,16 +118,16 @@ function buildCompactCycleTimeline(cycle: RobotBacktestTradeCycle, tk: Record<st
   return lines;
 }
 
+function tradeCycleDisplayPnlPct(c: RobotBacktestTradeCycle): number | null {
+  if (c.realizedPnlPct != null && Number.isFinite(c.realizedPnlPct)) return c.realizedPnlPct;
+  if (!Number.isFinite(c.firstBarEquityUsdt) || c.firstBarEquityUsdt <= 1e-9) return null;
+  if (!Number.isFinite(c.lastBarEquityUsdt)) return null;
+  return ((c.lastBarEquityUsdt - c.firstBarEquityUsdt) / c.firstBarEquityUsdt) * 100;
+}
+
 function tradeCycleChipButtonClass(c: RobotBacktestTradeCycle, selected: boolean): string {
   const base = "text-[10px] font-medium rounded-md border px-2 py-0.5 tabular-nums transition-colors";
-  if (!c.closed) {
-    return `${base} ${
-      selected
-        ? "border-amber-600 bg-amber-200 text-amber-950"
-        : "border-amber-300/80 bg-white text-amber-950 hover:bg-amber-100/80"
-    }`;
-  }
-  const p = c.realizedPnlPct;
+  const p = tradeCycleDisplayPnlPct(c);
   if (p == null || !Number.isFinite(p)) {
     return `${base} ${
       selected
@@ -150,10 +151,7 @@ function tradeCycleChipButtonClass(c: RobotBacktestTradeCycle, selected: boolean
 
 function tradeCycleBarLinkClass(c: RobotBacktestTradeCycle): string {
   const base = "shrink-0 underline font-semibold transition-colors";
-  if (!c.closed) {
-    return `${base} text-violet-700 hover:text-violet-900 decoration-violet-300`;
-  }
-  const p = c.realizedPnlPct;
+  const p = tradeCycleDisplayPnlPct(c);
   if (p == null || !Number.isFinite(p)) {
     return `${base} text-violet-700 hover:text-violet-900 decoration-violet-300`;
   }
@@ -174,9 +172,11 @@ export default function RobotBacktestResultModal(props: {
   result: Extract<RobotBacktestResult, { ok: true }> | null;
   /** Só admin: vê botão e tabela por barra; utilizadores normais só resumo + buy & hold. */
   isAdmin?: boolean;
+  /** Admin: centrar o gráfico no `openTime` da primeira compra do ciclo (ms). */
+  onGoToChartFirstBuy?: (openTimeMs: number) => void;
   t: T;
 }) {
-  const { open, onClose, robot, result, isAdmin = false, t } = props;
+  const { open, onClose, robot, result, isAdmin = false, onGoToChartFirstBuy, t } = props;
   const [barTableOpen, setBarTableOpen] = useState(false);
   const [selectedTradeCycleIdx, setSelectedTradeCycleIdx] = useState<number | null>(null);
   const [minimized, setMinimized] = useState(false);
@@ -520,23 +520,41 @@ export default function RobotBacktestResultModal(props: {
                 {tk.backtestAdminTradeCyclesHint ??
                   "Each chip is one round-trip from the first buy to the exit (or still open at the end)."}
               </p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 items-stretch">
                 {tradeCycles.map((c, i) => {
+                  const cyclePct = tradeCycleDisplayPnlPct(c);
                   const chip =
                     (tk.backtestAdminTradeCycleChip ?? "#{n} bars {from}→{to}")
                       .replace("{n}", String(c.index))
                       .replace("{from}", String(c.startBar))
                       .replace("{to}", String(c.endBar));
+                  const chipWithPnl =
+                    cyclePct != null && Number.isFinite(cyclePct)
+                      ? `${chip} (${fmtPct(cyclePct)})`
+                      : chip;
                   const sel = selectedTradeCycleIdx === i;
                   return (
-                    <button
-                      key={`tc_${c.index}_${c.startBar}_${c.endBar}`}
-                      type="button"
-                      onClick={() => setSelectedTradeCycleIdx(i)}
-                      className={tradeCycleChipButtonClass(c, sel)}
-                    >
-                      {chip}
-                    </button>
+                    <div key={`tc_${c.index}_${c.startBar}_${c.endBar}`} className="inline-flex items-stretch gap-0.5">
+                      <button type="button" onClick={() => setSelectedTradeCycleIdx(i)} className={tradeCycleChipButtonClass(c, sel)}>
+                        {chipWithPnl}
+                      </button>
+                      {onGoToChartFirstBuy ? (
+                        <button
+                          type="button"
+                          title={tk.backtestGoToChartFirstBuyTitle ?? "Center chart on first buy (this cycle)"}
+                          aria-label={tk.backtestGoToChartFirstBuyTitle ?? "Center chart on first buy (this cycle)"}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedTradeCycleIdx(i);
+                            onGoToChartFirstBuy(robotBacktestCycleFirstBuyOpenTimeMs(c));
+                          }}
+                          className="text-[10px] font-medium rounded-md border border-violet-400/80 bg-white px-1.5 py-0.5 text-violet-900 hover:bg-violet-50 tabular-nums transition-colors"
+                        >
+                          {tk.backtestGoToChartFirstBuy ?? "Chart"}
+                        </button>
+                      ) : null}
+                    </div>
                   );
                 })}
               </div>
@@ -551,7 +569,18 @@ export default function RobotBacktestResultModal(props: {
                     const timeline = buildCompactCycleTimeline(c, tk);
                     return (
                       <>
-                        <p className="font-semibold text-zinc-900">{title}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-zinc-900">{title}</p>
+                          {onGoToChartFirstBuy ? (
+                            <button
+                              type="button"
+                              onClick={() => onGoToChartFirstBuy(robotBacktestCycleFirstBuyOpenTimeMs(c))}
+                              className="text-[10px] font-medium rounded-md border border-violet-400/80 bg-violet-50/80 px-2 py-0.5 text-violet-900 hover:bg-violet-100"
+                            >
+                              {tk.backtestGoToChartFirstBuy ?? "Chart"}
+                            </button>
+                          ) : null}
+                        </div>
                         <ul className="space-y-1 font-mono tabular-nums text-[10px]">
                           <li>
                             <span className="text-zinc-500">{tk.backtestAdminTradeBars ?? "Bars"}:</span>{" "}
@@ -674,6 +703,8 @@ export default function RobotBacktestResultModal(props: {
                       {adminBarTableRows.map((row, idx) => {
                         const cycleIdx = firstRowKeyToCycleIdx.get(`${row.barNum}_${row.openTime}`);
                         const cycleForLink = cycleIdx != null ? tradeCycles[cycleIdx] : null;
+                        const cyclePctForLink =
+                          cycleForLink != null ? tradeCycleDisplayPnlPct(cycleForLink) : null;
                         return (
                         <tr key={`${row.barNum}_${row.openTime}_${idx}`} className="border-b border-zinc-100 hover:bg-zinc-50/80">
                           <td className="sticky left-0 bg-white px-1.5 py-0.5 text-right font-mono tabular-nums text-zinc-600 text-[10px] border-r border-zinc-100">
@@ -688,6 +719,9 @@ export default function RobotBacktestResultModal(props: {
                                   title={tk.backtestAdminTradeCyclesTitle ?? "Cycle report"}
                                 >
                                   #{cycleForLink.index}
+                                  {cyclePctForLink != null && Number.isFinite(cyclePctForLink)
+                                    ? ` (${fmtPct(cyclePctForLink)})`
+                                    : ""}
                                 </button>
                               ) : null}
                               <span>{row.barNum}</span>
