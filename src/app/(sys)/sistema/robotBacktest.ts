@@ -2,7 +2,6 @@ import type { Kline } from "./klinesChart/types";
 import { clampBacktestExecutionMode, clampSlippagePercent, type BacktestExecutionMode } from "./backtestStorage";
 import {
   buyerAllowsAccumulationBuy,
-  buyerMarketBuyRefStrictlyBelowCandleOpen,
   flattenBreakevenThresholdPrice,
   longFlattenCloseBreakeven,
 } from "./robotPriceLegRules";
@@ -339,6 +338,8 @@ export const ROBOT_BACKTEST_DEFAULT_FEE_RATE_PER_SIDE = 0.001;
  * Vendas por sinal / pós-alertas: preço de execução simulado `max(ref fecho/open, high com slippage)` quando mais favorável.
  * Comissão: `feeRatePerSide` sobre o nocional de cada compra e sobre o bruto de cada venda.
  * Slippage: compra na ref. configurada; venda/stop nas refs acima com `s` = slippage % / 100.
+ * **Compras (acumulação):** só avaliação vela a vela no fecho; usa {@link buyerAllowsAccumulationBuy} (sem a gate live
+ * «ref estritamente abaixo do open», que pressupõe leitura intrabar em tempo real).
  */
 export function runRobotBacktest(params: {
   robot: SavedRobot;
@@ -843,15 +844,12 @@ export function runRobotBacktest(params: {
       flattenArmed = false;
     }
 
-    // 5) Compra: acumulação ativa → …; a mercado só se buyRef estritamente abaixo do open (como no live sem LIMIT opcional); seguintes só vs última compra.
+    // 5) Compra (acumulação): só regras de fecho em buyerAllowsAccumulationBuy — sem gate live «ref < open» (só live).
     const buyOncePerCandleBt = robot.buyOncePerCandle !== false;
     if (buyAccumulationActive) {
       while (true) {
         if (buyOncePerCandleBt && boughtThisOpenTime.has(ot)) break;
-        if (
-          !buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice) ||
-          !buyerMarketBuyRefStrictlyBelowCandleOpen(buyRefPx, open)
-        ) {
+        if (!buyerAllowsAccumulationBuy(close, open, lastBuyFillPrice)) {
           break;
         }
         const roomBelowRobotMax = Math.max(0, maxSpendUsdt - quoteInPosition);

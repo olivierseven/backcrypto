@@ -8,6 +8,9 @@ import { loadSavedRobots } from "./robotsStorage";
 
 export const ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY = "crypto_sistema_robot_live_buy_accum_v1";
 
+/** Mesmo separador: `localStorage.setItem` não dispara `storage` — usar isto após persistir acumulação. */
+export const ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT = "crypto-sistema-robot-live-buy-accum-changed";
+
 export type RobotLiveBuyAccumRefBag = {
   robotFlattenArmedRef: MutableRefObject<Record<string, true>>;
   robotBuyEdgesSinceFlatRef: MutableRefObject<Record<string, number>>;
@@ -106,10 +109,54 @@ export function persistRobotLiveBuyAccum(refs: RobotLiveBuyAccumRefBag, onAfterL
   lastPersistedJson = json;
   try {
     window.localStorage.setItem(ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY, json);
+    try {
+      window.dispatchEvent(new CustomEvent(ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT));
+    } catch {
+      /* ignore */
+    }
   } catch {
     lastPersistedJson = null;
   }
   onAfterLocalPersist?.();
+}
+
+const emptyPersistedV1 = (): PersistedV1 => ({
+  v: 1,
+  flattenArmed: {},
+  buyEdgesSinceFlat: {},
+  accumulationActive: {},
+  accumLastOt: {},
+  accumCandleIndex: {},
+  sequentialSliceUsdt: {},
+  accumFrozenMaxSpendUsdt: {},
+  buySignalCountedOpenTimes: {},
+  hadPositionEnd: {},
+});
+
+/** Botão «Sinal» no HUD: grava janela de acumulação no localStorage (sobrevive refresh). */
+export function mergeManualBuySignalIntoAccumStorage(
+  robotId: string,
+  symbol: string,
+  opts: { nStart: number; openTime?: string }
+): void {
+  if (typeof window === "undefined") return;
+  const sym = symbol.trim().toUpperCase();
+  const kArm = `${robotId}::${sym}`;
+  const snap = loadRobotLiveBuyAccumSnapshot() ?? emptyPersistedV1();
+  snap.accumulationActive[kArm] = true;
+  snap.buyEdgesSinceFlat[kArm] = opts.nStart;
+  if (opts.openTime) {
+    snap.accumLastOt[kArm] = opts.openTime;
+    snap.accumCandleIndex[kArm] = 1;
+  }
+  try {
+    const json = JSON.stringify(snap);
+    lastPersistedJson = json;
+    window.localStorage.setItem(ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY, json);
+    window.dispatchEvent(new CustomEvent(ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT));
+  } catch {
+    lastPersistedJson = null;
+  }
 }
 
 function isRecord(x: unknown): x is Record<string, unknown> {

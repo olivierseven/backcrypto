@@ -133,7 +133,7 @@ export interface SavedRobot {
   buyOncePerCandle: boolean;
   /** Comprador com {@link buyOncePerCandle} false: segundos entre compras na mesma vela (0–300). */
   buyRepurchaseDelaySeconds: number;
-  /** Comprador: se ativo, a 1.ª compra (sem posição) usa LIMIT abaixo do open; senão compra a mercado só com fecho estritamente abaixo do open. */
+  /** Comprador: se ativo, a 1.ª compra (sem posição) usa LIMIT abaixo do open; senão compra a mercado na 1.ª perna (só preços válidos; timing pelos sinais). Seguintes na janela: fecho ≤ open + perna vs última compra. */
   firstEntryLimitEnabled: boolean;
   /** Comprador com LIMIT: desvio (%) abaixo do **open** da vela; mínimo técnico 0,01% sempre aplicado. */
   firstEntryLimitOffsetPercent: number;

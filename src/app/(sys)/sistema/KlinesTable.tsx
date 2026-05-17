@@ -34,6 +34,7 @@ import {
   loadSavedRobots,
   persistRobotBuyExecMap,
   hasRobotBuyExecForCandle,
+  normalizeBuyRepurchaseDelaySeconds,
   robotLiveBuyBlockedByCandlePolicy,
   setRobotBuyExecForCandle,
   ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
@@ -53,6 +54,7 @@ import {
   applyRobotLiveBuyAccumSnapshot,
   loadRobotLiveBuyAccumSnapshot,
   persistRobotLiveBuyAccum,
+  ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT,
   ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY,
 } from "./robotLiveBuyAccumStorage";
 import {
@@ -62,12 +64,19 @@ import {
   ROBOT_LIVE_SESSION_ACTIVITY_EVENT,
   ROBOT_LIVE_SESSION_CLEAR_REFS_EVENT,
   schedulePersistRobotLiveSessionsToDb,
+  sessionKeyArm,
 } from "./robotLiveSessionSync";
+import { setRobotLiveFormingOpenTime } from "./robotLiveFormingCandle";
+import {
+  ROBOT_LIVE_MANUAL_ENGINE_EVENT,
+  ROBOT_LIVE_MANUAL_TICK_EVENT,
+  dispatchRobotLiveManualTick,
+  type RobotLiveManualEngineDetail,
+} from "./robotLiveManualActions";
 import {
   buyerAllowsAccumulationBuy,
+  buyerAllowsMarketBuyOrder,
   buyerLimitBuyMaxPriceBelowCandleOpen,
-  buyerMarketBuyRefStrictlyBelowCandleOpen,
-  buyerRefAllowsNextBuy,
   flattenBreakevenThresholdPrice,
   longFlattenCloseBreakeven,
 } from "./robotPriceLegRules";
@@ -1376,6 +1385,10 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
   const [buyExecMap, setBuyExecMap] = useState<RobotBuyExecMap>(() =>
     typeof window !== "undefined" ? loadRobotBuyExecMap() : {}
   );
+  /** Incrementado em ações manuais (HUD) para re-correr o motor live sem esperar novo tick de klines. */
+  const [robotManualLiveTick, setRobotManualLiveTick] = useState(0);
+  /** Com `buyOncePerCandle` false: reavalia compras no intervalo do atraso (ex. 30s), não só quando mudam klines. */
+  const [robotRepurchasePollTick, setRobotRepurchasePollTick] = useState(0);
   const buyExecMapRef = useRef(buyExecMap);
   buyExecMapRef.current = buyExecMap;
   useEffect(() => {
@@ -1386,14 +1399,24 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
       if (e.key === ROBOT_BUY_EXEC_STORAGE_KEY || e.key === null) refreshExec();
       if (e.key === ROBOT_LIVE_BUY_ACCUM_STORAGE_KEY || e.key === null) {
         applyRobotLiveBuyAccumSnapshot(robotLiveBuyAccumRefBag, loadRobotLiveBuyAccumSnapshot());
+        setRobotManualLiveTick((x) => x + 1);
       }
     };
+    const onAccumChanged = () => {
+      applyRobotLiveBuyAccumSnapshot(robotLiveBuyAccumRefBag, loadRobotLiveBuyAccumSnapshot());
+      setRobotManualLiveTick((x) => x + 1);
+    };
+    const onManualTick = () => setRobotManualLiveTick((x) => x + 1);
     window.addEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
     window.addEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
+    window.addEventListener(ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT, onAccumChanged);
+    window.addEventListener(ROBOT_LIVE_MANUAL_TICK_EVENT, onManualTick);
     window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener(ROBOTS_CHANGED_EVENT, refreshRobots);
       window.removeEventListener(ROBOT_BUY_EXEC_CHANGED_EVENT, refreshExec);
+      window.removeEventListener(ROBOT_LIVE_BUY_ACCUM_CHANGED_EVENT, onAccumChanged);
+      window.removeEventListener(ROBOT_LIVE_MANUAL_TICK_EVENT, onManualTick);
       window.removeEventListener("storage", onStorage);
     };
   }, [robotLiveBuyAccumRefBag]);
@@ -1511,6 +1534,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     [savedRobots]
   );
 
+  useEffect(() => {
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym || !sym.endsWith("USDT")) return;
+    const repurchaseRobots = activeBuyerRobots.filter((r) => r.buyOncePerCandle === false);
+    if (repurchaseRobots.length === 0) return;
+    const delays = repurchaseRobots
+      .map((r) => normalizeBuyRepurchaseDelaySeconds(r.buyRepurchaseDelaySeconds))
+      .filter((d) => d > 0);
+    const delaySec = delays.length > 0 ? Math.min(...delays) : 5;
+    const intervalMs = Math.min(5000, Math.max(2000, delaySec * 1000));
+    const id = window.setInterval(() => setRobotRepurchasePollTick((x) => x + 1), intervalMs);
+    return () => window.clearInterval(id);
+  }, [symbol, activeBuyerRobots]);
+
   const scheduleRobotLiveToDb = useCallback(() => {
     schedulePersistRobotLiveSessionsToDb({
       refs: robotLiveBuyAccumRefBag,
@@ -1592,6 +1629,66 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     },
     []
   );
+
+  useEffect(() => {
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym || extendedKlines.length === 0) return;
+    setRobotLiveFormingOpenTime(sym, String(extendedKlines[0][0]));
+  }, [symbol, extendedKlines]);
+
+  useEffect(() => {
+    const sym = symbol?.trim().toUpperCase();
+    if (!sym || !sym.endsWith("USDT")) return;
+
+    const onManualEngine = (e: Event) => {
+      const d = (e as CustomEvent<RobotLiveManualEngineDetail>).detail;
+      if (!d?.robotId || d.symbol !== sym) return;
+
+      const kArm = sessionKeyArm(d.robotId, sym);
+      const robot = activeBuyerRobots.find((r) => r.id === d.robotId);
+
+      if (d.kind === "buy_signal") {
+        if (!robot) return;
+        const nStart = Math.min(
+          ROBOT_BUY_ACCUM_START_SIGNAL_MAX,
+          Math.max(1, Math.floor(robot.buyAccumulationStartOnSignalNumber ?? 1))
+        );
+        robotBuyAccumulationActiveRef.current[kArm] = true;
+        robotBuyEdgesSinceFlatRef.current[kArm] = nStart;
+        const ot = extendedKlines.length > 0 ? String(extendedKlines[0][0]) : undefined;
+        if (ot) {
+          robotBuyAccumLastOtRef.current[kArm] = ot;
+          robotBuyAccumCandleIndexRef.current[kArm] = 1;
+        }
+        appendRobotLiveActivityEvent(d.robotId, sym, "accumulation_window_on", {
+          signalsCounted: nStart,
+          openTime: ot,
+          manual: true,
+        });
+        persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
+        dispatchRobotLiveManualTick();
+        return;
+      }
+
+      if (d.kind === "position_closed") {
+        delete robotFlattenArmedRef.current[kArm];
+        delete robotFirstEntryLimitPendingRef.current[kArm];
+        delete robotLastBuyWallClockMsRef.current[kArm];
+        clearRobotLiveRefsForRobotSymbol(robotLiveBuyAccumRefBag, d.robotId, sym);
+        persistRobotLiveBuyAccum(robotLiveBuyAccumRefBag, scheduleRobotLiveToDb);
+        dispatchRobotLiveManualTick();
+      }
+    };
+
+    window.addEventListener(ROBOT_LIVE_MANUAL_ENGINE_EVENT, onManualEngine);
+    return () => window.removeEventListener(ROBOT_LIVE_MANUAL_ENGINE_EVENT, onManualEngine);
+  }, [
+    symbol,
+    activeBuyerRobots,
+    extendedKlines,
+    robotLiveBuyAccumRefBag,
+    scheduleRobotLiveToDb,
+  ]);
 
   /**
    * Robô ativo: envia ordens MARKET direto à Binance (sem boleta/confirmação).
@@ -2096,11 +2193,20 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
           continue;
         }
 
-        if (
-          !buyerMarketBuyRefStrictlyBelowCandleOpen(refPxLive, refOpenLive) ||
-          !buyerRefAllowsNextBuy(refPxLive, pos?.lastBuyFillPrice)
-        ) {
-          continue;
+        // 1.ª compra: timing pelo sinal. Seguintes: dip vs última compra; com várias compras/vela não exige vela vermelha.
+        const hasPriorBuyInSeq =
+          pos?.lastBuyFillPrice != null &&
+          Number.isFinite(pos.lastBuyFillPrice) &&
+          pos.lastBuyFillPrice > 0;
+        if (hasPriorBuyInSeq) {
+          const allowMultiPerCandle = robot.buyOncePerCandle === false;
+          if (allowMultiPerCandle) {
+            if (!buyerAllowsAccumulationBuy(refPxLive, refOpenLive, pos.lastBuyFillPrice)) {
+              continue;
+            }
+          } else if (!buyerAllowsMarketBuyOrder(refPxLive, refOpenLive, pos.lastBuyFillPrice)) {
+            continue;
+          }
         }
 
         robotLiveBuyInFlightRef.current.add(buyKey);
@@ -2149,6 +2255,8 @@ export default function KlinesTable({ isAdmin = false, isFreeUser = false }: { i
     robotPostFlattenSellOrTrue,
     robotLiveBuyAccumRefBag,
     scheduleRobotLiveToDb,
+    robotManualLiveTick,
+    robotRepurchasePollTick,
   ]);
 
   /** Overlays para pintar candle com cor da estratégia quando condição verdadeira. Se houver alguma estratégia combinada aplicada, só as combinadas têm efeito (as normais ficam desabilitadas). */

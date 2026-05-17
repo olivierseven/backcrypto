@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE } from "@/app/constants";
@@ -14,8 +14,15 @@ import {
 import { appendRobotLiveActivityEvent } from "./robotLiveSessionSync";
 import { dispatchRobotPositionSellClear } from "./robotLiveOrders";
 import {
+  armRobotManualBuySignal,
+  executeRobotManualMarketBuy,
+  executeRobotManualMarketSell,
+} from "./robotLiveManualActions";
+import {
   getRobotPosition,
   loadRobotPositionMap,
+  ROBOT_POSITION_BUY_EVENT,
+  ROBOT_POSITION_SELL_CLEAR_EVENT,
   type RobotOpenPosition,
 } from "./robotPositionStorage";
 
@@ -30,35 +37,21 @@ function isUsdtSpotPair(symbol: string): boolean {
   return s.endsWith("USDT") && s.length > 4;
 }
 
-type LineState = {
-  robotId: string;
-  avgBuyPrice: number;
-  baseQty: number;
-  pnlPct: number;
-  pnlUsdt: number;
+type RobotHudRow = {
+  robot: SavedRobot;
+  position: RobotOpenPosition | null;
+  pnlPct: number | null;
+  pnlUsdt: number | null;
 };
 
-function areLineStatesEqual(a: LineState[], b: LineState[]): boolean {
-  if (a === b) return true;
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    const ai = a[i];
-    const bi = b[i];
-    if (
-      ai.robotId !== bi.robotId ||
-      ai.avgBuyPrice !== bi.avgBuyPrice ||
-      ai.baseQty !== bi.baseQty ||
-      ai.pnlPct !== bi.pnlPct ||
-      ai.pnlUsdt !== bi.pnlUsdt
-    ) {
-      return false;
-    }
-  }
-  return true;
+function robotLabel(robot: SavedRobot): string {
+  const alias = robot.alias?.trim();
+  if (alias) return alias;
+  return `#${robot.id.slice(-6)}`;
 }
 
 /**
- * Atualiza PnL vs preço médio de compras (posição persistida) e opcionalmente dispara stop loss/stop gain a mercado.
+ * Atualiza PnL vs pre├ºo m├®dio de compras (posi├º├úo persistida) e opcionalmente dispara stop loss/stop gain a mercado.
  * Compras devem ser registadas com o evento `backcrypto-robot-position-buy` (ver robotPositionStorage).
  */
 export default function RobotTradingMonitor() {
@@ -68,11 +61,12 @@ export default function RobotTradingMonitor() {
   const { data: headerData } = useChartHeader();
   const lastPrice = headerData.lastPriceUsdt;
 
-  const [lines, setLines] = useState<LineState[]>([]);
   const [robotsTick, setRobotsTick] = useState(0);
   const [posTick, setPosTick] = useState(0);
-  /** Utilizador pediu esquecer posição (ex.: venda manual na Binance); aguarda confirmação. */
   const [pendingClearRobotId, setPendingClearRobotId] = useState<string | null>(null);
+  const [busyRobotId, setBusyRobotId] = useState<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [lastOk, setLastOk] = useState<string | null>(null);
   const stopInFlightRef = useRef<Set<string>>(new Set());
   const lastStopAtRef = useRef<Map<string, number>>(new Map());
 
@@ -81,20 +75,63 @@ export default function RobotTradingMonitor() {
     const onStorage = (e: StorageEvent) => {
       if (e.key === "crypto_sistema_robot_position_v1" || e.key === null) setPosTick((x) => x + 1);
     };
+    const onPosEvent = () => setPosTick((x) => x + 1);
     window.addEventListener(ROBOTS_CHANGED_EVENT, onRobots);
     window.addEventListener("storage", onStorage);
+    window.addEventListener(ROBOT_POSITION_BUY_EVENT, onPosEvent);
+    window.addEventListener(ROBOT_POSITION_SELL_CLEAR_EVENT, onPosEvent);
     return () => {
       window.removeEventListener(ROBOTS_CHANGED_EVENT, onRobots);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(ROBOT_POSITION_BUY_EVENT, onPosEvent);
+      window.removeEventListener(ROBOT_POSITION_SELL_CLEAR_EVENT, onPosEvent);
     };
   }, []);
 
   const activeBuyerRobots = useMemo(() => {
-    return loadSavedRobots().filter((r) => r.isActive && r.side === "buyer");
+    return loadSavedRobots().filter(
+      (r) => r.isActive && r.side === "buyer" && r.buyCombinedStrategyIds.length > 0
+    );
   }, [robotsTick]);
 
+  const sym = symbol?.trim().toUpperCase() ?? "";
+  const symOk = sym.length > 0 && isUsdtSpotPair(sym);
+
+  const hudRows = useMemo((): RobotHudRow[] => {
+    if (!symOk) return [];
+    void loadRobotPositionMap();
+    return activeBuyerRobots.map((robot) => {
+      const position = getRobotPosition(robot.id, sym);
+      const hasPos = position != null && position.totalBaseQty > 1e-12;
+      if (!hasPos || lastPrice == null || !Number.isFinite(lastPrice) || lastPrice <= 0) {
+        return { robot, position: hasPos ? position : null, pnlPct: null, pnlUsdt: null };
+      }
+      const pnlPct = ((lastPrice - position!.avgBuyPrice) / position!.avgBuyPrice) * 100;
+      const pnlUsdt = position!.totalBaseQty * lastPrice - position!.totalQuoteSpent;
+      return { robot, position, pnlPct, pnlUsdt };
+    });
+  }, [activeBuyerRobots, sym, symOk, lastPrice, posTick]);
+
+  const manualErrorMessage = useCallback(
+    (reason: string) => {
+      switch (reason) {
+        case "not_connected":
+          return t.robotsHudErrNotConnected ?? "Binance not connected.";
+        case "no_usdt":
+          return t.robotsHudErrNoUsdt ?? "No USDT balance.";
+        case "no_quote":
+          return t.robotsHudErrNoQuote ?? "Could not compute buy size.";
+        case "no_position":
+          return t.robotsHudErrNoPosition ?? "No tracked position.";
+        default:
+          return t.robotsHudErrOrder ?? "Order failed.";
+      }
+    },
+    [t]
+  );
+
   const tryStops = useCallback(
-    async (robot: SavedRobot, sym: string, pos: RobotOpenPosition) => {
+    async (robot: SavedRobot, pos: RobotOpenPosition) => {
       if ((!robot.stopLossEnabled && !robot.stopGainEnabled) || !lastPrice || lastPrice <= 0) return;
       const currentVal = pos.totalBaseQty * lastPrice;
       const lossPct = ((pos.avgBuyPrice - lastPrice) / pos.avgBuyPrice) * 100;
@@ -135,7 +172,7 @@ export default function RobotTradingMonitor() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            symbol: sym.trim().toUpperCase(),
+            symbol: sym,
             side: "SELL",
             type: "MARKET",
             quantity: qtyStr,
@@ -164,108 +201,177 @@ export default function RobotTradingMonitor() {
         stopInFlightRef.current.delete(id);
       }
     },
-    [lastPrice]
+    [lastPrice, sym]
   );
 
   useEffect(() => {
-    const sym = symbol?.trim();
-    if (!sym || !isUsdtSpotPair(sym)) {
-      setLines((prev) => (prev.length === 0 ? prev : []));
-      return;
-    }
-    if (lastPrice == null || !Number.isFinite(lastPrice) || lastPrice <= 0) {
-      setLines((prev) => (prev.length === 0 ? prev : []));
-      return;
-    }
-
-    const tick = () => {
-      void loadRobotPositionMap();
-      const next: LineState[] = [];
-      for (const robot of activeBuyerRobots) {
-        const pos = getRobotPosition(robot.id, sym);
-        if (!pos || pos.totalBaseQty <= 0) continue;
-        const pnlPct = ((lastPrice - pos.avgBuyPrice) / pos.avgBuyPrice) * 100;
-        const pnlUsdt = pos.totalBaseQty * lastPrice - pos.totalQuoteSpent;
-        next.push({
-          robotId: robot.id,
-          avgBuyPrice: pos.avgBuyPrice,
-          baseQty: pos.totalBaseQty,
-          pnlPct,
-          pnlUsdt,
-        });
-        void tryStops(robot, sym, pos);
+    if (!symOk || lastPrice == null || !Number.isFinite(lastPrice) || lastPrice <= 0) return;
+    for (const row of hudRows) {
+      if (row.position && row.position.totalBaseQty > 1e-12) {
+        void tryStops(row.robot, row.position);
       }
-      setLines((prev) => (areLineStatesEqual(prev, next) ? prev : next));
-    };
-
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, [symbol, lastPrice, activeBuyerRobots, tryStops, posTick]);
+    }
+  }, [hudRows, symOk, lastPrice, tryStops]);
 
   useEffect(() => {
-    if (
-      pendingClearRobotId != null &&
-      !lines.some((l) => l.robotId === pendingClearRobotId)
-    ) {
+    if (pendingClearRobotId != null && !hudRows.some((r) => r.robot.id === pendingClearRobotId && r.position)) {
       setPendingClearRobotId(null);
     }
-  }, [lines, pendingClearRobotId]);
+  }, [hudRows, pendingClearRobotId]);
 
-  if (lines.length === 0) return null;
+  const runManualBuy = async (robot: SavedRobot) => {
+    setBusyRobotId(robot.id);
+    setLastError(null);
+    setLastOk(null);
+    const res = await executeRobotManualMarketBuy(robot, sym);
+    setBusyRobotId(null);
+    if (!res.ok) setLastError(manualErrorMessage(res.reason));
+    else {
+      setLastOk(t.robotsHudOkBuy ?? "Buy order sent.");
+      setPosTick((x) => x + 1);
+    }
+  };
 
-  const symLabel = symbol?.trim().toUpperCase() ?? "";
+  const runManualSell = async (robot: SavedRobot) => {
+    setBusyRobotId(robot.id);
+    setLastError(null);
+    setLastOk(null);
+    const res = await executeRobotManualMarketSell(robot, sym);
+    setBusyRobotId(null);
+    if (!res.ok) setLastError(manualErrorMessage(res.reason));
+    else {
+      setLastOk(t.robotsHudOkSell ?? "Sell order sent.");
+      setPosTick((x) => x + 1);
+    }
+  };
+
+  const runManualBuySignal = (robot: SavedRobot) => {
+    setLastError(null);
+    setLastOk(null);
+    armRobotManualBuySignal(robot, sym);
+    setLastOk(
+      t.robotsHudOkSignal ??
+        "Accumulation window on — robot will try to buy when price rules allow (red forming candle, etc.)."
+    );
+  };
+
+  if (!symOk || hudRows.length === 0) return null;
 
   const handleConfirmForgetPosition = () => {
-    if (!pendingClearRobotId || !symLabel) return;
-    dispatchRobotPositionSellClear(pendingClearRobotId, symLabel);
+    if (!pendingClearRobotId || !sym) return;
+    dispatchRobotPositionSellClear(pendingClearRobotId, sym);
     setPendingClearRobotId(null);
     setPosTick((x) => x + 1);
   };
 
   return (
     <div
-      className="pointer-events-auto fixed left-2 z-[1250] max-w-[min(100vw-1rem,22rem)] rounded-lg border border-zinc-200 bg-white/95 px-2 py-1.5 text-[10px] shadow-md sm:text-[11px]"
+      className="pointer-events-auto fixed left-2 z-[1250] max-w-[min(100vw-1rem,24rem)] rounded-lg border border-violet-200 bg-white/95 px-2 py-1.5 text-[10px] shadow-md sm:text-[11px]"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 4.5rem)" }}
       aria-live="polite"
     >
-      <p className="font-semibold text-zinc-700 mb-1">{t.robotsPnlHudTitle ?? "Robot position (avg buy)"}</p>
-      <ul className="space-y-1 font-mono tabular-nums text-zinc-800">
-        {lines.map((ln) => (
-          <li key={ln.robotId} className="leading-snug flex items-start gap-1.5">
-            <div className="min-w-0 flex-1">
-              <span className="text-zinc-500">#{ln.robotId.slice(-6)}</span>{" "}
-              <span className="text-zinc-600">{t.robotsPnlAvg ?? "avg"}</span> {ln.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
-              <span className={ln.pnlPct >= 0 ? "text-emerald-700" : "text-red-700"}>
-                {ln.pnlPct >= 0 ? "+" : ""}
-                {ln.pnlPct.toFixed(2)}%
-              </span>
-              {" · "}
-              <span className={ln.pnlUsdt >= 0 ? "text-emerald-700" : "text-red-700"}>
-                {ln.pnlUsdt >= 0 ? "+" : ""}
-                {ln.pnlUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-              </span>
-            </div>
-            <button
-              type="button"
-              className="pointer-events-auto shrink-0 rounded border border-zinc-300 bg-white px-1 py-0 text-[11px] font-sans font-medium leading-none text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
-              aria-label={t.robotsPnlHudForgetAria ?? "Forget tracked position"}
-              title={t.robotsPnlHudForgetTitle ?? "Forget position"}
-              onClick={(e) => {
-                e.stopPropagation();
-                setPendingClearRobotId(ln.robotId);
-              }}
-            >
-              ×
-            </button>
-          </li>
-        ))}
+      <p className="font-semibold text-violet-900 mb-1">{t.robotsHudActiveTitle ?? "Active robots"}</p>
+      <p className="text-[9px] text-zinc-500 mb-1.5 font-sans">{sym}</p>
+      {lastError ? (
+        <p className="mb-1.5 rounded border border-red-200 bg-red-50 px-1.5 py-1 text-[9px] text-red-800 font-sans">
+          {lastError}
+        </p>
+      ) : null}
+      {lastOk && !lastError ? (
+        <p className="mb-1.5 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-1 text-[9px] text-emerald-900 font-sans">
+          {lastOk}
+        </p>
+      ) : null}
+      <ul className="space-y-2">
+        {hudRows.map((row) => {
+          const busy = busyRobotId === row.robot.id;
+          const hasPos = row.position != null && row.position.totalBaseQty > 1e-12;
+          return (
+            <li key={row.robot.id} className="rounded border border-zinc-200 bg-zinc-50/80 p-1.5 space-y-1">
+              <div className="flex items-start justify-between gap-1">
+                <div className="min-w-0 flex-1 font-sans">
+                  <p className="font-semibold text-zinc-800 truncate">{robotLabel(row.robot)}</p>
+                  {!hasPos ? (
+                    <p className="text-[9px] text-zinc-500">{t.robotsHudFlat ?? "No position"}</p>
+                  ) : (
+                    <p className="font-mono tabular-nums text-zinc-800 leading-snug">
+                      <span className="text-zinc-600">{t.robotsPnlAvg ?? "avg"}</span>{" "}
+                      {row.position!.avgBuyPrice.toLocaleString(undefined, { maximumFractionDigits: 6 })}{" "}
+                      <span className={row.pnlPct != null && row.pnlPct >= 0 ? "text-emerald-700" : "text-red-700"}>
+                        {row.pnlPct != null ? `${row.pnlPct >= 0 ? "+" : ""}${row.pnlPct.toFixed(2)}%` : "-"}
+                      </span>
+                      {" · "}
+                      <span className={row.pnlUsdt != null && row.pnlUsdt >= 0 ? "text-emerald-700" : "text-red-700"}>
+                        {row.pnlUsdt != null
+                          ? `${row.pnlUsdt >= 0 ? "+" : ""}${row.pnlUsdt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`
+                          : "-"}
+                      </span>
+                    </p>
+                  )}
+                </div>
+                {hasPos ? (
+                  <button
+                    type="button"
+                    className="pointer-events-auto shrink-0 rounded border border-zinc-300 bg-white px-1 py-0 text-[11px] font-sans font-medium leading-none text-zinc-600 hover:bg-zinc-100"
+                    aria-label={t.robotsPnlHudForgetAria ?? "Forget tracked position"}
+                    title={t.robotsPnlHudForgetTitle ?? "Forget position"}
+                    disabled={busy}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPendingClearRobotId(row.robot.id);
+                    }}
+                  >
+                    x
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-1 font-sans">
+                <button
+                  type="button"
+                  disabled={busy}
+                  title={t.robotsHudManualBuyTitle ?? "Market buy (test)"}
+                  className="rounded border border-emerald-300 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void runManualBuy(row.robot);
+                  }}
+                >
+                  {busy ? (t.robotsHudBusy ?? "...") : (t.robotsHudManualBuy ?? "Buy")}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !hasPos}
+                  title={t.robotsHudManualSellTitle ?? "Market sell (test)"}
+                  className="rounded border border-red-300 bg-red-50 px-1.5 py-0.5 text-[9px] font-medium text-red-900 hover:bg-red-100 disabled:opacity-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void runManualSell(row.robot);
+                  }}
+                >
+                  {t.robotsHudManualSell ?? "Sell"}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  title={t.robotsHudManualBuySignalTitle ?? "Buy signal only"}
+                  className="rounded border border-violet-300 bg-violet-50 px-1.5 py-0.5 text-[9px] font-medium text-violet-900 hover:bg-violet-100 disabled:opacity-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    runManualBuySignal(row.robot);
+                  }}
+                >
+                  {t.robotsHudManualBuySignal ?? "Signal"}
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {pendingClearRobotId != null && (
         <div className="mt-2 border-t border-zinc-200 pt-2 space-y-2" role="dialog" aria-labelledby="robot-pnl-forget-heading">
           <p id="robot-pnl-forget-heading" className="text-[10px] text-zinc-700 leading-snug font-sans">
             {(t.robotsPnlHudForgetConfirmMessage ?? "")
-              .replace("{symbol}", symLabel)
+              .replace("{symbol}", sym)
               .replace("{id}", pendingClearRobotId.slice(-6))}
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2 font-sans">

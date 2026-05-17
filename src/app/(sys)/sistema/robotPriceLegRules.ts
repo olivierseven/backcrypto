@@ -28,15 +28,6 @@ export function buyerAllowsMarketBuyOrder(
 }
 
 /**
- * Compra a **mercado** só quando a referência (ex. fecho da vela) está estritamente abaixo do open.
- */
-export function buyerMarketBuyRefStrictlyBelowCandleOpen(refPrice: number, candleOpen: number): boolean {
-  if (!Number.isFinite(refPrice) || refPrice <= 0) return false;
-  if (!Number.isFinite(candleOpen) || candleOpen <= 0) return false;
-  return refPrice < candleOpen * (1 - ROBOT_PRICE_LEG_REL_EPS);
-}
-
-/**
  * Janela de acumulação (várias compras; no live, no máximo uma por vela por defeito — configurável no robô):
  * - **Primeira** compra: o critério de entrada é o sinal das estratégias (contagem de velas com sinal antes de ligar a janela); aqui só exigimos preços de referência válidos (fecho/abertura > 0), sem fecho ≤ abertura.
  * - **Seguintes**: só se o preço de referência estiver **estritamente abaixo** do último fill registado (nova vela com “dip” vs última compra).
