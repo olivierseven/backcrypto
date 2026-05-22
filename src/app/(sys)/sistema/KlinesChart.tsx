@@ -1014,7 +1014,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
       clearTimeout(timeoutId);
       if (applyDelayTimeoutId != null) clearTimeout(applyDelayTimeoutId);
     };
-  }, [pathname, klines.length, symbolProp, addLayoutLoadLog, onCurrentLayoutLabelChange, t.defaultLayout, t.layoutName]);
+  }, [pathname, klines.length, symbolProp, isFreeUser, addLayoutLoadLog, onCurrentLayoutLabelChange, t.defaultLayout, t.layoutName]);
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -1210,6 +1210,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
 
   /** Persiste no servidor (slot 1–7). part = só essa coluna; payload = "indicators" | "regressions" (array), "strategies" { strategies, appliedStrategyIds }. */
   const saveLayoutToServerIfSlot = useCallback(async (part?: "layout" | "indicators" | "strategies" | "regressions", payload?: unknown) => {
+    if (isFreeUser) return;
     try {
       const raw = typeof window !== "undefined" ? getKlineLastLayoutStorage() : null;
       if (!raw || raw === "default") return;
@@ -1262,7 +1263,7 @@ export default function KlinesChart({ klines, groupMinutes, timezoneOffset = 0, 
     } catch {
       /* ignore */
     }
-  }, [buildLayoutColumns]);
+  }, [buildLayoutColumns, isFreeUser]);
 
   const saveLayoutToServerIfSlotRef = useRef(saveLayoutToServerIfSlot);
   saveLayoutToServerIfSlotRef.current = saveLayoutToServerIfSlot;

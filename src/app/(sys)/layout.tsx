@@ -11,6 +11,7 @@ import { getLocaleFromRequest } from "@/lib/get-locale-server";
 import { isAffiliateAccountAtivo } from "@/lib/affiliate-account-ativo";
 import { jwtVerify } from "jose";
 import { requireSysUserId } from "./require-sys-user";
+import { syncUserTierAndIsFree } from "@/lib/user-tier";
 
 /** Import dinâmico: o shell do layout fica num chunk menor; o cliente pesado carrega à parte (alivia ChunkLoadError/timeout com basePath + HMR). */
 const SistemaLayoutClient = nextDynamic(() => import("@/app/(sys)/sistema/SistemaLayoutClient"), {
@@ -50,11 +51,11 @@ export default async function SysLayout({ children }: { children: ReactNode }) {
 
   const userId = await requireSysUserId();
 
-  let user: { language: string | null; hideStatusBar: boolean | null; role: string | null; tier: string | null } | null;
+  let user: { language: string | null; hideStatusBar: boolean | null; role: string | null } | null;
   try {
     user = await cryptoPrisma.user.findUnique({
       where: { id: userId },
-      select: { language: true, hideStatusBar: true, role: true, tier: true },
+      select: { language: true, hideStatusBar: true, role: true },
     });
   } catch (err) {
     const isConnectionError =
@@ -78,7 +79,7 @@ export default async function SysLayout({ children }: { children: ReactNode }) {
 
   const lang = (user.language ?? "en") as "en" | "pt";
   const isAdmin = user.role === "admin";
-  const isFreeUser = user.tier === "free";
+  const { isFreeUser } = await syncUserTierAndIsFree(userId);
 
   return (
     <div className="h-[100dvh] min-h-0 w-full flex flex-col">

@@ -134,3 +134,9 @@ export async function getCurrentTier(userId: string): Promise<Tier> {
   });
   return (user?.tier as Tier) ?? Tier.free;
 }
+
+/** Sincroniza tier a partir dos créditos (expira vencidos) e indica se o utilizador está em free. */
+export async function syncUserTierAndIsFree(userId: string): Promise<{ tier: Tier; isFreeUser: boolean }> {
+  const tier = await syncUserTierFromCredits(userId);
+  return { tier, isFreeUser: tier === Tier.free };
+}

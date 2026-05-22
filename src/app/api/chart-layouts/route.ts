@@ -8,6 +8,8 @@ import { cryptoPrisma } from "@/lib/crypto-db";
 import { Prisma, Role } from "@/lib/prisma-bio-client";
 import { mergeColumnsToConfig, splitConfigToColumns } from "@/lib/chart-layout-columns";
 import { claimOrRejectSession, getTabIdFromRequest } from "@/lib/session-tab-claim";
+import { syncUserTierAndIsFree } from "@/lib/user-tier";
+import { Tier } from "@/lib/prisma-bio-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +44,8 @@ export async function GET(request: Request) {
   const sessionReject = await claimOrRejectSession(request, userId, tabId);
   if (sessionReject) return sessionReject;
 
+  const { tier, isFreeUser } = await syncUserTierAndIsFree(userId);
+
   const [user, rows, defaultModel] = await Promise.all([
     cryptoPrisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
     cryptoPrisma.chartLayout.findMany({
@@ -63,21 +67,23 @@ export async function GET(request: Request) {
     }),
   ]);
 
-  const layouts = rows.map((r) => {
-    const config = mergeColumnsToConfig(
-      r.layout,
-      r.indicators,
-      r.strategies,
-      r.others ?? undefined,
-      r.regressions ?? undefined,
-      r.robots
-    );
-    return {
-      slot: r.slot,
-      config,
-      name: r.name ?? undefined,
-    };
-  });
+  const layouts = isFreeUser
+    ? []
+    : rows.map((r) => {
+        const config = mergeColumnsToConfig(
+          r.layout,
+          r.indicators,
+          r.strategies,
+          r.others ?? undefined,
+          r.regressions ?? undefined,
+          r.robots
+        );
+        return {
+          slot: r.slot,
+          config,
+          name: r.name ?? undefined,
+        };
+      });
 
   const defaultLayout = defaultModel != null
     ? {
@@ -96,7 +102,18 @@ export async function GET(request: Request) {
     layouts,
     defaultLayout,
     canSaveDefault: user?.role === Role.admin,
+    tier,
+    isFreeUser,
   });
+}
+
+async function rejectIfFreeUser(userId: string): Promise<NextResponse | null> {
+  const { isFreeUser } = await syncUserTierAndIsFree(userId);
+  if (!isFreeUser) return null;
+  return NextResponse.json(
+    { error: "plan_required", message: "Saved layouts require an active plan" },
+    { status: 403 }
+  );
 }
 
 export async function POST(req: Request) {
@@ -106,6 +123,9 @@ export async function POST(req: Request) {
   const tabId = getTabIdFromRequest(req);
   const sessionReject = await claimOrRejectSession(req, userId, tabId);
   if (sessionReject) return sessionReject;
+
+  const freeReject = await rejectIfFreeUser(userId);
+  if (freeReject) return freeReject;
 
   const NAME_MAX_LEN = 24;
   let body: {
@@ -267,6 +287,9 @@ export async function PATCH(req: Request) {
   const tabId = getTabIdFromRequest(req);
   const sessionReject = await claimOrRejectSession(req, userId, tabId);
   if (sessionReject) return sessionReject;
+
+  const freeReject = await rejectIfFreeUser(userId);
+  if (freeReject) return freeReject;
 
   const NAME_MAX_LEN = 24;
 
