@@ -6,8 +6,6 @@ import { startVpsStallWatchdog } from "./vpsStallWatchdog.js";
 
 const runOnce = process.argv.includes("--once");
 
-const DEFAULT_INTERVAL_MS = 24 * 60 * 60 * 1000;
-const MIN_INTERVAL_MS = 5 * 60 * 1000;
 const HTTP_PORT = Number(process.env.TEMPORAL_CACHE_HTTP_PORT ?? "3047");
 const DB_RETRY_BASE_MS = Number(process.env.VPS_DB_RETRY_BASE_MS ?? "2000");
 const DB_RETRY_MAX_MS = Number(process.env.VPS_DB_RETRY_MAX_MS ?? "30000");
@@ -21,12 +19,17 @@ const BUSY_STUCK_MS = Math.max(
 );
 const SKIP_LOG_THROTTLE_MS = 60_000;
 
-function parseIntervalMs(): number {
-  const raw = process.env.TEMPORAL_CACHE_INTERVAL_MS;
-  if (raw === undefined || raw === "") return DEFAULT_INTERVAL_MS;
-  const n = Math.floor(Number(raw));
-  if (!Number.isFinite(n)) return DEFAULT_INTERVAL_MS;
-  return Math.max(MIN_INTERVAL_MS, n);
+/** Ms até à próxima meia-noite no fuso horário local do servidor (TZ do processo Node). */
+function msUntilNextLocalMidnight(): number {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return Math.max(1000, next.getTime() - now.getTime());
+}
+
+function formatLocalMidnightLabel(): string {
+  const next = new Date(Date.now() + msUntilNextLocalMidnight());
+  return next.toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
 }
 
 function isPrismaDbUnreachableError(e: unknown): boolean {
@@ -145,14 +148,25 @@ async function tick(): Promise<void> {
   }
 }
 
-async function main(): Promise<void> {
-  const intervalMs = parseIntervalMs();
+let midnightTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleNextMidnightRun(): void {
+  const waitMs = msUntilNextLocalMidnight();
   console.log(
-    `[sync-temporal-cache] arranque modo=${runOnce ? "once" : `interval ${intervalMs}ms`} (Debug Refresh cache prod)`
+    `[sync-temporal-cache] próxima corrida à meia-noite local (${formatLocalMidnightLabel()}) — em ${Math.round(waitMs / 1000)}s`
+  );
+  midnightTimer = setTimeout(() => {
+    void tick().finally(() => scheduleNextMidnightRun());
+  }, waitMs);
+}
+
+async function main(): Promise<void> {
+  console.log(
+    `[sync-temporal-cache] arranque modo=${runOnce ? "once" : "diário meia-noite local"} (Debug Refresh cache prod)`
   );
 
-  await tick();
   if (runOnce) {
+    await tick();
     stallWatchdog.stop();
     await db.$disconnect();
     process.exit(0);
@@ -160,13 +174,11 @@ async function main(): Promise<void> {
   }
 
   const healthServer = startHealthServer();
-  const intervalId = setInterval(() => {
-    void tick();
-  }, intervalMs);
+  scheduleNextMidnightRun();
 
   const shutdown = async () => {
     stallWatchdog.stop();
-    clearInterval(intervalId);
+    if (midnightTimer) clearTimeout(midnightTimer);
     if (healthServer) {
       await new Promise<void>((resolve) => healthServer.close(() => resolve()));
     }

@@ -16,7 +16,7 @@ Usa a **mesma lógica** do botão **Debug → Refresh cache → Produção** (`r
 ## Config
 
 - `DATABASE_URL` — Neon **prod** (equivalente a `URL_PROD` no Debug)
-- `TEMPORAL_CACHE_INTERVAL_MS` — intervalo entre corridas (default **86400000** = 24h; mínimo 5 min)
+- Modo contínuo (`npm start` / PM2): **1× por dia à meia-noite** no fuso horário **local do servidor** (TZ do processo Node)
 - `TEMPORAL_CACHE_HTTP_PORT` — health (default **3047**; `0` desliga)
 - `TEMPORAL_CACHE_CYCLE_MAX_MS` — timeout do ciclo (default 45 min)
 - `VPS_STALL_EXIT_MS` — watchdog sem progresso (default 15 min)
@@ -35,10 +35,10 @@ npm run build
 ## Execução
 
 ```bash
-# loop contínuo (PM2)
+# loop contínuo (PM2) — aguarda meia-noite local e corre 1×/dia
 npm start
 
-# uma corrida manual (equivalente a clicar Refresh cache prod)
+# corrida imediata (equivalente a clicar Refresh cache prod)
 npm run once
 ```
 
