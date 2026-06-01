@@ -174,6 +174,8 @@ async function main(): Promise<void> {
   }
 
   const healthServer = startHealthServer();
+  console.log("[sync-temporal-cache] corrida no arranque (restart PM2)");
+  void tick();
   scheduleNextMidnightRun();
 
   const shutdown = async () => {

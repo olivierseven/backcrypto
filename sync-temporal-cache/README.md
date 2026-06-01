@@ -16,7 +16,7 @@ Usa a **mesma lógica** do botão **Debug → Refresh cache → Produção** (`r
 ## Config
 
 - `DATABASE_URL` — Neon **prod** (equivalente a `URL_PROD` no Debug)
-- Modo contínuo (`npm start` / PM2): **1× por dia à meia-noite** no fuso horário **local do servidor** (TZ do processo Node)
+- Modo contínuo (`npm start` / PM2): corre **no arranque/restart** e **1× por dia à meia-noite** (fuso local do servidor)
 - `TEMPORAL_CACHE_HTTP_PORT` — health (default **3047**; `0` desliga)
 - `TEMPORAL_CACHE_CYCLE_MAX_MS` — timeout do ciclo (default 45 min)
 - `VPS_STALL_EXIT_MS` — watchdog sem progresso (default 15 min)
