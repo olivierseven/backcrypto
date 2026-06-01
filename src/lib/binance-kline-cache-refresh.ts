@@ -1,6 +1,6 @@
 /**
  * Refresh de BinanceKlineCache (1m–1d) + expurgo nas fontes.
- * Fonte única: botão Debug (target=prod) e worker VPS sync-temporal-cache.
+ * Usado pelo Debug → Refresh cache. Worker VPS: crypto_vps/sync-temporal-cache.
  */
 import { Prisma } from "@/lib/prisma-bio-client";
 import type { PrismaClient } from "@/lib/prisma-bio-client";
