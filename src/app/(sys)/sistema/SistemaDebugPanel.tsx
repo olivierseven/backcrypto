@@ -290,6 +290,9 @@ export default function SistemaDebugPanel() {
   const [lastBackfillLog, setLastBackfillLog] = useState<string | null>(null);
   const [backfillAllSymbols, setBackfillAllSymbols] = useState(false);
   const [backfillOnlyMissing, setBackfillOnlyMissing] = useState(false);
+  /** AAAA-MM-DD UTC — se preenchido, backfill usa desde/até em vez de 9/90/730 dias fixos. */
+  const [backfillFromDate, setBackfillFromDate] = useState("");
+  const [backfillToDate, setBackfillToDate] = useState("");
   const [backfillTarget, setBackfillTarget] = useState<"dev" | "prod">("dev");
   const [chartModels, setChartModels] = useState<{ slot: number; name?: string }[]>([]);
   const [chartModelsLoading, setChartModelsLoading] = useState(false);
@@ -337,6 +340,7 @@ export default function SistemaDebugPanel() {
   const [validadorWithGaps, setValidadorWithGaps] = useState<string[]>([]);
   const [accessUserId, setAccessUserId] = useState("");
   const [accessDays, setAccessDays] = useState(1);
+  const [accessTarget, setAccessTarget] = useState<"prod" | "dev">("prod");
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState("");
@@ -784,6 +788,54 @@ export default function SistemaDebugPanel() {
     return Math.floor(ms / FIVE_MINUTES_MS) * FIVE_MINUTES_MS;
   }
 
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  function parseUtcDateStart(yyyyMmDd: string): number | null {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(yyyyMmDd.trim());
+    if (!m) return null;
+    const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  function parseUtcDateEndInclusive(yyyyMmDd: string): number | null {
+    const start = parseUtcDateStart(yyyyMmDd);
+    if (start == null) return null;
+    return start + ONE_DAY_MS - 1;
+  }
+
+  function buildPastBackfillRange(
+    interval: "1m" | "5m" | "1h",
+    fromDateUtc: string,
+    toDateUtc: string
+  ): { from: number; to: number } | { error: string } {
+    const fromStart = parseUtcDateStart(fromDateUtc);
+    if (fromStart == null) {
+      return { error: (t as Record<string, string>).backfillFromDateInvalid ?? "Data inicial inválida." };
+    }
+    const now = Date.now();
+    const toEnd = toDateUtc.trim() ? parseUtcDateEndInclusive(toDateUtc) : now;
+    if (toDateUtc.trim() && toEnd == null) {
+      return { error: (t as Record<string, string>).backfillFromDateInvalid ?? "Data final inválida." };
+    }
+    const toCap = toEnd ?? now;
+    if (fromStart >= toCap) {
+      return { error: (t as Record<string, string>).backfillFromDateAfterTo ?? "Data inicial após a final." };
+    }
+    if (interval === "1m") {
+      return { from: fromStart - ONE_MINUTE_MS, to: toCap + ONE_MINUTE_MS };
+    }
+    if (interval === "5m") {
+      return {
+        from: floorTo5mMs(fromStart) - FIVE_MINUTES_MS,
+        to: floorTo5mMs(toCap) + FIVE_MINUTES_MS,
+      };
+    }
+    return {
+      from: floorToHourMs(fromStart) - ONE_HOUR_MS,
+      to: floorToHourMs(toCap) + ONE_HOUR_MS,
+    };
+  }
+
   async function runPastBackfill(interval: "1m" | "5m" | "1h", target: "dev" | "prod") {
     const sym = symbol.trim();
     if (!backfillAllSymbols && !sym) {
@@ -795,25 +847,47 @@ export default function SistemaDebugPanel() {
     await new Promise((r) => setTimeout(r, 0));
     try {
       const now = Date.now();
-      let from: number;
-      let to: number;
-      if (interval === "1m") {
-        from = now - KLINE_1M_DAYS_MS - ONE_MINUTE_MS;
-        to = now + ONE_MINUTE_MS;
-      } else if (interval === "5m") {
-        from = floorTo5mMs(now - KLINE_5M_DAYS_MS) - FIVE_MINUTES_MS;
-        to = floorTo5mMs(now) + FIVE_MINUTES_MS;
-      } else {
-        from = floorToHourMs(now - KLINE_1H_DAYS_MS) - ONE_HOUR_MS;
-        to = floorToHourMs(now) + ONE_HOUR_MS;
+      const customRange = backfillFromDate.trim()
+        ? buildPastBackfillRange(interval, backfillFromDate, backfillToDate)
+        : null;
+      if (customRange && "error" in customRange) {
+        setPastBackfillMessage(customRange.error);
+        return;
       }
-      const payload = {
-        symbol: backfillAllSymbols ? "all" : sym,
-        useSymbolPeriods: true,
-        interval,
-        onlyMissing: backfillAllSymbols && backfillOnlyMissing,
-        target,
-      };
+
+      let payload: Record<string, unknown>;
+      if (customRange && "from" in customRange) {
+        payload = {
+          symbol: backfillAllSymbols ? "all" : sym,
+          interval,
+          from: customRange.from,
+          to: customRange.to,
+          onlyMissing: false,
+          target,
+        };
+      } else {
+        let from: number;
+        let to: number;
+        if (interval === "1m") {
+          from = now - KLINE_1M_DAYS_MS - ONE_MINUTE_MS;
+          to = now + ONE_MINUTE_MS;
+        } else if (interval === "5m") {
+          from = floorTo5mMs(now - KLINE_5M_DAYS_MS) - FIVE_MINUTES_MS;
+          to = floorTo5mMs(now) + FIVE_MINUTES_MS;
+        } else {
+          from = floorToHourMs(now - KLINE_1H_DAYS_MS) - ONE_HOUR_MS;
+          to = floorToHourMs(now) + ONE_HOUR_MS;
+        }
+        payload = {
+          symbol: backfillAllSymbols ? "all" : sym,
+          useSymbolPeriods: true,
+          interval,
+          from,
+          to,
+          onlyMissing: backfillAllSymbols && backfillOnlyMissing,
+          target,
+        };
+      }
       const res = await fetch(`${API_BASE}/debug/klines-backfill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1415,6 +1489,30 @@ export default function SistemaDebugPanel() {
                   {(t as Record<string, string>).backfillOnlyMissing ?? "Apenas moedas sem histórico (novas)"}
                 </label>
               )}
+              <div className="flex flex-wrap gap-2 items-end mb-2">
+                <label className="flex flex-col gap-0.5 text-xs text-zinc-700">
+                  <span>{(t as Record<string, string>).backfillFromDateLabel ?? "Desde (data UTC)"}</span>
+                  <input
+                    type="date"
+                    value={backfillFromDate}
+                    onChange={(e) => setBackfillFromDate(e.target.value)}
+                    className="text-sm border border-zinc-300 rounded-md px-2 py-1 text-zinc-800 bg-white"
+                  />
+                </label>
+                <label className="flex flex-col gap-0.5 text-xs text-zinc-700">
+                  <span>{(t as Record<string, string>).backfillToDateLabel ?? "Até (opcional)"}</span>
+                  <input
+                    type="date"
+                    value={backfillToDate}
+                    onChange={(e) => setBackfillToDate(e.target.value)}
+                    className="text-sm border border-zinc-300 rounded-md px-2 py-1 text-zinc-800 bg-white"
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-amber-800 mb-2">
+                {(t as Record<string, string>).backfillFromDateHint ??
+                  "Com data «Desde» preenchida, preenche o buraco até hoje (ou até «Até») em todas as moedas marcadas."}
+              </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -1422,7 +1520,11 @@ export default function SistemaDebugPanel() {
                   onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "1m", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {pastBackfillLoading === "1m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (9 dias)"}
+                  {pastBackfillLoading === "1m"
+                    ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…"
+                    : backfillFromDate.trim()
+                      ? ((t as Record<string, string>).backfillPastWithRange ?? "Backfill 1m (intervalo)").replace("{interval}", "1m")
+                      : (t as { backfillPast1m?: string }).backfillPast1m ?? "Backfill 1m (9 dias)"}
                 </button>
                 <button
                   type="button"
@@ -1430,7 +1532,11 @@ export default function SistemaDebugPanel() {
                   onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "5m", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {pastBackfillLoading === "5m" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast5m?: string }).backfillPast5m ?? "Backfill 5m (90 dias)"}
+                  {pastBackfillLoading === "5m"
+                    ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…"
+                    : backfillFromDate.trim()
+                      ? ((t as Record<string, string>).backfillPastWithRange ?? "Backfill 5m (intervalo)").replace("{interval}", "5m")
+                      : (t as { backfillPast5m?: string }).backfillPast5m ?? "Backfill 5m (90 dias)"}
                 </button>
                 <button
                   type="button"
@@ -1438,7 +1544,11 @@ export default function SistemaDebugPanel() {
                   onClick={() => requestProdConfirm({ kind: "pastBackfill", interval: "1h", target: historicoTarget })}
                   className="text-xs font-medium px-2.5 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
                 >
-                  {pastBackfillLoading === "1h" ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…" : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (730 dias)"}
+                  {pastBackfillLoading === "1h"
+                    ? (t as { backfillPastLoading?: string }).backfillPastLoading ?? "Executando…"
+                    : backfillFromDate.trim()
+                      ? ((t as Record<string, string>).backfillPastWithRange ?? "Backfill 1h (intervalo)").replace("{interval}", "1h")
+                      : (t as { backfillPast1h?: string }).backfillPast1h ?? "Backfill 1h (730 dias)"}
                 </button>
               </div>
               {pastBackfillMessage && (
@@ -1960,9 +2070,39 @@ export default function SistemaDebugPanel() {
                   <h4 className="text-sm font-medium text-zinc-800 mb-2">
                     {(t as Record<string, string>).accessTitle ?? "Conceder acesso (lite)"}
                   </h4>
-                  <p className="text-xs text-zinc-600 mb-3">
+                  <p className="text-xs text-zinc-600 mb-2">
                     {(t as Record<string, string>).accessDaysMax ?? "1–365, padrão 1"}
                   </p>
+                  <p className="text-xs text-amber-800 mb-3">
+                    {(t as Record<string, string>).accessTargetHint ??
+                      "O acesso é gravado no banco selecionado. Use Produção para utilizadores reais."}
+                  </p>
+                  <div className="flex gap-4 mb-3 text-xs">
+                    <label className="flex items-center gap-1.5 text-zinc-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="accessTarget"
+                        checked={accessTarget === "prod"}
+                        onChange={() => {
+                          setAccessTarget("prod");
+                          setAccessMessage(null);
+                        }}
+                      />
+                      {(t as Record<string, string>).accessTargetProd ?? "Produção (URL_PROD)"}
+                    </label>
+                    <label className="flex items-center gap-1.5 text-zinc-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="accessTarget"
+                        checked={accessTarget === "dev"}
+                        onChange={() => {
+                          setAccessTarget("dev");
+                          setAccessMessage(null);
+                        }}
+                      />
+                      {(t as Record<string, string>).accessTargetDev ?? "Desenvolvimento (DATABASE_URL)"}
+                    </label>
+                  </div>
                   <div className="flex flex-col gap-3 max-w-sm">
                     <label className="flex flex-col gap-1">
                       <span className="text-xs font-medium text-zinc-600">{(t as Record<string, string>).accessUserIdLabel ?? "User ID"}</span>
@@ -2003,11 +2143,25 @@ export default function SistemaDebugPanel() {
                             method: "POST",
                             credentials: "include",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ userId: accessUserId.trim(), days: accessDays }),
+                            body: JSON.stringify({
+                              userId: accessUserId.trim(),
+                              days: accessDays,
+                              target: accessTarget,
+                            }),
                           });
                           const data = await res.json().catch(() => ({}));
                           if (res.ok && data.ok) {
-                            setAccessMessage(((t as Record<string, string>).accessSuccess ?? "Acesso concedido: 1 coin, {days} dia(s).").replace("{days}", String(data.days ?? accessDays)));
+                            const tpl =
+                              data.target === "prod"
+                                ? ((t as Record<string, string>).accessSuccessProd ??
+                                  "Acesso concedido em produção: {coins} coin(s), {days} dia(s).")
+                                : ((t as Record<string, string>).accessSuccess ??
+                                  "Acesso concedido: {coins} coin(s), {days} dia(s).");
+                            setAccessMessage(
+                              tpl
+                                .replace("{days}", String(data.days ?? accessDays))
+                                .replace("{coins}", String(data.coins ?? accessDays))
+                            );
                             setAccessUserId("");
                             setAccessDays(1);
                           } else {
@@ -2543,15 +2697,24 @@ export default function SistemaDebugPanel() {
               {(prodConfirm.kind === "pastBackfill" || prodConfirm.kind === "validateKlines" || prodConfirm.kind === "backfill" || prodConfirm.kind === "registerGaps") && (
                 <div className="mt-2 space-y-1">
                   {prodConfirm.kind === "pastBackfill" ? (
-                    backfillAllSymbols ? (
-                      <p className="text-xs text-zinc-600">
-                        {(t as Record<string, string>).confirmProdCoinsLabel?.replace("{coins}", confirmProdCoinsLabel) ?? `Moedas: ${confirmProdCoinsLabel}`}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-zinc-600">
-                        {(t as Record<string, string>).confirmProdSymbolLabel?.replace("{symbol}", confirmProdSymbol) ?? `Símbolo: ${confirmProdSymbol}`}
-                      </p>
-                    )
+                    <>
+                      {backfillAllSymbols ? (
+                        <p className="text-xs text-zinc-600">
+                          {(t as Record<string, string>).confirmProdCoinsLabel?.replace("{coins}", confirmProdCoinsLabel) ?? `Moedas: ${confirmProdCoinsLabel}`}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-zinc-600">
+                          {(t as Record<string, string>).confirmProdSymbolLabel?.replace("{symbol}", confirmProdSymbol) ?? `Símbolo: ${confirmProdSymbol}`}
+                        </p>
+                      )}
+                      {backfillFromDate.trim() && (
+                        <p className="text-xs text-zinc-600">
+                          {((t as Record<string, string>).confirmProdPastBackfillRange ?? "Intervalo (UTC): {from} → {to}")
+                            .replace("{from}", backfillFromDate)
+                            .replace("{to}", backfillToDate.trim() || "agora")}
+                        </p>
+                      )}
+                    </>
                   ) : (
                     <p className="text-xs text-zinc-600">
                       {(t as Record<string, string>).confirmProdSymbolLabel?.replace("{symbol}", confirmProdSymbol) ?? `Símbolo: ${confirmProdSymbol}`}

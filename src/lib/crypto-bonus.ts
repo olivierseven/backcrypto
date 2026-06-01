@@ -1,5 +1,5 @@
 import { cryptoPrisma } from "@/lib/crypto-db";
-import { Tier, TxSource, TxType } from "@/lib/prisma-bio-client";
+import { Tier, TxSource, TxType, type PrismaClient } from "@/lib/prisma-bio-client";
 import { log as vLog, dbg, warn, error } from "@/lib/logger";
 
 /** Valor inicial sugerido no painel admin (dias = coins, como o trial lite). */
@@ -254,15 +254,24 @@ export async function createCryptoLiteTrialPackage(userId: string): Promise<{
  */
 export async function createAdminAccessPackage(
   userId: string,
-  durationDays: number
+  durationDays: number,
+  db: PrismaClient = cryptoPrisma
 ): Promise<{ success: boolean; coins?: number; durationDays?: number; error?: string }> {
   const days = Math.max(MIN_ACCESS_DAYS, Math.min(MAX_ACCESS_DAYS, Math.floor(durationDays)));
   const coins = days;
   try {
+    const exists = await db.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!exists) {
+      return {
+        success: false,
+        error: "Usuário não encontrado neste banco (verifique o User ID e se escolheu Prod vs Dev).",
+      };
+    }
+
     const refId = `admin_access_${userId}_${Date.now()}`;
     dbg(`[crypto-bonus] creating admin access package userId=${userId.slice(0, 8)}... days=${days} coins=${coins}`);
 
-    const result = await cryptoPrisma.$transaction(async (tx) => {
+    const result = await db.$transaction(async (tx) => {
       const wallet = await tx.userCoinWallet.upsert({
         where: { userId },
         create: { userId, balance: 0 },
@@ -312,7 +321,7 @@ export async function createAdminAccessPackage(
       return { entryId: entry.id };
     });
 
-    const user = await cryptoPrisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: { language: true },
     });
@@ -324,7 +333,7 @@ export async function createAdminAccessPackage(
     const expiredDate = new Date();
     expiredDate.setDate(expiredDate.getDate() + days);
 
-    await cryptoPrisma.userNotification.create({
+    await db.userNotification.create({
       data: {
         senderType: "system",
         userId,

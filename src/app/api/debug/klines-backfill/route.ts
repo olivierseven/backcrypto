@@ -2,6 +2,7 @@
  * Backfill de gaps: busca klines na API Binance para o intervalo indicado e insere na tabela.
  * Apenas admin. POST /api/debug/klines-backfill
  * Body: { symbol?: string, interval: "1m" | "5m" | "1h", from: number, to: number } (from/to em ms UTC)
+ * Ou: { fromDate?: "YYYY-MM-DD", toDate?: "YYYY-MM-DD" } (meia-noite UTC) com interval — alternativa aos ms.
  * Ou: { symbol?: string, gaps: { interval: "1m"|"5m"|"1h", from: number, to: number }[] }
  * Opcional: onlyMissing: true — quando symbol "all", só processa moedas que ainda não têm histórico nesse intervalo.
  */
