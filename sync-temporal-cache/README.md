@@ -1,5 +1,7 @@
 # sync-temporal-cache
 
+> **Deploy na VPS:** pasta canónica em **`crypto_vps/sync-temporal-cache`** (este repo `backcrypto` mantém só a lib partilhada em `src/lib/binance-kline-cache-refresh.ts` para o Debug).
+
 Processo na **VPS** que reconstrói `BinanceKlineCache` (gráficos temporais 5m–1d).
 
 Usa a **mesma lógica** do botão **Debug → Refresh cache → Produção** (`runBinanceKlineCacheRefresh` em `src/lib/binance-kline-cache-refresh.ts`). Não chama cron Vercel nem HTTP.
@@ -23,11 +25,11 @@ Usa a **mesma lógica** do botão **Debug → Refresh cache → Produção** (`r
 
 ## Setup (VPS)
 
-```bash
-cd ~/backcrypto/sync-temporal-cache
-cp .env.example .env
-# Editar DATABASE_URL = URL prod Neon
+Ver **`crypto_vps/sync-temporal-cache/README.md`** — na VPS:
 
+```bash
+cd ~/crypto_vps/sync-temporal-cache
+cp ../.env .env
 npm install
 npm run build
 ```
